@@ -1,11 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import {
-  seedReservations,
-  seedClients,
-  seedProfiles,
-} from "@/lib/mock/seed";
+import { getStore, type Store } from "@/lib/mock/store";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
 export type ReservationListItem = {
@@ -17,15 +13,15 @@ export type ReservationListItem = {
   status: ReservationStatus;
 };
 
-function nameOfClient(clientId: string): string {
-  const client = seedClients.find((c) => c.id === clientId);
-  const profile = seedProfiles.find((p) => p.id === client?.profile_id);
+function nameOfClient(clientId: string, store: Store): string {
+  const client = store.clients.find((c) => c.id === clientId);
+  const profile = store.profiles.find((p) => p.id === client?.profile_id);
   return profile?.full_name ?? "—";
 }
 
-function nameOfProfile(profileId: string | null): string | null {
+function nameOfProfile(profileId: string | null, store: Store): string | null {
   if (!profileId) return null;
-  return seedProfiles.find((p) => p.id === profileId)?.full_name ?? null;
+  return store.profiles.find((p) => p.id === profileId)?.full_name ?? null;
 }
 
 /**
@@ -35,13 +31,14 @@ export async function listReservations(
   trainerId?: string,
 ): Promise<ReservationListItem[]> {
   if (USE_MOCK) {
-    return seedReservations
+    const store = getStore();
+    return store.reservations
       .filter((r) => !trainerId || r.trainer_id === trainerId)
       .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
       .map((r) => ({
         id: r.id,
-        clientName: nameOfClient(r.client_id),
-        trainerName: nameOfProfile(r.trainer_id),
+        clientName: nameOfClient(r.client_id, store),
+        trainerName: nameOfProfile(r.trainer_id, store),
         scheduledAt: r.scheduled_at,
         serviceType: r.service_type,
         status: r.status,

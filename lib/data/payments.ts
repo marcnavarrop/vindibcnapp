@@ -1,7 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import { seedPayments, seedClients, seedProfiles } from "@/lib/mock/seed";
+import { getStore, type Store } from "@/lib/mock/store";
 import type { PaymentMethod } from "@/types/database";
 
 export type PaymentListItem = {
@@ -12,20 +12,21 @@ export type PaymentListItem = {
   paidAt: string;
 };
 
-function clientName(clientId: string): string {
-  const client = seedClients.find((c) => c.id === clientId);
-  const profile = seedProfiles.find((p) => p.id === client?.profile_id);
+function clientName(clientId: string, store: Store): string {
+  const client = store.clients.find((c) => c.id === clientId);
+  const profile = store.profiles.find((p) => p.id === client?.profile_id);
   return profile?.full_name ?? "—";
 }
 
 export async function listPayments(): Promise<PaymentListItem[]> {
   if (USE_MOCK) {
-    return seedPayments
+    const store = getStore();
+    return store.payments
       .slice()
       .sort((a, b) => b.paid_at.localeCompare(a.paid_at))
       .map((p) => ({
         id: p.id,
-        clientName: clientName(p.client_id),
+        clientName: clientName(p.client_id, store),
         amount: p.amount,
         method: p.method,
         paidAt: p.paid_at,

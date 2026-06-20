@@ -15,6 +15,8 @@ const STATUS_TONE: Record<ReservationStatus, "info" | "success" | "danger"> = {
   cancelled: "danger",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ReservasPage() {
   const reservations = await listReservations();
 

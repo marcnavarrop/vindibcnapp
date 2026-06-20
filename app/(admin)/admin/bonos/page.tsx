@@ -11,6 +11,8 @@ const STATUS_TONE: Record<BonoStatus, "success" | "neutral" | "danger"> = {
   cancelled: "danger",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function BonosPage() {
   const bonos = await listBonos();
 

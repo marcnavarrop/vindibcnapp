@@ -5,6 +5,8 @@ import { listClients } from "@/lib/data/clients";
 /**
  * Listado de clientes (modo simulación o Supabase, según USE_MOCK).
  */
+export const dynamic = "force-dynamic";
+
 export default async function ClientsPage() {
   const clients = await listClients();
 
@@ -22,9 +24,17 @@ export default async function ClientsPage() {
             </Link>
             <h1 className="mt-1 text-2xl text-brand-dark">Clientes</h1>
           </div>
-          <span className="rounded-full bg-brand-purple/10 px-3 py-1 text-sm font-bold text-brand-purple">
-            {clients.length} clientes
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-brand-purple/10 px-3 py-1 text-sm font-bold text-brand-purple">
+              {clients.length} clientes
+            </span>
+            <Link
+              href="/admin/clients/new"
+              className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+            >
+              + Nuevo cliente
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 overflow-hidden rounded-2xl border border-brand-border bg-white">

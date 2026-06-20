@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { listPayments } from "@/lib/data/payments";
 import { PAYMENT_METHOD_LABELS, formatEur, formatDate } from "@/lib/labels";
 
+export const dynamic = "force-dynamic";
+
 export default async function PagosPage() {
   const payments = await listPayments();
   const total = payments.reduce((s, p) => s + p.amount, 0);

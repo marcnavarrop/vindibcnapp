@@ -1,7 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import { seedBonos, seedClients, seedProfiles } from "@/lib/mock/seed";
+import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import type { ServiceType, BonoStatus } from "@/types/database";
 
 export type BonoListItem = {
@@ -14,17 +14,18 @@ export type BonoListItem = {
   status: BonoStatus;
 };
 
-function clientName(clientId: string): string {
-  const client = seedClients.find((c) => c.id === clientId);
-  const profile = seedProfiles.find((p) => p.id === client?.profile_id);
+function clientName(clientId: string, store: Store): string {
+  const client = store.clients.find((c) => c.id === clientId);
+  const profile = store.profiles.find((p) => p.id === client?.profile_id);
   return profile?.full_name ?? "—";
 }
 
 export async function listBonos(): Promise<BonoListItem[]> {
   if (USE_MOCK) {
-    return seedBonos.map((b) => ({
+    const store = getStore();
+    return store.bonos.map((b) => ({
       id: b.id,
-      clientName: clientName(b.client_id),
+      clientName: clientName(b.client_id, store),
       serviceType: b.service_type,
       totalSessions: b.total_sessions,
       remainingSessions: b.remaining_sessions,
@@ -62,4 +63,48 @@ export async function listBonos(): Promise<BonoListItem[]> {
     price: r.price,
     status: r.status,
   }));
+}
+
+export type BonoInput = {
+  clientId: string;
+  serviceType: ServiceType;
+  totalSessions: number;
+  price: number;
+};
+
+/** Crea un bono para un cliente (sesiones restantes = totales al comprarlo). */
+export async function createBono(input: BonoInput): Promise<string> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    store.bonos.push({
+      id,
+      client_id: input.clientId,
+      service_type: input.serviceType,
+      total_sessions: input.totalSessions,
+      remaining_sessions: input.totalSessions,
+      price: input.price,
+      status: "active",
+      purchased_at: now,
+      created_at: now,
+    });
+    saveStore(store);
+    return id;
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bonos")
+    .insert({
+      client_id: input.clientId,
+      service_type: input.serviceType,
+      total_sessions: input.totalSessions,
+      remaining_sessions: input.totalSessions,
+      price: input.price,
+      status: "active",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
 }

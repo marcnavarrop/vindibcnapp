@@ -1,13 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import {
-  seedClients,
-  seedProfiles,
-  seedBonos,
-  seedReservations,
-  seedPayments,
-} from "@/lib/mock/seed";
+import { getStore, saveStore } from "@/lib/mock/store";
 import type {
   ServiceType,
   BonoStatus,
@@ -50,24 +44,29 @@ export type ClientPayment = {
 };
 
 export type ClientDetail = ClientListItem & {
+  assignedTrainerId: string | null;
   notes: string | null;
   bonos: ClientBono[];
   reservations: ClientReservation[];
   payments: ClientPayment[];
 };
 
-// ── Helpers de simulación ──
-function profileOf(profileId: string) {
-  return seedProfiles.find((p) => p.id === profileId);
-}
+export type ClientInput = {
+  fullName: string;
+  email: string;
+  phone: string | null;
+  assignedTrainerId: string | null;
+  notes: string | null;
+};
 
-function toListItem(clientId: string): ClientListItem {
-  const client = seedClients.find((c) => c.id === clientId)!;
-  const profile = profileOf(client.profile_id);
+// ── Helpers de simulación ──
+function toListItem(clientId: string, store = getStore()): ClientListItem {
+  const client = store.clients.find((c) => c.id === clientId)!;
+  const profile = store.profiles.find((p) => p.id === client.profile_id);
   const trainer = client.assigned_trainer_id
-    ? profileOf(client.assigned_trainer_id)
+    ? store.profiles.find((p) => p.id === client.assigned_trainer_id)
     : null;
-  const bonos = seedBonos.filter(
+  const bonos = store.bonos.filter(
     (b) => b.client_id === clientId && b.status === "active",
   );
   return {
@@ -89,9 +88,10 @@ export async function listClients(
   trainerId?: string,
 ): Promise<ClientListItem[]> {
   if (USE_MOCK) {
-    return seedClients
+    const store = getStore();
+    return store.clients
       .filter((c) => !trainerId || c.assigned_trainer_id === trainerId)
-      .map((c) => toListItem(c.id));
+      .map((c) => toListItem(c.id, store));
   }
 
   const supabase = await createClient();
@@ -134,12 +134,14 @@ export async function listClients(
 }
 
 function buildDetail(clientId: string): ClientDetail | null {
-  const client = seedClients.find((c) => c.id === clientId);
+  const store = getStore();
+  const client = store.clients.find((c) => c.id === clientId);
   if (!client) return null;
   return {
-    ...toListItem(clientId),
+    ...toListItem(clientId, store),
+    assignedTrainerId: client.assigned_trainer_id,
     notes: client.notes,
-    bonos: seedBonos
+    bonos: store.bonos
       .filter((b) => b.client_id === clientId)
       .map((b) => ({
         id: b.id,
@@ -149,7 +151,7 @@ function buildDetail(clientId: string): ClientDetail | null {
         price: b.price,
         status: b.status,
       })),
-    reservations: seedReservations
+    reservations: store.reservations
       .filter((r) => r.client_id === clientId)
       .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))
       .map((r) => ({
@@ -158,7 +160,7 @@ function buildDetail(clientId: string): ClientDetail | null {
         serviceType: r.service_type,
         status: r.status,
       })),
-    payments: seedPayments
+    payments: store.payments
       .filter((p) => p.client_id === clientId)
       .map((p) => ({
         id: p.id,
@@ -172,7 +174,6 @@ function buildDetail(clientId: string): ClientDetail | null {
 /** Ficha completa de un cliente por su id. */
 export async function getClient(id: string): Promise<ClientDetail | null> {
   if (USE_MOCK) return buildDetail(id);
-  // En real se implementará con varias consultas a Supabase.
   throw new Error("getClient: pendiente de implementar contra Supabase");
 }
 
@@ -181,10 +182,78 @@ export async function getClientByProfile(
   profileId: string,
 ): Promise<ClientDetail | null> {
   if (USE_MOCK) {
-    const client = seedClients.find((c) => c.profile_id === profileId);
+    const client = getStore().clients.find((c) => c.profile_id === profileId);
     return client ? buildDetail(client.id) : null;
   }
   throw new Error(
     "getClientByProfile: pendiente de implementar contra Supabase",
   );
+}
+
+/** Entrenadores disponibles para asignar (para los selects de formularios). */
+export async function listTrainers(): Promise<{ id: string; name: string }[]> {
+  if (USE_MOCK) {
+    return getStore()
+      .profiles.filter((p) => p.role === "trainer")
+      .map((p) => ({ id: p.id, name: p.full_name ?? "—" }));
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name")
+    .eq("role", "trainer")
+    .order("full_name");
+  if (error) throw error;
+  return (data ?? []).map((p) => ({ id: p.id, name: p.full_name ?? "—" }));
+}
+
+/** Crea un cliente (y su perfil). Devuelve el id del nuevo cliente. */
+export async function createClientRecord(input: ClientInput): Promise<string> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const profileId = crypto.randomUUID();
+    const clientId = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+    store.profiles.push({
+      id: profileId,
+      full_name: input.fullName,
+      email: input.email,
+      phone: input.phone,
+      role: "client",
+      created_at: createdAt,
+    });
+    store.clients.push({
+      id: clientId,
+      profile_id: profileId,
+      assigned_trainer_id: input.assignedTrainerId,
+      notes: input.notes,
+      created_at: createdAt,
+    });
+    saveStore(store);
+    return clientId;
+  }
+  throw new Error("createClientRecord: pendiente de implementar contra Supabase");
+}
+
+/** Actualiza los datos de un cliente existente. */
+export async function updateClientRecord(
+  id: string,
+  input: ClientInput,
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.id === id);
+    if (!client) throw new Error("Cliente no encontrado");
+    client.assigned_trainer_id = input.assignedTrainerId;
+    client.notes = input.notes;
+    const profile = store.profiles.find((p) => p.id === client.profile_id);
+    if (profile) {
+      profile.full_name = input.fullName;
+      profile.email = input.email;
+      profile.phone = input.phone;
+    }
+    saveStore(store);
+    return;
+  }
+  throw new Error("updateClientRecord: pendiente de implementar contra Supabase");
 }
