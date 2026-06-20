@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { SignOutButton } from "@/components/sign-out-button";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 /**
  * Área del entrenador. El middleware garantiza el rol 'trainer'.
@@ -11,14 +11,17 @@ export default async function TrainerHome() {
   } = await supabase.auth.getUser();
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Panel del entrenador</h1>
-        <SignOutButton />
-      </div>
-      <p className="mt-4 text-sm text-gray-500">
-        Sesión: {user?.email}. Aquí verás tus clientes asignados y tus reservas.
-      </p>
-    </main>
+    <div className="min-h-screen bg-brand-bg">
+      <DashboardHeader area="Entrenador" />
+      <main className="mx-auto max-w-5xl p-6">
+        <h1 className="text-2xl text-brand-dark">Panel del entrenador</h1>
+        <p className="mt-2 text-sm text-brand-muted">
+          Sesión: {user?.email}
+        </p>
+        <div className="mt-6 rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
+          Aquí verás tus clientes asignados y tus reservas.
+        </div>
+      </main>
+    </div>
   );
 }

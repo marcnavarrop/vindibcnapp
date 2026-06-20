@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { Wordmark } from "@/components/wordmark";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/input";
 
 /**
  * Alta de cuenta. Al registrarse, el trigger `on_auth_user_created` crea
@@ -45,76 +48,80 @@ export default function RegisterPage() {
 
   if (done) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 p-8">
-        <h1 className="text-2xl font-bold">Cuenta creada</h1>
-        <p className="text-sm text-gray-600">
-          Revisa tu correo si la confirmación por email está activada. Después
-          podrás{" "}
-          <Link href="/login" className="underline">
-            iniciar sesión
-          </Link>
-          .
-        </p>
+      <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
+          <Wordmark className="mb-4 block" />
+          <h1 className="text-xl text-brand-dark">Cuenta creada</h1>
+          <p className="mt-3 text-sm text-brand-muted">
+            Revisa tu correo si la confirmación por email está activada. Después
+            podrás{" "}
+            <Link
+              href="/login"
+              className="font-bold text-brand-purple hover:text-brand-orange"
+            >
+              iniciar sesión
+            </Link>
+            .
+          </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-8">
-      <h1 className="text-2xl font-bold">Crear cuenta</h1>
+    <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
+        <div className="mb-8 flex flex-col gap-1">
+          <Wordmark />
+          <h1 className="text-xl text-brand-dark">Crear cuenta</h1>
+        </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Nombre completo
-          <input
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <Field
+            label="Nombre completo"
+            name="fullName"
             type="text"
             required
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2"
           />
-        </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Correo electrónico
-          <input
+          <Field
+            label="Correo electrónico"
+            name="email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2"
           />
-        </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Contraseña
-          <input
+          <Field
+            label="Contraseña"
+            name="password"
             type="password"
             required
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2"
           />
-        </label>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-error">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {loading ? "Creando…" : "Crear cuenta"}
-        </button>
-      </form>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Creando…" : "Crear cuenta"}
+          </Button>
+        </form>
 
-      <p className="text-sm text-gray-500">
-        ¿Ya tienes cuenta?{" "}
-        <Link href="/login" className="underline">
-          Iniciar sesión
-        </Link>
-      </p>
+        <p className="mt-6 text-sm text-brand-muted">
+          ¿Ya tienes cuenta?{" "}
+          <Link
+            href="/login"
+            className="font-bold text-brand-purple hover:text-brand-orange"
+          >
+            Iniciar sesión
+          </Link>
+        </p>
+      </div>
     </main>
   );
 }

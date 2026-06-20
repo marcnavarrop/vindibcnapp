@@ -4,6 +4,9 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { Wordmark } from "@/components/wordmark";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/input";
 import type { UserRole } from "@/types/database";
 
 function LoginForm() {
@@ -44,49 +47,49 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-8">
-      <h1 className="text-2xl font-bold">Iniciar sesión</h1>
+    <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
+        <div className="mb-8 flex flex-col gap-1">
+          <Wordmark />
+          <h1 className="text-xl text-brand-dark">Iniciar sesión</h1>
+        </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Correo electrónico
-          <input
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <Field
+            label="Correo electrónico"
+            name="email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2"
           />
-        </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Contraseña
-          <input
+          <Field
+            label="Contraseña"
+            name="password"
             type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2"
           />
-        </label>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-error">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {loading ? "Entrando…" : "Entrar"}
-        </button>
-      </form>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Entrando…" : "Entrar"}
+          </Button>
+        </form>
 
-      <p className="text-sm text-gray-500">
-        ¿No tienes cuenta?{" "}
-        <Link href="/register" className="underline">
-          Crear cuenta
-        </Link>
-      </p>
+        <p className="mt-6 text-sm text-brand-muted">
+          ¿No tienes cuenta?{" "}
+          <Link
+            href="/register"
+            className="font-bold text-brand-purple hover:text-brand-orange"
+          >
+            Crear cuenta
+          </Link>
+        </p>
+      </div>
     </main>
   );
 }

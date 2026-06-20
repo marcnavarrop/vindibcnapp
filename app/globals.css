@@ -1,26 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f7f7; /* brand-bg */
+  --foreground: #303133; /* brand-charcoal */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* ─── Identidad VindiBCN ─── */
+  --color-brand-purple: #642263; /* primario */
+  --color-brand-purple-light: #965495;
+  --color-brand-orange: #ff6d17; /* acento */
+  --color-brand-dark: #1b1d1f;
+  --color-brand-charcoal: #303133;
+  --color-brand-muted: #777777;
+  --color-brand-border: #eaeaea;
+  --color-brand-bg: #f7f7f7;
+
+  /* Semánticos */
+  --color-success: #28a745;
+  --color-error: #dc3545;
+
+  /* Tipografía (enlazada a next/font) */
+  --font-sans: var(--font-roboto-condensed);
+  --font-display: var(--font-lora);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Titulares con la serif de marca */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), Georgia, serif;
 }
