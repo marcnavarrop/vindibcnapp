@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-8 p-8">
       <header>
-        <h1 className="text-3xl font-bold">VindiApp</h1>
+        <h1 className="text-3xl font-bold">VindiBCN</h1>
         <p className="mt-2 text-sm text-gray-500">
           Gestión del centro de entrenamiento personal y fisioterapia.
         </p>

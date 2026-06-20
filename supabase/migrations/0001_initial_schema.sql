@@ -1,5 +1,5 @@
 -- ============================================================================
--- VindiApp · Esquema inicial (Fase 0)
+-- VindiBCN · Esquema inicial (Fase 0)
 -- Centro de entrenamiento personal / fisioterapia.
 -- Incluye: enums, tablas, índices, Row Level Security (RLS),
 -- funciones helper y trigger de alta automática de perfil.

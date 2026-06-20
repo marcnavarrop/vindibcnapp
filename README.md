@@ -1,4 +1,4 @@
-# VindiApp
+# VindiBCN
 
 Aplicación web de gestión para un centro de entrenamiento personal y
 fisioterapia: clientes, bonos, reservas y pagos. Sustituye a Trainingym.

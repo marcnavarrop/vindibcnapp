@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VindiApp",
+  title: "VindiBCN",
   description: "Gestión del centro de entrenamiento personal y fisioterapia",
 };
 
