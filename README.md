@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VindiApp
 
-## Getting Started
+Aplicación web de gestión para un centro de entrenamiento personal y
+fisioterapia: clientes, bonos, reservas y pagos. Sustituye a Trainingym.
 
-First, run the development server:
+**Stack:** Next.js 15 (App Router, TypeScript) · Tailwind CSS · Supabase
+(base de datos + Auth) · Vercel (hosting) · Stripe (pagos, en una fase
+posterior).
+
+> Estado: **Fase 0 — scaffolding**. Estructura, autenticación por roles y
+> esquema de base de datos. Sin lógica de negocio ni diseño de marca todavía.
+
+---
+
+## Requisitos
+
+- Node.js 18.18+ (recomendado 20+)
+- Una cuenta de [Supabase](https://supabase.com) con un proyecto creado
+- (Opcional, para migraciones por CLI) [Supabase CLI](https://supabase.com/docs/guides/cli)
+
+## 1. Instalar dependencias
+
+```bash
+npm install
+```
+
+## 2. Variables de entorno
+
+Copia el ejemplo y rellena los valores reales de tu proyecto Supabase
+(Project Settings → API):
+
+```bash
+cp .env.local.example .env.local
+```
+
+| Variable                        | Dónde encontrarla                     | Uso                                   |
+| ------------------------------- | ------------------------------------- | ------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | API → Project URL                     | Cliente y servidor                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | API → anon public                     | Cliente (protegida por RLS)           |
+| `SUPABASE_SERVICE_ROLE_KEY`     | API → service_role (**secreta**)      | Solo servidor; salta la RLS           |
+
+> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` nunca debe exponerse en el navegador ni
+> llevar el prefijo `NEXT_PUBLIC_`. `.env.local` está en `.gitignore`.
+
+## 3. Aplicar la migración de base de datos
+
+El esquema vive en [`supabase/migrations/0001_initial_schema.sql`](supabase/migrations/0001_initial_schema.sql).
+Crea las tablas (`profiles`, `clients`, `bonos`, `reservations`, `payments`),
+sus enums, las políticas de **Row Level Security** y el **trigger** que crea
+un perfil al registrarse un usuario.
+
+**Opción A — SQL Editor (rápida, sin instalar nada):**
+abre el SQL Editor de tu proyecto en supabase.com, pega el contenido del
+archivo y ejecútalo.
+
+**Opción B — Supabase CLI (recomendada para el equipo):**
+
+```bash
+supabase link --project-ref <tu-project-ref>
+supabase db push
+```
+
+Para desarrollo 100% local con Docker:
+
+```bash
+supabase start      # levanta Postgres + Studio en local
+supabase db reset   # aplica todas las migraciones de /supabase/migrations
+```
+
+## 4. (Opcional) Regenerar los tipos de la base de datos
+
+`types/database.ts` está escrito a mano de momento. Cuando tengas el proyecto
+en marcha, puedes regenerarlo automáticamente:
+
+```bash
+# desde un proyecto remoto
+npx supabase gen types typescript --project-id <tu-project-ref> > types/database.ts
+
+# o desde el Supabase local
+npx supabase gen types typescript --local > types/database.ts
+```
+
+## 5. Arrancar en local
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Roles y rutas protegidas
 
-## Learn More
+La autenticación usa Supabase Auth con tres roles: `admin`, `trainer`,
+`client`. El [`middleware.ts`](middleware.ts) protege cada área y redirige
+según el rol:
 
-To learn more about Next.js, take a look at the following resources:
+| Ruta        | Rol requerido | Si no cumple                          |
+| ----------- | ------------- | ------------------------------------- |
+| `/admin/*`  | `admin`       | → su propia área, o `/login` sin sesión |
+| `/trainer/*`| `trainer`     | → su propia área, o `/login` sin sesión |
+| `/client/*` | `client`      | → su propia área, o `/login` sin sesión |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Al registrarse, el trigger crea el perfil con rol **`client`** por defecto.
+Para crear un **admin** o **trainer**, cambia el campo `role` en la tabla
+`profiles` desde Supabase Studio (o pásalo en `raw_user_meta_data.role` al
+hacer el alta).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estructura del proyecto
 
-## Deploy on Vercel
+```
+app/
+  (auth)/login, (auth)/register   # autenticación
+  (admin)/admin                   # área admin  → /admin
+  (trainer)/trainer               # área trainer → /trainer
+  (client)/client                 # área cliente → /client
+components/                       # componentes compartidos
+lib/supabase/
+  client.ts                       # cliente para el navegador
+  server.ts                       # cliente para Server Components / Actions
+  middleware.ts                   # refresco de sesión en el middleware
+types/database.ts                 # tipos de la BD
+supabase/migrations/              # migraciones SQL
+middleware.ts                     # control de acceso por rol
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Comando         | Acción                          |
+| --------------- | ------------------------------- |
+| `npm run dev`   | Servidor de desarrollo          |
+| `npm run build` | Build de producción             |
+| `npm start`     | Sirve el build de producción    |
+| `npm run lint`  | ESLint                          |
