@@ -4,9 +4,9 @@ import { DashboardHeader } from "@/components/dashboard-header";
 
 const SECTIONS = [
   { href: "/admin/clients", title: "Clientes", desc: "Fichas, entrenador asignado y bonos.", ready: true },
-  { href: "/admin", title: "Bonos", desc: "Paquetes de sesiones y su estado.", ready: false },
-  { href: "/admin", title: "Reservas", desc: "Agenda de sesiones.", ready: false },
-  { href: "/admin", title: "Pagos", desc: "Cobros en tarjeta y efectivo.", ready: false },
+  { href: "/admin/bonos", title: "Bonos", desc: "Paquetes de sesiones y su estado.", ready: true },
+  { href: "/admin/reservas", title: "Reservas", desc: "Agenda de sesiones.", ready: true },
+  { href: "/admin/pagos", title: "Pagos", desc: "Cobros en tarjeta y efectivo.", ready: true },
 ];
 
 /**
