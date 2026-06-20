@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
 import type { Database } from "@/types/database";
 
 type Role = Database["public"]["Enums"]["user_role"];
@@ -11,29 +12,48 @@ const ROUTE_ROLES: Record<string, Role> = {
   "/client": "client",
 };
 
+function protectedPrefixOf(pathname: string): string | undefined {
+  return Object.keys(ROUTE_ROLES).find(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+function redirect(request: NextRequest, pathname: string, from?: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  if (from) url.searchParams.set("redirectedFrom", from);
+  return NextResponse.redirect(url);
+}
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const protectedPrefix = protectedPrefixOf(pathname);
+
+  // ───────────────────────── Modo simulación ─────────────────────────
+  // Sin Supabase: el rol vive en una cookie que pone el login simulado.
+  if (USE_MOCK) {
+    if (!protectedPrefix) return NextResponse.next();
+
+    const role = request.cookies.get(MOCK_ROLE_COOKIE)?.value as
+      | Role
+      | undefined;
+
+    if (!role) return redirect(request, "/login", pathname);
+    if (role !== ROUTE_ROLES[protectedPrefix]) {
+      return redirect(request, `/${role}`);
+    }
+    return NextResponse.next();
+  }
+
+  // ───────────────────────── Modo real (Supabase) ─────────────────────
   // 1. Refresca la sesión (imprescindible para que la auth funcione).
   const { supabaseResponse, supabase, user } = await updateSession(request);
 
-  const { pathname } = request.nextUrl;
-
-  // 2. ¿La ruta actual está protegida por rol?
-  const protectedPrefix = Object.keys(ROUTE_ROLES).find(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
-
-  if (!protectedPrefix) {
-    // Ruta pública: dejamos pasar (con la sesión ya refrescada).
-    return supabaseResponse;
-  }
+  // 2. Ruta pública: dejamos pasar (con la sesión ya refrescada).
+  if (!protectedPrefix) return supabaseResponse;
 
   // 3. Sin sesión → al login, recordando a dónde quería ir.
-  if (!user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirectedFrom", pathname);
-    return NextResponse.redirect(url);
-  }
+  if (!user) return redirect(request, "/login", pathname);
 
   // 4. Con sesión: comprobamos el rol contra la tabla profiles.
   const { data: profile } = await supabase
@@ -42,13 +62,11 @@ export async function middleware(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
-  const requiredRole = ROUTE_ROLES[protectedPrefix];
-
-  if (!profile || profile.role !== requiredRole) {
-    // Rol incorrecto → lo mandamos a su propia área (o al login si no hay rol).
-    const url = request.nextUrl.clone();
-    url.pathname = profile?.role ? `/${profile.role}` : "/login";
-    return NextResponse.redirect(url);
+  if (!profile || profile.role !== ROUTE_ROLES[protectedPrefix]) {
+    // Rol incorrecto → a su propia área (o al login si no hay rol).
+    return profile?.role
+      ? redirect(request, `/${profile.role}`)
+      : redirect(request, "/login");
   }
 
   // 5. Todo correcto.
