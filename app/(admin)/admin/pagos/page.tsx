@@ -29,8 +29,8 @@ export default async function PagosPage() {
           </span>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-brand-border bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-brand-border bg-white">
+          <table className="w-full min-w-[40rem] text-left text-sm">
             <thead className="border-b border-brand-border bg-brand-bg">
               <tr className="text-xs tracking-wide text-brand-muted uppercase">
                 <th className="px-4 py-3 font-bold">Fecha</th>
