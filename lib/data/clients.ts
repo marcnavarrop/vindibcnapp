@@ -243,7 +243,7 @@ export async function updateClientRecord(
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.id === id);
-    if (!client) throw new Error("Cliente no encontrado");
+    if (!client) throw new Error("Client no trobat");
     client.assigned_trainer_id = input.assignedTrainerId;
     client.notes = input.notes;
     const profile = store.profiles.find((p) => p.id === client.profile_id);

@@ -25,7 +25,7 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por nombre, email o entrenador…"
+          placeholder="Cerca per nom, correu o entrenador/a…"
           className="w-full max-w-sm rounded-lg border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
         />
         <span className="text-sm whitespace-nowrap text-brand-muted">
@@ -37,11 +37,11 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
         <table className="w-full min-w-[40rem] text-left text-sm">
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
-              <th className="px-4 py-3 font-bold">Cliente</th>
-              <th className="px-4 py-3 font-bold">Contacto</th>
-              <th className="px-4 py-3 font-bold">Entrenador</th>
-              <th className="px-4 py-3 font-bold">Bonos activos</th>
-              <th className="px-4 py-3 font-bold">Sesiones rest.</th>
+              <th className="px-4 py-3 font-bold">Client</th>
+              <th className="px-4 py-3 font-bold">Contacte</th>
+              <th className="px-4 py-3 font-bold">Entrenador/a</th>
+              <th className="px-4 py-3 font-bold">Bons actius</th>
+              <th className="px-4 py-3 font-bold">Sessions rest.</th>
             </tr>
           </thead>
           <tbody>
@@ -64,7 +64,9 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
                 </td>
                 <td className="px-4 py-3">
                   {c.trainerName ?? (
-                    <span className="text-brand-muted italic">Sin asignar</span>
+                    <span className="text-brand-muted italic">
+                      Sense assignar
+                    </span>
                   )}
                 </td>
                 <td className="px-4 py-3">{c.activeBonos}</td>
@@ -81,7 +83,7 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
                   colSpan={5}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
-                  Sin resultados para “{query}”.
+                  Sense resultats per a “{query}”.
                 </td>
               </tr>
             )}

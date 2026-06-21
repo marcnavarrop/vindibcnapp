@@ -19,20 +19,20 @@ export default async function EditClientPage({
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
+      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/admin/clients/${id}`}
           className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
         >
-          ← Volver a la ficha
+          ← Tornar a la fitxa
         </Link>
-        <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Editar cliente</h1>
+        <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Editar client</h1>
 
         <ClientForm
           action={updateClientAction.bind(null, id)}
           trainers={trainers}
-          submitLabel="Guardar cambios"
+          submitLabel="Desar canvis"
           cancelHref={`/admin/clients/${id}`}
           defaults={{
             fullName: client.fullName,

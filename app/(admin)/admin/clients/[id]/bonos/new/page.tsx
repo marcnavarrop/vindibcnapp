@@ -16,18 +16,16 @@ export default async function NewBonoPage({
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
+      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/admin/clients/${id}`}
           className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
         >
-          ← Volver a la ficha
+          ← Tornar a la fitxa
         </Link>
-        <h1 className="mt-1 text-2xl text-brand-dark">Nuevo bono</h1>
-        <p className="mb-6 text-sm text-brand-muted">
-          Para {client.fullName}
-        </p>
+        <h1 className="mt-1 text-2xl text-brand-dark">Nou bo</h1>
+        <p className="mb-6 text-sm text-brand-muted">Per a {client.fullName}</p>
 
         <BonoForm
           action={createBonoAction.bind(null, id)}

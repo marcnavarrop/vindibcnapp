@@ -15,15 +15,15 @@ export default async function ReservasPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
+      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin"
           className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
         >
-          ← Volver
+          ← Tornar
         </Link>
-        <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Agenda de reservas</h1>
+        <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Agenda de reserves</h1>
 
         <ReservationsAgenda
           reservations={reservations}

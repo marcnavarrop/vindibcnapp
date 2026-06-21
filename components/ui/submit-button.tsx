@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
  */
 export function SubmitButton({
   children,
-  pendingLabel = "Guardando…",
+  pendingLabel = "Desant…",
 }: {
   children: React.ReactNode;
   pendingLabel?: string;

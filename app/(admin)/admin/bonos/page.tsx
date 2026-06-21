@@ -18,25 +18,25 @@ export default async function BonosPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
+      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin"
           className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
         >
-          ← Volver
+          ← Tornar
         </Link>
-        <h1 className="mt-1 text-2xl text-brand-dark">Bonos</h1>
+        <h1 className="mt-1 text-2xl text-brand-dark">Bons</h1>
 
         <div className="mt-6 overflow-x-auto rounded-2xl border border-brand-border bg-white">
           <table className="w-full min-w-[40rem] text-left text-sm">
             <thead className="border-b border-brand-border bg-brand-bg">
               <tr className="text-xs tracking-wide text-brand-muted uppercase">
-                <th className="px-4 py-3 font-bold">Cliente</th>
-                <th className="px-4 py-3 font-bold">Servicio</th>
-                <th className="px-4 py-3 font-bold">Sesiones</th>
-                <th className="px-4 py-3 font-bold">Precio</th>
-                <th className="px-4 py-3 font-bold">Estado</th>
+                <th className="px-4 py-3 font-bold">Client</th>
+                <th className="px-4 py-3 font-bold">Servei</th>
+                <th className="px-4 py-3 font-bold">Sessions</th>
+                <th className="px-4 py-3 font-bold">Preu</th>
+                <th className="px-4 py-3 font-bold">Estat</th>
               </tr>
             </thead>
             <tbody>

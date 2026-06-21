@@ -20,12 +20,12 @@ export default async function PagosPage() {
               href="/admin"
               className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
             >
-              ← Volver
+              ← Tornar
             </Link>
-            <h1 className="mt-1 text-2xl text-brand-dark">Pagos</h1>
+            <h1 className="mt-1 text-2xl text-brand-dark">Pagaments</h1>
           </div>
           <span className="rounded-full bg-success/10 px-3 py-1 text-sm font-bold text-success">
-            {formatEur(total)} cobrado
+            {formatEur(total)} cobrat
           </span>
         </div>
 
@@ -33,10 +33,10 @@ export default async function PagosPage() {
           <table className="w-full min-w-[40rem] text-left text-sm">
             <thead className="border-b border-brand-border bg-brand-bg">
               <tr className="text-xs tracking-wide text-brand-muted uppercase">
-                <th className="px-4 py-3 font-bold">Fecha</th>
-                <th className="px-4 py-3 font-bold">Cliente</th>
-                <th className="px-4 py-3 font-bold">Importe</th>
-                <th className="px-4 py-3 font-bold">Método</th>
+                <th className="px-4 py-3 font-bold">Data</th>
+                <th className="px-4 py-3 font-bold">Client</th>
+                <th className="px-4 py-3 font-bold">Import</th>
+                <th className="px-4 py-3 font-bold">Mètode</th>
               </tr>
             </thead>
             <tbody>

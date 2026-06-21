@@ -23,20 +23,20 @@ export default async function TrainerHome() {
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador" home="/trainer" />
+      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div>
           <h1 className="text-2xl text-brand-dark">
-            Hola, {viewer?.fullName?.split(" ")[0] ?? "entrenador"}
+            Hola, {viewer?.fullName?.split(" ")[0] ?? "entrenador/a"}
           </h1>
           <p className="mt-1 text-sm text-brand-muted">
-            {clients.length} clientes · {reservations.length} reservas
+            {clients.length} clients · {reservations.length} reserves
           </p>
         </div>
 
         <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
           <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Mis clientes
+            Els meus clients
           </h2>
           <div className="divide-y divide-brand-border">
             {clients.map((c) => (
@@ -46,7 +46,7 @@ export default async function TrainerHome() {
               >
                 <span className="font-bold text-brand-dark">{c.fullName}</span>
                 <span className="text-brand-muted">
-                  {c.remainingSessions} sesiones restantes
+                  {c.remainingSessions} sessions restants
                 </span>
               </div>
             ))}
@@ -55,7 +55,7 @@ export default async function TrainerHome() {
 
         <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
           <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Próximas reservas
+            Properes reserves
           </h2>
           <div className="divide-y divide-brand-border">
             {reservations.map((r) => (

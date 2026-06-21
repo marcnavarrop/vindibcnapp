@@ -18,7 +18,7 @@ const robotoCondensed = Roboto_Condensed({
 
 export const metadata: Metadata = {
   title: "VindiBCN",
-  description: "Gestión del centro de entrenamiento personal y fisioterapia",
+  description: "Gestió del centre d'entrenament personal i fisioteràpia",
 };
 
 export default function RootLayout({

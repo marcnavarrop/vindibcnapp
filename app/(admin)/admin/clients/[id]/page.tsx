@@ -23,7 +23,7 @@ export default async function ClientDetailPage({
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
+      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -31,7 +31,7 @@ export default async function ClientDetailPage({
               href="/admin/clients"
               className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
             >
-              ← Clientes
+              ← Clients
             </Link>
             <h1 className="mt-1 text-2xl text-brand-dark">{client.fullName}</h1>
             <p className="text-sm text-brand-muted">
@@ -49,10 +49,13 @@ export default async function ClientDetailPage({
 
         {/* Ficha */}
         <section className="grid gap-4 sm:grid-cols-3">
-          <Info label="Entrenador" value={client.trainerName ?? "Sin asignar"} />
-          <Info label="Bonos activos" value={String(client.activeBonos)} />
           <Info
-            label="Sesiones restantes"
+            label="Entrenador/a"
+            value={client.trainerName ?? "Sense assignar"}
+          />
+          <Info label="Bons actius" value={String(client.activeBonos)} />
+          <Info
+            label="Sessions restants"
             value={String(client.remainingSessions)}
           />
         </section>
@@ -60,7 +63,7 @@ export default async function ClientDetailPage({
         {client.notes && (
           <section className="rounded-2xl border border-brand-border bg-white p-5">
             <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-              Notas
+              Notes
             </h2>
             <p className="mt-1 text-sm text-brand-charcoal">{client.notes}</p>
           </section>
@@ -68,13 +71,13 @@ export default async function ClientDetailPage({
 
         {/* Bonos */}
         <Panel
-          title="Bonos"
+          title="Bons"
           action={
             <Link
               href={`/admin/clients/${client.id}/bonos/new`}
               className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
             >
-              + Añadir bono
+              + Afegir bo
             </Link>
           }
         >
@@ -84,7 +87,7 @@ export default async function ClientDetailPage({
                 {SERVICE_LABELS[b.serviceType]}
               </span>
               <span className="text-brand-muted">
-                {b.remainingSessions} / {b.totalSessions} sesiones
+                {b.remainingSessions} / {b.totalSessions} sessions
               </span>
               <span>{formatEur(b.price)}</span>
               <Badge tone={b.status === "active" ? "success" : "neutral"}>
@@ -95,7 +98,7 @@ export default async function ClientDetailPage({
         </Panel>
 
         {/* Reservas */}
-        <Panel title="Reservas">
+        <Panel title="Reserves">
           {client.reservations.map((r) => (
             <Row key={r.id}>
               <span className="font-bold text-brand-dark">
@@ -112,7 +115,7 @@ export default async function ClientDetailPage({
         </Panel>
 
         {/* Pagos */}
-        <Panel title="Pagos">
+        <Panel title="Pagaments">
           {client.payments.map((p) => (
             <Row key={p.id}>
               <span className="font-bold text-brand-dark">

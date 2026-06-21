@@ -7,32 +7,32 @@ import { formatEur } from "@/lib/labels";
 export const dynamic = "force-dynamic";
 
 const SECTIONS = [
-  { href: "/admin/clients", title: "Clientes", desc: "Fichas, entrenador asignado y bonos.", ready: true },
-  { href: "/admin/bonos", title: "Bonos", desc: "Paquetes de sesiones y su estado.", ready: true },
-  { href: "/admin/reservas", title: "Reservas", desc: "Agenda de sesiones.", ready: true },
-  { href: "/admin/pagos", title: "Pagos", desc: "Cobros en tarjeta y efectivo.", ready: true },
+  { href: "/admin/clients", title: "Clients", desc: "Fitxes, entrenador/a assignat/da i bons.", ready: true },
+  { href: "/admin/bonos", title: "Bons", desc: "Paquets de sessions i el seu estat.", ready: true },
+  { href: "/admin/reservas", title: "Reserves", desc: "Agenda de sessions.", ready: true },
+  { href: "/admin/pagos", title: "Pagaments", desc: "Cobraments amb targeta i efectiu.", ready: true },
 ];
 
 export default async function AdminHome() {
   const [viewer, stats] = await Promise.all([getViewer(), getAdminStats()]);
 
   const kpis = [
-    { label: "Clientes", value: String(stats.clients) },
-    { label: "Bonos activos", value: String(stats.activeBonos) },
-    { label: "Sesiones restantes", value: String(stats.remainingSessions) },
-    { label: "Ingresos", value: formatEur(stats.revenue) },
-    { label: "Reservas próximas", value: String(stats.upcomingReservations) },
+    { label: "Clients", value: String(stats.clients) },
+    { label: "Bons actius", value: String(stats.activeBonos) },
+    { label: "Sessions restants", value: String(stats.remainingSessions) },
+    { label: "Ingressos", value: formatEur(stats.revenue) },
+    { label: "Reserves properes", value: String(stats.upcomingReservations) },
   ];
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
+      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <h1 className="text-2xl text-brand-dark">
           Hola, {viewer?.fullName?.split(" ")[0] ?? "admin"}
         </h1>
         <p className="mt-2 text-sm text-brand-muted">
-          Resumen del centro.
+          Resum del centre.
         </p>
 
         {/* KPIs */}

@@ -67,9 +67,9 @@ export function ReservationsAgenda({
           value={trainer}
           onChange={(e) => setTrainer(e.target.value)}
           className={selectClass}
-          aria-label="Filtrar por entrenador"
+          aria-label="Filtrar per entrenador/a"
         >
-          <option value="">Todos los entrenadores</option>
+          <option value="">Tots els entrenadors</option>
           {trainers.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -80,9 +80,9 @@ export function ReservationsAgenda({
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className={selectClass}
-          aria-label="Filtrar por estado"
+          aria-label="Filtrar per estat"
         >
-          <option value="">Todos los estados</option>
+          <option value="">Tots els estats</option>
           {(
             Object.keys(RESERVATION_STATUS_LABELS) as ReservationStatus[]
           ).map((s) => (
@@ -93,8 +93,8 @@ export function ReservationsAgenda({
         </select>
       </div>
 
-      <Section title="Próximas" groups={upcoming} emptyLabel="No hay reservas próximas." />
-      <Section title="Pasadas" groups={past} emptyLabel="No hay reservas pasadas." />
+      <Section title="Properes" groups={upcoming} emptyLabel="No hi ha reserves properes." />
+      <Section title="Passades" groups={past} emptyLabel="No hi ha reserves passades." />
     </div>
   );
 }

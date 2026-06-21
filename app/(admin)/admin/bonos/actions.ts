@@ -15,16 +15,16 @@ export async function createBonoAction(
   const totalSessions = Number(formData.get("totalSessions"));
   const price = Number(formData.get("price"));
 
-  if (!serviceType) return { error: "Elige un servicio." };
+  if (!serviceType) return { error: "Tria un servei." };
   if (!Number.isFinite(totalSessions) || totalSessions <= 0)
-    return { error: "El nº de sesiones debe ser mayor que 0." };
+    return { error: "El nre. de sessions ha de ser més gran que 0." };
   if (!Number.isFinite(price) || price < 0)
-    return { error: "El precio no es válido." };
+    return { error: "El preu no és vàlid." };
 
   try {
     await createBono({ clientId, serviceType, totalSessions, price });
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Error al crear el bono." };
+    return { error: e instanceof Error ? e.message : "Error en crear el bo." };
   }
 
   revalidatePath(`/admin/clients/${clientId}`);

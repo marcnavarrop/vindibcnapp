@@ -7,11 +7,11 @@ import { clsx } from "@/lib/utils";
 type NavItem = { href: string; label: string; exact?: boolean };
 
 const ADMIN_NAV: NavItem[] = [
-  { href: "/admin", label: "Inicio", exact: true },
-  { href: "/admin/clients", label: "Clientes" },
-  { href: "/admin/bonos", label: "Bonos" },
-  { href: "/admin/reservas", label: "Reservas" },
-  { href: "/admin/pagos", label: "Pagos" },
+  { href: "/admin", label: "Inici", exact: true },
+  { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/bonos", label: "Bons" },
+  { href: "/admin/reservas", label: "Reserves" },
+  { href: "/admin/pagos", label: "Pagaments" },
 ];
 
 /**

@@ -8,45 +8,45 @@ import type {
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {
   ep_individual: "EP Individual",
-  ep_parejas: "EP Parejas",
-  grupo_reducido: "Grupo reducido",
-  fisioterapia: "Fisioterapia",
+  ep_parejas: "EP Parelles",
+  grupo_reducido: "Grup reduït",
+  fisioterapia: "Fisioteràpia",
 };
 
 export const BONO_STATUS_LABELS: Record<BonoStatus, string> = {
-  active: "Activo",
-  completed: "Completado",
-  cancelled: "Cancelado",
+  active: "Actiu",
+  completed: "Completat",
+  cancelled: "Cancel·lat",
 };
 
 export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   booked: "Reservada",
-  completed: "Realizada",
-  cancelled: "Cancelada",
+  completed: "Realitzada",
+  cancelled: "Cancel·lada",
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  card: "Tarjeta",
-  cash: "Efectivo",
+  card: "Targeta",
+  cash: "Efectiu",
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  admin: "Administración",
-  trainer: "Entrenador",
-  client: "Cliente",
+  admin: "Administració",
+  trainer: "Entrenador/a",
+  client: "Client",
 };
 
 /** Formatea un importe en euros. */
 export function formatEur(amount: number): string {
-  return new Intl.NumberFormat("es-ES", {
+  return new Intl.NumberFormat("ca-ES", {
     style: "currency",
     currency: "eur",
   }).format(amount);
 }
 
-/** Formatea una fecha ISO en formato corto español. */
+/** Formatea una fecha ISO en formato corto. */
 export function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat("ca-ES", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -55,15 +55,15 @@ export function formatDate(iso: string): string {
 
 /** Hora (HH:mm) de una fecha ISO. */
 export function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat("ca-ES", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
 }
 
-/** Cabecera de día: "lunes, 22 de junio". */
+/** Cabecera de día: "dilluns, 22 de juny". */
 export function formatDayHeading(iso: string): string {
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat("ca-ES", {
     weekday: "long",
     day: "numeric",
     month: "long",

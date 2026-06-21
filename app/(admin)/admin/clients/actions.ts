@@ -23,8 +23,8 @@ function parse(formData: FormData): ClientInput {
 }
 
 function validate(input: ClientInput): string | null {
-  if (!input.fullName) return "El nombre es obligatorio.";
-  if (!input.email) return "El email es obligatorio.";
+  if (!input.fullName) return "El nom és obligatori.";
+  if (!input.email) return "El correu electrònic és obligatori.";
   return null;
 }
 
@@ -40,7 +40,7 @@ export async function createClientAction(
   try {
     id = await createClientRecord(input);
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Error al crear." };
+    return { error: e instanceof Error ? e.message : "Error en crear." };
   }
 
   revalidatePath("/admin/clients");
@@ -59,7 +59,7 @@ export async function updateClientAction(
   try {
     await updateClientRecord(id, input);
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Error al guardar." };
+    return { error: e instanceof Error ? e.message : "Error en desar." };
   }
 
   revalidatePath("/admin/clients");

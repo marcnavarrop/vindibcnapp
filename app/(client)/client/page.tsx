@@ -21,7 +21,7 @@ export default async function ClientHome() {
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Mi área" home="/client" />
+      <DashboardHeader area="La meva àrea" home="/client" />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div>
           <h1 className="text-2xl text-brand-dark">
@@ -29,26 +29,26 @@ export default async function ClientHome() {
           </h1>
           {client && (
             <p className="mt-1 text-sm text-brand-muted">
-              {client.remainingSessions} sesiones restantes en{" "}
-              {client.activeBonos} bonos activos
+              {client.remainingSessions} sessions restants en{" "}
+              {client.activeBonos} bons actius
             </p>
           )}
         </div>
 
         {!client ? (
           <div className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-            Todavía no tienes ficha de cliente.
+            Encara no tens fitxa de client.
           </div>
         ) : (
           <>
-            <Panel title="Mis bonos">
+            <Panel title="Els meus bons">
               {client.bonos.map((b) => (
                 <Row key={b.id}>
                   <span className="font-bold text-brand-dark">
                     {SERVICE_LABELS[b.serviceType]}
                   </span>
                   <span className="text-brand-muted">
-                    {b.remainingSessions} / {b.totalSessions} sesiones
+                    {b.remainingSessions} / {b.totalSessions} sessions
                   </span>
                   <Badge tone={b.status === "active" ? "success" : "neutral"}>
                     {BONO_STATUS_LABELS[b.status]}
@@ -57,7 +57,7 @@ export default async function ClientHome() {
               ))}
             </Panel>
 
-            <Panel title="Mis reservas">
+            <Panel title="Les meves reserves">
               {client.reservations.map((r) => (
                 <Row key={r.id}>
                   <span className="font-bold text-brand-dark">
@@ -73,7 +73,7 @@ export default async function ClientHome() {
               ))}
             </Panel>
 
-            <Panel title="Mis pagos">
+            <Panel title="Els meus pagaments">
               {client.payments.map((p) => (
                 <Row key={p.id}>
                   <span className="font-bold text-brand-dark">

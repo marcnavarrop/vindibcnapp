@@ -51,15 +51,15 @@ export default function RegisterPage() {
       <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
         <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
           <Wordmark className="mb-4 block" />
-          <h1 className="text-xl text-brand-dark">Cuenta creada</h1>
+          <h1 className="text-xl text-brand-dark">Compte creat</h1>
           <p className="mt-3 text-sm text-brand-muted">
-            Revisa tu correo si la confirmación por email está activada. Después
-            podrás{" "}
+            Revisa el teu correu si la confirmació per email està activada.
+            Després podràs{" "}
             <Link
               href="/login"
               className="font-bold text-brand-purple hover:text-brand-orange"
             >
-              iniciar sesión
+              iniciar sessió
             </Link>
             .
           </p>
@@ -73,12 +73,12 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
         <div className="mb-8 flex flex-col gap-1">
           <Wordmark />
-          <h1 className="text-xl text-brand-dark">Crear cuenta</h1>
+          <h1 className="text-xl text-brand-dark">Crear compte</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <Field
-            label="Nombre completo"
+            label="Nom complet"
             name="fullName"
             type="text"
             required
@@ -87,7 +87,7 @@ export default function RegisterPage() {
           />
 
           <Field
-            label="Correo electrónico"
+            label="Correu electrònic"
             name="email"
             type="email"
             required
@@ -96,7 +96,7 @@ export default function RegisterPage() {
           />
 
           <Field
-            label="Contraseña"
+            label="Contrasenya"
             name="password"
             type="password"
             required
@@ -108,17 +108,17 @@ export default function RegisterPage() {
           {error && <p className="text-sm text-error">{error}</p>}
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Creando…" : "Crear cuenta"}
+            {loading ? "Creant…" : "Crear compte"}
           </Button>
         </form>
 
         <p className="mt-6 text-sm text-brand-muted">
-          ¿Ya tienes cuenta?{" "}
+          Ja tens compte?{" "}
           <Link
             href="/login"
             className="font-bold text-brand-purple hover:text-brand-orange"
           >
-            Iniciar sesión
+            Iniciar sessió
           </Link>
         </p>
       </div>

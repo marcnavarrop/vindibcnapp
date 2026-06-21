@@ -32,12 +32,12 @@ function MockLogin() {
     <div className={SHELL}>
       <div className="mb-6 flex flex-col gap-1">
         <Wordmark />
-        <h1 className="text-xl text-brand-dark">Entrar (modo demo)</h1>
+        <h1 className="text-xl text-brand-dark">Entrar (mode demo)</h1>
       </div>
 
       <p className="mb-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
-        Simulación sin Supabase. Elige con qué rol quieres entrar; los datos son
-        de ejemplo.
+        Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són
+        d&apos;exemple.
       </p>
 
       <div className="flex flex-col gap-3">
@@ -47,7 +47,7 @@ function MockLogin() {
             variant={role === "admin" ? "primary" : "outline"}
             onClick={() => enter(role)}
           >
-            Entrar como {ROLE_LABELS[role]}
+            Entrar com a {ROLE_LABELS[role]}
           </Button>
         ))}
       </div>
@@ -96,12 +96,12 @@ function LoginForm() {
     <div className={SHELL}>
       <div className="mb-8 flex flex-col gap-1">
         <Wordmark />
-        <h1 className="text-xl text-brand-dark">Iniciar sesión</h1>
+        <h1 className="text-xl text-brand-dark">Iniciar sessió</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <Field
-          label="Correo electrónico"
+          label="Correu electrònic"
           name="email"
           type="email"
           required
@@ -109,7 +109,7 @@ function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
         />
         <Field
-          label="Contraseña"
+          label="Contrasenya"
           name="password"
           type="password"
           required
@@ -120,17 +120,17 @@ function LoginForm() {
         {error && <p className="text-sm text-error">{error}</p>}
 
         <Button type="submit" disabled={loading}>
-          {loading ? "Entrando…" : "Entrar"}
+          {loading ? "Entrant…" : "Entrar"}
         </Button>
       </form>
 
       <p className="mt-6 text-sm text-brand-muted">
-        ¿No tienes cuenta?{" "}
+        No tens compte?{" "}
         <Link
           href="/register"
           className="font-bold text-brand-purple hover:text-brand-orange"
         >
-          Crear cuenta
+          Crear compte
         </Link>
       </p>
     </div>

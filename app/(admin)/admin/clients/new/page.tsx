@@ -9,20 +9,20 @@ export default async function NewClientPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
+      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/clients"
           className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
         >
-          ← Clientes
+          ← Clients
         </Link>
-        <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Nuevo cliente</h1>
+        <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Nou client</h1>
 
         <ClientForm
           action={createClientAction}
           trainers={trainers}
-          submitLabel="Crear cliente"
+          submitLabel="Crear client"
           cancelHref="/admin/clients"
         />
       </main>

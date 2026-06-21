@@ -37,32 +37,32 @@ export function ClientForm({
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
       <Field
-        label="Nombre completo"
+        label="Nom complet"
         name="fullName"
         required
         defaultValue={defaults?.fullName}
       />
       <Field
-        label="Correo electrónico"
+        label="Correu electrònic"
         name="email"
         type="email"
         required
         defaultValue={defaults?.email}
       />
       <Field
-        label="Teléfono"
+        label="Telèfon"
         name="phone"
         type="tel"
         defaultValue={defaults?.phone}
       />
       <SelectField
-        label="Entrenador asignado"
+        label="Entrenador/a assignat/da"
         name="assignedTrainerId"
-        placeholder="Sin asignar"
+        placeholder="Sense assignar"
         defaultValue={defaults?.assignedTrainerId}
         options={trainers.map((t) => ({ value: t.id, label: t.name }))}
       />
-      <TextAreaField label="Notas" name="notes" defaultValue={defaults?.notes} />
+      <TextAreaField label="Notes" name="notes" defaultValue={defaults?.notes} />
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
 
@@ -72,7 +72,7 @@ export function ClientForm({
           href={cancelHref}
           className="text-sm font-bold text-brand-muted hover:text-brand-purple"
         >
-          Cancelar
+          Cancel·lar
         </Link>
       </div>
     </form>

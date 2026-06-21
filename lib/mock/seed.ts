@@ -26,10 +26,10 @@ export const seedProfiles: Profile[] = [
 ];
 
 export const seedClients: Client[] = [
-  { id: "c-ana", profile_id: "u-client-ana", assigned_trainer_id: "u-trainer-laia", notes: "Lesión previa de rodilla. Trabajar movilidad.", created_at: now },
+  { id: "c-ana", profile_id: "u-client-ana", assigned_trainer_id: "u-trainer-laia", notes: "Lesió prèvia de genoll. Treballar mobilitat.", created_at: now },
   { id: "c-pau", profile_id: "u-client-pau", assigned_trainer_id: "u-trainer-laia", notes: null, created_at: now },
-  { id: "c-marta", profile_id: "u-client-marta", assigned_trainer_id: "u-trainer-jordi", notes: "Prefiere horario de mañana.", created_at: now },
-  { id: "c-oriol", profile_id: "u-client-oriol", assigned_trainer_id: null, notes: "Pendiente de asignar entrenador.", created_at: now },
+  { id: "c-marta", profile_id: "u-client-marta", assigned_trainer_id: "u-trainer-jordi", notes: "Prefereix horari de matí.", created_at: now },
+  { id: "c-oriol", profile_id: "u-client-oriol", assigned_trainer_id: null, notes: "Pendent d'assignar entrenador/a.", created_at: now },
 ];
 
 export const seedBonos: Bono[] = [

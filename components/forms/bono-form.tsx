@@ -28,14 +28,14 @@ export function BonoForm({
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
       <SelectField
-        label="Servicio"
+        label="Servei"
         name="serviceType"
-        placeholder="Elige un servicio"
+        placeholder="Tria un servei"
         required
         options={SERVICE_OPTIONS}
       />
       <Field
-        label="Nº de sesiones"
+        label="Nre. de sessions"
         name="totalSessions"
         type="number"
         min={1}
@@ -43,7 +43,7 @@ export function BonoForm({
         defaultValue={10}
       />
       <Field
-        label="Precio (€)"
+        label="Preu (€)"
         name="price"
         type="number"
         min={0}
@@ -54,12 +54,12 @@ export function BonoForm({
       {state.error && <p className="text-sm text-error">{state.error}</p>}
 
       <div className="flex items-center gap-3">
-        <SubmitButton>Crear bono</SubmitButton>
+        <SubmitButton>Crear bo</SubmitButton>
         <Link
           href={cancelHref}
           className="text-sm font-bold text-brand-muted hover:text-brand-purple"
         >
-          Cancelar
+          Cancel·lar
         </Link>
       </div>
     </form>

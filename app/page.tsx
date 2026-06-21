@@ -18,7 +18,7 @@ export default function Home() {
               Vindi<span className="text-brand-orange">BCN</span>
             </span>
             <p className="text-sm text-white/70">
-              Gestión del centro de entrenamiento personal y fisioterapia.
+              Gestió del centre d&apos;entrenament personal i fisioteràpia.
             </p>
           </header>
 
@@ -27,18 +27,18 @@ export default function Home() {
               href="/login"
               className="inline-flex items-center justify-center rounded-lg bg-brand-orange px-4 py-2.5 text-sm font-bold tracking-wide uppercase transition-opacity hover:opacity-90"
             >
-              Iniciar sesión
+              Iniciar sessió
             </Link>
             <Link
               href="/register"
               className="inline-flex items-center justify-center rounded-lg border border-white/30 px-4 py-2.5 text-sm font-bold tracking-wide uppercase transition-colors hover:bg-white/10"
             >
-              Crear cuenta
+              Crear compte
             </Link>
           </nav>
 
           <p className="text-xs text-white/40">
-            Áreas:{" "}
+            Àrees:{" "}
             <Link href="/admin" className="underline hover:text-white/70">
               /admin
             </Link>{" "}
