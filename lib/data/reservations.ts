@@ -7,6 +7,7 @@ import type { ServiceType, ReservationStatus } from "@/types/database";
 export type ReservationListItem = {
   id: string;
   clientName: string;
+  trainerId: string | null;
   trainerName: string | null;
   scheduledAt: string;
   serviceType: ServiceType;
@@ -38,6 +39,7 @@ export async function listReservations(
       .map((r) => ({
         id: r.id,
         clientName: nameOfClient(r.client_id, store),
+        trainerId: r.trainer_id,
         trainerName: nameOfProfile(r.trainer_id, store),
         scheduledAt: r.scheduled_at,
         serviceType: r.service_type,
@@ -50,7 +52,7 @@ export async function listReservations(
   let query = supabase
     .from("reservations")
     .select(
-      `id, scheduled_at, service_type, status,
+      `id, scheduled_at, service_type, status, trainer_id,
        client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name)),
        trainer:profiles!reservations_trainer_id_fkey(full_name)`,
     )
@@ -65,12 +67,14 @@ export async function listReservations(
     scheduled_at: string;
     service_type: ServiceType;
     status: ReservationStatus;
+    trainer_id: string | null;
     client: { profile: { full_name: string | null } | null } | null;
     trainer: { full_name: string | null } | null;
   };
   return (data as unknown as Row[]).map((r) => ({
     id: r.id,
     clientName: r.client?.profile?.full_name ?? "—",
+    trainerId: r.trainer_id,
     trainerName: r.trainer?.full_name ?? null,
     scheduledAt: r.scheduled_at,
     serviceType: r.service_type,

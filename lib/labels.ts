@@ -52,3 +52,25 @@ export function formatDate(iso: string): string {
     year: "numeric",
   }).format(new Date(iso));
 }
+
+/** Hora (HH:mm) de una fecha ISO. */
+export function formatTime(iso: string): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+/** Cabecera de día: "lunes, 22 de junio". */
+export function formatDayHeading(iso: string): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(iso));
+}
+
+/** Clave de día (YYYY-MM-DD) para agrupar. */
+export function dayKey(iso: string): string {
+  return new Date(iso).toISOString().slice(0, 10);
+}
