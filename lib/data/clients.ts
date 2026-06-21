@@ -1,6 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import type {
   ServiceType,
@@ -171,10 +172,101 @@ function buildDetail(clientId: string): ClientDetail | null {
   };
 }
 
+// Ficha completa contra Supabase (id de cliente o id de perfil).
+type DetailRow = {
+  id: string;
+  assigned_trainer_id: string | null;
+  notes: string | null;
+  profile: {
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
+  trainer: { full_name: string | null } | null;
+  bonos: {
+    id: string;
+    service_type: ServiceType;
+    total_sessions: number;
+    remaining_sessions: number;
+    price: number;
+    status: BonoStatus;
+  }[];
+  reservations: {
+    id: string;
+    scheduled_at: string;
+    service_type: ServiceType;
+    status: ReservationStatus;
+  }[];
+  payments: {
+    id: string;
+    amount: number;
+    method: PaymentMethod;
+    paid_at: string;
+  }[];
+};
+
+async function fetchClientDetail(
+  column: "id" | "profile_id",
+  value: string,
+): Promise<ClientDetail | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .select(
+      `id, assigned_trainer_id, notes,
+       profile:profiles!clients_profile_id_fkey(full_name, email, phone),
+       trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
+       bonos(id, service_type, total_sessions, remaining_sessions, price, status),
+       reservations(id, scheduled_at, service_type, status),
+       payments(id, amount, method, paid_at)`,
+    )
+    .eq(column, value)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const row = data as unknown as DetailRow;
+  const active = row.bonos.filter((b) => b.status === "active");
+  return {
+    id: row.id,
+    fullName: row.profile?.full_name ?? "—",
+    email: row.profile?.email ?? "",
+    phone: row.profile?.phone ?? null,
+    trainerName: row.trainer?.full_name ?? null,
+    activeBonos: active.length,
+    remainingSessions: active.reduce((s, b) => s + b.remaining_sessions, 0),
+    assignedTrainerId: row.assigned_trainer_id,
+    notes: row.notes,
+    bonos: row.bonos.map((b) => ({
+      id: b.id,
+      serviceType: b.service_type,
+      totalSessions: b.total_sessions,
+      remainingSessions: b.remaining_sessions,
+      price: b.price,
+      status: b.status,
+    })),
+    reservations: row.reservations
+      .slice()
+      .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))
+      .map((r) => ({
+        id: r.id,
+        scheduledAt: r.scheduled_at,
+        serviceType: r.service_type,
+        status: r.status,
+      })),
+    payments: row.payments.map((p) => ({
+      id: p.id,
+      amount: p.amount,
+      method: p.method,
+      paidAt: p.paid_at,
+    })),
+  };
+}
+
 /** Ficha completa de un cliente por su id. */
 export async function getClient(id: string): Promise<ClientDetail | null> {
   if (USE_MOCK) return buildDetail(id);
-  throw new Error("getClient: pendiente de implementar contra Supabase");
+  return fetchClientDetail("id", id);
 }
 
 /** Ficha del cliente que corresponde a un perfil (área cliente). */
@@ -185,9 +277,7 @@ export async function getClientByProfile(
     const client = getStore().clients.find((c) => c.profile_id === profileId);
     return client ? buildDetail(client.id) : null;
   }
-  throw new Error(
-    "getClientByProfile: pendiente de implementar contra Supabase",
-  );
+  return fetchClientDetail("profile_id", profileId);
 }
 
 /** Entrenadores disponibles para asignar (para los selects de formularios). */
@@ -232,7 +322,37 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
     saveStore(store);
     return clientId;
   }
-  throw new Error("createClientRecord: pendiente de implementar contra Supabase");
+
+  // Real: creamos el usuario de auth (el trigger crea su perfil) y la fila de
+  // cliente. Usa la service_role key (Admin API + salta RLS).
+  const admin = createAdminClient();
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email: input.email,
+    password: crypto.randomUUID(),
+    email_confirm: true,
+    user_metadata: { full_name: input.fullName, role: "client" },
+  });
+  if (createErr || !created?.user) {
+    throw new Error(
+      createErr?.message ?? "No s'ha pogut crear l'usuari del client.",
+    );
+  }
+  const profileId = created.user.id;
+  // El trigger ya ha creado el perfil; completamos el teléfono.
+  await admin.from("profiles").update({ phone: input.phone }).eq("id", profileId);
+  const { data: clientRow, error: insErr } = await admin
+    .from("clients")
+    .insert({
+      profile_id: profileId,
+      assigned_trainer_id: input.assignedTrainerId,
+      notes: input.notes,
+    })
+    .select("id")
+    .single();
+  if (insErr || !clientRow) {
+    throw new Error(insErr?.message ?? "No s'ha pogut crear el client.");
+  }
+  return clientRow.id;
 }
 
 /** Actualiza los datos de un cliente existente. */
@@ -255,5 +375,32 @@ export async function updateClientRecord(
     saveStore(store);
     return;
   }
-  throw new Error("updateClientRecord: pendiente de implementar contra Supabase");
+
+  // Real: actualizamos la fila de cliente y su perfil (RLS deja al admin).
+  const supabase = await createClient();
+  const { data: client, error: getErr } = await supabase
+    .from("clients")
+    .select("profile_id")
+    .eq("id", id)
+    .single();
+  if (getErr || !client) throw new Error("Client no trobat");
+
+  const { error: cErr } = await supabase
+    .from("clients")
+    .update({
+      assigned_trainer_id: input.assignedTrainerId,
+      notes: input.notes,
+    })
+    .eq("id", id);
+  if (cErr) throw cErr;
+
+  const { error: pErr } = await supabase
+    .from("profiles")
+    .update({
+      full_name: input.fullName,
+      email: input.email,
+      phone: input.phone,
+    })
+    .eq("id", client.profile_id);
+  if (pErr) throw pErr;
 }
