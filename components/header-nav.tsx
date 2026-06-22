@@ -12,6 +12,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/bonos", label: "Bons" },
   { href: "/admin/reservas", label: "Reserves" },
   { href: "/admin/pagos", label: "Pagaments" },
+  { href: "/admin/serveis", label: "Serveis" },
 ];
 
 /**

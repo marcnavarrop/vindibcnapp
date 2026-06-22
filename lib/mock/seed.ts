@@ -12,6 +12,7 @@ type Client = Database["public"]["Tables"]["clients"]["Row"];
 type Bono = Database["public"]["Tables"]["bonos"]["Row"];
 type Reservation = Database["public"]["Tables"]["reservations"]["Row"];
 type Payment = Database["public"]["Tables"]["payments"]["Row"];
+type Service = Database["public"]["Tables"]["services"]["Row"];
 
 const now = "2026-06-01T09:00:00.000Z";
 
@@ -44,6 +45,13 @@ export const seedReservations: Reservation[] = [
   { id: "r-1", client_id: "c-ana", bono_id: "b-1", trainer_id: "u-trainer-laia", scheduled_at: "2026-06-22T08:00:00.000Z", service_type: "ep_individual", status: "booked", created_at: now },
   { id: "r-2", client_id: "c-pau", bono_id: "b-3", trainer_id: "u-trainer-laia", scheduled_at: "2026-06-22T17:00:00.000Z", service_type: "grupo_reducido", status: "booked", created_at: now },
   { id: "r-3", client_id: "c-marta", bono_id: "b-4", trainer_id: "u-trainer-jordi", scheduled_at: "2026-06-18T09:00:00.000Z", service_type: "ep_parejas", status: "completed", created_at: now },
+];
+
+export const seedServices: Service[] = [
+  { id: "s-ep-ind", service_type: "ep_individual", name: "Entrenament personal individual", price: 400, default_sessions: 10, active: true, created_at: now },
+  { id: "s-ep-par", service_type: "ep_parejas", name: "Entrenament personal en parella", price: 350, default_sessions: 10, active: true, created_at: now },
+  { id: "s-grup", service_type: "grupo_reducido", name: "Grup reduït", price: 200, default_sessions: 8, active: true, created_at: now },
+  { id: "s-fisio", service_type: "fisioterapia", name: "Fisioteràpia", price: 250, default_sessions: 5, active: true, created_at: now },
 ];
 
 export const seedPayments: Payment[] = [

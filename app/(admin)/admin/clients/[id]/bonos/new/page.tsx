@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { BonoForm } from "@/components/forms/bono-form";
 import { getClient } from "@/lib/data/clients";
+import { listActiveServices } from "@/lib/data/services";
 import { createBonoAction } from "@/app/(admin)/admin/bonos/actions";
+
+export const dynamic = "force-dynamic";
 
 export default async function NewBonoPage({
   params,
@@ -11,7 +14,10 @@ export default async function NewBonoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const client = await getClient(id);
+  const [client, services] = await Promise.all([
+    getClient(id),
+    listActiveServices(),
+  ]);
   if (!client) notFound();
 
   return (
@@ -30,6 +36,7 @@ export default async function NewBonoPage({
         <BonoForm
           action={createBonoAction.bind(null, id)}
           cancelHref={`/admin/clients/${id}`}
+          services={services}
         />
       </main>
     </div>

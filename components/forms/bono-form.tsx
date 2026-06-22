@@ -1,38 +1,64 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { SERVICE_LABELS } from "@/lib/labels";
+import { formatEur } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
-import type { ServiceType } from "@/types/database";
-
-const SERVICE_OPTIONS = (Object.keys(SERVICE_LABELS) as ServiceType[]).map(
-  (value) => ({ value, label: SERVICE_LABELS[value] }),
-);
+import type { Service } from "@/lib/data/services";
 
 export function BonoForm({
   action,
   cancelHref,
+  services,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   cancelHref: string;
+  services: Service[];
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
+  const [serviceId, setServiceId] = useState("");
+  const [sessions, setSessions] = useState("");
+  const [price, setPrice] = useState("");
+
+  const selected = useMemo(
+    () => services.find((s) => s.id === serviceId),
+    [services, serviceId],
+  );
+
+  function onServiceChange(id: string) {
+    setServiceId(id);
+    const s = services.find((x) => x.id === id);
+    if (s) {
+      setSessions(String(s.defaultSessions));
+      setPrice(String(s.price));
+    }
+  }
 
   return (
     <form
       action={formAction}
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
+      {/* El tipus de servei real viatja amagat; el desplegable mostra el catàleg. */}
+      <input type="hidden" name="serviceType" value={selected?.serviceType ?? ""} />
+
       <SelectField
         label="Servei"
-        name="serviceType"
-        placeholder="Tria un servei"
+        name="serviceId"
+        placeholder={
+          services.length === 0 ? "No hi ha serveis al catàleg" : "Tria un servei"
+        }
         required
-        options={SERVICE_OPTIONS}
+        disabled={services.length === 0}
+        value={serviceId}
+        onChange={(e) => onServiceChange(e.target.value)}
+        options={services.map((s) => ({
+          value: s.id,
+          label: `${s.name} · ${formatEur(s.price)}`,
+        }))}
       />
       <Field
         label="Nre. de sessions"
@@ -40,7 +66,8 @@ export function BonoForm({
         type="number"
         min={1}
         required
-        defaultValue={10}
+        value={sessions}
+        onChange={(e) => setSessions(e.target.value)}
       />
       <Field
         label="Preu (€)"
@@ -49,6 +76,8 @@ export function BonoForm({
         min={0}
         step="0.01"
         required
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
       />
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}

@@ -179,6 +179,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      services: {
+        Row: {
+          id: string;
+          service_type: ServiceType;
+          name: string;
+          price: number;
+          default_sessions: number;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          service_type: ServiceType;
+          name: string;
+          price: number;
+          default_sessions?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          service_type?: ServiceType;
+          name?: string;
+          price?: number;
+          default_sessions?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
