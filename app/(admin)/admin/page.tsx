@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: "/admin/reservas", title: "Reserves", desc: "Agenda de sessions.", ready: true },
   { href: "/admin/pagos", title: "Pagaments", desc: "Cobraments amb targeta i efectiu.", ready: true },
   { href: "/admin/serveis", title: "Serveis", desc: "Catàleg de serveis i preus.", ready: true },
+  { href: "/admin/exercicis", title: "Exercicis", desc: "Biblioteca d'exercicis amb vídeo.", ready: true },
 ];
 
 export default async function AdminHome() {

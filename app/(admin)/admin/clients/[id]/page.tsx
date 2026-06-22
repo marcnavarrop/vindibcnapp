@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { getClient } from "@/lib/data/clients";
+import { listMeasurements } from "@/lib/data/measurements";
+import { deleteMeasurementAction } from "@/app/(admin)/admin/clients/progres-actions";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -18,7 +20,10 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const client = await getClient(id);
+  const [client, measurements] = await Promise.all([
+    getClient(id),
+    listMeasurements(id),
+  ]);
   if (!client) notFound();
 
   return (
@@ -127,6 +132,51 @@ export default async function ClientDetailPage({
               </Badge>
             </Row>
           ))}
+        </Panel>
+
+        {/* Progrés */}
+        <Panel
+          title="Progrés"
+          action={
+            <Link
+              href={`/admin/clients/${client.id}/progres/new`}
+              className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+            >
+              + Afegir mesura
+            </Link>
+          }
+        >
+          {measurements.length === 0 ? (
+            <p className="px-5 py-3 text-sm text-brand-muted">
+              Encara no hi ha mesures.
+            </p>
+          ) : (
+            measurements.map((m) => (
+              <Row key={m.id}>
+                <span className="font-bold text-brand-dark">
+                  {formatDate(m.recordedAt)}
+                </span>
+                {m.weightKg != null && (
+                  <span className="font-bold text-brand-purple">
+                    {m.weightKg} kg
+                  </span>
+                )}
+                {m.notes && (
+                  <span className="text-brand-muted">{m.notes}</span>
+                )}
+                <form action={deleteMeasurementAction} className="ml-auto">
+                  <input type="hidden" name="id" value={m.id} />
+                  <input type="hidden" name="clientId" value={client.id} />
+                  <button
+                    type="submit"
+                    className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                  >
+                    Eliminar
+                  </button>
+                </form>
+              </Row>
+            ))
+          )}
         </Panel>
       </main>
     </div>

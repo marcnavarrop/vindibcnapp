@@ -19,6 +19,12 @@ export type ServiceType =
 export type BonoStatus = "active" | "completed" | "cancelled";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type PaymentMethod = "card" | "cash";
+export type ExerciseCategory =
+  | "forca"
+  | "mobilitat"
+  | "cardio"
+  | "rehabilitacio"
+  | "core";
 
 export interface Database {
   public: {
@@ -209,6 +215,60 @@ export interface Database {
         };
         Relationships: [];
       };
+      exercises: {
+        Row: {
+          id: string;
+          name: string;
+          category: ExerciseCategory;
+          description: string | null;
+          video_url: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          category: ExerciseCategory;
+          description?: string | null;
+          video_url?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          category?: ExerciseCategory;
+          description?: string | null;
+          video_url?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      measurements: {
+        Row: {
+          id: string;
+          client_id: string;
+          recorded_at: string;
+          weight_kg: number | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          recorded_at?: string;
+          weight_kg?: number | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          recorded_at?: string;
+          weight_kg?: number | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -223,6 +283,7 @@ export interface Database {
       bono_status: BonoStatus;
       reservation_status: ReservationStatus;
       payment_method: PaymentMethod;
+      exercise_category: ExerciseCategory;
     };
     CompositeTypes: Record<never, never>;
   };

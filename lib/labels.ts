@@ -4,7 +4,16 @@ import type {
   ReservationStatus,
   PaymentMethod,
   UserRole,
+  ExerciseCategory,
 } from "@/types/database";
+
+export const EXERCISE_CATEGORY_LABELS: Record<ExerciseCategory, string> = {
+  forca: "Força",
+  mobilitat: "Mobilitat",
+  cardio: "Cardio",
+  rehabilitacio: "Rehabilitació",
+  core: "Core",
+};
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {
   ep_individual: "EP Individual",

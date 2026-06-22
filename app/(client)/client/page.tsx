@@ -1,5 +1,6 @@
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
+import { listMeasurements } from "@/lib/data/measurements";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +19,7 @@ import {
 export default async function ClientHome() {
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
+  const measurements = client ? await listMeasurements(client.id) : [];
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -85,6 +87,30 @@ export default async function ClientHome() {
                   </Badge>
                 </Row>
               ))}
+            </Panel>
+
+            <Panel title="El meu progrés">
+              {measurements.length === 0 ? (
+                <p className="px-5 py-3 text-sm text-brand-muted">
+                  Encara no hi ha mesures.
+                </p>
+              ) : (
+                measurements.map((m) => (
+                  <Row key={m.id}>
+                    <span className="font-bold text-brand-dark">
+                      {formatDate(m.recordedAt)}
+                    </span>
+                    {m.weightKg != null && (
+                      <span className="font-bold text-brand-purple">
+                        {m.weightKg} kg
+                      </span>
+                    )}
+                    {m.notes && (
+                      <span className="text-brand-muted">{m.notes}</span>
+                    )}
+                  </Row>
+                ))
+              )}
             </Panel>
           </>
         )}

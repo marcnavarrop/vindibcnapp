@@ -13,6 +13,8 @@ type Bono = Database["public"]["Tables"]["bonos"]["Row"];
 type Reservation = Database["public"]["Tables"]["reservations"]["Row"];
 type Payment = Database["public"]["Tables"]["payments"]["Row"];
 type Service = Database["public"]["Tables"]["services"]["Row"];
+type Exercise = Database["public"]["Tables"]["exercises"]["Row"];
+type Measurement = Database["public"]["Tables"]["measurements"]["Row"];
 
 const now = "2026-06-01T09:00:00.000Z";
 
@@ -52,6 +54,17 @@ export const seedServices: Service[] = [
   { id: "s-ep-par", service_type: "ep_parejas", name: "Entrenament personal en parella", price: 350, default_sessions: 10, active: true, created_at: now },
   { id: "s-grup", service_type: "grupo_reducido", name: "Grup reduït", price: 200, default_sessions: 8, active: true, created_at: now },
   { id: "s-fisio", service_type: "fisioterapia", name: "Fisioteràpia", price: 250, default_sessions: 5, active: true, created_at: now },
+];
+
+export const seedExercises: Exercise[] = [
+  { id: "e-esquat", name: "Esquat amb barra", category: "forca", description: "Treball de cames i glutis. Mantingues l'esquena recta.", video_url: "https://www.youtube.com/watch?v=ultWZbUMPL8", created_at: now },
+  { id: "e-planxa", name: "Planxa abdominal", category: "core", description: "Manté el cos alineat 30-60 segons.", video_url: null, created_at: now },
+  { id: "e-mobilitat-malucs", name: "Mobilitat de malucs", category: "mobilitat", description: "Rutina de mobilitat articular per a malucs.", video_url: null, created_at: now },
+];
+
+export const seedMeasurements: Measurement[] = [
+  { id: "m-ana-1", client_id: "c-ana", recorded_at: "2026-05-01", weight_kg: 64.5, notes: "Mesura inicial.", created_at: now },
+  { id: "m-ana-2", client_id: "c-ana", recorded_at: "2026-06-01", weight_kg: 63.2, notes: "Bona evolució.", created_at: now },
 ];
 
 export const seedPayments: Payment[] = [
