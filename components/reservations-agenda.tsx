@@ -9,6 +9,10 @@ import {
   formatDayHeading,
   dayKey,
 } from "@/lib/labels";
+import {
+  cancelReservationAction,
+  completeReservationAction,
+} from "@/app/(admin)/admin/reservas/actions";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { ReservationStatus } from "@/types/database";
 
@@ -142,11 +146,12 @@ function Section({
                     {r.trainerName && (
                       <span className="text-brand-muted">· {r.trainerName}</span>
                     )}
-                    <span className="ml-auto">
+                    <div className="ml-auto flex items-center gap-2">
                       <Badge tone={STATUS_TONE[r.status]}>
                         {RESERVATION_STATUS_LABELS[r.status]}
                       </Badge>
-                    </span>
+                      {r.status === "booked" && <ReservationActions id={r.id} />}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -155,5 +160,30 @@ function Section({
         </div>
       )}
     </section>
+  );
+}
+
+function ReservationActions({ id }: { id: string }) {
+  return (
+    <div className="flex items-center gap-1">
+      <form action={completeReservationAction}>
+        <input type="hidden" name="id" value={id} />
+        <button
+          type="submit"
+          className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-success hover:bg-success/10"
+        >
+          Fet
+        </button>
+      </form>
+      <form action={cancelReservationAction}>
+        <input type="hidden" name="id" value={id} />
+        <button
+          type="submit"
+          className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10"
+        >
+          Cancel·lar
+        </button>
+      </form>
+    </div>
   );
 }

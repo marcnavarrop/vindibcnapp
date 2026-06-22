@@ -17,13 +17,23 @@ export default async function ReservasPage() {
     <div className="min-h-screen bg-brand-bg">
       <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
-        <Link
-          href="/admin"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
-        >
-          ← Tornar
-        </Link>
-        <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Agenda de reserves</h1>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <Link
+              href="/admin"
+              className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+            >
+              ← Tornar
+            </Link>
+            <h1 className="mt-1 text-2xl text-brand-dark">Agenda de reserves</h1>
+          </div>
+          <Link
+            href="/admin/reservas/new"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+          >
+            + Nova reserva
+          </Link>
+        </div>
 
         <ReservationsAgenda
           reservations={reservations}
