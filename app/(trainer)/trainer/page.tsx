@@ -3,6 +3,8 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listClients } from "@/lib/data/clients";
 import { listReservations } from "@/lib/data/reservations";
+import { listAnnouncements } from "@/lib/data/announcements";
+import { AnnouncementsFeed } from "@/components/announcements-feed";
 import {
   SERVICE_LABELS,
   RESERVATION_STATUS_LABELS,
@@ -16,9 +18,10 @@ import {
 export default async function TrainerHome() {
   const viewer = await getViewer();
   const trainerId = viewer?.id;
-  const [clients, reservations] = await Promise.all([
+  const [clients, reservations, announcements] = await Promise.all([
     listClients(trainerId),
     listReservations(trainerId),
+    listAnnouncements(),
   ]);
 
   return (
@@ -76,6 +79,13 @@ export default async function TrainerHome() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-sm font-bold tracking-widest text-brand-muted uppercase">
+            Comunitat
+          </h2>
+          <AnnouncementsFeed announcements={announcements} />
         </section>
       </main>
     </div>

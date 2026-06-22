@@ -269,6 +269,30 @@ export interface Database {
         };
         Relationships: [];
       };
+      announcements: {
+        Row: {
+          id: string;
+          author_id: string | null;
+          title: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          author_id?: string | null;
+          title: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          author_id?: string | null;
+          title?: string;
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {

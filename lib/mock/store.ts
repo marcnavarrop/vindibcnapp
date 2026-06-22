@@ -11,6 +11,7 @@ import {
   seedServices,
   seedExercises,
   seedMeasurements,
+  seedAnnouncements,
 } from "./seed";
 import type { Database } from "@/types/database";
 
@@ -25,6 +26,7 @@ export type Store = {
   services: Tables["services"]["Row"][];
   exercises: Tables["exercises"]["Row"][];
   measurements: Tables["measurements"]["Row"][];
+  announcements: Tables["announcements"]["Row"][];
 };
 
 /**
@@ -47,6 +49,7 @@ function fromSeed(): Store {
     services: structuredClone(seedServices),
     exercises: structuredClone(seedExercises),
     measurements: structuredClone(seedMeasurements),
+    announcements: structuredClone(seedAnnouncements),
   };
 }
 

@@ -15,6 +15,7 @@ type Payment = Database["public"]["Tables"]["payments"]["Row"];
 type Service = Database["public"]["Tables"]["services"]["Row"];
 type Exercise = Database["public"]["Tables"]["exercises"]["Row"];
 type Measurement = Database["public"]["Tables"]["measurements"]["Row"];
+type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 
 const now = "2026-06-01T09:00:00.000Z";
 
@@ -65,6 +66,11 @@ export const seedExercises: Exercise[] = [
 export const seedMeasurements: Measurement[] = [
   { id: "m-ana-1", client_id: "c-ana", recorded_at: "2026-05-01", weight_kg: 64.5, notes: "Mesura inicial.", created_at: now },
   { id: "m-ana-2", client_id: "c-ana", recorded_at: "2026-06-01", weight_kg: 63.2, notes: "Bona evolució.", created_at: now },
+];
+
+export const seedAnnouncements: Announcement[] = [
+  { id: "a-1", author_id: "u-admin", title: "Sopar de Nadal del centre", body: "El 20 de desembre fem el sopar anual. Apunta't a recepció!", created_at: "2026-06-10T10:00:00.000Z" },
+  { id: "a-2", author_id: "u-trainer-laia", title: "Nou grup de mobilitat", body: "Comencem un grup reduït de mobilitat els dimarts a les 18 h.", created_at: "2026-06-15T10:00:00.000Z" },
 ];
 
 export const seedPayments: Payment[] = [

@@ -14,6 +14,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/pagos", label: "Pagaments" },
   { href: "/admin/serveis", label: "Serveis" },
   { href: "/admin/exercicis", label: "Exercicis" },
+  { href: "/admin/community", label: "Comunitat" },
 ];
 
 /**

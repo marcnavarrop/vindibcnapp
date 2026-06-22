@@ -1,7 +1,9 @@
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listMeasurements } from "@/lib/data/measurements";
+import { listAnnouncements } from "@/lib/data/announcements";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { Badge } from "@/components/ui/badge";
 import {
   SERVICE_LABELS,
@@ -20,6 +22,7 @@ export default async function ClientHome() {
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
   const measurements = client ? await listMeasurements(client.id) : [];
+  const announcements = await listAnnouncements();
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -114,6 +117,13 @@ export default async function ClientHome() {
             </Panel>
           </>
         )}
+
+        <section>
+          <h2 className="mb-3 text-sm font-bold tracking-widest text-brand-muted uppercase">
+            Comunitat
+          </h2>
+          <AnnouncementsFeed announcements={announcements} />
+        </section>
       </main>
     </div>
   );
