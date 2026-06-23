@@ -7,8 +7,36 @@ fisioterapia: clientes, bonos, reservas y pagos. Sustituye a Trainingym.
 (base de datos + Auth) · Vercel (hosting) · Stripe (pagos, en una fase
 posterior).
 
-> Estado: **Fase 0 — scaffolding**. Estructura, autenticación por roles y
-> esquema de base de datos. Sin lógica de negocio ni diseño de marca todavía.
+> Estado: **MVP funcional**. Autenticación por roles, gestión de clientes,
+> bonos, reservas (con repetición semanal), catálogo de servicios, biblioteca
+> de ejercicios y progreso, y tablón de comunidad — todo con lógica de negocio
+> real sobre Supabase. Pendientes principales: registro de cobros / Stripe y
+> pulido del diseño de marca.
+
+## Módulos
+
+| Módulo                     | Estado                                                        |
+| -------------------------- | ------------------------------------------------------------- |
+| Auth y roles               | ✅ Completo (admin / trainer / client, rutas protegidas)       |
+| Clientes                   | ✅ Completo (CRUD, asignación de entrenador/a, ficha)          |
+| Bonos                      | ✅ Completo (alta con precio y servicio asociado)              |
+| Reservas                   | ✅ Completo (agenda, crear/cancelar, repetición semanal)       |
+| Catálogo de servicios      | ✅ Completo (CRUD de servicios y precios)                      |
+| Ejercicios y progreso      | ✅ Completo (biblioteca + mediciones por cliente)              |
+| Comunidad (anuncios)       | ✅ Completo (tablón con CRUD, feed para entrenadores/as)       |
+| Pagos                      | ⚠️ Solo lectura — lista cobros, falta registrarlos            |
+| Stripe                     | ❌ No empezado (fase posterior)                                |
+
+## Modo simulación (mock) vs. real
+
+[`lib/config.ts`](lib/config.ts) expone `USE_MOCK`, que decide si la app usa
+un almacén en memoria de datos de prueba o Supabase de verdad:
+
+- Está en **mock** mientras `NEXT_PUBLIC_SUPABASE_URL` falte o sea el
+  placeholder de previsualización (útil para desarrollar sin backend).
+- Pasa a **real** automáticamente en cuanto pongas una URL de Supabase válida
+  en `.env.local`. No hay que tocar código.
+- Puedes forzar el mock con `NEXT_PUBLIC_USE_MOCK=true`.
 
 ---
 
@@ -44,10 +72,17 @@ cp .env.local.example .env.local
 
 ## 3. Aplicar la migración de base de datos
 
-El esquema vive en [`supabase/migrations/0001_initial_schema.sql`](supabase/migrations/0001_initial_schema.sql).
-Crea las tablas (`profiles`, `clients`, `bonos`, `reservations`, `payments`),
-sus enums, las políticas de **Row Level Security** y el **trigger** que crea
-un perfil al registrarse un usuario.
+El esquema vive en [`supabase/migrations/`](supabase/migrations/) y se aplica
+en orden:
+
+| Migración                       | Contenido                                              |
+| ------------------------------- | ------------------------------------------------------ |
+| `0001_initial_schema.sql`       | `profiles`, `clients`, `bonos`, `reservations`, `payments`, enums, RLS y el trigger que crea un perfil al registrarse |
+| `0002_services.sql`             | Catálogo de servicios y precios                        |
+| `0003_exercises_progress.sql`   | Biblioteca de ejercicios y mediciones de progreso      |
+| `0004_community.sql`            | Tablón de anuncios de la comunidad                     |
+
+Incluyen sus enums y las políticas de **Row Level Security** correspondientes.
 
 **Opción A — SQL Editor (rápida, sin instalar nada):**
 abre el SQL Editor de tu proyecto en supabase.com, pega el contenido del
@@ -112,14 +147,21 @@ hacer el alta).
 ```
 app/
   (auth)/login, (auth)/register   # autenticación
-  (admin)/admin                   # área admin  → /admin
+  (admin)/admin                   # área admin: clientes, bonos, reservas,
+                                  #   serveis, exercicis, community, pagos
   (trainer)/trainer               # área trainer → /trainer
   (client)/client                 # área cliente → /client
-components/                       # componentes compartidos
-lib/supabase/
-  client.ts                       # cliente para el navegador
-  server.ts                       # cliente para Server Components / Actions
-  middleware.ts                   # refresco de sesión en el middleware
+components/                       # componentes compartidos (forms, tablas, UI)
+lib/
+  config.ts                       # USE_MOCK (mock vs. Supabase real)
+  auth.ts                         # getViewer() y helpers de sesión
+  data/                           # capa de datos por módulo (clients, bonos,
+                                  #   reservations, services, exercises,
+                                  #   measurements, announcements, payments…)
+  mock/                           # almacén y seed para el modo simulación
+  supabase/client.ts              # cliente para el navegador
+  supabase/server.ts              # cliente para Server Components / Actions
+  supabase/middleware.ts          # refresco de sesión en el middleware
 types/database.ts                 # tipos de la BD
 supabase/migrations/              # migraciones SQL
 middleware.ts                     # control de acceso por rol
