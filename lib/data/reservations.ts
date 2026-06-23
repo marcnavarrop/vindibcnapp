@@ -164,28 +164,42 @@ export type ReservationInput = {
   scheduledAt: string; // ISO
 };
 
-/** Crea una reserva consumiendo una sesión del bono indicado. */
+/**
+ * Crea una o més reserves a partir d'un bo, consumint una sessió per reserva.
+ * Amb `repeatWeeks > 1` crea una reserva cada setmana a la mateixa hora.
+ */
 export async function createReservation(
   input: ReservationInput,
+  repeatWeeks = 1,
 ): Promise<void> {
+  const weeks = Math.max(1, Math.floor(repeatWeeks));
+  const base = new Date(input.scheduledAt).getTime();
+  const dates = Array.from({ length: weeks }, (_, i) =>
+    new Date(base + i * 7 * 24 * 60 * 60 * 1000).toISOString(),
+  );
+
   if (USE_MOCK) {
     const store = getStore();
     const bono = store.bonos.find((b) => b.id === input.bonoId);
     if (!bono) throw new Error("Bo no trobat.");
-    if (bono.remaining_sessions <= 0)
-      throw new Error("Aquest bo no té sessions disponibles.");
-    bono.remaining_sessions -= 1;
+    if (bono.remaining_sessions < weeks)
+      throw new Error(
+        `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
+      );
+    for (const scheduled_at of dates) {
+      store.reservations.push({
+        id: crypto.randomUUID(),
+        client_id: bono.client_id,
+        bono_id: bono.id,
+        trainer_id: input.trainerId,
+        scheduled_at,
+        service_type: bono.service_type,
+        status: "booked",
+        created_at: new Date().toISOString(),
+      });
+    }
+    bono.remaining_sessions -= weeks;
     if (bono.remaining_sessions === 0) bono.status = "completed";
-    store.reservations.push({
-      id: crypto.randomUUID(),
-      client_id: bono.client_id,
-      bono_id: bono.id,
-      trainer_id: input.trainerId,
-      scheduled_at: input.scheduledAt,
-      service_type: bono.service_type,
-      status: "booked",
-      created_at: new Date().toISOString(),
-    });
     saveStore(store);
     return;
   }
@@ -197,20 +211,24 @@ export async function createReservation(
     .eq("id", input.bonoId)
     .single();
   if (bErr || !bono) throw new Error("Bo no trobat.");
-  if (bono.remaining_sessions <= 0)
-    throw new Error("Aquest bo no té sessions disponibles.");
+  if (bono.remaining_sessions < weeks)
+    throw new Error(
+      `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
+    );
 
-  const { error: rErr } = await supabase.from("reservations").insert({
-    client_id: bono.client_id,
-    bono_id: bono.id,
-    trainer_id: input.trainerId,
-    scheduled_at: input.scheduledAt,
-    service_type: bono.service_type,
-    status: "booked",
-  });
+  const { error: rErr } = await supabase.from("reservations").insert(
+    dates.map((scheduled_at) => ({
+      client_id: bono.client_id,
+      bono_id: bono.id,
+      trainer_id: input.trainerId,
+      scheduled_at,
+      service_type: bono.service_type,
+      status: "booked" as const,
+    })),
+  );
   if (rErr) throw rErr;
 
-  const remaining = bono.remaining_sessions - 1;
+  const remaining = bono.remaining_sessions - weeks;
   const { error: uErr } = await supabase
     .from("bonos")
     .update({

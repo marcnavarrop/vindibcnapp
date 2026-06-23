@@ -16,19 +16,25 @@ export async function createReservationAction(
   const bonoId = String(formData.get("bonoId") ?? "");
   const trainerId = String(formData.get("trainerId") ?? "") || null;
   const raw = String(formData.get("scheduledAt") ?? "");
+  const repeatWeeks = Number(formData.get("repeatWeeks")) || 1;
 
   if (!bonoId) return { error: "Tria un bo." };
   if (!raw) return { error: "Indica la data i hora." };
+  if (repeatWeeks < 1 || repeatWeeks > 52)
+    return { error: "Les repeticions han d'estar entre 1 i 52." };
 
   const date = new Date(raw);
   if (Number.isNaN(date.getTime())) return { error: "La data no és vàlida." };
 
   try {
-    await createReservation({
-      bonoId,
-      trainerId,
-      scheduledAt: date.toISOString(),
-    });
+    await createReservation(
+      {
+        bonoId,
+        trainerId,
+        scheduledAt: date.toISOString(),
+      },
+      repeatWeeks,
+    );
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en crear la reserva." };
   }

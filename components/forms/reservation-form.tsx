@@ -70,6 +70,21 @@ export function ReservationForm({
 
       <Field label="Data i hora" name="scheduledAt" type="datetime-local" required />
 
+      <div>
+        <Field
+          label="Repeticions setmanals"
+          name="repeatWeeks"
+          type="number"
+          min={1}
+          max={52}
+          defaultValue={1}
+        />
+        <p className="mt-1 text-xs text-brand-muted">
+          Amb més d&apos;1, crea una reserva cada setmana a la mateixa hora
+          (consumeix una sessió per reserva).
+        </p>
+      </div>
+
       {state.error && <p className="text-sm text-error">{state.error}</p>}
 
       <div className="flex items-center gap-3">
