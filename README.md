@@ -9,9 +9,9 @@ posterior).
 
 > Estado: **MVP funcional**. Autenticación por roles, gestión de clientes,
 > bonos, reservas (con repetición semanal), catálogo de servicios, biblioteca
-> de ejercicios y progreso, y tablón de comunidad — todo con lógica de negocio
-> real sobre Supabase. Pendientes principales: registro de cobros / Stripe y
-> pulido del diseño de marca.
+> de ejercicios y progreso, registro de cobros y tablón de comunidad — todo
+> con lógica de negocio real sobre Supabase. Pendientes principales: cobro
+> online con Stripe y pulido del diseño de marca.
 
 ## Módulos
 
@@ -24,8 +24,8 @@ posterior).
 | Catálogo de servicios      | ✅ Completo (CRUD de servicios y precios)                      |
 | Ejercicios y progreso      | ✅ Completo (biblioteca + mediciones por cliente)              |
 | Comunidad (anuncios)       | ✅ Completo (tablón con CRUD, feed para entrenadores/as)       |
-| Pagos                      | ⚠️ Solo lectura — lista cobros, falta registrarlos            |
-| Stripe                     | ❌ No empezado (fase posterior)                                |
+| Pagos                      | ✅ Registro de cobros (al vender un bono y alta manual, efectivo/tarjeta) |
+| Stripe (cobro online)      | ❌ No empezado (fase posterior)                                |
 
 ## Modo simulación (mock) vs. real
 
