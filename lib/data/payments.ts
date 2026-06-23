@@ -1,8 +1,8 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import { getStore, type Store } from "@/lib/mock/store";
-import type { PaymentMethod } from "@/types/database";
+import { getStore, saveStore, type Store } from "@/lib/mock/store";
+import type { PaymentMethod, ServiceType } from "@/types/database";
 
 export type PaymentListItem = {
   id: string;
@@ -58,4 +58,104 @@ export async function listPayments(): Promise<PaymentListItem[]> {
     method: p.method,
     paidAt: p.paid_at,
   }));
+}
+
+export type PaymentInput = {
+  clientId: string;
+  bonoId: string | null;
+  amount: number;
+  method: PaymentMethod;
+};
+
+/** Registra un cobro (efectivo o tarjeta). No procesa el pago: solo lo anota. */
+export async function createPayment(input: PaymentInput): Promise<string> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    store.payments.push({
+      id,
+      client_id: input.clientId,
+      bono_id: input.bonoId,
+      stripe_payment_id: null,
+      amount: input.amount,
+      currency: "eur",
+      method: input.method,
+      paid_at: now,
+      created_at: now,
+    });
+    saveStore(store);
+    return id;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payments")
+    .insert({
+      client_id: input.clientId,
+      bono_id: input.bonoId,
+      amount: input.amount,
+      method: input.method,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+export type PaymentFormData = {
+  clients: {
+    id: string;
+    name: string;
+    bonos: { id: string; serviceType: ServiceType; price: number }[];
+  }[];
+};
+
+/** Clientes y sus bonos, para el alta manual de un pago. */
+export async function getPaymentFormData(): Promise<PaymentFormData> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const clients = store.clients.map((c) => {
+      const profile = store.profiles.find((p) => p.id === c.profile_id);
+      return {
+        id: c.id,
+        name: profile?.full_name ?? "—",
+        bonos: store.bonos
+          .filter((b) => b.client_id === c.id)
+          .map((b) => ({
+            id: b.id,
+            serviceType: b.service_type,
+            price: b.price,
+          })),
+      };
+    });
+    return { clients };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .select(
+      `id,
+       profile:profiles!clients_profile_id_fkey(full_name),
+       bonos(id, service_type, price)`,
+    )
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+
+  type Row = {
+    id: string;
+    profile: { full_name: string | null } | null;
+    bonos: { id: string; service_type: ServiceType; price: number }[];
+  };
+  const clients = (data as unknown as Row[]).map((c) => ({
+    id: c.id,
+    name: c.profile?.full_name ?? "—",
+    bonos: c.bonos.map((b) => ({
+      id: b.id,
+      serviceType: b.service_type,
+      price: b.price,
+    })),
+  }));
+  return { clients };
 }

@@ -24,9 +24,17 @@ export default async function PagosPage() {
             </Link>
             <h1 className="mt-1 text-2xl text-brand-dark">Pagaments</h1>
           </div>
-          <span className="rounded-full bg-success/10 px-3 py-1 text-sm font-bold text-success">
-            {formatEur(total)} cobrat
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-success/10 px-3 py-1 text-sm font-bold text-success">
+              {formatEur(total)} cobrat
+            </span>
+            <Link
+              href="/admin/pagos/new"
+              className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+            >
+              + Nou pagament
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 overflow-x-auto rounded-2xl border border-brand-border bg-white">

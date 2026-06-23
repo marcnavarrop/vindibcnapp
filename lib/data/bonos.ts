@@ -2,7 +2,8 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
-import type { ServiceType, BonoStatus } from "@/types/database";
+import { createPayment } from "@/lib/data/payments";
+import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
 
 export type BonoListItem = {
   id: string;
@@ -70,16 +71,20 @@ export type BonoInput = {
   serviceType: ServiceType;
   totalSessions: number;
   price: number;
+  /** Si se indica, registra el cobro del bono con este método. */
+  paymentMethod?: PaymentMethod | null;
 };
 
 /** Crea un bono para un cliente (sesiones restantes = totales al comprarlo). */
 export async function createBono(input: BonoInput): Promise<string> {
+  let bonoId: string;
+
   if (USE_MOCK) {
     const store = getStore();
-    const id = crypto.randomUUID();
+    bonoId = crypto.randomUUID();
     const now = new Date().toISOString();
     store.bonos.push({
-      id,
+      id: bonoId,
       client_id: input.clientId,
       service_type: input.serviceType,
       total_sessions: input.totalSessions,
@@ -90,21 +95,33 @@ export async function createBono(input: BonoInput): Promise<string> {
       created_at: now,
     });
     saveStore(store);
-    return id;
+  } else {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("bonos")
+      .insert({
+        client_id: input.clientId,
+        service_type: input.serviceType,
+        total_sessions: input.totalSessions,
+        remaining_sessions: input.totalSessions,
+        price: input.price,
+        status: "active",
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    bonoId = data.id;
   }
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("bonos")
-    .insert({
-      client_id: input.clientId,
-      service_type: input.serviceType,
-      total_sessions: input.totalSessions,
-      remaining_sessions: input.totalSessions,
-      price: input.price,
-      status: "active",
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-  return data.id;
+
+  // Registra el cobro del bono si se ha indicado un método de pago.
+  if (input.paymentMethod) {
+    await createPayment({
+      clientId: input.clientId,
+      bonoId,
+      amount: input.price,
+      method: input.paymentMethod,
+    });
+  }
+
+  return bonoId;
 }
