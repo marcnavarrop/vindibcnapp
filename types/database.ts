@@ -11,6 +11,7 @@
  */
 
 export type UserRole = "admin" | "trainer" | "client";
+export type Specialty = "entrenador" | "fisioterapeuta";
 export type ServiceType =
   | "ep_individual"
   | "ep_parejas"
@@ -36,6 +37,7 @@ export interface Database {
           email: string | null;
           phone: string | null;
           role: UserRole;
+          specialty: Specialty | null;
           created_at: string;
         };
         Insert: {
@@ -44,6 +46,7 @@ export interface Database {
           email?: string | null;
           phone?: string | null;
           role?: UserRole;
+          specialty?: Specialty | null;
           created_at?: string;
         };
         Update: {
@@ -52,6 +55,7 @@ export interface Database {
           email?: string | null;
           phone?: string | null;
           role?: UserRole;
+          specialty?: Specialty | null;
           created_at?: string;
         };
         Relationships: [];

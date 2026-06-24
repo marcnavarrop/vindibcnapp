@@ -310,6 +310,7 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
       email: input.email,
       phone: input.phone,
       role: "client",
+      specialty: null,
       created_at: createdAt,
     });
     store.clients.push({

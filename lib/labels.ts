@@ -5,7 +5,13 @@ import type {
   PaymentMethod,
   UserRole,
   ExerciseCategory,
+  Specialty,
 } from "@/types/database";
+
+export const SPECIALTY_LABELS: Record<Specialty, string> = {
+  entrenador: "Entrenador/a",
+  fisioterapeuta: "Fisioterapeuta",
+};
 
 export const EXERCISE_CATEGORY_LABELS: Record<ExerciseCategory, string> = {
   forca: "Força",
