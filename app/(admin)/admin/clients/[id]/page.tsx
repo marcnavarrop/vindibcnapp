@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { getClient } from "@/lib/data/clients";
 import { listMeasurements } from "@/lib/data/measurements";
@@ -27,8 +26,6 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -179,7 +176,6 @@ export default async function ClientDetailPage({
           )}
         </Panel>
       </main>
-    </div>
   );
 }
 

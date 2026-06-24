@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listBonos } from "@/lib/data/bonos";
 import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur } from "@/lib/labels";
@@ -17,8 +16,6 @@ export default async function BonosPage() {
   const bonos = await listBonos();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin"
@@ -70,6 +67,5 @@ export default async function BonosPage() {
           </table>
         </div>
       </main>
-    </div>
   );
 }

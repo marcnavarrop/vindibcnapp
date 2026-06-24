@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ClientForm } from "@/components/forms/client-form";
 import { getClient, listTrainers } from "@/lib/data/clients";
 import { updateClientAction } from "@/app/(admin)/admin/clients/actions";
@@ -18,8 +17,6 @@ export default async function EditClientPage({
   if (!client) notFound();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/admin/clients/${id}`}
@@ -43,6 +40,5 @@ export default async function EditClientPage({
           }}
         />
       </main>
-    </div>
   );
 }

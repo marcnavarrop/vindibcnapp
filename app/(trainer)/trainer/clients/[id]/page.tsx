@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewer } from "@/lib/auth";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { getClient } from "@/lib/data/clients";
 import {
@@ -27,8 +26,6 @@ export default async function TrainerClientDetailPage({
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -153,7 +150,6 @@ export default async function TrainerClientDetailPage({
           </Panel>
         )}
       </main>
-    </div>
   );
 }
 

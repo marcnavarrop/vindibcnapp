@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { listReservations } from "@/lib/data/reservations";
 import { listTrainers } from "@/lib/data/clients";
@@ -14,8 +13,6 @@ export default async function ReservasPage() {
   const nowISO = new Date().toISOString();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -41,6 +38,5 @@ export default async function ReservasPage() {
           nowISO={nowISO}
         />
       </main>
-    </div>
   );
 }

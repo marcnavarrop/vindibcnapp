@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listPayments } from "@/lib/data/payments";
 import { PAYMENT_METHOD_LABELS, formatEur, formatDate } from "@/lib/labels";
@@ -11,8 +10,6 @@ export default async function PagosPage() {
   const total = payments.reduce((s, p) => s + p.amount, 0);
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administración" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -69,6 +66,5 @@ export default async function PagosPage() {
           </table>
         </div>
       </main>
-    </div>
   );
 }

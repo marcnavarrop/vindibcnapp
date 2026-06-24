@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listServices } from "@/lib/data/services";
 import { toggleServiceAction } from "@/app/(admin)/admin/serveis/actions";
@@ -11,8 +10,6 @@ export default async function ServeisPage() {
   const services = await listServices();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h1 className="text-2xl text-brand-dark">Serveis i preus</h1>
@@ -85,6 +82,5 @@ export default async function ServeisPage() {
           </table>
         </div>
       </main>
-    </div>
   );
 }

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { BonoForm } from "@/components/forms/bono-form";
 import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
@@ -30,8 +29,6 @@ export default async function NewTrainerBonoPage({
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/trainer/clients/${clientId}`}
@@ -49,6 +46,5 @@ export default async function NewTrainerBonoPage({
           showPayment={false}
         />
       </main>
-    </div>
   );
 }

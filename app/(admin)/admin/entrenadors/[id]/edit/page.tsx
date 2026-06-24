@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { TrainerForm } from "@/components/forms/trainer-form";
 import { updateTrainerSpecialtyAction } from "@/app/(admin)/admin/entrenadors/actions";
 import { getTrainer } from "@/lib/data/trainers";
@@ -19,8 +18,6 @@ export default async function EditTrainerPage({
   const action = updateTrainerSpecialtyAction.bind(null, id);
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/entrenadors"
@@ -44,6 +41,5 @@ export default async function EditTrainerPage({
           cancelHref="/admin/entrenadors"
         />
       </main>
-    </div>
   );
 }

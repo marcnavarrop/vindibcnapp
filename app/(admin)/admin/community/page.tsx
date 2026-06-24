@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { listAnnouncements } from "@/lib/data/announcements";
 import { deleteAnnouncementAction } from "@/app/(admin)/admin/community/actions";
 import { formatDate } from "@/lib/labels";
@@ -10,8 +9,6 @@ export default async function CommunityPage() {
   const announcements = await listAnnouncements();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h1 className="text-2xl text-brand-dark">Comunitat</h1>
@@ -63,6 +60,5 @@ export default async function CommunityPage() {
           </div>
         )}
       </main>
-    </div>
   );
 }

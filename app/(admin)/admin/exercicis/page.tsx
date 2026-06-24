@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listExercises } from "@/lib/data/exercises";
 import { deleteExerciseAction } from "@/app/(admin)/admin/exercicis/actions";
@@ -11,8 +10,6 @@ export default async function ExercicisPage() {
   const exercises = await listExercises();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h1 className="text-2xl text-brand-dark">Biblioteca d&apos;exercicis</h1>
@@ -76,6 +73,5 @@ export default async function ExercicisPage() {
           </div>
         )}
       </main>
-    </div>
   );
 }

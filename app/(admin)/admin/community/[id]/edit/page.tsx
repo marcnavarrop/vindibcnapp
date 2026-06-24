@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { AnnouncementForm } from "@/components/forms/announcement-form";
 import { getAnnouncement } from "@/lib/data/announcements";
 import { updateAnnouncementAction } from "@/app/(admin)/admin/community/actions";
@@ -17,8 +16,6 @@ export default async function EditAnnouncementPage({
   if (!announcement) notFound();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/community"
@@ -34,6 +31,5 @@ export default async function EditAnnouncementPage({
           defaults={{ title: announcement.title, body: announcement.body }}
         />
       </main>
-    </div>
   );
 }

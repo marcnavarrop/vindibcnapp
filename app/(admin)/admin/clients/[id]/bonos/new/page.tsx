@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { BonoForm } from "@/components/forms/bono-form";
 import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
@@ -21,8 +20,6 @@ export default async function NewBonoPage({
   if (!client) notFound();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/admin/clients/${id}`}
@@ -39,6 +36,5 @@ export default async function NewBonoPage({
           services={services}
         />
       </main>
-    </div>
   );
 }

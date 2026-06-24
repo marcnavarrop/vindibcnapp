@@ -1,4 +1,3 @@
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listExercises } from "@/lib/data/exercises";
 import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
@@ -9,8 +8,6 @@ export default async function TrainerExercicisPage() {
   const exercises = await listExercises();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto max-w-5xl p-6">
         <h1 className="mb-1 text-2xl text-brand-dark">
           Biblioteca d&apos;exercicis
@@ -54,6 +51,5 @@ export default async function TrainerExercicisPage() {
           </div>
         )}
       </main>
-    </div>
   );
 }

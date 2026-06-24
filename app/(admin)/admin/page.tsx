@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { getAdminStats } from "@/lib/data/stats";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { formatEur } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
@@ -29,8 +28,6 @@ export default async function AdminHome() {
   ];
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <h1 className="text-2xl text-brand-dark">
           Hola, {viewer?.fullName?.split(" ")[0] ?? "admin"}
@@ -68,6 +65,5 @@ export default async function AdminHome() {
           ))}
         </div>
       </main>
-    </div>
   );
 }

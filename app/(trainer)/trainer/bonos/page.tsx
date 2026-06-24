@@ -1,4 +1,3 @@
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listBonos } from "@/lib/data/bonos";
 import {
@@ -13,8 +12,6 @@ export default async function TrainerBonosPage() {
   const bonos = await listBonos();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto max-w-5xl p-6">
         <h1 className="mb-1 text-2xl text-brand-dark">Bons</h1>
         <p className="mb-6 text-sm text-brand-muted">
@@ -68,6 +65,5 @@ export default async function TrainerBonosPage() {
           </table>
         </div>
       </main>
-    </div>
   );
 }

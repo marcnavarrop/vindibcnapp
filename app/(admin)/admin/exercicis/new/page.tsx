@@ -1,12 +1,9 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ExerciseForm } from "@/components/forms/exercise-form";
 import { createExerciseAction } from "@/app/(admin)/admin/exercicis/actions";
 
 export default function NewExercisePage() {
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/exercicis"
@@ -21,6 +18,5 @@ export default function NewExercisePage() {
           submitLabel="Crear exercici"
         />
       </main>
-    </div>
   );
 }

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ClientForm } from "@/components/forms/client-form";
 import { listTrainers } from "@/lib/data/clients";
 import { createClientAction } from "@/app/(admin)/admin/clients/actions";
@@ -8,8 +7,6 @@ export default async function NewClientPage() {
   const trainers = await listTrainers();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/clients"
@@ -26,6 +23,5 @@ export default async function NewClientPage() {
           cancelHref="/admin/clients"
         />
       </main>
-    </div>
   );
 }

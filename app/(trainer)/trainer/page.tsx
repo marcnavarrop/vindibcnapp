@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Badge } from "@/components/ui/badge";
 import { listClients } from "@/lib/data/clients";
 import { listReservations } from "@/lib/data/reservations";
@@ -40,8 +39,6 @@ export default async function TrainerHome() {
     .slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div>
           <h1 className="text-2xl text-brand-dark">
@@ -137,6 +134,5 @@ export default async function TrainerHome() {
           <AnnouncementsFeed announcements={announcements} />
         </section>
       </main>
-    </div>
   );
 }

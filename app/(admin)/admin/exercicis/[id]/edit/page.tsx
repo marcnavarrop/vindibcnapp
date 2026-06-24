@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ExerciseForm } from "@/components/forms/exercise-form";
 import { getExercise } from "@/lib/data/exercises";
 import { updateExerciseAction } from "@/app/(admin)/admin/exercicis/actions";
@@ -17,8 +16,6 @@ export default async function EditExercisePage({
   if (!exercise) notFound();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/exercicis"
@@ -39,6 +36,5 @@ export default async function EditExercisePage({
           }}
         />
       </main>
-    </div>
   );
 }

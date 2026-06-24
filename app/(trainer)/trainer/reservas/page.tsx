@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { listReservations } from "@/lib/data/reservations";
 import { listClients, listTrainers } from "@/lib/data/clients";
@@ -26,8 +25,6 @@ export default async function TrainerReservasPage() {
   const nowISO = new Date().toISOString();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -52,6 +49,5 @@ export default async function TrainerReservasPage() {
           manageableIds={manageableIds}
         />
       </main>
-    </div>
   );
 }

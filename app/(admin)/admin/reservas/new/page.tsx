@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ReservationForm } from "@/components/forms/reservation-form";
 import { getReservationFormData } from "@/lib/data/reservations";
 
@@ -9,8 +8,6 @@ export default async function NewReservationPage() {
   const { clients, trainers } = await getReservationFormData();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/reservas"
@@ -22,6 +19,5 @@ export default async function NewReservationPage() {
 
         <ReservationForm clients={clients} trainers={trainers} />
       </main>
-    </div>
   );
 }

@@ -2,7 +2,6 @@ import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listMeasurements } from "@/lib/data/measurements";
 import { listAnnouncements } from "@/lib/data/announcements";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,8 +24,6 @@ export default async function ClientHome() {
   const announcements = await listAnnouncements();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="La meva àrea" home="/client" />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div>
           <h1 className="text-2xl text-brand-dark">
@@ -125,7 +122,6 @@ export default async function ClientHome() {
           <AnnouncementsFeed announcements={announcements} />
         </section>
       </main>
-    </div>
   );
 }
 

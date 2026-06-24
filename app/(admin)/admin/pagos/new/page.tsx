@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { PaymentForm } from "@/components/forms/payment-form";
 import { getPaymentFormData } from "@/lib/data/payments";
 
@@ -9,8 +8,6 @@ export default async function NewPaymentPage() {
   const { clients } = await getPaymentFormData();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/pagos"
@@ -22,6 +19,5 @@ export default async function NewPaymentPage() {
 
         <PaymentForm clients={clients} />
       </main>
-    </div>
   );
 }

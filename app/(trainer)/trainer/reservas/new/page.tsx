@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ReservationForm } from "@/components/forms/reservation-form";
 import { getReservationFormData } from "@/lib/data/reservations";
 import { createTrainerReservationAction } from "@/app/(trainer)/trainer/reservas/actions";
@@ -12,8 +11,6 @@ export default async function NewTrainerReservationPage() {
   const { clients, trainers } = await getReservationFormData(viewer?.id);
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Entrenador/a" home="/trainer" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/trainer/reservas"
@@ -38,6 +35,5 @@ export default async function NewTrainerReservationPage() {
           />
         )}
       </main>
-    </div>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { MeasurementForm } from "@/components/forms/measurement-form";
 import { getClient } from "@/lib/data/clients";
 import { createMeasurementAction } from "@/app/(admin)/admin/clients/progres-actions";
@@ -19,8 +18,6 @@ export default async function NewMeasurementPage({
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/admin/clients/${id}`}
@@ -37,6 +34,5 @@ export default async function NewMeasurementPage({
           today={today}
         />
       </main>
-    </div>
   );
 }

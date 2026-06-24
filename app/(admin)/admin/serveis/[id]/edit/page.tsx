@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ServiceForm } from "@/components/forms/service-form";
 import { getService } from "@/lib/data/services";
 import { updateServiceAction } from "@/app/(admin)/admin/serveis/actions";
@@ -17,8 +16,6 @@ export default async function EditServicePage({
   if (!service) notFound();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/serveis"
@@ -40,6 +37,5 @@ export default async function EditServicePage({
           }}
         />
       </main>
-    </div>
   );
 }

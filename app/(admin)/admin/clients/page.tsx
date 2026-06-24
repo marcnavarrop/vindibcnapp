@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ClientsTable } from "@/components/clients-table";
 import { listClients } from "@/lib/data/clients";
 
@@ -9,8 +8,6 @@ export default async function ClientsPage() {
   const clients = await listClients();
 
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <DashboardHeader area="Administració" home="/admin" />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -32,6 +29,5 @@ export default async function ClientsPage() {
 
         <ClientsTable clients={clients} />
       </main>
-    </div>
   );
 }
