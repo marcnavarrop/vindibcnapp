@@ -37,13 +37,23 @@ export function ReservationsAgenda({
   reservations,
   trainers,
   nowISO,
+  manageableIds,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
   nowISO: string;
+  /**
+   * Si se pasa, solo las reservas cuyos id estén aquí muestran botones de
+   * gestión (Fet/Cancel·lar). Si se omite, todas son gestionables (admin).
+   */
+  manageableIds?: string[];
 }) {
   const [trainer, setTrainer] = useState("");
   const [status, setStatus] = useState("");
+  const manageable = useMemo(
+    () => (manageableIds ? new Set(manageableIds) : null),
+    [manageableIds],
+  );
 
   const { upcoming, past } = useMemo(() => {
     const filtered = reservations.filter(
@@ -97,8 +107,18 @@ export function ReservationsAgenda({
         </select>
       </div>
 
-      <Section title="Properes" groups={upcoming} emptyLabel="No hi ha reserves properes." />
-      <Section title="Passades" groups={past} emptyLabel="No hi ha reserves passades." />
+      <Section
+        title="Properes"
+        groups={upcoming}
+        emptyLabel="No hi ha reserves properes."
+        canManage={(id) => !manageable || manageable.has(id)}
+      />
+      <Section
+        title="Passades"
+        groups={past}
+        emptyLabel="No hi ha reserves passades."
+        canManage={(id) => !manageable || manageable.has(id)}
+      />
     </div>
   );
 }
@@ -107,10 +127,12 @@ function Section({
   title,
   groups,
   emptyLabel,
+  canManage,
 }: {
   title: string;
   groups: DayGroup[];
   emptyLabel: string;
+  canManage: (id: string) => boolean;
 }) {
   return (
     <section>
@@ -150,7 +172,9 @@ function Section({
                       <Badge tone={STATUS_TONE[r.status]}>
                         {RESERVATION_STATUS_LABELS[r.status]}
                       </Badge>
-                      {r.status === "booked" && <ReservationActions id={r.id} />}
+                      {r.status === "booked" && canManage(r.id) && (
+                        <ReservationActions id={r.id} />
+                      )}
                     </div>
                   </div>
                 ))}

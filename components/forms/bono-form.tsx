@@ -13,10 +13,13 @@ export function BonoForm({
   action,
   cancelHref,
   services,
+  showPayment = true,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   cancelHref: string;
   services: Service[];
+  /** Bloque de cobro. Solo el admin registra pagos (RLS); el trainer no. */
+  showPayment?: boolean;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
   const [serviceId, setServiceId] = useState("");
@@ -80,20 +83,24 @@ export function BonoForm({
         onChange={(e) => setPrice(e.target.value)}
       />
 
-      <SelectField
-        label="Cobrament"
-        name="paymentMethod"
-        defaultValue="cash"
-        options={[
-          { value: "cash", label: "Efectiu" },
-          { value: "card", label: "Targeta" },
-          { value: "none", label: "No registrar ara" },
-        ]}
-      />
-      <p className="-mt-3 text-xs text-brand-muted">
-        Registra el cobrament del bo. Tria «No registrar ara» si encara no
-        s&apos;ha pagat.
-      </p>
+      {showPayment && (
+        <>
+          <SelectField
+            label="Cobrament"
+            name="paymentMethod"
+            defaultValue="cash"
+            options={[
+              { value: "cash", label: "Efectiu" },
+              { value: "card", label: "Targeta" },
+              { value: "none", label: "No registrar ara" },
+            ]}
+          />
+          <p className="-mt-3 text-xs text-brand-muted">
+            Registra el cobrament del bo. Tria «No registrar ara» si encara no
+            s&apos;ha pagat.
+          </p>
+        </>
+      )}
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
 

@@ -13,14 +13,14 @@ import type { FormState } from "@/app/(admin)/admin/clients/actions";
 export function ReservationForm({
   clients,
   trainers,
+  action = createReservationAction,
 }: {
   clients: ReservationFormData["clients"];
   trainers: ReservationFormData["trainers"];
+  /** Acción del formulario; por defecto la del área admin. */
+  action?: (prev: FormState, formData: FormData) => Promise<FormState>;
 }) {
-  const [state, formAction] = useActionState(
-    createReservationAction,
-    {} as FormState,
-  );
+  const [state, formAction] = useActionState(action, {} as FormState);
   const [clientId, setClientId] = useState("");
 
   const bonos = useMemo(

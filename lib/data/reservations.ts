@@ -7,6 +7,7 @@ import type { ServiceType, ReservationStatus } from "@/types/database";
 
 export type ReservationListItem = {
   id: string;
+  clientId: string;
   clientName: string;
   trainerId: string | null;
   trainerName: string | null;
@@ -39,6 +40,7 @@ export async function listReservations(
       .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
       .map((r) => ({
         id: r.id,
+        clientId: r.client_id,
         clientName: nameOfClient(r.client_id, store),
         trainerId: r.trainer_id,
         trainerName: nameOfProfile(r.trainer_id, store),
@@ -53,7 +55,7 @@ export async function listReservations(
   let query = supabase
     .from("reservations")
     .select(
-      `id, scheduled_at, service_type, status, trainer_id,
+      `id, client_id, scheduled_at, service_type, status, trainer_id,
        client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name)),
        trainer:profiles!reservations_trainer_id_fkey(full_name)`,
     )
@@ -65,6 +67,7 @@ export async function listReservations(
 
   type Row = {
     id: string;
+    client_id: string;
     scheduled_at: string;
     service_type: ServiceType;
     status: ReservationStatus;
@@ -74,6 +77,7 @@ export async function listReservations(
   };
   return (data as unknown as Row[]).map((r) => ({
     id: r.id,
+    clientId: r.client_id,
     clientName: r.client?.profile?.full_name ?? "—",
     trainerId: r.trainer_id,
     trainerName: r.trainer?.full_name ?? null,
@@ -96,12 +100,16 @@ export type ReservationFormData = {
   trainers: { id: string; name: string }[];
 };
 
-export async function getReservationFormData(): Promise<ReservationFormData> {
+export async function getReservationFormData(
+  onlyTrainerId?: string,
+): Promise<ReservationFormData> {
   const trainers = await listTrainers();
 
   if (USE_MOCK) {
     const store = getStore();
-    const clients = store.clients.map((c) => {
+    const clients = store.clients
+      .filter((c) => !onlyTrainerId || c.assigned_trainer_id === onlyTrainerId)
+      .map((c) => {
       const profile = store.profiles.find((p) => p.id === c.profile_id);
       return {
         id: c.id,
@@ -124,7 +132,7 @@ export async function getReservationFormData(): Promise<ReservationFormData> {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("clients")
     .select(
       `id,
@@ -132,6 +140,8 @@ export async function getReservationFormData(): Promise<ReservationFormData> {
        bonos(id, service_type, remaining_sessions, status)`,
     )
     .order("created_at", { ascending: true });
+  if (onlyTrainerId) query = query.eq("assigned_trainer_id", onlyTrainerId);
+  const { data, error } = await query;
   if (error) throw error;
 
   type Row = {
