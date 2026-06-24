@@ -6,6 +6,7 @@ import {
   createReservation,
   cancelReservation,
   completeReservation,
+  rescheduleReservation,
 } from "@/lib/data/reservations";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
@@ -54,5 +55,14 @@ export async function cancelReservationAction(formData: FormData) {
 export async function completeReservationAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id) await completeReservation(id);
+  revalidatePath("/admin/reservas");
+}
+
+export async function rescheduleReservationAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const raw = String(formData.get("scheduledAt") ?? "");
+  const date = new Date(raw);
+  if (!id || Number.isNaN(date.getTime())) return;
+  await rescheduleReservation(id, date.toISOString());
   revalidatePath("/admin/reservas");
 }

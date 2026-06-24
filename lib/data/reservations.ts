@@ -327,3 +327,28 @@ export async function completeReservation(id: string): Promise<void> {
     .eq("status", "booked");
   if (error) throw error;
 }
+
+/** Reprograma una reserva (cambia la fecha/hora). Solo si está reservada. */
+export async function rescheduleReservation(
+  id: string,
+  scheduledAt: string,
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const r = store.reservations.find((x) => x.id === id);
+    if (!r) throw new Error("Reserva no trobada.");
+    if (r.status !== "booked")
+      throw new Error("Només es poden reprogramar reserves actives.");
+    r.scheduled_at = scheduledAt;
+    saveStore(store);
+    return;
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("reservations")
+    .update({ scheduled_at: scheduledAt })
+    .eq("id", id)
+    .eq("status", "booked");
+  if (error) throw error;
+}

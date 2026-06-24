@@ -21,6 +21,7 @@ export function ReservationsView({
   newReservationBase,
   cancelAction,
   completeAction,
+  rescheduleAction,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -29,6 +30,7 @@ export function ReservationsView({
   newReservationBase: string;
   cancelAction: ReservationAction;
   completeAction: ReservationAction;
+  rescheduleAction: ReservationAction;
 }) {
   const [view, setView] = useState<"calendar" | "list">("calendar");
 
@@ -59,6 +61,7 @@ export function ReservationsView({
           newReservationBase={newReservationBase}
           cancelAction={cancelAction}
           completeAction={completeAction}
+          rescheduleAction={rescheduleAction}
         />
       ) : (
         <ReservationsAgenda

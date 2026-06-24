@@ -5,6 +5,7 @@ import { listTrainers } from "@/lib/data/clients";
 import {
   cancelReservationAction,
   completeReservationAction,
+  rescheduleReservationAction,
 } from "@/app/(admin)/admin/reservas/actions";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,7 @@ export default async function ReservasPage() {
           newReservationBase="/admin/reservas/new"
           cancelAction={cancelReservationAction}
           completeAction={completeReservationAction}
+          rescheduleAction={rescheduleReservationAction}
         />
       </main>
   );

@@ -6,6 +6,7 @@ import {
   createReservation,
   cancelReservation,
   completeReservation,
+  rescheduleReservation,
 } from "@/lib/data/reservations";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
@@ -58,5 +59,15 @@ export async function cancelTrainerReservationAction(formData: FormData) {
 export async function completeTrainerReservationAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id) await completeReservation(id);
+  revalidatePath("/trainer/reservas");
+}
+
+/** Reprograma una reserva propia (RLS: solo de sus clientes asignados). */
+export async function rescheduleTrainerReservationAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const raw = String(formData.get("scheduledAt") ?? "");
+  const date = new Date(raw);
+  if (!id || Number.isNaN(date.getTime())) return;
+  await rescheduleReservation(id, date.toISOString());
   revalidatePath("/trainer/reservas");
 }

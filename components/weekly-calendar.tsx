@@ -53,6 +53,7 @@ export function WeeklyCalendar({
   newReservationBase,
   cancelAction,
   completeAction,
+  rescheduleAction,
 }: {
   reservations: ReservationListItem[];
   manageableIds: string[];
@@ -60,6 +61,7 @@ export function WeeklyCalendar({
   newReservationBase: string;
   cancelAction: ReservationAction;
   completeAction: ReservationAction;
+  rescheduleAction: ReservationAction;
 }) {
   const router = useRouter();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -184,18 +186,23 @@ export function WeeklyCalendar({
                 const items = cells.get(`${dayIdx}-${h}`) ?? [];
                 const slot = new Date(d);
                 slot.setHours(h, 0, 0, 0);
+                const goNew = () =>
+                  router.push(
+                    `${newReservationBase}?at=${encodeURIComponent(
+                      toLocalInput(slot),
+                    )}`,
+                  );
                 return (
-                  <button
+                  <div
                     key={dayIdx}
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        `${newReservationBase}?at=${encodeURIComponent(
-                          toLocalInput(slot),
-                        )}`,
-                      )
-                    }
-                    className="min-h-[3.25rem] border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60"
+                    role="button"
+                    tabIndex={0}
+                    onClick={goNew}
+                    onKeyDown={(e) => {
+                      if (e.target === e.currentTarget && e.key === "Enter")
+                        goNew();
+                    }}
+                    className="min-h-[3.25rem] cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60"
                     aria-label={`Nova reserva ${DAY_NAMES[dayIdx]} ${pad(h)}:00`}
                   >
                     <div className="flex flex-col gap-1">
@@ -216,7 +223,7 @@ export function WeeklyCalendar({
                         />
                       ))}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -235,6 +242,7 @@ export function WeeklyCalendar({
           canManage={manageable.has(selected.id)}
           cancelAction={cancelAction}
           completeAction={completeAction}
+          rescheduleAction={rescheduleAction}
           onClose={() => setSelected(null)}
         />
       )}
@@ -277,22 +285,15 @@ function ReservationCard({
   const color = SERVICE_COLORS[r.serviceType];
   const cancelled = r.status === "cancelled";
   return (
-    <span
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick(e as unknown as React.MouseEvent);
-        }
-      }}
       style={{
         backgroundColor: `${color}1a`,
         borderLeft: `3px solid ${color}`,
       }}
       className={clsx(
-        "block cursor-pointer rounded-md px-1.5 py-1 text-[11px] leading-tight",
+        "block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight",
         cancelled && "opacity-50 line-through",
       )}
       title={`${r.clientName} · ${SERVICE_LABELS[r.serviceType]}`}
@@ -305,7 +306,7 @@ function ReservationCard({
         {SERVICE_LABELS[r.serviceType]}
         {occupancy != null && ` · ${occupancy}/${GROUP_CAPACITY}`}
       </span>
-    </span>
+    </button>
   );
 }
 
@@ -314,12 +315,14 @@ function ReservationModal({
   canManage,
   cancelAction,
   completeAction,
+  rescheduleAction,
   onClose,
 }: {
   r: ReservationListItem;
   canManage: boolean;
   cancelAction: ReservationAction;
   completeAction: ReservationAction;
+  rescheduleAction: ReservationAction;
   onClose: () => void;
 }) {
   const when = new Intl.DateTimeFormat("ca-ES", {
@@ -353,7 +356,32 @@ function ReservationModal({
 
         {canManage ? (
           r.status === "booked" ? (
-            <div className="mt-5 flex items-center gap-2">
+            <>
+            <form
+              action={rescheduleAction}
+              className="mt-5 flex flex-col gap-2 rounded-lg bg-brand-bg p-3"
+            >
+              <label className="text-xs font-bold tracking-wide text-brand-muted uppercase">
+                Reprogramar
+              </label>
+              <input type="hidden" name="id" value={r.id} />
+              <div className="flex items-center gap-2">
+                <input
+                  type="datetime-local"
+                  name="scheduledAt"
+                  required
+                  defaultValue={toLocalInput(new Date(r.scheduledAt))}
+                  className="flex-1 rounded-lg border border-brand-border bg-white px-2 py-1.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
+                />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-brand-orange px-3 py-1.5 text-sm font-bold text-white hover:opacity-90"
+                >
+                  Desar
+                </button>
+              </div>
+            </form>
+            <div className="mt-2 flex items-center gap-2">
               <form action={completeAction} className="flex-1">
                 <input type="hidden" name="id" value={r.id} />
                 <button
@@ -373,6 +401,7 @@ function ReservationModal({
                 </button>
               </form>
             </div>
+            </>
           ) : (
             <p className="mt-5 text-sm text-brand-muted">
               Aquesta reserva ja està {RESERVATION_STATUS_LABELS[r.status].toLowerCase()}.
