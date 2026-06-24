@@ -6,7 +6,12 @@ import { createTrainerReservationAction } from "@/app/(trainer)/trainer/reservas
 
 export const dynamic = "force-dynamic";
 
-export default async function NewTrainerReservationPage() {
+export default async function NewTrainerReservationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ at?: string }>;
+}) {
+  const { at } = await searchParams;
   const viewer = await getViewer();
   const { clients, trainers } = await getReservationFormData(viewer?.id);
 
@@ -32,6 +37,7 @@ export default async function NewTrainerReservationPage() {
             clients={clients}
             trainers={trainers}
             action={createTrainerReservationAction}
+            defaultScheduledAt={at}
           />
         )}
       </main>

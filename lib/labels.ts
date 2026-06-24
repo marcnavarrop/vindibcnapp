@@ -28,6 +28,21 @@ export const SERVICE_LABELS: Record<ServiceType, string> = {
   fisioterapia: "Fisioteràpia",
 };
 
+/**
+ * Color base por tipo de servicio para la vista de calendario.
+ * Paleta coherente con la marca (lila/naranja) + un verde-azulado y un violeta
+ * claro para distinguir los cuatro tipos. Se usa como borde y fondo tintado.
+ */
+export const SERVICE_COLORS: Record<ServiceType, string> = {
+  ep_individual: "#642263", // lila de marca
+  ep_parejas: "#965495", // lila claro
+  grupo_reducido: "#ff6d17", // naranja de acento
+  fisioterapia: "#1d8a8a", // verd-blau (fisio)
+};
+
+/** Capacidad por defecto de una sesión de grupo reducido (para el "N/4"). */
+export const GROUP_CAPACITY = 4;
+
 export const BONO_STATUS_LABELS: Record<BonoStatus, string> = {
   active: "Actiu",
   completed: "Completat",

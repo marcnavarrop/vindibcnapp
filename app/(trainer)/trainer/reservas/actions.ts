@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createReservation } from "@/lib/data/reservations";
+import {
+  createReservation,
+  cancelReservation,
+  completeReservation,
+} from "@/lib/data/reservations";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
 /**
@@ -40,4 +44,19 @@ export async function createTrainerReservationAction(
   revalidatePath("/trainer/reservas");
   revalidatePath("/trainer/bonos");
   redirect("/trainer/reservas");
+}
+
+/** Cancela una reserva (RLS: solo de sus clientes asignados). */
+export async function cancelTrainerReservationAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (id) await cancelReservation(id);
+  revalidatePath("/trainer/reservas");
+  revalidatePath("/trainer/bonos");
+}
+
+/** Marca una reserva como realizada (RLS: solo de sus clientes asignados). */
+export async function completeTrainerReservationAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (id) await completeReservation(id);
+  revalidatePath("/trainer/reservas");
 }

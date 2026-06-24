@@ -14,11 +14,14 @@ export function ReservationForm({
   clients,
   trainers,
   action = createReservationAction,
+  defaultScheduledAt,
 }: {
   clients: ReservationFormData["clients"];
   trainers: ReservationFormData["trainers"];
   /** Acción del formulario; por defecto la del área admin. */
   action?: (prev: FormState, formData: FormData) => Promise<FormState>;
+  /** Valor inicial de data i hora (YYYY-MM-DDTHH:mm), p. ej. desde el calendario. */
+  defaultScheduledAt?: string;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
   const [clientId, setClientId] = useState("");
@@ -68,7 +71,13 @@ export function ReservationForm({
         options={trainers.map((t) => ({ value: t.id, label: t.name }))}
       />
 
-      <Field label="Data i hora" name="scheduledAt" type="datetime-local" required />
+      <Field
+        label="Data i hora"
+        name="scheduledAt"
+        type="datetime-local"
+        required
+        defaultValue={defaultScheduledAt}
+      />
 
       <div>
         <Field

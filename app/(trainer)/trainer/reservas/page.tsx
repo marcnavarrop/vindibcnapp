@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
-import { ReservationsAgenda } from "@/components/reservations-agenda";
+import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
 import { listClients, listTrainers } from "@/lib/data/clients";
+import {
+  cancelTrainerReservationAction,
+  completeTrainerReservationAction,
+} from "@/app/(trainer)/trainer/reservas/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,11 +46,14 @@ export default async function TrainerReservasPage() {
           </Link>
         </div>
 
-        <ReservationsAgenda
+        <ReservationsView
           reservations={reservations}
           trainers={trainers}
           nowISO={nowISO}
           manageableIds={manageableIds}
+          newReservationBase="/trainer/reservas/new"
+          cancelAction={cancelTrainerReservationAction}
+          completeAction={completeTrainerReservationAction}
         />
       </main>
   );

@@ -4,7 +4,12 @@ import { getReservationFormData } from "@/lib/data/reservations";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewReservationPage() {
+export default async function NewReservationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ at?: string }>;
+}) {
+  const { at } = await searchParams;
   const { clients, trainers } = await getReservationFormData();
 
   return (
@@ -17,7 +22,11 @@ export default async function NewReservationPage() {
         </Link>
         <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Nova reserva</h1>
 
-        <ReservationForm clients={clients} trainers={trainers} />
+        <ReservationForm
+          clients={clients}
+          trainers={trainers}
+          defaultScheduledAt={at}
+        />
       </main>
   );
 }
