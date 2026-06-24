@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const SECTIONS = [
   { href: "/admin/clients", title: "Clients", desc: "Fitxes, entrenador/a assignat/da i bons.", ready: true },
+  { href: "/admin/entrenadors", title: "Entrenadors", desc: "Equip, especialitat i clients assignats.", ready: true },
   { href: "/admin/bonos", title: "Bons", desc: "Paquets de sessions i el seu estat.", ready: true },
   { href: "/admin/reservas", title: "Reserves", desc: "Agenda de sessions.", ready: true },
   { href: "/admin/pagos", title: "Pagaments", desc: "Cobraments amb targeta i efectiu.", ready: true },
