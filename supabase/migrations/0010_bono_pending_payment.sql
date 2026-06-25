@@ -1,0 +1,11 @@
+-- ============================================================================
+-- VindiBCN · 0010 — Estat 'pending_payment' per als bons
+--
+-- Un bo comprat pel client "per pagar al centre" es crea en 'pending_payment':
+-- té totes les sessions però NO es pot fer servir per reservar fins que l'admin
+-- el marca com pagat (passa a 'active' i es registra el cobrament).
+--
+-- Nota: ALTER TYPE ... ADD VALUE no pot executar-se dins d'una transacció amb
+-- usos posteriors del valor; aquí va sol, així que és segur.
+-- ============================================================================
+alter type public.bono_status add value if not exists 'pending_payment';

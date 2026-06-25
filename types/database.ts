@@ -19,7 +19,11 @@ export type ServiceType =
   | "ep_parejas"
   | "grupo_reducido"
   | "fisioterapia";
-export type BonoStatus = "active" | "completed" | "cancelled";
+export type BonoStatus =
+  | "active"
+  | "completed"
+  | "cancelled"
+  | "pending_payment";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type PaymentMethod = "card" | "cash";
 export type ExerciseCategory =

@@ -47,7 +47,15 @@ export default async function ClientBonosPage() {
                     {b.remainingSessions} / {b.totalSessions} sessions
                   </span>
                   <span>{formatEur(b.price)}</span>
-                  <Badge tone={b.status === "active" ? "success" : "neutral"}>
+                  <Badge
+                    tone={
+                      b.status === "active"
+                        ? "success"
+                        : b.status === "pending_payment"
+                          ? "warn"
+                          : "neutral"
+                    }
+                  >
                     {BONO_STATUS_LABELS[b.status]}
                   </Badge>
                 </Row>

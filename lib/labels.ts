@@ -62,6 +62,7 @@ export const BONO_STATUS_LABELS: Record<BonoStatus, string> = {
   active: "Actiu",
   completed: "Completat",
   cancelled: "Cancel·lat",
+  pending_payment: "Pendent de pagament",
 };
 
 export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {

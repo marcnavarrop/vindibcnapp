@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createBono } from "@/lib/data/bonos";
+import { createBono, markBonoPaid } from "@/lib/data/bonos";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType, PaymentMethod } from "@/types/database";
 
@@ -35,4 +35,13 @@ export async function createBonoAction(
   revalidatePath("/admin/bonos");
   revalidatePath("/admin/pagos");
   redirect(`/admin/clients/${clientId}`);
+}
+
+/** Marca un bono pendiente como pagado (en efectivo, en el centro). */
+export async function markBonoPaidAction(formData: FormData) {
+  const bonoId = String(formData.get("bonoId") ?? "");
+  if (!bonoId) return;
+  await markBonoPaid(bonoId);
+  revalidatePath("/admin/bonos");
+  revalidatePath("/admin/pagos");
 }
