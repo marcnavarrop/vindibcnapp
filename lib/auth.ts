@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
@@ -21,8 +22,12 @@ export type Viewer = {
  *
  * Las pantallas usan esto en vez de hablar con Supabase directamente, así el
  * cambio a producción no toca las vistas.
+ *
+ * Envuelta en `React.cache()`: dentro de un mismo render (p. ej. el layout
+ * `AppShell` y la página la invocan a la vez) solo hace UNA llamada a Supabase
+ * Auth; las siguientes reutilizan el resultado memoizado del request.
  */
-export async function getViewer(): Promise<Viewer | null> {
+export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (USE_MOCK) {
     const role = (await cookies()).get(MOCK_ROLE_COOKIE)?.value as
       | UserRole
@@ -59,4 +64,4 @@ export async function getViewer(): Promise<Viewer | null> {
     role: profile.role,
     specialty: profile.specialty ?? null,
   };
-}
+});

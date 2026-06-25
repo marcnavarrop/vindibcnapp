@@ -74,8 +74,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Ejecuta el middleware en todo salvo assets estáticos e imágenes.
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  // Solo las áreas que requieren control de rol. Así el middleware (y su
+  // `getUser()` contra Supabase Auth) NO se ejecuta en rutas públicas (/,
+  // /login, /register), assets estáticos, imágenes ni sus prefetches.
+  // `:path*` cubre también la ruta base (p. ej. exactamente "/admin").
+  matcher: ["/admin/:path*", "/trainer/:path*", "/client/:path*"],
 };
