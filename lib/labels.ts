@@ -6,11 +6,18 @@ import type {
   UserRole,
   ExerciseCategory,
   Specialty,
+  PreferredLanguage,
 } from "@/types/database";
 
 export const SPECIALTY_LABELS: Record<Specialty, string> = {
   entrenador: "Entrenador/a",
   fisioterapeuta: "Fisioterapeuta",
+};
+
+export const LANGUAGE_LABELS: Record<PreferredLanguage, string> = {
+  ca: "Català",
+  es: "Castellà",
+  en: "English",
 };
 
 export const EXERCISE_CATEGORY_LABELS: Record<ExerciseCategory, string> = {

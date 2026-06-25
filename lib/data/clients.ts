@@ -8,6 +8,7 @@ import type {
   BonoStatus,
   ReservationStatus,
   PaymentMethod,
+  PreferredLanguage,
 } from "@/types/database";
 
 /** Cliente enriquecido para listados (nombre, entrenador, sesiones restantes). */
@@ -311,6 +312,7 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
       phone: input.phone,
       role: "client",
       specialty: null,
+      preferred_language: "ca",
       created_at: createdAt,
     });
     store.clients.push({
@@ -404,4 +406,80 @@ export async function updateClientRecord(
     })
     .eq("id", client.profile_id);
   if (pErr) throw pErr;
+}
+
+// ── Ajustes del propio perfil (área cliente · Configuració) ──
+
+export type ProfileSettings = {
+  fullName: string;
+  email: string;
+  phone: string;
+  preferredLanguage: PreferredLanguage;
+};
+
+/** Lee los datos editables del propio perfil. */
+export async function getProfileSettings(
+  profileId: string,
+): Promise<ProfileSettings | null> {
+  if (USE_MOCK) {
+    const p = getStore().profiles.find((x) => x.id === profileId);
+    return p
+      ? {
+          fullName: p.full_name ?? "",
+          email: p.email ?? "",
+          phone: p.phone ?? "",
+          preferredLanguage: p.preferred_language,
+        }
+      : null;
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("full_name, email, phone, preferred_language")
+    .eq("id", profileId)
+    .single();
+  if (error || !data) return null;
+  return {
+    fullName: data.full_name ?? "",
+    email: data.email ?? "",
+    phone: data.phone ?? "",
+    preferredLanguage: data.preferred_language,
+  };
+}
+
+export type ProfileSettingsInput = {
+  fullName: string;
+  phone: string | null;
+  preferredLanguage: PreferredLanguage;
+};
+
+/**
+ * Actualiza el propio perfil (nombre, teléfono e idioma). El email NO se toca
+ * porque es el de login. La RLS de `profiles_update` solo deja modificar la
+ * propia fila (id = auth.uid()); aun así filtramos por `profileId`.
+ */
+export async function updateProfileSettings(
+  profileId: string,
+  input: ProfileSettingsInput,
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const p = store.profiles.find((x) => x.id === profileId);
+    if (!p) throw new Error("Perfil no trobat.");
+    p.full_name = input.fullName;
+    p.phone = input.phone;
+    p.preferred_language = input.preferredLanguage;
+    saveStore(store);
+    return;
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      full_name: input.fullName,
+      phone: input.phone,
+      preferred_language: input.preferredLanguage,
+    })
+    .eq("id", profileId);
+  if (error) throw error;
 }

@@ -122,6 +122,7 @@ export async function createTrainer(input: TrainerInput): Promise<string> {
       phone: null,
       role: "trainer",
       specialty: input.specialty,
+      preferred_language: "ca",
       created_at: new Date().toISOString(),
     });
     saveStore(store);

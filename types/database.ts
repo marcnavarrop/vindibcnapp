@@ -12,6 +12,7 @@
 
 export type UserRole = "admin" | "trainer" | "client";
 export type Specialty = "entrenador" | "fisioterapeuta";
+export type PreferredLanguage = "ca" | "es" | "en";
 export type ServiceType =
   | "ep_individual"
   | "ep_parejas"
@@ -38,6 +39,7 @@ export interface Database {
           phone: string | null;
           role: UserRole;
           specialty: Specialty | null;
+          preferred_language: PreferredLanguage;
           created_at: string;
         };
         Insert: {
@@ -47,6 +49,7 @@ export interface Database {
           phone?: string | null;
           role?: UserRole;
           specialty?: Specialty | null;
+          preferred_language?: PreferredLanguage;
           created_at?: string;
         };
         Update: {
@@ -56,6 +59,7 @@ export interface Database {
           phone?: string | null;
           role?: UserRole;
           specialty?: Specialty | null;
+          preferred_language?: PreferredLanguage;
           created_at?: string;
         };
         Relationships: [];
