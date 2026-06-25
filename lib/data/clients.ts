@@ -9,6 +9,7 @@ import type {
   ReservationStatus,
   PaymentMethod,
   PreferredLanguage,
+  Gender,
 } from "@/types/database";
 
 /** Cliente enriquecido para listados (nombre, entrenador, sesiones restantes). */
@@ -313,6 +314,12 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
       role: "client",
       specialty: null,
       preferred_language: "ca",
+      birth_date: null,
+      height_cm: null,
+      weight_kg: null,
+      gender: null,
+      emergency_contact: null,
+      objective: null,
       created_at: createdAt,
     });
     store.clients.push({
@@ -415,48 +422,74 @@ export type ProfileSettings = {
   email: string;
   phone: string;
   preferredLanguage: PreferredLanguage;
+  birthDate: string; // YYYY-MM-DD o ""
+  heightCm: string; // string para el input numérico
+  weightKg: string;
+  gender: Gender | "";
+  emergencyContact: string;
+  objective: string;
 };
 
 /** Lee los datos editables del propio perfil. */
 export async function getProfileSettings(
   profileId: string,
 ): Promise<ProfileSettings | null> {
+  const toSettings = (p: {
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+    preferred_language: PreferredLanguage;
+    birth_date: string | null;
+    height_cm: number | null;
+    weight_kg: number | null;
+    gender: Gender | null;
+    emergency_contact: string | null;
+    objective: string | null;
+  }): ProfileSettings => ({
+    fullName: p.full_name ?? "",
+    email: p.email ?? "",
+    phone: p.phone ?? "",
+    preferredLanguage: p.preferred_language,
+    birthDate: p.birth_date ?? "",
+    heightCm: p.height_cm != null ? String(p.height_cm) : "",
+    weightKg: p.weight_kg != null ? String(p.weight_kg) : "",
+    gender: p.gender ?? "",
+    emergencyContact: p.emergency_contact ?? "",
+    objective: p.objective ?? "",
+  });
+
   if (USE_MOCK) {
     const p = getStore().profiles.find((x) => x.id === profileId);
-    return p
-      ? {
-          fullName: p.full_name ?? "",
-          email: p.email ?? "",
-          phone: p.phone ?? "",
-          preferredLanguage: p.preferred_language,
-        }
-      : null;
+    return p ? toSettings(p) : null;
   }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("full_name, email, phone, preferred_language")
+    .select(
+      "full_name, email, phone, preferred_language, birth_date, height_cm, weight_kg, gender, emergency_contact, objective",
+    )
     .eq("id", profileId)
     .single();
   if (error || !data) return null;
-  return {
-    fullName: data.full_name ?? "",
-    email: data.email ?? "",
-    phone: data.phone ?? "",
-    preferredLanguage: data.preferred_language,
-  };
+  return toSettings(data);
 }
 
 export type ProfileSettingsInput = {
   fullName: string;
   phone: string | null;
   preferredLanguage: PreferredLanguage;
+  birthDate: string | null;
+  heightCm: number | null;
+  weightKg: number | null;
+  gender: Gender | null;
+  emergencyContact: string | null;
+  objective: string | null;
 };
 
 /**
- * Actualiza el propio perfil (nombre, teléfono e idioma). El email NO se toca
- * porque es el de login. La RLS de `profiles_update` solo deja modificar la
- * propia fila (id = auth.uid()); aun así filtramos por `profileId`.
+ * Actualiza el propio perfil. El email NO se toca porque es el de login. La RLS
+ * de `profiles_update` solo deja modificar la propia fila (id = auth.uid());
+ * aun así filtramos por `profileId`.
  */
 export async function updateProfileSettings(
   profileId: string,
@@ -469,6 +502,12 @@ export async function updateProfileSettings(
     p.full_name = input.fullName;
     p.phone = input.phone;
     p.preferred_language = input.preferredLanguage;
+    p.birth_date = input.birthDate;
+    p.height_cm = input.heightCm;
+    p.weight_kg = input.weightKg;
+    p.gender = input.gender;
+    p.emergency_contact = input.emergencyContact;
+    p.objective = input.objective;
     saveStore(store);
     return;
   }
@@ -479,6 +518,12 @@ export async function updateProfileSettings(
       full_name: input.fullName,
       phone: input.phone,
       preferred_language: input.preferredLanguage,
+      birth_date: input.birthDate,
+      height_cm: input.heightCm,
+      weight_kg: input.weightKg,
+      gender: input.gender,
+      emergency_contact: input.emergencyContact,
+      objective: input.objective,
     })
     .eq("id", profileId);
   if (error) throw error;

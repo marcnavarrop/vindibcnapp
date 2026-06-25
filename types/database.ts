@@ -13,6 +13,7 @@
 export type UserRole = "admin" | "trainer" | "client";
 export type Specialty = "entrenador" | "fisioterapeuta";
 export type PreferredLanguage = "ca" | "es" | "en";
+export type Gender = "home" | "dona" | "altre" | "ns_nc";
 export type ServiceType =
   | "ep_individual"
   | "ep_parejas"
@@ -40,6 +41,12 @@ export interface Database {
           role: UserRole;
           specialty: Specialty | null;
           preferred_language: PreferredLanguage;
+          birth_date: string | null;
+          height_cm: number | null;
+          weight_kg: number | null;
+          gender: Gender | null;
+          emergency_contact: string | null;
+          objective: string | null;
           created_at: string;
         };
         Insert: {
@@ -50,6 +57,12 @@ export interface Database {
           role?: UserRole;
           specialty?: Specialty | null;
           preferred_language?: PreferredLanguage;
+          birth_date?: string | null;
+          height_cm?: number | null;
+          weight_kg?: number | null;
+          gender?: Gender | null;
+          emergency_contact?: string | null;
+          objective?: string | null;
           created_at?: string;
         };
         Update: {
@@ -60,6 +73,12 @@ export interface Database {
           role?: UserRole;
           specialty?: Specialty | null;
           preferred_language?: PreferredLanguage;
+          birth_date?: string | null;
+          height_cm?: number | null;
+          weight_kg?: number | null;
+          gender?: Gender | null;
+          emergency_contact?: string | null;
+          objective?: string | null;
           created_at?: string;
         };
         Relationships: [];

@@ -20,13 +20,13 @@ type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 const now = "2026-06-01T09:00:00.000Z";
 
 export const seedProfiles: Profile[] = [
-  { id: "u-admin", full_name: "Marc Navarro", email: "admin@vindibcn.com", phone: "+34 600 000 001", role: "admin", specialty: null, preferred_language: "ca", created_at: now },
-  { id: "u-trainer-laia", full_name: "Laia Puig", email: "laia@vindibcn.com", phone: "+34 600 000 002", role: "trainer", specialty: "entrenador", preferred_language: "ca", created_at: now },
-  { id: "u-trainer-jordi", full_name: "Jordi Soler", email: "jordi@vindibcn.com", phone: "+34 600 000 003", role: "trainer", specialty: "fisioterapeuta", preferred_language: "ca", created_at: now },
-  { id: "u-client-ana", full_name: "Ana Ferrer", email: "ana@example.com", phone: "+34 600 100 001", role: "client", specialty: null, preferred_language: "ca", created_at: now },
-  { id: "u-client-pau", full_name: "Pau Riera", email: "pau@example.com", phone: "+34 600 100 002", role: "client", specialty: null, preferred_language: "ca", created_at: now },
-  { id: "u-client-marta", full_name: "Marta Gil", email: "marta@example.com", phone: "+34 600 100 003", role: "client", specialty: null, preferred_language: "ca", created_at: now },
-  { id: "u-client-oriol", full_name: "Oriol Camps", email: "oriol@example.com", phone: "+34 600 100 004", role: "client", specialty: null, preferred_language: "ca", created_at: now },
+  { id: "u-admin", full_name: "Marc Navarro", email: "admin@vindibcn.com", phone: "+34 600 000 001", role: "admin", specialty: null, preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, created_at: now },
+  { id: "u-trainer-laia", full_name: "Laia Puig", email: "laia@vindibcn.com", phone: "+34 600 000 002", role: "trainer", specialty: "entrenador", preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, created_at: now },
+  { id: "u-trainer-jordi", full_name: "Jordi Soler", email: "jordi@vindibcn.com", phone: "+34 600 000 003", role: "trainer", specialty: "fisioterapeuta", preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, created_at: now },
+  { id: "u-client-ana", full_name: "Ana Ferrer", email: "ana@example.com", phone: "+34 600 100 001", role: "client", specialty: null, preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, created_at: now },
+  { id: "u-client-pau", full_name: "Pau Riera", email: "pau@example.com", phone: "+34 600 100 002", role: "client", specialty: null, preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, created_at: now },
+  { id: "u-client-marta", full_name: "Marta Gil", email: "marta@example.com", phone: "+34 600 100 003", role: "client", specialty: null, preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, created_at: now },
+  { id: "u-client-oriol", full_name: "Oriol Camps", email: "oriol@example.com", phone: "+34 600 100 004", role: "client", specialty: null, preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, created_at: now },
 ];
 
 export const seedClients: Client[] = [

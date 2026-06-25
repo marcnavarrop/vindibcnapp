@@ -123,6 +123,12 @@ export async function createTrainer(input: TrainerInput): Promise<string> {
       role: "trainer",
       specialty: input.specialty,
       preferred_language: "ca",
+      birth_date: null,
+      height_cm: null,
+      weight_kg: null,
+      gender: null,
+      emergency_contact: null,
+      objective: null,
       created_at: new Date().toISOString(),
     });
     saveStore(store);

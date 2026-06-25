@@ -7,6 +7,7 @@ import type {
   ExerciseCategory,
   Specialty,
   PreferredLanguage,
+  Gender,
 } from "@/types/database";
 
 export const SPECIALTY_LABELS: Record<Specialty, string> = {
@@ -18,6 +19,13 @@ export const LANGUAGE_LABELS: Record<PreferredLanguage, string> = {
   ca: "Català",
   es: "Castellà",
   en: "English",
+};
+
+export const GENDER_LABELS: Record<Gender, string> = {
+  home: "Home",
+  dona: "Dona",
+  altre: "Altre",
+  ns_nc: "Prefereixo no dir-ho",
 };
 
 export const EXERCISE_CATEGORY_LABELS: Record<ExerciseCategory, string> = {
