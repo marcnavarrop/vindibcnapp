@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "@/lib/utils";
-import { SERVICE_LABELS, SERVICE_COLORS } from "@/lib/labels";
+import { SERVICE_LABELS, SERVICE_COLORS, GROUP_CAPACITY } from "@/lib/labels";
 import type {
   ClientCalendarReservation,
   ClientReservationData,
@@ -193,22 +193,46 @@ export function ClientWeeklyCalendar({
                 const items = cells.get(`${dayIdx}-${h}`) ?? [];
                 const cellDate = new Date(d);
                 cellDate.setHours(h, 0, 0, 0);
+                const inHours =
+                  h >= OPEN && h < CLOSE && cellDate.getTime() > Date.now();
+
+                const ownItems = items.filter((r) => r.isOwn);
+                const groupItems = items.filter(
+                  (r) => r.serviceType === "grupo_reducido",
+                );
+                const hasExclusive = items.some(
+                  (r) => r.serviceType !== "grupo_reducido",
+                );
+                const groupCount = groupItems.length;
+                const groupColor = SERVICE_COLORS.grupo_reducido;
+
+                // Unirse a un grupo existente con plazas (con un bono de grupo).
+                const groupJoinable =
+                  ownItems.length === 0 &&
+                  !hasExclusive &&
+                  groupCount > 0 &&
+                  groupCount < GROUP_CAPACITY &&
+                  selectedBono?.serviceType === "grupo_reducido";
+
+                const empty = items.length === 0;
                 const bookable =
-                  h >= OPEN &&
-                  h < CLOSE &&
-                  cellDate.getTime() > Date.now() &&
-                  !!selectedBono &&
-                  items.every((r) => !r.isOwn);
+                  inHours && !!selectedBono && (empty || groupJoinable);
+
+                // Al unirse, usa la hora EXACTA del grupo ya creado (no la celda).
+                const targetSlot = groupJoinable
+                  ? new Date(groupItems[0].scheduledAt)
+                  : cellDate;
+
                 return (
                   <div
                     key={dayIdx}
                     role={bookable ? "button" : undefined}
                     tabIndex={bookable ? 0 : undefined}
-                    onClick={bookable ? () => setSlot(cellDate) : undefined}
+                    onClick={bookable ? () => setSlot(targetSlot) : undefined}
                     onKeyDown={
                       bookable
                         ? (e) => {
-                            if (e.key === "Enter") setSlot(cellDate);
+                            if (e.key === "Enter") setSlot(targetSlot);
                           }
                         : undefined
                     }
@@ -218,8 +242,8 @@ export function ClientWeeklyCalendar({
                     )}
                   >
                     <div className="flex flex-col gap-1">
-                      {items.map((r) =>
-                        r.isOwn ? (
+                      {ownItems.length > 0 ? (
+                        ownItems.map((r) => (
                           <button
                             key={r.id}
                             type="button"
@@ -243,15 +267,33 @@ export function ClientWeeklyCalendar({
                               {SERVICE_LABELS[r.serviceType]}
                             </span>
                           </button>
+                        ))
+                      ) : hasExclusive ? (
+                        <span className="block rounded-md bg-brand-border/60 px-1.5 py-1 text-[11px] font-bold text-brand-muted">
+                          Ocupat
+                        </span>
+                      ) : groupCount > 0 ? (
+                        groupCount >= GROUP_CAPACITY ? (
+                          <span className="block rounded-md bg-brand-border/60 px-1.5 py-1 text-[11px] font-bold text-brand-muted">
+                            Grup · Complet
+                          </span>
                         ) : (
                           <span
-                            key={r.id}
-                            className="block rounded-md bg-brand-border/60 px-1.5 py-1 text-[11px] font-bold text-brand-muted"
+                            style={{
+                              backgroundColor: `${groupColor}1a`,
+                              borderLeft: `3px solid ${groupColor}`,
+                            }}
+                            className="block rounded-md px-1.5 py-1 text-[11px] font-bold leading-tight"
                           >
-                            Ocupat
+                            <span className="block" style={{ color: groupColor }}>
+                              Grup · {groupCount}/{GROUP_CAPACITY}
+                            </span>
+                            <span className="block font-normal text-brand-muted">
+                              {groupJoinable ? "Plaça lliure" : "Grup reduït"}
+                            </span>
                           </span>
-                        ),
-                      )}
+                        )
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -262,8 +304,9 @@ export function ClientWeeklyCalendar({
       </div>
 
       <p className="mt-3 text-xs text-brand-muted">
-        Fes clic en una franja lliure per reservar amb el bo seleccionat. Les
-        sessions d&apos;altres persones es mostren com a «Ocupat».
+        Fes clic en una franja lliure per reservar amb el bo seleccionat. Amb un
+        bo de grup, també pots apuntar-te a una sessió «Grup» amb plaça lliure.
+        Les sessions d&apos;altres persones es mostren com a «Ocupat».
       </p>
 
       {slot && selectedBono && (
