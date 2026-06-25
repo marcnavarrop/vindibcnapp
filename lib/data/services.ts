@@ -42,14 +42,24 @@ function toService(r: Row): Service {
 }
 
 /** Todo el catálogo (incluidos inactivos), para la pantalla de gestión. */
+/** Orden estable: por tipo de servicio y, dentro, por nº de sesiones. */
+function byTypeThenSessions(a: Service, b: Service): number {
+  return (
+    a.serviceType.localeCompare(b.serviceType) ||
+    a.defaultSessions - b.defaultSessions
+  );
+}
+
 export async function listServices(): Promise<Service[]> {
-  if (USE_MOCK) return getStore().services.map(toService);
+  if (USE_MOCK)
+    return getStore().services.map(toService).sort(byTypeThenSessions);
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("services")
     .select("id, service_type, name, price, default_sessions, active")
-    .order("created_at", { ascending: true });
+    .order("service_type", { ascending: true })
+    .order("default_sessions", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(toService);
 }

@@ -56,13 +56,13 @@ export function BuyBonoForm({ services }: { services: Service[] }) {
 
       {/* a) Servei / paquet */}
       <SelectField
-        label="Servei"
+        label="Paquet"
         name="serviceSelect"
         value={serviceId}
         onChange={(e) => setServiceId(e.target.value)}
         options={services.map((s) => ({
           value: s.id,
-          label: `${s.name} · ${s.defaultSessions} sessions · ${formatEur(s.price)}`,
+          label: `${SERVICE_LABELS[s.serviceType]} · ${s.name} · ${s.defaultSessions} sess. · ${formatEur(s.price)}`,
         }))}
       />
 

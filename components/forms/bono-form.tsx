@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { formatEur } from "@/lib/labels";
+import { formatEur, SERVICE_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { Service } from "@/lib/data/services";
 
@@ -49,10 +49,10 @@ export function BonoForm({
       <input type="hidden" name="serviceType" value={selected?.serviceType ?? ""} />
 
       <SelectField
-        label="Servei"
+        label="Paquet"
         name="serviceId"
         placeholder={
-          services.length === 0 ? "No hi ha serveis al catàleg" : "Tria un servei"
+          services.length === 0 ? "No hi ha paquets al catàleg" : "Tria un paquet"
         }
         required
         disabled={services.length === 0}
@@ -60,7 +60,7 @@ export function BonoForm({
         onChange={(e) => onServiceChange(e.target.value)}
         options={services.map((s) => ({
           value: s.id,
-          label: `${s.name} · ${formatEur(s.price)}`,
+          label: `${SERVICE_LABELS[s.serviceType]} · ${s.name} · ${s.defaultSessions} sess. · ${formatEur(s.price)}`,
         }))}
       />
       <Field

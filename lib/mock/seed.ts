@@ -51,10 +51,18 @@ export const seedReservations: Reservation[] = [
 ];
 
 export const seedServices: Service[] = [
-  { id: "s-ep-ind", service_type: "ep_individual", name: "Entrenament personal individual", price: 400, default_sessions: 10, active: true, created_at: now },
-  { id: "s-ep-par", service_type: "ep_parejas", name: "Entrenament personal en parella", price: 350, default_sessions: 10, active: true, created_at: now },
-  { id: "s-grup", service_type: "grupo_reducido", name: "Grup reduït", price: 200, default_sessions: 8, active: true, created_at: now },
-  { id: "s-fisio", service_type: "fisioterapia", name: "Fisioteràpia", price: 250, default_sessions: 5, active: true, created_at: now },
+  { id: "s-epi-1", service_type: "ep_individual", name: "Sessió única", price: 55, default_sessions: 1, active: true, created_at: now },
+  { id: "s-epi-4", service_type: "ep_individual", name: "Bo 4 sessions", price: 190, default_sessions: 4, active: true, created_at: now },
+  { id: "s-epi-8", service_type: "ep_individual", name: "Bo 8 sessions", price: 360, default_sessions: 8, active: true, created_at: now },
+  { id: "s-epp-1", service_type: "ep_parejas", name: "Sessió única", price: 65, default_sessions: 1, active: true, created_at: now },
+  { id: "s-epp-4", service_type: "ep_parejas", name: "Bo 4 sessions", price: 240, default_sessions: 4, active: true, created_at: now },
+  { id: "s-epp-8", service_type: "ep_parejas", name: "Bo 8 sessions", price: 450, default_sessions: 8, active: true, created_at: now },
+  { id: "s-grp-2", service_type: "grupo_reducido", name: "Bo 2 sessions", price: 50, default_sessions: 2, active: true, created_at: now },
+  { id: "s-grp-4", service_type: "grupo_reducido", name: "Bo 4 sessions", price: 80, default_sessions: 4, active: true, created_at: now },
+  { id: "s-grp-8", service_type: "grupo_reducido", name: "Bo 8 sessions", price: 140, default_sessions: 8, active: true, created_at: now },
+  { id: "s-fis-1", service_type: "fisioterapia", name: "Sessió única", price: 50, default_sessions: 1, active: true, created_at: now },
+  { id: "s-fis-5", service_type: "fisioterapia", name: "Bo 5 sessions", price: 225, default_sessions: 5, active: true, created_at: now },
+  { id: "s-fis-10", service_type: "fisioterapia", name: "Bo 10 sessions", price: 420, default_sessions: 10, active: true, created_at: now },
 ];
 
 export const seedExercises: Exercise[] = [
