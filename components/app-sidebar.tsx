@@ -17,6 +17,23 @@ function areaSubtitle(role: Role, specialty: Specialty | null): string {
   return AREA_LABELS[role];
 }
 
+/** Inicial para el avatar: del nombre completo o, si falta, del correo. */
+function initialOf(fullName: string, email: string): string {
+  const src = (fullName || email).trim();
+  return src ? src[0].toUpperCase() : "?";
+}
+
+function Avatar({ initial }: { initial: string }) {
+  return (
+    <div
+      aria-hidden
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-orange text-sm font-bold text-white"
+    >
+      {initial}
+    </div>
+  );
+}
+
 /**
  * Navegación lateral común a las tres áreas (admin/trainer/client),
  * parametrizada por rol.
@@ -27,12 +44,17 @@ function areaSubtitle(role: Role, specialty: Specialty | null): string {
 export function AppSidebar({
   role,
   specialty = null,
+  fullName = "",
+  email = "",
 }: {
   role: Role;
   specialty?: Specialty | null;
+  fullName?: string;
+  email?: string;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const initial = initialOf(fullName, email);
 
   // Cierra el panel al navegar.
   useEffect(() => {
@@ -43,7 +65,12 @@ export function AppSidebar({
     <>
       {/* ── Sidebar fijo (escritorio) ── */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col bg-brand-purple text-white">
-        <SidebarContent role={role} specialty={specialty} pathname={pathname} />
+        <SidebarContent
+          role={role}
+          specialty={specialty}
+          initial={initial}
+          pathname={pathname}
+        />
       </aside>
 
       {/* ── Barra superior (móvil) ── */}
@@ -61,7 +88,10 @@ export function AppSidebar({
             <Wordmark className="text-xl text-white" />
           </Link>
         </div>
-        <SignOutButton />
+        <div className="flex items-center gap-2">
+          <Avatar initial={initial} />
+          <SignOutButton />
+        </div>
       </header>
 
       {/* ── Panel deslizante (móvil) ── */}
@@ -81,7 +111,12 @@ export function AppSidebar({
             >
               <CloseIcon />
             </button>
-            <SidebarContent role={role} specialty={specialty} pathname={pathname} />
+            <SidebarContent
+          role={role}
+          specialty={specialty}
+          initial={initial}
+          pathname={pathname}
+        />
           </div>
         </div>
       )}
@@ -92,10 +127,12 @@ export function AppSidebar({
 function SidebarContent({
   role,
   specialty,
+  initial,
   pathname,
 }: {
   role: Role;
   specialty: Specialty | null;
+  initial: string;
   pathname: string;
 }) {
   return (
@@ -139,7 +176,8 @@ function SidebarContent({
             Demo
           </span>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <Avatar initial={initial} />
           <SignOutButton />
         </div>
       </div>

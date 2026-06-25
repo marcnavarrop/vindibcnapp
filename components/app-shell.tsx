@@ -18,7 +18,12 @@ export async function AppShell({
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <AppSidebar role={role} specialty={viewer?.specialty ?? null} />
+      <AppSidebar
+        role={role}
+        specialty={viewer?.specialty ?? null}
+        fullName={viewer?.fullName ?? ""}
+        email={viewer?.email ?? ""}
+      />
       <div className="lg:pl-64">{children}</div>
     </div>
   );
