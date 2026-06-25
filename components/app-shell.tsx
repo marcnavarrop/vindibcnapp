@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { getViewer } from "@/lib/auth";
 import type { Role } from "@/lib/nav";
 
 /**
@@ -6,16 +7,18 @@ import type { Role } from "@/lib/nav";
  * contenido, que en escritorio se desplaza para dejar sitio al sidebar fijo y
  * en móvil ocupa todo el ancho.
  */
-export function AppShell({
+export async function AppShell({
   role,
   children,
 }: {
   role: Role;
   children: React.ReactNode;
 }) {
+  const viewer = await getViewer();
+
   return (
     <div className="min-h-screen bg-brand-bg">
-      <AppSidebar role={role} />
+      <AppSidebar role={role} specialty={viewer?.specialty ?? null} />
       <div className="lg:pl-64">{children}</div>
     </div>
   );

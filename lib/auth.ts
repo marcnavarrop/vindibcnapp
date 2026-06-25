@@ -3,13 +3,14 @@ import { cookies } from "next/headers";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { seedProfiles } from "@/lib/mock/seed";
-import type { UserRole } from "@/types/database";
+import type { UserRole, Specialty } from "@/types/database";
 
 export type Viewer = {
   id: string;
   email: string;
   fullName: string;
   role: UserRole;
+  specialty: Specialty | null;
 };
 
 /**
@@ -34,6 +35,7 @@ export async function getViewer(): Promise<Viewer | null> {
       email: profile.email ?? "",
       fullName: profile.full_name ?? "",
       role,
+      specialty: profile.specialty ?? null,
     };
   }
 
@@ -45,7 +47,7 @@ export async function getViewer(): Promise<Viewer | null> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role")
+    .select("full_name, role, specialty")
     .eq("id", user.id)
     .single();
   if (!profile) return null;
@@ -55,5 +57,6 @@ export async function getViewer(): Promise<Viewer | null> {
     email: user.email ?? "",
     fullName: profile.full_name ?? "",
     role: profile.role,
+    specialty: profile.specialty ?? null,
   };
 }

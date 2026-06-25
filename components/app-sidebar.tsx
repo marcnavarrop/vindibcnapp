@@ -7,7 +7,15 @@ import { clsx } from "@/lib/utils";
 import { Wordmark } from "@/components/wordmark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { USE_MOCK } from "@/lib/config";
+import { SPECIALTY_LABELS } from "@/lib/labels";
 import { NAV, AREA_LABELS, HOME_PATH, type Role } from "@/lib/nav";
+import type { Specialty } from "@/types/database";
+
+/** Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área. */
+function areaSubtitle(role: Role, specialty: Specialty | null): string {
+  if (role === "trainer" && specialty) return SPECIALTY_LABELS[specialty];
+  return AREA_LABELS[role];
+}
 
 /**
  * Navegación lateral común a las tres áreas (admin/trainer/client),
@@ -16,7 +24,13 @@ import { NAV, AREA_LABELS, HOME_PATH, type Role } from "@/lib/nav";
  * - Escritorio (lg+): sidebar fijo a la izquierda.
  * - Móvil: barra superior con menú hamburguesa que abre un panel deslizante.
  */
-export function AppSidebar({ role }: { role: Role }) {
+export function AppSidebar({
+  role,
+  specialty = null,
+}: {
+  role: Role;
+  specialty?: Specialty | null;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -29,7 +43,7 @@ export function AppSidebar({ role }: { role: Role }) {
     <>
       {/* ── Sidebar fijo (escritorio) ── */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col bg-brand-purple text-white">
-        <SidebarContent role={role} pathname={pathname} />
+        <SidebarContent role={role} specialty={specialty} pathname={pathname} />
       </aside>
 
       {/* ── Barra superior (móvil) ── */}
@@ -67,7 +81,7 @@ export function AppSidebar({ role }: { role: Role }) {
             >
               <CloseIcon />
             </button>
-            <SidebarContent role={role} pathname={pathname} />
+            <SidebarContent role={role} specialty={specialty} pathname={pathname} />
           </div>
         </div>
       )}
@@ -75,13 +89,21 @@ export function AppSidebar({ role }: { role: Role }) {
   );
 }
 
-function SidebarContent({ role, pathname }: { role: Role; pathname: string }) {
+function SidebarContent({
+  role,
+  specialty,
+  pathname,
+}: {
+  role: Role;
+  specialty: Specialty | null;
+  pathname: string;
+}) {
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <Link href={HOME_PATH[role]} className="px-2 pt-2">
         <Wordmark className="text-2xl text-white" />
         <span className="mt-0.5 block text-xs font-bold tracking-widest text-white/60 uppercase">
-          {AREA_LABELS[role]}
+          {areaSubtitle(role, specialty)}
         </span>
       </Link>
 
