@@ -13,6 +13,7 @@ import {
   PAYMENT_METHOD_LABELS,
   formatEur,
   formatDate,
+  formatLongDate,
 } from "@/lib/labels";
 
 /**
@@ -28,7 +29,8 @@ export default async function ClientHome() {
   return (
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div>
-          <h1 className="text-2xl text-brand-dark">
+          <p className="text-sm text-brand-muted">{formatLongDate(new Date())}</p>
+          <h1 className="mt-0.5 text-2xl text-brand-dark">
             Hola, {viewer?.fullName?.split(" ")[0] ?? ""}
           </h1>
           {client && (

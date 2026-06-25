@@ -104,3 +104,13 @@ export function formatDayHeading(iso: string): string {
 export function dayKey(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10);
 }
+
+/** Fecha larga en catalán con la inicial en mayúscula (p. ej. "Dimecres, 25 de juny"). */
+export function formatLongDate(date: Date): string {
+  const s = new Intl.DateTimeFormat("ca-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(date);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}

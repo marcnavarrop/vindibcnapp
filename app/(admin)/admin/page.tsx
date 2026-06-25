@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { getAdminStats } from "@/lib/data/stats";
-import { formatEur } from "@/lib/labels";
+import { formatEur, formatLongDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,8 @@ export default async function AdminHome() {
 
   return (
       <main className="mx-auto max-w-5xl p-6">
-        <h1 className="text-2xl text-brand-dark">
+        <p className="text-sm text-brand-muted">{formatLongDate(new Date())}</p>
+        <h1 className="mt-0.5 text-2xl text-brand-dark">
           Hola, {viewer?.fullName?.split(" ")[0] ?? "admin"}
         </h1>
         <p className="mt-2 text-sm text-brand-muted">
