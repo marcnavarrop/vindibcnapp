@@ -36,12 +36,14 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/trainer/reservas", label: "Reserves" },
     { href: "/trainer/bonos", label: "Bons" },
     { href: "/trainer/exercicis", label: "Exercicis" },
+    { href: "/trainer/comunitat", label: "Comunitat" },
   ],
   client: [
     { href: "/client", label: "Inici", exact: true },
     { href: "/client/bonos", label: "Bonos" },
     { href: "/client/reservas", label: "Reserves" },
     { href: "/client/exercicis", label: "Exercicis" },
+    { href: "/client/comunitat", label: "Comunitat" },
     { href: "/client/configuracio", label: "Configuració" },
   ],
 };
