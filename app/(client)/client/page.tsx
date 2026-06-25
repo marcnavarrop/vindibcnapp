@@ -2,8 +2,10 @@ import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listMeasurements } from "@/lib/data/measurements";
 import { listAnnouncements } from "@/lib/data/announcements";
+import Link from "next/link";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { Badge } from "@/components/ui/badge";
+import { cancelOwnReservationAction } from "@/app/(client)/client/reservas/actions";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -59,20 +61,57 @@ export default async function ClientHome() {
               ))}
             </Panel>
 
-            <Panel title="Les meves reserves">
-              {client.reservations.map((r) => (
-                <Row key={r.id}>
-                  <span className="font-bold text-brand-dark">
-                    {formatDate(r.scheduledAt)}
-                  </span>
-                  <span className="text-brand-muted">
-                    {SERVICE_LABELS[r.serviceType]}
-                  </span>
-                  <Badge tone={r.status === "completed" ? "success" : "info"}>
-                    {RESERVATION_STATUS_LABELS[r.status]}
-                  </Badge>
-                </Row>
-              ))}
+            <Panel
+              title="Les meves reserves"
+              action={
+                <Link
+                  href="/client/reservas"
+                  className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                >
+                  + Reservar
+                </Link>
+              }
+            >
+              {client.reservations.length === 0 ? (
+                <p className="px-5 py-3 text-sm text-brand-muted">
+                  Encara no tens reserves.
+                </p>
+              ) : (
+                client.reservations.map((r) => {
+                  const cancellable =
+                    r.status === "booked" &&
+                    new Date(r.scheduledAt).getTime() > Date.now();
+                  return (
+                    <Row key={r.id}>
+                      <span className="font-bold text-brand-dark">
+                        {formatDate(r.scheduledAt)}
+                      </span>
+                      <span className="text-brand-muted">
+                        {SERVICE_LABELS[r.serviceType]}
+                      </span>
+                      <Badge
+                        tone={r.status === "completed" ? "success" : "info"}
+                      >
+                        {RESERVATION_STATUS_LABELS[r.status]}
+                      </Badge>
+                      {cancellable && (
+                        <form
+                          action={cancelOwnReservationAction}
+                          className="ml-auto"
+                        >
+                          <input type="hidden" name="id" value={r.id} />
+                          <button
+                            type="submit"
+                            className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10"
+                          >
+                            Cancel·lar
+                          </button>
+                        </form>
+                      )}
+                    </Row>
+                  );
+                })
+              )}
             </Panel>
 
             <Panel title="Els meus pagaments">
@@ -127,16 +166,21 @@ export default async function ClientHome() {
 
 function Panel({
   title,
+  action,
   children,
 }: {
   title: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
-      <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
-        {title}
-      </h2>
+      <div className="flex items-center justify-between border-b border-brand-border bg-brand-bg px-5 py-3">
+        <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
+          {title}
+        </h2>
+        {action}
+      </div>
       <div className="divide-y divide-brand-border">{children}</div>
     </section>
   );
