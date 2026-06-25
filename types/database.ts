@@ -324,6 +324,33 @@ export interface Database {
         };
         Relationships: [];
       };
+      client_exercises: {
+        Row: {
+          id: string;
+          client_id: string;
+          exercise_id: string;
+          assigned_by: string | null;
+          notes: string | null;
+          assigned_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          exercise_id: string;
+          assigned_by?: string | null;
+          notes?: string | null;
+          assigned_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          exercise_id?: string;
+          assigned_by?: string | null;
+          notes?: string | null;
+          assigned_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {

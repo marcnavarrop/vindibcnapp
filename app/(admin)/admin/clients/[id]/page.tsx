@@ -3,7 +3,14 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { getClient } from "@/lib/data/clients";
 import { listMeasurements } from "@/lib/data/measurements";
+import { listClientExercises } from "@/lib/data/client-exercises";
+import { listExercises } from "@/lib/data/exercises";
 import { deleteMeasurementAction } from "@/app/(admin)/admin/clients/progres-actions";
+import {
+  assignExerciseAction,
+  removeExerciseAction,
+} from "@/app/(admin)/admin/clients/exercises-actions";
+import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -19,9 +26,11 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, measurements] = await Promise.all([
+  const [client, measurements, assignedExercises, library] = await Promise.all([
     getClient(id),
     listMeasurements(id),
+    listClientExercises(id),
+    listExercises(),
   ]);
   if (!client) notFound();
 
@@ -130,6 +139,15 @@ export default async function ClientDetailPage({
             </Row>
           ))}
         </Panel>
+
+        {/* Exercicis assignats */}
+        <AssignedExercisesPanel
+          assigned={assignedExercises}
+          library={library}
+          canManage
+          assignAction={assignExerciseAction.bind(null, client.id)}
+          removeAction={removeExerciseAction.bind(null, client.id)}
+        />
 
         {/* Progrés */}
         <Panel

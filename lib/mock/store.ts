@@ -12,6 +12,7 @@ import {
   seedExercises,
   seedMeasurements,
   seedAnnouncements,
+  seedClientExercises,
 } from "./seed";
 import type { Database } from "@/types/database";
 
@@ -27,6 +28,7 @@ export type Store = {
   exercises: Tables["exercises"]["Row"][];
   measurements: Tables["measurements"]["Row"][];
   announcements: Tables["announcements"]["Row"][];
+  client_exercises: Tables["client_exercises"]["Row"][];
 };
 
 /**
@@ -50,6 +52,7 @@ function fromSeed(): Store {
     exercises: structuredClone(seedExercises),
     measurements: structuredClone(seedMeasurements),
     announcements: structuredClone(seedAnnouncements),
+    client_exercises: structuredClone(seedClientExercises),
   };
 }
 

@@ -3,6 +3,13 @@ import { notFound } from "next/navigation";
 import { getViewer } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { getClient } from "@/lib/data/clients";
+import { listClientExercises } from "@/lib/data/client-exercises";
+import { listExercises } from "@/lib/data/exercises";
+import {
+  assignExerciseTrainerAction,
+  removeExerciseTrainerAction,
+} from "@/app/(trainer)/trainer/clients/exercises-actions";
+import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -20,7 +27,12 @@ export default async function TrainerClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [viewer, client] = await Promise.all([getViewer(), getClient(id)]);
+  const [viewer, client, assignedExercises, library] = await Promise.all([
+    getViewer(),
+    getClient(id),
+    listClientExercises(id),
+    listExercises(),
+  ]);
   if (!client) notFound();
 
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
@@ -149,6 +161,14 @@ export default async function TrainerClientDetailPage({
             ))}
           </Panel>
         )}
+
+        <AssignedExercisesPanel
+          assigned={assignedExercises}
+          library={library}
+          canManage={canManage}
+          assignAction={assignExerciseTrainerAction.bind(null, client.id)}
+          removeAction={removeExerciseTrainerAction.bind(null, client.id)}
+        />
       </main>
   );
 }
