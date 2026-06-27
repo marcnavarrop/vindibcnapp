@@ -33,6 +33,13 @@ export default async function ClientReservasPage() {
           : "Encara no tens entrenador/a assignat/da. Parla amb el centre per poder reservar."}
       </p>
 
+      {data.trainerName && availability.length === 0 && (
+        <p className="mb-4 rounded-lg bg-brand-orange/10 px-4 py-3 text-sm font-bold text-brand-orange">
+          {data.trainerName} encara no té disponibilitat publicada. De moment no
+          es pot reservar; consulta-ho amb el centre.
+        </p>
+      )}
+
       {data.trainerName && (
         <ClientWeeklyCalendar
           reservations={data.reservations}

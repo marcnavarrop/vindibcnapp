@@ -5,8 +5,22 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listTrainers } from "@/lib/data/clients";
+import { listAvailabilityLite } from "@/lib/data/availability";
+import { isHourAvailable } from "@/lib/availability-slots";
 import { GROUP_CAPACITY } from "@/lib/labels";
 import type { Database, ServiceType, ReservationStatus } from "@/types/database";
+
+/** Lanza si la franja no cae dentro de la disponibilidad declarada del trainer. */
+async function assertWithinAvailability(
+  trainerId: string,
+  when: Date,
+): Promise<void> {
+  const rules = await listAvailabilityLite(trainerId);
+  if (!isHourAvailable(rules, when, when.getHours()))
+    throw new Error(
+      "Aquesta franja no està dins de la disponibilitat de l'entrenador/a.",
+    );
+}
 
 type DB = SupabaseClient<Database>;
 
@@ -421,6 +435,7 @@ export async function createClientReservation(
       throw new Error("Aquest bo no té sessions disponibles.");
     const trainerId = client.assigned_trainer_id;
     if (!trainerId) throw new Error("No tens entrenador/a assignat/da.");
+    await assertWithinAvailability(trainerId, when);
     assertSlotFree(
       store.reservations.filter(
         (r) =>
@@ -457,6 +472,9 @@ export async function createClientReservation(
   if (cErr || !client) throw new Error("Client no trobat.");
   const trainerId = client.assigned_trainer_id;
   if (!trainerId) throw new Error("No tens entrenador/a assignat/da.");
+
+  // 1b. La franja debe caer dentro de la disponibilidad del entrenador.
+  await assertWithinAvailability(trainerId, when);
 
   // 2. El bono debe ser suyo, activo y con sesiones.
   const { data: bono, error: bErr } = await admin

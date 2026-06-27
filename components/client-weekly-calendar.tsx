@@ -207,9 +207,10 @@ export function ClientWeeklyCalendar({
                 const groupItems = items.filter(
                   (r) => r.serviceType === "grupo_reducido",
                 );
-                const hasExclusive = items.some(
+                const exclusive = items.find(
                   (r) => r.serviceType !== "grupo_reducido",
                 );
+                const hasExclusive = !!exclusive;
                 const groupCount = groupItems.length;
                 const groupColor = SERVICE_COLORS.grupo_reducido;
 
@@ -221,11 +222,13 @@ export function ClientWeeklyCalendar({
                   groupCount < GROUP_CAPACITY &&
                   selectedBono?.serviceType === "grupo_reducido";
 
-                // Disponibilidad: si el entrenador tiene reglas, la franja debe
-                // caer dentro; si no tiene ninguna, no se restringe (legacy).
-                const withinAvailability =
-                  availability.length === 0 ||
-                  isHourAvailable(availability, cellDate, h);
+                // Disponibilidad: la franja debe caer dentro de una regla del
+                // entrenador. Sin reglas, no hay nada reservable.
+                const withinAvailability = isHourAvailable(
+                  availability,
+                  cellDate,
+                  h,
+                );
 
                 const empty = items.length === 0;
                 const bookable =
@@ -284,9 +287,23 @@ export function ClientWeeklyCalendar({
                             </span>
                           </button>
                         ))
-                      ) : hasExclusive ? (
-                        <span className="block rounded-md bg-brand-border/60 px-1.5 py-1 text-[11px] font-bold text-brand-muted">
-                          Ocupat
+                      ) : exclusive ? (
+                        <span
+                          style={{
+                            backgroundColor: `${SERVICE_COLORS[exclusive.serviceType]}14`,
+                            borderLeft: `3px solid ${SERVICE_COLORS[exclusive.serviceType]}`,
+                          }}
+                          className="block rounded-md px-1.5 py-1 text-[11px] leading-tight"
+                        >
+                          <span
+                            className="block font-bold"
+                            style={{ color: SERVICE_COLORS[exclusive.serviceType] }}
+                          >
+                            {SERVICE_LABELS[exclusive.serviceType]}
+                          </span>
+                          <span className="block font-normal text-brand-muted">
+                            Ocupat
+                          </span>
                         </span>
                       ) : groupCount > 0 ? (
                         groupCount >= GROUP_CAPACITY ? (
