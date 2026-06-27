@@ -17,6 +17,7 @@ type Exercise = Database["public"]["Tables"]["exercises"]["Row"];
 type Measurement = Database["public"]["Tables"]["measurements"]["Row"];
 type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 type ClientExercise = Database["public"]["Tables"]["client_exercises"]["Row"];
+type AvailabilityRule = Database["public"]["Tables"]["availability_rules"]["Row"];
 
 const now = "2026-06-01T09:00:00.000Z";
 
@@ -71,6 +72,8 @@ export const seedExercises: Exercise[] = [
   { id: "e-planxa", name: "Planxa abdominal", category: "core", description: "Manté el cos alineat 30-60 segons.", video_url: null, created_at: now },
   { id: "e-mobilitat-malucs", name: "Mobilitat de malucs", category: "mobilitat", description: "Rutina de mobilitat articular per a malucs.", video_url: null, created_at: now },
 ];
+
+export const seedAvailabilityRules: AvailabilityRule[] = [];
 
 export const seedClientExercises: ClientExercise[] = [
   { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },

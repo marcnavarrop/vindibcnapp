@@ -324,6 +324,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      availability_rules: {
+        Row: {
+          id: string;
+          trainer_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+          valid_from: string;
+          valid_until: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trainer_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+          valid_from?: string;
+          valid_until?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trainer_id?: string;
+          weekday?: number;
+          start_time?: string;
+          end_time?: string;
+          valid_from?: string;
+          valid_until?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       client_exercises: {
         Row: {
           id: string;

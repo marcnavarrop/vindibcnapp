@@ -1,5 +1,6 @@
 import { getViewer } from "@/lib/auth";
 import { getClientReservationData } from "@/lib/data/reservations";
+import { listAvailabilityLite } from "@/lib/data/availability";
 import { ClientWeeklyCalendar } from "@/components/client-weekly-calendar";
 import {
   createOwnReservationAction,
@@ -12,7 +13,16 @@ export default async function ClientReservasPage() {
   const viewer = await getViewer();
   const data = viewer
     ? await getClientReservationData(viewer.id)
-    : { clientId: null, trainerName: null, bonos: [], reservations: [] };
+    : {
+        clientId: null,
+        trainerId: null,
+        trainerName: null,
+        bonos: [],
+        reservations: [],
+      };
+  const availability = data.trainerId
+    ? await listAvailabilityLite(data.trainerId)
+    : [];
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -28,6 +38,7 @@ export default async function ClientReservasPage() {
           reservations={data.reservations}
           bonos={data.bonos}
           trainerName={data.trainerName}
+          availability={availability}
           createAction={createOwnReservationAction}
           cancelAction={cancelOwnReservationAction}
         />

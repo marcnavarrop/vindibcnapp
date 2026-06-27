@@ -583,6 +583,7 @@ export type ClientCalendarReservation = {
 
 export type ClientReservationData = {
   clientId: string | null;
+  trainerId: string | null;
   trainerName: string | null;
   bonos: { id: string; serviceType: ServiceType; remaining: number }[];
   reservations: ClientCalendarReservation[];
@@ -600,7 +601,13 @@ export async function getClientReservationData(
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === profileId);
     if (!client)
-      return { clientId: null, trainerName: null, bonos: [], reservations: [] };
+      return {
+        clientId: null,
+        trainerId: null,
+        trainerName: null,
+        bonos: [],
+        reservations: [],
+      };
     const trainerId = client.assigned_trainer_id;
     const trainerName = trainerId
       ? (store.profiles.find((p) => p.id === trainerId)?.full_name ?? null)
@@ -626,7 +633,7 @@ export async function getClientReservationData(
         status: r.status,
         isOwn: r.client_id === client.id,
       }));
-    return { clientId: client.id, trainerName, bonos, reservations };
+    return { clientId: client.id, trainerId, trainerName, bonos, reservations };
   }
 
   const admin = createAdminClient();
@@ -636,7 +643,13 @@ export async function getClientReservationData(
     .eq("profile_id", profileId)
     .single();
   if (!client)
-    return { clientId: null, trainerName: null, bonos: [], reservations: [] };
+    return {
+      clientId: null,
+      trainerId: null,
+      trainerName: null,
+      bonos: [],
+      reservations: [],
+    };
 
   const trainerId = client.assigned_trainer_id;
   const { data: bonoRows } = await admin
@@ -675,5 +688,5 @@ export async function getClientReservationData(
     }));
   }
 
-  return { clientId: client.id, trainerName, bonos, reservations };
+  return { clientId: client.id, trainerId, trainerName, bonos, reservations };
 }

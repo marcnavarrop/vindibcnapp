@@ -3,6 +3,7 @@ import { getViewer } from "@/lib/auth";
 import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
 import { listClients, listTrainers } from "@/lib/data/clients";
+import { listAvailabilityLite } from "@/lib/data/availability";
 import {
   cancelTrainerReservationAction,
   completeTrainerReservationAction,
@@ -16,10 +17,11 @@ export default async function TrainerReservasPage() {
   const trainerId = viewer?.id;
 
   // Todas las reservas (coordinación) + las de MIS clientes (gestionables).
-  const [reservations, trainers, myClients] = await Promise.all([
+  const [reservations, trainers, myClients, availability] = await Promise.all([
     listReservations(),
     listTrainers(),
     trainerId ? listClients(trainerId) : Promise.resolve([]),
+    trainerId ? listAvailabilityLite(trainerId) : Promise.resolve([]),
   ]);
 
   const myClientIds = new Set(myClients.map((c) => c.id));
@@ -56,6 +58,7 @@ export default async function TrainerReservasPage() {
           cancelAction={cancelTrainerReservationAction}
           completeAction={completeTrainerReservationAction}
           rescheduleAction={rescheduleTrainerReservationAction}
+          availability={availability}
         />
       </main>
   );

@@ -5,6 +5,7 @@ import { clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import type { ReservationListItem } from "@/lib/data/reservations";
+import type { AvailabilityRuleLite } from "@/lib/availability-slots";
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
 
@@ -22,6 +23,7 @@ export function ReservationsView({
   cancelAction,
   completeAction,
   rescheduleAction,
+  availability,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -31,6 +33,7 @@ export function ReservationsView({
   cancelAction: ReservationAction;
   completeAction: ReservationAction;
   rescheduleAction: ReservationAction;
+  availability?: AvailabilityRuleLite[];
 }) {
   const [view, setView] = useState<"calendar" | "list">("calendar");
 
@@ -62,6 +65,7 @@ export function ReservationsView({
           cancelAction={cancelAction}
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}
+          availability={availability}
         />
       ) : (
         <ReservationsAgenda

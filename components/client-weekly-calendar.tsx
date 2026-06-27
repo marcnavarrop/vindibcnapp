@@ -4,6 +4,10 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "@/lib/utils";
 import { SERVICE_LABELS, SERVICE_COLORS, GROUP_CAPACITY } from "@/lib/labels";
+import {
+  isHourAvailable,
+  type AvailabilityRuleLite,
+} from "@/lib/availability-slots";
 import type {
   ClientCalendarReservation,
   ClientReservationData,
@@ -49,12 +53,15 @@ export function ClientWeeklyCalendar({
   reservations,
   bonos,
   trainerName,
+  availability,
   createAction,
   cancelAction,
 }: {
   reservations: ClientCalendarReservation[];
   bonos: ClientReservationData["bonos"];
   trainerName: string | null;
+  /** Reglas de disponibilidad del entrenador. Si está vacío, no se restringe. */
+  availability: AvailabilityRuleLite[];
   createAction: CreateAction;
   cancelAction: CancelAction;
 }) {
@@ -214,9 +221,18 @@ export function ClientWeeklyCalendar({
                   groupCount < GROUP_CAPACITY &&
                   selectedBono?.serviceType === "grupo_reducido";
 
+                // Disponibilidad: si el entrenador tiene reglas, la franja debe
+                // caer dentro; si no tiene ninguna, no se restringe (legacy).
+                const withinAvailability =
+                  availability.length === 0 ||
+                  isHourAvailable(availability, cellDate, h);
+
                 const empty = items.length === 0;
                 const bookable =
-                  inHours && !!selectedBono && (empty || groupJoinable);
+                  inHours &&
+                  withinAvailability &&
+                  !!selectedBono &&
+                  (empty || groupJoinable);
 
                 // Al unirse, usa la hora EXACTA del grupo ya creado (no la celda).
                 const targetSlot = groupJoinable

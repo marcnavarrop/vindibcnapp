@@ -9,6 +9,10 @@ import {
   RESERVATION_STATUS_LABELS,
   GROUP_CAPACITY,
 } from "@/lib/labels";
+import {
+  isHourAvailable,
+  type AvailabilityRuleLite,
+} from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
@@ -54,6 +58,7 @@ export function WeeklyCalendar({
   cancelAction,
   completeAction,
   rescheduleAction,
+  availability,
 }: {
   reservations: ReservationListItem[];
   manageableIds: string[];
@@ -62,6 +67,8 @@ export function WeeklyCalendar({
   cancelAction: ReservationAction;
   completeAction: ReservationAction;
   rescheduleAction: ReservationAction;
+  /** Si se pasa, sombrea las franjas dentro de la disponibilidad declarada. */
+  availability?: AvailabilityRuleLite[];
 }) {
   const router = useRouter();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -192,6 +199,8 @@ export function WeeklyCalendar({
                       toLocalInput(slot),
                     )}`,
                   );
+                const inAvailability =
+                  availability && isHourAvailable(availability, slot, h);
                 return (
                   <div
                     key={dayIdx}
@@ -202,7 +211,10 @@ export function WeeklyCalendar({
                       if (e.target === e.currentTarget && e.key === "Enter")
                         goNew();
                     }}
-                    className="min-h-[3.25rem] cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60"
+                    className={clsx(
+                      "min-h-[3.25rem] cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60",
+                      inAvailability && "bg-brand-purple/5",
+                    )}
                     aria-label={`Nova reserva ${DAY_NAMES[dayIdx]} ${pad(h)}:00`}
                   >
                     <div className="flex flex-col gap-1">

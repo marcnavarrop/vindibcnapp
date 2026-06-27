@@ -21,6 +21,18 @@ export const LANGUAGE_LABELS: Record<PreferredLanguage, string> = {
   en: "English",
 };
 
+/** Días de la semana (lunes = 0), forma corta y larga. */
+export const WEEKDAY_SHORT = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
+export const WEEKDAY_LONG = [
+  "Dilluns",
+  "Dimarts",
+  "Dimecres",
+  "Dijous",
+  "Divendres",
+  "Dissabte",
+  "Diumenge",
+];
+
 export const GENDER_LABELS: Record<Gender, string> = {
   home: "Home",
   dona: "Dona",
