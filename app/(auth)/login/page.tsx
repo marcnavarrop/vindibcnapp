@@ -139,8 +139,21 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-brand-bg p-6">
       <Suspense>{USE_MOCK ? <MockLogin /> : <LoginForm />}</Suspense>
+      <footer className="mt-6 text-center text-xs text-brand-muted">
+        <Link href="/legal/privacitat" className="hover:text-brand-purple">
+          Privacitat
+        </Link>{" "}
+        ·{" "}
+        <Link href="/legal/avis-legal" className="hover:text-brand-purple">
+          Avís legal
+        </Link>{" "}
+        ·{" "}
+        <Link href="/legal/cookies" className="hover:text-brand-purple">
+          Cookies
+        </Link>
+      </footer>
     </main>
   );
 }

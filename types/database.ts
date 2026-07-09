@@ -324,6 +324,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      consents: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: "privacy" | "health_data";
+          version: string;
+          granted_at: string;
+          ip: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: "privacy" | "health_data";
+          version: string;
+          granted_at?: string;
+          ip?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: "privacy" | "health_data";
+          version?: string;
+          granted_at?: string;
+          ip?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       availability_rules: {
         Row: {
           id: string;

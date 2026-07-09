@@ -181,6 +181,20 @@ function SidebarContent({
           <SignOutButton />
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-x-2 gap-y-1 px-1 text-[10px] text-white/40">
+        <Link href="/legal/privacitat" className="hover:text-white/70">
+          Privacitat
+        </Link>
+        <span>·</span>
+        <Link href="/legal/avis-legal" className="hover:text-white/70">
+          Avís legal
+        </Link>
+        <span>·</span>
+        <Link href="/legal/cookies" className="hover:text-white/70">
+          Cookies
+        </Link>
+      </div>
     </div>
   );
 }

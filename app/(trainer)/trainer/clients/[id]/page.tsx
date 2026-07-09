@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { getClient } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
+import { getConsentStatus } from "@/lib/data/consents";
+import { HealthConsentWarning } from "@/components/health-consent-warning";
 import {
   assignExerciseTrainerAction,
   removeExerciseTrainerAction,
@@ -37,6 +39,12 @@ export default async function TrainerClientDetailPage({
 
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
 
+  const consent = await getConsentStatus(client.profileId);
+  const receivesFisio =
+    client.bonos.some((b) => b.serviceType === "fisioterapia") ||
+    client.reservations.some((r) => r.serviceType === "fisioterapia");
+  const needsHealthConsent = receivesFisio && !consent.healthDataAt;
+
   return (
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
         <div className="flex items-start justify-between gap-4">
@@ -59,6 +67,8 @@ export default async function TrainerClientDetailPage({
             </span>
           )}
         </div>
+
+        {needsHealthConsent && <HealthConsentWarning />}
 
         <section className="grid gap-4 sm:grid-cols-3">
           <Info

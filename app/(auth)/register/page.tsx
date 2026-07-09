@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
+import { recordRegistrationConsentAction } from "@/app/(auth)/register/actions";
 
 /**
  * Alta de cuenta. Al registrarse, el trigger `on_auth_user_created` crea
@@ -16,17 +17,24 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!acceptPrivacy) {
+      setError(
+        "Has d'acceptar la Política de Privacitat i l'Avís Legal per continuar.",
+      );
+      return;
+    }
     setLoading(true);
     setError(null);
 
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -39,6 +47,16 @@ export default function RegisterPage() {
       setError(signUpError.message);
       setLoading(false);
       return;
+    }
+
+    // Registra el consentiment de privacitat lligat a l'alta (data + IP).
+    if (data.user?.id) {
+      try {
+        await recordRegistrationConsentAction(data.user.id);
+      } catch {
+        // No bloquegem l'alta si el registre del consentiment falla; queda
+        // marcada pendent i es pot tornar a demanar des de Configuració.
+      }
     }
 
     // Según la config de Supabase, puede requerir confirmación por email.
@@ -105,12 +123,54 @@ export default function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
+          <label className="flex items-start gap-2 text-sm text-brand-charcoal">
+            <input
+              type="checkbox"
+              checked={acceptPrivacy}
+              onChange={(e) => setAcceptPrivacy(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
+            />
+            <span>
+              He llegit i accepto la{" "}
+              <Link
+                href="/legal/privacitat"
+                target="_blank"
+                className="font-bold text-brand-purple hover:text-brand-orange"
+              >
+                Política de Privacitat
+              </Link>{" "}
+              i l&apos;{" "}
+              <Link
+                href="/legal/avis-legal"
+                target="_blank"
+                className="font-bold text-brand-purple hover:text-brand-orange"
+              >
+                Avís Legal
+              </Link>
+              .
+            </span>
+          </label>
+
           {error && <p className="text-sm text-error">{error}</p>}
 
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || !acceptPrivacy}>
             {loading ? "Creant…" : "Crear compte"}
           </Button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-brand-muted">
+          <Link href="/legal/privacitat" className="hover:text-brand-purple">
+            Privacitat
+          </Link>{" "}
+          ·{" "}
+          <Link href="/legal/avis-legal" className="hover:text-brand-purple">
+            Avís legal
+          </Link>{" "}
+          ·{" "}
+          <Link href="/legal/cookies" className="hover:text-brand-purple">
+            Cookies
+          </Link>
+        </p>
 
         <p className="mt-6 text-sm text-brand-muted">
           Ja tens compte?{" "}

@@ -47,6 +47,7 @@ export type ClientPayment = {
 };
 
 export type ClientDetail = ClientListItem & {
+  profileId: string;
   assignedTrainerId: string | null;
   notes: string | null;
   bonos: ClientBono[];
@@ -142,6 +143,7 @@ function buildDetail(clientId: string): ClientDetail | null {
   if (!client) return null;
   return {
     ...toListItem(clientId, store),
+    profileId: client.profile_id,
     assignedTrainerId: client.assigned_trainer_id,
     notes: client.notes,
     bonos: store.bonos
@@ -177,6 +179,7 @@ function buildDetail(clientId: string): ClientDetail | null {
 // Ficha completa contra Supabase (id de cliente o id de perfil).
 type DetailRow = {
   id: string;
+  profile_id: string;
   assigned_trainer_id: string | null;
   notes: string | null;
   profile: {
@@ -215,7 +218,7 @@ async function fetchClientDetail(
   const { data, error } = await supabase
     .from("clients")
     .select(
-      `id, assigned_trainer_id, notes,
+      `id, profile_id, assigned_trainer_id, notes,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(id, service_type, total_sessions, remaining_sessions, price, status),
@@ -237,6 +240,7 @@ async function fetchClientDetail(
     trainerName: row.trainer?.full_name ?? null,
     activeBonos: active.length,
     remainingSessions: active.reduce((s, b) => s + b.remaining_sessions, 0),
+    profileId: row.profile_id,
     assignedTrainerId: row.assigned_trainer_id,
     notes: row.notes,
     bonos: row.bonos.map((b) => ({
