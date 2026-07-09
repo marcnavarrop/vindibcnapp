@@ -58,12 +58,20 @@ export default async function ClientDetailPage({
               {client.phone ? ` · ${client.phone}` : ""}
             </p>
           </div>
-          <Link
-            href={`/admin/clients/${client.id}/edit`}
-            className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
-          >
-            Editar
-          </Link>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/admin/clients/${client.id}/export`}
+              className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
+            >
+              Exportar dades
+            </a>
+            <Link
+              href={`/admin/clients/${client.id}/edit`}
+              className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
+            >
+              Editar
+            </Link>
+          </div>
         </div>
 
         {needsHealthConsent && <HealthConsentWarning />}

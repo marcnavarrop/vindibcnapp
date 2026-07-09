@@ -15,6 +15,7 @@ import {
   seedClientExercises,
   seedAvailabilityRules,
   seedConsents,
+  seedDataAccessLog,
 } from "./seed";
 import type { Database } from "@/types/database";
 
@@ -33,6 +34,7 @@ export type Store = {
   client_exercises: Tables["client_exercises"]["Row"][];
   availability_rules: Tables["availability_rules"]["Row"][];
   consents: Tables["consents"]["Row"][];
+  data_access_log: Tables["data_access_log"]["Row"][];
 };
 
 /**
@@ -59,6 +61,7 @@ function fromSeed(): Store {
     client_exercises: structuredClone(seedClientExercises),
     availability_rules: structuredClone(seedAvailabilityRules),
     consents: structuredClone(seedConsents),
+    data_access_log: structuredClone(seedDataAccessLog),
   };
 }
 

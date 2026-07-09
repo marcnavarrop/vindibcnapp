@@ -78,6 +78,9 @@ export const seedAvailabilityRules: AvailabilityRule[] = [];
 type Consent = Database["public"]["Tables"]["consents"]["Row"];
 export const seedConsents: Consent[] = [];
 
+type DataAccessLog = Database["public"]["Tables"]["data_access_log"]["Row"];
+export const seedDataAccessLog: DataAccessLog[] = [];
+
 export const seedClientExercises: ClientExercise[] = [
   { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },
 ];

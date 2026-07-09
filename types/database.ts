@@ -324,6 +324,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      data_access_log: {
+        Row: {
+          id: string;
+          actor_id: string | null;
+          subject_profile_id: string | null;
+          subject_label: string | null;
+          action: "export" | "delete";
+          details: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id?: string | null;
+          subject_profile_id?: string | null;
+          subject_label?: string | null;
+          action: "export" | "delete";
+          details?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          actor_id?: string | null;
+          subject_profile_id?: string | null;
+          subject_label?: string | null;
+          action?: "export" | "delete";
+          details?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       consents: {
         Row: {
           id: string;
