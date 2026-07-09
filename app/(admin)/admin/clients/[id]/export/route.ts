@@ -22,12 +22,16 @@ export async function GET(
     return NextResponse.json({ error: "Client no trobat." }, { status: 404 });
   }
 
-  await logDataAccess({
-    actorId: viewer.id,
-    subjectProfileId: result.profileId,
-    subjectLabel: result.label,
-    action: "export",
-  });
+  try {
+    await logDataAccess({
+      actorId: viewer.id,
+      subjectProfileId: result.profileId,
+      subjectLabel: result.label,
+      action: "export",
+    });
+  } catch {
+    // El registre és best-effort: no bloquegem el dret d'accés si falla.
+  }
 
   const body = JSON.stringify(result.data, null, 2);
   return new NextResponse(body, {
