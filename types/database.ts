@@ -183,34 +183,37 @@ export interface Database {
       payments: {
         Row: {
           id: string;
-          client_id: string;
+          client_id: string | null;
           bono_id: string | null;
           stripe_payment_id: string | null;
           amount: number;
           currency: string;
           method: PaymentMethod;
+          concept: string | null;
           paid_at: string;
           created_at: string;
         };
         Insert: {
           id?: string;
-          client_id: string;
+          client_id?: string | null;
           bono_id?: string | null;
           stripe_payment_id?: string | null;
           amount: number;
           currency?: string;
           method: PaymentMethod;
+          concept?: string | null;
           paid_at?: string;
           created_at?: string;
         };
         Update: {
           id?: string;
-          client_id?: string;
+          client_id?: string | null;
           bono_id?: string | null;
           stripe_payment_id?: string | null;
           amount?: number;
           currency?: string;
           method?: PaymentMethod;
+          concept?: string | null;
           paid_at?: string;
           created_at?: string;
         };

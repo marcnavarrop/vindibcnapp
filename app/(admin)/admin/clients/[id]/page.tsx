@@ -7,6 +7,7 @@ import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
 import { HealthConsentWarning } from "@/components/health-consent-warning";
+import { DeleteClientModal } from "@/components/delete-client-modal";
 import { deleteMeasurementAction } from "@/app/(admin)/admin/clients/progres-actions";
 import {
   assignExerciseAction,
@@ -71,6 +72,10 @@ export default async function ClientDetailPage({
             >
               Editar
             </Link>
+            <DeleteClientModal
+              clientId={client.id}
+              clientName={client.fullName}
+            />
           </div>
         </div>
 

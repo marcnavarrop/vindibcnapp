@@ -3,7 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
-import { createPayment } from "@/lib/data/payments";
+import { createPayment, bonoConcept } from "@/lib/data/payments";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
 
 export type BonoListItem = {
@@ -121,6 +121,7 @@ export async function createBono(input: BonoInput): Promise<string> {
       bonoId,
       amount: input.price,
       method: input.paymentMethod,
+      concept: bonoConcept(input.serviceType, input.totalSessions),
     });
   }
 
@@ -214,6 +215,7 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
       bonoId: bono.id,
       amount: bono.price,
       method: "cash",
+      concept: bonoConcept(bono.service_type, bono.total_sessions),
     });
     return;
   }
@@ -221,7 +223,7 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
   const supabase = await createClient();
   const { data: bono, error: bErr } = await supabase
     .from("bonos")
-    .select("id, client_id, price, status")
+    .select("id, client_id, price, status, service_type, total_sessions")
     .eq("id", bonoId)
     .single();
   if (bErr || !bono) throw new Error("Bo no trobat.");
@@ -239,5 +241,6 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
     bonoId: bono.id,
     amount: bono.price,
     method: "cash",
+    concept: bonoConcept(bono.service_type, bono.total_sessions),
   });
 }

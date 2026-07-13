@@ -2,7 +2,16 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
+import { SERVICE_LABELS } from "@/lib/labels";
 import type { PaymentMethod, ServiceType } from "@/types/database";
+
+/** Concepte comptable d'un pagament de bo (per a la retenció fiscal). */
+export function bonoConcept(
+  serviceType: ServiceType,
+  totalSessions: number,
+): string {
+  return `Bo ${totalSessions} ${totalSessions === 1 ? "sessió" : "sessions"} · ${SERVICE_LABELS[serviceType]}`;
+}
 
 export type PaymentListItem = {
   id: string;
@@ -12,7 +21,8 @@ export type PaymentListItem = {
   paidAt: string;
 };
 
-function clientName(clientId: string, store: Store): string {
+function clientName(clientId: string | null, store: Store): string {
+  if (!clientId) return "—";
   const client = store.clients.find((c) => c.id === clientId);
   const profile = store.profiles.find((p) => p.id === client?.profile_id);
   return profile?.full_name ?? "—";
@@ -65,6 +75,8 @@ export type PaymentInput = {
   bonoId: string | null;
   amount: number;
   method: PaymentMethod;
+  /** Concepte comptable (p. ex. "Bo 8 sessions · EP Individual"). */
+  concept?: string | null;
 };
 
 /** Registra un cobro (efectivo o tarjeta). No procesa el pago: solo lo anota. */
@@ -81,6 +93,7 @@ export async function createPayment(input: PaymentInput): Promise<string> {
       amount: input.amount,
       currency: "eur",
       method: input.method,
+      concept: input.concept ?? null,
       paid_at: now,
       created_at: now,
     });
@@ -96,6 +109,7 @@ export async function createPayment(input: PaymentInput): Promise<string> {
       bono_id: input.bonoId,
       amount: input.amount,
       method: input.method,
+      concept: input.concept ?? null,
     })
     .select("id")
     .single();

@@ -96,8 +96,8 @@ export const seedAnnouncements: Announcement[] = [
 ];
 
 export const seedPayments: Payment[] = [
-  { id: "pay-1", client_id: "c-ana", bono_id: "b-1", stripe_payment_id: null, amount: 400, currency: "eur", method: "card", paid_at: now, created_at: now },
-  { id: "pay-2", client_id: "c-ana", bono_id: "b-2", stripe_payment_id: null, amount: 250, currency: "eur", method: "cash", paid_at: now, created_at: now },
-  { id: "pay-3", client_id: "c-pau", bono_id: "b-3", stripe_payment_id: null, amount: 200, currency: "eur", method: "card", paid_at: now, created_at: now },
-  { id: "pay-4", client_id: "c-marta", bono_id: "b-4", stripe_payment_id: null, amount: 350, currency: "eur", method: "card", paid_at: now, created_at: now },
+  { id: "pay-1", client_id: "c-ana", bono_id: "b-1", stripe_payment_id: null, amount: 400, currency: "eur", method: "card", concept: null, paid_at: now, created_at: now },
+  { id: "pay-2", client_id: "c-ana", bono_id: "b-2", stripe_payment_id: null, amount: 250, currency: "eur", method: "cash", concept: null, paid_at: now, created_at: now },
+  { id: "pay-3", client_id: "c-pau", bono_id: "b-3", stripe_payment_id: null, amount: 200, currency: "eur", method: "card", concept: null, paid_at: now, created_at: now },
+  { id: "pay-4", client_id: "c-marta", bono_id: "b-4", stripe_payment_id: null, amount: 350, currency: "eur", method: "card", concept: null, paid_at: now, created_at: now },
 ];
