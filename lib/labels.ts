@@ -67,6 +67,36 @@ export const SERVICE_COLORS: Record<ServiceType, string> = {
   fisioterapia: "#1d8a8a", // verd-blau (fisio)
 };
 
+/** Todos los tipos de servicio, en orden de presentación. */
+export const SERVICE_TYPES: ServiceType[] = [
+  "ep_individual",
+  "ep_parejas",
+  "grupo_reducido",
+  "fisioterapia",
+];
+
+/**
+ * Servicios que ofrece por defecto una franja según la especialidad del
+ * profesional (editable en la UI): el fisio ofrece fisioterapia; el entrenador
+ * (o sin especialidad) ofrece los tres servicios de entrenamiento.
+ */
+export function defaultServiceTypesFor(
+  specialty: Specialty | null,
+): ServiceType[] {
+  return specialty === "fisioterapeuta"
+    ? ["fisioterapia"]
+    : ["ep_individual", "ep_parejas", "grupo_reducido"];
+}
+
+/** Filtra una lista de strings dejando solo tipos de servicio válidos. */
+export function parseServiceTypes(values: (string | File)[]): ServiceType[] {
+  return values
+    .map((v) => String(v))
+    .filter((v): v is ServiceType =>
+      (SERVICE_TYPES as string[]).includes(v),
+    );
+}
+
 /** Capacidad por defecto de una sesión de grupo reducido (para el "N/4"). */
 export const GROUP_CAPACITY = 4;
 

@@ -57,6 +57,7 @@ export default async function AdminDisponibilitatPage({
             <AvailabilityManager
               rules={rules}
               todayStr={todayStr}
+              specialty={selected.specialty}
               createAction={createAvailabilityAdminAction.bind(null, selected.id)}
               updateAction={updateAvailabilityAdminAction}
               deleteAction={deleteAvailabilityAdminAction}

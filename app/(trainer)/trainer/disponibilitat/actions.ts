@@ -7,6 +7,7 @@ import {
   updateAvailabilityRule,
   deleteAvailabilityRule,
 } from "@/lib/data/availability";
+import { parseServiceTypes } from "@/lib/labels";
 
 function parseWeekdays(formData: FormData): number[] {
   return formData
@@ -27,6 +28,7 @@ export async function createAvailabilityTrainerAction(formData: FormData) {
       String(formData.get("validFrom") ?? "") ||
       new Date().toISOString().slice(0, 10),
     validUntil: String(formData.get("validUntil") ?? "").trim() || null,
+    serviceTypes: parseServiceTypes(formData.getAll("serviceTypes")),
   });
   revalidatePath("/trainer/disponibilitat");
 }
@@ -39,6 +41,7 @@ export async function updateAvailabilityTrainerAction(formData: FormData) {
     endTime: String(formData.get("endTime") ?? ""),
     validFrom: String(formData.get("validFrom") ?? ""),
     validUntil: String(formData.get("validUntil") ?? "").trim() || null,
+    serviceTypes: parseServiceTypes(formData.getAll("serviceTypes")),
   });
   revalidatePath("/trainer/disponibilitat");
 }

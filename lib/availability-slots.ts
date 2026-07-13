@@ -4,13 +4,19 @@
  * navegador). Las sesiones son de 1 hora, alineadas con el calendario actual.
  */
 
+import type { ServiceType } from "@/types/database";
+
 export type AvailabilityRuleLite = {
   weekday: number; // 0 = dilluns … 6 = diumenge
   startHour: number; // hora de inicio (entero)
   endHour: number; // hora de fin (exclusiva)
   validFrom: string; // YYYY-MM-DD
   validUntil: string | null; // YYYY-MM-DD o null (sin fin)
+  serviceTypes: ServiceType[]; // servicios ofrecidos en esa franja
 };
+
+/** Regla lite con el profesional dueño (para el calendario global del cliente). */
+export type TrainerRuleLite = AvailabilityRuleLite & { trainerId: string };
 
 /** Día de la semana de una fecha en la convención del negocio (lunes = 0). */
 export function weekdayOf(date: Date): number {
@@ -59,5 +65,28 @@ export function isHourAvailable(
       (!r.validUntil || day <= r.validUntil) &&
       h >= r.startHour &&
       h < r.endHour,
+  );
+}
+
+/**
+ * ¿La hora `h` de `date` está dentro de la disponibilidad para el servicio
+ * `service`? (además del horario, la regla debe ofrecer ese servicio).
+ */
+export function isServiceAvailable(
+  rules: AvailabilityRuleLite[],
+  date: Date,
+  h: number,
+  service: ServiceType,
+): boolean {
+  const wd = weekdayOf(date);
+  const day = localDateStr(date);
+  return rules.some(
+    (r) =>
+      r.weekday === wd &&
+      day >= r.validFrom &&
+      (!r.validUntil || day <= r.validUntil) &&
+      h >= r.startHour &&
+      h < r.endHour &&
+      r.serviceTypes.includes(service),
   );
 }

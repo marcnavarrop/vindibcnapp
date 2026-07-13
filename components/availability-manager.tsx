@@ -1,20 +1,64 @@
 "use client";
 
 import { useState } from "react";
-import { WEEKDAY_SHORT, WEEKDAY_LONG } from "@/lib/labels";
+import {
+  WEEKDAY_SHORT,
+  WEEKDAY_LONG,
+  SERVICE_TYPES,
+  SERVICE_LABELS,
+  defaultServiceTypesFor,
+} from "@/lib/labels";
 import type { AvailabilityRule } from "@/lib/data/availability";
+import type { ServiceType, Specialty } from "@/types/database";
 
 type Action = (formData: FormData) => void | Promise<void>;
+
+/** Grupo de checkboxes de servicios ofrecidos en la franja. */
+function ServiceTypesField({
+  selected,
+  small = false,
+}: {
+  selected: ServiceType[];
+  small?: boolean;
+}) {
+  return (
+    <div>
+      <span className="mb-1.5 block text-xs font-bold tracking-wide text-brand-muted uppercase">
+        Serveis oferts
+      </span>
+      <div className="flex flex-wrap gap-2">
+        {SERVICE_TYPES.map((s) => (
+          <label
+            key={s}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-lg border border-brand-border font-bold text-brand-charcoal has-[:checked]:border-brand-purple has-[:checked]:bg-brand-purple/10 has-[:checked]:text-brand-purple ${
+              small ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm"
+            }`}
+          >
+            <input
+              type="checkbox"
+              name="serviceTypes"
+              value={s}
+              defaultChecked={selected.includes(s)}
+            />
+            {SERVICE_LABELS[s]}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function AvailabilityManager({
   rules,
   todayStr,
+  specialty,
   createAction,
   updateAction,
   deleteAction,
 }: {
   rules: AvailabilityRule[];
   todayStr: string;
+  specialty: Specialty | null;
   createAction: Action;
   updateAction: Action;
   deleteAction: Action;
@@ -90,6 +134,8 @@ export function AvailabilityManager({
           </Labeled>
         </div>
 
+        <ServiceTypesField selected={defaultServiceTypesFor(specialty)} />
+
         <div>
           <button
             type="submit"
@@ -163,6 +209,9 @@ export function AvailabilityManager({
                           className={inputCls}
                         />
                       </Labeled>
+                      <div className="w-full">
+                        <ServiceTypesField selected={r.serviceTypes} small />
+                      </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="submit"
@@ -190,6 +239,22 @@ export function AvailabilityManager({
                       <span className="text-brand-muted">
                         des del {r.validFrom}
                         {r.validUntil ? ` fins al ${r.validUntil}` : " (oberta)"}
+                      </span>
+                      <span className="flex flex-wrap gap-1">
+                        {r.serviceTypes.length === 0 ? (
+                          <span className="text-xs text-error">
+                            sense serveis
+                          </span>
+                        ) : (
+                          r.serviceTypes.map((s) => (
+                            <span
+                              key={s}
+                              className="rounded bg-brand-bg px-1.5 py-0.5 text-xs font-bold text-brand-purple"
+                            >
+                              {SERVICE_LABELS[s]}
+                            </span>
+                          ))
+                        )}
                       </span>
                       <div className="ml-auto flex items-center gap-3">
                         <button

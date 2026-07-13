@@ -6,7 +6,9 @@ import {
   availableHoursForDate,
   localDateStr,
   type AvailabilityRuleLite,
+  type TrainerRuleLite,
 } from "@/lib/availability-slots";
+import type { ServiceType } from "@/types/database";
 
 export type AvailabilityRule = {
   id: string;
@@ -16,6 +18,7 @@ export type AvailabilityRule = {
   endTime: string; // HH:MM
   validFrom: string; // YYYY-MM-DD
   validUntil: string | null;
+  serviceTypes: ServiceType[];
 };
 
 const hhmm = (t: string) => t.slice(0, 5);
@@ -27,6 +30,7 @@ function toLite(r: {
   end_time: string;
   valid_from: string;
   valid_until: string | null;
+  service_types: ServiceType[];
 }): AvailabilityRuleLite {
   return {
     weekday: r.weekday,
@@ -34,6 +38,7 @@ function toLite(r: {
     endHour: toHour(r.end_time),
     validFrom: r.valid_from,
     validUntil: r.valid_until,
+    serviceTypes: r.service_types ?? [],
   };
 }
 
@@ -56,13 +61,16 @@ export async function listAvailabilityRules(
         endTime: hhmm(r.end_time),
         validFrom: r.valid_from,
         validUntil: r.valid_until,
+        serviceTypes: r.service_types ?? [],
       }));
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("availability_rules")
-    .select("id, trainer_id, weekday, start_time, end_time, valid_from, valid_until")
+    .select(
+      "id, trainer_id, weekday, start_time, end_time, valid_from, valid_until, service_types",
+    )
     .eq("trainer_id", trainerId)
     .order("weekday")
     .order("start_time");
@@ -75,6 +83,7 @@ export async function listAvailabilityRules(
     endTime: hhmm(r.end_time),
     validFrom: r.valid_from,
     validUntil: r.valid_until,
+    serviceTypes: r.service_types ?? [],
   }));
 }
 
@@ -90,10 +99,28 @@ export async function listAvailabilityLite(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("availability_rules")
-    .select("weekday, start_time, end_time, valid_from, valid_until")
+    .select("weekday, start_time, end_time, valid_from, valid_until, service_types")
     .eq("trainer_id", trainerId);
   if (error) throw error;
   return (data ?? []).map(toLite);
+}
+
+/** Todas las reglas de TODOS los profesionales (para el calendario global). */
+export async function listAllTrainerRulesLite(): Promise<TrainerRuleLite[]> {
+  if (USE_MOCK) {
+    return getStore().availability_rules.map((r) => ({
+      trainerId: r.trainer_id,
+      ...toLite(r),
+    }));
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("availability_rules")
+    .select(
+      "trainer_id, weekday, start_time, end_time, valid_from, valid_until, service_types",
+    );
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ trainerId: r.trainer_id, ...toLite(r) }));
 }
 
 export type CreateAvailabilityInput = {
@@ -103,6 +130,7 @@ export type CreateAvailabilityInput = {
   endTime: string; // HH:MM
   validFrom: string; // YYYY-MM-DD
   validUntil: string | null;
+  serviceTypes: ServiceType[];
 };
 
 /** Crea una regla por cada día marcado (alta ágil). */
@@ -123,6 +151,7 @@ export async function createAvailabilityRules(
         end_time: input.endTime,
         valid_from: input.validFrom,
         valid_until: input.validUntil,
+        service_types: input.serviceTypes,
         created_at: now,
       });
     }
@@ -139,6 +168,7 @@ export async function createAvailabilityRules(
       end_time: input.endTime,
       valid_from: input.validFrom,
       valid_until: input.validUntil,
+      service_types: input.serviceTypes,
     })),
   );
   if (error) throw error;
@@ -149,6 +179,7 @@ export type UpdateAvailabilityInput = {
   endTime: string;
   validFrom: string;
   validUntil: string | null;
+  serviceTypes: ServiceType[];
 };
 
 /** Edita una regla individual. */
@@ -164,6 +195,7 @@ export async function updateAvailabilityRule(
     r.end_time = input.endTime;
     r.valid_from = input.validFrom;
     r.valid_until = input.validUntil;
+    r.service_types = input.serviceTypes;
     saveStore(store);
     return;
   }
@@ -175,6 +207,7 @@ export async function updateAvailabilityRule(
       end_time: input.endTime,
       valid_from: input.validFrom,
       valid_until: input.validUntil,
+      service_types: input.serviceTypes,
     })
     .eq("id", id);
   if (error) throw error;

@@ -396,6 +396,7 @@ export interface Database {
           end_time: string;
           valid_from: string;
           valid_until: string | null;
+          service_types: ServiceType[];
           created_at: string;
         };
         Insert: {
@@ -406,6 +407,7 @@ export interface Database {
           end_time: string;
           valid_from?: string;
           valid_until?: string | null;
+          service_types?: ServiceType[];
           created_at?: string;
         };
         Update: {
@@ -416,6 +418,7 @@ export interface Database {
           end_time?: string;
           valid_from?: string;
           valid_until?: string | null;
+          service_types?: ServiceType[];
           created_at?: string;
         };
         Relationships: [];

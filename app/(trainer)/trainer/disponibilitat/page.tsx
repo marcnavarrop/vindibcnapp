@@ -25,6 +25,7 @@ export default async function TrainerDisponibilitatPage() {
       <AvailabilityManager
         rules={rules}
         todayStr={todayStr}
+        specialty={viewer?.specialty ?? null}
         createAction={createAvailabilityTrainerAction}
         updateAction={updateAvailabilityTrainerAction}
         deleteAction={deleteAvailabilityTrainerAction}

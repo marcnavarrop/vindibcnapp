@@ -6,19 +6,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
-import { isHourAvailable } from "@/lib/availability-slots";
+import { isServiceAvailable } from "@/lib/availability-slots";
 import { GROUP_CAPACITY } from "@/lib/labels";
 import type { Database, ServiceType, ReservationStatus } from "@/types/database";
 
-/** Lanza si la franja no cae dentro de la disponibilidad declarada del trainer. */
+/** Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio. */
 async function assertWithinAvailability(
   trainerId: string,
   when: Date,
+  serviceType: ServiceType,
 ): Promise<void> {
   const rules = await listAvailabilityLite(trainerId);
-  if (!isHourAvailable(rules, when, when.getHours()))
+  if (!isServiceAvailable(rules, when, when.getHours(), serviceType))
     throw new Error(
-      "Aquesta franja no està dins de la disponibilitat de l'entrenador/a.",
+      "Aquesta franja no està dins de la disponibilitat d'aquest professional per a aquest servei.",
     );
 }
 
@@ -410,11 +411,18 @@ export async function rescheduleReservation(
 
 export type ClientReservationInput = {
   profileId: string; // id del perfil del cliente (viewer.id)
-  bonoId: string;
+  trainerId: string; // profesional dueño del slot elegido
+  serviceType: ServiceType; // servicio del slot elegido
   scheduledAt: string; // ISO
 };
 
-/** Reserva creada por el propio cliente, consumiendo una sesión de su bono. */
+/**
+ * Reserva creada por el propio cliente. Lo que determina qué puede reservar es
+ * el TIPO DE BONO, no el entrenador asignado: puede reservar con CUALQUIER
+ * profesional cuya disponibilidad ofrezca un servicio para el que tenga bono
+ * activo. Si tiene varios bonos activos de ese tipo, se consume el más antiguo
+ * (FIFO por purchased_at).
+ */
 export async function createClientReservation(
   input: ClientReservationInput,
 ): Promise<void> {
@@ -423,19 +431,24 @@ export async function createClientReservation(
   if (when.getTime() <= Date.now())
     throw new Error("La data ha de ser futura.");
   const scheduledAt = when.toISOString();
+  const { trainerId, serviceType } = input;
 
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === input.profileId);
     if (!client) throw new Error("Client no trobat.");
-    const bono = store.bonos.find((b) => b.id === input.bonoId);
-    if (!bono || bono.client_id !== client.id)
-      throw new Error("Aquest bo no és teu.");
-    if (bono.status !== "active" || bono.remaining_sessions <= 0)
-      throw new Error("Aquest bo no té sessions disponibles.");
-    const trainerId = client.assigned_trainer_id;
-    if (!trainerId) throw new Error("No tens entrenador/a assignat/da.");
-    await assertWithinAvailability(trainerId, when);
+    const bono = store.bonos
+      .filter(
+        (b) =>
+          b.client_id === client.id &&
+          b.service_type === serviceType &&
+          b.status === "active" &&
+          b.remaining_sessions > 0,
+      )
+      .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
+    if (!bono)
+      throw new Error("No tens cap bo actiu d'aquest tipus amb sessions.");
+    await assertWithinAvailability(trainerId, when, serviceType);
     assertSlotFree(
       store.reservations.filter(
         (r) =>
@@ -443,7 +456,7 @@ export async function createClientReservation(
           r.scheduled_at === scheduledAt &&
           r.status === "booked",
       ),
-      bono.service_type,
+      serviceType,
     );
     store.reservations.push({
       id: crypto.randomUUID(),
@@ -451,7 +464,7 @@ export async function createClientReservation(
       bono_id: bono.id,
       trainer_id: trainerId,
       scheduled_at: scheduledAt,
-      service_type: bono.service_type,
+      service_type: serviceType,
       status: "booked",
       created_at: new Date().toISOString(),
     });
@@ -463,31 +476,34 @@ export async function createClientReservation(
 
   const admin = createAdminClient();
 
-  // 1. El cliente del perfil que reserva.
+  // 1. Cliente.
   const { data: client, error: cErr } = await admin
     .from("clients")
-    .select("id, assigned_trainer_id")
+    .select("id")
     .eq("profile_id", input.profileId)
     .single();
   if (cErr || !client) throw new Error("Client no trobat.");
-  const trainerId = client.assigned_trainer_id;
-  if (!trainerId) throw new Error("No tens entrenador/a assignat/da.");
 
-  // 1b. La franja debe caer dentro de la disponibilidad del entrenador.
-  await assertWithinAvailability(trainerId, when);
+  // 2. La franja debe estar dentro de la disponibilidad de ESE profesional para
+  //    ESE servicio.
+  await assertWithinAvailability(trainerId, when, serviceType);
 
-  // 2. El bono debe ser suyo, activo y con sesiones.
+  // 3. Bono más antiguo activo de este tipo con sesiones (FIFO).
   const { data: bono, error: bErr } = await admin
     .from("bonos")
-    .select("id, client_id, service_type, remaining_sessions, status")
-    .eq("id", input.bonoId)
-    .single();
-  if (bErr || !bono) throw new Error("Bo no trobat.");
-  if (bono.client_id !== client.id) throw new Error("Aquest bo no és teu.");
-  if (bono.status !== "active" || bono.remaining_sessions <= 0)
-    throw new Error("Aquest bo no té sessions disponibles.");
+    .select("id, remaining_sessions")
+    .eq("client_id", client.id)
+    .eq("service_type", serviceType)
+    .eq("status", "active")
+    .gt("remaining_sessions", 0)
+    .order("purchased_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (bErr) throw bErr;
+  if (!bono)
+    throw new Error("No tens cap bo actiu d'aquest tipus amb sessions.");
 
-  // 3. La franja del entrenador no puede solaparse (salvo grupo con aforo).
+  // 4. La franja del profesional no puede solaparse (salvo grupo con aforo).
   const { data: existing, error: eErr } = await admin
     .from("reservations")
     .select("service_type")
@@ -495,10 +511,12 @@ export async function createClientReservation(
     .eq("scheduled_at", scheduledAt)
     .eq("status", "booked");
   if (eErr) throw eErr;
-  assertSlotFree((existing ?? []) as { service_type: ServiceType }[], bono.service_type);
+  assertSlotFree(
+    (existing ?? []) as { service_type: ServiceType }[],
+    serviceType,
+  );
 
-  // 4. Reclamo atómico de la sesión (decrement-first con bloqueo optimista):
-  //    si otra petición concurrente ya la descontó, el WHERE no casa y se aborta.
+  // 5. Reclamo atómico de la sesión (decrement-first con bloqueo optimista).
   const nextRemaining = bono.remaining_sessions - 1;
   const { data: claimed, error: dErr } = await admin
     .from("bonos")
@@ -513,14 +531,13 @@ export async function createClientReservation(
   if (dErr || !claimed)
     throw new Error("Aquest bo no té sessions disponibles.");
 
-  // 5. Inserta la reserva. Si falla (p. ej. índice únic de franja), devuelve
-  //    la sesión reclamada para no perderla.
+  // 6. Inserta la reserva; si falla, devuelve la sesión reclamada.
   const { error: rErr } = await admin.from("reservations").insert({
     client_id: client.id,
     bono_id: bono.id,
     trainer_id: trainerId,
     scheduled_at: scheduledAt,
-    service_type: bono.service_type,
+    service_type: serviceType,
     status: "booked",
   });
   if (rErr) {
