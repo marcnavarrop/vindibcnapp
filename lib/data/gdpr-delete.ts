@@ -61,7 +61,9 @@ export async function deleteClient(
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("clients")
-    .select("id, profile_id, profile:profiles(full_name, email)")
+    .select(
+      "id, profile_id, profile:profiles!clients_profile_id_fkey(full_name, email)",
+    )
     .eq("id", clientId)
     .single();
   if (!client) return null;
