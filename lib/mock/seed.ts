@@ -73,7 +73,17 @@ export const seedExercises: Exercise[] = [
   { id: "e-mobilitat-malucs", name: "Mobilitat de malucs", category: "mobilitat", description: "Rutina de mobilitat articular per a malucs.", video_url: null, created_at: now },
 ];
 
-export const seedAvailabilityRules: AvailabilityRule[] = [];
+export const seedAvailabilityRules: AvailabilityRule[] = [
+  // Laia (entrenadora): matí i tarda de dilluns a divendres, serveis d'entrenament.
+  ...[0, 1, 2, 3, 4].flatMap((weekday) => [
+    { id: `av-laia-m-${weekday}`, trainer_id: "u-trainer-laia", weekday, start_time: "09:00", end_time: "13:00", valid_from: "2026-01-01", valid_until: null, service_types: ["ep_individual", "ep_parejas", "grupo_reducido"] as Bono["service_type"][], created_at: now },
+    { id: `av-laia-t-${weekday}`, trainer_id: "u-trainer-laia", weekday, start_time: "17:00", end_time: "20:00", valid_from: "2026-01-01", valid_until: null, service_types: ["ep_individual", "ep_parejas", "grupo_reducido"] as Bono["service_type"][], created_at: now },
+  ]),
+  // Jordi (fisioterapeuta): matins de dilluns a divendres, només fisioteràpia.
+  ...[0, 1, 2, 3, 4].map((weekday) => ({
+    id: `av-jordi-${weekday}`, trainer_id: "u-trainer-jordi", weekday, start_time: "10:00", end_time: "14:00", valid_from: "2026-01-01", valid_until: null, service_types: ["fisioterapia"] as Bono["service_type"][], created_at: now,
+  })),
+];
 
 type Consent = Database["public"]["Tables"]["consents"]["Row"];
 export const seedConsents: Consent[] = [];
