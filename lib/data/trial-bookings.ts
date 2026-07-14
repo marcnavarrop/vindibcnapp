@@ -4,7 +4,8 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
-import { sendEmail, CENTER_EMAIL } from "@/lib/email";
+import { CENTER_EMAIL } from "@/lib/email";
+import { notify, getProfileContact } from "@/lib/notifications";
 import {
   isServiceAvailable,
   localDateStr,
@@ -31,25 +32,41 @@ function fmtWhen(iso: string): string {
   }).format(new Date(iso));
 }
 
-/** Avisos (best-effort) en crear una sol·licitud de prova. */
+/** Avisa el professional del forat i el correu del centre (esdeveniment trial_request). */
 async function notifyTrialRequested(input: {
+  trainerId: string | null;
   fullName: string;
   email: string;
   phone: string;
   scheduledAt: string;
 }): Promise<void> {
   const when = fmtWhen(input.scheduledAt);
-  await sendEmail({
-    to: input.email,
-    subject: "Sol·licitud de sessió de prova rebuda",
-    text: `Hola ${input.fullName},\n\nHem rebut la teva sol·licitud de sessió de prova per al ${when}. Està PENDENT DE CONFIRMACIÓ per part de l'entrenador/a; t'avisarem quan la confirmi.\n\nGràcies!\nVindiBCN`,
-  });
+  const data = {
+    visitorName: input.fullName,
+    when,
+    phone: input.phone,
+    email: input.email,
+  };
+  // Al professional dueño del forat (segons les seves preferències).
+  if (input.trainerId) {
+    const trainer = await getProfileContact(input.trainerId);
+    if (trainer)
+      await notify({
+        type: "trial_request",
+        recipient: { profileId: trainer.profileId, email: trainer.email, phone: trainer.phone, name: trainer.name },
+        data: { ...data, name: trainer.name ?? "" },
+      });
+  }
+  // Al correu general del centre (operatiu: ignora preferències d'usuari).
   if (CENTER_EMAIL)
-    await sendEmail({
-      to: CENTER_EMAIL,
-      subject: "Nova sol·licitud de sessió de prova",
-      text: `${input.fullName} (${input.email}, ${input.phone}) ha demanat una prova per al ${when}. Cal confirmar-la o rebutjar-la.`,
-    });
+    await notify(
+      {
+        type: "trial_request",
+        recipient: { profileId: null, email: CENTER_EMAIL, phone: null, name: "Centre" },
+        data: { ...data, name: "" },
+      },
+      { ignorePreferences: true },
+    );
 }
 const MIN_ADVANCE_MS = 24 * HOUR;
 const MAX_ADVANCE_MS = 30 * 24 * HOUR;
@@ -276,6 +293,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
     });
     saveStore(store);
     await notifyTrialRequested({
+      trainerId,
       fullName: input.fullName.trim(),
       email,
       phone,
@@ -352,6 +370,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
   });
   if (error) throw error;
   await notifyTrialRequested({
+    trainerId: chosen,
     fullName: input.fullName.trim(),
     email,
     phone,
@@ -552,21 +571,28 @@ async function updateTrialStatus(
   return null;
 }
 
+/** Notifica el visitant del canvi d'estat de la seva prova (trial_status). */
+async function notifyTrialStatus(id: string, status: "confirmed" | "rejected"): Promise<void> {
+  const t = (await listTrialBookings()).find((x) => x.id === id);
+  if (!t) return;
+  await notify({
+    type: "trial_status",
+    recipient: { profileId: null, email: t.email, phone: t.phone, name: t.fullName },
+    relatedId: t.id,
+    data: { name: t.fullName, when: fmtWhen(t.scheduledAt), status },
+  });
+}
+
 /** L'entrenador (o admin) accepta una prova pendent → 'confirmed'. */
 export async function acceptTrial(id: string, actingTrainerId: string | null): Promise<void> {
   await updateTrialStatus(id, "confirmed", actingTrainerId, ["pending"]);
-  const t = (await listTrialBookings()).find((x) => x.id === id);
-  if (t)
-    await sendEmail({
-      to: t.email,
-      subject: "La teva sessió de prova està confirmada",
-      text: `Hola ${t.fullName},\n\nLa teva sessió de prova del ${fmtWhen(t.scheduledAt)} ha estat CONFIRMADA. T'hi esperem!\n\nVindiBCN`,
-    });
+  await notifyTrialStatus(id, "confirmed");
 }
 
 /** Rebutja una prova pendent/confirmada → 'rejected' (allibera el forat). */
 export async function rejectTrial(id: string, actingTrainerId: string | null): Promise<void> {
   await updateTrialStatus(id, "rejected", actingTrainerId, ["pending", "confirmed"]);
+  await notifyTrialStatus(id, "rejected");
 }
 
 /** Estats de tancament que pot fixar l'admin (sense restricció d'entrenador). */

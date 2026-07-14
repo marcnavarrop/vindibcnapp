@@ -17,6 +17,8 @@ import {
   seedConsents,
   seedDataAccessLog,
   seedTrialBookings,
+  seedNotificationPreferences,
+  seedNotificationLog,
 } from "./seed";
 import type { Database } from "@/types/database";
 
@@ -37,6 +39,8 @@ export type Store = {
   consents: Tables["consents"]["Row"][];
   data_access_log: Tables["data_access_log"]["Row"][];
   trial_bookings: Tables["trial_bookings"]["Row"][];
+  notification_preferences: Tables["notification_preferences"]["Row"][];
+  notification_log: Tables["notification_log"]["Row"][];
 };
 
 /**
@@ -65,6 +69,8 @@ function fromSeed(): Store {
     consents: structuredClone(seedConsents),
     data_access_log: structuredClone(seedDataAccessLog),
     trial_bookings: structuredClone(seedTrialBookings),
+    notification_preferences: structuredClone(seedNotificationPreferences),
+    notification_log: structuredClone(seedNotificationLog),
   };
 }
 

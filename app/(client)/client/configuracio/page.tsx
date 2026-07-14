@@ -1,19 +1,20 @@
 import { getViewer } from "@/lib/auth";
 import { getProfileSettings } from "@/lib/data/clients";
 import { getConsentStatus } from "@/lib/data/consents";
+import { getPreferences } from "@/lib/notifications/preferences";
 import { ProfileSettingsForm } from "@/components/forms/profile-settings-form";
 import { HealthConsentForm } from "@/components/forms/health-consent-form";
+import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
 import { formatDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientConfigPage() {
   const viewer = await getViewer();
-  const [settings, consent] = await Promise.all([
+  const [settings, consent, prefs] = await Promise.all([
     viewer ? getProfileSettings(viewer.id) : Promise.resolve(null),
-    viewer
-      ? getConsentStatus(viewer.id)
-      : Promise.resolve(null),
+    viewer ? getConsentStatus(viewer.id) : Promise.resolve(null),
+    viewer ? getPreferences(viewer.id) : Promise.resolve(null),
   ]);
 
   return (
@@ -66,6 +67,12 @@ export default async function ClientConfigPage() {
             )}
           </div>
         </section>
+      )}
+
+      {prefs && (
+        <div className="mt-6">
+          <NotificationPreferencesForm prefs={prefs} role="client" />
+        </div>
       )}
     </main>
   );

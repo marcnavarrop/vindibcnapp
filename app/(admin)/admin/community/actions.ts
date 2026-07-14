@@ -8,6 +8,7 @@ import {
   deleteAnnouncement,
   type AnnouncementInput,
 } from "@/lib/data/announcements";
+import { notifyCommunity } from "@/lib/notifications/community";
 import { getViewer } from "@/lib/auth";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
@@ -35,11 +36,14 @@ export async function createAnnouncementAction(
   const viewer = await getViewer();
   if (!viewer) return { error: "Sessió no vàlida." };
 
+  let announcementId: string;
   try {
-    await createAnnouncement(input, viewer.id);
+    announcementId = await createAnnouncement(input, viewer.id);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en publicar." };
   }
+  // Avisa qui tingui la comunitat activada (best-effort, no bloqueja).
+  await notifyCommunity({ announcementId, title: input.title, body: input.body });
   revalidatePath("/admin/community");
   redirect("/admin/community");
 }

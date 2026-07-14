@@ -433,6 +433,102 @@ export interface Database {
         };
         Relationships: [];
       };
+      notification_preferences: {
+        Row: {
+          id: string;
+          profile_id: string;
+          reservation_confirmed_email: boolean;
+          reservation_confirmed_whatsapp: boolean;
+          reservation_cancelled_email: boolean;
+          reservation_cancelled_whatsapp: boolean;
+          session_reminder_email: boolean;
+          session_reminder_whatsapp: boolean;
+          trial_request_email: boolean;
+          trial_request_whatsapp: boolean;
+          trial_status_email: boolean;
+          trial_status_whatsapp: boolean;
+          bono_low_email: boolean;
+          bono_low_whatsapp: boolean;
+          community_email: boolean;
+          community_whatsapp: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          reservation_confirmed_email?: boolean;
+          reservation_confirmed_whatsapp?: boolean;
+          reservation_cancelled_email?: boolean;
+          reservation_cancelled_whatsapp?: boolean;
+          session_reminder_email?: boolean;
+          session_reminder_whatsapp?: boolean;
+          trial_request_email?: boolean;
+          trial_request_whatsapp?: boolean;
+          trial_status_email?: boolean;
+          trial_status_whatsapp?: boolean;
+          bono_low_email?: boolean;
+          bono_low_whatsapp?: boolean;
+          community_email?: boolean;
+          community_whatsapp?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          profile_id: string;
+          reservation_confirmed_email: boolean;
+          reservation_confirmed_whatsapp: boolean;
+          reservation_cancelled_email: boolean;
+          reservation_cancelled_whatsapp: boolean;
+          session_reminder_email: boolean;
+          session_reminder_whatsapp: boolean;
+          trial_request_email: boolean;
+          trial_request_whatsapp: boolean;
+          trial_status_email: boolean;
+          trial_status_whatsapp: boolean;
+          bono_low_email: boolean;
+          bono_low_whatsapp: boolean;
+          community_email: boolean;
+          community_whatsapp: boolean;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
+      notification_log: {
+        Row: {
+          id: string;
+          profile_id: string | null;
+          recipient: string | null;
+          event_type: string;
+          channel: string;
+          status: string;
+          error: string | null;
+          related_id: string | null;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          profile_id?: string | null;
+          recipient?: string | null;
+          event_type: string;
+          channel: string;
+          status: string;
+          error?: string | null;
+          related_id?: string | null;
+          sent_at?: string;
+        };
+        Update: {
+          id?: string;
+          profile_id?: string | null;
+          recipient?: string | null;
+          event_type?: string;
+          channel?: string;
+          status?: string;
+          error?: string | null;
+          related_id?: string | null;
+          sent_at?: string;
+        };
+        Relationships: [];
+      };
       trial_bookings: {
         Row: {
           id: string;

@@ -31,6 +31,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/admin/serveis", label: "Serveis" },
     { href: "/admin/exercicis", label: "Exercicis" },
     { href: "/admin/community", label: "Comunitat" },
+    { href: "/admin/configuracio", label: "Configuració" },
   ],
   trainer: [
     { href: "/trainer", label: "Inici", exact: true },
@@ -40,6 +41,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/trainer/bonos", label: "Bons" },
     { href: "/trainer/exercicis", label: "Exercicis" },
     { href: "/trainer/comunitat", label: "Comunitat" },
+    { href: "/trainer/configuracio", label: "Configuració" },
   ],
   client: [
     { href: "/client", label: "Inici", exact: true },

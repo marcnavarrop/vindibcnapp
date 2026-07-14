@@ -60,6 +60,12 @@ export async function deleteClient(
       (ce) => ce.client_id !== clientId,
     );
     store.consents = store.consents.filter((c) => c.user_id !== profileId);
+    store.notification_preferences = store.notification_preferences.filter(
+      (n) => n.profile_id !== profileId,
+    );
+    store.notification_log = store.notification_log.filter(
+      (n) => n.profile_id !== profileId,
+    );
     store.clients = store.clients.filter((c) => c.id !== clientId);
     store.profiles = store.profiles.filter((p) => p.id !== profileId);
     saveStore(store);

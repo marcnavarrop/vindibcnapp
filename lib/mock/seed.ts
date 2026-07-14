@@ -94,6 +94,34 @@ export const seedDataAccessLog: DataAccessLog[] = [];
 type TrialBooking = Database["public"]["Tables"]["trial_bookings"]["Row"];
 export const seedTrialBookings: TrialBooking[] = [];
 
+type NotifPrefs =
+  Database["public"]["Tables"]["notification_preferences"]["Row"];
+/** Preferències per defecte per a cada perfil de la llavor. */
+export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
+  (p) => ({
+    id: `np-${p.id}`,
+    profile_id: p.id,
+    reservation_confirmed_email: true,
+    reservation_confirmed_whatsapp: false,
+    reservation_cancelled_email: true,
+    reservation_cancelled_whatsapp: false,
+    session_reminder_email: false,
+    session_reminder_whatsapp: false,
+    trial_request_email: false,
+    trial_request_whatsapp: false,
+    trial_status_email: true,
+    trial_status_whatsapp: false,
+    bono_low_email: false,
+    bono_low_whatsapp: false,
+    community_email: false,
+    community_whatsapp: false,
+    created_at: now,
+  }),
+);
+
+type NotifLog = Database["public"]["Tables"]["notification_log"]["Row"];
+export const seedNotificationLog: NotifLog[] = [];
+
 export const seedClientExercises: ClientExercise[] = [
   { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },
 ];

@@ -8,7 +8,8 @@ import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
 import { isServiceAvailable } from "@/lib/availability-slots";
 import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
-import { GROUP_CAPACITY } from "@/lib/labels";
+import { notify, getProfileContact } from "@/lib/notifications";
+import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
 import type { Database, ServiceType, ReservationStatus } from "@/types/database";
 
 /** Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio. */
@@ -25,6 +26,103 @@ async function assertWithinAvailability(
 }
 
 type DB = SupabaseClient<Database>;
+
+// ─────────────── Notificacions (best-effort) ───────────────
+
+function fmtWhen(iso: string): string {
+  return new Intl.DateTimeFormat("ca-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+type Contact = {
+  profileId: string;
+  email: string | null;
+  phone: string | null;
+  name: string | null;
+};
+
+/** Contacte del client (perfil) a partir del client_id. */
+async function clientContact(clientId: string): Promise<Contact | null> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const cl = store.clients.find((c) => c.id === clientId);
+    if (!cl) return null;
+    const p = store.profiles.find((x) => x.id === cl.profile_id);
+    return {
+      profileId: cl.profile_id,
+      email: p?.email ?? null,
+      phone: p?.phone ?? null,
+      name: p?.full_name ?? null,
+    };
+  }
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("clients")
+    .select(
+      "profile_id, profile:profiles!clients_profile_id_fkey(email, phone, full_name)",
+    )
+    .eq("id", clientId)
+    .maybeSingle();
+  if (!data) return null;
+  const p = (
+    data as unknown as {
+      profile: { email: string | null; phone: string | null; full_name: string | null } | null;
+    }
+  ).profile;
+  return {
+    profileId: data.profile_id as string,
+    email: p?.email ?? null,
+    phone: p?.phone ?? null,
+    name: p?.full_name ?? null,
+  };
+}
+
+/** Notifica al client una reserva creada/cancel·lada (best-effort). */
+async function notifyReservation(
+  clientId: string,
+  type: "reservation_confirmed" | "reservation_cancelled",
+  info: {
+    reservationId?: string | null;
+    scheduledAt: string;
+    serviceType: ServiceType;
+    trainerName?: string | null;
+  },
+): Promise<void> {
+  const c = await clientContact(clientId);
+  if (!c) return;
+  await notify({
+    type,
+    recipient: c,
+    relatedId: info.reservationId ?? null,
+    data: {
+      name: c.name ?? "",
+      when: fmtWhen(info.scheduledAt),
+      service: SERVICE_LABELS[info.serviceType],
+      ...(info.trainerName ? { trainer: info.trainerName } : {}),
+    },
+  });
+}
+
+/** Avisa el client que li queda 1 sessió al bo (best-effort). */
+async function notifyBonoLowIfNeeded(
+  clientId: string,
+  serviceType: ServiceType,
+  remaining: number,
+): Promise<void> {
+  if (remaining !== 1) return;
+  const c = await clientContact(clientId);
+  if (!c) return;
+  await notify({
+    type: "bono_low",
+    recipient: c,
+    data: { name: c.name ?? "", service: SERVICE_LABELS[serviceType] },
+  });
+}
 
 /**
  * Devuelve una sesión a su bono (al cancelar una reserva) y reactiva el bono si
@@ -279,6 +377,19 @@ export async function createReservation(
     bono.remaining_sessions -= weeks;
     if (bono.remaining_sessions === 0) bono.status = "completed";
     saveStore(store);
+    const trainerName = input.trainerId
+      ? (store.profiles.find((p) => p.id === input.trainerId)?.full_name ?? null)
+      : null;
+    await notifyReservation(bono.client_id, "reservation_confirmed", {
+      scheduledAt: dates[0],
+      serviceType: bono.service_type,
+      trainerName,
+    });
+    await notifyBonoLowIfNeeded(
+      bono.client_id,
+      bono.service_type,
+      bono.remaining_sessions,
+    );
     return;
   }
 
@@ -315,6 +426,16 @@ export async function createReservation(
     })
     .eq("id", bono.id);
   if (uErr) throw uErr;
+
+  const trainer = input.trainerId
+    ? await getProfileContact(input.trainerId)
+    : null;
+  await notifyReservation(bono.client_id, "reservation_confirmed", {
+    scheduledAt: dates[0],
+    serviceType: bono.service_type,
+    trainerName: trainer?.name ?? null,
+  });
+  await notifyBonoLowIfNeeded(bono.client_id, bono.service_type, remaining);
 }
 
 /** Cancela una reserva reservada y devuelve la sesión a su bono. */
@@ -336,13 +457,17 @@ export async function cancelReservation(id: string): Promise<void> {
       }
     }
     saveStore(store);
+    await notifyReservation(r.client_id, "reservation_cancelled", {
+      scheduledAt: r.scheduled_at,
+      serviceType: r.service_type,
+    });
     return;
   }
 
   const supabase = await createClient();
   const { data: r, error } = await supabase
     .from("reservations")
-    .select("id, status, bono_id")
+    .select("id, status, bono_id, client_id, scheduled_at, service_type")
     .eq("id", id)
     .single();
   if (error || !r) throw new Error("Reserva no trobada.");
@@ -355,6 +480,10 @@ export async function cancelReservation(id: string): Promise<void> {
   if (uErr) throw uErr;
 
   if (r.bono_id) await restoreBonoSession(supabase, r.bono_id);
+  await notifyReservation(r.client_id, "reservation_cancelled", {
+    scheduledAt: r.scheduled_at,
+    serviceType: r.service_type,
+  });
 }
 
 /** Marca una reserva reservada como realizada. */
@@ -478,6 +607,14 @@ export async function createClientReservation(
     bono.remaining_sessions -= 1;
     if (bono.remaining_sessions === 0) bono.status = "completed";
     saveStore(store);
+    const trainerName =
+      store.profiles.find((p) => p.id === trainerId)?.full_name ?? null;
+    await notifyReservation(client.id, "reservation_confirmed", {
+      scheduledAt,
+      serviceType,
+      trainerName,
+    });
+    await notifyBonoLowIfNeeded(client.id, serviceType, bono.remaining_sessions);
     return;
   }
 
@@ -556,6 +693,14 @@ export async function createClientReservation(
       .eq("id", bono.id);
     throw new Error("Aquesta franja ja està ocupada.");
   }
+
+  const trainer = await getProfileContact(trainerId);
+  await notifyReservation(client.id, "reservation_confirmed", {
+    scheduledAt,
+    serviceType,
+    trainerName: trainer?.name ?? null,
+  });
+  await notifyBonoLowIfNeeded(client.id, serviceType, nextRemaining);
 }
 
 /** Cancelación de una reserva por el propio cliente (futura y 'booked'). */
@@ -586,6 +731,20 @@ export async function cancelClientReservation(
       }
     }
     saveStore(store);
+    // Client cancel·la: avisa el professional del forat (si en té).
+    if (r.trainer_id) {
+      const trainer = await getProfileContact(r.trainer_id);
+      if (trainer)
+        await notify({
+          type: "reservation_cancelled",
+          recipient: trainer,
+          data: {
+            name: trainer.name ?? "",
+            when: fmtWhen(r.scheduled_at),
+            service: SERVICE_LABELS[r.service_type],
+          },
+        });
+    }
     return;
   }
 
@@ -593,7 +752,7 @@ export async function cancelClientReservation(
   const { data: r, error } = await admin
     .from("reservations")
     .select(
-      `id, status, scheduled_at, bono_id,
+      `id, status, scheduled_at, service_type, trainer_id, bono_id,
        client:clients!reservations_client_id_fkey(profile_id)`,
     )
     .eq("id", reservationId)
@@ -614,6 +773,19 @@ export async function cancelClientReservation(
     .eq("id", reservationId);
   if (uErr) throw uErr;
   if (r.bono_id) await restoreBonoSession(admin, r.bono_id);
+  if (r.trainer_id) {
+    const trainer = await getProfileContact(r.trainer_id);
+    if (trainer)
+      await notify({
+        type: "reservation_cancelled",
+        recipient: trainer,
+        data: {
+          name: trainer.name ?? "",
+          when: fmtWhen(r.scheduled_at),
+          service: SERVICE_LABELS[r.service_type],
+        },
+      });
+  }
 }
 
 /** Reserva para el calendario del cliente: SIN nombres de otros clientes. */
