@@ -2,12 +2,15 @@ import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
+import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listClients, listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
 import {
   cancelTrainerReservationAction,
   completeTrainerReservationAction,
   rescheduleTrainerReservationAction,
+  acceptTrialTrainerAction,
+  rejectTrialTrainerAction,
 } from "@/app/(trainer)/trainer/reservas/actions";
 
 export const dynamic = "force-dynamic";
@@ -17,12 +20,18 @@ export default async function TrainerReservasPage() {
   const trainerId = viewer?.id;
 
   // Todas las reservas (coordinación) + las de MIS clientes (gestionables).
-  const [reservations, trainers, myClients, availability] = await Promise.all([
-    listReservations(),
-    listTrainers(),
-    trainerId ? listClients(trainerId) : Promise.resolve([]),
-    trainerId ? listAvailabilityLite(trainerId) : Promise.resolve([]),
-  ]);
+  const [reservations, trainers, myClients, availability, trials] =
+    await Promise.all([
+      listReservations(),
+      listTrainers(),
+      trainerId ? listClients(trainerId) : Promise.resolve([]),
+      trainerId ? listAvailabilityLite(trainerId) : Promise.resolve([]),
+      listActiveTrialHolds(),
+    ]);
+  // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
+  const manageableTrialIds = trials
+    .filter((t) => t.trainerId === trainerId)
+    .map((t) => t.id);
 
   const myClientIds = new Set(myClients.map((c) => c.id));
   const manageableIds = reservations
@@ -59,6 +68,10 @@ export default async function TrainerReservasPage() {
           completeAction={completeTrainerReservationAction}
           rescheduleAction={rescheduleTrainerReservationAction}
           availability={availability}
+          trials={trials}
+          manageableTrialIds={manageableTrialIds}
+          acceptTrialAction={acceptTrialTrainerAction}
+          rejectTrialAction={rejectTrialTrainerAction}
         />
       </main>
   );

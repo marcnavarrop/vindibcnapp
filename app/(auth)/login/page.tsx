@@ -141,6 +141,12 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-brand-bg p-6">
       <Suspense>{USE_MOCK ? <MockLogin /> : <LoginForm />}</Suspense>
+      <Link
+        href="/prova"
+        className="mt-5 inline-flex items-center gap-2 rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold text-brand-purple hover:border-brand-purple"
+      >
+        🎁 Vols provar-nos? Demana una sessió de prova gratuïta
+      </Link>
       <footer className="mt-6 text-center text-xs text-brand-muted">
         <Link href="/legal/privacitat" className="hover:text-brand-purple">
           Privacitat

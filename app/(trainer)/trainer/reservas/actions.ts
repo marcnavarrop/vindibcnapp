@@ -8,6 +8,8 @@ import {
   completeReservation,
   rescheduleReservation,
 } from "@/lib/data/reservations";
+import { acceptTrial, rejectTrial } from "@/lib/data/trial-bookings";
+import { getViewer } from "@/lib/auth";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
 /**
@@ -69,5 +71,23 @@ export async function rescheduleTrainerReservationAction(formData: FormData) {
   const date = new Date(raw);
   if (!id || Number.isNaN(date.getTime())) return;
   await rescheduleReservation(id, date.toISOString());
+  revalidatePath("/trainer/reservas");
+}
+
+/** Accepta una sessió de prova pròpia (queda confirmada). */
+export async function acceptTrialTrainerAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return;
+  const id = String(formData.get("id") ?? "");
+  if (id) await acceptTrial(id, viewer.id);
+  revalidatePath("/trainer/reservas");
+}
+
+/** Rebutja una sessió de prova pròpia (allibera el forat). */
+export async function rejectTrialTrainerAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return;
+  const id = String(formData.get("id") ?? "");
+  if (id) await rejectTrial(id, viewer.id);
   revalidatePath("/trainer/reservas");
 }

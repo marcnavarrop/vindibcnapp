@@ -20,12 +20,15 @@ export function ClientForm({
   action,
   trainers,
   defaults,
+  trialId,
   submitLabel,
   cancelHref,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   trainers: { id: string; name: string }[];
   defaults?: ClientDefaults;
+  /** Si es converteix una sessió de prova, el seu id (per vincular-la). */
+  trialId?: string;
   submitLabel: string;
   cancelHref: string;
 }) {
@@ -36,6 +39,7 @@ export function ClientForm({
       action={formAction}
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
+      {trialId && <input type="hidden" name="trialId" value={trialId} />}
       <Field
         label="Nom complet"
         name="fullName"

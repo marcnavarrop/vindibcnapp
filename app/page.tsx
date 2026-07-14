@@ -35,6 +35,12 @@ export default function Home() {
             >
               Crear compte
             </Link>
+            <Link
+              href="/prova"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-bold tracking-wide uppercase transition-colors hover:bg-white/20"
+            >
+              🎁 Sessió de prova gratuïta
+            </Link>
           </nav>
 
           <p className="text-xs text-white/40">

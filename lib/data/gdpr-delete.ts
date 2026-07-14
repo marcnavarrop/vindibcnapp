@@ -3,6 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { bonoConcept } from "@/lib/data/payments";
+import { deleteTrialsForClient } from "@/lib/data/trial-bookings";
 import type { ServiceType } from "@/types/database";
 
 export type DeleteResult = { profileId: string; label: string };
@@ -28,6 +29,13 @@ export async function deleteClient(
     const profile = store.profiles.find((p) => p.id === client.profile_id);
     const label = `${profile?.full_name ?? "—"} <${profile?.email ?? ""}>`;
     const profileId = client.profile_id;
+
+    // RGPD: elimina també les seves sessions de prova (convertides o per email/tel).
+    await deleteTrialsForClient({
+      clientId,
+      email: profile?.email ?? null,
+      phone: profile?.phone ?? null,
+    });
 
     // Retenció anonimitzada dels pagaments amb concepte.
     for (const p of store.payments.filter((x) => x.client_id === clientId)) {
@@ -62,15 +70,25 @@ export async function deleteClient(
   const { data: client } = await admin
     .from("clients")
     .select(
-      "id, profile_id, profile:profiles!clients_profile_id_fkey(full_name, email)",
+      "id, profile_id, profile:profiles!clients_profile_id_fkey(full_name, email, phone)",
     )
     .eq("id", clientId)
     .single();
   if (!client) return null;
   const profileId = client.profile_id as string;
-  const p = (client as { profile: { full_name?: string; email?: string } | null })
-    .profile;
+  const p = (
+    client as {
+      profile: { full_name?: string; email?: string; phone?: string } | null;
+    }
+  ).profile;
   const label = `${p?.full_name ?? "—"} <${p?.email ?? ""}>`;
+
+  // RGPD: elimina també les seves sessions de prova (convertides o per email/tel).
+  await deleteTrialsForClient({
+    clientId,
+    email: p?.email ?? null,
+    phone: p?.phone ?? null,
+  });
 
   // 1. Fixa el concepte als pagaments sense concepte (abans de desvincular-los).
   const { data: pays } = await admin

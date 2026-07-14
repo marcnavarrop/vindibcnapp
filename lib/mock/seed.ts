@@ -91,6 +91,9 @@ export const seedConsents: Consent[] = [];
 type DataAccessLog = Database["public"]["Tables"]["data_access_log"]["Row"];
 export const seedDataAccessLog: DataAccessLog[] = [];
 
+type TrialBooking = Database["public"]["Tables"]["trial_bookings"]["Row"];
+export const seedTrialBookings: TrialBooking[] = [];
+
 export const seedClientExercises: ClientExercise[] = [
   { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },
 ];

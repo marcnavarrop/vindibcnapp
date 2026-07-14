@@ -14,6 +14,7 @@ import {
   type AvailabilityRuleLite,
 } from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
+import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
 const DEFAULT_OPEN = 7;
@@ -59,6 +60,10 @@ export function WeeklyCalendar({
   completeAction,
   rescheduleAction,
   availability,
+  trials = [],
+  manageableTrialIds = [],
+  acceptTrialAction,
+  rejectTrialAction,
 }: {
   reservations: ReservationListItem[];
   manageableIds: string[];
@@ -69,12 +74,22 @@ export function WeeklyCalendar({
   rescheduleAction: ReservationAction;
   /** Si se pasa, sombrea las franjas dentro de la disponibilidad declarada. */
   availability?: AvailabilityRuleLite[];
+  /** Sessions de prova (pending/confirmed) per pintar diferenciades. */
+  trials?: TrialHoldItem[];
+  manageableTrialIds?: string[];
+  acceptTrialAction?: ReservationAction;
+  rejectTrialAction?: ReservationAction;
 }) {
   const router = useRouter();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selected, setSelected] = useState<ReservationListItem | null>(null);
+  const [selectedTrial, setSelectedTrial] = useState<TrialHoldItem | null>(null);
 
   const manageable = useMemo(() => new Set(manageableIds), [manageableIds]);
+  const manageableTrials = useMemo(
+    () => new Set(manageableTrialIds),
+    [manageableTrialIds],
+  );
 
   const weekStart = useMemo(
     () => addDays(startOfWeek(new Date()), weekOffset * 7),
@@ -87,7 +102,7 @@ export function WeeklyCalendar({
   );
 
   // Reservas de esta semana, agrupadas por (día, hora).
-  const { cells, hours, groupOccupancy } = useMemo(() => {
+  const { cells, hours, groupOccupancy, trialCells } = useMemo(() => {
     const inWeek = reservations.filter((r) => {
       const d = new Date(r.scheduledAt);
       return d >= weekStart && d < weekEnd;
@@ -113,10 +128,19 @@ export function WeeklyCalendar({
       const key = `${dayIdx}-${h}`;
       (map.get(key) ?? map.set(key, []).get(key)!).push(r);
     }
+    // Sessions de prova d'aquesta setmana, agrupades per (dia, hora).
+    const trialMap = new Map<string, TrialHoldItem[]>();
+    for (const t of trials) {
+      const d = new Date(t.scheduledAt);
+      if (d < weekStart || d >= weekEnd) continue;
+      const key = `${(d.getDay() + 6) % 7}-${d.getHours()}`;
+      (trialMap.get(key) ?? trialMap.set(key, []).get(key)!).push(t);
+    }
+
     const hrs: number[] = [];
     for (let h = minH; h < maxH; h++) hrs.push(h);
-    return { cells: map, hours: hrs, groupOccupancy: occ };
-  }, [reservations, weekStart, weekEnd]);
+    return { cells: map, hours: hrs, groupOccupancy: occ, trialCells: trialMap };
+  }, [reservations, trials, weekStart, weekEnd]);
 
   const monthLabel = new Intl.DateTimeFormat("ca-ES", {
     month: "long",
@@ -234,6 +258,16 @@ export function WeeklyCalendar({
                           }}
                         />
                       ))}
+                      {(trialCells.get(`${dayIdx}-${h}`) ?? []).map((t) => (
+                        <TrialCard
+                          key={t.id}
+                          t={t}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTrial(t);
+                          }}
+                        />
+                      ))}
                     </div>
                   </div>
                 );
@@ -258,6 +292,154 @@ export function WeeklyCalendar({
           onClose={() => setSelected(null)}
         />
       )}
+
+      {selectedTrial && (
+        <TrialModal
+          t={selectedTrial}
+          canManage={manageableTrials.has(selectedTrial.id)}
+          acceptAction={acceptTrialAction}
+          rejectAction={rejectTrialAction}
+          onClose={() => setSelectedTrial(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+const TRIAL_COLOR = "#ff6d17"; // taronja de marca per a les proves
+
+function TrialCard({
+  t,
+  onClick,
+}: {
+  t: TrialHoldItem;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  const pending = t.status === "pending";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        backgroundColor: `${TRIAL_COLOR}1a`,
+        border: `1.5px ${pending ? "dashed" : "solid"} ${TRIAL_COLOR}`,
+      }}
+      className="block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight"
+      title={`Prova · ${t.fullName}`}
+    >
+      <span className="flex items-center gap-1">
+        <span
+          className="rounded px-1 text-[9px] font-bold text-white"
+          style={{ backgroundColor: TRIAL_COLOR }}
+        >
+          PROVA
+        </span>
+        <span className="truncate font-bold text-brand-dark">{t.fullName}</span>
+      </span>
+      <span className="block" style={{ color: TRIAL_COLOR }}>
+        {pending ? "Pendent" : "Confirmada"}
+      </span>
+    </button>
+  );
+}
+
+function TrialModal({
+  t,
+  canManage,
+  acceptAction,
+  rejectAction,
+  onClose,
+}: {
+  t: TrialHoldItem;
+  canManage: boolean;
+  acceptAction?: ReservationAction;
+  rejectAction?: ReservationAction;
+  onClose: () => void;
+}) {
+  const when = new Intl.DateTimeFormat("ca-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(t.scheduledAt));
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="mb-3 h-1.5 w-12 rounded-full"
+          style={{ backgroundColor: TRIAL_COLOR }}
+        />
+        <div className="flex items-center gap-2">
+          <span
+            className="rounded px-1.5 py-0.5 text-[10px] font-bold text-white"
+            style={{ backgroundColor: TRIAL_COLOR }}
+          >
+            SESSIÓ DE PROVA
+          </span>
+          <span className="text-xs font-bold text-brand-muted uppercase">
+            {t.status === "pending" ? "Pendent" : "Confirmada"}
+          </span>
+        </div>
+        <h2 className="mt-2 text-lg font-bold text-brand-dark">{t.fullName}</h2>
+        <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
+        <dl className="mt-4 flex flex-col gap-2 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-brand-muted">Telèfon</dt>
+            <dd className="font-bold text-brand-dark">
+              <a href={`tel:${t.phone}`} className="hover:text-brand-purple">
+                {t.phone}
+              </a>
+            </dd>
+          </div>
+        </dl>
+
+        {canManage && (acceptAction || rejectAction) ? (
+          <div className="mt-5 flex items-center gap-2">
+            {t.status === "pending" && acceptAction && (
+              <form action={acceptAction} className="flex-1" onSubmit={onClose}>
+                <input type="hidden" name="id" value={t.id} />
+                <button
+                  type="submit"
+                  className="w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
+                >
+                  Acceptar
+                </button>
+              </form>
+            )}
+            {rejectAction && (
+              <form action={rejectAction} className="flex-1" onSubmit={onClose}>
+                <input type="hidden" name="id" value={t.id} />
+                <button
+                  type="submit"
+                  className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
+                >
+                  Rebutjar
+                </button>
+              </form>
+            )}
+          </div>
+        ) : (
+          <p className="mt-5 text-sm text-brand-muted">
+            Només l&apos;entrenador/a d&apos;aquesta prova la pot gestionar.
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+        >
+          Tancar
+        </button>
+      </div>
     </div>
   );
 }

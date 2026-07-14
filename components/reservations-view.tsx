@@ -5,6 +5,7 @@ import { clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import type { ReservationListItem } from "@/lib/data/reservations";
+import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import type { AvailabilityRuleLite } from "@/lib/availability-slots";
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
@@ -24,6 +25,10 @@ export function ReservationsView({
   completeAction,
   rescheduleAction,
   availability,
+  trials,
+  manageableTrialIds,
+  acceptTrialAction,
+  rejectTrialAction,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -34,6 +39,10 @@ export function ReservationsView({
   completeAction: ReservationAction;
   rescheduleAction: ReservationAction;
   availability?: AvailabilityRuleLite[];
+  trials?: TrialHoldItem[];
+  manageableTrialIds?: string[];
+  acceptTrialAction?: ReservationAction;
+  rejectTrialAction?: ReservationAction;
 }) {
   const [view, setView] = useState<"calendar" | "list">("calendar");
 
@@ -66,6 +75,10 @@ export function ReservationsView({
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}
           availability={availability}
+          trials={trials}
+          manageableTrialIds={manageableTrialIds}
+          acceptTrialAction={acceptTrialAction}
+          rejectTrialAction={rejectTrialAction}
         />
       ) : (
         <ReservationsAgenda

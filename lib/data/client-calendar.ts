@@ -3,6 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import type { TrainerRuleLite } from "@/lib/availability-slots";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
@@ -41,6 +42,20 @@ const EMPTY: ClientCenterData = {
 export async function getClientCenterData(
   profileId: string,
 ): Promise<ClientCenterData> {
+  // Les proves 'pending'/'confirmed' ocupen el forat: es mostren com a
+  // reserves anònimes ('booked', isOwn=false) perquè el client no pugui
+  // reservar-hi a sobre ni deduir de qui són.
+  const holdReservations: CenterReservation[] = (
+    await listActiveTrialHolds()
+  ).map((h) => ({
+    id: `trial-${h.id}`,
+    trainerId: h.trainerId,
+    scheduledAt: h.scheduledAt,
+    serviceType: h.serviceType,
+    status: "booked" as ReservationStatus,
+    isOwn: false,
+  }));
+
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === profileId);
@@ -79,7 +94,13 @@ export async function getClientCenterData(
         status: r.status,
         isOwn: r.client_id === client.id,
       }));
-    return { clientId: client.id, bonoTypes, trainers, rules, reservations };
+    return {
+      clientId: client.id,
+      bonoTypes,
+      trainers,
+      rules,
+      reservations: [...reservations, ...holdReservations],
+    };
   }
 
   const admin = createAdminClient();
@@ -123,5 +144,11 @@ export async function getClientCenterData(
     isOwn: r.client_id === client.id,
   }));
 
-  return { clientId: client.id, bonoTypes, trainers, rules, reservations };
+  return {
+    clientId: client.id,
+    bonoTypes,
+    trainers,
+    rules,
+    reservations: [...reservations, ...holdReservations],
+  };
 }

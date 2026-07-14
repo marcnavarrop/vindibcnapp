@@ -1,19 +1,25 @@
 import Link from "next/link";
 import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
+import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listTrainers } from "@/lib/data/clients";
 import {
   cancelReservationAction,
   completeReservationAction,
   rescheduleReservationAction,
 } from "@/app/(admin)/admin/reservas/actions";
+import {
+  acceptTrialAdminAction,
+  rejectTrialAdminAction,
+} from "@/app/(admin)/admin/prova/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReservasPage() {
-  const [reservations, trainers] = await Promise.all([
+  const [reservations, trainers, trials] = await Promise.all([
     listReservations(),
     listTrainers(),
+    listActiveTrialHolds(),
   ]);
   const nowISO = new Date().toISOString();
 
@@ -45,6 +51,10 @@ export default async function ReservasPage() {
           cancelAction={cancelReservationAction}
           completeAction={completeReservationAction}
           rescheduleAction={rescheduleReservationAction}
+          trials={trials}
+          manageableTrialIds={trials.map((t) => t.id)}
+          acceptTrialAction={acceptTrialAdminAction}
+          rejectTrialAction={rejectTrialAdminAction}
         />
       </main>
   );

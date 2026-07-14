@@ -25,6 +25,16 @@ export type BonoStatus =
   | "cancelled"
   | "pending_payment";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
+export type TrialStatus =
+  | "pending"
+  | "confirmed"
+  | "rejected"
+  | "expired"
+  | "completed"
+  | "no_show"
+  | "cancelled";
+/** Serveis d'entrenament (les sessions de prova mai són de fisioteràpia). */
+export type TrainingServiceType = Exclude<ServiceType, "fisioterapia">;
 export type PaymentMethod = "card" | "cash";
 export type ExerciseCategory =
   | "forca"
@@ -423,6 +433,54 @@ export interface Database {
         };
         Relationships: [];
       };
+      trial_bookings: {
+        Row: {
+          id: string;
+          full_name: string;
+          email: string;
+          phone: string;
+          trainer_id: string | null;
+          scheduled_at: string;
+          service_type: ServiceType;
+          status: TrialStatus;
+          expires_at: string;
+          converted_client_id: string | null;
+          consent_privacy_at: string;
+          ip: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name: string;
+          email: string;
+          phone: string;
+          trainer_id?: string | null;
+          scheduled_at: string;
+          service_type: ServiceType;
+          status?: TrialStatus;
+          expires_at: string;
+          converted_client_id?: string | null;
+          consent_privacy_at: string;
+          ip?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string;
+          email?: string;
+          phone?: string;
+          trainer_id?: string | null;
+          scheduled_at?: string;
+          service_type?: ServiceType;
+          status?: TrialStatus;
+          expires_at?: string;
+          converted_client_id?: string | null;
+          consent_privacy_at?: string;
+          ip?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       client_exercises: {
         Row: {
           id: string;
@@ -463,6 +521,7 @@ export interface Database {
       service_type: ServiceType;
       bono_status: BonoStatus;
       reservation_status: ReservationStatus;
+      trial_status: TrialStatus;
       payment_method: PaymentMethod;
       exercise_category: ExerciseCategory;
     };

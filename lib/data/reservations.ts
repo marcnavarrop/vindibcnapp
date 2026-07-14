@@ -7,6 +7,7 @@ import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
 import { isServiceAvailable } from "@/lib/availability-slots";
+import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { GROUP_CAPACITY } from "@/lib/labels";
 import type { Database, ServiceType, ReservationStatus } from "@/types/database";
 
@@ -450,12 +451,18 @@ export async function createClientReservation(
       throw new Error("No tens cap bo actiu d'aquest tipus amb sessions.");
     await assertWithinAvailability(trainerId, when, serviceType);
     assertSlotFree(
-      store.reservations.filter(
-        (r) =>
-          r.trainer_id === trainerId &&
-          r.scheduled_at === scheduledAt &&
-          r.status === "booked",
-      ),
+      [
+        ...store.reservations
+          .filter(
+            (r) =>
+              r.trainer_id === trainerId &&
+              r.scheduled_at === scheduledAt &&
+              r.status === "booked",
+          )
+          .map((r) => ({ service_type: r.service_type })),
+        // Les proves 'pending'/'confirmed' també ocupen el forat.
+        ...mockActiveHoldsAt(store, trainerId, scheduledAt),
+      ],
       serviceType,
     );
     store.reservations.push({
@@ -511,8 +518,10 @@ export async function createClientReservation(
     .eq("scheduled_at", scheduledAt)
     .eq("status", "booked");
   if (eErr) throw eErr;
+  // Les proves 'pending'/'confirmed' també ocupen el forat.
+  const holds = await fetchActiveHoldsAt(admin, trainerId, scheduledAt);
   assertSlotFree(
-    (existing ?? []) as { service_type: ServiceType }[],
+    [...((existing ?? []) as { service_type: ServiceType }[]), ...holds],
     serviceType,
   );
 

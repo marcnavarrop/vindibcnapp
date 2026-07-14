@@ -7,6 +7,7 @@ import {
   updateClientRecord,
   type ClientInput,
 } from "@/lib/data/clients";
+import { markTrialConverted } from "@/lib/data/trial-bookings";
 
 export type FormState = { error?: string };
 
@@ -41,6 +42,16 @@ export async function createClientAction(
     id = await createClientRecord(input);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en crear." };
+  }
+
+  // Si prové de convertir una sessió de prova, la vinculem (converted_client_id).
+  const trialId = String(formData.get("trialId") ?? "");
+  if (trialId) {
+    try {
+      await markTrialConverted(trialId, id);
+    } catch {
+      // La conversió del client ja s'ha fet; el vincle és secundari.
+    }
   }
 
   revalidatePath("/admin/clients");

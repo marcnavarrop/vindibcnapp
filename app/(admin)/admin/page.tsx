@@ -10,6 +10,7 @@ const SECTIONS = [
   { href: "/admin/entrenadors", title: "Entrenadors", desc: "Equip, especialitat i clients assignats.", ready: true },
   { href: "/admin/bonos", title: "Bons", desc: "Paquets de sessions i el seu estat.", ready: true },
   { href: "/admin/reservas", title: "Reserves", desc: "Agenda de sessions.", ready: true },
+  { href: "/admin/prova", title: "Sessions de prova", desc: "Sol·licituds de prova gratuïta i conversió.", ready: true },
   { href: "/admin/pagos", title: "Pagaments", desc: "Cobraments amb targeta i efectiu.", ready: true },
   { href: "/admin/serveis", title: "Serveis", desc: "Catàleg de serveis i preus.", ready: true },
   { href: "/admin/exercicis", title: "Exercicis", desc: "Biblioteca d'exercicis amb vídeo.", ready: true },
