@@ -35,3 +35,13 @@ export function appUrl(): string {
 export function appLink(path: string): string {
   return `${appUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/**
+ * URL pública (HTTPS) del logo per a la capçalera dels emails. Opcional: si no
+ * està definida (`EMAIL_LOGO_URL`), es fa servir el wordmark de text "VindiBCN".
+ * Recomanació: fer servir una versió clara/blanca del logo, perquè la capçalera
+ * és de color lila fosc.
+ */
+export function emailLogoUrl(): string | null {
+  return process.env.EMAIL_LOGO_URL || null;
+}

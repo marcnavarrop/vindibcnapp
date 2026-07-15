@@ -1,6 +1,6 @@
 import "server-only";
 import type { NotificationEvent } from "@/lib/notifications/types";
-import { BRAND, CENTER_NAME, appLink } from "@/lib/notifications/brand";
+import { BRAND, CENTER_NAME, appLink, emailLogoUrl } from "@/lib/notifications/brand";
 
 /** Escapa text per evitar injecció d'HTML des de dades d'usuari. */
 function esc(s: string): string {
@@ -79,6 +79,14 @@ function footer(kind: FooterKind): string {
   </td></tr>`;
 }
 
+/** Capçalera de marca: imatge del logo si hi ha EMAIL_LOGO_URL; si no, wordmark. */
+function brandHeader(): string {
+  const logo = emailLogoUrl();
+  if (logo)
+    return `<img src="${logo}" alt="${CENTER_NAME}" height="30" style="display:block;height:30px;width:auto;border:0;outline:none;text-decoration:none;">`;
+  return `<span style="font-size:23px;font-weight:800;letter-spacing:-0.5px;color:${BRAND.white};">Vindi<span style="color:${BRAND.orange};">BCN</span></span>`;
+}
+
 function layout(block: Block): string {
   const bodyParts: string[] = [];
   bodyParts.push(
@@ -96,7 +104,7 @@ function layout(block: Block): string {
     <tr><td align="center" style="padding:24px 12px;">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:${BRAND.white};border:1px solid ${BRAND.border};border-radius:16px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
         <tr><td style="background:${BRAND.purple};padding:22px 32px;">
-          <span style="font-size:23px;font-weight:800;letter-spacing:-0.5px;color:${BRAND.white};">Vindi<span style="color:${BRAND.orange};">BCN</span></span>
+          ${brandHeader()}
         </td></tr>
         <tr><td style="padding:30px 32px 8px;">${bodyParts.join("")}</td></tr>
         ${footer(block.footer)}

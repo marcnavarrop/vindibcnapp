@@ -7,7 +7,7 @@ import "server-only";
  *   RESEND_API_KEY          — clau de Resend (si no hi és, no s'envia res).
  *   NOTIFICATIONS_FROM_EMAIL — remitent, tal com l'espera Resend. Accepta tant
  *                              "email@domini" com el format "Nom <email@domini>"
- *                              (p. ex. "Vindi BCN <hola@vindibcn.com>"); es passa
+ *                              (p. ex. "VindiBCN <hola@vindibcn.com>"); es passa
  *                              literalment, sense re-embolcallar. Per defecte, el
  *                              domini de proves de Resend (onboarding@resend.dev)
  *                              perquè no trenqui en local.
