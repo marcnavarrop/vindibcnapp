@@ -5,14 +5,17 @@ import "server-only";
  * el dia que verifiquem el domini només calgui canviar variables, no codi:
  *
  *   RESEND_API_KEY          — clau de Resend (si no hi és, no s'envia res).
- *   NOTIFICATIONS_FROM_EMAIL — remitent; per defecte el domini de proves de
- *                              Resend (onboarding@resend.dev). Canvia'l a una
- *                              adreça de vindibcn.com quan el domini estigui
- *                              verificat.
+ *   NOTIFICATIONS_FROM_EMAIL — remitent, tal com l'espera Resend. Accepta tant
+ *                              "email@domini" com el format "Nom <email@domini>"
+ *                              (p. ex. "Vindi BCN <hola@vindibcn.com>"); es passa
+ *                              literalment, sense re-embolcallar. Per defecte, el
+ *                              domini de proves de Resend (onboarding@resend.dev)
+ *                              perquè no trenqui en local.
  *   CENTER_EMAIL            — (opcional) correu general del centre per a avisos.
  *
- * ⚠️ En mode de proves de Resend només s'entreguen correus a la teva pròpia
- * adreça verificada; la resta els accepta l'API però no els reparteix.
+ * Amb el domini verificat a Resend, els correus s'entreguen a qualsevol
+ * destinatari. (En mode de proves, Resend només reparteix a la teva pròpia
+ * adreça verificada.)
  */
 const FROM = process.env.NOTIFICATIONS_FROM_EMAIL ?? "onboarding@resend.dev";
 
