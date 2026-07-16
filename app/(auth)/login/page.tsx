@@ -62,7 +62,10 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // Missatge d'error que pot arribar del callback (enllaç caducat, etc.).
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error"),
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -125,7 +128,16 @@ function LoginForm() {
         </Button>
       </form>
 
-      <p className="mt-6 text-sm text-brand-muted">
+      <p className="mt-4 text-sm text-brand-muted">
+        <Link
+          href="/forgot-password"
+          className="font-bold text-brand-purple hover:text-brand-orange"
+        >
+          Has oblidat la contrasenya?
+        </Link>
+      </p>
+
+      <p className="mt-2 text-sm text-brand-muted">
         No tens compte?{" "}
         <Link
           href="/register"

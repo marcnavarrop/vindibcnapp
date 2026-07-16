@@ -3,7 +3,11 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
+import { appUrl } from "@/lib/notifications/brand";
 import type { Specialty } from "@/types/database";
+
+/** URL d'aterratge dels enllaços d'invitació/recuperació. */
+export const AUTH_CALLBACK_URL = `${appUrl()}/auth/callback`;
 
 export type TrainerListItem = {
   id: string;
@@ -136,15 +140,18 @@ export async function createTrainer(input: TrainerInput): Promise<string> {
   }
 
   const admin = createAdminClient();
-  const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email: input.email,
-    password: crypto.randomUUID(),
-    email_confirm: true,
-    user_metadata: { full_name: input.fullName, role: "trainer" },
-  });
+  // Invitació per email: crea l'usuari SENSE contrasenya i li envia un correu
+  // perquè la fixi. El trigger crea el perfil amb el rol dels metadates.
+  const { data: created, error: createErr } = await admin.auth.admin.inviteUserByEmail(
+    input.email,
+    {
+      data: { full_name: input.fullName, role: "trainer" },
+      redirectTo: AUTH_CALLBACK_URL,
+    },
+  );
   if (createErr || !created?.user) {
     throw new Error(
-      createErr?.message ?? "No s'ha pogut crear l'usuari de l'entrenador/a.",
+      createErr?.message ?? "No s'ha pogut convidar l'entrenador/a.",
     );
   }
   const id = created.user.id;

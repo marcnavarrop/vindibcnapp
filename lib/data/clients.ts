@@ -3,6 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
+import { AUTH_CALLBACK_URL } from "@/lib/data/trainers";
 import type {
   ServiceType,
   BonoStatus,
@@ -337,18 +338,17 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
     return clientId;
   }
 
-  // Real: creamos el usuario de auth (el trigger crea su perfil) y la fila de
-  // cliente. Usa la service_role key (Admin API + salta RLS).
+  // Real: invitem l'usuari per email (crea el perfil via trigger, sense
+  // contrasenya) i creem la fila de client. Usa service_role (Admin API + RLS).
   const admin = createAdminClient();
-  const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email: input.email,
-    password: crypto.randomUUID(),
-    email_confirm: true,
-    user_metadata: { full_name: input.fullName, role: "client" },
-  });
+  const { data: created, error: createErr } =
+    await admin.auth.admin.inviteUserByEmail(input.email, {
+      data: { full_name: input.fullName, role: "client" },
+      redirectTo: AUTH_CALLBACK_URL,
+    });
   if (createErr || !created?.user) {
     throw new Error(
-      createErr?.message ?? "No s'ha pogut crear l'usuari del client.",
+      createErr?.message ?? "No s'ha pogut convidar el client.",
     );
   }
   const profileId = created.user.id;

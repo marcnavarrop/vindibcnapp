@@ -15,9 +15,8 @@ export default function NewTrainerPage() {
           Nou entrenador/a
         </h1>
         <p className="mb-6 max-w-xl text-sm text-brand-muted">
-          Es crea l&apos;usuari a Supabase Auth amb rol d&apos;entrenador/a.
-          Després podrà accedir amb el seu correu (caldrà que restableixi la
-          contrasenya).
+          Es crea l&apos;usuari amb rol d&apos;entrenador/a i se li envia un
+          correu d&apos;invitació perquè creï la seva contrasenya i pugui entrar.
         </p>
 
         <TrainerForm
