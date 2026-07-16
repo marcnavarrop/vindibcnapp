@@ -3,7 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
-import { AUTH_CALLBACK_URL } from "@/lib/data/trainers";
+import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import type {
   ServiceType,
   BonoStatus,
@@ -16,6 +16,7 @@ import type {
 /** Cliente enriquecido para listados (nombre, entrenador, sesiones restantes). */
 export type ClientListItem = {
   id: string;
+  profileId: string;
   fullName: string;
   email: string;
   phone: string | null;
@@ -76,6 +77,7 @@ function toListItem(clientId: string, store = getStore()): ClientListItem {
   );
   return {
     id: client.id,
+    profileId: client.profile_id,
     fullName: profile?.full_name ?? "—",
     email: profile?.email ?? "",
     phone: profile?.phone ?? null,
@@ -103,7 +105,7 @@ export async function listClients(
   let query = supabase
     .from("clients")
     .select(
-      `id,
+      `id, profile_id,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(remaining_sessions, status)`,
@@ -116,6 +118,7 @@ export async function listClients(
 
   type Row = {
     id: string;
+    profile_id: string;
     profile: {
       full_name: string | null;
       email: string | null;
@@ -128,6 +131,7 @@ export async function listClients(
     const active = row.bonos.filter((b) => b.status === "active");
     return {
       id: row.id,
+      profileId: row.profile_id,
       fullName: row.profile?.full_name ?? "—",
       email: row.profile?.email ?? "",
       phone: row.profile?.phone ?? null,
@@ -338,21 +342,14 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
     return clientId;
   }
 
-  // Real: invitem l'usuari per email (crea el perfil via trigger, sense
-  // contrasenya) i creem la fila de client. Usa service_role (Admin API + RLS).
+  // Crea l'usuari (el trigger crea el perfil) i li envia la invitació de marca
+  // via Resend (email best-effort). Després completem telèfon i fila de client.
+  const profileId = await createUserWithInvite({
+    email: input.email,
+    fullName: input.fullName,
+    role: "client",
+  });
   const admin = createAdminClient();
-  const { data: created, error: createErr } =
-    await admin.auth.admin.inviteUserByEmail(input.email, {
-      data: { full_name: input.fullName, role: "client" },
-      redirectTo: AUTH_CALLBACK_URL,
-    });
-  if (createErr || !created?.user) {
-    throw new Error(
-      createErr?.message ?? "No s'ha pogut convidar el client.",
-    );
-  }
-  const profileId = created.user.id;
-  // El trigger ya ha creado el perfil; completamos el teléfono.
   await admin.from("profiles").update({ phone: input.phone }).eq("id", profileId);
   const { data: clientRow, error: insErr } = await admin
     .from("clients")

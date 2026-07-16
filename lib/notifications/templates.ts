@@ -11,7 +11,7 @@ function esc(s: string): string {
 
 type DetailRow = { label: string; value: string };
 type Cta = { label: string; url: string };
-type FooterKind = "client" | "trainer" | "visitor";
+type FooterKind = "client" | "trainer" | "visitor" | "plain";
 
 type Block = {
   heading: string;
@@ -65,16 +65,16 @@ function footer(kind: FooterKind): string {
     prefsLine = `Pots gestionar els teus avisos des de la teva àrea, a <a href="${appLink(
       "/trainer/configuracio",
     )}" style="color:${BRAND.purple};text-decoration:underline;">Configuració</a>.`;
-  else
+  else if (kind === "visitor")
     prefsLine = `Has rebut aquest correu perquè has demanat una sessió de prova a ${CENTER_NAME}.`;
+  // "plain": només marca + privacitat (emails de compte: invitació/recuperació).
 
   return `<tr><td style="padding:20px 32px 28px;border-top:1px solid ${BRAND.border};">
     <p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:${BRAND.muted};">
       <strong style="color:${BRAND.charcoal};">${CENTER_NAME}</strong> · Centre d'entrenament personal i fisioteràpia
     </p>
     <p style="margin:0;font-size:12px;line-height:1.5;color:${BRAND.muted};">
-      ${prefsLine}
-      &nbsp;·&nbsp;<a href="${privacy}" style="color:${BRAND.muted};text-decoration:underline;">Política de Privacitat</a>
+      ${prefsLine ? `${prefsLine}&nbsp;·&nbsp;` : ""}<a href="${privacy}" style="color:${BRAND.muted};text-decoration:underline;">Política de Privacitat</a>
     </p>
   </td></tr>`;
 }
@@ -146,6 +146,52 @@ function plain(block: Block): string {
 // ─────────────────────────── Plantilles per esdeveniment ───────────────────────────
 
 export type RenderedEmail = { subject: string; html: string; text: string };
+
+/** Email d'invitació (crear contrasenya) amb la marca. */
+export function renderInviteEmail(input: {
+  name: string | null;
+  url: string;
+}): RenderedEmail {
+  const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
+  const block: Block = {
+    heading: "Benvingut/da a VindiBCN",
+    intro: [
+      hola,
+      "T'han donat d'alta al centre. Fes clic al botó per crear la teva contrasenya i començar a fer servir la teva àrea.",
+    ],
+    cta: { label: "Crear la meva contrasenya", url: input.url },
+    outro: ["Si no esperaves aquest correu, ignora'l."],
+    footer: "plain",
+  };
+  return {
+    subject: "Benvingut/da a VindiBCN — crea la teva contrasenya",
+    html: layout(block),
+    text: plain(block),
+  };
+}
+
+/** Email de restabliment de contrasenya amb la marca. */
+export function renderRecoveryEmail(input: {
+  name: string | null;
+  url: string;
+}): RenderedEmail {
+  const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
+  const block: Block = {
+    heading: "Restablir la contrasenya",
+    intro: [
+      hola,
+      "Has demanat crear una contrasenya nova. Fes clic al botó per continuar:",
+    ],
+    cta: { label: "Crear contrasenya nova", url: input.url },
+    outro: ["Si no ho has demanat tu, ignora aquest correu; la teva contrasenya no canviarà."],
+    footer: "plain",
+  };
+  return {
+    subject: "Restablir la teva contrasenya — VindiBCN",
+    html: layout(block),
+    text: plain(block),
+  };
+}
 
 export function renderEmail(event: NotificationEvent): RenderedEmail {
   const d = event.data;

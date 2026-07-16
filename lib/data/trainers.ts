@@ -3,11 +3,8 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
-import { appUrl } from "@/lib/notifications/brand";
+import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import type { Specialty } from "@/types/database";
-
-/** URL d'aterratge dels enllaços d'invitació/recuperació. */
-export const AUTH_CALLBACK_URL = `${appUrl()}/auth/callback`;
 
 export type TrainerListItem = {
   id: string;
@@ -139,22 +136,15 @@ export async function createTrainer(input: TrainerInput): Promise<string> {
     return id;
   }
 
+  // Crea l'usuari (rol als metadates; el trigger crea el perfil) i li envia la
+  // invitació de marca via Resend. Email best-effort; l'alta no es trenca si
+  // falla (l'admin pot reenviar-la).
+  const id = await createUserWithInvite({
+    email: input.email,
+    fullName: input.fullName,
+    role: "trainer",
+  });
   const admin = createAdminClient();
-  // Invitació per email: crea l'usuari SENSE contrasenya i li envia un correu
-  // perquè la fixi. El trigger crea el perfil amb el rol dels metadates.
-  const { data: created, error: createErr } = await admin.auth.admin.inviteUserByEmail(
-    input.email,
-    {
-      data: { full_name: input.fullName, role: "trainer" },
-      redirectTo: AUTH_CALLBACK_URL,
-    },
-  );
-  if (createErr || !created?.user) {
-    throw new Error(
-      createErr?.message ?? "No s'ha pogut convidar l'entrenador/a.",
-    );
-  }
-  const id = created.user.id;
   // El trigger ya creó el perfil con rol 'trainer'; fijamos la especialidad.
   const { error: updErr } = await admin
     .from("profiles")

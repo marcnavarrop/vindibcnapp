@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { listTrainersDetailed } from "@/lib/data/trainers";
 import { SPECIALTY_LABELS } from "@/lib/labels";
+import { ResendInviteButton } from "@/components/resend-invite-button";
 
 export const dynamic = "force-dynamic";
 
@@ -70,12 +71,15 @@ export default async function EntrenadorsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/entrenadors/${t.id}/edit`}
-                      className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
-                    >
-                      Editar
-                    </Link>
+                    <div className="flex items-center justify-end gap-4">
+                      <ResendInviteButton profileId={t.id} />
+                      <Link
+                        href={`/admin/entrenadors/${t.id}/edit`}
+                        className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                      >
+                        Editar
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

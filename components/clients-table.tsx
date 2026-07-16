@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ClientListItem } from "@/lib/data/clients";
+import { ResendInviteButton } from "@/components/resend-invite-button";
 
 export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
   const [query, setQuery] = useState("");
@@ -42,6 +43,7 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
               <th className="px-4 py-3 font-bold">Entrenador/a</th>
               <th className="px-4 py-3 font-bold">Bons actius</th>
               <th className="px-4 py-3 font-bold">Sessions rest.</th>
+              <th className="px-4 py-3 font-bold"></th>
             </tr>
           </thead>
           <tbody>
@@ -75,12 +77,15 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
                     {c.remainingSessions}
                   </span>
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <ResendInviteButton profileId={c.profileId} />
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
                   Sense resultats per a “{query}”.
