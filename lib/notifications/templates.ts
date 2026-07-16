@@ -102,7 +102,7 @@ function layout(block: Block): string {
   for (const pgraph of block.outro ?? []) bodyParts.push(paragraph(pgraph, BRAND.muted));
 
   return `<!doctype html>
-<html lang="ca"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"></head>
+<html lang="ca"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><style>:root{color-scheme:light only;supported-color-schemes:light only;}</style></head>
 <body style="margin:0;padding:0;background:${BRAND.bg};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.bg};">
     <tr><td align="center" style="padding:24px 12px;">
