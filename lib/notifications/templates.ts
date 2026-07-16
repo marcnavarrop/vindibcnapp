@@ -11,7 +11,7 @@ function esc(s: string): string {
 
 type DetailRow = { label: string; value: string };
 type Cta = { label: string; url: string };
-type FooterKind = "client" | "trainer" | "visitor" | "plain";
+type FooterKind = "client" | "trainer" | "admin" | "visitor" | "plain";
 
 type Block = {
   heading: string;
@@ -64,6 +64,10 @@ function footer(kind: FooterKind): string {
   else if (kind === "trainer")
     prefsLine = `Pots gestionar els teus avisos des de la teva àrea, a <a href="${appLink(
       "/trainer/configuracio",
+    )}" style="color:${BRAND.purple};text-decoration:underline;">Configuració</a>.`;
+  else if (kind === "admin")
+    prefsLine = `Pots gestionar els teus avisos a <a href="${appLink(
+      "/admin/configuracio",
     )}" style="color:${BRAND.purple};text-decoration:underline;">Configuració</a>.`;
   else if (kind === "visitor")
     prefsLine = `Has rebut aquest correu perquè has demanat una sessió de prova a ${CENTER_NAME}.`;
@@ -188,6 +192,29 @@ export function renderRecoveryEmail(input: {
   };
   return {
     subject: "Restablir la teva contrasenya — VindiBCN",
+    html: layout(block),
+    text: plain(block),
+  };
+}
+
+/** Email de benvinguda per a un client que s'ha registrat pel seu compte. */
+export function renderWelcomeEmail(input: {
+  name: string | null;
+  url: string;
+}): RenderedEmail {
+  const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
+  const block: Block = {
+    heading: "Benvingut/da a VindiBCN!",
+    intro: [
+      hola,
+      "Ens alegra molt tenir-te amb nosaltres. Des de la teva àrea podràs reservar sessions, comprar bons i consultar els teus exercicis.",
+    ],
+    cta: { label: "Entra a la teva àrea", url: input.url },
+    outro: ["Qualsevol dubte, respon a aquest correu o parla amb el centre. Ens veiem aviat!"],
+    footer: "client",
+  };
+  return {
+    subject: "Benvingut/da a VindiBCN!",
     html: layout(block),
     text: plain(block),
   };
@@ -354,6 +381,20 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         ]),
         cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
         footer: "trainer",
+      };
+      break;
+    }
+    case "new_client_registered": {
+      subject = "Nou client registrat · VindiBCN";
+      block = {
+        heading: "Nou client registrat",
+        intro: [hola, "S'ha donat d'alta un client nou pel seu compte:"],
+        details: rows([
+          ["Nom", d.client],
+          ["Correu", d.clientEmail],
+        ]),
+        cta: { label: "Veure la fitxa del client", url: d.url ?? appLink("/admin/clients") },
+        footer: "admin",
       };
       break;
     }

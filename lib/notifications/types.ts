@@ -16,7 +16,9 @@ export type NotificationEventType =
   // Avisos que rep el professional com a dueño de la seva agenda:
   | "trainer_booking_received"
   | "trainer_booking_cancelled"
-  | "trainer_daily_agenda";
+  | "trainer_daily_agenda"
+  // Avís de gestió per a l'admin:
+  | "new_client_registered";
 
 export type NotificationChannel = "email" | "whatsapp";
 
@@ -118,6 +120,12 @@ export const EVENT_META: Record<
     audience: ["trainer"],
     group: "agenda",
   },
+  new_client_registered: {
+    label: "Nou client registrat",
+    description: "Quan algú es dóna d'alta pel seu compte.",
+    audience: ["admin"],
+    group: "general",
+  },
 };
 
 /** Ordre de presentació dels esdeveniments a la UI. */
@@ -132,4 +140,5 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "trainer_booking_received",
   "trainer_booking_cancelled",
   "trainer_daily_agenda",
+  "new_client_registered",
 ];

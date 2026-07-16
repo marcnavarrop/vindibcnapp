@@ -121,6 +121,8 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     trainer_booking_cancelled_whatsapp: false,
     trainer_daily_agenda_email: false,
     trainer_daily_agenda_whatsapp: false,
+    new_client_registered_email: true,
+    new_client_registered_whatsapp: false,
     created_at: now,
   }),
 );

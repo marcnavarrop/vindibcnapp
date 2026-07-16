@@ -12,7 +12,7 @@ export type LogEntry = {
   profileId: string | null;
   recipient: string | null;
   // Els esdeveniments de notificació, més els emails de compte (invitació/recuperació).
-  eventType: NotificationEventType | "auth_invite" | "auth_recovery";
+  eventType: NotificationEventType | "auth_invite" | "auth_recovery" | "auth_welcome";
   channel: NotificationChannel;
   status: NotificationLogStatus;
   error?: string | null;

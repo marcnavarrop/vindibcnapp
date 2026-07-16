@@ -6,7 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
-import { recordRegistrationConsentAction } from "@/app/(auth)/register/actions";
+import {
+  recordRegistrationConsentAction,
+  notifyNewRegistrationAction,
+} from "@/app/(auth)/register/actions";
 
 /**
  * Alta de cuenta. Al registrarse, el trigger `on_auth_user_created` crea
@@ -56,6 +59,12 @@ export default function RegisterPage() {
       } catch {
         // No bloquegem l'alta si el registre del consentiment falla; queda
         // marcada pendent i es pot tornar a demanar des de Configuració.
+      }
+      // Email de benvinguda + avís de nou client (best-effort, no bloqueja).
+      try {
+        await notifyNewRegistrationAction();
+      } catch {
+        // ignorem: els avisos són secundaris.
       }
     }
 

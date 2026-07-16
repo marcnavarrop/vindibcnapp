@@ -457,6 +457,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp: boolean;
           trainer_daily_agenda_email: boolean;
           trainer_daily_agenda_whatsapp: boolean;
+          new_client_registered_email: boolean;
+          new_client_registered_whatsapp: boolean;
           created_at: string;
         };
         Insert: {
@@ -482,6 +484,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp?: boolean;
           trainer_daily_agenda_email?: boolean;
           trainer_daily_agenda_whatsapp?: boolean;
+          new_client_registered_email?: boolean;
+          new_client_registered_whatsapp?: boolean;
           created_at?: string;
         };
         Update: Partial<{
@@ -507,6 +511,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp: boolean;
           trainer_daily_agenda_email: boolean;
           trainer_daily_agenda_whatsapp: boolean;
+          new_client_registered_email: boolean;
+          new_client_registered_whatsapp: boolean;
           created_at: string;
         }>;
         Relationships: [];

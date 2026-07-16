@@ -32,6 +32,9 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   trainer_booking_cancelled_whatsapp: false,
   trainer_daily_agenda_email: false,
   trainer_daily_agenda_whatsapp: false,
+  // Avís a l'admin quan algú es registra (email actiu per defecte).
+  new_client_registered_email: true,
+  new_client_registered_whatsapp: false,
 };
 
 export const PREFERENCE_KEYS = Object.keys(
