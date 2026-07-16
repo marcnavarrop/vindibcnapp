@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
@@ -12,26 +13,50 @@ import type { UserRole } from "@/types/database";
 const SHELL =
   "w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm";
 
+type Status = "verifying" | "ready" | "invalid";
+
 /**
  * Fixa la contrasenya després d'obrir un enllaç d'invitació o de recuperació.
- * La sessió ja l'ha establert /auth/callback; aquí només es crida updateUser.
+ * La verificació del token es fa AQUÍ, amb JS (verifyOtp), no en un GET del
+ * servidor: així els escànegers d'enllaços del correu (GET sense JS) no
+ * consumeixen el token d'un sol ús abans que l'usuari cliqui.
  */
-export default function UpdatePasswordPage() {
+function UpdatePasswordInner() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [hasSession, setHasSession] = useState(false);
+  const params = useSearchParams();
+  const [status, setStatus] = useState<Status>("verifying");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const verifiedRef = useRef(false);
 
   useEffect(() => {
+    if (verifiedRef.current) return;
+    verifiedRef.current = true;
+
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) => {
-      setHasSession(!!data.session);
-      setReady(true);
-    });
-  }, []);
+    (async () => {
+      // Si ja hi ha sessió activa (p. ex. usuari loguejat), directe al formulari.
+      const { data: sess } = await supabase.auth.getSession();
+      if (sess.session) {
+        setStatus("ready");
+        return;
+      }
+      // Verifica el token de l'enllaç.
+      const tokenHash = params.get("token_hash");
+      const type = params.get("type") as EmailOtpType | null;
+      if (!tokenHash || !type) {
+        setStatus("invalid");
+        return;
+      }
+      const { error: vErr } = await supabase.auth.verifyOtp({
+        type,
+        token_hash: tokenHash,
+      });
+      setStatus(vErr ? "invalid" : "ready");
+    })();
+  }, [params]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +74,6 @@ export default function UpdatePasswordPage() {
       setLoading(false);
       return;
     }
-    // Redirigeix a la home del rol.
     const { data } = await supabase.auth.getUser();
     let role: UserRole | undefined;
     if (data.user) {
@@ -72,13 +96,15 @@ export default function UpdatePasswordPage() {
           <h1 className="text-xl text-brand-dark">Crea la teva contrasenya</h1>
         </div>
 
-        {!ready ? (
-          <p className="text-sm text-brand-muted">Carregant…</p>
-        ) : !hasSession ? (
+        {status === "verifying" ? (
+          <p className="text-sm text-brand-muted">Verificant l&apos;enllaç…</p>
+        ) : status === "invalid" ? (
           <p className="rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-            Aquest enllaç no és vàlid o ha caducat. Torna a demanar l&apos;accés
-            des de{" "}
-            <a href="/forgot-password" className="font-bold text-brand-purple underline">
+            Aquest enllaç no és vàlid o ha caducat. Demana&apos;n un de nou des de{" "}
+            <a
+              href="/forgot-password"
+              className="font-bold text-brand-purple underline"
+            >
               restablir la contrasenya
             </a>
             .
@@ -109,5 +135,13 @@ export default function UpdatePasswordPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function UpdatePasswordPage() {
+  return (
+    <Suspense>
+      <UpdatePasswordInner />
+    </Suspense>
   );
 }

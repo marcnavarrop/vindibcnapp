@@ -14,9 +14,14 @@ import type { UserRole } from "@/types/database";
  * plantilles del dashboard. Sempre s'envien (no hi ha preferència d'usuari).
  */
 
-/** Construeix l'enllaç cap al nostre /auth/callback a partir del token. */
+/**
+ * Enllaç del correu. Apunta a la PÀGINA (no al route handler): la verificació
+ * del token es fa amb JS al navegador, així els escànegers d'enllaços dels
+ * proveïdors de correu (que fan un GET pla, sense executar JS) no consumeixen el
+ * token d'un sol ús abans que l'usuari cliqui.
+ */
 function callbackUrl(tokenHash: string, type: "invite" | "recovery"): string {
-  return appLink(`/auth/callback?token_hash=${tokenHash}&type=${type}`);
+  return appLink(`/auth/update-password?token_hash=${tokenHash}&type=${type}`);
 }
 
 /** Envia (best-effort) l'email d'invitació i ho registra al log. */
