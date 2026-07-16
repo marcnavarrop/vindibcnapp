@@ -9,6 +9,7 @@ import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
 import { ROLE_LABELS } from "@/lib/labels";
+import { safeRedirect } from "@/lib/auth-redirect";
 import type { UserRole } from "@/types/database";
 
 const SHELL =
@@ -21,8 +22,8 @@ function MockLogin() {
 
   function enter(role: UserRole) {
     document.cookie = `${MOCK_ROLE_COOKIE}=${role}; path=/; max-age=${60 * 60 * 24 * 7}`;
-    const redirectedFrom = searchParams.get("redirectedFrom");
-    router.replace(redirectedFrom ?? `/${role}`);
+    // Torna al destí original si és segur i el rol hi té accés; si no, a la home.
+    router.replace(safeRedirect(searchParams.get("redirectedFrom"), role));
     router.refresh();
   }
 
@@ -86,9 +87,9 @@ function LoginForm() {
       .eq("id", data.user.id)
       .single();
 
-    const redirectedFrom = searchParams.get("redirectedFrom");
     const role = profile?.role as UserRole | undefined;
-    router.replace(redirectedFrom ?? (role ? `/${role}` : "/"));
+    // Torna al destí original si és segur i el rol hi té accés; si no, a la home.
+    router.replace(safeRedirect(searchParams.get("redirectedFrom"), role));
     router.refresh();
   }
 
