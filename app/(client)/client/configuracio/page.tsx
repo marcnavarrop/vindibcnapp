@@ -5,6 +5,8 @@ import { getPreferences } from "@/lib/notifications/preferences";
 import { ProfileSettingsForm } from "@/components/forms/profile-settings-form";
 import { HealthConsentForm } from "@/components/forms/health-consent-form";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
+import { ChangePasswordForm } from "@/components/forms/change-password-form";
+import { USE_MOCK } from "@/lib/config";
 import { formatDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +76,8 @@ export default async function ClientConfigPage() {
           <NotificationPreferencesForm prefs={prefs} role="client" />
         </div>
       )}
+
+      {!USE_MOCK && <ChangePasswordForm />}
     </main>
   );
 }

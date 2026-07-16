@@ -1,6 +1,8 @@
 import { getViewer } from "@/lib/auth";
 import { getPreferences } from "@/lib/notifications/preferences";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
+import { ChangePasswordForm } from "@/components/forms/change-password-form";
+import { USE_MOCK } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,7 @@ export default async function TrainerConfigPage() {
         Gestiona com vols rebre els avisos del centre.
       </p>
       {prefs && <NotificationPreferencesForm prefs={prefs} role="trainer" />}
+      {!USE_MOCK && <ChangePasswordForm />}
     </main>
   );
 }
