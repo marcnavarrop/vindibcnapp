@@ -79,12 +79,16 @@ function footer(kind: FooterKind): string {
   </td></tr>`;
 }
 
-/** Capçalera de marca: imatge del logo si hi ha EMAIL_LOGO_URL; si no, wordmark. */
+/** Capçalera de marca: icona del logo + wordmark "VindiBCN" (blanc/taronja). */
 function brandHeader(): string {
-  const logo = emailLogoUrl();
-  if (logo)
-    return `<img src="${logo}" alt="${CENTER_NAME}" height="30" style="display:block;height:30px;width:auto;border:0;outline:none;text-decoration:none;">`;
-  return `<span style="font-size:23px;font-weight:800;letter-spacing:-0.5px;color:${BRAND.white};">Vindi<span style="color:${BRAND.orange};">BCN</span></span>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td style="vertical-align:middle;padding-right:10px;">
+      <img src="${emailLogoUrl()}" width="34" height="34" alt="${CENTER_NAME}" style="display:block;width:34px;height:34px;border:0;outline:none;text-decoration:none;">
+    </td>
+    <td style="vertical-align:middle;">
+      <span style="font-size:22px;font-weight:800;letter-spacing:-0.5px;color:${BRAND.white};">Vindi<span style="color:${BRAND.orange};">BCN</span></span>
+    </td>
+  </tr></table>`;
 }
 
 function layout(block: Block): string {

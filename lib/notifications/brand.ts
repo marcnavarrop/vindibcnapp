@@ -37,11 +37,12 @@ export function appLink(path: string): string {
 }
 
 /**
- * URL pública (HTTPS) del logo per a la capçalera dels emails. Opcional: si no
- * està definida (`EMAIL_LOGO_URL`), es fa servir el wordmark de text "VindiBCN".
- * Recomanació: fer servir una versió clara/blanca del logo, perquè la capçalera
- * és de color lila fosc.
+ * URL pública (HTTPS) del logo per a la capçalera dels emails. Per defecte, el
+ * fitxer del repo `public/logo_vindi.png` servit pel domini de l'app (a Vercel,
+ * el domini de producció automàticament). Es pot sobreescriure amb `EMAIL_LOGO_URL`
+ * (p. ex. un CDN). Sempre s'acompanya del text "VindiBCN", així que si un client
+ * bloqueja la imatge la marca segueix llegint-se.
  */
-export function emailLogoUrl(): string | null {
-  return process.env.EMAIL_LOGO_URL || null;
+export function emailLogoUrl(): string {
+  return process.env.EMAIL_LOGO_URL || appLink("/logo_vindi.png");
 }
