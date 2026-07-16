@@ -281,6 +281,61 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "trainer_booking_received": {
+      subject = "Nova reserva a la teva agenda · VindiBCN";
+      block = {
+        heading: "Un client t'ha reservat una sessió",
+        intro: [hola, "Tens una nova reserva a la teva agenda:"],
+        details: rows([
+          ["Client", d.client],
+          ["Data i hora", d.when],
+          ["Servei", d.service],
+        ]),
+        cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
+        footer: "trainer",
+      };
+      break;
+    }
+    case "trainer_booking_cancelled": {
+      subject = "Un client ha cancel·lat una sessió · VindiBCN";
+      block = {
+        heading: "S'ha alliberat un forat de la teva agenda",
+        intro: [hola, "Un client ha cancel·lat aquesta sessió:"],
+        details: rows([
+          ["Client", d.client],
+          ["Data i hora", d.when],
+          ["Servei", d.service],
+        ]),
+        cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
+        footer: "trainer",
+      };
+      break;
+    }
+    case "trainer_daily_agenda": {
+      subject = "La teva agenda de demà · VindiBCN";
+      let sessions: { time: string; client: string; service: string }[] = [];
+      try {
+        sessions = JSON.parse(d.sessions ?? "[]");
+      } catch {
+        sessions = [];
+      }
+      block = {
+        heading: "La teva agenda de demà",
+        intro: [
+          hola,
+          sessions.length
+            ? `Demà tens ${sessions.length} ${sessions.length === 1 ? "sessió" : "sessions"}:`
+            : "Demà no tens cap sessió programada. Bon descans!",
+        ],
+        details: sessions.map((s) => ({
+          label: s.time,
+          value: `${s.client} · ${s.service}`,
+        })),
+        cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
+        footer: "trainer",
+      };
+      break;
+    }
   }
 
   return { subject, html: layout(block), text: plain(block) };

@@ -5,11 +5,16 @@ import { updateNotificationPreferencesAction } from "@/lib/actions/notification-
 import {
   EVENT_META,
   EVENT_ORDER,
+  GROUP_LABELS,
   type NotificationEventType,
+  type NotificationGroup,
 } from "@/lib/notifications/types";
 import { prefKey, type NotificationPreferences } from "@/lib/notifications/preferences-defaults";
 
 type Role = "client" | "trainer" | "admin";
+
+// Ordre dels grups a la UI (l'agenda primer per als professionals).
+const GROUP_ORDER: NotificationGroup[] = ["agenda", "general"];
 
 export function NotificationPreferencesForm({
   prefs,
@@ -26,6 +31,11 @@ export function NotificationPreferencesForm({
   const events = EVENT_ORDER.filter((t) =>
     EVENT_META[t].audience.includes(role),
   );
+  const groups = GROUP_ORDER.map((g) => ({
+    group: g,
+    events: events.filter((t) => EVENT_META[t].group === g),
+  })).filter((g) => g.events.length > 0);
+  const showGroupTitles = groups.length > 1;
 
   return (
     <form
@@ -47,15 +57,23 @@ export function NotificationPreferencesForm({
           <span className="text-center">Email</span>
           <span className="text-center">WhatsApp</span>
         </div>
-        {events.map((type) => (
-          <PrefRow key={type} type={type} prefs={prefs} />
+
+        {groups.map(({ group, events: groupEvents }) => (
+          <div key={group}>
+            {showGroupTitles && (
+              <div className="border-b border-brand-border bg-brand-bg/60 px-4 py-1.5 text-[11px] font-bold tracking-wide text-brand-purple uppercase">
+                {GROUP_LABELS[group]}
+              </div>
+            )}
+            {groupEvents.map((type) => (
+              <PrefRow key={type} type={type} prefs={prefs} />
+            ))}
+          </div>
         ))}
       </div>
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
-      {state.ok && (
-        <p className="text-sm text-success">Preferències desades.</p>
-      )}
+      {state.ok && <p className="text-sm text-success">Preferències desades.</p>}
 
       <div>
         <button

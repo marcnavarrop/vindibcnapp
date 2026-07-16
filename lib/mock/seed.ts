@@ -115,6 +115,12 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     bono_low_whatsapp: false,
     community_email: false,
     community_whatsapp: false,
+    trainer_booking_received_email: true,
+    trainer_booking_received_whatsapp: false,
+    trainer_booking_cancelled_email: true,
+    trainer_booking_cancelled_whatsapp: false,
+    trainer_daily_agenda_email: false,
+    trainer_daily_agenda_whatsapp: false,
     created_at: now,
   }),
 );

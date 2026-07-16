@@ -451,6 +451,12 @@ export interface Database {
           bono_low_whatsapp: boolean;
           community_email: boolean;
           community_whatsapp: boolean;
+          trainer_booking_received_email: boolean;
+          trainer_booking_received_whatsapp: boolean;
+          trainer_booking_cancelled_email: boolean;
+          trainer_booking_cancelled_whatsapp: boolean;
+          trainer_daily_agenda_email: boolean;
+          trainer_daily_agenda_whatsapp: boolean;
           created_at: string;
         };
         Insert: {
@@ -470,6 +476,12 @@ export interface Database {
           bono_low_whatsapp?: boolean;
           community_email?: boolean;
           community_whatsapp?: boolean;
+          trainer_booking_received_email?: boolean;
+          trainer_booking_received_whatsapp?: boolean;
+          trainer_booking_cancelled_email?: boolean;
+          trainer_booking_cancelled_whatsapp?: boolean;
+          trainer_daily_agenda_email?: boolean;
+          trainer_daily_agenda_whatsapp?: boolean;
           created_at?: string;
         };
         Update: Partial<{
@@ -489,6 +501,12 @@ export interface Database {
           bono_low_whatsapp: boolean;
           community_email: boolean;
           community_whatsapp: boolean;
+          trainer_booking_received_email: boolean;
+          trainer_booking_received_whatsapp: boolean;
+          trainer_booking_cancelled_email: boolean;
+          trainer_booking_cancelled_whatsapp: boolean;
+          trainer_daily_agenda_email: boolean;
+          trainer_daily_agenda_whatsapp: boolean;
           created_at: string;
         }>;
         Relationships: [];

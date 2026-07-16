@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SERVICE_LABELS } from "@/lib/labels";
-import { listTomorrowReminderTargets, tomorrowMadrid } from "@/lib/data/reminders";
+import {
+  listTomorrowReminderTargets,
+  listTomorrowTrainerAgendas,
+  tomorrowMadrid,
+} from "@/lib/data/reminders";
 import { notifyOnce } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -52,12 +56,29 @@ async function handle(req: NextRequest) {
     else skipped++;
   }
 
+  // Resum diari d'agenda per als professionals que el tinguin activat.
+  const agendas = await listTomorrowTrainerAgendas();
+  let agendaSent = 0;
+  let agendaSkipped = 0;
+  for (const a of agendas) {
+    const did = await notifyOnce({
+      type: "trainer_daily_agenda",
+      recipient: a.recipient,
+      relatedId: a.relatedId,
+      data: {
+        name: a.recipient.name ?? "",
+        sessions: JSON.stringify(a.sessions),
+      },
+    });
+    if (did) agendaSent++;
+    else agendaSkipped++;
+  }
+
   return NextResponse.json({
     ok: true,
     day: tomorrowMadrid(),
-    targets: targets.length,
-    processed: sent,
-    skipped_already_sent: skipped,
+    reminders: { targets: targets.length, processed: sent, skipped_already_sent: skipped },
+    agendas: { trainers: agendas.length, processed: agendaSent, skipped_already_sent: agendaSkipped },
   });
 }
 

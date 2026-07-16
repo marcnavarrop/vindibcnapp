@@ -108,6 +108,30 @@ async function notifyReservation(
   });
 }
 
+/**
+ * Avisa el PROFESSIONAL (dueño de la agenda) que un client li ha reservat o
+ * cancel·lat una sessió. Només s'ha de cridar quan l'acció l'ha iniciat el
+ * client (autoservei), mai quan l'ha fet el propi entrenador o l'admin.
+ */
+async function notifyTrainerBooking(
+  trainerId: string,
+  type: "trainer_booking_received" | "trainer_booking_cancelled",
+  info: { clientName: string | null; scheduledAt: string; serviceType: ServiceType },
+): Promise<void> {
+  const t = await getProfileContact(trainerId);
+  if (!t) return;
+  await notify({
+    type,
+    recipient: t,
+    data: {
+      name: t.name ?? "",
+      client: info.clientName ?? "Un client",
+      when: fmtWhen(info.scheduledAt),
+      service: SERVICE_LABELS[info.serviceType],
+    },
+  });
+}
+
 /** Avisa el client que li queda 1 sessió al bo (best-effort). */
 async function notifyBonoLowIfNeeded(
   clientId: string,
@@ -615,6 +639,14 @@ export async function createClientReservation(
       trainerName,
     });
     await notifyBonoLowIfNeeded(client.id, serviceType, bono.remaining_sessions);
+    // L'acció l'ha fet el client → avisa el professional de la nova reserva.
+    const clientName =
+      store.profiles.find((p) => p.id === input.profileId)?.full_name ?? null;
+    await notifyTrainerBooking(trainerId, "trainer_booking_received", {
+      clientName,
+      scheduledAt,
+      serviceType,
+    });
     return;
   }
 
@@ -701,6 +733,13 @@ export async function createClientReservation(
     trainerName: trainer?.name ?? null,
   });
   await notifyBonoLowIfNeeded(client.id, serviceType, nextRemaining);
+  // L'acció l'ha fet el client → avisa el professional de la nova reserva.
+  const me = await getProfileContact(input.profileId);
+  await notifyTrainerBooking(trainerId, "trainer_booking_received", {
+    clientName: me?.name ?? null,
+    scheduledAt,
+    serviceType,
+  });
 }
 
 /** Cancelación de una reserva por el propio cliente (futura y 'booked'). */
@@ -731,19 +770,15 @@ export async function cancelClientReservation(
       }
     }
     saveStore(store);
-    // Client cancel·la: avisa el professional del forat (si en té).
+    // L'acció l'ha fet el client → avisa el professional de la cancel·lació.
     if (r.trainer_id) {
-      const trainer = await getProfileContact(r.trainer_id);
-      if (trainer)
-        await notify({
-          type: "reservation_cancelled",
-          recipient: trainer,
-          data: {
-            name: trainer.name ?? "",
-            when: fmtWhen(r.scheduled_at),
-            service: SERVICE_LABELS[r.service_type],
-          },
-        });
+      const clientName =
+        store.profiles.find((p) => p.id === client.profile_id)?.full_name ?? null;
+      await notifyTrainerBooking(r.trainer_id, "trainer_booking_cancelled", {
+        clientName,
+        scheduledAt: r.scheduled_at,
+        serviceType: r.service_type,
+      });
     }
     return;
   }
@@ -753,13 +788,16 @@ export async function cancelClientReservation(
     .from("reservations")
     .select(
       `id, status, scheduled_at, service_type, trainer_id, bono_id,
-       client:clients!reservations_client_id_fkey(profile_id)`,
+       client:clients!reservations_client_id_fkey(profile_id, profile:profiles!clients_profile_id_fkey(full_name))`,
     )
     .eq("id", reservationId)
     .single();
   if (error || !r) throw new Error("Reserva no trobada.");
-  const owner = (r as unknown as { client: { profile_id: string } | null })
-    .client;
+  const owner = (
+    r as unknown as {
+      client: { profile_id: string; profile: { full_name: string | null } | null } | null;
+    }
+  ).client;
   if (!owner || owner.profile_id !== profileId)
     throw new Error("Aquesta reserva no és teva.");
   if (r.status !== "booked")
@@ -773,19 +811,13 @@ export async function cancelClientReservation(
     .eq("id", reservationId);
   if (uErr) throw uErr;
   if (r.bono_id) await restoreBonoSession(admin, r.bono_id);
-  if (r.trainer_id) {
-    const trainer = await getProfileContact(r.trainer_id);
-    if (trainer)
-      await notify({
-        type: "reservation_cancelled",
-        recipient: trainer,
-        data: {
-          name: trainer.name ?? "",
-          when: fmtWhen(r.scheduled_at),
-          service: SERVICE_LABELS[r.service_type],
-        },
-      });
-  }
+  // L'acció l'ha fet el client → avisa el professional de la cancel·lació.
+  if (r.trainer_id)
+    await notifyTrainerBooking(r.trainer_id, "trainer_booking_cancelled", {
+      clientName: owner.profile?.full_name ?? null,
+      scheduledAt: r.scheduled_at,
+      serviceType: r.service_type,
+    });
 }
 
 /** Reserva para el calendario del cliente: SIN nombres de otros clientes. */
