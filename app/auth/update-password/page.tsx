@@ -37,24 +37,24 @@ function UpdatePasswordInner() {
 
     const supabase = createClient();
     (async () => {
-      // Si ja hi ha sessió activa (p. ex. usuari loguejat), directe al formulari.
-      const { data: sess } = await supabase.auth.getSession();
-      if (sess.session) {
-        setStatus("ready");
-        return;
-      }
-      // Verifica el token de l'enllaç.
+      // IMPORTANT: si hi ha token a l'enllaç, s'ha de verificar SEMPRE primer.
+      // verifyOtp estableix la sessió de l'usuari del token (i substitueix
+      // qualsevol sessió que ja hi hagués al navegador, p. ex. la d'un admin),
+      // de manera que la contrasenya es fixa a l'usuari correcte.
       const tokenHash = params.get("token_hash");
       const type = params.get("type") as EmailOtpType | null;
-      if (!tokenHash || !type) {
-        setStatus("invalid");
+      if (tokenHash && type) {
+        const { error: vErr } = await supabase.auth.verifyOtp({
+          type,
+          token_hash: tokenHash,
+        });
+        setStatus(vErr ? "invalid" : "ready");
         return;
       }
-      const { error: vErr } = await supabase.auth.verifyOtp({
-        type,
-        token_hash: tokenHash,
-      });
-      setStatus(vErr ? "invalid" : "ready");
+      // Sense token: només és vàlid si l'usuari ja té una sessió pròpia oberta
+      // (p. ex. hi arriba directament per canviar-se la contrasenya).
+      const { data: sess } = await supabase.auth.getSession();
+      setStatus(sess.session ? "ready" : "invalid");
     })();
   }, [params]);
 
