@@ -37,10 +37,11 @@ dependemos del envío de emails de Supabase.
 | `community` | clientes/entrenadores que lo activen | ❌ |
 | `trainer_booking_received` / `trainer_booking_cancelled` | entrenador (solo si la acción la hace el **cliente**) | ✅ |
 | `trainer_daily_agenda` | entrenador (opt-in) | ❌ |
+| `new_client_registered` | admins con la pref + `CENTER_EMAIL` | ✅ |
 
-- Preferencias en `notification_preferences` (migraciones **0019** y **0020**),
-  fila creada por trigger al crear cada `profile`. UI en Configuració (client /
-  trainer / admin), agrupadas ("La meva agenda" para el profesional).
+- Preferencias en `notification_preferences` (migraciones **0019**, **0020**,
+  **0021**), fila creada por trigger al crear cada `profile`. UI en Configuració
+  (client / trainer / admin), agrupadas ("La meva agenda" para el profesional).
 
 ### Cron diario
 
@@ -158,8 +159,23 @@ Con la arquitectura actual, Supabase **no envía emails**:
 - **0019** — `notification_preferences` + `notification_log` + trigger.
 - **0020** — columnas de agenda del profesional (`trainer_booking_*`,
   `trainer_daily_agenda`).
+- **0021** — columnas del aviso de nuevo cliente (`new_client_registered_*`).
 
 ## 8. Registro público de clientes (`/register`)
 
-`signUp` con contraseña propia del usuario — **camino independiente** que NO se
-toca. Solo el alta hecha por admin usa la invitación.
+`signUp` con contraseña propia del usuario — **camino independiente** del alta
+por admin (que usa invitación). Al completarse el registro,
+`onNewClientRegistered` (`lib/data/registration.ts`), disparado por una server
+action que actúa sobre el **usuario autenticado por cookie** (no un id del
+navegador):
+
+1. **Crea la fila `clients`** si falta (el trigger solo crea el `profile`), así
+   el auto-registrado aparece en el panel de admin.
+2. **Email de bienvenida** de marca al cliente (`renderWelcomeEmail`,
+   best-effort, log `auth_welcome`), con CTA a `/client`.
+3. **Aviso `new_client_registered`** a los admins con la preferencia activada
+   (default true) + `CENTER_EMAIL` si existe, con CTA a la ficha
+   `/admin/clients/[id]`.
+
+**Idempotente y sin solapamiento con el alta por admin**: si la fila `clients`
+ya existe (procesado o creado por un admin), no hace nada → nunca duplica.
