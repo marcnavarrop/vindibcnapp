@@ -10,7 +10,7 @@ export function bonoConcept(
   serviceType: ServiceType,
   totalSessions: number,
 ): string {
-  return `Bo ${totalSessions} ${totalSessions === 1 ? "sessió" : "sessions"} · ${SERVICE_LABELS[serviceType]}`;
+  return `Bo de ${totalSessions} ${totalSessions === 1 ? "sessió" : "sessions"} · ${SERVICE_LABELS[serviceType]}`;
 }
 
 export type PaymentListItem = {
@@ -75,7 +75,7 @@ export type PaymentInput = {
   bonoId: string | null;
   amount: number;
   method: PaymentMethod;
-  /** Concepte comptable (p. ex. "Bo 8 sessions · EP Individual"). */
+  /** Concepte comptable (p. ex. "Bo de 8 sessions · EP Individual"). */
   concept?: string | null;
 };
 
