@@ -40,13 +40,15 @@ export default async function OfertesPage({
   const serviceMap = new Map(services.map((s) => [s.id, s]));
 
   function scopeLabel(p: (typeof promotions)[0]) {
-    if (p.scope === "service" && p.serviceType)
-      return `Tot ${SERVICE_LABELS[p.serviceType]}`;
-    if (p.scope === "package" && p.serviceId) {
-      const s = serviceMap.get(p.serviceId);
-      return s
-        ? `${SERVICE_LABELS[s.serviceType]} · ${s.name}`
-        : `Paquet (${p.serviceId.slice(0, 8)}…)`;
+    if (p.scope === "service" && p.serviceTypes.length > 0)
+      return p.serviceTypes.map((t) => SERVICE_LABELS[t]).join(", ");
+    if (p.scope === "package" && p.serviceIds.length > 0) {
+      return p.serviceIds
+        .map((id) => {
+          const s = serviceMap.get(id);
+          return s ? `${SERVICE_LABELS[s.serviceType]} · ${s.name}` : id.slice(0, 8) + "…";
+        })
+        .join(", ");
     }
     return "—";
   }

@@ -610,8 +610,8 @@ export interface Database {
           discount_type: DiscountType;
           discount_value: number;
           scope: PromotionScope;
-          service_type: ServiceType | null;
-          service_id: string | null;
+          service_types: ServiceType[] | null;
+          service_ids: string[] | null;
           starts_at: string;
           ends_at: string;
           active: boolean;
@@ -623,8 +623,8 @@ export interface Database {
           discount_type: DiscountType;
           discount_value: number;
           scope: PromotionScope;
-          service_type?: ServiceType | null;
-          service_id?: string | null;
+          service_types?: ServiceType[] | null;
+          service_ids?: string[] | null;
           starts_at: string;
           ends_at: string;
           active?: boolean;
@@ -636,8 +636,8 @@ export interface Database {
           discount_type?: DiscountType;
           discount_value?: number;
           scope?: PromotionScope;
-          service_type?: ServiceType | null;
-          service_id?: string | null;
+          service_types?: ServiceType[] | null;
+          service_ids?: string[] | null;
           starts_at?: string;
           ends_at?: string;
           active?: boolean;

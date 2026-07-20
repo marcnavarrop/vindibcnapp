@@ -14,10 +14,12 @@ export type Promotion = {
   discountType: DiscountType;
   discountValue: number;
   scope: PromotionScope;
-  serviceType: ServiceType | null;
-  serviceId: string | null;
-  startsAt: string;  // "YYYY-MM-DD"
-  endsAt: string;    // "YYYY-MM-DD"
+  /** Llista de service_types quan scope='service'. Sempre [] si scope='package'. */
+  serviceTypes: ServiceType[];
+  /** Llista de service_ids quan scope='package'. Sempre [] si scope='service'. */
+  serviceIds: string[];
+  startsAt: string;
+  endsAt: string;
   active: boolean;
   createdAt: string;
 };
@@ -25,9 +27,7 @@ export type Promotion = {
 export type EffectivePrice = {
   originalPrice: number;
   finalPrice: number;
-  /** Euros estalviats (sempre >= 0) */
   discountAmount: number;
-  /** Text pel badge: "-15%" o "-10€" */
   discountLabel: string;
   hasDiscount: boolean;
   promotionName?: string;
@@ -41,8 +41,8 @@ function rowToPromotion(r: {
   discount_type: DiscountType;
   discount_value: number;
   scope: PromotionScope;
-  service_type: string | null;
-  service_id: string | null;
+  service_types: string[] | null;
+  service_ids: string[] | null;
   starts_at: string;
   ends_at: string;
   active: boolean;
@@ -54,8 +54,8 @@ function rowToPromotion(r: {
     discountType: r.discount_type,
     discountValue: Number(r.discount_value),
     scope: r.scope,
-    serviceType: r.service_type as ServiceType | null,
-    serviceId: r.service_id,
+    serviceTypes: (r.service_types ?? []) as ServiceType[],
+    serviceIds: r.service_ids ?? [],
     startsAt: r.starts_at,
     endsAt: r.ends_at,
     active: r.active,
@@ -65,15 +65,14 @@ function rowToPromotion(r: {
 
 // ─── Càlcul de preu efectiu (funció pura, sense IO) ─────────────────────────
 
-/** Calcula el millor preu aplicable per a un servei donada una llista de promocions. */
 export function computeEffectivePrice(
   service: Service,
   promotions: Promotion[],
 ): EffectivePrice {
   const applicable = promotions.filter(
     (p) =>
-      (p.scope === "package" && p.serviceId === service.id) ||
-      (p.scope === "service" && p.serviceType === service.serviceType),
+      (p.scope === "package" && p.serviceIds.includes(service.id)) ||
+      (p.scope === "service" && p.serviceTypes.includes(service.serviceType)),
   );
 
   if (applicable.length === 0) {
@@ -86,7 +85,6 @@ export function computeEffectivePrice(
     };
   }
 
-  // Escull la promoció que doni major estalvi
   let bestPromo = applicable[0];
   let bestSaving = 0;
   for (const p of applicable) {
@@ -118,7 +116,6 @@ export function computeEffectivePrice(
 
 // ─── Accés a dades ───────────────────────────────────────────────────────────
 
-/** Retorna totes les promocions (per a l'admin). */
 export async function listPromotions(): Promise<Promotion[]> {
   if (USE_MOCK) {
     const { getStore } = await import("@/lib/mock/store");
@@ -135,7 +132,6 @@ export async function listPromotions(): Promise<Promotion[]> {
   return (data ?? []).map(rowToPromotion);
 }
 
-/** Retorna les promocions actives avui (per calcular preus). */
 export async function listActivePromotions(today: string): Promise<Promotion[]> {
   if (USE_MOCK) {
     const { getStore } = await import("@/lib/mock/store");
@@ -156,7 +152,6 @@ export async function listActivePromotions(today: string): Promise<Promotion[]> 
   return (data ?? []).map(rowToPromotion);
 }
 
-/** Retorna una promoció pel seu id. */
 export async function getPromotion(id: string): Promise<Promotion | null> {
   if (USE_MOCK) {
     const { getStore } = await import("@/lib/mock/store");
@@ -180,8 +175,8 @@ export type PromotionInput = {
   discountType: DiscountType;
   discountValue: number;
   scope: PromotionScope;
-  serviceType: ServiceType | null;
-  serviceId: string | null;
+  serviceTypes: ServiceType[];
+  serviceIds: string[];
   startsAt: string;
   endsAt: string;
   active: boolean;
@@ -199,8 +194,8 @@ export async function createPromotion(input: PromotionInput): Promise<string> {
       discount_type: input.discountType,
       discount_value: input.discountValue,
       scope: input.scope,
-      service_type: input.serviceType,
-      service_id: input.serviceId,
+      service_types: input.scope === "service" ? input.serviceTypes : null,
+      service_ids: input.scope === "package" ? input.serviceIds : null,
       starts_at: input.startsAt,
       ends_at: input.endsAt,
       active: input.active,
@@ -218,8 +213,8 @@ export async function createPromotion(input: PromotionInput): Promise<string> {
       discount_type: input.discountType,
       discount_value: input.discountValue,
       scope: input.scope,
-      service_type: input.serviceType,
-      service_id: input.serviceId,
+      service_types: input.scope === "service" ? input.serviceTypes : null,
+      service_ids: input.scope === "package" ? input.serviceIds : null,
       starts_at: input.startsAt,
       ends_at: input.endsAt,
       active: input.active,
@@ -246,8 +241,10 @@ export async function updatePromotion(
     if (input.discountType !== undefined) p.discount_type = input.discountType;
     if (input.discountValue !== undefined) p.discount_value = input.discountValue;
     if (input.scope !== undefined) p.scope = input.scope;
-    if (input.serviceType !== undefined) p.service_type = input.serviceType;
-    if (input.serviceId !== undefined) p.service_id = input.serviceId;
+    if (input.serviceTypes !== undefined)
+      p.service_types = input.serviceTypes.length ? input.serviceTypes : null;
+    if (input.serviceIds !== undefined)
+      p.service_ids = input.serviceIds.length ? input.serviceIds : null;
     if (input.startsAt !== undefined) p.starts_at = input.startsAt;
     if (input.endsAt !== undefined) p.ends_at = input.endsAt;
     if (input.active !== undefined) p.active = input.active;
@@ -256,6 +253,9 @@ export async function updatePromotion(
   }
 
   const admin = createAdminClient();
+
+  // Quan canvia el scope, cal netejar el camp que no s'usa.
+  // Construïm l'objecte de forma explícita per satisfer el tipatge estricte de Supabase.
   const { error } = await admin
     .from("promotions")
     .update({
@@ -263,8 +263,14 @@ export async function updatePromotion(
       ...(input.discountType !== undefined && { discount_type: input.discountType }),
       ...(input.discountValue !== undefined && { discount_value: input.discountValue }),
       ...(input.scope !== undefined && { scope: input.scope }),
-      ...(input.serviceType !== undefined && { service_type: input.serviceType }),
-      ...(input.serviceId !== undefined && { service_id: input.serviceId }),
+      ...(input.serviceTypes !== undefined && {
+        service_types: input.serviceTypes.length ? input.serviceTypes : null,
+        service_ids: null,
+      }),
+      ...(input.serviceIds !== undefined && {
+        service_ids: input.serviceIds.length ? input.serviceIds : null,
+        service_types: null,
+      }),
       ...(input.startsAt !== undefined && { starts_at: input.startsAt }),
       ...(input.endsAt !== undefined && { ends_at: input.endsAt }),
       ...(input.active !== undefined && { active: input.active }),
@@ -291,11 +297,6 @@ export async function deletePromotion(id: string): Promise<void> {
   if (error) throw new Error("No s'ha pogut eliminar l'oferta.");
 }
 
-/**
- * Funció d'utilitat principal: donats uns serveis i la data d'avui,
- * retorna un Map serviceId → EffectivePrice.
- * Fa una sola consulta a la BD independentment del nombre de serveis.
- */
 export async function getEffectivePrices(
   services: Service[],
   today?: string,
@@ -309,9 +310,6 @@ export async function getEffectivePrices(
   return result;
 }
 
-/**
- * Retorna el preu efectiu per a un sol servei (còmode per a createPendingBono).
- */
 export async function getEffectivePrice(
   service: Service,
   today?: string,
@@ -321,13 +319,14 @@ export async function getEffectivePrice(
 }
 
 /**
- * Comprova si una nova oferta es solaparia amb alguna d'existent per al
- * mateix àmbit. Retorna true si hi ha solapament.
+ * Comprova si una nova oferta es solaparia amb alguna d'existent.
+ * Dues promocions es solapen si comparteixen dates I almenys un service_type
+ * o service_id en comú (intersecció d'arrays).
  */
 export async function hasOverlap(input: {
   scope: PromotionScope;
-  serviceType: ServiceType | null;
-  serviceId: string | null;
+  serviceTypes: ServiceType[];
+  serviceIds: string[];
   startsAt: string;
   endsAt: string;
   excludeId?: string;
@@ -336,17 +335,12 @@ export async function hasOverlap(input: {
   return all.some((p) => {
     if (input.excludeId && p.id === input.excludeId) return false;
     if (!p.active) return false;
-    // Solapament de dates
     const datesOverlap = p.startsAt <= input.endsAt && p.endsAt >= input.startsAt;
     if (!datesOverlap) return false;
-    // Solapament d'àmbit
     if (input.scope === "package" && p.scope === "package")
-      return p.serviceId === input.serviceId;
+      return input.serviceIds.some((id) => p.serviceIds.includes(id));
     if (input.scope === "service" && p.scope === "service")
-      return p.serviceType === input.serviceType;
-    // Un scope='service' es solapa amb scope='package' del mateix tipus
-    if (input.scope === "service" && p.scope === "package") return false;
-    if (input.scope === "package" && p.scope === "service") return false;
+      return input.serviceTypes.some((t) => p.serviceTypes.includes(t));
     return false;
   });
 }
