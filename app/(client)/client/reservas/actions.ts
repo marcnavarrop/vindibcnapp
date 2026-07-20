@@ -58,16 +58,25 @@ export async function createOwnReservationAction(
 }
 
 /** Cancela una reserva del propio cliente (futura y 'booked'). */
-export async function cancelOwnReservationAction(formData: FormData) {
+export async function cancelOwnReservationAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return;
+  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Reserva no especificada." };
   try {
     await cancelClientReservation(viewer.id, id);
-  } catch {
-    // La UI ya valida; un fallo aquí (p. ej. reserva ya pasada) se ignora.
+  } catch (e) {
+    return {
+      error:
+        e instanceof Error
+          ? e.message
+          : "No s'ha pogut cancel·lar la reserva.",
+    };
   }
   revalidatePath("/client/reservas");
   revalidatePath("/client");
+  return { ok: true };
 }

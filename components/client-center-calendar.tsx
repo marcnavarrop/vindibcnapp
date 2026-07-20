@@ -54,7 +54,10 @@ type CreateAction = (
   prev: FormState,
   formData: FormData,
 ) => Promise<FormState>;
-type CancelAction = (formData: FormData) => void | Promise<void>;
+type CancelAction = (
+  prev: { error?: string; ok?: boolean },
+  formData: FormData,
+) => Promise<{ error?: string; ok?: boolean }>;
 
 function startOfWeek(ref: Date): Date {
   const d = new Date(ref);
@@ -96,7 +99,7 @@ function offeredServices(
 
 /** Un elemento a pintar en una celda (chip). */
 type CellItem =
-  | { kind: "own"; id: string; trainerId: string | null; service: ServiceType }
+  | { kind: "own"; id: string; trainerId: string | null; service: ServiceType; slot: Date }
   | { kind: "occupied"; trainerId: string | null; service: ServiceType }
   | {
       kind: "group";
@@ -116,10 +119,12 @@ export function ClientCenterCalendar({
   data,
   createAction,
   cancelAction,
+  minCancellationHours = 0,
 }: {
   data: ClientCenterData;
   createAction: CreateAction;
   cancelAction: CancelAction;
+  minCancellationHours?: number;
 }) {
   const router = useRouter();
   const { bonoTypes, trainers, rules, reservations } = data;
@@ -218,6 +223,7 @@ export function ClientCenterCalendar({
           id: r.id,
           trainerId: t.id,
           service: r.serviceType,
+          slot: new Date(r.scheduledAt),
         });
       if (ownHere.length > 0) continue;
 
@@ -586,6 +592,8 @@ export function ClientCenterCalendar({
           service={own.service}
           trainerName={trainerName(own.trainerId)}
           id={own.id}
+          scheduledAt={own.slot.toISOString()}
+          minCancellationHours={minCancellationHours}
           cancelAction={cancelAction}
           onClose={() => setOwn(null)}
         />
@@ -663,15 +671,25 @@ function OwnModal({
   service,
   trainerName,
   id,
+  scheduledAt,
+  minCancellationHours,
   cancelAction,
   onClose,
 }: {
   service: ServiceType;
   trainerName: string;
   id: string;
+  scheduledAt: string;
+  minCancellationHours: number;
   cancelAction: CancelAction;
   onClose: () => void;
 }) {
+  const [state, action] = useActionState(cancelAction, {});
+  const canCancel =
+    minCancellationHours === 0 ||
+    new Date(scheduledAt).getTime() - Date.now() >=
+      minCancellationHours * 60 * 60 * 1000;
+
   return (
     <Overlay onClose={onClose}>
       <h2 className="text-lg font-bold text-brand-dark">La meva sessió</h2>
@@ -679,15 +697,28 @@ function OwnModal({
         <Field label="Servei" value={SERVICE_LABELS[service]} />
         <Field label="Professional" value={trainerName} />
       </dl>
-      <form action={cancelAction} className="mt-5" onSubmit={onClose}>
-        <input type="hidden" name="id" value={id} />
-        <button
-          type="submit"
-          className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
-        >
-          Cancel·lar reserva
-        </button>
-      </form>
+      {canCancel ? (
+        <>
+          <form action={action} className="mt-5" onSubmit={state.ok ? onClose : undefined}>
+            <input type="hidden" name="id" value={id} />
+            <button
+              type="submit"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
+            >
+              Cancel·lar reserva
+            </button>
+          </form>
+          {state.error && (
+            <p className="mt-2 text-xs text-error">{state.error}</p>
+          )}
+        </>
+      ) : (
+        <p className="mt-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
+          Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys{" "}
+          {minCancellationHours} h d&apos;antelació). Contacta amb el centre si
+          tens una urgència.
+        </p>
+      )}
       <button
         type="button"
         onClick={onClose}

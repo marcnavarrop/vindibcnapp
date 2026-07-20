@@ -2,9 +2,10 @@ import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listAnnouncements } from "@/lib/data/announcements";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { Badge } from "@/components/ui/badge";
-import { cancelOwnReservationAction } from "@/app/(client)/client/reservas/actions";
+import { CancelReservationButton } from "@/components/forms/cancel-reservation-button";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -19,10 +20,14 @@ import {
  */
 export default async function ClientHome() {
   const viewer = await getViewer();
-  const client = viewer ? await getClientByProfile(viewer.id) : null;
-  const announcements = await listAnnouncements();
+  const [client, announcements, centerSettings] = await Promise.all([
+    viewer ? getClientByProfile(viewer.id) : Promise.resolve(null),
+    listAnnouncements(),
+    getCenterSettings(),
+  ]);
 
   const nowISO = new Date().toISOString();
+  const minMs = centerSettings.minCancellationHours * 60 * 60 * 1000;
   const activeBonos = client?.bonos.filter((b) => b.status === "active") ?? [];
   const upcoming =
     client?.reservations
@@ -108,18 +113,13 @@ export default async function ClientHome() {
                   <Badge tone="info">
                     {RESERVATION_STATUS_LABELS[r.status]}
                   </Badge>
-                  <form
-                    action={cancelOwnReservationAction}
+                  <CancelReservationButton
+                    id={r.id}
+                    scheduledAt={r.scheduledAt}
+                    minCancellationHours={centerSettings.minCancellationHours}
+                    minMs={minMs}
                     className="ml-auto"
-                  >
-                    <input type="hidden" name="id" value={r.id} />
-                    <button
-                      type="submit"
-                      className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10"
-                    >
-                      Cancel·lar
-                    </button>
-                  </form>
+                  />
                 </Row>
               ))
             )}

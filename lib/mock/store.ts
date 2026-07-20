@@ -43,6 +43,7 @@ export type Store = {
   notification_preferences: Tables["notification_preferences"]["Row"][];
   notification_log: Tables["notification_log"]["Row"][];
   promotions: Tables["promotions"]["Row"][];
+  centerSettings: Tables["center_settings"]["Row"] | null;
 };
 
 /**
@@ -74,6 +75,7 @@ function fromSeed(): Store {
     notification_preferences: structuredClone(seedNotificationPreferences),
     notification_log: structuredClone(seedNotificationLog),
     promotions: structuredClone(seedPromotions),
+    centerSettings: { id: true, min_cancellation_hours: 24, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
 }
 

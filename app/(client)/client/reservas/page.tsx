@@ -1,5 +1,6 @@
 import { getViewer } from "@/lib/auth";
 import { getClientCenterData } from "@/lib/data/client-calendar";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { ClientCenterCalendar } from "@/components/client-center-calendar";
 import {
   createOwnReservationAction,
@@ -10,15 +11,18 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientReservasPage() {
   const viewer = await getViewer();
-  const data = viewer
-    ? await getClientCenterData(viewer.id)
-    : {
-        clientId: null,
-        bonoTypes: [],
-        trainers: [],
-        rules: [],
-        reservations: [],
-      };
+  const [data, centerSettings] = await Promise.all([
+    viewer
+      ? getClientCenterData(viewer.id)
+      : Promise.resolve({
+          clientId: null,
+          bonoTypes: [],
+          trainers: [],
+          rules: [],
+          reservations: [],
+        }),
+    getCenterSettings(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -32,6 +36,7 @@ export default async function ClientReservasPage() {
         data={data}
         createAction={createOwnReservationAction}
         cancelAction={cancelOwnReservationAction}
+        minCancellationHours={centerSettings.minCancellationHours}
       />
     </main>
   );

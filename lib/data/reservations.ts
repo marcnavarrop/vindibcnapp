@@ -758,6 +758,13 @@ export async function cancelClientReservation(
       throw new Error("Només pots cancel·lar reserves actives.");
     if (new Date(r.scheduled_at).getTime() <= Date.now())
       throw new Error("No pots cancel·lar una sessió passada.");
+    const { getCenterSettings } = await import("@/lib/data/center-settings");
+    const settings = await getCenterSettings();
+    const minMs = settings.minCancellationHours * 60 * 60 * 1000;
+    if (new Date(r.scheduled_at).getTime() - Date.now() < minMs)
+      throw new Error(
+        `Aquesta reserva ja no es pot cancel·lar (cal fer-ho amb almenys ${settings.minCancellationHours} hores d'antelació). Contacta amb el centre si tens una urgència.`,
+      );
     r.status = "cancelled";
     if (r.bono_id) {
       const bono = store.bonos.find((b) => b.id === r.bono_id);
@@ -804,6 +811,13 @@ export async function cancelClientReservation(
     throw new Error("Només pots cancel·lar reserves actives.");
   if (new Date(r.scheduled_at).getTime() <= Date.now())
     throw new Error("No pots cancel·lar una sessió passada.");
+  const { getCenterSettings } = await import("@/lib/data/center-settings");
+  const settings = await getCenterSettings();
+  const minMs = settings.minCancellationHours * 60 * 60 * 1000;
+  if (new Date(r.scheduled_at).getTime() - Date.now() < minMs)
+    throw new Error(
+      `Aquesta reserva ja no es pot cancel·lar (cal fer-ho amb almenys ${settings.minCancellationHours} hores d'antelació). Contacta amb el centre si tens una urgència.`,
+    );
 
   const { error: uErr } = await admin
     .from("reservations")

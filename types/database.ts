@@ -672,6 +672,25 @@ export interface Database {
         };
         Relationships: [];
       };
+      center_settings: {
+        Row: {
+          id: boolean;
+          min_cancellation_hours: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: boolean;
+          min_cancellation_hours?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          min_cancellation_hours?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
