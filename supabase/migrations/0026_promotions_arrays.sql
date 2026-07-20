@@ -26,8 +26,25 @@ alter table public.promotions
   drop column service_type,
   drop column service_id;
 
--- 4. Substituir el constraint d'àmbit
-alter table public.promotions drop constraint promotions_scope_check;
+-- 4. Substituir el constraint d'àmbit (IF EXISTS per si el nom difereix)
+alter table public.promotions drop constraint if exists promotions_scope_check;
+-- Per si Supabase l'ha generat amb un nom automàtic, eliminar qualsevol check
+-- que faci referència a service_type (no n'hi ha d'altres, és segur)
+do $$
+declare
+  r record;
+begin
+  for r in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.promotions'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) ilike '%service_type%'
+  loop
+    execute format('alter table public.promotions drop constraint %I', r.conname);
+  end loop;
+end
+$$;
 alter table public.promotions add constraint promotions_scope_check check (
   (scope = 'service'
     and service_types is not null
