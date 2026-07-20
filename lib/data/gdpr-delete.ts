@@ -5,6 +5,7 @@ import { getStore, saveStore } from "@/lib/mock/store";
 import { bonoConcept } from "@/lib/data/payments";
 import { deleteTrialsForClient } from "@/lib/data/trial-bookings";
 import { deleteAllClientDocuments } from "@/lib/data/client-documents";
+import { deleteAllClientVideos } from "@/lib/data/client-videos";
 import type { ServiceType } from "@/types/database";
 
 export type DeleteResult = { profileId: string; label: string };
@@ -49,8 +50,9 @@ export async function deleteClient(
       p.client_id = null;
       p.bono_id = null;
     }
-    // Esborra documents del Storage (mock: només metadades).
+    // Esborra documents i vídeos del Storage (mock: només metadades).
     await deleteAllClientDocuments(clientId);
+    await deleteAllClientVideos(clientId);
     // Hard delete de la resta.
     store.bonos = store.bonos.filter((b) => b.client_id !== clientId);
     store.reservations = store.reservations.filter(
@@ -99,8 +101,9 @@ export async function deleteClient(
     phone: p?.phone ?? null,
   });
 
-  // 0. Esborra documents del Storage + metadades (abans del cascade d'Auth).
+  // 0. Esborra documents i vídeos del Storage + metadades (abans del cascade d'Auth).
   await deleteAllClientDocuments(clientId);
+  await deleteAllClientVideos(clientId);
 
   // 1. Fixa el concepte als pagaments sense concepte (abans de desvincular-los).
   const { data: pays } = await admin

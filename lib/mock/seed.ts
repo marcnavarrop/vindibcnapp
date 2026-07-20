@@ -182,3 +182,6 @@ export const seedClientDocuments: ClientDocument[] = [
     uploaded_at: "2026-03-15T10:00:00.000Z",
   },
 ];
+
+type ClientVideo = Database["public"]["Tables"]["client_videos"]["Row"];
+export const seedClientVideos: ClientVideo[] = [];

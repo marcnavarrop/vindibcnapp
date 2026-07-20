@@ -19,6 +19,8 @@ export type ClientDataExport = {
    * individualment des de la seva àrea mentre el compte estigui actiu.
    */
   documents: unknown[];
+  /** Metadades dels vídeos pujats pel professional (sense storage_path). */
+  videos: unknown[];
 };
 
 /**
@@ -58,6 +60,10 @@ export async function exportClientData(
           .filter((d) => d.client_id === clientId)
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .map(({ storage_path: _sp, ...meta }) => meta),
+        videos: (store.client_videos ?? [])
+          .filter((v) => v.client_id === clientId)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          .map(({ storage_path: _sp, ...meta }) => meta),
       },
     };
   }
@@ -71,7 +77,7 @@ export async function exportClientData(
   if (!client) return null;
   const profileId = client.profile_id;
 
-  const [profile, bonos, reservations, payments, measurements, exercises, consents, documents] =
+  const [profile, bonos, reservations, payments, measurements, exercises, consents, documents, videos] =
     await Promise.all([
       admin.from("profiles").select("*").eq("id", profileId).single(),
       admin.from("bonos").select("*").eq("client_id", clientId),
@@ -85,6 +91,10 @@ export async function exportClientData(
       admin.from("consents").select("*").eq("user_id", profileId),
       admin
         .from("client_documents")
+        .select("id, client_id, uploaded_by, file_name, file_size, mime_type, description, uploaded_at")
+        .eq("client_id", clientId),
+      admin
+        .from("client_videos")
         .select("id, client_id, uploaded_by, file_name, file_size, mime_type, description, uploaded_at")
         .eq("client_id", clientId),
     ]);
@@ -104,6 +114,7 @@ export async function exportClientData(
       exercises: exercises.data ?? [],
       consents: consents.data ?? [],
       documents: documents.data ?? [],
+      videos: videos.data ?? [],
     },
   };
 }

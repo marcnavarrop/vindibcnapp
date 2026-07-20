@@ -7,13 +7,23 @@ import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { listClientDocuments } from "@/lib/data/client-documents";
 import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
+import { listMeasurements } from "@/lib/data/measurements";
+import { listClientVideos } from "@/lib/data/client-videos";
 import { getConsentStatus } from "@/lib/data/consents";
 import { HealthConsentWarning } from "@/components/health-consent-warning";
 import {
   assignExerciseTrainerAction,
   removeExerciseTrainerAction,
 } from "@/app/(trainer)/trainer/clients/exercises-actions";
+import {
+  deleteMeasurementTrainerAction,
+} from "@/app/(trainer)/trainer/clients/progres-actions";
+import {
+  uploadClientVideoAction,
+  deleteClientVideoAction,
+} from "@/app/actions/client-videos-actions";
 import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
+import { VideosUploaderPanel } from "@/components/videos-uploader-panel";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -31,12 +41,14 @@ export default async function TrainerClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [viewer, client, assignedExercises, library, documents] = await Promise.all([
+  const [viewer, client, assignedExercises, library, documents, measurements, videos] = await Promise.all([
     getViewer(),
     getClient(id),
     listClientExercises(id),
     listExercises(),
     listClientDocuments(id),
+    listMeasurements(id),
+    listClientVideos(id),
   ]);
   if (!client) notFound();
 
@@ -184,6 +196,60 @@ export default async function TrainerClientDetailPage({
           canManage={canManage}
           assignAction={assignExerciseTrainerAction.bind(null, client.id)}
           removeAction={removeExerciseTrainerAction.bind(null, client.id)}
+        />
+
+        {/* Progrés */}
+        <Panel
+          title="Progrés"
+          action={
+            canManage && (
+              <Link
+                href={`/trainer/clients/${client.id}/progres/new`}
+                className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+              >
+                + Afegir mesura
+              </Link>
+            )
+          }
+        >
+          {measurements.length === 0 ? (
+            <Empty>Encara no hi ha mesures.</Empty>
+          ) : (
+            measurements.map((m) => (
+              <Row key={m.id}>
+                <span className="font-bold text-brand-dark">
+                  {formatDate(m.recordedAt)}
+                </span>
+                {m.weightKg != null && (
+                  <span className="font-bold text-brand-purple">
+                    {m.weightKg} kg
+                  </span>
+                )}
+                {m.notes && (
+                  <span className="text-brand-muted">{m.notes}</span>
+                )}
+                {canManage && (
+                  <form action={deleteMeasurementTrainerAction} className="ml-auto">
+                    <input type="hidden" name="id" value={m.id} />
+                    <input type="hidden" name="clientId" value={client.id} />
+                    <button
+                      type="submit"
+                      className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                    >
+                      Eliminar
+                    </button>
+                  </form>
+                )}
+              </Row>
+            ))
+          )}
+        </Panel>
+
+        {/* Vídeos */}
+        <VideosUploaderPanel
+          videos={videos}
+          uploadAction={uploadClientVideoAction.bind(null, client.id, `/trainer/clients/${client.id}`)}
+          deleteAction={deleteClientVideoAction.bind(null, `/trainer/clients/${client.id}`)}
         />
       </main>
   );
