@@ -685,6 +685,7 @@ function OwnModal({
   onClose: () => void;
 }) {
   const [state, action] = useActionState(cancelAction, {});
+  const [confirming, setConfirming] = useState(false);
   const canCancel =
     minCancellationHours === 0 ||
     new Date(scheduledAt).getTime() - Date.now() >=
@@ -698,20 +699,42 @@ function OwnModal({
         <Field label="Professional" value={trainerName} />
       </dl>
       {canCancel ? (
-        <>
-          <form action={action} className="mt-5" onSubmit={state.ok ? onClose : undefined}>
-            <input type="hidden" name="id" value={id} />
-            <button
-              type="submit"
-              className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
-            >
-              Cancel·lar reserva
-            </button>
-          </form>
-          {state.error && (
-            <p className="mt-2 text-xs text-error">{state.error}</p>
-          )}
-        </>
+        confirming ? (
+          <>
+            <p className="mt-5 text-sm font-bold text-brand-dark">
+              Segur que vols cancel·lar aquesta reserva?
+            </p>
+            <div className="mt-3 flex gap-2">
+              <form action={action} className="flex-1">
+                <input type="hidden" name="id" value={id} />
+                <button
+                  type="submit"
+                  className="w-full rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-80"
+                >
+                  Sí, cancel·la
+                </button>
+              </form>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="flex-1 rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+              >
+                No, torna
+              </button>
+            </div>
+            {state.error && (
+              <p className="mt-2 text-xs text-error">{state.error}</p>
+            )}
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            className="mt-5 w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
+          >
+            Cancel·lar reserva
+          </button>
+        )
       ) : (
         <p className="mt-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
           Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys{" "}
