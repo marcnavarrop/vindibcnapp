@@ -170,16 +170,16 @@ function SidebarContent({
         </ul>
       </nav>
 
-      <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-4">
-        {USE_MOCK && (
-          <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
-            Demo
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 border-t border-white/10 px-2 pt-4">
+        <div className="flex min-w-0 items-center gap-2">
           <Avatar initial={initial} />
-          <SignOutButton />
+          {USE_MOCK && (
+            <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
+              Demo
+            </span>
+          )}
         </div>
+        <SignOutButton />
       </div>
 
       <div className="flex flex-wrap gap-x-2 gap-y-1 px-1 text-[10px] text-white/40">

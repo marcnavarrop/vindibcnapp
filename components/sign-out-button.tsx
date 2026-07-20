@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
-import { Button } from "@/components/ui/button";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -19,9 +18,15 @@ export function SignOutButton() {
     router.refresh();
   }
 
+  // Botó propi (compacte) en lloc del <Button> global, que força px-4/uppercase
+  // amples: aquí el volem petit i proporcionat al peu del menú.
   return (
-    <Button variant="outline" onClick={handleSignOut} className="px-3 py-1.5">
+    <button
+      type="button"
+      onClick={handleSignOut}
+      className="shrink-0 rounded-lg border border-brand-border bg-white px-2.5 py-1.5 text-xs font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-brand-bg"
+    >
       Tancar sessió
-    </Button>
+    </button>
   );
 }
