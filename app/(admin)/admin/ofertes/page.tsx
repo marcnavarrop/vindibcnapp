@@ -3,10 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { listPromotions } from "@/lib/data/promotions";
 import { listActiveServices } from "@/lib/data/services";
 import { SERVICE_LABELS, formatEur } from "@/lib/labels";
-import {
-  toggleOfertaAction,
-  deleteOfertaAction,
-} from "@/app/(admin)/admin/ofertes/actions";
+import { toggleOfertaAction } from "@/app/(admin)/admin/ofertes/actions";
+import { DeleteOfertaButton } from "@/components/forms/delete-oferta-button";
 
 export const dynamic = "force-dynamic";
 
@@ -122,25 +120,7 @@ export default async function OfertesPage({
                         {p.active ? "Desactivar" : "Activar"}
                       </button>
                     </form>
-                    <form
-                      action={deleteOfertaAction}
-                      onSubmit={(e) => {
-                        if (
-                          !confirm(
-                            "Segur que vols eliminar aquesta oferta? Aquesta acció no es pot desfer.",
-                          )
-                        )
-                          e.preventDefault();
-                      }}
-                    >
-                      <input type="hidden" name="id" value={p.id} />
-                      <button
-                        type="submit"
-                        className="text-xs font-bold tracking-wide text-error uppercase hover:opacity-70"
-                      >
-                        Eliminar
-                      </button>
-                    </form>
+                    <DeleteOfertaButton id={p.id} />
                   </div>
                 </div>
               );
