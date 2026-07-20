@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { Badge } from "@/components/ui/badge";
+import { RouteTabs } from "@/components/ui/route-tabs";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -9,6 +9,11 @@ import {
   formatEur,
   formatDate,
 } from "@/lib/labels";
+
+const BONO_TABS = [
+  { href: "/client/bonos", label: "Els meus bons" },
+  { href: "/client/bonos/comprar", label: "Comprar bo nou", accent: true },
+];
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +23,8 @@ export default async function ClientBonosPage() {
 
   return (
     <main className="mx-auto max-w-5xl p-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl text-brand-dark">Bonos</h1>
-        <Link
-          href="/client/bonos/comprar"
-          className="inline-flex items-center justify-center rounded-lg bg-brand-orange px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-opacity hover:opacity-90"
-        >
-          + Comprar bo nou
-        </Link>
-      </div>
+      <h1 className="mb-4 text-2xl text-brand-dark">Bonos</h1>
+      <RouteTabs tabs={BONO_TABS} />
 
       {!client ? (
         <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
