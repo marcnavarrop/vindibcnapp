@@ -11,41 +11,45 @@ import {
 } from "@/lib/data/promotions";
 import type { DiscountType, PromotionScope, ServiceType } from "@/types/database";
 
-export type OfertaFormState = { error?: string; overlap?: boolean };
+export type OfertaFormState = { error?: string };
 
 function parseInput(fd: FormData): PromotionInput & { error?: string } {
-  const name        = (fd.get("name") as string ?? "").trim();
-  const discountType = fd.get("discountType") as DiscountType;
-  const discountValue = parseFloat(fd.get("discountValue") as string ?? "");
-  const scope        = fd.get("scope") as PromotionScope;
-  const serviceType  = (fd.get("serviceType") as ServiceType | "") || null;
-  const serviceId    = (fd.get("serviceId") as string | "") || null;
-  const startsAt     = fd.get("startsAt") as string;
-  const endsAt       = fd.get("endsAt") as string;
+  const name         = ((fd.get("name") as string) ?? "").trim();
+  const discountType = (fd.get("discountType") as DiscountType) || null;
+  const discountRaw  = fd.get("discountValue") as string;
+  const discountValue = discountRaw ? parseFloat(discountRaw) : NaN;
+  const scope        = (fd.get("scope") as PromotionScope) || null;
+  const serviceType  = ((fd.get("serviceType") as string) || "") || null;
+  const serviceId    = ((fd.get("serviceId") as string) || "") || null;
+  const startsAt     = (fd.get("startsAt") as string) || "";
+  const endsAt       = (fd.get("endsAt") as string) || "";
   const active       = fd.get("active") !== "false";
 
-  if (!name) return { ...({} as PromotionInput), error: "El nom és obligatori." };
+  if (!name)
+    return { ...(null as unknown as PromotionInput), error: "El nom és obligatori." };
   if (!discountType || !["percentage", "fixed_amount"].includes(discountType))
-    return { ...({} as PromotionInput), error: "Tipus de descompte invàlid." };
+    return { ...(null as unknown as PromotionInput), error: "Tipus de descompte invàlid." };
   if (isNaN(discountValue) || discountValue <= 0)
-    return { ...({} as PromotionInput), error: "El valor del descompte ha de ser positiu." };
+    return { ...(null as unknown as PromotionInput), error: "El valor del descompte ha de ser positiu." };
   if (discountType === "percentage" && discountValue > 100)
-    return { ...({} as PromotionInput), error: "El percentatge no pot superar el 100%." };
+    return { ...(null as unknown as PromotionInput), error: "El percentatge no pot superar el 100%." };
+  if (!scope || !["service", "package"].includes(scope))
+    return { ...(null as unknown as PromotionInput), error: "L'àmbit és obligatori." };
   if (!startsAt || !endsAt)
-    return { ...({} as PromotionInput), error: "Les dates són obligatòries." };
+    return { ...(null as unknown as PromotionInput), error: "Les dates són obligatòries." };
   if (endsAt < startsAt)
-    return { ...({} as PromotionInput), error: "La data de fi ha de ser igual o posterior a l'inici." };
+    return { ...(null as unknown as PromotionInput), error: "La data de fi ha de ser igual o posterior a l'inici." };
   if (scope === "service" && !serviceType)
-    return { ...({} as PromotionInput), error: "Tria el tipus de servei." };
+    return { ...(null as unknown as PromotionInput), error: "Tria el tipus de servei." };
   if (scope === "package" && !serviceId)
-    return { ...({} as PromotionInput), error: "Tria el paquet." };
+    return { ...(null as unknown as PromotionInput), error: "Tria el paquet." };
 
   return {
     name,
     discountType,
     discountValue,
     scope,
-    serviceType: scope === "service" ? serviceType : null,
+    serviceType: scope === "service" ? (serviceType as ServiceType) : null,
     serviceId:   scope === "package" ? serviceId : null,
     startsAt,
     endsAt,
@@ -60,18 +64,35 @@ export async function createOfertaAction(
   const input = parseInput(fd);
   if (input.error) return { error: input.error };
 
-  const overlap = await hasOverlap({
-    scope: input.scope,
-    serviceType: input.serviceType,
-    serviceId: input.serviceId,
-    startsAt: input.startsAt,
-    endsAt: input.endsAt,
-  });
+  let overlap = false;
+  try {
+    overlap = await hasOverlap({
+      scope: input.scope,
+      serviceType: input.serviceType,
+      serviceId: input.serviceId,
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+    });
+  } catch (err) {
+    console.error("[createOfertaAction] hasOverlap error:", err);
+    // No blocking — continue even if overlap check fails
+  }
 
-  // Creem igualment però avisem
-  await createPromotion(input);
+  try {
+    await createPromotion(input);
+  } catch (err) {
+    console.error("[createOfertaAction] createPromotion error:", err);
+    return {
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error desconegut en crear l'oferta.",
+    };
+  }
+
   revalidatePath("/admin/ofertes");
   revalidatePath("/admin/serveis");
+  revalidatePath("/client/bonos/comprar");
 
   if (overlap) {
     redirect("/admin/ofertes?overlap=1");
@@ -87,18 +108,35 @@ export async function updateOfertaAction(
   const input = parseInput(fd);
   if (input.error) return { error: input.error };
 
-  const overlap = await hasOverlap({
-    scope: input.scope,
-    serviceType: input.serviceType,
-    serviceId: input.serviceId,
-    startsAt: input.startsAt,
-    endsAt: input.endsAt,
-    excludeId: id,
-  });
+  let overlap = false;
+  try {
+    overlap = await hasOverlap({
+      scope: input.scope,
+      serviceType: input.serviceType,
+      serviceId: input.serviceId,
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      excludeId: id,
+    });
+  } catch (err) {
+    console.error("[updateOfertaAction] hasOverlap error:", err);
+  }
 
-  await updatePromotion(id, input);
+  try {
+    await updatePromotion(id, input);
+  } catch (err) {
+    console.error("[updateOfertaAction] updatePromotion error:", err);
+    return {
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error desconegut en actualitzar l'oferta.",
+    };
+  }
+
   revalidatePath("/admin/ofertes");
   revalidatePath("/admin/serveis");
+  revalidatePath("/client/bonos/comprar");
 
   if (overlap) {
     redirect("/admin/ofertes?overlap=1");
@@ -109,14 +147,26 @@ export async function updateOfertaAction(
 export async function toggleOfertaAction(fd: FormData): Promise<void> {
   const id     = fd.get("id") as string;
   const active = fd.get("active") === "true";
-  await updatePromotion(id, { active });
+  try {
+    await updatePromotion(id, { active });
+  } catch (err) {
+    console.error("[toggleOfertaAction] error:", err);
+    throw err;
+  }
   revalidatePath("/admin/ofertes");
   revalidatePath("/admin/serveis");
+  revalidatePath("/client/bonos/comprar");
 }
 
 export async function deleteOfertaAction(fd: FormData): Promise<void> {
   const id = fd.get("id") as string;
-  await deletePromotion(id);
+  try {
+    await deletePromotion(id);
+  } catch (err) {
+    console.error("[deleteOfertaAction] error:", err);
+    throw err;
+  }
   revalidatePath("/admin/ofertes");
   revalidatePath("/admin/serveis");
+  revalidatePath("/client/bonos/comprar");
 }

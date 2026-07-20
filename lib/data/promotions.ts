@@ -226,7 +226,10 @@ export async function createPromotion(input: PromotionInput): Promise<string> {
     })
     .select("id")
     .single();
-  if (error || !data) throw new Error("No s'ha pogut crear l'oferta.");
+  if (error || !data) {
+    console.error("[createPromotion] Supabase error:", error);
+    throw new Error(error?.message ?? "No s'ha pogut crear l'oferta.");
+  }
   return data.id;
 }
 
@@ -267,7 +270,10 @@ export async function updatePromotion(
       ...(input.active !== undefined && { active: input.active }),
     })
     .eq("id", id);
-  if (error) throw new Error("No s'ha pogut actualitzar l'oferta.");
+  if (error) {
+    console.error("[updatePromotion] Supabase error:", error);
+    throw new Error(error.message ?? "No s'ha pogut actualitzar l'oferta.");
+  }
 }
 
 export async function deletePromotion(id: string): Promise<void> {
