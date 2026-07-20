@@ -672,6 +672,34 @@ export interface Database {
         };
         Relationships: [];
       };
+      client_documents: {
+        Row: {
+          id: string;
+          client_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          file_name: string;
+          file_size: number | null;
+          mime_type: string | null;
+          description: string | null;
+          uploaded_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          file_name: string;
+          file_size?: number | null;
+          mime_type?: string | null;
+          description?: string | null;
+          uploaded_at?: string;
+        };
+        Update: {
+          description?: string | null;
+        };
+        Relationships: [];
+      };
       center_settings: {
         Row: {
           id: boolean;

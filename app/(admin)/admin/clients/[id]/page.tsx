@@ -6,6 +6,8 @@ import { listMeasurements } from "@/lib/data/measurements";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
+import { listClientDocuments } from "@/lib/data/client-documents";
+import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
 import { HealthConsentWarning } from "@/components/health-consent-warning";
 import { DeleteClientModal } from "@/components/delete-client-modal";
 import { deleteMeasurementAction } from "@/app/(admin)/admin/clients/progres-actions";
@@ -29,11 +31,12 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, measurements, assignedExercises, library] = await Promise.all([
+  const [client, measurements, assignedExercises, library, documents] = await Promise.all([
     getClient(id),
     listMeasurements(id),
     listClientExercises(id),
     listExercises(),
+    listClientDocuments(id),
   ]);
   if (!client) notFound();
 
@@ -171,6 +174,9 @@ export default async function ClientDetailPage({
           assignAction={assignExerciseAction.bind(null, client.id)}
           removeAction={removeExerciseAction.bind(null, client.id)}
         />
+
+        {/* Documents */}
+        <DocumentsReadonlyPanel documents={documents} clientId={id} />
 
         {/* Progrés */}
         <Panel

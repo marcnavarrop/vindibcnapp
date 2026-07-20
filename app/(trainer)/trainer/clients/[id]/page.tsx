@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { getClient } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
+import { listClientDocuments } from "@/lib/data/client-documents";
+import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
 import { getConsentStatus } from "@/lib/data/consents";
 import { HealthConsentWarning } from "@/components/health-consent-warning";
 import {
@@ -29,11 +31,12 @@ export default async function TrainerClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [viewer, client, assignedExercises, library] = await Promise.all([
+  const [viewer, client, assignedExercises, library, documents] = await Promise.all([
     getViewer(),
     getClient(id),
     listClientExercises(id),
     listExercises(),
+    listClientDocuments(id),
   ]);
   if (!client) notFound();
 
@@ -171,6 +174,9 @@ export default async function TrainerClientDetailPage({
             ))}
           </Panel>
         )}
+
+        {/* Documents */}
+        <DocumentsReadonlyPanel documents={documents} clientId={id} />
 
         <AssignedExercisesPanel
           assigned={assignedExercises}

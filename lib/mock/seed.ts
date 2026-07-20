@@ -9,6 +9,7 @@ import type { Database } from "@/types/database";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Client = Database["public"]["Tables"]["clients"]["Row"];
+type ClientDocument = Database["public"]["Tables"]["client_documents"]["Row"];
 type Bono = Database["public"]["Tables"]["bonos"]["Row"];
 type Reservation = Database["public"]["Tables"]["reservations"]["Row"];
 type Payment = Database["public"]["Tables"]["payments"]["Row"];
@@ -166,4 +167,18 @@ export const seedPayments: Payment[] = [
   { id: "pay-2", client_id: "c-ana", bono_id: "b-2", stripe_payment_id: null, amount: 250, currency: "eur", method: "cash", concept: null, paid_at: now, created_at: now },
   { id: "pay-3", client_id: "c-pau", bono_id: "b-3", stripe_payment_id: null, amount: 200, currency: "eur", method: "card", concept: null, paid_at: now, created_at: now },
   { id: "pay-4", client_id: "c-marta", bono_id: "b-4", stripe_payment_id: null, amount: 350, currency: "eur", method: "card", concept: null, paid_at: now, created_at: now },
+];
+
+export const seedClientDocuments: ClientDocument[] = [
+  {
+    id: "doc-1",
+    client_id: "c-ana",
+    uploaded_by: "u-client-ana",
+    storage_path: "c-ana/doc-1-informe-genoll.pdf",
+    file_name: "informe-genoll.pdf",
+    file_size: 245760,
+    mime_type: "application/pdf",
+    description: "Informe de la ressonància del genoll (març 2026)",
+    uploaded_at: "2026-03-15T10:00:00.000Z",
+  },
 ];

@@ -20,6 +20,7 @@ import {
   seedNotificationPreferences,
   seedNotificationLog,
   seedPromotions,
+  seedClientDocuments,
 } from "./seed";
 import type { Database } from "@/types/database";
 
@@ -43,6 +44,7 @@ export type Store = {
   notification_preferences: Tables["notification_preferences"]["Row"][];
   notification_log: Tables["notification_log"]["Row"][];
   promotions: Tables["promotions"]["Row"][];
+  client_documents: Tables["client_documents"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
 };
 
@@ -75,6 +77,7 @@ function fromSeed(): Store {
     notification_preferences: structuredClone(seedNotificationPreferences),
     notification_log: structuredClone(seedNotificationLog),
     promotions: structuredClone(seedPromotions),
+    client_documents: structuredClone(seedClientDocuments),
     centerSettings: { id: true, min_cancellation_hours: 24, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
 }

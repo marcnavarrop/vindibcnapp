@@ -88,6 +88,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/client/bonos", label: "Bonos" },
     { href: "/client/reservas", label: "Reserves" },
     { href: "/client/exercicis", label: "Exercicis" },
+    { href: "/client/documents", label: "Documents" },
     { href: "/client/comunitat", label: "Comunitat" },
     { href: "/client/configuracio", label: "Configuració" },
   ],
