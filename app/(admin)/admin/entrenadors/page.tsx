@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { listTrainersDetailed } from "@/lib/data/trainers";
+import { GroupTabs } from "@/components/ui/group-tabs";
+
+const TABS = [
+  { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/entrenadors", label: "Entrenadors" },
+];
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import { ResendInviteButton } from "@/components/resend-invite-button";
 
@@ -10,6 +16,8 @@ export default async function EntrenadorsPage() {
   const trainers = await listTrainersDetailed();
 
   return (
+    <>
+      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -97,5 +105,6 @@ export default async function EntrenadorsPage() {
           </table>
         </div>
       </main>
+    </>
   );
 }

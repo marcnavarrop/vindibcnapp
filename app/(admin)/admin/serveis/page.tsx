@@ -1,4 +1,10 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/ui/group-tabs";
+
+const TABS = [
+  { href: "/admin/serveis", label: "Serveis" },
+  { href: "/admin/ofertes", label: "Ofertes" },
+];
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { listServices, type Service } from "@/lib/data/services";
@@ -32,7 +38,9 @@ export default async function ServeisPage() {
   ];
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <>
+      <GroupTabs tabs={TABS} />
+      <main className="mx-auto max-w-5xl p-6">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl text-brand-dark">Serveis i paquets</h1>
         <Link
@@ -107,5 +115,6 @@ export default async function ServeisPage() {
         </div>
       )}
     </main>
+    </>
   );
 }

@@ -6,6 +6,15 @@ export type Role = "admin" | "trainer" | "client";
 
 export type NavItem = { href: string; label: string; exact?: boolean };
 
+/** Grup de seccions relacionades que apareix com una sola entrada al sidebar. */
+export type NavGroup = { label: string; children: NavItem[] };
+
+export type NavEntry = NavItem | NavGroup;
+
+export function isNavGroup(e: NavEntry): e is NavGroup {
+  return "children" in e;
+}
+
 export const AREA_LABELS: Record<Role, string> = {
   admin: "Administració",
   trainer: "Entrenador/a",
@@ -18,18 +27,43 @@ export const HOME_PATH: Record<Role, string> = {
   client: "/client",
 };
 
-export const NAV: Record<Role, NavItem[]> = {
+/**
+ * Estructura de navegació amb grups. Substitueix NAV al sidebar.
+ * Els grups amb múltiples fills es mostren com una sola entrada al sidebar
+ * i com pestanyes dins de cada pàgina del grup.
+ */
+export const NAV_GROUPS: Record<Role, NavEntry[]> = {
   admin: [
     { href: "/admin", label: "Inici", exact: true },
-    { href: "/admin/clients", label: "Clients" },
-    { href: "/admin/entrenadors", label: "Entrenadors" },
-    { href: "/admin/bonos", label: "Bons" },
-    { href: "/admin/reservas", label: "Reserves" },
-    { href: "/admin/prova", label: "Sessions de prova" },
-    { href: "/admin/disponibilitat", label: "Disponibilitat" },
-    { href: "/admin/pagos", label: "Pagaments" },
-    { href: "/admin/serveis", label: "Serveis" },
-    { href: "/admin/ofertes", label: "Ofertes" },
+    {
+      label: "Persones",
+      children: [
+        { href: "/admin/clients", label: "Clients" },
+        { href: "/admin/entrenadors", label: "Entrenadors" },
+      ],
+    },
+    {
+      label: "Reserves",
+      children: [
+        { href: "/admin/reservas", label: "Reserves" },
+        { href: "/admin/prova", label: "Sessions de prova" },
+        { href: "/admin/disponibilitat", label: "Disponibilitat" },
+      ],
+    },
+    {
+      label: "Bons i pagaments",
+      children: [
+        { href: "/admin/bonos", label: "Bons" },
+        { href: "/admin/pagos", label: "Pagaments" },
+      ],
+    },
+    {
+      label: "Catàleg",
+      children: [
+        { href: "/admin/serveis", label: "Serveis" },
+        { href: "/admin/ofertes", label: "Ofertes" },
+      ],
+    },
     { href: "/admin/exercicis", label: "Exercicis" },
     { href: "/admin/community", label: "Comunitat" },
     { href: "/admin/configuracio", label: "Configuració" },
@@ -37,8 +71,13 @@ export const NAV: Record<Role, NavItem[]> = {
   trainer: [
     { href: "/trainer", label: "Inici", exact: true },
     { href: "/trainer/clients", label: "Clients" },
-    { href: "/trainer/reservas", label: "Reserves" },
-    { href: "/trainer/disponibilitat", label: "Disponibilitat" },
+    {
+      label: "Reserves",
+      children: [
+        { href: "/trainer/reservas", label: "Reserves" },
+        { href: "/trainer/disponibilitat", label: "Disponibilitat" },
+      ],
+    },
     { href: "/trainer/bonos", label: "Bons" },
     { href: "/trainer/exercicis", label: "Exercicis" },
     { href: "/trainer/comunitat", label: "Comunitat" },
@@ -53,3 +92,18 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/client/configuracio", label: "Configuració" },
   ],
 };
+
+/** Retorna les pestanyes del grup al qual pertany el pathname donat, o null. */
+export function getGroupTabs(role: Role, pathname: string): NavItem[] | null {
+  for (const entry of NAV_GROUPS[role]) {
+    if (
+      isNavGroup(entry) &&
+      entry.children.some(
+        (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
+      )
+    ) {
+      return entry.children;
+    }
+  }
+  return null;
+}

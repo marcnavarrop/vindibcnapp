@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/ui/group-tabs";
+
+const TABS = [
+  { href: "/admin/reservas", label: "Reserves" },
+  { href: "/admin/prova", label: "Sessions de prova" },
+  { href: "/admin/disponibilitat", label: "Disponibilitat" },
+];
 import { listTrainersDetailed } from "@/lib/data/trainers";
 import { listAvailabilityRules } from "@/lib/data/availability";
 import { AvailabilityManager } from "@/components/availability-manager";
@@ -24,7 +31,9 @@ export default async function AdminDisponibilitatPage({
   const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <>
+      <GroupTabs tabs={TABS} />
+      <main className="mx-auto max-w-5xl p-6">
       <h1 className="mb-1 text-2xl text-brand-dark">Disponibilitat</h1>
       <p className="mb-6 text-sm text-brand-muted">
         Gestiona els horaris de cada entrenador/a.
@@ -66,5 +75,6 @@ export default async function AdminDisponibilitatPage({
         </>
       )}
     </main>
+    </>
   );
 }

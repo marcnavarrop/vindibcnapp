@@ -1,4 +1,10 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/ui/group-tabs";
+
+const TABS = [
+  { href: "/trainer/reservas", label: "Reserves" },
+  { href: "/trainer/disponibilitat", label: "Disponibilitat" },
+];
 import { getViewer } from "@/lib/auth";
 import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
@@ -41,6 +47,8 @@ export default async function TrainerReservasPage() {
   const nowISO = new Date().toISOString();
 
   return (
+    <>
+      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -74,5 +82,6 @@ export default async function TrainerReservasPage() {
           rejectTrialAction={rejectTrialTrainerAction}
         />
       </main>
+    </>
   );
 }

@@ -8,7 +8,7 @@ import { Wordmark } from "@/components/wordmark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { USE_MOCK } from "@/lib/config";
 import { SPECIALTY_LABELS } from "@/lib/labels";
-import { NAV, AREA_LABELS, HOME_PATH, type Role } from "@/lib/nav";
+import { NAV_GROUPS, isNavGroup, AREA_LABELS, HOME_PATH, type Role } from "@/lib/nav";
 import type { Specialty } from "@/types/database";
 
 /** Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área. */
@@ -146,15 +146,36 @@ function SidebarContent({
 
       <nav className="flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1">
-          {NAV[role].map((item) => {
-            const active = item.exact
-              ? pathname === item.href
-              : pathname === item.href ||
-                pathname.startsWith(`${item.href}/`);
+          {NAV_GROUPS[role].map((entry) => {
+            if (isNavGroup(entry)) {
+              const active = entry.children.some(
+                (c) =>
+                  pathname === c.href || pathname.startsWith(`${c.href}/`),
+              );
+              return (
+                <li key={entry.label}>
+                  <Link
+                    href={entry.children[0].href}
+                    className={clsx(
+                      "flex items-center rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold transition-colors",
+                      active
+                        ? "border-brand-orange bg-white/15 text-white"
+                        : "border-transparent text-white/80 hover:bg-white/10 hover:text-white",
+                    )}
+                  >
+                    {entry.label}
+                  </Link>
+                </li>
+              );
+            }
+            const active = entry.exact
+              ? pathname === entry.href
+              : pathname === entry.href ||
+                pathname.startsWith(`${entry.href}/`);
             return (
-              <li key={item.href}>
+              <li key={entry.href}>
                 <Link
-                  href={item.href}
+                  href={entry.href}
                   className={clsx(
                     "flex items-center rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold transition-colors",
                     active
@@ -162,7 +183,7 @@ function SidebarContent({
                       : "border-transparent text-white/80 hover:bg-white/10 hover:text-white",
                   )}
                 >
-                  {item.label}
+                  {entry.label}
                 </Link>
               </li>
             );

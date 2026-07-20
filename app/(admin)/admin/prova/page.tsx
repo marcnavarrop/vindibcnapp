@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { listTrialBookings } from "@/lib/data/trial-bookings";
+import { GroupTabs } from "@/components/ui/group-tabs";
+
+const TABS = [
+  { href: "/admin/reservas", label: "Reserves" },
+  { href: "/admin/prova", label: "Sessions de prova" },
+  { href: "/admin/disponibilitat", label: "Disponibilitat" },
+];
 import { SERVICE_LABELS } from "@/lib/labels";
 import {
   acceptTrialAdminAction,
@@ -45,7 +52,9 @@ export default async function AdminProvaPage() {
   const rest = trials.filter((t) => t.status !== "pending");
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <>
+      <GroupTabs tabs={TABS} />
+      <main className="mx-auto max-w-5xl p-6">
       <Link
         href="/admin"
         className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
@@ -83,6 +92,7 @@ export default async function AdminProvaPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
 

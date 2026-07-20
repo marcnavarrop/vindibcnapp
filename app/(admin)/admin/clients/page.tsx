@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { ClientsTable } from "@/components/clients-table";
 import { listClients } from "@/lib/data/clients";
+import { GroupTabs } from "@/components/ui/group-tabs";
+
+const TABS = [
+  { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/entrenadors", label: "Entrenadors" },
+];
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +14,8 @@ export default async function ClientsPage() {
   const clients = await listClients();
 
   return (
+    <>
+      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -29,5 +37,6 @@ export default async function ClientsPage() {
 
         <ClientsTable clients={clients} />
       </main>
+    </>
   );
 }
