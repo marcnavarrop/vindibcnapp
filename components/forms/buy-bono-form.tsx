@@ -8,7 +8,9 @@ import {
   type FormState,
 } from "@/app/(client)/client/bonos/comprar/actions";
 import type { Service } from "@/lib/data/services";
+import type { EffectivePrice } from "@/lib/data/promotions";
 import type { ServiceType } from "@/types/database";
+import { PriceDisplay } from "@/components/ui/price-display";
 
 // ─── Icones SVG inline per tipus de servei ───────────────────────────────────
 function IconIndividual({ color }: { color: string }) {
@@ -114,12 +116,14 @@ const SERVICE_ICONS: Record<ServiceType, (color: string) => React.ReactNode> = {
 // ─── Pas 1: tria el tipus de servei ──────────────────────────────────────────
 function Step1ServiceType({
   services,
+  effectivePrices,
   onSelect,
 }: {
   services: Service[];
+  effectivePrices: Record<string, EffectivePrice>;
   onSelect: (type: ServiceType) => void;
 }) {
-  // Agrupa per serviceType i calcula preu mínim
+  // Agrupa per serviceType i calcula preu mínim efectiu
   const groups = useMemo(() => {
     const map = new Map<ServiceType, Service[]>();
     for (const s of services) {
@@ -129,9 +133,10 @@ function Step1ServiceType({
     }
     return Array.from(map.entries()).map(([type, pkgs]) => ({
       type,
-      minPrice: Math.min(...pkgs.map((p) => p.price)),
+      minPrice: Math.min(...pkgs.map((p) => effectivePrices[p.id]?.finalPrice ?? p.price)),
+      hasDiscount: pkgs.some((p) => effectivePrices[p.id]?.hasDiscount),
     }));
-  }, [services]);
+  }, [services, effectivePrices]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -139,7 +144,7 @@ function Step1ServiceType({
         Tria el tipus de servei per al qual vols comprar un bo.
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {groups.map(({ type, minPrice }) => {
+        {groups.map(({ type, minPrice, hasDiscount }) => {
           const color = SERVICE_COLORS[type];
           const bgColor = `${color}18`;
           const borderColor = `${color}40`;
@@ -180,7 +185,10 @@ function Step1ServiceType({
                   {SERVICE_LABELS[type]}
                 </p>
                 <p className="mt-0.5 text-xs text-brand-muted">
-                  Des de {formatEur(minPrice)}
+                  Des de{" "}
+                  <span className={hasDiscount ? "font-bold text-brand-orange" : ""}>
+                    {formatEur(minPrice)}
+                  </span>
                 </p>
               </div>
               <svg
@@ -207,12 +215,14 @@ function Step2Package({
   services,
   serviceType,
   selectedId,
+  effectivePrices,
   onSelect,
   onBack,
 }: {
   services: Service[];
   serviceType: ServiceType;
   selectedId: string;
+  effectivePrices: Record<string, EffectivePrice>;
   onSelect: (id: string) => void;
   onBack: () => void;
 }) {
@@ -221,15 +231,17 @@ function Step2Package({
     [services, serviceType],
   );
 
-  // Millor preu per sessió (el que té el cost/sessió més baix)
+  // Millor preu per sessió calculat sobre el preu final efectiu
   const bestId = useMemo(() => {
     if (pkgs.length <= 1) return null;
     return pkgs.reduce((best, s) => {
-      const perSession = s.price / s.defaultSessions;
-      const bestPerSession = best.price / best.defaultSessions;
+      const ep = effectivePrices[s.id];
+      const bestEp = effectivePrices[best.id];
+      const perSession = (ep?.finalPrice ?? s.price) / s.defaultSessions;
+      const bestPerSession = (bestEp?.finalPrice ?? best.price) / best.defaultSessions;
       return perSession < bestPerSession ? s : best;
     }).id;
-  }, [pkgs]);
+  }, [pkgs, effectivePrices]);
 
   const color = SERVICE_COLORS[serviceType];
 
@@ -264,10 +276,13 @@ function Step2Package({
 
       <div className="flex flex-col gap-3">
         {pkgs.map((pkg) => {
-          const pricePerSession =
-            pkg.defaultSessions > 1
-              ? pkg.price / pkg.defaultSessions
-              : null;
+          const ep = effectivePrices[pkg.id] ?? {
+            originalPrice: pkg.price,
+            finalPrice: pkg.price,
+            discountAmount: 0,
+            discountLabel: "",
+            hasDiscount: false,
+          };
           const isBest = pkg.id === bestId;
           const isSelected = pkg.id === selectedId;
 
@@ -300,14 +315,10 @@ function Step2Package({
               </div>
 
               <div className="flex flex-shrink-0 flex-col items-end gap-0.5">
-                <span className="font-bold text-brand-dark">
-                  {formatEur(pkg.price)}
-                </span>
-                {pricePerSession !== null && (
-                  <span className="text-xs text-brand-muted">
-                    {formatEur(pricePerSession)}/sessió
-                  </span>
-                )}
+                <PriceDisplay
+                  ep={ep}
+                  showPerSession={pkg.defaultSessions > 1 ? pkg.defaultSessions : undefined}
+                />
               </div>
 
               <div
@@ -342,7 +353,13 @@ function Step2Package({
 }
 
 // ─── Component principal ──────────────────────────────────────────────────────
-export function BuyBonoForm({ services }: { services: Service[] }) {
+export function BuyBonoForm({
+  services,
+  effectivePrices = {},
+}: {
+  services: Service[];
+  effectivePrices?: Record<string, EffectivePrice>;
+}) {
   const [state, formAction] = useActionState(
     createPendingBonoAction,
     {} as FormState,
@@ -404,6 +421,7 @@ export function BuyBonoForm({ services }: { services: Service[] }) {
       {step === 1 && (
         <Step1ServiceType
           services={services}
+          effectivePrices={effectivePrices}
           onSelect={(type) => {
             setServiceType(type);
             // Preselecciona el primer paquet d'aquest tipus
@@ -424,6 +442,7 @@ export function BuyBonoForm({ services }: { services: Service[] }) {
               services={services}
               serviceType={serviceType}
               selectedId={serviceId}
+              effectivePrices={effectivePrices}
               onSelect={setServiceId}
               onBack={() => setStep(1)}
             />
@@ -436,9 +455,15 @@ export function BuyBonoForm({ services }: { services: Service[] }) {
                 <span className="font-bold text-brand-dark">
                   {selected.name}
                 </span>
-                <span className="font-bold text-brand-purple">
-                  {formatEur(selected.price)}
-                </span>
+                <PriceDisplay
+                  ep={effectivePrices[selected.id] ?? {
+                    originalPrice: selected.price,
+                    finalPrice: selected.price,
+                    discountAmount: 0,
+                    discountLabel: "",
+                    hasDiscount: false,
+                  }}
+                />
               </div>
               <p className="mt-0.5 text-brand-muted">
                 {SERVICE_LABELS[selected.serviceType]} ·{" "}

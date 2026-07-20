@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BonoForm } from "@/components/forms/bono-form";
 import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
+import { getEffectivePrices } from "@/lib/data/promotions";
 import { createBonoAction } from "@/app/(admin)/admin/bonos/actions";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,9 @@ export default async function NewBonoPage({
   ]);
   if (!client) notFound();
 
+  const effectivePricesMap = await getEffectivePrices(services);
+  const effectivePrices = Object.fromEntries(effectivePricesMap);
+
   return (
       <main className="mx-auto max-w-5xl p-6">
         <Link
@@ -34,6 +38,7 @@ export default async function NewBonoPage({
           action={createBonoAction.bind(null, id)}
           cancelHref={`/admin/clients/${id}`}
           services={services}
+          effectivePrices={effectivePrices}
         />
       </main>
   );

@@ -130,6 +130,23 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
 type NotifLog = Database["public"]["Tables"]["notification_log"]["Row"];
 export const seedNotificationLog: NotifLog[] = [];
 
+type Promotion = Database["public"]["Tables"]["promotions"]["Row"];
+export const seedPromotions: Promotion[] = [
+  {
+    id: "promo-fisio-estiu",
+    name: "Descompte d'estiu Fisioteràpia",
+    discount_type: "percentage",
+    discount_value: 15,
+    scope: "service",
+    service_type: "fisioterapia",
+    service_id: null,
+    starts_at: "2026-07-01",
+    ends_at: "2026-08-31",
+    active: true,
+    created_at: now,
+  },
+];
+
 export const seedClientExercises: ClientExercise[] = [
   { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },
 ];

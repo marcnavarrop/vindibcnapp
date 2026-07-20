@@ -29,6 +29,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { href: "/admin/disponibilitat", label: "Disponibilitat" },
     { href: "/admin/pagos", label: "Pagaments" },
     { href: "/admin/serveis", label: "Serveis" },
+    { href: "/admin/ofertes", label: "Ofertes" },
     { href: "/admin/exercicis", label: "Exercicis" },
     { href: "/admin/community", label: "Comunitat" },
     { href: "/admin/configuracio", label: "Configuració" },

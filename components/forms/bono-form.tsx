@@ -8,16 +8,20 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { formatEur, SERVICE_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { Service } from "@/lib/data/services";
+import type { EffectivePrice } from "@/lib/data/promotions";
 
 export function BonoForm({
   action,
   cancelHref,
   services,
+  effectivePrices = {},
   showPayment = true,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   cancelHref: string;
   services: Service[];
+  /** Preus efectius (amb descompte) per serviceId. */
+  effectivePrices?: Record<string, EffectivePrice>;
   /** Bloque de cobro. Solo el admin registra pagos (RLS); el trainer no. */
   showPayment?: boolean;
 }) {
@@ -36,7 +40,8 @@ export function BonoForm({
     const s = services.find((x) => x.id === id);
     if (s) {
       setSessions(String(s.defaultSessions));
-      setPrice(String(s.price));
+      const ep = effectivePrices[id];
+      setPrice(String(ep?.finalPrice ?? s.price));
     }
   }
 
@@ -58,10 +63,16 @@ export function BonoForm({
         disabled={services.length === 0}
         value={serviceId}
         onChange={(e) => onServiceChange(e.target.value)}
-        options={services.map((s) => ({
-          value: s.id,
-          label: `${SERVICE_LABELS[s.serviceType]} · ${s.name} · ${s.defaultSessions} sess. · ${formatEur(s.price)}`,
-        }))}
+        options={services.map((s) => {
+          const ep = effectivePrices[s.id];
+          const priceLabel = ep?.hasDiscount
+            ? `${formatEur(ep.finalPrice)} (${ep.discountLabel})`
+            : formatEur(s.price);
+          return {
+            value: s.id,
+            label: `${SERVICE_LABELS[s.serviceType]} · ${s.name} · ${s.defaultSessions} sess. · ${priceLabel}`,
+          };
+        })}
       />
       <Field
         label="Nre. de sessions"

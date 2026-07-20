@@ -4,6 +4,7 @@ import { getViewer } from "@/lib/auth";
 import { BonoForm } from "@/components/forms/bono-form";
 import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
+import { getEffectivePrices } from "@/lib/data/promotions";
 import { createTrainerBonoAction } from "@/app/(trainer)/trainer/bonos/actions";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,9 @@ export default async function NewTrainerBonoPage({
     redirect(`/trainer/clients/${clientId}`);
   }
 
+  const effectivePricesMap = await getEffectivePrices(services);
+  const effectivePrices = Object.fromEntries(effectivePricesMap);
+
   return (
       <main className="mx-auto max-w-5xl p-6">
         <Link
@@ -43,6 +47,7 @@ export default async function NewTrainerBonoPage({
           action={createTrainerBonoAction.bind(null, clientId)}
           cancelHref={`/trainer/clients/${clientId}`}
           services={services}
+          effectivePrices={effectivePrices}
           showPayment={false}
         />
       </main>

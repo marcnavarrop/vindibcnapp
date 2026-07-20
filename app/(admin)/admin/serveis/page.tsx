@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { PriceDisplay } from "@/components/ui/price-display";
 import { listServices, type Service } from "@/lib/data/services";
+import { getEffectivePrices } from "@/lib/data/promotions";
 import { toggleServiceAction } from "@/app/(admin)/admin/serveis/actions";
-import { SERVICE_LABELS, formatEur } from "@/lib/labels";
+import { SERVICE_LABELS } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
-// Orden de los tipos de servicio en la pantalla.
 const SERVICE_ORDER: ServiceType[] = [
   "ep_individual",
   "ep_parejas",
@@ -17,6 +18,7 @@ const SERVICE_ORDER: ServiceType[] = [
 
 export default async function ServeisPage() {
   const services = await listServices();
+  const effectivePrices = await getEffectivePrices(services);
 
   const byType = new Map<ServiceType, Service[]>();
   for (const s of services) {
@@ -56,48 +58,49 @@ export default async function ServeisPage() {
                 {SERVICE_LABELS[type]}
               </h2>
               <div className="divide-y divide-brand-border">
-                {byType.get(type)!.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 text-sm"
-                  >
-                    <span className="min-w-[8rem] font-bold text-brand-dark">
-                      {s.name}
-                    </span>
-                    <span className="text-brand-muted">
-                      {s.defaultSessions}{" "}
-                      {s.defaultSessions === 1 ? "sessió" : "sessions"}
-                    </span>
-                    <span className="font-bold text-brand-purple">
-                      {formatEur(s.price)}
-                    </span>
-                    <Badge tone={s.active ? "success" : "neutral"}>
-                      {s.active ? "Actiu" : "Inactiu"}
-                    </Badge>
-                    <div className="ml-auto flex items-center gap-3">
-                      <Link
-                        href={`/admin/serveis/${s.id}/edit`}
-                        className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
-                      >
-                        Editar
-                      </Link>
-                      <form action={toggleServiceAction}>
-                        <input type="hidden" name="id" value={s.id} />
-                        <input
-                          type="hidden"
-                          name="active"
-                          value={String(!s.active)}
-                        />
-                        <button
-                          type="submit"
-                          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark"
+                {byType.get(type)!.map((s) => {
+                  const ep = effectivePrices.get(s.id)!;
+                  return (
+                    <div
+                      key={s.id}
+                      className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 text-sm"
+                    >
+                      <span className="min-w-[8rem] font-bold text-brand-dark">
+                        {s.name}
+                      </span>
+                      <span className="text-brand-muted">
+                        {s.defaultSessions}{" "}
+                        {s.defaultSessions === 1 ? "sessió" : "sessions"}
+                      </span>
+                      <PriceDisplay ep={ep} size="sm" />
+                      <Badge tone={s.active ? "success" : "neutral"}>
+                        {s.active ? "Actiu" : "Inactiu"}
+                      </Badge>
+                      <div className="ml-auto flex items-center gap-3">
+                        <Link
+                          href={`/admin/serveis/${s.id}/edit`}
+                          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
                         >
-                          {s.active ? "Desactivar" : "Activar"}
-                        </button>
-                      </form>
+                          Editar
+                        </Link>
+                        <form action={toggleServiceAction}>
+                          <input type="hidden" name="id" value={s.id} />
+                          <input
+                            type="hidden"
+                            name="active"
+                            value={String(!s.active)}
+                          />
+                          <button
+                            type="submit"
+                            className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark"
+                          >
+                            {s.active ? "Desactivar" : "Activar"}
+                          </button>
+                        </form>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           ))}

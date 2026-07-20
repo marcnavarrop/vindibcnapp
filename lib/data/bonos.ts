@@ -140,23 +140,35 @@ export async function createPendingBono(input: {
   profileId: string;
   serviceId: string;
 }): Promise<string> {
+  // Importació dinàmica per evitar cicle de mòduls (promotions → bonos → promotions)
+  const { getEffectivePrice } = await import("@/lib/data/promotions");
+
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === input.profileId);
     if (!client) throw new Error("Client no trobat.");
-    const service = store.services.find(
+    const serviceRow = store.services.find(
       (s) => s.id === input.serviceId && s.active,
     );
-    if (!service) throw new Error("Servei no vàlid.");
+    if (!serviceRow) throw new Error("Servei no vàlid.");
+    const service = {
+      id: serviceRow.id,
+      serviceType: serviceRow.service_type,
+      name: serviceRow.name,
+      price: serviceRow.price,
+      defaultSessions: serviceRow.default_sessions,
+      active: serviceRow.active,
+    };
+    const ep = await getEffectivePrice(service);
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     store.bonos.push({
       id,
       client_id: client.id,
-      service_type: service.service_type,
-      total_sessions: service.default_sessions,
-      remaining_sessions: service.default_sessions,
-      price: service.price,
+      service_type: serviceRow.service_type,
+      total_sessions: serviceRow.default_sessions,
+      remaining_sessions: serviceRow.default_sessions,
+      price: ep.finalPrice,
       status: "pending_payment",
       purchased_at: now,
       created_at: now,
@@ -173,22 +185,32 @@ export async function createPendingBono(input: {
     .single();
   if (cErr || !client) throw new Error("Client no trobat.");
 
-  const { data: service, error: sErr } = await admin
+  const { data: serviceRow, error: sErr } = await admin
     .from("services")
-    .select("service_type, price, default_sessions, active")
+    .select("service_type, price, default_sessions, active, name")
     .eq("id", input.serviceId)
     .single();
-  if (sErr || !service || !service.active)
+  if (sErr || !serviceRow || !serviceRow.active)
     throw new Error("Servei no vàlid.");
+
+  const service = {
+    id: input.serviceId,
+    serviceType: serviceRow.service_type,
+    name: serviceRow.name,
+    price: serviceRow.price,
+    defaultSessions: serviceRow.default_sessions,
+    active: serviceRow.active,
+  };
+  const ep = await getEffectivePrice(service);
 
   const { data, error } = await admin
     .from("bonos")
     .insert({
       client_id: client.id,
-      service_type: service.service_type,
-      total_sessions: service.default_sessions,
-      remaining_sessions: service.default_sessions,
-      price: service.price,
+      service_type: serviceRow.service_type,
+      total_sessions: serviceRow.default_sessions,
+      remaining_sessions: serviceRow.default_sessions,
+      price: ep.finalPrice,
       status: "pending_payment",
     })
     .select("id")

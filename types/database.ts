@@ -36,6 +36,8 @@ export type TrialStatus =
 /** Serveis d'entrenament (les sessions de prova mai són de fisioteràpia). */
 export type TrainingServiceType = Exclude<ServiceType, "fisioterapia">;
 export type PaymentMethod = "card" | "cash";
+export type DiscountType = "percentage" | "fixed_amount";
+export type PromotionScope = "service" | "package";
 export type ExerciseCategory =
   | "forca"
   | "mobilitat"
@@ -601,6 +603,48 @@ export interface Database {
         };
         Relationships: [];
       };
+      promotions: {
+        Row: {
+          id: string;
+          name: string;
+          discount_type: DiscountType;
+          discount_value: number;
+          scope: PromotionScope;
+          service_type: ServiceType | null;
+          service_id: string | null;
+          starts_at: string;
+          ends_at: string;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          discount_type: DiscountType;
+          discount_value: number;
+          scope: PromotionScope;
+          service_type?: ServiceType | null;
+          service_id?: string | null;
+          starts_at: string;
+          ends_at: string;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          discount_type?: DiscountType;
+          discount_value?: number;
+          scope?: PromotionScope;
+          service_type?: ServiceType | null;
+          service_id?: string | null;
+          starts_at?: string;
+          ends_at?: string;
+          active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       client_exercises: {
         Row: {
           id: string;
@@ -644,6 +688,8 @@ export interface Database {
       trial_status: TrialStatus;
       payment_method: PaymentMethod;
       exercise_category: ExerciseCategory;
+      discount_type: DiscountType;
+      promotion_scope: PromotionScope;
     };
     CompositeTypes: Record<never, never>;
   };
