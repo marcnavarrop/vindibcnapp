@@ -16,6 +16,7 @@ import {
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { ServiceType } from "@/types/database";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
+import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 
 const OPEN = 7;
 const CLOSE = 22;
@@ -622,7 +623,8 @@ function CreateModal({
   const [state, formAction] = useActionState(action, {} as FormState);
   useEffect(() => {
     if (state.ok) onDone();
-  }, [state.ok, onDone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const when = new Intl.DateTimeFormat("ca-ES", {
     weekday: "long",
@@ -631,6 +633,38 @@ function CreateModal({
     hour: "2-digit",
     minute: "2-digit",
   }).format(slot);
+
+  if (state.ok) {
+    return (
+      <Overlay onClose={onDone}>
+        <div className="flex flex-col items-center gap-1 py-2 text-center">
+          <span className="text-3xl">✓</span>
+          <h2 className="text-lg font-bold text-brand-dark">
+            Reserva confirmada!
+          </h2>
+          <p className="text-sm text-brand-muted capitalize">{when}</p>
+        </div>
+        <dl className="mt-4 flex flex-col gap-2 text-sm">
+          <Field label="Servei" value={SERVICE_LABELS[service]} />
+          <Field label="Professional" value={trainerName} />
+        </dl>
+        <div className="mt-5 flex flex-col items-center gap-3">
+          <AddToCalendarButton
+            serviceType={service}
+            trainerName={trainerName}
+            scheduledAt={slot.toISOString()}
+          />
+          <button
+            type="button"
+            onClick={onDone}
+            className="text-sm font-bold text-brand-muted hover:text-brand-dark"
+          >
+            Tancar
+          </button>
+        </div>
+      </Overlay>
+    );
+  }
 
   return (
     <Overlay onClose={onClose}>
@@ -698,6 +732,13 @@ function OwnModal({
         <Field label="Servei" value={SERVICE_LABELS[service]} />
         <Field label="Professional" value={trainerName} />
       </dl>
+      <div className="mt-4">
+        <AddToCalendarButton
+          serviceType={service}
+          trainerName={trainerName}
+          scheduledAt={scheduledAt}
+        />
+      </div>
       {canCancel ? (
         confirming ? (
           <>

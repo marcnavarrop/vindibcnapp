@@ -6,6 +6,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { Badge } from "@/components/ui/badge";
 import { CancelReservationButton } from "@/components/forms/cancel-reservation-button";
+import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -113,13 +114,19 @@ export default async function ClientHome() {
                   <Badge tone="info">
                     {RESERVATION_STATUS_LABELS[r.status]}
                   </Badge>
-                  <CancelReservationButton
-                    id={r.id}
-                    scheduledAt={r.scheduledAt}
-                    minCancellationHours={centerSettings.minCancellationHours}
-                    minMs={minMs}
-                    className="ml-auto"
-                  />
+                  <div className="ml-auto flex items-center gap-2">
+                    <AddToCalendarButton
+                      serviceType={r.serviceType}
+                      trainerName={client?.trainerName ?? null}
+                      scheduledAt={r.scheduledAt}
+                    />
+                    <CancelReservationButton
+                      id={r.id}
+                      scheduledAt={r.scheduledAt}
+                      minCancellationHours={centerSettings.minCancellationHours}
+                      minMs={minMs}
+                    />
+                  </div>
                 </Row>
               ))
             )}
