@@ -3,6 +3,15 @@ import type { ServiceType } from "@/types/database";
 
 export const SESSION_DURATION_MINUTES = 60;
 
+const CENTER_LOCATION =
+  "Vindi BCN, Carrer de la Mare de Déu dels Desemparats, 14-16, Gràcia, 08012 Barcelona";
+
+const TRAINING_SERVICES: ServiceType[] = [
+  "ep_individual",
+  "ep_parejas",
+  "grupo_reducido",
+];
+
 export type CalendarEvent = {
   title: string;
   start: Date;
@@ -22,14 +31,16 @@ export function buildCalendarEvent({
 }): CalendarEvent {
   const start = new Date(scheduledAt);
   const serviceLabel = SERVICE_LABELS[serviceType];
+  const isTraining = TRAINING_SERVICES.includes(serviceType);
+  const prefix = isTraining ? "💪 " : "";
   const title = trainerName
-    ? `${serviceLabel} amb ${trainerName} · VindiBCN`
-    : `${serviceLabel} · VindiBCN`;
+    ? `${prefix}${serviceLabel} amb ${trainerName} · VindiBCN`
+    : `${prefix}${serviceLabel} · VindiBCN`;
   return {
     title,
     start,
     durationMinutes: SESSION_DURATION_MINUTES,
-    location: "VindiBCN, Gràcia, Barcelona",
+    location: CENTER_LOCATION,
     description: `${serviceLabel} a VindiBCN.`,
   };
 }

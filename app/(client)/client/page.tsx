@@ -154,7 +154,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
+    <section className="rounded-2xl border border-brand-border bg-white">
       <div className="flex items-center justify-between border-b border-brand-border bg-brand-bg px-5 py-3">
         <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
           {title}
