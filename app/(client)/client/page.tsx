@@ -117,7 +117,7 @@ export default async function ClientHome() {
                   <div className="ml-auto flex items-center gap-2">
                     <AddToCalendarButton
                       serviceType={r.serviceType}
-                      trainerName={client?.trainerName ?? null}
+                      trainerName={r.trainerName}
                       scheduledAt={r.scheduledAt}
                     />
                     <CancelReservationButton

@@ -39,6 +39,7 @@ export type ClientReservation = {
   scheduledAt: string;
   serviceType: ServiceType;
   status: ReservationStatus;
+  trainerName: string | null;
 };
 
 export type ClientPayment = {
@@ -164,12 +165,18 @@ function buildDetail(clientId: string): ClientDetail | null {
     reservations: store.reservations
       .filter((r) => r.client_id === clientId)
       .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))
-      .map((r) => ({
-        id: r.id,
-        scheduledAt: r.scheduled_at,
-        serviceType: r.service_type,
-        status: r.status,
-      })),
+      .map((r) => {
+        const trainer = r.trainer_id
+          ? store.profiles.find((p) => p.id === r.trainer_id)
+          : null;
+        return {
+          id: r.id,
+          scheduledAt: r.scheduled_at,
+          serviceType: r.service_type,
+          status: r.status,
+          trainerName: trainer?.full_name ?? null,
+        };
+      }),
     payments: store.payments
       .filter((p) => p.client_id === clientId)
       .map((p) => ({
@@ -206,6 +213,7 @@ type DetailRow = {
     scheduled_at: string;
     service_type: ServiceType;
     status: ReservationStatus;
+    trainer: { full_name: string | null } | null;
   }[];
   payments: {
     id: string;
@@ -227,7 +235,7 @@ async function fetchClientDetail(
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(id, service_type, total_sessions, remaining_sessions, price, status),
-       reservations(id, scheduled_at, service_type, status),
+       reservations(id, scheduled_at, service_type, status, trainer:profiles!reservations_trainer_id_fkey(full_name)),
        payments(id, amount, method, paid_at)`,
     )
     .eq(column, value)
@@ -264,6 +272,7 @@ async function fetchClientDetail(
         scheduledAt: r.scheduled_at,
         serviceType: r.service_type,
         status: r.status,
+        trainerName: r.trainer?.full_name ?? null,
       })),
     payments: row.payments.map((p) => ({
       id: p.id,
