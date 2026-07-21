@@ -52,6 +52,16 @@ function toUtcIcs(d: Date): string {
   return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 }
 
+// RFC 5545 §3.3.11: escape backslash, semicolon, comma, and newlines in TEXT values.
+function escapeIcsText(s: string): string {
+  return s
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "");
+}
+
 // RFC 5545 §3.1: fold lines longer than 75 octets (CRLF + space).
 function foldIcsLine(line: string): string {
   const bytes = new TextEncoder().encode(line);
@@ -109,9 +119,9 @@ export function buildIcsContent(event: CalendarEvent): string {
     `DTSTAMP:${now}`,
     `DTSTART:${toUtcIcs(event.start)}`,
     `DTEND:${toUtcIcs(end)}`,
-    `SUMMARY:${event.title}`,
-    `LOCATION:${event.location}`,
-    `DESCRIPTION:${event.description}`,
+    `SUMMARY:${escapeIcsText(event.title)}`,
+    `LOCATION:${escapeIcsText(event.location)}`,
+    `DESCRIPTION:${escapeIcsText(event.description)}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ];
