@@ -10,14 +10,14 @@ import type { ServiceType } from "@/types/database";
 
 type Props = {
   serviceType: ServiceType;
-  trainerName: string | null;
+  otherPartyName: string | null;
   scheduledAt: string;
   className?: string;
 };
 
 export function AddToCalendarButton({
   serviceType,
-  trainerName,
+  otherPartyName,
   scheduledAt,
   className = "",
 }: Props) {
@@ -36,7 +36,7 @@ export function AddToCalendarButton({
   }, [open]);
 
   function downloadIcs() {
-    const event = buildCalendarEvent({ serviceType, trainerName, scheduledAt });
+    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt });
     const blob = new Blob([buildIcsContent(event)], {
       type: "text/calendar;charset=utf-8",
     });
@@ -50,7 +50,7 @@ export function AddToCalendarButton({
   }
 
   function openGoogle() {
-    const event = buildCalendarEvent({ serviceType, trainerName, scheduledAt });
+    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt });
     window.open(buildGoogleCalendarUrl(event), "_blank", "noopener");
     setOpen(false);
   }

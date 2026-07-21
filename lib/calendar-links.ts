@@ -22,22 +22,22 @@ export type CalendarEvent = {
 
 export function buildCalendarEvent({
   serviceType,
-  trainerName,
+  otherPartyName,
   scheduledAt,
 }: {
   serviceType: ServiceType;
-  trainerName: string | null;
+  otherPartyName: string | null;
   scheduledAt: string | Date;
 }): CalendarEvent {
   const start = new Date(scheduledAt);
   const serviceLabel = SERVICE_LABELS[serviceType];
   const isTraining = TRAINING_SERVICES.includes(serviceType);
   const prefix = isTraining ? "💪 " : "";
-  const title = trainerName
-    ? `${prefix}${serviceLabel} amb ${trainerName} · VindiBCN`
+  const title = otherPartyName
+    ? `${prefix}${serviceLabel} amb ${otherPartyName} · VindiBCN`
     : `${prefix}${serviceLabel} · VindiBCN`;
-  const description = trainerName
-    ? `Sessió amb ${trainerName}. ${serviceLabel} a VindiBCN.`
+  const description = otherPartyName
+    ? `Sessió amb ${otherPartyName}. ${serviceLabel} a VindiBCN.`
     : `${serviceLabel} a VindiBCN.`;
   return {
     title,

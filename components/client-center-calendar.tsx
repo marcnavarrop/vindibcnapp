@@ -576,7 +576,7 @@ export function ClientCenterCalendar({
       {book && (
         <CreateModal
           trainerId={book.trainerId}
-          trainerName={trainerName(book.trainerId)}
+          otherPartyName={trainerName(book.trainerId)}
           service={book.service}
           slot={book.slot}
           action={createAction}
@@ -591,7 +591,7 @@ export function ClientCenterCalendar({
       {own && (
         <OwnModal
           service={own.service}
-          trainerName={trainerName(own.trainerId)}
+          otherPartyName={trainerName(own.trainerId)}
           id={own.id}
           scheduledAt={own.slot.toISOString()}
           minCancellationHours={minCancellationHours}
@@ -605,7 +605,7 @@ export function ClientCenterCalendar({
 
 function CreateModal({
   trainerId,
-  trainerName,
+  otherPartyName: trainerName,
   service,
   slot,
   action,
@@ -613,7 +613,7 @@ function CreateModal({
   onDone,
 }: {
   trainerId: string;
-  trainerName: string;
+  otherPartyName: string;
   service: ServiceType;
   slot: Date;
   action: CreateAction;
@@ -651,7 +651,7 @@ function CreateModal({
         <div className="mt-5 flex flex-col items-center gap-3">
           <AddToCalendarButton
             serviceType={service}
-            trainerName={trainerName}
+            otherPartyName={trainerName}
             scheduledAt={slot.toISOString()}
           />
           <button
@@ -703,7 +703,7 @@ function CreateModal({
 
 function OwnModal({
   service,
-  trainerName,
+  otherPartyName: trainerName,
   id,
   scheduledAt,
   minCancellationHours,
@@ -711,7 +711,7 @@ function OwnModal({
   onClose,
 }: {
   service: ServiceType;
-  trainerName: string;
+  otherPartyName: string;
   id: string;
   scheduledAt: string;
   minCancellationHours: number;
@@ -735,7 +735,7 @@ function OwnModal({
       <div className="mt-4">
         <AddToCalendarButton
           serviceType={service}
-          trainerName={trainerName}
+          otherPartyName={trainerName}
           scheduledAt={scheduledAt}
         />
       </div>

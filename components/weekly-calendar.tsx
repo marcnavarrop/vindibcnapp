@@ -15,6 +15,7 @@ import {
 } from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
+import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
 const DEFAULT_OPEN = 7;
@@ -547,6 +548,16 @@ function ReservationModal({
           <Field label="Estat" value={RESERVATION_STATUS_LABELS[r.status]} />
           {r.trainerName && <Field label="Entrenador/a" value={r.trainerName} />}
         </dl>
+
+        {canManage && (
+          <div className="mt-4">
+            <AddToCalendarButton
+              serviceType={r.serviceType}
+              otherPartyName={r.clientName}
+              scheduledAt={r.scheduledAt}
+            />
+          </div>
+        )}
 
         {canManage ? (
           r.status === "booked" ? (

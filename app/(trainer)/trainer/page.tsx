@@ -11,6 +11,7 @@ import {
   formatDate,
   formatLongDate,
 } from "@/lib/labels";
+import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ export default async function TrainerHome() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
+        <section className="rounded-2xl border border-brand-border bg-white">
           <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
             Properes reserves
           </h2>
@@ -123,6 +124,13 @@ export default async function TrainerHome() {
                   <Badge tone={r.status === "completed" ? "success" : "info"}>
                     {RESERVATION_STATUS_LABELS[r.status]}
                   </Badge>
+                  <div className="ml-auto">
+                    <AddToCalendarButton
+                      serviceType={r.serviceType}
+                      otherPartyName={r.clientName}
+                      scheduledAt={r.scheduledAt}
+                    />
+                  </div>
                 </div>
               ))
             )}
