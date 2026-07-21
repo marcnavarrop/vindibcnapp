@@ -10,7 +10,7 @@ export async function createPollAction(formData: FormData) {
   if (!viewer) return;
 
   const question = String(formData.get("question") ?? "").trim();
-  const allowMultiple = formData.get("allow_multiple") === "true";
+  const allowMultiple = formData.get("allow_multiple") === "true" || formData.get("allow_multiple") === "on";
   const closesAt = String(formData.get("closes_at") ?? "").trim() || null;
 
   // Options are sent as option_0, option_1, ...

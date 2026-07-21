@@ -7,7 +7,6 @@ import { createPollAction } from "@/app/(admin)/admin/community/polls/actions";
 export default function NewPollPage() {
   const router = useRouter();
   const [options, setOptions] = useState(["", ""]);
-  const [allowMultiple, setAllowMultiple] = useState(false);
 
   function addOption() {
     setOptions((o) => [...o, ""]);
@@ -33,8 +32,6 @@ export default function NewPollPage() {
       </div>
 
       <form action={createPollAction} className="flex flex-col gap-5">
-        <input type="hidden" name="allow_multiple" value={String(allowMultiple)} />
-
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-bold text-brand-dark">
             Pregunta <span className="text-error">*</span>
@@ -86,8 +83,8 @@ export default function NewPollPage() {
           <label className="flex cursor-pointer items-center gap-3">
             <input
               type="checkbox"
-              checked={allowMultiple}
-              onChange={(e) => setAllowMultiple(e.target.checked)}
+              name="allow_multiple"
+              value="true"
               className="h-4 w-4 rounded accent-brand-purple"
             />
             <span className="text-sm text-brand-charcoal">
