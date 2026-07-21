@@ -1,17 +1,11 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
-import { Badge } from "@/components/ui/badge";
 import { listClients } from "@/lib/data/clients";
 import { listReservations } from "@/lib/data/reservations";
 import { listAnnouncements } from "@/lib/data/announcements";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
-import {
-  SERVICE_LABELS,
-  RESERVATION_STATUS_LABELS,
-  formatDate,
-  formatLongDate,
-} from "@/lib/labels";
-import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
+import { TrainerUpcomingReservations } from "@/components/trainer-upcoming-reservations";
+import { formatLongDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
@@ -28,17 +22,12 @@ const SECTIONS = [
  */
 export default async function TrainerHome() {
   const viewer = await getViewer();
-  const trainerId = viewer?.id;
-  const [clients, reservations, announcements] = await Promise.all([
+  const trainerId = viewer?.id ?? "";
+  const [clients, allReservations, announcements] = await Promise.all([
     listClients(trainerId),
-    listReservations(trainerId),
+    listReservations(), // totes les reserves del centre per al toggle Els meus / Tots
     listAnnouncements(),
   ]);
-
-  const nowISO = new Date().toISOString();
-  const upcoming = reservations
-    .filter((r) => r.scheduledAt >= nowISO)
-    .slice(0, 6);
 
   return (
       <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
@@ -48,7 +37,7 @@ export default async function TrainerHome() {
             Hola, {viewer?.fullName?.split(" ")[0] ?? "entrenador/a"}
           </h1>
           <p className="mt-1 text-sm text-brand-muted">
-            {clients.length} clients assignats · {reservations.length} reserves
+            {clients.length} clients assignats
           </p>
         </div>
 
@@ -99,43 +88,10 @@ export default async function TrainerHome() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-brand-border bg-white">
-          <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Properes reserves
-          </h2>
-          <div className="divide-y divide-brand-border">
-            {upcoming.length === 0 ? (
-              <p className="px-5 py-3 text-sm text-brand-muted">
-                No tens reserves properes.
-              </p>
-            ) : (
-              upcoming.map((r) => (
-                <div
-                  key={r.id}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-sm"
-                >
-                  <span className="font-bold text-brand-dark">
-                    {formatDate(r.scheduledAt)}
-                  </span>
-                  <span>{r.clientName}</span>
-                  <span className="text-brand-muted">
-                    {SERVICE_LABELS[r.serviceType]}
-                  </span>
-                  <Badge tone={r.status === "completed" ? "success" : "info"}>
-                    {RESERVATION_STATUS_LABELS[r.status]}
-                  </Badge>
-                  <div className="ml-auto">
-                    <AddToCalendarButton
-                      serviceType={r.serviceType}
-                      otherPartyName={r.clientName}
-                      scheduledAt={r.scheduledAt}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
+        <TrainerUpcomingReservations
+          reservations={allReservations}
+          myId={trainerId}
+        />
 
         <section>
           <h2 className="mb-3 text-sm font-bold tracking-widest text-brand-muted uppercase">
