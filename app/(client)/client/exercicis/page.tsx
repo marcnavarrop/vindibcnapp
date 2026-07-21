@@ -2,8 +2,9 @@ import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
+import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { Badge } from "@/components/ui/badge";
-import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
+import { EXERCISE_CATEGORY_LABELS, formatDate } from "@/lib/labels";
 import { ExerciseVideoPlayer } from "@/components/exercise-video-player";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +12,18 @@ export const dynamic = "force-dynamic";
 export default async function ClientExercicisPage() {
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
-  const [assigned, library] = await Promise.all([
+  const [assigned, library, allProgress] = await Promise.all([
     client ? listClientExercises(client.id) : Promise.resolve([]),
     listExercises(),
+    client ? listAllProgressForClient(client.id) : Promise.resolve([]),
   ]);
+
+  const progressByAssignment = new Map(
+    assigned.map((a) => [
+      a.id,
+      allProgress.filter((p) => p.clientExerciseId === a.id),
+    ]),
+  );
 
   const assignedIds = new Set(assigned.map((a) => a.exerciseId));
   const rest = library.filter((e) => !assignedIds.has(e.id));
@@ -61,6 +70,37 @@ export default async function ClientExercicisPage() {
                   videoUrl={a.videoUrl}
                   videoFilePath={a.videoFilePath}
                 />
+                {/* Historial de progrés (read-only) */}
+                {(progressByAssignment.get(a.id) ?? []).length > 0 && (
+                  <div className="mt-1 border-t border-brand-purple/20 pt-3">
+                    <p className="mb-1.5 text-xs font-bold tracking-wide text-brand-purple uppercase">
+                      El teu progrés
+                    </p>
+                    <div className="flex flex-col gap-1">
+                      {(progressByAssignment.get(a.id) ?? []).map((ep) => (
+                        <div
+                          key={ep.id}
+                          className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm"
+                        >
+                          <span className="text-brand-muted">
+                            {formatDate(ep.recordedAt)}
+                          </span>
+                          <span className="font-bold text-brand-dark">
+                            {ep.weightKg} kg
+                          </span>
+                          {ep.reps != null && (
+                            <span className="text-brand-muted">
+                              {ep.reps} reps
+                            </span>
+                          )}
+                          {ep.notes && (
+                            <span className="text-brand-muted">{ep.notes}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
