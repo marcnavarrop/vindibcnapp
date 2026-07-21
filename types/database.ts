@@ -715,6 +715,81 @@ export interface Database {
         };
         Relationships: [];
       };
+      polls: {
+        Row: {
+          id: string;
+          question: string;
+          allow_multiple: boolean;
+          active: boolean;
+          created_by: string | null;
+          created_at: string;
+          closes_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          question: string;
+          allow_multiple?: boolean;
+          active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          closes_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          question?: string;
+          allow_multiple?: boolean;
+          active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          closes_at?: string | null;
+        };
+        Relationships: [];
+      };
+      poll_options: {
+        Row: {
+          id: string;
+          poll_id: string;
+          label: string;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          poll_id: string;
+          label: string;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          poll_id?: string;
+          label?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      poll_responses: {
+        Row: {
+          id: string;
+          poll_id: string;
+          option_id: string;
+          client_id: string;
+          responded_at: string;
+        };
+        Insert: {
+          id?: string;
+          poll_id: string;
+          option_id: string;
+          client_id: string;
+          responded_at?: string;
+        };
+        Update: {
+          id?: string;
+          poll_id?: string;
+          option_id?: string;
+          client_id?: string;
+          responded_at?: string;
+        };
+        Relationships: [];
+      };
       center_settings: {
         Row: {
           id: boolean;
