@@ -291,29 +291,35 @@ export interface Database {
         };
         Relationships: [];
       };
-      measurements: {
+      exercise_progress: {
         Row: {
           id: string;
-          client_id: string;
+          client_exercise_id: string;
           recorded_at: string;
-          weight_kg: number | null;
+          weight_kg: number;
+          reps: number | null;
           notes: string | null;
+          recorded_by: string;
           created_at: string;
         };
         Insert: {
           id?: string;
-          client_id: string;
+          client_exercise_id: string;
           recorded_at?: string;
-          weight_kg?: number | null;
+          weight_kg: number;
+          reps?: number | null;
           notes?: string | null;
+          recorded_by: string;
           created_at?: string;
         };
         Update: {
           id?: string;
-          client_id?: string;
+          client_exercise_id?: string;
           recorded_at?: string;
-          weight_kg?: number | null;
+          weight_kg?: number;
+          reps?: number | null;
           notes?: string | null;
+          recorded_by?: string;
           created_at?: string;
         };
         Relationships: [];
@@ -464,6 +470,8 @@ export interface Database {
           trainer_daily_agenda_whatsapp: boolean;
           new_client_registered_email: boolean;
           new_client_registered_whatsapp: boolean;
+          new_exercises_assigned_email: boolean;
+          new_exercises_assigned_whatsapp: boolean;
           created_at: string;
         };
         Insert: {
@@ -491,6 +499,8 @@ export interface Database {
           trainer_daily_agenda_whatsapp?: boolean;
           new_client_registered_email?: boolean;
           new_client_registered_whatsapp?: boolean;
+          new_exercises_assigned_email?: boolean;
+          new_exercises_assigned_whatsapp?: boolean;
           created_at?: string;
         };
         Update: Partial<{
@@ -518,6 +528,8 @@ export interface Database {
           trainer_daily_agenda_whatsapp: boolean;
           new_client_registered_email: boolean;
           new_client_registered_whatsapp: boolean;
+          new_exercises_assigned_email: boolean;
+          new_exercises_assigned_whatsapp: boolean;
           created_at: string;
         }>;
         Relationships: [];

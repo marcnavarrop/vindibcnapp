@@ -10,14 +10,9 @@ export type ClientDataExport = {
   bonos: unknown[];
   reservations: unknown[];
   payments: unknown[];
-  measurements: unknown[];
+  exercise_progress: unknown[];
   exercises: unknown[];
   consents: unknown[];
-  /**
-   * Metadades dels documents pujats (nom, data, mida).
-   * Els fitxers binaris no s'inclouen en el JSON; el client pot descarregar-los
-   * individualment des de la seva àrea mentre el compte estigui actiu.
-   */
   documents: unknown[];
 };
 
@@ -47,7 +42,9 @@ export async function exportClientData(
         bonos: store.bonos.filter((b) => b.client_id === clientId),
         reservations: store.reservations.filter((r) => r.client_id === clientId),
         payments: store.payments.filter((p) => p.client_id === clientId),
-        measurements: store.measurements.filter((m) => m.client_id === clientId),
+        exercise_progress: (store.exercise_progress ?? []).filter(
+          (ep) => store.client_exercises.some((ce) => ce.client_id === clientId && ce.id === ep.client_exercise_id),
+        ),
         exercises: store.client_exercises
           .filter((ce) => ce.client_id === clientId)
           .map((ce) => ({ ...ce, exercise_name: exMap.get(ce.exercise_id) })),
@@ -71,17 +68,20 @@ export async function exportClientData(
   if (!client) return null;
   const profileId = client.profile_id;
 
-  const [profile, bonos, reservations, payments, measurements, exercises, consents, documents] =
+  const [profile, bonos, reservations, payments, ces, exercise_progress, consents, documents] =
     await Promise.all([
       admin.from("profiles").select("*").eq("id", profileId).single(),
       admin.from("bonos").select("*").eq("client_id", clientId),
       admin.from("reservations").select("*").eq("client_id", clientId),
       admin.from("payments").select("*").eq("client_id", clientId),
-      admin.from("measurements").select("*").eq("client_id", clientId),
       admin
         .from("client_exercises")
         .select("*, exercise:exercises(name, category)")
         .eq("client_id", clientId),
+      admin
+        .from("exercise_progress")
+        .select("*, client_exercise:client_exercises!inner(client_id)")
+        .eq("client_exercise.client_id", clientId),
       admin.from("consents").select("*").eq("user_id", profileId),
       admin
         .from("client_documents")
@@ -100,8 +100,8 @@ export async function exportClientData(
       bonos: bonos.data ?? [],
       reservations: reservations.data ?? [],
       payments: payments.data ?? [],
-      measurements: measurements.data ?? [],
-      exercises: exercises.data ?? [],
+      exercise_progress: exercise_progress.data ?? [],
+      exercises: ces.data ?? [],
       consents: consents.data ?? [],
       documents: documents.data ?? [],
     },

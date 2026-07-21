@@ -10,7 +10,7 @@ import {
   seedPayments,
   seedServices,
   seedExercises,
-  seedMeasurements,
+  seedExerciseProgress,
   seedAnnouncements,
   seedClientExercises,
   seedAvailabilityRules,
@@ -34,7 +34,7 @@ export type Store = {
   payments: Tables["payments"]["Row"][];
   services: Tables["services"]["Row"][];
   exercises: Tables["exercises"]["Row"][];
-  measurements: Tables["measurements"]["Row"][];
+  exercise_progress: Tables["exercise_progress"]["Row"][];
   announcements: Tables["announcements"]["Row"][];
   client_exercises: Tables["client_exercises"]["Row"][];
   availability_rules: Tables["availability_rules"]["Row"][];
@@ -67,7 +67,7 @@ function fromSeed(): Store {
     payments: structuredClone(seedPayments),
     services: structuredClone(seedServices),
     exercises: structuredClone(seedExercises),
-    measurements: structuredClone(seedMeasurements),
+    exercise_progress: structuredClone(seedExerciseProgress),
     announcements: structuredClone(seedAnnouncements),
     client_exercises: structuredClone(seedClientExercises),
     availability_rules: structuredClone(seedAvailabilityRules),

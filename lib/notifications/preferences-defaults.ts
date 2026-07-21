@@ -35,6 +35,9 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // Avís a l'admin quan algú es registra (email actiu per defecte).
   new_client_registered_email: true,
   new_client_registered_whatsapp: false,
+  // Avís manual (trainer acciona explícitament) — desactivat a preferències.
+  new_exercises_assigned_email: false,
+  new_exercises_assigned_whatsapp: false,
 };
 
 export const PREFERENCE_KEYS = Object.keys(

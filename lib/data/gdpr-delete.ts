@@ -56,8 +56,11 @@ export async function deleteClient(
     store.reservations = store.reservations.filter(
       (r) => r.client_id !== clientId,
     );
-    store.measurements = store.measurements.filter(
-      (m) => m.client_id !== clientId,
+    const ceIds = new Set(
+      store.client_exercises.filter((ce) => ce.client_id === clientId).map((ce) => ce.id),
+    );
+    store.exercise_progress = (store.exercise_progress ?? []).filter(
+      (ep) => !ceIds.has(ep.client_exercise_id),
     );
     store.client_exercises = store.client_exercises.filter(
       (ce) => ce.client_id !== clientId,

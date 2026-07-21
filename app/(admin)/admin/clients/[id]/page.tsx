@@ -1,21 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { getClient } from "@/lib/data/clients";
-import { listMeasurements } from "@/lib/data/measurements";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
 import { listClientDocuments } from "@/lib/data/client-documents";
+import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
 import { HealthConsentWarning } from "@/components/health-consent-warning";
 import { DeleteClientModal } from "@/components/delete-client-modal";
-import { deleteMeasurementAction } from "@/app/(admin)/admin/clients/progres-actions";
+import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
+import { ClientProgressPanel } from "@/components/client-progress-panel";
+import { ClientNotificationsPanel } from "@/components/client-notifications-panel";
 import {
   assignExerciseAction,
   removeExerciseAction,
 } from "@/app/(admin)/admin/clients/exercises-actions";
-import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -31,12 +33,12 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, measurements, assignedExercises, library, documents] = await Promise.all([
+  const [client, assignedExercises, library, documents, allProgress] = await Promise.all([
     getClient(id),
-    listMeasurements(id),
     listClientExercises(id),
     listExercises(),
     listClientDocuments(id),
+    listAllProgressForClient(id),
   ]);
   if (!client) notFound();
 
@@ -46,67 +48,32 @@ export default async function ClientDetailPage({
     client.reservations.some((r) => r.serviceType === "fisioterapia");
   const needsHealthConsent = receivesFisio && !consent.healthDataAt;
 
-  return (
-      <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Link
-              href="/admin/clients"
-              className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
-            >
-              ← Clients
-            </Link>
-            <h1 className="mt-1 text-2xl text-brand-dark">{client.fullName}</h1>
-            <p className="text-sm text-brand-muted">
-              {client.email}
-              {client.phone ? ` · ${client.phone}` : ""}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={`/admin/clients/${client.id}/export`}
-              className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
-            >
-              Exportar dades
-            </a>
-            <Link
-              href={`/admin/clients/${client.id}/edit`}
-              className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
-            >
-              Editar
-            </Link>
-            <DeleteClientModal
-              clientId={client.id}
-              clientName={client.fullName}
-            />
-          </div>
-        </div>
+  const redirectPath = `/admin/clients/${id}`;
 
-        {needsHealthConsent && <HealthConsentWarning />}
-
-        {/* Ficha */}
-        <section className="grid gap-4 sm:grid-cols-3">
-          <Info
-            label="Entrenador/a"
-            value={client.trainerName ?? "Sense assignar"}
-          />
-          <Info label="Bons actius" value={String(client.activeBonos)} />
-          <Info
-            label="Sessions restants"
-            value={String(client.remainingSessions)}
-          />
-        </section>
-
-        {client.notes && (
-          <section className="rounded-2xl border border-brand-border bg-white p-5">
-            <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-              Notes
-            </h2>
-            <p className="mt-1 text-sm text-brand-charcoal">{client.notes}</p>
+  const tabs = [
+    {
+      label: "Resum",
+      content: (
+        <div className="flex flex-col gap-6">
+          <section className="grid gap-4 sm:grid-cols-3">
+            <Info label="Entrenador/a" value={client.trainerName ?? "Sense assignar"} />
+            <Info label="Bons actius" value={String(client.activeBonos)} />
+            <Info label="Sessions restants" value={String(client.remainingSessions)} />
           </section>
-        )}
-
-        {/* Bonos */}
+          {client.notes && (
+            <section className="rounded-2xl border border-brand-border bg-white p-5">
+              <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
+                Notes
+              </h2>
+              <p className="mt-1 text-sm text-brand-charcoal">{client.notes}</p>
+            </section>
+          )}
+        </div>
+      ),
+    },
+    {
+      label: "Bonos",
+      content: (
         <Panel
           title="Bons"
           action={
@@ -118,55 +85,74 @@ export default async function ClientDetailPage({
             </Link>
           }
         >
-          {client.bonos.map((b) => (
-            <Row key={b.id}>
-              <span className="font-bold text-brand-dark">
-                {SERVICE_LABELS[b.serviceType]}
-              </span>
-              <span className="text-brand-muted">
-                {b.remainingSessions} / {b.totalSessions} sessions
-              </span>
-              <span>{formatEur(b.price)}</span>
-              <Badge tone={b.status === "active" ? "success" : "neutral"}>
-                {BONO_STATUS_LABELS[b.status]}
-              </Badge>
-            </Row>
-          ))}
+          {client.bonos.length === 0 ? (
+            <Empty>Sense bons.</Empty>
+          ) : (
+            client.bonos.map((b) => (
+              <Row key={b.id}>
+                <span className="font-bold text-brand-dark">
+                  {SERVICE_LABELS[b.serviceType]}
+                </span>
+                <span className="text-brand-muted">
+                  {b.remainingSessions} / {b.totalSessions} sessions
+                </span>
+                <span>{formatEur(b.price)}</span>
+                <Badge tone={b.status === "active" ? "success" : "neutral"}>
+                  {BONO_STATUS_LABELS[b.status]}
+                </Badge>
+              </Row>
+            ))
+          )}
         </Panel>
-
-        {/* Reservas */}
-        <Panel title="Reserves">
-          {client.reservations.map((r) => (
-            <Row key={r.id}>
-              <span className="font-bold text-brand-dark">
-                {formatDate(r.scheduledAt)}
-              </span>
-              <span className="text-brand-muted">
-                {SERVICE_LABELS[r.serviceType]}
-              </span>
-              <Badge tone={r.status === "completed" ? "success" : "info"}>
-                {RESERVATION_STATUS_LABELS[r.status]}
-              </Badge>
-            </Row>
-          ))}
-        </Panel>
-
-        {/* Pagos */}
+      ),
+    },
+    {
+      label: "Pagaments",
+      content: (
         <Panel title="Pagaments">
-          {client.payments.map((p) => (
-            <Row key={p.id}>
-              <span className="font-bold text-brand-dark">
-                {formatDate(p.paidAt)}
-              </span>
-              <span className="font-bold">{formatEur(p.amount)}</span>
-              <Badge tone={p.method === "card" ? "info" : "warn"}>
-                {PAYMENT_METHOD_LABELS[p.method]}
-              </Badge>
-            </Row>
-          ))}
+          {client.payments.length === 0 ? (
+            <Empty>Sense pagaments.</Empty>
+          ) : (
+            client.payments.map((p) => (
+              <Row key={p.id}>
+                <span className="font-bold text-brand-dark">{formatDate(p.paidAt)}</span>
+                <span className="font-bold">{formatEur(p.amount)}</span>
+                <Badge tone={p.method === "card" ? "info" : "warn"}>
+                  {PAYMENT_METHOD_LABELS[p.method]}
+                </Badge>
+              </Row>
+            ))
+          )}
         </Panel>
-
-        {/* Exercicis assignats */}
+      ),
+    },
+    {
+      label: "Reserves",
+      content: (
+        <Panel title="Reserves">
+          {client.reservations.length === 0 ? (
+            <Empty>Sense reserves.</Empty>
+          ) : (
+            client.reservations.map((r) => (
+              <Row key={r.id}>
+                <span className="font-bold text-brand-dark">
+                  {formatDate(r.scheduledAt)}
+                </span>
+                <span className="text-brand-muted">
+                  {SERVICE_LABELS[r.serviceType]}
+                </span>
+                <Badge tone={r.status === "completed" ? "success" : "info"}>
+                  {RESERVATION_STATUS_LABELS[r.status]}
+                </Badge>
+              </Row>
+            ))
+          )}
+        </Panel>
+      ),
+    },
+    {
+      label: "Exercicis",
+      content: (
         <AssignedExercisesPanel
           assigned={assignedExercises}
           library={library}
@@ -174,64 +160,103 @@ export default async function ClientDetailPage({
           assignAction={assignExerciseAction.bind(null, client.id)}
           removeAction={removeExerciseAction.bind(null, client.id)}
         />
-
-        {/* Documents */}
-        <DocumentsReadonlyPanel documents={documents} clientId={id} />
-
-        {/* Progrés */}
-        <Panel
-          title="Progrés"
-          action={
+      ),
+    },
+    {
+      label: "Progrés",
+      content: (
+        <ClientProgressPanel
+          assigned={assignedExercises}
+          allProgress={allProgress}
+          canManage
+          redirectPath={redirectPath}
+        />
+      ),
+    },
+    {
+      label: "Documents",
+      content: <DocumentsReadonlyPanel documents={documents} clientId={id} />,
+    },
+    {
+      label: "Notes",
+      content: (
+        <section className="rounded-2xl border border-brand-border bg-white p-5">
+          <h2 className="mb-2 text-sm font-bold tracking-wide text-brand-muted uppercase">
+            Notes internes
+          </h2>
+          {client.notes ? (
+            <p className="text-sm text-brand-charcoal">{client.notes}</p>
+          ) : (
+            <p className="text-sm text-brand-muted">Sense notes.</p>
+          )}
+          <div className="mt-4">
             <Link
-              href={`/admin/clients/${client.id}/progres/new`}
+              href={`/admin/clients/${client.id}/edit`}
               className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
             >
-              + Afegir mesura
+              Editar notes →
             </Link>
-          }
-        >
-          {measurements.length === 0 ? (
-            <p className="px-5 py-3 text-sm text-brand-muted">
-              Encara no hi ha mesures.
-            </p>
-          ) : (
-            measurements.map((m) => (
-              <Row key={m.id}>
-                <span className="font-bold text-brand-dark">
-                  {formatDate(m.recordedAt)}
-                </span>
-                {m.weightKg != null && (
-                  <span className="font-bold text-brand-purple">
-                    {m.weightKg} kg
-                  </span>
-                )}
-                {m.notes && (
-                  <span className="text-brand-muted">{m.notes}</span>
-                )}
-                <form action={deleteMeasurementAction} className="ml-auto">
-                  <input type="hidden" name="id" value={m.id} />
-                  <input type="hidden" name="clientId" value={client.id} />
-                  <button
-                    type="submit"
-                    className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
-                  >
-                    Eliminar
-                  </button>
-                </form>
-              </Row>
-            ))
-          )}
-        </Panel>
-      </main>
+          </div>
+        </section>
+      ),
+    },
+    {
+      label: "Notificacions",
+      content: (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-brand-muted">
+            Envia avisos manuals a aquest client.
+          </p>
+          <ClientNotificationsPanel clientId={client.id} />
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Link
+            href="/admin/clients"
+            className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          >
+            ← Clients
+          </Link>
+          <h1 className="mt-1 text-2xl text-brand-dark">{client.fullName}</h1>
+          <p className="text-sm text-brand-muted">
+            {client.email}
+            {client.phone ? ` · ${client.phone}` : ""}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/admin/clients/${client.id}/export`}
+            className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
+          >
+            Exportar dades
+          </a>
+          <Link
+            href={`/admin/clients/${client.id}/edit`}
+            className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
+          >
+            Editar
+          </Link>
+          <DeleteClientModal clientId={client.id} clientName={client.fullName} />
+        </div>
+      </div>
+
+      {needsHealthConsent && <HealthConsentWarning />}
+
+      <InPageTabs tabs={tabs} />
+    </main>
   );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-brand-border bg-white p-5">
-      <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-        {label}
-      </div>
+      <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">{label}</div>
       <div className="mt-1 text-lg font-bold text-brand-dark">{value}</div>
     </div>
   );
@@ -249,9 +274,7 @@ function Panel({
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
       <div className="flex items-center justify-between border-b border-brand-border bg-brand-bg px-5 py-3">
-        <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-          {title}
-        </h2>
+        <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">{title}</h2>
         {action}
       </div>
       <div className="divide-y divide-brand-border">{children}</div>
@@ -265,4 +288,8 @@ function Row({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="px-5 py-3 text-sm text-brand-muted">{children}</p>;
 }

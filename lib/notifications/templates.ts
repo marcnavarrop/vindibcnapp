@@ -398,6 +398,19 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "new_exercises_assigned": {
+      subject = "Nous exercicis assignats · VindiBCN";
+      block = {
+        heading: "Tens exercicis nous assignats!",
+        intro: [
+          hola,
+          "El teu entrenador/a t'ha afegit exercicis nous. Consulta'ls a la teva àrea per veure les instruccions i els vídeos.",
+        ],
+        cta: { label: "Veure els meus exercicis", url: appLink("/client/exercicis") },
+        footer: "client",
+      };
+      break;
+    }
     case "trainer_daily_agenda": {
       subject = "La teva agenda de demà · VindiBCN";
       let sessions: { time: string; client: string; service: string }[] = [];

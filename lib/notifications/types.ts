@@ -18,7 +18,9 @@ export type NotificationEventType =
   | "trainer_booking_cancelled"
   | "trainer_daily_agenda"
   // Avís de gestió per a l'admin:
-  | "new_client_registered";
+  | "new_client_registered"
+  // Avisos manuals (accionats pel trainer/admin, no apareixen a preferències):
+  | "new_exercises_assigned";
 
 export type NotificationChannel = "email" | "whatsapp";
 
@@ -126,6 +128,12 @@ export const EVENT_META: Record<
     audience: ["admin"],
     group: "general",
   },
+  new_exercises_assigned: {
+    label: "Exercicis nous assignats",
+    description: "Quan el trainer assigna exercicis nous al client.",
+    audience: [],
+    group: "general",
+  },
 };
 
 /** Ordre de presentació dels esdeveniments a la UI. */
@@ -141,4 +149,5 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "trainer_booking_cancelled",
   "trainer_daily_agenda",
   "new_client_registered",
+  "new_exercises_assigned",
 ];

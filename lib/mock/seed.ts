@@ -15,7 +15,7 @@ type Reservation = Database["public"]["Tables"]["reservations"]["Row"];
 type Payment = Database["public"]["Tables"]["payments"]["Row"];
 type Service = Database["public"]["Tables"]["services"]["Row"];
 type Exercise = Database["public"]["Tables"]["exercises"]["Row"];
-type Measurement = Database["public"]["Tables"]["measurements"]["Row"];
+type ExerciseProgress = Database["public"]["Tables"]["exercise_progress"]["Row"];
 type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 type ClientExercise = Database["public"]["Tables"]["client_exercises"]["Row"];
 type AvailabilityRule = Database["public"]["Tables"]["availability_rules"]["Row"];
@@ -124,6 +124,8 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     trainer_daily_agenda_whatsapp: false,
     new_client_registered_email: true,
     new_client_registered_whatsapp: false,
+    new_exercises_assigned_email: false,
+    new_exercises_assigned_whatsapp: false,
     created_at: now,
   }),
 );
@@ -152,9 +154,9 @@ export const seedClientExercises: ClientExercise[] = [
   { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },
 ];
 
-export const seedMeasurements: Measurement[] = [
-  { id: "m-ana-1", client_id: "c-ana", recorded_at: "2026-05-01", weight_kg: 64.5, notes: "Mesura inicial.", created_at: now },
-  { id: "m-ana-2", client_id: "c-ana", recorded_at: "2026-06-01", weight_kg: 63.2, notes: "Bona evolució.", created_at: now },
+export const seedExerciseProgress: ExerciseProgress[] = [
+  { id: "ep-1", client_exercise_id: "ce-1", recorded_at: "2026-05-01", weight_kg: 40, reps: 12, notes: "Primera sessió.", recorded_by: "u-trainer-laia", created_at: now },
+  { id: "ep-2", client_exercise_id: "ce-1", recorded_at: "2026-06-01", weight_kg: 45, reps: 12, notes: "Bona progressió.", recorded_by: "u-trainer-laia", created_at: now },
 ];
 
 export const seedAnnouncements: Announcement[] = [

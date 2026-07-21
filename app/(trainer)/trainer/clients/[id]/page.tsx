@@ -2,22 +2,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewer } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { getClient } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { listClientDocuments } from "@/lib/data/client-documents";
+import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
-import { listMeasurements } from "@/lib/data/measurements";
 import { getConsentStatus } from "@/lib/data/consents";
 import { HealthConsentWarning } from "@/components/health-consent-warning";
+import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
+import { ClientProgressPanel } from "@/components/client-progress-panel";
+import { ClientNotificationsPanel } from "@/components/client-notifications-panel";
 import {
   assignExerciseTrainerAction,
   removeExerciseTrainerAction,
 } from "@/app/(trainer)/trainer/clients/exercises-actions";
-import {
-  deleteMeasurementTrainerAction,
-} from "@/app/(trainer)/trainer/clients/progres-actions";
-import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -35,13 +35,13 @@ export default async function TrainerClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [viewer, client, assignedExercises, library, documents, measurements] = await Promise.all([
+  const [viewer, client, assignedExercises, library, documents, allProgress] = await Promise.all([
     getViewer(),
     getClient(id),
     listClientExercises(id),
     listExercises(),
     listClientDocuments(id),
-    listMeasurements(id),
+    listAllProgressForClient(id),
   ]);
   if (!client) notFound();
 
@@ -53,52 +53,32 @@ export default async function TrainerClientDetailPage({
     client.reservations.some((r) => r.serviceType === "fisioterapia");
   const needsHealthConsent = receivesFisio && !consent.healthDataAt;
 
-  return (
-      <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Link
-              href="/trainer/clients"
-              className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
-            >
-              ← Clients
-            </Link>
-            <h1 className="mt-1 text-2xl text-brand-dark">{client.fullName}</h1>
-            <p className="text-sm text-brand-muted">
-              {client.email}
-              {client.phone ? ` · ${client.phone}` : ""}
-            </p>
-          </div>
-          {!canManage && (
-            <span className="rounded-full bg-brand-muted/10 px-3 py-1 text-xs font-bold tracking-wide text-brand-muted uppercase">
-              Només lectura
-            </span>
+  const redirectPath = `/trainer/clients/${id}`;
+
+  const tabs = [
+    {
+      label: "Resum",
+      content: (
+        <div className="flex flex-col gap-6">
+          <section className="grid gap-4 sm:grid-cols-3">
+            <Info label="Entrenador/a" value={client.trainerName ?? "Sense assignar"} />
+            <Info label="Bons actius" value={String(client.activeBonos)} />
+            <Info label="Sessions restants" value={String(client.remainingSessions)} />
+          </section>
+          {client.notes && (
+            <section className="rounded-2xl border border-brand-border bg-white p-5">
+              <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
+                Notes
+              </h2>
+              <p className="mt-1 text-sm text-brand-charcoal">{client.notes}</p>
+            </section>
           )}
         </div>
-
-        {needsHealthConsent && <HealthConsentWarning />}
-
-        <section className="grid gap-4 sm:grid-cols-3">
-          <Info
-            label="Entrenador/a"
-            value={client.trainerName ?? "Sense assignar"}
-          />
-          <Info label="Bons actius" value={String(client.activeBonos)} />
-          <Info
-            label="Sessions restants"
-            value={String(client.remainingSessions)}
-          />
-        </section>
-
-        {client.notes && (
-          <section className="rounded-2xl border border-brand-border bg-white p-5">
-            <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-              Notes
-            </h2>
-            <p className="mt-1 text-sm text-brand-charcoal">{client.notes}</p>
-          </section>
-        )}
-
+      ),
+    },
+    {
+      label: "Bonos",
+      content: (
         <Panel
           title="Bons"
           action={
@@ -131,7 +111,11 @@ export default async function TrainerClientDetailPage({
             ))
           )}
         </Panel>
-
+      ),
+    },
+    {
+      label: "Reserves",
+      content: (
         <Panel
           title="Reserves"
           action={
@@ -163,26 +147,11 @@ export default async function TrainerClientDetailPage({
             ))
           )}
         </Panel>
-
-        {client.payments.length > 0 && (
-          <Panel title="Pagaments">
-            {client.payments.map((p) => (
-              <Row key={p.id}>
-                <span className="font-bold text-brand-dark">
-                  {formatDate(p.paidAt)}
-                </span>
-                <span className="font-bold">{formatEur(p.amount)}</span>
-                <Badge tone={p.method === "card" ? "info" : "warn"}>
-                  {PAYMENT_METHOD_LABELS[p.method]}
-                </Badge>
-              </Row>
-            ))}
-          </Panel>
-        )}
-
-        {/* Documents */}
-        <DocumentsReadonlyPanel documents={documents} clientId={id} />
-
+      ),
+    },
+    {
+      label: "Exercicis",
+      content: (
         <AssignedExercisesPanel
           assigned={assignedExercises}
           library={library}
@@ -190,64 +159,85 @@ export default async function TrainerClientDetailPage({
           assignAction={assignExerciseTrainerAction.bind(null, client.id)}
           removeAction={removeExerciseTrainerAction.bind(null, client.id)}
         />
-
-        {/* Progrés */}
-        <Panel
-          title="Progrés"
-          action={
-            canManage && (
-              <Link
-                href={`/trainer/clients/${client.id}/progres/new`}
-                className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
-              >
-                + Afegir mesura
-              </Link>
-            )
-          }
-        >
-          {measurements.length === 0 ? (
-            <Empty>Encara no hi ha mesures.</Empty>
+      ),
+    },
+    {
+      label: "Progrés",
+      content: (
+        <ClientProgressPanel
+          assigned={assignedExercises}
+          allProgress={allProgress}
+          canManage={canManage}
+          redirectPath={redirectPath}
+        />
+      ),
+    },
+    {
+      label: "Documents",
+      content: <DocumentsReadonlyPanel documents={documents} clientId={id} />,
+    },
+    {
+      label: "Notes",
+      content: (
+        <section className="rounded-2xl border border-brand-border bg-white p-5">
+          <h2 className="mb-2 text-sm font-bold tracking-wide text-brand-muted uppercase">
+            Notes internes
+          </h2>
+          {client.notes ? (
+            <p className="text-sm text-brand-charcoal">{client.notes}</p>
           ) : (
-            measurements.map((m) => (
-              <Row key={m.id}>
-                <span className="font-bold text-brand-dark">
-                  {formatDate(m.recordedAt)}
-                </span>
-                {m.weightKg != null && (
-                  <span className="font-bold text-brand-purple">
-                    {m.weightKg} kg
-                  </span>
-                )}
-                {m.notes && (
-                  <span className="text-brand-muted">{m.notes}</span>
-                )}
-                {canManage && (
-                  <form action={deleteMeasurementTrainerAction} className="ml-auto">
-                    <input type="hidden" name="id" value={m.id} />
-                    <input type="hidden" name="clientId" value={client.id} />
-                    <button
-                      type="submit"
-                      className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
-                    >
-                      Eliminar
-                    </button>
-                  </form>
-                )}
-              </Row>
-            ))
+            <p className="text-sm text-brand-muted">Sense notes.</p>
           )}
-        </Panel>
+        </section>
+      ),
+    },
+    {
+      label: "Notificacions",
+      content: (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-brand-muted">
+            Envia avisos manuals a aquest client.
+          </p>
+          <ClientNotificationsPanel clientId={client.id} />
+        </div>
+      ),
+    },
+  ];
 
-      </main>
+  return (
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Link
+            href="/trainer/clients"
+            className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          >
+            ← Clients
+          </Link>
+          <h1 className="mt-1 text-2xl text-brand-dark">{client.fullName}</h1>
+          <p className="text-sm text-brand-muted">
+            {client.email}
+            {client.phone ? ` · ${client.phone}` : ""}
+          </p>
+        </div>
+        {!canManage && (
+          <span className="rounded-full bg-brand-muted/10 px-3 py-1 text-xs font-bold tracking-wide text-brand-muted uppercase">
+            Només lectura
+          </span>
+        )}
+      </div>
+
+      {needsHealthConsent && <HealthConsentWarning />}
+
+      <InPageTabs tabs={tabs} />
+    </main>
   );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-brand-border bg-white p-5">
-      <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-        {label}
-      </div>
+      <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">{label}</div>
       <div className="mt-1 text-lg font-bold text-brand-dark">{value}</div>
     </div>
   );
@@ -265,9 +255,7 @@ function Panel({
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
       <div className="flex items-center justify-between border-b border-brand-border bg-brand-bg px-5 py-3">
-        <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-          {title}
-        </h2>
+        <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">{title}</h2>
         {action}
       </div>
       <div className="divide-y divide-brand-border">{children}</div>
