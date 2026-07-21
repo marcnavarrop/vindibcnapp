@@ -8,12 +8,6 @@ import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
 import { listClientDocuments } from "@/lib/data/client-documents";
 import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
-import { listClientVideos } from "@/lib/data/client-videos";
-import { VideosUploaderPanel } from "@/components/videos-uploader-panel";
-import {
-  uploadClientVideoAction,
-  deleteClientVideoAction,
-} from "@/app/actions/client-videos-actions";
 import { HealthConsentWarning } from "@/components/health-consent-warning";
 import { DeleteClientModal } from "@/components/delete-client-modal";
 import { deleteMeasurementAction } from "@/app/(admin)/admin/clients/progres-actions";
@@ -37,13 +31,12 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, measurements, assignedExercises, library, documents, videos] = await Promise.all([
+  const [client, measurements, assignedExercises, library, documents] = await Promise.all([
     getClient(id),
     listMeasurements(id),
     listClientExercises(id),
     listExercises(),
     listClientDocuments(id),
-    listClientVideos(id),
   ]);
   if (!client) notFound();
 
@@ -184,13 +177,6 @@ export default async function ClientDetailPage({
 
         {/* Documents */}
         <DocumentsReadonlyPanel documents={documents} clientId={id} />
-
-        {/* Vídeos */}
-        <VideosUploaderPanel
-          videos={videos}
-          uploadAction={uploadClientVideoAction.bind(null, client.id, `/admin/clients/${client.id}`)}
-          deleteAction={deleteClientVideoAction.bind(null, `/admin/clients/${client.id}`)}
-        />
 
         {/* Progrés */}
         <Panel

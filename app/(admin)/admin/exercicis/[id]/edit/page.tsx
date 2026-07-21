@@ -33,6 +33,7 @@ export default async function EditExercisePage({
             category: exercise.category,
             description: exercise.description ?? "",
             videoUrl: exercise.videoUrl ?? "",
+            videoFilePath: exercise.videoFilePath,
           }}
         />
       </main>

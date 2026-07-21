@@ -268,6 +268,7 @@ export interface Database {
           category: ExerciseCategory;
           description: string | null;
           video_url: string | null;
+          video_file_path: string | null;
           created_at: string;
         };
         Insert: {
@@ -276,6 +277,7 @@ export interface Database {
           category: ExerciseCategory;
           description?: string | null;
           video_url?: string | null;
+          video_file_path?: string | null;
           created_at?: string;
         };
         Update: {
@@ -284,6 +286,7 @@ export interface Database {
           category?: ExerciseCategory;
           description?: string | null;
           video_url?: string | null;
+          video_file_path?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -673,34 +676,6 @@ export interface Database {
         Relationships: [];
       };
       client_documents: {
-        Row: {
-          id: string;
-          client_id: string;
-          uploaded_by: string;
-          storage_path: string;
-          file_name: string;
-          file_size: number | null;
-          mime_type: string | null;
-          description: string | null;
-          uploaded_at: string;
-        };
-        Insert: {
-          id?: string;
-          client_id: string;
-          uploaded_by: string;
-          storage_path: string;
-          file_name: string;
-          file_size?: number | null;
-          mime_type?: string | null;
-          description?: string | null;
-          uploaded_at?: string;
-        };
-        Update: {
-          description?: string | null;
-        };
-        Relationships: [];
-      };
-      client_videos: {
         Row: {
           id: string;
           client_id: string;

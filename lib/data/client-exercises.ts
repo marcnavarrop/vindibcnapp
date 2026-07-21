@@ -11,6 +11,7 @@ export type AssignedExercise = {
   category: ExerciseCategory;
   description: string | null;
   videoUrl: string | null;
+  videoFilePath: string | null;
   notes: string | null;
   assignedAt: string;
 };
@@ -32,6 +33,7 @@ export async function listClientExercises(
           category: (ex?.category ?? "forca") as ExerciseCategory,
           description: ex?.description ?? null,
           videoUrl: ex?.video_url ?? null,
+          videoFilePath: ex?.video_file_path ?? null,
           notes: ce.notes,
           assignedAt: ce.assigned_at,
         };
@@ -44,7 +46,7 @@ export async function listClientExercises(
     .from("client_exercises")
     .select(
       `id, exercise_id, notes, assigned_at,
-       exercise:exercises!client_exercises_exercise_id_fkey(name, category, description, video_url)`,
+       exercise:exercises!client_exercises_exercise_id_fkey(name, category, description, video_url, video_file_path)`,
     )
     .eq("client_id", clientId)
     .order("assigned_at", { ascending: false });
@@ -60,6 +62,7 @@ export async function listClientExercises(
       category: ExerciseCategory;
       description: string | null;
       video_url: string | null;
+      video_file_path: string | null;
     } | null;
   };
   return (data as unknown as Row[]).map((r) => ({
@@ -69,6 +72,7 @@ export async function listClientExercises(
     category: r.exercise?.category ?? "forca",
     description: r.exercise?.description ?? null,
     videoUrl: r.exercise?.video_url ?? null,
+    videoFilePath: r.exercise?.video_file_path ?? null,
     notes: r.notes,
     assignedAt: r.assigned_at,
   }));

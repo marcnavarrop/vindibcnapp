@@ -10,6 +10,7 @@ export type Exercise = {
   category: ExerciseCategory;
   description: string | null;
   videoUrl: string | null;
+  videoFilePath: string | null;
 };
 
 export type ExerciseInput = {
@@ -17,6 +18,7 @@ export type ExerciseInput = {
   category: ExerciseCategory;
   description: string | null;
   videoUrl: string | null;
+  videoFilePath: string | null;
 };
 
 type Row = {
@@ -25,6 +27,7 @@ type Row = {
   category: ExerciseCategory;
   description: string | null;
   video_url: string | null;
+  video_file_path: string | null;
 };
 
 const toExercise = (r: Row): Exercise => ({
@@ -33,6 +36,7 @@ const toExercise = (r: Row): Exercise => ({
   category: r.category,
   description: r.description,
   videoUrl: r.video_url,
+  videoFilePath: r.video_file_path,
 });
 
 export async function listExercises(): Promise<Exercise[]> {
@@ -40,7 +44,7 @@ export async function listExercises(): Promise<Exercise[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("exercises")
-    .select("id, name, category, description, video_url")
+    .select("id, name, category, description, video_url, video_file_path")
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(toExercise);
@@ -54,7 +58,7 @@ export async function getExercise(id: string): Promise<Exercise | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("exercises")
-    .select("id, name, category, description, video_url")
+    .select("id, name, category, description, video_url, video_file_path")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -71,6 +75,7 @@ export async function createExercise(input: ExerciseInput): Promise<string> {
       category: input.category,
       description: input.description,
       video_url: input.videoUrl,
+      video_file_path: input.videoFilePath,
       created_at: new Date().toISOString(),
     });
     saveStore(store);
@@ -84,6 +89,7 @@ export async function createExercise(input: ExerciseInput): Promise<string> {
       category: input.category,
       description: input.description,
       video_url: input.videoUrl,
+      video_file_path: input.videoFilePath,
     })
     .select("id")
     .single();
@@ -94,6 +100,7 @@ export async function createExercise(input: ExerciseInput): Promise<string> {
 export async function updateExercise(
   id: string,
   input: ExerciseInput,
+  oldVideoFilePath?: string | null,
 ): Promise<void> {
   if (USE_MOCK) {
     const store = getStore();
@@ -103,9 +110,17 @@ export async function updateExercise(
     e.category = input.category;
     e.description = input.description;
     e.video_url = input.videoUrl;
+    e.video_file_path = input.videoFilePath;
     saveStore(store);
     return;
   }
+
+  // Si hi havia un vídeo pujat i s'ha canviat (o eliminat), esborra l'arxiu de Storage.
+  if (oldVideoFilePath && oldVideoFilePath !== input.videoFilePath) {
+    const { deleteExerciseVideo } = await import("@/lib/data/exercise-videos");
+    await deleteExerciseVideo(oldVideoFilePath).catch(() => null);
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("exercises")
@@ -114,6 +129,7 @@ export async function updateExercise(
       category: input.category,
       description: input.description,
       video_url: input.videoUrl,
+      video_file_path: input.videoFilePath,
     })
     .eq("id", id);
   if (error) throw error;
@@ -126,7 +142,17 @@ export async function deleteExercise(id: string): Promise<void> {
     saveStore(store);
     return;
   }
+  // Esborra el vídeo de Storage si n'hi havia
   const supabase = await createClient();
+  const { data: ex } = await supabase
+    .from("exercises")
+    .select("video_file_path")
+    .eq("id", id)
+    .single();
+  if (ex?.video_file_path) {
+    const { deleteExerciseVideo } = await import("@/lib/data/exercise-videos");
+    await deleteExerciseVideo(ex.video_file_path).catch(() => null);
+  }
   const { error } = await supabase.from("exercises").delete().eq("id", id);
   if (error) throw error;
 }

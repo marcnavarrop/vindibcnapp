@@ -69,9 +69,9 @@ export const seedServices: Service[] = [
 ];
 
 export const seedExercises: Exercise[] = [
-  { id: "e-esquat", name: "Esquat amb barra", category: "forca", description: "Treball de cames i glutis. Mantingues l'esquena recta.", video_url: "https://www.youtube.com/watch?v=ultWZbUMPL8", created_at: now },
-  { id: "e-planxa", name: "Planxa abdominal", category: "core", description: "Manté el cos alineat 30-60 segons.", video_url: null, created_at: now },
-  { id: "e-mobilitat-malucs", name: "Mobilitat de malucs", category: "mobilitat", description: "Rutina de mobilitat articular per a malucs.", video_url: null, created_at: now },
+  { id: "e-esquat", name: "Esquat amb barra", category: "forca", description: "Treball de cames i glutis. Mantingues l'esquena recta.", video_url: "https://www.youtube.com/watch?v=ultWZbUMPL8", video_file_path: null, created_at: now },
+  { id: "e-planxa", name: "Planxa abdominal", category: "core", description: "Manté el cos alineat 30-60 segons.", video_url: null, video_file_path: null, created_at: now },
+  { id: "e-mobilitat-malucs", name: "Mobilitat de malucs", category: "mobilitat", description: "Rutina de mobilitat articular per a malucs.", video_url: null, video_file_path: null, created_at: now },
 ];
 
 export const seedAvailabilityRules: AvailabilityRule[] = [
@@ -183,5 +183,3 @@ export const seedClientDocuments: ClientDocument[] = [
   },
 ];
 
-type ClientVideo = Database["public"]["Tables"]["client_videos"]["Row"];
-export const seedClientVideos: ClientVideo[] = [];

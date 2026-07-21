@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
+import { ExerciseVideoPlayer } from "@/components/exercise-video-player";
 import type { AssignedExercise } from "@/lib/data/client-exercises";
 import type { Exercise } from "@/lib/data/exercises";
 
@@ -45,16 +46,10 @@ export function AssignedExercisesPanel({
                 {a.notes && (
                   <span className="text-brand-muted">{a.notes}</span>
                 )}
-                {a.videoUrl && (
-                  <a
-                    href={a.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-bold text-brand-purple hover:text-brand-orange"
-                  >
-                    ▶ Veure vídeo
-                  </a>
-                )}
+                <ExerciseVideoPlayer
+                  videoUrl={a.videoUrl}
+                  videoFilePath={a.videoFilePath}
+                />
               </div>
               <Badge tone="info">{EXERCISE_CATEGORY_LABELS[a.category]}</Badge>
               {canManage && (

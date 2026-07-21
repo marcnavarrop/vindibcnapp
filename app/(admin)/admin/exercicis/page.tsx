@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { listExercises } from "@/lib/data/exercises";
 import { deleteExerciseAction } from "@/app/(admin)/admin/exercicis/actions";
 import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
+import { ExerciseVideoPlayer } from "@/components/exercise-video-player";
 
 export const dynamic = "force-dynamic";
 
@@ -41,16 +42,10 @@ export default async function ExercicisPage() {
                 {e.description && (
                   <p className="text-sm text-brand-muted">{e.description}</p>
                 )}
-                {e.videoUrl && (
-                  <a
-                    href={e.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-bold text-brand-purple hover:text-brand-orange"
-                  >
-                    ▶ Veure vídeo
-                  </a>
-                )}
+                <ExerciseVideoPlayer
+                  videoUrl={e.videoUrl}
+                  videoFilePath={e.videoFilePath}
+                />
                 <div className="mt-2 flex items-center gap-4">
                   <Link
                     href={`/admin/exercicis/${e.id}/edit`}

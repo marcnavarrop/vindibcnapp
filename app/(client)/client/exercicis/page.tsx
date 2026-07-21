@@ -4,6 +4,7 @@ import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { Badge } from "@/components/ui/badge";
 import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
+import { ExerciseVideoPlayer } from "@/components/exercise-video-player";
 
 export const dynamic = "force-dynamic";
 
@@ -56,16 +57,10 @@ export default async function ClientExercicisPage() {
                 {a.description && (
                   <p className="text-sm text-brand-muted">{a.description}</p>
                 )}
-                {a.videoUrl && (
-                  <a
-                    href={a.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-bold text-brand-purple hover:text-brand-orange"
-                  >
-                    ▶ Veure vídeo
-                  </a>
-                )}
+                <ExerciseVideoPlayer
+                  videoUrl={a.videoUrl}
+                  videoFilePath={a.videoFilePath}
+                />
               </div>
             ))}
           </div>
