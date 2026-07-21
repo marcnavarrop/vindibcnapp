@@ -8,7 +8,8 @@ drop policy if exists "storage_client_videos_select" on storage.objects;
 drop policy if exists "storage_client_videos_insert" on storage.objects;
 drop policy if exists "storage_client_videos_delete" on storage.objects;
 
-delete from storage.buckets where id = 'client-videos';
+-- NOTA: el bucket 'client-videos' s'ha d'eliminar manualment des de
+-- Storage > Buckets al dashboard de Supabase (no es pot fer per SQL).
 
 drop table if exists public.client_videos;
 
