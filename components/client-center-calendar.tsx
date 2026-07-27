@@ -684,7 +684,7 @@ function CreateModal({
       <form action={formAction} className="mt-5">
         <input type="hidden" name="trainerId" value={trainerId} />
         <input type="hidden" name="serviceType" value={service} />
-        <input type="hidden" name="scheduledAt" value={toLocalInput(slot)} />
+        <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
         {state.error && (
           <p className="mb-3 text-sm text-error">{state.error}</p>
         )}
@@ -725,8 +725,13 @@ function OwnModal({
   cancelAction: CancelAction;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [state, action] = useActionState(cancelAction, {});
   const [confirming, setConfirming] = useState(false);
+  useEffect(() => {
+    if (state.ok) { router.refresh(); onClose(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.ok]);
   const canCancel =
     minCancellationHours === 0 ||
     new Date(scheduledAt).getTime() - Date.now() >=
