@@ -239,7 +239,7 @@ export function WeeklyCalendar({
                     }}
                     className={clsx(
                       "min-h-[3.25rem] cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60",
-                      inAvailability && "bg-brand-purple/5",
+                      inAvailability && "bg-brand-purple/20",
                     )}
                     aria-label={`Nova reserva ${DAY_NAMES[dayIdx]} ${pad(h)}:00`}
                   >

@@ -10,7 +10,7 @@ import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listClients, listTrainers } from "@/lib/data/clients";
-import { listAvailabilityLite } from "@/lib/data/availability";
+import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import {
   cancelTrainerReservationAction,
   completeTrainerReservationAction,
@@ -26,12 +26,12 @@ export default async function TrainerReservasPage() {
   const trainerId = viewer?.id;
 
   // Todas las reservas (coordinación) + las de MIS clientes (gestionables).
-  const [reservations, trainers, myClients, availability, trials] =
+  const [reservations, trainers, myClients, allAvailability, trials] =
     await Promise.all([
       listReservations(),
       listTrainers(),
       trainerId ? listClients(trainerId) : Promise.resolve([]),
-      trainerId ? listAvailabilityLite(trainerId) : Promise.resolve([]),
+      listAllTrainerRulesLite(),
       listActiveTrialHolds(),
     ]);
   // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
@@ -75,7 +75,8 @@ export default async function TrainerReservasPage() {
           cancelAction={cancelTrainerReservationAction}
           completeAction={completeTrainerReservationAction}
           rescheduleAction={rescheduleTrainerReservationAction}
-          availability={availability}
+          allAvailability={allAvailability}
+          myTrainerId={trainerId}
           trials={trials}
           manageableTrialIds={manageableTrialIds}
           acceptTrialAction={acceptTrialTrainerAction}
