@@ -4,8 +4,8 @@ import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
   { href: "/admin/reservas", label: "Reserves" },
-  { href: "/admin/prova", label: "Sessions de prova" },
   { href: "/admin/disponibilitat", label: "Disponibilitat" },
+  { href: "/admin/prova", label: "Sessions de prova" },
 ];
 import { SERVICE_LABELS } from "@/lib/labels";
 import {

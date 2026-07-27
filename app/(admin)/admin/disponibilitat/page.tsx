@@ -3,8 +3,8 @@ import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
   { href: "/admin/reservas", label: "Reserves" },
-  { href: "/admin/prova", label: "Sessions de prova" },
   { href: "/admin/disponibilitat", label: "Disponibilitat" },
+  { href: "/admin/prova", label: "Sessions de prova" },
 ];
 import { listTrainersDetailed } from "@/lib/data/trainers";
 import { listAvailabilityRules } from "@/lib/data/availability";
