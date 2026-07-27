@@ -74,7 +74,7 @@ function toListItem(clientId: string, store = getStore()): ClientListItem {
     ? store.profiles.find((p) => p.id === client.assigned_trainer_id)
     : null;
   const bonos = store.bonos.filter(
-    (b) => b.client_id === clientId && b.status === "active",
+    (b) => b.client_id === clientId && (b.status === "active" || b.status === "pending_payment"),
   );
   return {
     id: client.id,
@@ -129,7 +129,7 @@ export async function listClients(
     bonos: { remaining_sessions: number; status: string }[];
   };
   return (data as unknown as Row[]).map((row) => {
-    const active = row.bonos.filter((b) => b.status === "active");
+    const active = row.bonos.filter((b) => b.status === "active" || b.status === "pending_payment");
     return {
       id: row.id,
       profileId: row.profile_id,
@@ -244,7 +244,7 @@ async function fetchClientDetail(
   if (!data) return null;
 
   const row = data as unknown as DetailRow;
-  const active = row.bonos.filter((b) => b.status === "active");
+  const active = row.bonos.filter((b) => b.status === "active" || b.status === "pending_payment");
   return {
     id: row.id,
     fullName: row.profile?.full_name ?? "—",

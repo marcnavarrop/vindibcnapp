@@ -66,7 +66,7 @@ export async function getClientCenterData(
           .filter(
             (b) =>
               b.client_id === client.id &&
-              b.status === "active" &&
+              (b.status === "active" || b.status === "pending_payment") &&
               b.remaining_sessions > 0,
           )
           .map((b) => b.service_type),
@@ -127,7 +127,7 @@ export async function getClientCenterData(
   const bonoTypes = [
     ...new Set(
       (bonoRows.data ?? [])
-        .filter((b) => b.status === "active" && b.remaining_sessions > 0)
+        .filter((b) => (b.status === "active" || b.status === "pending_payment") && b.remaining_sessions > 0)
         .map((b) => b.service_type),
     ),
   ];

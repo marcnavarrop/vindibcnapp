@@ -90,6 +90,12 @@ export function BonosAdminTable({ bonos }: { bonos: BonoListItem[] }) {
                     {b.remainingSessions}
                   </span>
                   <span className="text-brand-muted"> / {b.totalSessions}</span>
+                  {b.status === "pending_payment" &&
+                    b.totalSessions - b.remainingSessions > 0 && (
+                      <span className="ml-2 text-xs font-bold text-brand-orange">
+                        ({b.totalSessions - b.remainingSessions} ja consumides)
+                      </span>
+                    )}
                 </td>
                 <td className="px-4 py-3">{formatEur(b.price)}</td>
                 <td className="px-4 py-3">

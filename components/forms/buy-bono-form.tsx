@@ -380,8 +380,8 @@ export function BuyBonoForm({
       <div className="rounded-2xl border border-brand-border bg-white p-8 text-center">
         <p className="text-lg font-bold text-brand-dark">Bo reservat</p>
         <p className="mt-2 text-sm text-brand-muted">
-          Paga&apos;l al centre per activar-lo. Mentre estigui pendent de
-          pagament no es pot fer servir per reservar.
+          Paga&apos;l al centre quan vulguis. Ja pots fer servir les sessions
+          per reservar mentre estigui pendent de pagament.
         </p>
         <Link
           href="/client/bonos"

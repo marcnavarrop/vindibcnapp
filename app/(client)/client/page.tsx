@@ -29,7 +29,7 @@ export default async function ClientHome() {
 
   const nowISO = new Date().toISOString();
   const minMs = centerSettings.minCancellationHours * 60 * 60 * 1000;
-  const activeBonos = client?.bonos.filter((b) => b.status === "active") ?? [];
+  const activeBonos = client?.bonos.filter((b) => b.status === "active" || b.status === "pending_payment") ?? [];
   const upcoming =
     client?.reservations
       .filter((r) => r.status === "booked" && r.scheduledAt >= nowISO)

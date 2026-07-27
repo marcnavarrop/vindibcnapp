@@ -334,7 +334,7 @@ export async function getReservationFormData(
           .filter(
             (b) =>
               b.client_id === c.id &&
-              b.status === "active" &&
+              (b.status === "active" || b.status === "pending_payment") &&
               b.remaining_sessions > 0,
           )
           .map((b) => ({
@@ -374,7 +374,7 @@ export async function getReservationFormData(
     id: c.id,
     name: c.profile?.full_name ?? "—",
     bonos: c.bonos
-      .filter((b) => b.status === "active" && b.remaining_sessions > 0)
+      .filter((b) => (b.status === "active" || b.status === "pending_payment") && b.remaining_sessions > 0)
       .map((b) => ({
         id: b.id,
         serviceType: b.service_type,
@@ -622,7 +622,7 @@ export async function createClientReservation(
         (b) =>
           b.client_id === client.id &&
           b.service_type === serviceType &&
-          b.status === "active" &&
+          (b.status === "active" || b.status === "pending_payment") &&
           b.remaining_sessions > 0,
       )
       .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
@@ -696,7 +696,7 @@ export async function createClientReservation(
     .select("id, remaining_sessions")
     .eq("client_id", client.id)
     .eq("service_type", serviceType)
-    .eq("status", "active")
+    .in("status", ["active", "pending_payment"])
     .gt("remaining_sessions", 0)
     .order("purchased_at", { ascending: true })
     .limit(1)
@@ -945,7 +945,7 @@ export async function getClientReservationData(
     .select("id, service_type, remaining_sessions, status")
     .eq("client_id", client.id);
   const bonos = (bonoRows ?? [])
-    .filter((b) => b.status === "active" && b.remaining_sessions > 0)
+    .filter((b) => (b.status === "active" || b.status === "pending_payment") && b.remaining_sessions > 0)
     .map((b) => ({
       id: b.id,
       serviceType: b.service_type,
