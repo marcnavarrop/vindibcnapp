@@ -1,17 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { updateCenterSettingsAction } from "@/app/(admin)/admin/configuracio/center-actions";
 import type { CenterSettings } from "@/lib/data/center-settings";
 
 export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
   const [state, action] = useActionState(updateCenterSettingsAction, {});
+  const [trainersSeColleagues, setTrainersSeColleagues] = useState(
+    settings.trainersSeColleaguesReservations,
+  );
 
   return (
     <form
       action={action}
-      className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-6"
+      className="flex flex-col gap-6 rounded-2xl border border-brand-border bg-white p-6"
     >
       <div>
         <label
@@ -39,6 +42,42 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           />
           <span className="text-sm text-brand-muted">hores</span>
         </div>
+      </div>
+
+      <div className="border-t border-brand-border pt-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-brand-dark">
+              Els entrenadors veuen les reserves dels companys
+            </p>
+            <p className="mt-0.5 text-xs text-brand-muted">
+              Permet la coordinació entre professionals mostrant les reserves de
+              tots al calendari. Si està desactivat, cada entrenador només veu
+              les seves pròpies reserves.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={trainersSeColleagues}
+            onClick={() => setTrainersSeColleagues((v) => !v)}
+            className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple ${
+              trainersSeColleagues ? "bg-brand-purple" : "bg-brand-border"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                trainersSeColleagues ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+        {/* Hidden input que envia el valor real al server action */}
+        <input
+          type="hidden"
+          name="trainersSeColleaguesReservations"
+          value={trainersSeColleagues ? "true" : "false"}
+        />
       </div>
 
       {state.error && (

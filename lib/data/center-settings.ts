@@ -6,9 +6,13 @@ const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export type CenterSettings = {
   minCancellationHours: number;
+  trainersSeColleaguesReservations: boolean;
 };
 
-const DEFAULT: CenterSettings = { minCancellationHours: 24 };
+const DEFAULT: CenterSettings = {
+  minCancellationHours: 24,
+  trainersSeColleaguesReservations: true,
+};
 
 export async function getCenterSettings(): Promise<CenterSettings> {
   if (USE_MOCK) {
@@ -16,16 +20,20 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     const store = getStore();
     return {
       minCancellationHours: store.centerSettings?.min_cancellation_hours ?? DEFAULT.minCancellationHours,
+      trainersSeColleaguesReservations:
+        store.centerSettings?.trainers_see_colleagues_reservations ?? DEFAULT.trainersSeColleaguesReservations,
     };
   }
 
   const supabase = await createClient();
   const { data } = await supabase
     .from("center_settings")
-    .select("min_cancellation_hours")
+    .select("min_cancellation_hours, trainers_see_colleagues_reservations")
     .single();
   return {
     minCancellationHours: data?.min_cancellation_hours ?? DEFAULT.minCancellationHours,
+    trainersSeColleaguesReservations:
+      data?.trainers_see_colleagues_reservations ?? DEFAULT.trainersSeColleaguesReservations,
   };
 }
 
@@ -47,6 +55,11 @@ export async function updateCenterSettings(
       store.centerSettings.min_cancellation_hours = input.minCancellationHours;
       store.centerSettings.updated_at = new Date().toISOString();
     }
+    if (input.trainersSeColleaguesReservations !== undefined) {
+      store.centerSettings.trainers_see_colleagues_reservations =
+        input.trainersSeColleaguesReservations;
+      store.centerSettings.updated_at = new Date().toISOString();
+    }
     saveStore(store);
     return;
   }
@@ -56,6 +69,9 @@ export async function updateCenterSettings(
     id: true,
     ...(input.minCancellationHours !== undefined && {
       min_cancellation_hours: input.minCancellationHours,
+    }),
+    ...(input.trainersSeColleaguesReservations !== undefined && {
+      trainers_see_colleagues_reservations: input.trainersSeColleaguesReservations,
     }),
     updated_at: new Date().toISOString(),
   });

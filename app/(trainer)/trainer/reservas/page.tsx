@@ -11,6 +11,7 @@ import { listReservations } from "@/lib/data/reservations";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listClients, listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   cancelTrainerReservationAction,
   completeTrainerReservationAction,
@@ -26,13 +27,14 @@ export default async function TrainerReservasPage() {
   const trainerId = viewer?.id;
 
   // Todas las reservas (coordinación) + las de MIS clientes (gestionables).
-  const [reservations, trainers, myClients, allAvailability, trials] =
+  const [reservations, trainers, myClients, allAvailability, trials, centerSettings] =
     await Promise.all([
       listReservations(),
       listTrainers(),
       trainerId ? listClients(trainerId) : Promise.resolve([]),
       listAllTrainerRulesLite(),
       listActiveTrialHolds(),
+      getCenterSettings(),
     ]);
   // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
   const manageableTrialIds = trials
@@ -43,6 +45,12 @@ export default async function TrainerReservasPage() {
   const manageableIds = reservations
     .filter((r) => myClientIds.has(r.clientId))
     .map((r) => r.id);
+
+  // Si l'ajust de centre ho desactiva, el trainer només veu les seves pròpies reserves.
+  const visibleReservations =
+    centerSettings.trainersSeColleaguesReservations
+      ? reservations
+      : reservations.filter((r) => r.trainerId === trainerId);
 
   const nowISO = new Date().toISOString();
 
@@ -67,7 +75,7 @@ export default async function TrainerReservasPage() {
         </div>
 
         <ReservationsView
-          reservations={reservations}
+          reservations={visibleReservations}
           trainers={trainers}
           nowISO={nowISO}
           manageableIds={manageableIds}

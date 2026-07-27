@@ -20,8 +20,10 @@ export async function updateCenterSettingsAction(
   if (hours > 168)
     return { error: "El límit màxim és 168 hores (7 dies)." };
 
+  const trainersSeColleagues = fd.get("trainersSeColleaguesReservations") === "true";
+
   try {
-    await updateCenterSettings({ minCancellationHours: hours });
+    await updateCenterSettings({ minCancellationHours: hours, trainersSeColleaguesReservations: trainersSeColleagues });
   } catch (e) {
     return {
       error: e instanceof Error ? e.message : "Error en desar la configuració.",
