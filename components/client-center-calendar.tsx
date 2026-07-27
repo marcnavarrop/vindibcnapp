@@ -31,6 +31,39 @@ const SERVICE_BADGE: Record<ServiceType, string> = {
   fisioterapia: "Fisio",
 };
 
+/** Icones de servei (SVG inline, ~10 px). */
+const SVC_ICON: Record<ServiceType, React.ReactNode> = {
+  ep_individual: (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>
+      <circle cx="5" cy="3.5" r="2" />
+      <path d="M1 10c0-3.5 8-3.5 8 0z" />
+    </svg>
+  ),
+  ep_parejas: (
+    <svg width="13" height="10" viewBox="0 0 13 10" fill="currentColor" aria-hidden>
+      <circle cx="4" cy="3.5" r="2" /><path d="M0 10c0-3.5 8-3.5 8 0z" />
+      <circle cx="9" cy="3.5" r="2" /><path d="M5 10c0-3.5 8-3.5 8 0z" />
+    </svg>
+  ),
+  grupo_reducido: (
+    <svg width="16" height="10" viewBox="0 0 16 10" fill="currentColor" aria-hidden>
+      <circle cx="2.5" cy="3" r="1.7" /><path d="M0 9.5c0-3 5-3 5 0z" />
+      <circle cx="8" cy="3" r="1.7" /><path d="M5 9.5c0-3 6-3 6 0z" />
+      <circle cx="13.5" cy="3" r="1.7" /><path d="M11 9.5c0-3 5-3 5 0z" />
+    </svg>
+  ),
+  fisioterapia: (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>
+      <rect x="0" y="2.5" width="1.5" height="4.5" rx="0.75" />
+      <rect x="2" y="0.5" width="1.5" height="6" rx="0.75" />
+      <rect x="4" y="0" width="1.5" height="6.5" rx="0.75" />
+      <rect x="6" y="0.5" width="1.5" height="6" rx="0.75" />
+      <rect x="8" y="2" width="1.5" height="5" rx="0.75" />
+      <rect x="0" y="6" width="10" height="4" rx="1.5" />
+    </svg>
+  ),
+};
+
 /** Paleta determinista por profesional (mismo color siempre). */
 const PRO_PALETTE = [
   "#642263", // lila de marca
@@ -51,6 +84,8 @@ function proColor(id: string | null): string {
   if (!id) return "#8a8f98";
   return PRO_PALETTE[hashStr(id) % PRO_PALETTE.length];
 }
+/** Primer nom (per a la vista compacta de les fitxes). */
+const firstName = (name: string) => name.split(" ")[0];
 
 type CreateAction = (
   prev: FormState,
@@ -101,7 +136,7 @@ function offeredServices(
 
 /** Un elemento a pintar en una celda (chip). */
 type CellItem =
-  | { kind: "own"; id: string; trainerId: string | null; service: ServiceType; slot: Date }
+  | { kind: "own"; id: string; trainerId: string | null; service: ServiceType; slot: Date; groupCount?: number }
   | { kind: "occupied"; trainerId: string | null; service: ServiceType }
   | {
       kind: "group";
@@ -226,6 +261,7 @@ export function ClientCenterCalendar({
           trainerId: t.id,
           service: r.serviceType,
           slot: new Date(r.scheduledAt),
+          groupCount: r.serviceType === "grupo_reducido" ? groupHere.length : undefined,
         });
       if (ownHere.length > 0) continue;
 
@@ -465,17 +501,21 @@ export function ClientCenterCalendar({
                               type="button"
                               onClick={() => setOwn(it)}
                               style={{
-                                backgroundColor: `${color}1a`,
-                                borderLeft: `3px solid ${color}`,
+                                backgroundColor: `${color}15`,
+                                border: `2px solid ${color}`,
                               }}
                               className="block w-full rounded-md px-1.5 py-1 text-left text-[11px] leading-tight"
                             >
-                              <span className="block font-bold text-brand-dark">
+                              <span className="flex items-center gap-0.5 font-bold text-brand-dark">
+                                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><polyline points="1.5 5 4 7.5 8.5 2" /></svg>
                                 La meva sessió
                               </span>
-                              <span className="block truncate text-brand-muted">
-                                {SERVICE_BADGE[it.service]} ·{" "}
-                                {trainerName(it.trainerId)}
+                              <span className="flex items-center gap-0.5 truncate text-brand-muted">
+                                <span className="shrink-0">{SVC_ICON[it.service]}</span>
+                                {SERVICE_BADGE[it.service]}
+                                {it.groupCount != null ? ` · ${it.groupCount}/${GROUP_CAPACITY}` : ""}
+                                {" · "}
+                                {firstName(trainerName(it.trainerId))}
                               </span>
                             </button>
                           );
@@ -484,8 +524,9 @@ export function ClientCenterCalendar({
                           return (
                             <span
                               key={`occ-${idx}`}
-                              className="block rounded-md bg-brand-border/50 px-1.5 py-1 text-[11px] leading-tight text-brand-muted"
+                              className="flex items-center gap-0.5 rounded-md bg-brand-border/50 px-1.5 py-1 text-[11px] leading-tight text-brand-muted"
                             >
+                              <span className="shrink-0 opacity-60">{SVC_ICON[it.service]}</span>
                               Ocupat
                             </span>
                           );
@@ -554,13 +595,14 @@ export function ClientCenterCalendar({
                             className="block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight hover:brightness-95"
                           >
                             <span
-                              className="block font-bold"
+                              className="flex items-center gap-0.5 font-bold"
                               style={{ color }}
                             >
+                              <span className="shrink-0">{SVC_ICON[it.service]}</span>
                               {SERVICE_BADGE[it.service]}
                             </span>
                             <span className="block truncate text-brand-muted">
-                              {trainerName(it.trainerId)}
+                              {firstName(trainerName(it.trainerId))}
                             </span>
                           </button>
                         );
@@ -610,6 +652,40 @@ export function ClientCenterCalendar({
   );
 }
 
+/** Icona animada de feedback (confirmació verda / cancel·lació vermella). */
+function AnimatedFeedback({ type }: { type: "success" | "cancel" }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(t);
+  }, []);
+  const isOk = type === "success";
+  const color = isOk ? "#16a34a" : "#ef4444";
+  const bg = isOk ? "#dcfce7" : "#fee2e2";
+  return (
+    <div
+      style={{
+        width: 72, height: 72, borderRadius: "50%",
+        backgroundColor: bg,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        transform: mounted ? "scale(1)" : "scale(0.35)",
+        opacity: mounted ? 1 : 0,
+        transition: "transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease",
+      }}
+    >
+      {isOk ? (
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
 function CreateModal({
   trainerId,
   otherPartyName: trainerName,
@@ -644,9 +720,9 @@ function CreateModal({
   if (state.ok) {
     return (
       <Overlay onClose={onDone}>
-        <div className="flex flex-col items-center gap-1 py-2 text-center">
-          <span className="text-3xl">✓</span>
-          <h2 className="text-lg font-bold text-brand-dark">
+        <div className="flex flex-col items-center gap-3 py-2 text-center">
+          <AnimatedFeedback type="success" />
+          <h2 className="text-xl font-bold text-brand-dark">
             Reserva confirmada!
           </h2>
           <p className="text-sm text-brand-muted capitalize">{when}</p>
@@ -728,14 +804,35 @@ function OwnModal({
   const router = useRouter();
   const [state, action] = useActionState(cancelAction, {});
   const [confirming, setConfirming] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
   useEffect(() => {
-    if (state.ok) { router.refresh(); onClose(); }
+    if (state.ok) setCancelled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
   const canCancel =
     minCancellationHours === 0 ||
     new Date(scheduledAt).getTime() - Date.now() >=
       minCancellationHours * 60 * 60 * 1000;
+
+  if (cancelled) {
+    const close = () => { router.refresh(); onClose(); };
+    return (
+      <Overlay onClose={close}>
+        <div className="flex flex-col items-center gap-3 py-2 text-center">
+          <AnimatedFeedback type="cancel" />
+          <h2 className="text-xl font-bold text-brand-dark">Reserva cancel·lada</h2>
+          <p className="text-sm text-brand-muted">La sessió ha estat eliminada correctament.</p>
+        </div>
+        <button
+          type="button"
+          onClick={close}
+          className="mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20"
+        >
+          Tancar
+        </button>
+      </Overlay>
+    );
+  }
 
   return (
     <Overlay onClose={onClose}>

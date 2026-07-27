@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "@/lib/utils";
 import {
@@ -15,12 +15,79 @@ import {
 } from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
+import type { ServiceType } from "@/types/database";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
 const DEFAULT_OPEN = 7;
 const DEFAULT_CLOSE = 22;
+
+/** Primer nom (vista compacta). */
+const firstName = (name: string) => name.split(" ")[0];
+
+/** Icones de servei (SVG inline). */
+const SVC_ICON: Record<ServiceType, React.ReactNode> = {
+  ep_individual: (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>
+      <circle cx="5" cy="3.5" r="2" /><path d="M1 10c0-3.5 8-3.5 8 0z" />
+    </svg>
+  ),
+  ep_parejas: (
+    <svg width="13" height="10" viewBox="0 0 13 10" fill="currentColor" aria-hidden>
+      <circle cx="4" cy="3.5" r="2" /><path d="M0 10c0-3.5 8-3.5 8 0z" />
+      <circle cx="9" cy="3.5" r="2" /><path d="M5 10c0-3.5 8-3.5 8 0z" />
+    </svg>
+  ),
+  grupo_reducido: (
+    <svg width="16" height="10" viewBox="0 0 16 10" fill="currentColor" aria-hidden>
+      <circle cx="2.5" cy="3" r="1.7" /><path d="M0 9.5c0-3 5-3 5 0z" />
+      <circle cx="8" cy="3" r="1.7" /><path d="M5 9.5c0-3 6-3 6 0z" />
+      <circle cx="13.5" cy="3" r="1.7" /><path d="M11 9.5c0-3 5-3 5 0z" />
+    </svg>
+  ),
+  fisioterapia: (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>
+      <rect x="0" y="2.5" width="1.5" height="4.5" rx="0.75" />
+      <rect x="2" y="0.5" width="1.5" height="6" rx="0.75" />
+      <rect x="4" y="0" width="1.5" height="6.5" rx="0.75" />
+      <rect x="6" y="0.5" width="1.5" height="6" rx="0.75" />
+      <rect x="8" y="2" width="1.5" height="5" rx="0.75" />
+      <rect x="0" y="6" width="10" height="4" rx="1.5" />
+    </svg>
+  ),
+};
+
+/** Icona animada de feedback. */
+function AnimatedFeedback({ type }: { type: "success" | "cancel" }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(t);
+  }, []);
+  const isOk = type === "success";
+  const color = isOk ? "#16a34a" : "#ef4444";
+  const bg = isOk ? "#dcfce7" : "#fee2e2";
+  return (
+    <div style={{
+      width: 72, height: 72, borderRadius: "50%", backgroundColor: bg,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      transform: mounted ? "scale(1)" : "scale(0.35)",
+      opacity: mounted ? 1 : 0,
+      transition: "transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease",
+    }}>
+      {isOk ? (
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      )}
+    </div>
+  );
+}
 
 const DAY_NAMES = [
   "Dilluns",
@@ -500,13 +567,14 @@ function ReservationCard({
       title={`${r.clientName} · ${SERVICE_LABELS[r.serviceType]}`}
     >
       <span className="flex items-center gap-1 font-bold text-brand-dark">
-        <span className="truncate">{r.clientName}</span>
+        <span className="truncate">{firstName(r.clientName)}</span>
         {!canManage && <LockIcon />}
       </span>
       <span
-        className="block truncate"
+        className="flex items-center gap-0.5 truncate"
         style={{ color: oc ? oc.text : color }}
       >
+        <span className="shrink-0">{SVC_ICON[r.serviceType]}</span>
         {SERVICE_LABELS[r.serviceType]}
         {occupancy != null && ` · ${occupancy}/${GROUP_CAPACITY}`}
         {status === "full" && " · Complet"}
@@ -531,6 +599,26 @@ function ReservationModal({
   rescheduleAction: ReservationAction;
   onClose: () => void;
 }) {
+  const router = useRouter();
+  const [done, setDone] = useState<"cancelled" | "completed" | null>(null);
+
+  if (done) {
+    const close = () => { router.refresh(); onClose(); };
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={close}>
+        <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl bg-white p-8 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <AnimatedFeedback type={done === "cancelled" ? "cancel" : "success"} />
+          <h2 className="text-xl font-bold text-brand-dark">
+            {done === "cancelled" ? "Reserva cancel·lada" : "Reserva marcada com feta"}
+          </h2>
+          <button type="button" onClick={close} className="mt-2 w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark">
+            Tancar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const when = new Intl.DateTimeFormat("ca-ES", {
     weekday: "long",
     day: "numeric",
@@ -598,7 +686,7 @@ function ReservationModal({
               </div>
             </form>
             <div className="mt-2 flex items-center gap-2">
-              <form action={completeAction} className="flex-1">
+              <form action={completeAction} className="flex-1" onSubmit={() => setDone("completed")}>
                 <input type="hidden" name="id" value={r.id} />
                 <button
                   type="submit"
@@ -607,7 +695,7 @@ function ReservationModal({
                   Marcar feta
                 </button>
               </form>
-              <form action={cancelAction} className="flex-1">
+              <form action={cancelAction} className="flex-1" onSubmit={() => setDone("cancelled")}>
                 <input type="hidden" name="id" value={r.id} />
                 <button
                   type="submit"
