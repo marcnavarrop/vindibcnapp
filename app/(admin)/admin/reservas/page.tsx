@@ -64,6 +64,7 @@ export default async function ReservasPage() {
           manageableTrialIds={trials.map((t) => t.id)}
           acceptTrialAction={acceptTrialAdminAction}
           rejectTrialAction={rejectTrialAdminAction}
+          showCalendarFilters
         />
       </main>
     </>
