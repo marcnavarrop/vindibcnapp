@@ -17,6 +17,7 @@ import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { ServiceType } from "@/types/database";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
+import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
 const OPEN = 7;
 const CLOSE = 22;
@@ -490,6 +491,8 @@ export function ClientCenterCalendar({
                           );
                         }
                         if (it.kind === "group") {
+                          const status = getOccupancyStatus(it.count);
+                          const oc = OCCUPANCY_COLORS[status];
                           return (
                             <button
                               key={`grp-${idx}`}
@@ -506,24 +509,28 @@ export function ClientCenterCalendar({
                                   : undefined
                               }
                               style={{
-                                backgroundColor: `${color}1a`,
-                                borderLeft: `3px solid ${color}`,
+                                backgroundColor: oc.bg,
+                                borderLeft: `3px solid ${oc.border}`,
                               }}
                               className={clsx(
                                 "block w-full rounded-md px-1.5 py-1 text-left text-[11px] font-bold leading-tight",
-                                it.joinable &&
-                                  "cursor-pointer hover:brightness-95",
+                                it.joinable
+                                  ? "cursor-pointer hover:brightness-95"
+                                  : "cursor-not-allowed opacity-80",
                               )}
                             >
-                              <span className="block" style={{ color }}>
+                              <span className="block" style={{ color: oc.text }}>
                                 Grup · {it.count}/{GROUP_CAPACITY}
                               </span>
-                              <span className="block font-normal text-brand-muted">
-                                {it.joinable
-                                  ? "Plaça lliure"
-                                  : it.count >= GROUP_CAPACITY
-                                    ? "Complet"
-                                    : trainerName(it.trainerId)}
+                              <span
+                                className="block font-normal"
+                                style={{ color: oc.text }}
+                              >
+                                {status === "full"
+                                  ? "Complet"
+                                  : status === "almost_full"
+                                    ? "Gairebé ple"
+                                    : "Plaça lliure"}
                               </span>
                             </button>
                           );

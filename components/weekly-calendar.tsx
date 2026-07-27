@@ -16,6 +16,7 @@ import {
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
+import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
 const DEFAULT_OPEN = 7;
@@ -477,16 +478,21 @@ function ReservationCard({
   occupancy?: number;
   onClick: (e: React.MouseEvent) => void;
 }) {
+  const isGroup = r.serviceType === "grupo_reducido" && occupancy != null;
+  const status = isGroup ? getOccupancyStatus(occupancy!) : null;
+  const oc = status ? OCCUPANCY_COLORS[status] : null;
   const color = SERVICE_COLORS[r.serviceType];
   const cancelled = r.status === "cancelled";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      style={{
-        backgroundColor: `${color}1a`,
-        borderLeft: `3px solid ${color}`,
-      }}
+      style={
+        oc
+          ? { backgroundColor: oc.bg, borderLeft: `3px solid ${oc.border}` }
+          : { backgroundColor: `${color}1a`, borderLeft: `3px solid ${color}` }
+      }
       className={clsx(
         "block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight",
         cancelled && "opacity-50 line-through",
@@ -497,9 +503,14 @@ function ReservationCard({
         <span className="truncate">{r.clientName}</span>
         {!canManage && <LockIcon />}
       </span>
-      <span className="block truncate" style={{ color }}>
+      <span
+        className="block truncate"
+        style={{ color: oc ? oc.text : color }}
+      >
         {SERVICE_LABELS[r.serviceType]}
         {occupancy != null && ` · ${occupancy}/${GROUP_CAPACITY}`}
+        {status === "full" && " · Complet"}
+        {status === "almost_full" && " · Gairebé ple"}
       </span>
     </button>
   );
