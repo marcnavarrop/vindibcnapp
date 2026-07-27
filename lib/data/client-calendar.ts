@@ -19,6 +19,8 @@ export type CenterReservation = {
 
 export type ClientCenterData = {
   clientId: string | null;
+  /** Entrenador assignat al client (pot ser null si no en té cap). */
+  assignedTrainerId: string | null;
   /** Tipos de servicio que el cliente puede reservar (bonos activos con sesiones). */
   bonoTypes: ServiceType[];
   trainers: { id: string; name: string }[];
@@ -28,6 +30,7 @@ export type ClientCenterData = {
 
 const EMPTY: ClientCenterData = {
   clientId: null,
+  assignedTrainerId: null,
   bonoTypes: [],
   trainers: [],
   rules: [],
@@ -96,6 +99,7 @@ export async function getClientCenterData(
       }));
     return {
       clientId: client.id,
+      assignedTrainerId: client.assigned_trainer_id ?? null,
       bonoTypes,
       trainers,
       rules,
@@ -106,7 +110,7 @@ export async function getClientCenterData(
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("clients")
-    .select("id")
+    .select("id, assigned_trainer_id")
     .eq("profile_id", profileId)
     .single();
   if (!client) return EMPTY;
@@ -146,6 +150,7 @@ export async function getClientCenterData(
 
   return {
     clientId: client.id,
+    assignedTrainerId: client.assigned_trainer_id ?? null,
     bonoTypes,
     trainers,
     rules,

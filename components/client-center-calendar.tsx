@@ -164,14 +164,16 @@ export function ClientCenterCalendar({
   minCancellationHours?: number;
 }) {
   const router = useRouter();
-  const { bonoTypes, trainers, rules, reservations } = data;
+  const { bonoTypes, trainers, rules, reservations, assignedTrainerId } = data;
 
   const [view, setView] = useState<"day" | "week">("week");
   const [offset, setOffset] = useState(0); // en días (día) o semanas (semana)
   const [serviceFilter, setServiceFilter] = useState<ServiceType | "all">(
     "all",
   );
-  const [trainerFilter, setTrainerFilter] = useState<string | "all">("all");
+  const [trainerFilter, setTrainerFilter] = useState<string | "all">(
+    assignedTrainerId ?? "all",
+  );
   const [book, setBook] = useState<{
     trainerId: string;
     service: ServiceType;
@@ -335,12 +337,33 @@ export function ClientCenterCalendar({
 
   const shownTrainers = trainers.filter((t) => showTrainer(t.id));
 
+  // Avís si el professional filtrat no ofereix cap servei que el client pugui reservar.
+  const filteredTrainerOffersNothing =
+    trainerFilter !== "all" &&
+    bonoTypes.length > 0 &&
+    !rules.some(
+      (r) => r.trainerId === trainerFilter && r.serviceTypes.some((s) => bonoTypes.includes(s)),
+    );
+
   return (
     <div>
       {bonoTypes.length === 0 && (
         <p className="mb-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
           No tens cap bo actiu amb sessions disponibles, així que de moment no hi
           ha res reservable. Parla amb el centre per adquirir-ne un.
+        </p>
+      )}
+
+      {filteredTrainerOffersNothing && (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Aquest professional no ofereix cap dels serveis dels teus bons.{" "}
+          <button
+            type="button"
+            onClick={() => setTrainerFilter("all")}
+            className="font-bold underline hover:no-underline"
+          >
+            Mostra tots els professionals
+          </button>
         </p>
       )}
 

@@ -16,6 +16,7 @@ export default async function ClientReservasPage() {
       ? getClientCenterData(viewer.id)
       : Promise.resolve({
           clientId: null,
+          assignedTrainerId: null,
           bonoTypes: [],
           trainers: [],
           rules: [],
