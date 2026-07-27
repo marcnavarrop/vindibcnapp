@@ -46,8 +46,8 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
       label: "Reserves",
       children: [
         { href: "/admin/reservas", label: "Reserves" },
-        { href: "/admin/prova", label: "Sessions de prova" },
         { href: "/admin/disponibilitat", label: "Disponibilitat" },
+        { href: "/admin/prova", label: "Sessions de prova" },
       ],
     },
     {
