@@ -189,6 +189,7 @@ export function WeeklyCalendar({
     let minH = DEFAULT_OPEN;
     let maxH = DEFAULT_CLOSE;
     for (const r of inWeek) {
+      if (r.status === "cancelled") continue;
       const d = new Date(r.scheduledAt);
       const dayIdx = (d.getDay() + 6) % 7;
       const h = d.getHours();

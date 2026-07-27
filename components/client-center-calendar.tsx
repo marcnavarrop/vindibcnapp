@@ -192,6 +192,7 @@ export function ClientCenterCalendar({
   const resIndex = useMemo(() => {
     const m = new Map<string, ClientCenterData["reservations"]>();
     for (const r of reservations) {
+      if (r.status === "cancelled") continue;
       const d = new Date(r.scheduledAt);
       const key = `${r.trainerId}|${localDateStr(d)}|${d.getHours()}`;
       (m.get(key) ?? m.set(key, []).get(key)!).push(r);
@@ -219,6 +220,7 @@ export function ClientCenterCalendar({
       maxH = Math.max(maxH, r.endHour);
     }
     for (const r of reservations) {
+      if (r.status === "cancelled") continue;
       const h = new Date(r.scheduledAt).getHours();
       minH = Math.min(minH, h);
       maxH = Math.max(maxH, h + 1);
