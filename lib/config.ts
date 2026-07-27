@@ -17,3 +17,11 @@ export const USE_MOCK =
 
 /** Nombre de la cookie que guarda el rol en modo simulación. */
 export const MOCK_ROLE_COOKIE = "vindi_mock_role";
+
+/**
+ * Zona horaria del centre (per a la validació de disponibilitat al servidor).
+ * El servidor Vercel corre en UTC; les regles de disponibilitat usen hores locals.
+ * Sobreescrivible via variable d'entorn per a centres en altres zones.
+ */
+export const CENTER_TZ =
+  process.env.CENTER_TIMEZONE ?? "Europe/Madrid";

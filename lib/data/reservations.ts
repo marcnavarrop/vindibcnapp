@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { USE_MOCK } from "@/lib/config";
+import { USE_MOCK, CENTER_TZ } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
@@ -12,6 +12,28 @@ import { notify, getProfileContact } from "@/lib/notifications";
 import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
 import type { Database, ServiceType, ReservationStatus } from "@/types/database";
 
+/**
+ * Retorna un Date "trampa" on els mètodes locals (getHours, getDay, getDate…)
+ * retornen els valors de la zona horària del centre, no del servidor (UTC).
+ * Tècnica: formatar el Date en la TZ del centre i parsejar com si fos UTC.
+ */
+function toLocalDate(utcDate: Date): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: CENTER_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(utcDate);
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return new Date(
+    `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}Z`,
+  );
+}
+
 /** Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio. */
 async function assertWithinAvailability(
   trainerId: string,
@@ -19,7 +41,11 @@ async function assertWithinAvailability(
   serviceType: ServiceType,
 ): Promise<void> {
   const rules = await listAvailabilityLite(trainerId);
-  if (!isServiceAvailable(rules, when, when.getHours(), serviceType))
+  // El servidor corre en UTC; les regles usen hores locals del centre.
+  // toLocalDate converteix el Date UTC a un Date on els mètodes locals donen
+  // l'hora local del centre (CENTER_TZ), sense que calgui canviar isServiceAvailable.
+  const localWhen = toLocalDate(when);
+  if (!isServiceAvailable(rules, localWhen, localWhen.getHours(), serviceType))
     throw new Error(
       "Aquesta franja no està dins de la disponibilitat d'aquest professional per a aquest servei.",
     );
