@@ -495,26 +495,26 @@ export function ClientCenterCalendar({
                       {items.map((it, idx) => {
                         const color = proColor(it.trainerId);
                         if (it.kind === "own") {
+                          // Verd propi coherent amb el semàfor de grups (#16a34a = green-600)
+                          const ownBg = "#dcfce7"; // green-100
+                          const ownBorder = "#16a34a"; // green-600
                           return (
                             <button
                               key={`own-${it.id}`}
                               type="button"
                               onClick={() => setOwn(it)}
                               style={{
-                                backgroundColor: `${color}15`,
-                                border: `2px solid ${color}`,
+                                backgroundColor: ownBg,
+                                border: `2px solid ${ownBorder}`,
                               }}
-                              className="block w-full rounded-md px-1.5 py-1 text-left text-[11px] leading-tight"
+                              className="block w-full min-w-0 overflow-hidden rounded-md px-1.5 py-1 text-left text-[11px] leading-tight"
                             >
-                              <span className="flex items-center gap-0.5 font-bold text-brand-dark">
-                                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><polyline points="1.5 5 4 7.5 8.5 2" /></svg>
-                                La meva sessió
-                              </span>
-                              <span className="flex items-center gap-0.5 truncate text-brand-muted">
+                              <span className="flex min-w-0 items-center gap-0.5 font-bold" style={{ color: ownBorder }}>
+                                <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0"><polyline points="1.5 5 4 7.5 8.5 2" /></svg>
                                 <span className="shrink-0">{SVC_ICON[it.service]}</span>
-                                {SERVICE_BADGE[it.service]}
-                                {it.groupCount != null ? ` · ${it.groupCount}/${GROUP_CAPACITY}` : ""}
-                                {" · "}
+                                <span className="truncate">{SERVICE_BADGE[it.service]}{it.groupCount != null ? ` · ${it.groupCount}/${GROUP_CAPACITY}` : ""}</span>
+                              </span>
+                              <span className="block truncate text-brand-muted">
                                 {firstName(trainerName(it.trainerId))}
                               </span>
                             </button>
@@ -688,7 +688,7 @@ function AnimatedFeedback({ type }: { type: "success" | "cancel" }) {
 
 function CreateModal({
   trainerId,
-  otherPartyName: trainerName,
+  otherPartyName: trainerNameFull,
   service,
   slot,
   action,
@@ -703,6 +703,7 @@ function CreateModal({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const trainerName = firstName(trainerNameFull);
   const [state, formAction] = useActionState(action, {} as FormState);
   useEffect(() => {
     if (state.ok) onDone();
@@ -786,7 +787,7 @@ function CreateModal({
 
 function OwnModal({
   service,
-  otherPartyName: trainerName,
+  otherPartyName: trainerNameFull,
   id,
   scheduledAt,
   minCancellationHours,
@@ -834,6 +835,8 @@ function OwnModal({
     );
   }
 
+  const trainerName = firstName(trainerNameFull);
+
   return (
     <Overlay onClose={onClose}>
       <h2 className="text-lg font-bold text-brand-dark">La meva sessió</h2>
@@ -844,7 +847,7 @@ function OwnModal({
       <div className="mt-4">
         <AddToCalendarButton
           serviceType={service}
-          otherPartyName={trainerName}
+          otherPartyName={trainerNameFull}
           scheduledAt={scheduledAt}
         />
       </div>
