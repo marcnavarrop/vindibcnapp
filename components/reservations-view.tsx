@@ -43,6 +43,7 @@ export function ReservationsView({
   acceptTrialAction,
   rejectTrialAction,
   showCalendarFilters,
+  showColleagueSelector,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -64,10 +65,12 @@ export function ReservationsView({
   rejectTrialAction?: ReservationAction;
   /** Mostra la barra de filtres avançats (professional, client, servei). */
   showCalendarFilters?: boolean;
+  /** Mostra el selector de companys (quan el centre ho permet). */
+  showColleagueSelector?: boolean;
 }) {
   const [view, setView] = useState<"calendar" | "list">("calendar");
-  // "mine" | "none" | trainerId d'un company
-  const [availFilter, setAvailFilter] = useState<string>("mine");
+  const [showOwnAvail, setShowOwnAvail] = useState(true);
+  const [selectedColleagues, setSelectedColleagues] = useState<Set<string>>(new Set());
 
   // ── Filtres del calendari d'admin ──────────────────────────────────────────
   const [filterTrainer, setFilterTrainer] = useState<string>(NO_FILTER);
@@ -96,13 +99,21 @@ export function ReservationsView({
 
   // Reservas filtrades per passar al calendari
   const filteredReservations = useMemo(() => {
-    if (!showCalendarFilters || !hasActiveFilters) return reservations;
-    return reservations.filter((r) => {
-      if (filterTrainer && r.trainerId !== filterTrainer) return false;
-      if (filterService && r.serviceType !== filterService) return false;
-      if (filterClient && r.clientName !== filterClient) return false;
-      return true;
-    });
+    let list = reservations;
+    if (showCalendarFilters && hasActiveFilters) {
+      list = list.filter((r) => {
+        if (filterTrainer && r.trainerId !== filterTrainer) return false;
+        if (filterService && r.serviceType !== filterService) return false;
+        if (filterClient && r.clientName !== filterClient) return false;
+        return true;
+      });
+    }
+    if (showColleagueSelector && myTrainerId) {
+      list = list.filter(
+        (r) => r.trainerId === myTrainerId || (!!r.trainerId && selectedColleagues.has(r.trainerId)),
+      );
+    }
+    return list;
   }, [
     reservations,
     showCalendarFilters,
@@ -110,6 +121,9 @@ export function ReservationsView({
     filterTrainer,
     filterService,
     filterClient,
+    showColleagueSelector,
+    myTrainerId,
+    selectedColleagues,
   ]);
 
   function clearFilters() {
@@ -119,17 +133,14 @@ export function ReservationsView({
     setClientQuery("");
   }
 
-  // Regles efectives a mostrar al calendari, depenent del selector.
+  // Regles efectives a mostrar al calendari (només la pròpia disponibilitat).
   const effectiveAvailability = useMemo((): AvailabilityRuleLite[] | undefined => {
-    // Si ve de l'admin (sense allAvailability), usa el prop clàssic.
     if (!allAvailability) return availability;
-    if (availFilter === "none") return undefined;
-    const targetId = availFilter === "mine" ? myTrainerId : availFilter;
-    if (!targetId) return undefined;
-    return allAvailability.filter((r) => r.trainerId === targetId);
-  }, [allAvailability, availability, availFilter, myTrainerId]);
+    if (!showOwnAvail || !myTrainerId) return undefined;
+    return allAvailability.filter((r) => r.trainerId === myTrainerId);
+  }, [allAvailability, availability, showOwnAvail, myTrainerId]);
 
-  const showAvailSelector = !!allAvailability && trainers.length > 0;
+  const colleagues = trainers.filter((t) => t.id !== myTrainerId);
 
   return (
     <div>
@@ -153,29 +164,45 @@ export function ReservationsView({
           ))}
         </div>
 
-        {showAvailSelector && view === "calendar" && (
-          <label className="flex items-center gap-2 text-xs">
-            <span className="font-bold tracking-wide text-brand-muted uppercase">
-              Disponibilitat
-            </span>
-            <select
-              value={availFilter}
-              onChange={(e) => setAvailFilter(e.target.value)}
-              className="rounded-lg border border-brand-border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-brand-purple"
-            >
-              <option value="mine">La meva</option>
-              {trainers
-                .filter((t) => t.id !== myTrainerId)
-                .map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              <option value="none">Cap</option>
-            </select>
+        {!!allAvailability && view === "calendar" && (
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showOwnAvail}
+              onChange={(e) => setShowOwnAvail(e.target.checked)}
+              className="h-3.5 w-3.5 accent-brand-purple"
+            />
+            <span className="text-brand-muted">Mostrar la meva disponibilitat</span>
           </label>
         )}
       </div>
+
+      {/* ── Selector de companys (trainer amb permís) ─────────────────────── */}
+      {showColleagueSelector && view === "calendar" && colleagues.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-brand-border bg-white px-3 py-2.5">
+          <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
+            Companys
+          </span>
+          {colleagues.map((t) => (
+            <label key={t.id} className="flex cursor-pointer items-center gap-1.5 text-sm">
+              <input
+                type="checkbox"
+                checked={selectedColleagues.has(t.id)}
+                onChange={() =>
+                  setSelectedColleagues((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(t.id)) next.delete(t.id);
+                    else next.add(t.id);
+                    return next;
+                  })
+                }
+                className="h-3.5 w-3.5 accent-brand-purple"
+              />
+              <span className="text-brand-charcoal">{t.name}</span>
+            </label>
+          ))}
+        </div>
+      )}
 
       {/* ── Filtres del calendari d'admin ──────────────────────────────────── */}
       {showCalendarFilters && view === "calendar" && (

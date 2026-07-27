@@ -628,6 +628,10 @@ export async function createClientReservation(
       .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
     if (!bono)
       throw new Error("No tens cap bo actiu d'aquest tipus amb sessions.");
+    const clientAlreadyBooked = store.reservations.some(
+      (r) => r.client_id === client.id && r.scheduled_at === scheduledAt && r.status === "booked",
+    );
+    if (clientAlreadyBooked) throw new Error("Ja tens una reserva a aquesta hora.");
     await assertWithinAvailability(trainerId, when, serviceType);
     assertSlotFree(
       [
@@ -685,6 +689,16 @@ export async function createClientReservation(
     .eq("profile_id", input.profileId)
     .single();
   if (cErr || !client) throw new Error("Client no trobat.");
+
+  // 1b. El client no pot tenir dues reserves confirmades a la mateixa hora.
+  const { data: clientConflict } = await admin
+    .from("reservations")
+    .select("id")
+    .eq("client_id", client.id)
+    .eq("scheduled_at", scheduledAt)
+    .eq("status", "booked")
+    .maybeSingle();
+  if (clientConflict) throw new Error("Ja tens una reserva a aquesta hora.");
 
   // 2. La franja debe estar dentro de la disponibilidad de ESE profesional para
   //    ESE servicio.

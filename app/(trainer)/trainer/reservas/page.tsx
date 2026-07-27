@@ -89,6 +89,7 @@ export default async function TrainerReservasPage() {
           manageableTrialIds={manageableTrialIds}
           acceptTrialAction={acceptTrialTrainerAction}
           rejectTrialAction={rejectTrialTrainerAction}
+          showColleagueSelector={centerSettings.trainersSeColleaguesReservations}
         />
       </main>
     </>

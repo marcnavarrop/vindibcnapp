@@ -23,8 +23,8 @@ import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 const DEFAULT_OPEN = 7;
 const DEFAULT_CLOSE = 22;
 
-/** Primer nom (vista compacta). */
-const firstName = (name: string) => name.split(" ")[0];
+/** Nom i primer cognom (vista compacta). */
+const firstName = (name: string) => name.split(" ").slice(0, 2).join(" ");
 
 /** Icones de servei (SVG inline). */
 const SVC_ICON: Record<ServiceType, React.ReactNode> = {

@@ -25,8 +25,8 @@ const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
 
 /** Abreviatura visual del tipo de sesión (indicador rápido). */
 const SERVICE_BADGE: Record<ServiceType, string> = {
-  ep_individual: "Ind",
-  ep_parejas: "Par",
+  ep_individual: "Individual",
+  ep_parejas: "Parella",
   grupo_reducido: "Grup",
   fisioterapia: "Fisio",
 };
@@ -245,6 +245,15 @@ export function ClientCenterCalendar({
     const day = localDateStr(cellDate);
     const items: CellItem[] = [];
 
+    // Si ja tens una reserva confirmada a aquesta hora, no mostris noves franges lliures.
+    const clientAlreadyBookedThisHour = reservations.some(
+      (r) =>
+        r.isOwn &&
+        r.status !== "cancelled" &&
+        localDateStr(new Date(r.scheduledAt)) === day &&
+        new Date(r.scheduledAt).getHours() === h,
+    );
+
     for (const t of trainers) {
       if (!showTrainer(t.id)) continue;
       const resHere = resIndex.get(`${t.id}|${day}|${h}`) ?? [];
@@ -282,7 +291,7 @@ export function ClientCenterCalendar({
         const count = groupHere.length;
         const hasFree = count < GROUP_CAPACITY;
         const joinable =
-          hasFree && inFuture && inHours && canBook("grupo_reducido");
+          hasFree && inFuture && inHours && canBook("grupo_reducido") && !clientAlreadyBookedThisHour;
         items.push({
           kind: "group",
           trainerId: t.id,
@@ -295,7 +304,7 @@ export function ClientCenterCalendar({
 
       // Profesional libre: una franja reservable por cada servicio ofrecido
       // para el que el cliente tenga bono.
-      if (inFuture && inHours) {
+      if (inFuture && inHours && !clientAlreadyBookedThisHour) {
         for (const s of SERVICE_TYPES) {
           if (offered.has(s) && canBook(s))
             items.push({
@@ -409,7 +418,7 @@ export function ClientCenterCalendar({
                 className="inline-block h-3 w-3 rounded-full"
                 style={{ backgroundColor: proColor(t.id) }}
               />
-              {t.name}
+              {firstName(t.name)}
             </span>
           ))}
         </div>
