@@ -78,7 +78,7 @@ function fromSeed(): Store {
     notification_log: structuredClone(seedNotificationLog),
     promotions: structuredClone(seedPromotions),
     client_documents: structuredClone(seedClientDocuments),
-    centerSettings: { id: true, min_cancellation_hours: 24, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
 }
 

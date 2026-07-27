@@ -47,18 +47,19 @@ export async function updateCenterSettings(
       store.centerSettings = {
         id: true,
         min_cancellation_hours: DEFAULT.minCancellationHours,
+        trainers_see_colleagues_reservations: DEFAULT.trainersSeColleaguesReservations,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
     }
+    const cs = store.centerSettings;
     if (input.minCancellationHours !== undefined) {
-      store.centerSettings.min_cancellation_hours = input.minCancellationHours;
-      store.centerSettings.updated_at = new Date().toISOString();
+      cs.min_cancellation_hours = input.minCancellationHours;
+      cs.updated_at = new Date().toISOString();
     }
     if (input.trainersSeColleaguesReservations !== undefined) {
-      store.centerSettings.trainers_see_colleagues_reservations =
-        input.trainersSeColleaguesReservations;
-      store.centerSettings.updated_at = new Date().toISOString();
+      cs.trainers_see_colleagues_reservations = input.trainersSeColleaguesReservations;
+      cs.updated_at = new Date().toISOString();
     }
     saveStore(store);
     return;
