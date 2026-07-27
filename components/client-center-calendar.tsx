@@ -28,7 +28,7 @@ const SERVICE_BADGE: Record<ServiceType, string> = {
   ep_individual: "Individual",
   ep_parejas: "Parella",
   grupo_reducido: "Grup",
-  fisioterapia: "Fisio",
+  fisioterapia: "Fisioteràpia",
 };
 
 /** Icones de servei (SVG inline, ~10 px). */
