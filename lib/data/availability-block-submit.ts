@@ -1,5 +1,5 @@
 import "server-only";
-import { CENTER_TZ } from "@/lib/config";
+import { centerLocalToInstant } from "@/lib/center-time";
 import { CENTER_OPEN_HOUR, CENTER_CLOSE_HOUR } from "@/lib/availability-slots";
 import {
   createAvailabilityBlock,
@@ -7,6 +7,8 @@ import {
   type AffectedReservation,
 } from "@/lib/data/availability-blocks";
 import { cancelReservation } from "@/lib/data/reservations";
+
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export type BlockFormState = {
   error?: string;
@@ -18,30 +20,6 @@ export type BlockFormState = {
     affected: AffectedReservation[];
   };
 };
-
-const pad = (n: number) => String(n).padStart(2, "0");
-
-/** Desfasament (ms) entre UTC i l'hora del centre per a un instant donat. */
-function centerOffsetMs(at: Date): number {
-  const asUTC = new Date(at.toLocaleString("en-US", { timeZone: "UTC" }));
-  const asCenter = new Date(at.toLocaleString("en-US", { timeZone: CENTER_TZ }));
-  return asCenter.getTime() - asUTC.getTime();
-}
-
-/**
- * Converteix una hora de rellotge del centre ("2026-08-01", 7) en l'instant
- * absolut correcte. El servidor corre en UTC, així que interpretar la cadena
- * directament desplaçaria el bloqueig una o dues hores segons l'horari d'estiu.
- */
-function centerLocalToInstant(dateStr: string, hhmm: string): Date {
-  const naive = Date.parse(`${dateStr}T${hhmm}:00Z`);
-  if (Number.isNaN(naive)) throw new Error("Data no vàlida.");
-  const offset = centerOffsetMs(new Date(naive));
-  const first = new Date(naive - offset);
-  // Segona passada: prop d'un canvi d'hora, l'offset del resultat pot diferir.
-  const refined = centerOffsetMs(first);
-  return refined === offset ? first : new Date(naive - refined);
-}
 
 /** Llegeix el rang del formulari, en mode "dia complet" o amb hores exactes. */
 function parseRange(fd: FormData): { startAt: string; endAt: string } {
