@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClientsTable } from "@/components/clients-table";
 import { listClients } from "@/lib/data/clients";
+import { getTrainer } from "@/lib/data/trainers";
 import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
@@ -10,8 +11,19 @@ const TABS = [
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientsPage() {
-  const clients = await listClients();
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ trainer?: string }>;
+}) {
+  const { trainer: trainerId } = await searchParams;
+
+  // El filtre per entrenador es resol al servidor i per id: listClients ja
+  // l'accepta, i així evitem ambigüitats si dos entrenadors es diuen igual.
+  const [clients, trainer] = await Promise.all([
+    listClients(trainerId),
+    trainerId ? getTrainer(trainerId) : null,
+  ]);
 
   return (
     <>
@@ -35,7 +47,10 @@ export default async function ClientsPage() {
           </Link>
         </div>
 
-        <ClientsTable clients={clients} />
+        <ClientsTable
+          clients={clients}
+          trainerFilter={trainerId ? { name: trainer?.fullName ?? null } : null}
+        />
       </main>
     </>
   );

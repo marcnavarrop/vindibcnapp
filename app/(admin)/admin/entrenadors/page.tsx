@@ -74,9 +74,17 @@ export default async function EntrenadorsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="font-bold text-brand-purple">
-                      {t.clientCount}
-                    </span>
+                    {t.clientCount > 0 ? (
+                      <Link
+                        href={`/admin/clients?trainer=${t.id}`}
+                        title={`Veure els clients de ${t.fullName}`}
+                        className="font-bold text-brand-purple underline decoration-brand-purple/30 underline-offset-2 hover:text-brand-orange hover:decoration-brand-orange/40"
+                      >
+                        {t.clientCount}
+                      </Link>
+                    ) : (
+                      <span className="font-bold text-brand-muted">0</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-4">

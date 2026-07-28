@@ -6,7 +6,17 @@ import type { ClientListItem } from "@/lib/data/clients";
 import { ResendInviteButton } from "@/components/resend-invite-button";
 import { normalizeForSearch, digitsOnly } from "@/lib/utils";
 
-export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
+export function ClientsTable({
+  clients,
+  trainerFilter = null,
+}: {
+  clients: ClientListItem[];
+  /**
+   * Filtre per entrenador actiu, resolt al servidor via ?trainer=<id>.
+   * `name` és null si l'id no resol cap entrenador (enllaç antic o eliminat).
+   */
+  trainerFilter?: { name: string | null } | null;
+}) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -14,11 +24,12 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
     if (!q) return clients;
     const qDigits = digitsOnly(query);
     return clients.filter((c) => {
+      // Només dades del propi client: cercar "Laia" no ha de retornar els
+      // clients de l'entrenadora Laia. Per això hi ha el filtre d'entrenador.
       if (
         normalizeForSearch(c.fullName).includes(q) ||
         normalizeForSearch(c.email).includes(q) ||
-        normalizeForSearch(c.phone).includes(q) ||
-        normalizeForSearch(c.trainerName).includes(q)
+        normalizeForSearch(c.phone).includes(q)
       )
         return true;
       // El telèfon es desa amb prefix i espais ("+34 600 100 001"): comparant
@@ -55,6 +66,30 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
         <span className="text-sm whitespace-nowrap text-brand-muted">
           {filtered.length} de {clients.length}
         </span>
+
+        {trainerFilter && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple/10 py-1 pr-1 pl-3 text-xs font-bold text-brand-purple">
+            Entrenador/a: {trainerFilter.name ?? "desconegut/da"}
+            <Link
+              href="/admin/clients"
+              aria-label="Treure el filtre d'entrenador/a"
+              title="Treure el filtre"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-brand-purple/20"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                className="h-3 w-3"
+              >
+                <path d="M3 3l6 6M9 3l-6 6" />
+              </svg>
+            </Link>
+          </span>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
@@ -111,7 +146,11 @@ export function ClientsTable({ clients }: { clients: ClientListItem[] }) {
                   colSpan={6}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
-                  No s&apos;ha trobat cap client amb aquesta cerca.
+                  {clients.length > 0 || !trainerFilter
+                    ? "No s'ha trobat cap client amb aquesta cerca."
+                    : trainerFilter.name
+                      ? `${trainerFilter.name} no té cap client assignat.`
+                      : "Aquest entrenador/a ja no existeix."}
                 </td>
               </tr>
             )}
