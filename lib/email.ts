@@ -1,4 +1,5 @@
 import "server-only";
+import { USE_MOCK } from "@/lib/config";
 
 /**
  * Transport d'emails de baix nivell amb Resend. Configurable per entorn perquè
@@ -17,7 +18,13 @@ import "server-only";
  * destinatari. (En mode de proves, Resend només reparteix a la teva pròpia
  * adreça verificada.)
  */
-const FROM = process.env.NOTIFICATIONS_FROM_EMAIL ?? "onboarding@resend.dev";
+/**
+ * Es llegeix a cada enviament, no al carregar el mòdul: així un canvi de
+ * variable a l'entorn no queda capturat per una instància ja calenta.
+ */
+function fromAddress(): string {
+  return process.env.NOTIFICATIONS_FROM_EMAIL ?? "onboarding@resend.dev";
+}
 
 /** Adreça del centre per als avisos interns (opcional). */
 export const CENTER_EMAIL = process.env.CENTER_EMAIL ?? null;
@@ -26,7 +33,7 @@ export function isEmailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
-export type SendResult = { ok: boolean; error?: string };
+export type SendResult = { ok: boolean; error?: string; id?: string };
 
 /** Envia un correu. Mai llança: retorna {ok:false, error} si falla. */
 export async function sendEmail(input: {
@@ -35,6 +42,11 @@ export async function sendEmail(input: {
   html: string;
   text?: string;
 }): Promise<SendResult> {
+  // En mode demo mai enviem de veritat: hi ha RESEND_API_KEY en entorns de
+  // desenvolupament, i sense aquest tall una alta de prova enviava correus
+  // reals (amb el remitent de proves) a bústies reals.
+  if (USE_MOCK) return { ok: true, id: "mock" };
+
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false, error: "RESEND_API_KEY no configurada" };
   try {
@@ -45,7 +57,7 @@ export async function sendEmail(input: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: FROM,
+        from: fromAddress(),
         to: input.to,
         subject: input.subject,
         html: input.html,
@@ -56,7 +68,8 @@ export async function sendEmail(input: {
       const body = await res.text().catch(() => "");
       return { ok: false, error: `Resend ${res.status}: ${body.slice(0, 300)}` };
     }
-    return { ok: true };
+    const json = (await res.json().catch(() => null)) as { id?: string } | null;
+    return { ok: true, id: json?.id };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "error d'enviament" };
   }

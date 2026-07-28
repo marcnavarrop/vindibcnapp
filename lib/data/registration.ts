@@ -107,12 +107,18 @@ async function notifyAdmins(
     url,
   };
 
-  const admin = createAdminClient();
-  const { data: admins } = await admin
-    .from("profiles")
-    .select("id, email, phone, full_name")
-    .eq("role", "admin");
-  for (const a of admins ?? []) {
+  // En mode demo els destinataris surten del store simulat: si no, una alta de
+  // prova enviaria avisos a les bústies reals dels admins de producció.
+  const admins = USE_MOCK
+    ? getStore().profiles.filter((p) => p.role === "admin")
+    : (
+        await createAdminClient()
+          .from("profiles")
+          .select("id, email, phone, full_name")
+          .eq("role", "admin")
+      ).data ?? [];
+
+  for (const a of admins) {
     await notify({
       type: "new_client_registered",
       recipient: { profileId: a.id, email: a.email, phone: a.phone, name: a.full_name },
