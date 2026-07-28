@@ -23,11 +23,13 @@ export async function recordRegistrationConsentAction(
  * autenticat per la sessió (tras el signUp, amb "Confirm email" desactivat, ja
  * hi ha sessió). Best-effort: no trenca el registre.
  */
-export async function notifyNewRegistrationAction(): Promise<void> {
+export async function notifyNewRegistrationAction(
+  referralCode?: string,
+): Promise<void> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return;
-  await onNewClientRegistered(user.id);
+  await onNewClientRegistered(user.id, referralCode);
 }

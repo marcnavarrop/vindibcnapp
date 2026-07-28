@@ -33,10 +33,10 @@ export const seedProfiles: Profile[] = [
 ];
 
 export const seedClients: Client[] = [
-  { id: "c-ana", profile_id: "u-client-ana", assigned_trainer_id: "u-trainer-laia", notes: "Lesió prèvia de genoll. Treballar mobilitat.", created_at: now },
-  { id: "c-pau", profile_id: "u-client-pau", assigned_trainer_id: "u-trainer-laia", notes: null, created_at: now },
-  { id: "c-marta", profile_id: "u-client-marta", assigned_trainer_id: "u-trainer-jordi", notes: "Prefereix horari de matí.", created_at: now },
-  { id: "c-oriol", profile_id: "u-client-oriol", assigned_trainer_id: null, notes: "Pendent d'assignar entrenador/a.", created_at: now },
+  { id: "c-ana",   profile_id: "u-client-ana",   assigned_trainer_id: "u-trainer-laia",  notes: "Lesió prèvia de genoll. Treballar mobilitat.", referral_code: "ANF-2K4M", referred_by_client_id: null,    created_at: now },
+  { id: "c-pau",   profile_id: "u-client-pau",   assigned_trainer_id: "u-trainer-laia",  notes: null,                                           referral_code: "PAU-7V3S", referred_by_client_id: null,    created_at: now },
+  { id: "c-marta", profile_id: "u-client-marta", assigned_trainer_id: "u-trainer-jordi", notes: "Prefereix horari de matí.",                     referral_code: "MAR-9B5W", referred_by_client_id: "c-ana", created_at: now },
+  { id: "c-oriol", profile_id: "u-client-oriol", assigned_trainer_id: null,              notes: "Pendent d'assignar entrenador/a.",               referral_code: "RCA-4J8P", referred_by_client_id: null,    created_at: now },
 ];
 
 export const seedBonos: Bono[] = [
@@ -182,6 +182,32 @@ export const seedClientDocuments: ClientDocument[] = [
     mime_type: "application/pdf",
     description: "Informe de la ressonància del genoll (març 2026)",
     uploaded_at: "2026-03-15T10:00:00.000Z",
+  },
+];
+
+type ReferralReward = Database["public"]["Tables"]["referral_rewards"]["Row"];
+
+// Demo: Ana (c-ana) referred Marta (c-marta). Both have a pending reward.
+export const seedReferralRewards: ReferralReward[] = [
+  {
+    id: "rr-ana-reward",
+    referrer_client_id: "c-ana",
+    referee_client_id: "c-marta",
+    beneficiary_client_id: "c-ana",
+    discount_percent: 10,
+    status: "pending",
+    used_in_bono_id: null,
+    created_at: now,
+  },
+  {
+    id: "rr-marta-reward",
+    referrer_client_id: "c-ana",
+    referee_client_id: "c-marta",
+    beneficiary_client_id: "c-marta",
+    discount_percent: 10,
+    status: "pending",
+    used_in_bono_id: null,
+    created_at: now,
   },
 ];
 

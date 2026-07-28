@@ -2,10 +2,13 @@ import { getViewer } from "@/lib/auth";
 import { getProfileSettings } from "@/lib/data/clients";
 import { getConsentStatus } from "@/lib/data/consents";
 import { getPreferences } from "@/lib/notifications/preferences";
+import { getCenterSettings } from "@/lib/data/center-settings";
+import { getReferralStats } from "@/lib/data/referral";
 import { ProfileSettingsForm } from "@/components/forms/profile-settings-form";
 import { HealthConsentForm } from "@/components/forms/health-consent-form";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
 import { ChangePasswordForm } from "@/components/forms/change-password-form";
+import { ReferralCodeCard } from "@/components/referral-code-card";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { USE_MOCK } from "@/lib/config";
 import { formatDate } from "@/lib/labels";
@@ -15,21 +18,34 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientConfigPage() {
   const viewer = await getViewer();
-  const [settings, consent, prefs] = await Promise.all([
+  const [settings, consent, prefs, centerSettings, referralStats] = await Promise.all([
     viewer ? getProfileSettings(viewer.id) : Promise.resolve(null),
     viewer ? getConsentStatus(viewer.id) : Promise.resolve(null),
     viewer ? getPreferences(viewer.id) : Promise.resolve(null),
+    getCenterSettings(),
+    viewer ? getReferralStats(viewer.id) : Promise.resolve(null),
   ]);
 
   const tabs = [
     {
       label: "Dades personals",
-      content: settings ? (
-        <ProfileSettingsForm settings={settings} />
-      ) : (
-        <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-          No s&apos;ha pogut carregar el teu perfil.
-        </p>
+      content: (
+        <div className="flex flex-col gap-4">
+          {settings ? (
+            <ProfileSettingsForm settings={settings} />
+          ) : (
+            <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
+              No s&apos;ha pogut carregar el teu perfil.
+            </p>
+          )}
+          {centerSettings.referralProgramActive && referralStats && (
+            <ReferralCodeCard
+              code={referralStats.code}
+              referredCount={referralStats.referredCount}
+              discountPercent={centerSettings.referralDiscountPercent}
+            />
+          )}
+        </div>
       ),
     },
     {

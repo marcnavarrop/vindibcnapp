@@ -10,6 +10,8 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
   const [trainersSeColleagues, setTrainersSeColleagues] = useState(
     settings.trainersSeColleaguesReservations,
   );
+  const [referralActive, setReferralActive] = useState(settings.referralProgramActive);
+  const [referralReferee, setReferralReferee] = useState(settings.referralRewardReferee);
 
   return (
     <form
@@ -79,6 +81,94 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           value={trainersSeColleagues ? "true" : "false"}
         />
       </div>
+
+      {/* ── Sistema de referits ── */}
+      <div className="border-t border-brand-border pt-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-brand-dark">
+              Sistema de referits actiu
+            </p>
+            <p className="mt-0.5 text-xs text-brand-muted">
+              Permet que els clients comparteixin el seu codi personal per
+              obtenir descomptes quan algú nou s&apos;apunta gràcies a ells.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={referralActive}
+            onClick={() => setReferralActive((v) => !v)}
+            className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple ${
+              referralActive ? "bg-brand-purple" : "bg-brand-border"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                referralActive ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+        <input type="hidden" name="referralProgramActive" value={referralActive ? "true" : "false"} />
+      </div>
+
+      {referralActive && (
+        <>
+          <div className="border-t border-brand-border pt-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-brand-dark">
+                  Recompensar també el nou client
+                </p>
+                <p className="mt-0.5 text-xs text-brand-muted">
+                  A més del client que refereix, el nou client (referit) també
+                  rep el mateix descompte en la seva propera compra.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={referralReferee}
+                onClick={() => setReferralReferee((v) => !v)}
+                className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple ${
+                  referralReferee ? "bg-brand-purple" : "bg-brand-border"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    referralReferee ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+            <input type="hidden" name="referralRewardReferee" value={referralReferee ? "true" : "false"} />
+          </div>
+
+          <div className="border-t border-brand-border pt-4">
+            <label htmlFor="referralDiscountPercent" className="mb-1 block text-sm font-bold text-brand-dark">
+              Percentatge de descompte de referit
+            </label>
+            <p className="mb-3 text-xs text-brand-muted">
+              S&apos;aplica tant al client que refereix com al nou client (si l&apos;opció anterior està activa).
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                id="referralDiscountPercent"
+                name="referralDiscountPercent"
+                type="number"
+                min={1}
+                max={100}
+                step={0.5}
+                required
+                defaultValue={settings.referralDiscountPercent}
+                className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none"
+              />
+              <span className="text-sm text-brand-muted">%</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {state.error && (
         <p className="text-sm text-error">{state.error}</p>

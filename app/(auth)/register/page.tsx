@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -62,7 +63,7 @@ export default function RegisterPage() {
       }
       // Email de benvinguda + avís de nou client (best-effort, no bloqueja).
       try {
-        await notifyNewRegistrationAction();
+        await notifyNewRegistrationAction(referralCode.trim() || undefined);
       } catch {
         // ignorem: els avisos són secundaris.
       }
@@ -130,6 +131,15 @@ export default function RegisterPage() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <Field
+            label="Codi de referit (opcional)"
+            name="referralCode"
+            type="text"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+            placeholder="Ex: ANF-2K4M"
           />
 
           <label className="flex items-start gap-2 text-sm text-brand-charcoal">

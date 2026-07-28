@@ -21,9 +21,22 @@ export async function updateCenterSettingsAction(
     return { error: "El límit màxim és 168 hores (7 dies)." };
 
   const trainersSeColleagues = fd.get("trainersSeColleaguesReservations") === "true";
+  const referralProgramActive = fd.get("referralProgramActive") === "true";
+  const referralRewardReferee = fd.get("referralRewardReferee") === "true";
+  const rawPct = fd.get("referralDiscountPercent") as string | null;
+  const referralDiscountPercent = rawPct ? parseFloat(rawPct) : 10;
+  if (referralProgramActive && (isNaN(referralDiscountPercent) || referralDiscountPercent <= 0 || referralDiscountPercent > 100)) {
+    return { error: "El percentatge de descompte ha de ser entre 1 i 100." };
+  }
 
   try {
-    await updateCenterSettings({ minCancellationHours: hours, trainersSeColleaguesReservations: trainersSeColleagues });
+    await updateCenterSettings({
+      minCancellationHours: hours,
+      trainersSeColleaguesReservations: trainersSeColleagues,
+      referralProgramActive,
+      referralRewardReferee,
+      referralDiscountPercent: referralProgramActive ? referralDiscountPercent : undefined,
+    });
   } catch (e) {
     return {
       error: e instanceof Error ? e.message : "Error en desar la configuració.",

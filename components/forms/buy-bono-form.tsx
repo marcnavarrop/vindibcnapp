@@ -9,6 +9,7 @@ import {
 } from "@/app/(client)/client/bonos/comprar/actions";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
+import type { PendingReward } from "@/lib/data/referral";
 import type { ServiceType } from "@/types/database";
 import { PriceDisplay } from "@/components/ui/price-display";
 
@@ -356,9 +357,11 @@ function Step2Package({
 export function BuyBonoForm({
   services,
   effectivePrices = {},
+  pendingReferralReward = null,
 }: {
   services: Service[];
   effectivePrices?: Record<string, EffectivePrice>;
+  pendingReferralReward?: PendingReward | null;
 }) {
   const [state, formAction] = useActionState(
     createPendingBonoAction,
@@ -471,6 +474,27 @@ export function BuyBonoForm({
               </p>
             </div>
           )}
+
+          {/* Banner recompensa de referit */}
+          {pendingReferralReward && selected && (() => {
+            const ep = effectivePrices[selected.id];
+            const promoDiscountPct = ep?.hasDiscount && selected.price > 0
+              ? ((selected.price - ep.finalPrice) / selected.price) * 100
+              : 0;
+            const useReferral = pendingReferralReward.discountPercent > promoDiscountPct;
+            return (
+              <div className={`rounded-xl border px-4 py-3 text-sm ${useReferral ? "border-brand-purple/30 bg-brand-purple/5" : "border-brand-border bg-brand-bg"}`}>
+                <p className={`font-bold ${useReferral ? "text-brand-purple" : "text-brand-muted"}`}>
+                  {useReferral ? "✓" : "·"} Descompte de referit: {pendingReferralReward.discountPercent}% off
+                </p>
+                <p className="mt-0.5 text-xs text-brand-muted">
+                  {useReferral
+                    ? `S'aplica automàticament a aquesta compra (millor descompte disponible).`
+                    : `L'oferta del catàleg (${promoDiscountPct.toFixed(0)}%) és millor — el descompte de referit es guardarà per a la propera compra.`}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Mètode de pagament */}
           <div className="flex flex-col gap-2">

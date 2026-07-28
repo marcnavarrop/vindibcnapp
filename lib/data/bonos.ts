@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { createPayment, bonoConcept } from "@/lib/data/payments";
+import { maybeGenerateReferralRewards, applyReferralReward, getPendingReferralReward } from "@/lib/data/referral";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
 
 export type BonoListItem = {
@@ -135,12 +136,18 @@ export async function createBono(input: BonoInput): Promise<string> {
 // service_role: el cliente solo envía el `serviceId`; el precio y las sesiones
 // salen del catálogo, nunca del cliente.
 
-/** Crea un bono 'pending_payment' para el propio cliente (a pagar en el centro). */
+/**
+ * Crea un bono 'pending_payment' per al client.
+ * Aplica automàticament el millor descompte entre:
+ *   a) la promoció activa del catàleg (getEffectivePrice)
+ *   b) un referral_reward pendent del client
+ * No es combinen: s'aplica només el que dóna un % major.
+ * Si s'aplica la recompensa de referit, queda marcada com a 'used'.
+ */
 export async function createPendingBono(input: {
   profileId: string;
   serviceId: string;
 }): Promise<string> {
-  // Importació dinàmica per evitar cicle de mòduls (promotions → bonos → promotions)
   const { getEffectivePrice } = await import("@/lib/data/promotions");
 
   if (USE_MOCK) {
@@ -160,6 +167,19 @@ export async function createPendingBono(input: {
       active: serviceRow.active,
     };
     const ep = await getEffectivePrice(service);
+    const promoDiscountPct = serviceRow.price > 0
+      ? ((serviceRow.price - ep.finalPrice) / serviceRow.price) * 100
+      : 0;
+
+    const pendingReward = await getPendingReferralReward(input.profileId);
+    const useReferral =
+      pendingReward !== null &&
+      pendingReward.discountPercent > promoDiscountPct;
+
+    const finalPrice = useReferral
+      ? Math.round(serviceRow.price * (1 - pendingReward!.discountPercent / 100) * 100) / 100
+      : ep.finalPrice;
+
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     store.bonos.push({
@@ -168,12 +188,13 @@ export async function createPendingBono(input: {
       service_type: serviceRow.service_type,
       total_sessions: serviceRow.default_sessions,
       remaining_sessions: serviceRow.default_sessions,
-      price: ep.finalPrice,
+      price: finalPrice,
       status: "pending_payment",
       purchased_at: now,
       created_at: now,
     });
     saveStore(store);
+    if (useReferral) await applyReferralReward(pendingReward!.id, id);
     return id;
   }
 
@@ -202,6 +223,18 @@ export async function createPendingBono(input: {
     active: serviceRow.active,
   };
   const ep = await getEffectivePrice(service);
+  const promoDiscountPct = serviceRow.price > 0
+    ? ((serviceRow.price - ep.finalPrice) / serviceRow.price) * 100
+    : 0;
+
+  const pendingReward = await getPendingReferralReward(input.profileId);
+  const useReferral =
+    pendingReward !== null &&
+    pendingReward.discountPercent > promoDiscountPct;
+
+  const finalPrice = useReferral
+    ? Math.round(serviceRow.price * (1 - pendingReward!.discountPercent / 100) * 100) / 100
+    : ep.finalPrice;
 
   const { data, error } = await admin
     .from("bonos")
@@ -210,12 +243,13 @@ export async function createPendingBono(input: {
       service_type: serviceRow.service_type,
       total_sessions: serviceRow.default_sessions,
       remaining_sessions: serviceRow.default_sessions,
-      price: ep.finalPrice,
+      price: finalPrice,
       status: "pending_payment",
     })
     .select("id")
     .single();
   if (error || !data) throw new Error("No s'ha pogut crear el bo.");
+  if (useReferral) await applyReferralReward(pendingReward!.id, data.id);
   return data.id;
 }
 
@@ -230,6 +264,12 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
     if (!bono) throw new Error("Bo no trobat.");
     if (bono.status !== "pending_payment")
       throw new Error("Aquest bo no està pendent de pagament.");
+
+    // Check if this is the FIRST paid bono for this client (to generate referral rewards)
+    const isFirstPaidBono = !store.bonos.some(
+      (b) => b.client_id === bono.client_id && b.id !== bonoId && b.status === "active",
+    );
+
     bono.status = "active";
     saveStore(store);
     await createPayment({
@@ -239,6 +279,7 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
       method: "cash",
       concept: bonoConcept(bono.service_type, bono.total_sessions),
     });
+    if (isFirstPaidBono) await maybeGenerateReferralRewards(bono.client_id);
     return;
   }
 
@@ -265,4 +306,7 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
     method: "cash",
     concept: bonoConcept(bono.service_type, bono.total_sessions),
   });
+  // Generate referral rewards if this is the first paid bono for this client
+  // (maybeGenerateReferralRewards is idempotent — safe to call unconditionally)
+  await maybeGenerateReferralRewards(bono.client_id);
 }

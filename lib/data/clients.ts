@@ -345,6 +345,8 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
       profile_id: profileId,
       assigned_trainer_id: input.assignedTrainerId,
       notes: input.notes,
+      referral_code: null,
+      referred_by_client_id: null,
       created_at: createdAt,
     });
     saveStore(store);

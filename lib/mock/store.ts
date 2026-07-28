@@ -21,6 +21,7 @@ import {
   seedNotificationLog,
   seedPromotions,
   seedClientDocuments,
+  seedReferralRewards,
 } from "./seed";
 import type { Database } from "@/types/database";
 
@@ -45,6 +46,7 @@ export type Store = {
   notification_log: Tables["notification_log"]["Row"][];
   promotions: Tables["promotions"]["Row"][];
   client_documents: Tables["client_documents"]["Row"][];
+  referral_rewards: Tables["referral_rewards"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
 };
 
@@ -78,7 +80,8 @@ function fromSeed(): Store {
     notification_log: structuredClone(seedNotificationLog),
     promotions: structuredClone(seedPromotions),
     client_documents: structuredClone(seedClientDocuments),
-    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    referral_rewards: structuredClone(seedReferralRewards),
+    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
 }
 

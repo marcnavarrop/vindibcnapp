@@ -1,5 +1,7 @@
+import { getViewer } from "@/lib/auth";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
+import { getPendingReferralReward } from "@/lib/data/referral";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
 import { RouteTabs } from "@/components/ui/route-tabs";
 
@@ -11,8 +13,12 @@ const BONO_TABS = [
 ];
 
 export default async function ComprarBonoPage() {
-  const services = await listActiveServices();
-  const effectivePricesMap = await getEffectivePrices(services);
+  const viewer = await getViewer();
+  const [services, effectivePricesMap, pendingReferralReward] = await Promise.all([
+    listActiveServices(),
+    getEffectivePrices(await listActiveServices()),
+    viewer ? getPendingReferralReward(viewer.id) : null,
+  ]);
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   return (
@@ -23,7 +29,11 @@ export default async function ComprarBonoPage() {
         Tria un servei i com vols pagar-lo.
       </p>
 
-      <BuyBonoForm services={services} effectivePrices={effectivePrices} />
+      <BuyBonoForm
+        services={services}
+        effectivePrices={effectivePrices}
+        pendingReferralReward={pendingReferralReward}
+      />
     </main>
   );
 }

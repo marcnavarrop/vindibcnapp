@@ -24,6 +24,7 @@ export type BonoStatus =
   | "completed"
   | "cancelled"
   | "pending_payment";
+export type ReferralRewardStatus = "pending" | "used" | "expired";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type TrialStatus =
   | "pending"
@@ -105,6 +106,8 @@ export interface Database {
           profile_id: string;
           assigned_trainer_id: string | null;
           notes: string | null;
+          referral_code: string | null;
+          referred_by_client_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -112,6 +115,8 @@ export interface Database {
           profile_id: string;
           assigned_trainer_id?: string | null;
           notes?: string | null;
+          referral_code?: string | null;
+          referred_by_client_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -119,6 +124,8 @@ export interface Database {
           profile_id?: string;
           assigned_trainer_id?: string | null;
           notes?: string | null;
+          referral_code?: string | null;
+          referred_by_client_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -795,6 +802,9 @@ export interface Database {
           id: boolean;
           min_cancellation_hours: number;
           trainers_see_colleagues_reservations: boolean;
+          referral_program_active: boolean;
+          referral_reward_referee: boolean;
+          referral_discount_percent: number;
           created_at: string;
           updated_at: string;
         };
@@ -802,13 +812,46 @@ export interface Database {
           id?: boolean;
           min_cancellation_hours?: number;
           trainers_see_colleagues_reservations?: boolean;
+          referral_program_active?: boolean;
+          referral_reward_referee?: boolean;
+          referral_discount_percent?: number;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           min_cancellation_hours?: number;
           trainers_see_colleagues_reservations?: boolean;
+          referral_program_active?: boolean;
+          referral_reward_referee?: boolean;
+          referral_discount_percent?: number;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      referral_rewards: {
+        Row: {
+          id: string;
+          referrer_client_id: string;
+          referee_client_id: string;
+          beneficiary_client_id: string;
+          discount_percent: number;
+          status: ReferralRewardStatus;
+          used_in_bono_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referrer_client_id: string;
+          referee_client_id: string;
+          beneficiary_client_id: string;
+          discount_percent: number;
+          status?: ReferralRewardStatus;
+          used_in_bono_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          status?: ReferralRewardStatus;
+          used_in_bono_id?: string | null;
         };
         Relationships: [];
       };

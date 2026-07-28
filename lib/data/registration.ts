@@ -18,10 +18,13 @@ import { notify } from "@/lib/notifications";
  * existeix (perquè ja s'ha processat o perquè l'ha creat un admin), no fa res.
  * Best-effort absolut: mai llança.
  */
-export async function onNewClientRegistered(profileId: string): Promise<void> {
+export async function onNewClientRegistered(
+  profileId: string,
+  referralCode?: string,
+): Promise<void> {
   try {
     if (USE_MOCK) {
-      await mockFlow(profileId);
+      await mockFlow(profileId, referralCode);
       return;
     }
 
@@ -41,9 +44,23 @@ export async function onNewClientRegistered(profileId: string): Promise<void> {
       .maybeSingle();
     if (existing) return;
 
+    // Resolve referral code if provided and program is active
+    let referredByClientId: string | null = null;
+    if (referralCode?.trim()) {
+      const { getCenterSettings } = await import("@/lib/data/center-settings");
+      const { validateReferralCode } = await import("@/lib/data/referral");
+      const settings = await getCenterSettings();
+      if (settings.referralProgramActive) {
+        referredByClientId = await validateReferralCode(referralCode.trim());
+      }
+    }
+
     const { data: created } = await admin
       .from("clients")
-      .insert({ profile_id: profileId })
+      .insert({
+        profile_id: profileId,
+        ...(referredByClientId ? { referred_by_client_id: referredByClientId } : {}),
+      })
       .select("id")
       .single();
     const clientId = created?.id ?? null;
@@ -115,17 +132,45 @@ async function notifyAdmins(
 }
 
 /** Versió mock (per completesa; el registre real no s'executa en mode demo). */
-async function mockFlow(profileId: string): Promise<void> {
+async function mockFlow(profileId: string, referralCode?: string): Promise<void> {
   const store = getStore();
   const profile = store.profiles.find((p) => p.id === profileId);
   if (!profile || profile.role !== "client") return;
   if (store.clients.some((c) => c.profile_id === profileId)) return;
+
+  let referredByClientId: string | null = null;
+  if (referralCode?.trim()) {
+    const { getCenterSettings } = await import("@/lib/data/center-settings");
+    const { validateReferralCode, generateMockReferralCode } = await import("@/lib/data/referral");
+    const settings = await getCenterSettings();
+    if (settings.referralProgramActive) {
+      referredByClientId = await validateReferralCode(referralCode.trim());
+    }
+    const clientId = crypto.randomUUID();
+    store.clients.push({
+      id: clientId,
+      profile_id: profileId,
+      assigned_trainer_id: null,
+      notes: null,
+      referral_code: generateMockReferralCode(profile.full_name ?? "USR"),
+      referred_by_client_id: referredByClientId,
+      created_at: new Date().toISOString(),
+    });
+    saveStore(store);
+    await sendWelcome(profileId, profile.email, profile.full_name);
+    await notifyAdmins(profile.full_name, profile.email, clientId);
+    return;
+  }
+
+  const { generateMockReferralCode } = await import("@/lib/data/referral");
   const clientId = crypto.randomUUID();
   store.clients.push({
     id: clientId,
     profile_id: profileId,
     assigned_trainer_id: null,
     notes: null,
+    referral_code: generateMockReferralCode(profile.full_name ?? "USR"),
+    referred_by_client_id: null,
     created_at: new Date().toISOString(),
   });
   saveStore(store);
