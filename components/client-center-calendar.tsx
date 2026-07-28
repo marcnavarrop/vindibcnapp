@@ -11,7 +11,10 @@ import {
 import {
   weekdayOf,
   localDateStr,
+  isHourBlocked,
+  blocksOf,
   type TrainerRuleLite,
+  type TrainerBlockLite,
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { ServiceType } from "@/types/database";
@@ -116,10 +119,15 @@ const toLocalInput = (d: Date) =>
 /** Servicios que un profesional ofrece en (fecha, hora) según sus reglas. */
 function offeredServices(
   rules: TrainerRuleLite[],
+  blocks: TrainerBlockLite[],
   trainerId: string,
   date: Date,
   h: number,
 ): Set<ServiceType> {
+  // Un bloqueig temporal tapa la regla setmanal: la franja deixa de ser
+  // reservable encara que hi hagi horari definit.
+  if (isHourBlocked(blocksOf(blocks, trainerId), date, h))
+    return new Set<ServiceType>();
   const wd = weekdayOf(date);
   const day = localDateStr(date);
   const out = new Set<ServiceType>();
@@ -164,7 +172,8 @@ export function ClientCenterCalendar({
   minCancellationHours?: number;
 }) {
   const router = useRouter();
-  const { bonoTypes, trainers, rules, reservations, assignedTrainerId } = data;
+  const { bonoTypes, trainers, rules, blocks, reservations, assignedTrainerId } =
+    data;
 
   const [view, setView] = useState<"day" | "week">("week");
   const [offset, setOffset] = useState(0); // en días (día) o semanas (semana)
@@ -264,7 +273,7 @@ export function ClientCenterCalendar({
       const groupHere = resHere.filter(
         (r) => r.serviceType === "grupo_reducido",
       );
-      const offered = offeredServices(rules, t.id, cellDate, h);
+      const offered = offeredServices(rules, blocks, t.id, cellDate, h);
 
       // Mis sesiones (siempre visibles).
       for (const r of ownHere)

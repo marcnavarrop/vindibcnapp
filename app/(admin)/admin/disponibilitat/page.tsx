@@ -8,11 +8,15 @@ const TABS = [
 ];
 import { listTrainersDetailed } from "@/lib/data/trainers";
 import { listAvailabilityRules } from "@/lib/data/availability";
+import { listUpcomingBlocks } from "@/lib/data/availability-blocks";
 import { AvailabilityManager } from "@/components/availability-manager";
+import { AvailabilityBlocksManager } from "@/components/availability-blocks-manager";
 import {
   createAvailabilityAdminAction,
   updateAvailabilityAdminAction,
   deleteAvailabilityAdminAction,
+  createBlockAdminAction,
+  deleteBlockAdminAction,
 } from "@/app/(admin)/admin/disponibilitat/actions";
 import { clsx } from "@/lib/utils";
 
@@ -27,7 +31,12 @@ export default async function AdminDisponibilitatPage({
   const trainers = await listTrainersDetailed();
   const selected =
     trainers.find((t) => t.id === selectedId) ?? trainers[0] ?? null;
-  const rules = selected ? await listAvailabilityRules(selected.id) : [];
+  const [rules, blocks] = selected
+    ? await Promise.all([
+        listAvailabilityRules(selected.id),
+        listUpcomingBlocks(selected.id),
+      ])
+    : [[], []];
   const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
@@ -70,6 +79,14 @@ export default async function AdminDisponibilitatPage({
               createAction={createAvailabilityAdminAction.bind(null, selected.id)}
               updateAction={updateAvailabilityAdminAction}
               deleteAction={deleteAvailabilityAdminAction}
+            />
+          )}
+
+          {selected && (
+            <AvailabilityBlocksManager
+              blocks={blocks}
+              createAction={createBlockAdminAction.bind(null, selected.id)}
+              deleteAction={deleteBlockAdminAction}
             />
           )}
         </>

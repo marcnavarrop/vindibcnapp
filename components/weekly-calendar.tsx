@@ -11,7 +11,9 @@ import {
 } from "@/lib/labels";
 import {
   isHourAvailable,
+  isHourBlocked,
   type AvailabilityRuleLite,
+  type AvailabilityBlockLite,
 } from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
@@ -129,6 +131,7 @@ export function WeeklyCalendar({
   completeAction,
   rescheduleAction,
   availability,
+  blocks,
   trials = [],
   manageableTrialIds = [],
   acceptTrialAction,
@@ -143,6 +146,8 @@ export function WeeklyCalendar({
   rescheduleAction: ReservationAction;
   /** Si se pasa, sombrea las franjas dentro de la disponibilidad declarada. */
   availability?: AvailabilityRuleLite[];
+  /** Bloquejos temporals: tapen la disponibilitat setmanal al ombrejat. */
+  blocks?: AvailabilityBlockLite[];
   /** Sessions de prova (pending/confirmed) per pintar diferenciades. */
   trials?: TrialHoldItem[];
   manageableTrialIds?: string[];
@@ -294,7 +299,9 @@ export function WeeklyCalendar({
                     )}`,
                   );
                 const inAvailability =
-                  availability && isHourAvailable(availability, slot, h);
+                  availability &&
+                  isHourAvailable(availability, slot, h) &&
+                  !isHourBlocked(blocks ?? [], slot, h);
                 return (
                   <div
                     key={dayIdx}

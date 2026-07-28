@@ -11,9 +11,12 @@ import {
 } from "@/lib/labels";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
-import type {
-  AvailabilityRuleLite,
-  TrainerRuleLite,
+import {
+  blocksOf,
+  type AvailabilityRuleLite,
+  type TrainerRuleLite,
+  type AvailabilityBlockLite,
+  type TrainerBlockLite,
 } from "@/lib/availability-slots";
 import type { ServiceType } from "@/types/database";
 
@@ -37,6 +40,7 @@ export function ReservationsView({
   rescheduleAction,
   availability,
   allAvailability,
+  allBlocks,
   myTrainerId,
   trials,
   manageableTrialIds,
@@ -57,6 +61,8 @@ export function ReservationsView({
   availability?: AvailabilityRuleLite[];
   /** Totes les regles de tots els professionals (per al selector del trainer). */
   allAvailability?: TrainerRuleLite[];
+  /** Bloquejos temporals de tots els professionals (tapen l'ombrejat). */
+  allBlocks?: TrainerBlockLite[];
   /** ID del trainer autenticat (per pre-seleccionar "La meva" disponibilitat). */
   myTrainerId?: string;
   trials?: TrialHoldItem[];
@@ -139,6 +145,12 @@ export function ReservationsView({
     if (!showOwnAvail || !myTrainerId) return undefined;
     return allAvailability.filter((r) => r.trainerId === myTrainerId);
   }, [allAvailability, availability, showOwnAvail, myTrainerId]);
+
+  // Bloquejos del professional del qual s'ombreja la disponibilitat.
+  const effectiveBlocks = useMemo((): AvailabilityBlockLite[] => {
+    if (!allBlocks || !myTrainerId) return [];
+    return blocksOf(allBlocks, myTrainerId);
+  }, [allBlocks, myTrainerId]);
 
   const colleagues = trainers.filter((t) => t.id !== myTrainerId);
 
@@ -338,6 +350,7 @@ export function ReservationsView({
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}
           availability={effectiveAvailability}
+          blocks={effectiveBlocks}
           trials={trials}
           manageableTrialIds={manageableTrialIds}
           acceptTrialAction={acceptTrialAction}

@@ -6,7 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
-import { isServiceAvailable } from "@/lib/availability-slots";
+import { listBlocksLite } from "@/lib/data/availability-blocks";
+import { isServiceAvailable, isInstantBlocked } from "@/lib/availability-slots";
 import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
@@ -40,7 +41,10 @@ async function assertWithinAvailability(
   when: Date,
   serviceType: ServiceType,
 ): Promise<void> {
-  const rules = await listAvailabilityLite(trainerId);
+  const [rules, blocks] = await Promise.all([
+    listAvailabilityLite(trainerId),
+    listBlocksLite(trainerId),
+  ]);
   // El servidor corre en UTC; les regles usen hores locals del centre.
   // toLocalDate converteix el Date UTC a un Date on els mètodes locals donen
   // l'hora local del centre (CENTER_TZ), sense que calgui canviar isServiceAvailable.
@@ -48,6 +52,13 @@ async function assertWithinAvailability(
   if (!isServiceAvailable(rules, localWhen, localWhen.getHours(), serviceType))
     throw new Error(
       "Aquesta franja no està dins de la disponibilitat d'aquest professional per a aquest servei.",
+    );
+
+  // Els bloquejos són instants absoluts: es comparen amb el `when` real, sense
+  // passar per toLocalDate (si no, es desplaçarien una o dues hores).
+  if (isInstantBlocked(blocks, when))
+    throw new Error(
+      "Aquest professional té un bloqueig de disponibilitat en aquesta franja.",
     );
 }
 

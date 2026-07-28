@@ -4,12 +4,16 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { CENTER_EMAIL } from "@/lib/email";
 import { notify, getProfileContact } from "@/lib/notifications";
 import {
   isServiceAvailable,
+  isInstantBlocked,
+  blocksOf,
   localDateStr,
   type TrainerRuleLite,
+  type TrainerBlockLite,
 } from "@/lib/availability-slots";
 import { TRIAL_SERVICE, TRAINING_SERVICES } from "@/lib/data/trial-bookings.constants";
 import type { Database, ServiceType, TrialStatus } from "@/types/database";
@@ -227,6 +231,7 @@ export type CreateTrialInput = {
 /** Tria un entrenador lliure que ofereixi la prova en aquell forat. */
 function pickTrainer(
   rules: TrainerRuleLite[],
+  blocks: TrainerBlockLite[],
   when: Date,
   isFree: (trainerId: string) => boolean,
 ): string | null {
@@ -235,6 +240,8 @@ function pickTrainer(
     .map((r) => r.trainerId);
   for (const trainerId of new Set(candidates)) {
     if (!isFree(trainerId)) continue;
+    // Un bloqueig temporal el treu del sorteig encara que tingui regla.
+    if (isInstantBlocked(blocksOf(blocks, trainerId), when)) continue;
     const trainerRules = rules.filter((r) => r.trainerId === trainerId);
     if (isServiceAvailable(trainerRules, when, when.getHours(), TRIAL_SERVICE))
       return trainerId;
@@ -265,13 +272,14 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
   const rules = (await listAllTrainerRulesLite()).filter((r) =>
     r.serviceTypes.includes(TRIAL_SERVICE),
   );
+  const allBlocks = await listAllBlocksLite();
 
   if (USE_MOCK) {
     const store = getStore();
     sweepExpiredMock(store);
     assertNoDuplicateMock(store, email, phone);
     assertIpRateMock(store, input.ip, nowMs);
-    const trainerId = pickTrainer(rules, when, (tid) =>
+    const trainerId = pickTrainer(rules, allBlocks, when, (tid) =>
       isTrainerFreeMock(store, tid, scheduledAt),
     );
     if (!trainerId)
@@ -332,7 +340,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
       throw new Error("Has fet massa sol·licituds. Torna-ho a provar més tard.");
   }
 
-  const trainerId = pickTrainer(rules, when, () => true);
+  const trainerId = pickTrainer(rules, allBlocks, when, () => true);
   // Comprova de nou que el candidat estigui realment lliure (reserva + hold).
   let chosen: string | null = null;
   if (trainerId) {
@@ -345,6 +353,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
     for (const tid of new Set(rules.map((r) => r.trainerId))) {
       const trainerRules = rules.filter((r) => r.trainerId === tid);
       if (
+        !isInstantBlocked(blocksOf(allBlocks, tid), when) &&
         isServiceAvailable(trainerRules, when, when.getHours(), TRIAL_SERVICE) &&
         (await isTrainerFreeReal(admin, tid, scheduledAt))
       ) {

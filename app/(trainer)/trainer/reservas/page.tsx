@@ -11,6 +11,7 @@ import { listReservations } from "@/lib/data/reservations";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listClients, listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   cancelTrainerReservationAction,
@@ -27,12 +28,20 @@ export default async function TrainerReservasPage() {
   const trainerId = viewer?.id;
 
   // Todas las reservas (coordinación) + las de MIS clientes (gestionables).
-  const [reservations, trainers, myClients, allAvailability, trials, centerSettings] =
-    await Promise.all([
+  const [
+    reservations,
+    trainers,
+    myClients,
+    allAvailability,
+    allBlocks,
+    trials,
+    centerSettings,
+  ] = await Promise.all([
       listReservations(),
       listTrainers(),
       trainerId ? listClients(trainerId) : Promise.resolve([]),
       listAllTrainerRulesLite(),
+      listAllBlocksLite(),
       listActiveTrialHolds(),
       getCenterSettings(),
     ]);
@@ -84,6 +93,7 @@ export default async function TrainerReservasPage() {
           completeAction={completeTrainerReservationAction}
           rescheduleAction={rescheduleTrainerReservationAction}
           allAvailability={allAvailability}
+          allBlocks={allBlocks}
           myTrainerId={trainerId}
           trials={trials}
           manageableTrialIds={manageableTrialIds}

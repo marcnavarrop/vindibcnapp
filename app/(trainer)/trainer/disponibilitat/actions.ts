@@ -8,6 +8,11 @@ import {
   deleteAvailabilityRule,
 } from "@/lib/data/availability";
 import { parseServiceTypes } from "@/lib/labels";
+import { deleteAvailabilityBlock } from "@/lib/data/availability-blocks";
+import {
+  submitAvailabilityBlock,
+  type BlockFormState,
+} from "@/lib/data/availability-block-submit";
 
 function parseWeekdays(formData: FormData): number[] {
   return formData
@@ -49,5 +54,26 @@ export async function updateAvailabilityTrainerAction(formData: FormData) {
 export async function deleteAvailabilityTrainerAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id) await deleteAvailabilityRule(id);
+  revalidatePath("/trainer/disponibilitat");
+}
+
+// ─────────────── Bloquejos temporals ───────────────
+
+export async function createBlockTrainerAction(
+  prev: BlockFormState,
+  formData: FormData,
+): Promise<BlockFormState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return { error: "No autoritzat." };
+  const res = await submitAvailabilityBlock(viewer.id, viewer.id, formData);
+  if (res.ok) revalidatePath("/trainer/disponibilitat");
+  return res;
+}
+
+export async function deleteBlockTrainerAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return;
+  const id = String(formData.get("id") ?? "");
+  if (id) await deleteAvailabilityBlock(id);
   revalidatePath("/trainer/disponibilitat");
 }

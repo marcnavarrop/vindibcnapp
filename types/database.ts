@@ -451,6 +451,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      availability_blocks: {
+        Row: {
+          id: string;
+          trainer_id: string;
+          start_at: string;
+          end_at: string;
+          reason: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trainer_id: string;
+          start_at: string;
+          end_at: string;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trainer_id?: string;
+          start_at?: string;
+          end_at?: string;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       notification_preferences: {
         Row: {
           id: string;

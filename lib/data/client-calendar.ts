@@ -3,8 +3,9 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
-import type { TrainerRuleLite } from "@/lib/availability-slots";
+import type { TrainerRuleLite, TrainerBlockLite } from "@/lib/availability-slots";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
 /** Reserva del centro para el calendario del cliente (SIN nombres de otros). */
@@ -25,6 +26,8 @@ export type ClientCenterData = {
   bonoTypes: ServiceType[];
   trainers: { id: string; name: string }[];
   rules: TrainerRuleLite[];
+  /** Bloquejos temporals que tapen les regles setmanals. */
+  blocks: TrainerBlockLite[];
   reservations: CenterReservation[];
 };
 
@@ -34,6 +37,7 @@ const EMPTY: ClientCenterData = {
   bonoTypes: [],
   trainers: [],
   rules: [],
+  blocks: [],
   reservations: [],
 };
 
@@ -103,6 +107,7 @@ export async function getClientCenterData(
       bonoTypes,
       trainers,
       rules,
+      blocks: await listAllBlocksLite(),
       reservations: [...reservations, ...holdReservations],
     };
   }
@@ -115,13 +120,14 @@ export async function getClientCenterData(
     .single();
   if (!client) return EMPTY;
 
-  const [bonoRows, trainerRows, rules, resRows] = await Promise.all([
+  const [bonoRows, trainerRows, rules, blocks, resRows] = await Promise.all([
     admin
       .from("bonos")
       .select("service_type, status, remaining_sessions")
       .eq("client_id", client.id),
     admin.from("profiles").select("id, full_name").eq("role", "trainer"),
     listAllTrainerRulesLite(),
+    listAllBlocksLite(),
     admin
       .from("reservations")
       .select("id, client_id, trainer_id, scheduled_at, service_type, status")
@@ -154,6 +160,7 @@ export async function getClientCenterData(
     bonoTypes,
     trainers,
     rules,
+    blocks,
     reservations: [...reservations, ...holdReservations],
   };
 }

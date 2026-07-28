@@ -6,18 +6,27 @@ const TABS = [
   { href: "/trainer/disponibilitat", label: "Disponibilitat" },
 ];
 import { listAvailabilityRules } from "@/lib/data/availability";
+import { listUpcomingBlocks } from "@/lib/data/availability-blocks";
 import { AvailabilityManager } from "@/components/availability-manager";
+import { AvailabilityBlocksManager } from "@/components/availability-blocks-manager";
 import {
   createAvailabilityTrainerAction,
   updateAvailabilityTrainerAction,
   deleteAvailabilityTrainerAction,
+  createBlockTrainerAction,
+  deleteBlockTrainerAction,
 } from "@/app/(trainer)/trainer/disponibilitat/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrainerDisponibilitatPage() {
   const viewer = await getViewer();
-  const rules = viewer ? await listAvailabilityRules(viewer.id) : [];
+  const [rules, blocks] = viewer
+    ? await Promise.all([
+        listAvailabilityRules(viewer.id),
+        listUpcomingBlocks(viewer.id),
+      ])
+    : [[], []];
   const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
@@ -37,6 +46,12 @@ export default async function TrainerDisponibilitatPage() {
         createAction={createAvailabilityTrainerAction}
         updateAction={updateAvailabilityTrainerAction}
         deleteAction={deleteAvailabilityTrainerAction}
+      />
+
+      <AvailabilityBlocksManager
+        blocks={blocks}
+        createAction={createBlockTrainerAction}
+        deleteAction={deleteBlockTrainerAction}
       />
     </main>
     </>

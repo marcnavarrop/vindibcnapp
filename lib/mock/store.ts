@@ -39,6 +39,7 @@ export type Store = {
   announcements: Tables["announcements"]["Row"][];
   client_exercises: Tables["client_exercises"]["Row"][];
   availability_rules: Tables["availability_rules"]["Row"][];
+  availability_blocks: Tables["availability_blocks"]["Row"][];
   consents: Tables["consents"]["Row"][];
   data_access_log: Tables["data_access_log"]["Row"][];
   trial_bookings: Tables["trial_bookings"]["Row"][];
@@ -73,6 +74,7 @@ function fromSeed(): Store {
     announcements: structuredClone(seedAnnouncements),
     client_exercises: structuredClone(seedClientExercises),
     availability_rules: structuredClone(seedAvailabilityRules),
+    availability_blocks: [],
     consents: structuredClone(seedConsents),
     data_access_log: structuredClone(seedDataAccessLog),
     trial_bookings: structuredClone(seedTrialBookings),

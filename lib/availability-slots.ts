@@ -18,6 +18,69 @@ export type AvailabilityRuleLite = {
 /** Regla lite con el profesional dueño (para el calendario global del cliente). */
 export type TrainerRuleLite = AvailabilityRuleLite & { trainerId: string };
 
+/**
+ * Bloqueo temporal (vacaciones, baja, tarde puntual). Se superpone a las reglas
+ * semanales: una franja solo es reservable si hay regla Y no cae en un bloqueo.
+ *
+ * A diferencia de las reglas —que son horas locales del centro— un bloqueo es
+ * un rango de INSTANTES absolutos, así que se compara como tal y no necesita
+ * conversión de zona horaria.
+ */
+export type AvailabilityBlockLite = {
+  /** ISO 8601 */
+  startAt: string;
+  /** ISO 8601, exclusivo */
+  endAt: string;
+};
+
+/** Bloqueo con el profesional dueño (para el calendario global). */
+export type TrainerBlockLite = AvailabilityBlockLite & { trainerId: string };
+
+/** Horario de apertura del centro, usado para los bloqueos de "día completo". */
+export const CENTER_OPEN_HOUR = 7;
+export const CENTER_CLOSE_HOUR = 22;
+
+/** ¿El instante `at` cae dentro de algún bloqueo? (inicio incluido, fin excluido) */
+export function isInstantBlocked(
+  blocks: AvailabilityBlockLite[],
+  at: Date,
+): boolean {
+  const t = at.getTime();
+  return blocks.some(
+    (b) => t >= new Date(b.startAt).getTime() && t < new Date(b.endAt).getTime(),
+  );
+}
+
+/**
+ * ¿La franja de una hora que empieza a las `h` del día `date` solapa algún
+ * bloqueo? `date`+`h` se interpretan en la zona horaria del entorno que llama
+ * (en el navegador, la del usuario: la del centro).
+ */
+export function isHourBlocked(
+  blocks: AvailabilityBlockLite[],
+  date: Date,
+  h: number,
+): boolean {
+  const slotStart = new Date(date);
+  slotStart.setHours(h, 0, 0, 0);
+  const slotEnd = new Date(slotStart);
+  slotEnd.setHours(h + 1, 0, 0, 0);
+  return blocks.some((b) => {
+    const bStart = new Date(b.startAt).getTime();
+    const bEnd = new Date(b.endAt).getTime();
+    // Solapamiento de intervalos semiabiertos.
+    return slotStart.getTime() < bEnd && slotEnd.getTime() > bStart;
+  });
+}
+
+/** Filtra los bloqueos de un profesional concreto. */
+export function blocksOf(
+  blocks: TrainerBlockLite[],
+  trainerId: string,
+): AvailabilityBlockLite[] {
+  return blocks.filter((b) => b.trainerId === trainerId);
+}
+
 /** Día de la semana de una fecha en la convención del negocio (lunes = 0). */
 export function weekdayOf(date: Date): number {
   return (date.getDay() + 6) % 7;
