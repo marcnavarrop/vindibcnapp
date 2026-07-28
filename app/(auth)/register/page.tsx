@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { USE_MOCK } from "@/lib/config";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
 import {
   recordRegistrationConsentAction,
   notifyNewRegistrationAction,
+  mockRegisterAction,
 } from "@/app/(auth)/register/actions";
 
 /**
@@ -36,6 +38,22 @@ export default function RegisterPage() {
     }
     setLoading(true);
     setError(null);
+
+    // En mode demo no cridem Supabase: crearia un usuari real al projecte.
+    if (USE_MOCK) {
+      try {
+        await mockRegisterAction({
+          fullName,
+          email,
+          referralCode: referralCode.trim() || undefined,
+        });
+        setDone(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No s'ha pogut crear el compte.");
+      }
+      setLoading(false);
+      return;
+    }
 
     const supabase = createClient();
     const { data, error: signUpError } = await supabase.auth.signUp({

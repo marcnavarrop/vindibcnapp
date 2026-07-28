@@ -265,11 +265,6 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
     if (bono.status !== "pending_payment")
       throw new Error("Aquest bo no està pendent de pagament.");
 
-    // Check if this is the FIRST paid bono for this client (to generate referral rewards)
-    const isFirstPaidBono = !store.bonos.some(
-      (b) => b.client_id === bono.client_id && b.id !== bonoId && b.status === "active",
-    );
-
     bono.status = "active";
     saveStore(store);
     await createPayment({
@@ -279,7 +274,9 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
       method: "cash",
       concept: bonoConcept(bono.service_type, bono.total_sessions),
     });
-    if (isFirstPaidBono) await maybeGenerateReferralRewards(bono.client_id);
+    // Genera les recompenses de referit només quan el pagament es confirma.
+    // És idempotent: no duplica si ja existeixen per aquest referit.
+    await maybeGenerateReferralRewards(bono.client_id);
     return;
   }
 

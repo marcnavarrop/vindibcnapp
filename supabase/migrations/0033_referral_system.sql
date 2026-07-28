@@ -85,7 +85,13 @@ WHERE c.profile_id = p.id
   AND c.referral_code IS NULL;
 
 -- 6. referral_rewards table
-CREATE TYPE referral_reward_status AS ENUM ('pending', 'used', 'expired');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'referral_reward_status') THEN
+    CREATE TYPE referral_reward_status AS ENUM ('pending', 'used', 'expired');
+  END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS referral_rewards (
   id                    uuid                   PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -101,6 +107,7 @@ CREATE TABLE IF NOT EXISTS referral_rewards (
 -- 7. RLS
 ALTER TABLE referral_rewards ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "staff_all_referral_rewards" ON referral_rewards;
 CREATE POLICY "staff_all_referral_rewards" ON referral_rewards
   FOR ALL TO authenticated
   USING (
@@ -110,6 +117,7 @@ CREATE POLICY "staff_all_referral_rewards" ON referral_rewards
     )
   );
 
+DROP POLICY IF EXISTS "client_own_referral_rewards" ON referral_rewards;
 CREATE POLICY "client_own_referral_rewards" ON referral_rewards
   FOR SELECT TO authenticated
   USING (
