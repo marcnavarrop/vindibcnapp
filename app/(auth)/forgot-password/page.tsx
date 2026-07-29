@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Wordmark } from "@/components/wordmark";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Field } from "@/components/ui/input";
 import {
   requestPasswordResetAction,
@@ -44,9 +44,10 @@ export default function ForgotPasswordPage() {
               name="email"
               type="email"
               required
+              autoComplete="email"
             />
             {state.error && <p className="text-sm text-error">{state.error}</p>}
-            <Button type="submit">Enviar enllaç</Button>
+            <SubmitButton pendingLabel="Enviant…">Enviar enllaç</SubmitButton>
           </form>
         )}
 

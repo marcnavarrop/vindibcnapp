@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/wordmark";
@@ -22,11 +22,8 @@ type Status = "verifying" | "ready" | "invalid";
  * consumeixen el token d'un sol ús abans que l'usuari cliqui.
  */
 function UpdatePasswordInner() {
-  const router = useRouter();
   const params = useSearchParams();
   const [status, setStatus] = useState<Status>("verifying");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const verifiedRef = useRef(false);
@@ -58,8 +55,15 @@ function UpdatePasswordInner() {
     })();
   }, [params]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // Del DOM, no d'un estat de React: els gestors de contrasenyes poden
+    // omplir els camps sense disparar l'onChange. Abans de cap await.
+    const fd = new FormData(e.currentTarget);
+    const password = String(fd.get("password") ?? "");
+    const confirm = String(fd.get("confirm") ?? "");
+
     setError(null);
     if (password.length < 8)
       return setError("La contrasenya ha de tenir com a mínim 8 caràcters.");
@@ -67,25 +71,36 @@ function UpdatePasswordInner() {
       return setError("Les contrasenyes no coincideixen.");
 
     setLoading(true);
-    const supabase = createClient();
-    const { error: updErr } = await supabase.auth.updateUser({ password });
-    if (updErr) {
-      setError(updErr.message);
-      setLoading(false);
-      return;
+    let navigating = false;
+
+    try {
+      const supabase = createClient();
+      const { error: updErr } = await supabase.auth.updateUser({ password });
+      if (updErr) {
+        setError(updErr.message);
+        return;
+      }
+
+      const { data } = await supabase.auth.getUser();
+      let role: UserRole | undefined;
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+        role = profile?.role as UserRole | undefined;
+      }
+
+      // Navegació dura: assegura que la petició porti les cookies de sessió i
+      // que el middleware no ens reboti cap aquí deixant el botó penjat.
+      navigating = true;
+      window.location.assign(roleHome(role));
+    } catch {
+      setError("Hi ha hagut un problema de connexió. Torna-ho a provar.");
+    } finally {
+      if (!navigating) setLoading(false);
     }
-    const { data } = await supabase.auth.getUser();
-    let role: UserRole | undefined;
-    if (data.user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-      role = profile?.role as UserRole | undefined;
-    }
-    router.replace(roleHome(role));
-    router.refresh();
   }
 
   return (
@@ -111,21 +126,22 @@ function UpdatePasswordInner() {
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* Camps no controlats: es llegeixen del FormData al submit. */}
             <Field
               label="Nova contrasenya"
               name="password"
               type="password"
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
+              autoComplete="new-password"
             />
             <Field
               label="Repeteix la contrasenya"
               name="confirm"
               type="password"
               required
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              minLength={8}
+              autoComplete="new-password"
             />
             {error && <p className="text-sm text-error">{error}</p>}
             <Button type="submit" disabled={loading}>

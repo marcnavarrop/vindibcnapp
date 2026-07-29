@@ -58,42 +58,68 @@ function MockLogin() {
 
 /** Login real contra Supabase. */
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   // Missatge d'error que pot arribar del callback (enllaç caducat, etc.).
   const [error, setError] = useState<string | null>(
     searchParams.get("error"),
   );
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // Els valors surten del DOM, no d'un estat de React: l'autocompletat natiu
+    // d'iOS/Safari pot omplir els camps sense disparar l'onChange que React
+    // necessita, i llavors enviaríem cadenes buides amb els camps plens.
+    // Cal llegir-ho ABANS del primer await: després, currentTarget ja és null.
+    const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email") ?? "").trim();
+    const password = String(fd.get("password") ?? "");
+
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { data, error: signInError } = await supabase.auth.signInWithPassword(
-      { email, password },
-    );
+    // Si sortim de la pàgina, no volem reactivar el botó: ha de continuar
+    // dient "Entrant…" fins que el navegador descarregui la pàgina.
+    let navigating = false;
 
-    if (signInError) {
-      setError(signInError.message);
-      setLoading(false);
-      return;
+    try {
+      const supabase = createClient();
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({ email, password });
+
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+      if (!data.user) {
+        setError("No s'ha pogut iniciar la sessió. Torna-ho a provar.");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      const role = profile?.role as UserRole | undefined;
+      // Torna al destí original si és segur i el rol hi té accés; si no, a la home.
+      const dest = safeRedirect(searchParams.get("redirectedFrom"), role);
+
+      // Navegació dura a propòsit, en lloc de router.replace() + refresh():
+      // garanteix que la petició porti les cookies de sessió acabades d'escriure.
+      // Amb una navegació de client, el middleware pot no veure-les encara i
+      // rebotar cap a /login; com que és la MATEIXA ruta, el component no es
+      // desmuntaria i el botó es quedaria penjat a "Entrant…" per sempre.
+      navigating = true;
+      window.location.assign(dest);
+    } catch {
+      setError("Hi ha hagut un problema de connexió. Torna-ho a provar.");
+    } finally {
+      // Xarxa de seguretat: passi el que passi, el botó no es queda penjat.
+      if (!navigating) setLoading(false);
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
-      .single();
-
-    const role = profile?.role as UserRole | undefined;
-    // Torna al destí original si és segur i el rol hi té accés; si no, a la home.
-    router.replace(safeRedirect(searchParams.get("redirectedFrom"), role));
-    router.refresh();
   }
 
   return (
@@ -104,21 +130,21 @@ function LoginForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Camps no controlats: sense estat de React no hi pot haver desajust
+            amb l'autocompletat. Els valors es llegeixen del FormData al submit. */}
         <Field
           label="Correu electrònic"
           name="email"
           type="email"
           required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
         />
         <Field
           label="Contrasenya"
           name="password"
           type="password"
           required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
         />
 
         {error && <p className="text-sm text-error">{error}</p>}

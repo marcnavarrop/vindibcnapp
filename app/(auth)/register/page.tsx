@@ -19,16 +19,14 @@ import {
  * Los roles admin/trainer se asignan después manualmente.
  */
 export default function RegisterPage() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [referralCode, setReferralCode] = useState("");
+  // Només queda com a estat el que controla la UI (el gate del checkbox);
+  // els camps de text es llegeixen del FormData, immunes a l'autocompletat.
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!acceptPrivacy) {
       setError(
@@ -36,60 +34,69 @@ export default function RegisterPage() {
       );
       return;
     }
+
+    // Abans de qualsevol await: després, currentTarget ja és null.
+    const fd = new FormData(e.currentTarget);
+    const fullName = String(fd.get("fullName") ?? "").trim();
+    const email = String(fd.get("email") ?? "").trim();
+    const password = String(fd.get("password") ?? "");
+    const referralCode =
+      String(fd.get("referralCode") ?? "").trim().toUpperCase() || undefined;
+
     setLoading(true);
     setError(null);
 
-    // En mode demo no cridem Supabase: crearia un usuari real al projecte.
-    if (USE_MOCK) {
-      try {
-        await mockRegisterAction({
-          fullName,
-          email,
-          referralCode: referralCode.trim() || undefined,
-        });
+    try {
+      // En mode demo no cridem Supabase: crearia un usuari real al projecte.
+      if (USE_MOCK) {
+        await mockRegisterAction({ fullName, email, referralCode });
         setDone(true);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "No s'ha pogut crear el compte.");
+        return;
       }
+
+      const supabase = createClient();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          // Estos datos los lee el trigger handle_new_user().
+          data: { full_name: fullName, role: "client" },
+        },
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
+
+      // Registra el consentiment de privacitat lligat a l'alta (data + IP).
+      if (data.user?.id) {
+        try {
+          await recordRegistrationConsentAction(data.user.id);
+        } catch {
+          // No bloquegem l'alta si el registre del consentiment falla; queda
+          // marcada pendent i es pot tornar a demanar des de Configuració.
+        }
+        // Email de benvinguda + avís de nou client (best-effort, no bloqueja).
+        try {
+          await notifyNewRegistrationAction(referralCode);
+        } catch {
+          // ignorem: els avisos són secundaris.
+        }
+      }
+
+      // Según la config de Supabase, puede requerir confirmación por email.
+      setDone(true);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "No s'ha pogut crear el compte. Torna-ho a provar.",
+      );
+    } finally {
+      // Xarxa de seguretat: el botó mai es queda penjat.
       setLoading(false);
-      return;
     }
-
-    const supabase = createClient();
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        // Estos datos los lee el trigger handle_new_user().
-        data: { full_name: fullName, role: "client" },
-      },
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
-      setLoading(false);
-      return;
-    }
-
-    // Registra el consentiment de privacitat lligat a l'alta (data + IP).
-    if (data.user?.id) {
-      try {
-        await recordRegistrationConsentAction(data.user.id);
-      } catch {
-        // No bloquegem l'alta si el registre del consentiment falla; queda
-        // marcada pendent i es pot tornar a demanar des de Configuració.
-      }
-      // Email de benvinguda + avís de nou client (best-effort, no bloqueja).
-      try {
-        await notifyNewRegistrationAction(referralCode.trim() || undefined);
-      } catch {
-        // ignorem: els avisos són secundaris.
-      }
-    }
-
-    // Según la config de Supabase, puede requerir confirmación por email.
-    setDone(true);
-    setLoading(false);
   }
 
   if (done) {
@@ -123,13 +130,13 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Camps no controlats: els valors surten del FormData al submit. */}
           <Field
             label="Nom complet"
             name="fullName"
             type="text"
             required
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            autoComplete="name"
           />
 
           <Field
@@ -137,8 +144,7 @@ export default function RegisterPage() {
             name="email"
             type="email"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
           />
 
           <Field
@@ -147,16 +153,17 @@ export default function RegisterPage() {
             type="password"
             required
             minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
           />
 
+          {/* `uppercase` només afecta com es veu; el valor es normalitza en
+              llegir-lo, sense necessitat d'estat de React. */}
           <Field
             label="Codi de referit (opcional)"
             name="referralCode"
             type="text"
-            value={referralCode}
-            onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+            autoComplete="off"
+            className="uppercase"
             placeholder="Ex: ANF-2K4M"
           />
 
