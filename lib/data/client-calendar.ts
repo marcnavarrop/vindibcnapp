@@ -52,18 +52,27 @@ export async function getClientCenterData(
   // Les proves 'pending'/'confirmed' ocupen el forat: es mostren com a
   // reserves anònimes ('booked', isOwn=false) perquè el client no pugui
   // reservar-hi a sobre ni deduir de qui són.
-  const holdReservations: CenterReservation[] = (
-    await listActiveTrialHolds()
-  ).map((h) => ({
-    id: `trial-${h.id}`,
-    trainerId: h.trainerId,
-    scheduledAt: h.scheduledAt,
-    serviceType: h.serviceType,
-    status: "booked" as ReservationStatus,
-    isOwn: false,
-  }));
+  //
+  // S'engega aquí però NO s'espera encara: no depèn de res del client, així
+  // que ha de viatjar en paral·lel amb la consulta de `clients` en comptes
+  // d'encadenar-s'hi (eren dos viatges de xarxa seguits).
+  const holdsPromise = listActiveTrialHolds();
+  const toHoldReservations = (
+    holds: Awaited<typeof holdsPromise>,
+  ): CenterReservation[] =>
+    holds.map((h) => ({
+      id: `trial-${h.id}`,
+      trainerId: h.trainerId,
+      scheduledAt: h.scheduledAt,
+      serviceType: h.serviceType,
+      status: "booked" as ReservationStatus,
+      isOwn: false,
+    }));
 
   if (USE_MOCK) {
+    // En simulació no hi ha latència: s'espera abans de qualsevol return
+    // primerenc, perquè la promesa no quedi penjada.
+    const holdReservations = toHoldReservations(await holdsPromise);
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === profileId);
     if (!client) return EMPTY;
@@ -113,11 +122,17 @@ export async function getClientCenterData(
   }
 
   const admin = createAdminClient();
-  const { data: client } = await admin
-    .from("clients")
-    .select("id, assigned_trainer_id")
-    .eq("profile_id", profileId)
-    .single();
+  // Les proves i la fila de client són independents: un sol viatge en comptes
+  // de dos encadenats.
+  const [holds, { data: client }] = await Promise.all([
+    holdsPromise,
+    admin
+      .from("clients")
+      .select("id, assigned_trainer_id")
+      .eq("profile_id", profileId)
+      .single(),
+  ]);
+  const holdReservations = toHoldReservations(holds);
   if (!client) return EMPTY;
 
   const [bonoRows, trainerRows, rules, blocks, resRows] = await Promise.all([
