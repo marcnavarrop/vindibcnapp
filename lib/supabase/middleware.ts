@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { stripViewerHeaders } from "@/lib/auth-headers";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
@@ -12,7 +13,15 @@ import type { Database } from "@/types/database";
  * ahí puede provocar cierres de sesión difíciles de depurar.
  */
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  // Capçaleres que veurà el render. Es clonen i es NETEGEN aquí mateix, abans
+  // de saber res de la sessió: així cap valor d'identitat enviat des de fora
+  // pot arribar a la pàgina. Vegeu lib/auth-headers.ts.
+  const requestHeaders = new Headers(request.headers);
+  stripViewerHeaders(requestHeaders);
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +35,9 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = NextResponse.next({
+            request: { headers: requestHeaders },
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
@@ -39,5 +50,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { supabaseResponse, supabase, user };
+  // `requestHeaders` es retorna perquè el middleware hi pugui posar la
+  // identitat validada i reconstruir la resposta una sola vegada al final.
+  return { supabaseResponse, supabase, user, requestHeaders };
 }
