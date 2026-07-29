@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { getViewer } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
@@ -65,13 +66,11 @@ export default async function TrainerClientDetailPage({
             <Info label="Bons actius" value={String(client.activeBonos)} />
             <Info label="Sessions restants" value={String(client.remainingSessions)} />
           </section>
-          {client.notes && (
-            <section className="rounded-2xl border border-brand-border bg-white p-5">
-              <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-                Notes
-              </h2>
-              <p className="mt-1 text-sm text-brand-charcoal">{client.notes}</p>
-            </section>
+          {(client.clinicalNotes || client.generalNotes) && (
+            <ClientNotesPanel
+              clinicalNotes={client.clinicalNotes}
+              generalNotes={client.generalNotes}
+            />
           )}
         </div>
       ),
@@ -179,16 +178,10 @@ export default async function TrainerClientDetailPage({
     {
       label: "Notes",
       content: (
-        <section className="rounded-2xl border border-brand-border bg-white p-5">
-          <h2 className="mb-2 text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Notes internes
-          </h2>
-          {client.notes ? (
-            <p className="text-sm text-brand-charcoal">{client.notes}</p>
-          ) : (
-            <p className="text-sm text-brand-muted">Sense notes.</p>
-          )}
-        </section>
+        <ClientNotesPanel
+          clinicalNotes={client.clinicalNotes}
+          generalNotes={client.generalNotes}
+        />
       ),
     },
     {

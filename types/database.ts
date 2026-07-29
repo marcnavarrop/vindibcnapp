@@ -105,7 +105,10 @@ export interface Database {
           id: string;
           profile_id: string;
           assigned_trainer_id: string | null;
+          /** @deprecated substituïda per clinical_notes + general_notes (0035). */
           notes: string | null;
+          clinical_notes: string | null;
+          general_notes: string | null;
           referral_code: string | null;
           referred_by_client_id: string | null;
           created_at: string;
@@ -115,6 +118,8 @@ export interface Database {
           profile_id: string;
           assigned_trainer_id?: string | null;
           notes?: string | null;
+          clinical_notes?: string | null;
+          general_notes?: string | null;
           referral_code?: string | null;
           referred_by_client_id?: string | null;
           created_at?: string;
@@ -124,6 +129,8 @@ export interface Database {
           profile_id?: string;
           assigned_trainer_id?: string | null;
           notes?: string | null;
+          clinical_notes?: string | null;
+          general_notes?: string | null;
           referral_code?: string | null;
           referred_by_client_id?: string | null;
           created_at?: string;

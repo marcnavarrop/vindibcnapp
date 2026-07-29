@@ -19,7 +19,8 @@ function parse(formData: FormData): ClientInput {
     email: str("email"),
     phone: str("phone") || null,
     assignedTrainerId: str("assignedTrainerId") || null,
-    notes: str("notes") || null,
+    clinicalNotes: str("clinicalNotes") || null,
+    generalNotes: str("generalNotes") || null,
   };
 }
 

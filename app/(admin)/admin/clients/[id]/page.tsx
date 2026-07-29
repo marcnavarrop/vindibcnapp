@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
+import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { getClient } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
@@ -60,13 +61,11 @@ export default async function ClientDetailPage({
             <Info label="Bons actius" value={String(client.activeBonos)} />
             <Info label="Sessions restants" value={String(client.remainingSessions)} />
           </section>
-          {client.notes && (
-            <section className="rounded-2xl border border-brand-border bg-white p-5">
-              <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-                Notes
-              </h2>
-              <p className="mt-1 text-sm text-brand-charcoal">{client.notes}</p>
-            </section>
+          {(client.clinicalNotes || client.generalNotes) && (
+            <ClientNotesPanel
+              clinicalNotes={client.clinicalNotes}
+              generalNotes={client.generalNotes}
+            />
           )}
         </div>
       ),
@@ -180,24 +179,11 @@ export default async function ClientDetailPage({
     {
       label: "Notes",
       content: (
-        <section className="rounded-2xl border border-brand-border bg-white p-5">
-          <h2 className="mb-2 text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Notes internes
-          </h2>
-          {client.notes ? (
-            <p className="text-sm text-brand-charcoal">{client.notes}</p>
-          ) : (
-            <p className="text-sm text-brand-muted">Sense notes.</p>
-          )}
-          <div className="mt-4">
-            <Link
-              href={`/admin/clients/${client.id}/edit`}
-              className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
-            >
-              Editar notes →
-            </Link>
-          </div>
-        </section>
+        <ClientNotesPanel
+          clinicalNotes={client.clinicalNotes}
+          generalNotes={client.generalNotes}
+          editHref={`/admin/clients/${client.id}/edit`}
+        />
       ),
     },
     {

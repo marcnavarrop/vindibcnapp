@@ -13,7 +13,8 @@ export type ClientDefaults = {
   email: string;
   phone: string;
   assignedTrainerId: string;
-  notes: string;
+  clinicalNotes: string;
+  generalNotes: string;
 };
 
 export function ClientForm({
@@ -66,7 +67,16 @@ export function ClientForm({
         defaultValue={defaults?.assignedTrainerId}
         options={trainers.map((t) => ({ value: t.id, label: t.name }))}
       />
-      <TextAreaField label="Notes" name="notes" defaultValue={defaults?.notes} />
+      <TextAreaField
+        label="Notes clíniques"
+        name="clinicalNotes"
+        defaultValue={defaults?.clinicalNotes}
+      />
+      <TextAreaField
+        label="Notes generals"
+        name="generalNotes"
+        defaultValue={defaults?.generalNotes}
+      />
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
 

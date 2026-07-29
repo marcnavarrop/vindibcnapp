@@ -22,6 +22,9 @@
   /* Semánticos */
   --color-success: #28a745;
   --color-error: #dc3545;
+  /* Salud: distingue las notas clínicas del resto sin usar el naranja, que
+     está reservado para lo que requiere acción del admin. */
+  --color-brand-clinical: #17786d;
 
   /* Tipografía (enlazada a next/font) */
   --font-sans: var(--font-roboto-condensed);

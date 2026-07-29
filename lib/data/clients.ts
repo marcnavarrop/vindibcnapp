@@ -52,7 +52,8 @@ export type ClientPayment = {
 export type ClientDetail = ClientListItem & {
   profileId: string;
   assignedTrainerId: string | null;
-  notes: string | null;
+  clinicalNotes: string | null;
+  generalNotes: string | null;
   bonos: ClientBono[];
   reservations: ClientReservation[];
   payments: ClientPayment[];
@@ -63,7 +64,8 @@ export type ClientInput = {
   email: string;
   phone: string | null;
   assignedTrainerId: string | null;
-  notes: string | null;
+  clinicalNotes: string | null;
+  generalNotes: string | null;
 };
 
 // ── Helpers de simulación ──
@@ -151,7 +153,8 @@ function buildDetail(clientId: string): ClientDetail | null {
     ...toListItem(clientId, store),
     profileId: client.profile_id,
     assignedTrainerId: client.assigned_trainer_id,
-    notes: client.notes,
+    clinicalNotes: client.clinical_notes ?? null,
+    generalNotes: client.general_notes ?? client.notes ?? null,
     bonos: store.bonos
       .filter((b) => b.client_id === clientId)
       .map((b) => ({
@@ -194,6 +197,8 @@ type DetailRow = {
   profile_id: string;
   assigned_trainer_id: string | null;
   notes: string | null;
+  clinical_notes: string | null;
+  general_notes: string | null;
   profile: {
     full_name: string | null;
     email: string | null;
@@ -231,7 +236,7 @@ async function fetchClientDetail(
   const { data, error } = await supabase
     .from("clients")
     .select(
-      `id, profile_id, assigned_trainer_id, notes,
+      `id, profile_id, assigned_trainer_id, notes, clinical_notes, general_notes,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(id, service_type, total_sessions, remaining_sessions, price, status),
@@ -255,7 +260,9 @@ async function fetchClientDetail(
     remainingSessions: active.reduce((s, b) => s + b.remaining_sessions, 0),
     profileId: row.profile_id,
     assignedTrainerId: row.assigned_trainer_id,
-    notes: row.notes,
+    clinicalNotes: row.clinical_notes,
+    // Fallback a la columna antiga per si la migració encara no s'ha aplicat.
+    generalNotes: row.general_notes ?? row.notes,
     bonos: row.bonos.map((b) => ({
       id: b.id,
       serviceType: b.service_type,
@@ -344,7 +351,9 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
       id: clientId,
       profile_id: profileId,
       assigned_trainer_id: input.assignedTrainerId,
-      notes: input.notes,
+      notes: null,
+      clinical_notes: input.clinicalNotes,
+      general_notes: input.generalNotes,
       referral_code: null,
       referred_by_client_id: null,
       created_at: createdAt,
@@ -367,7 +376,8 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
     .insert({
       profile_id: profileId,
       assigned_trainer_id: input.assignedTrainerId,
-      notes: input.notes,
+      clinical_notes: input.clinicalNotes,
+      general_notes: input.generalNotes,
     })
     .select("id")
     .single();
@@ -387,7 +397,8 @@ export async function updateClientRecord(
     const client = store.clients.find((c) => c.id === id);
     if (!client) throw new Error("Client no trobat");
     client.assigned_trainer_id = input.assignedTrainerId;
-    client.notes = input.notes;
+    client.clinical_notes = input.clinicalNotes;
+    client.general_notes = input.generalNotes;
     const profile = store.profiles.find((p) => p.id === client.profile_id);
     if (profile) {
       profile.full_name = input.fullName;
@@ -411,7 +422,8 @@ export async function updateClientRecord(
     .from("clients")
     .update({
       assigned_trainer_id: input.assignedTrainerId,
-      notes: input.notes,
+      clinical_notes: input.clinicalNotes,
+      general_notes: input.generalNotes,
     })
     .eq("id", id);
   if (cErr) throw cErr;
