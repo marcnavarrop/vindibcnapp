@@ -14,10 +14,19 @@ const BONO_TABS = [
 
 export default async function ComprarBonoPage() {
   const viewer = await getViewer();
-  const [services, effectivePricesMap, pendingReferralReward] = await Promise.all([
-    listActiveServices(),
-    getEffectivePrices(await listActiveServices()),
-    viewer ? getPendingReferralReward(viewer.id) : null,
+
+  // El catàleg i la recompensa pendent són independents: s'engeguen alhora.
+  // getEffectivePrices SÍ que depèn del catàleg, així que espera només aquest
+  // i se solapa amb la recompensa, que continua en vol.
+  const servicesPromise = listActiveServices();
+  const rewardPromise = viewer
+    ? getPendingReferralReward(viewer.id)
+    : Promise.resolve(null);
+
+  const services = await servicesPromise;
+  const [effectivePricesMap, pendingReferralReward] = await Promise.all([
+    getEffectivePrices(services),
+    rewardPromise,
   ]);
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 

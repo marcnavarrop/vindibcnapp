@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
 
 export function SignOutButton() {
@@ -11,6 +10,11 @@ export function SignOutButton() {
     if (USE_MOCK) {
       document.cookie = `${MOCK_ROLE_COOKIE}=; path=/; max-age=0`;
     } else {
+      // Import dinàmic a propòsit: aquest botó viu al layout de tots els rols,
+      // i amb un import estàtic tot @supabase/supabase-js (~51 kB gzip, amb
+      // realtime, que no fem servir) entrava al bundle de CADA pantalla.
+      // Així només es descarrega quan algú tanca sessió de veritat.
+      const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       await supabase.auth.signOut();
     }
