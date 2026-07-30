@@ -83,7 +83,7 @@ function fromSeed(): Store {
     promotions: structuredClone(seedPromotions),
     client_documents: structuredClone(seedClientDocuments),
     referral_rewards: structuredClone(seedReferralRewards),
-    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, opening_time: "07:00:00", closing_time: "22:00:00", min_booking_hours: 0, bono_low_threshold: 1, reminder_hour_local: 20, module_comunitat_enabled: true, module_sessions_prova_enabled: true, module_documents_enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
 }
 

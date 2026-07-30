@@ -100,6 +100,8 @@ export default async function TrainerReservasPage() {
           acceptTrialAction={acceptTrialTrainerAction}
           rejectTrialAction={rejectTrialTrainerAction}
           showColleagueSelector={centerSettings.trainersSeColleaguesReservations}
+          openingHour={centerSettings.openingHour}
+          closingHour={centerSettings.closingHour}
         />
       </main>
     </>

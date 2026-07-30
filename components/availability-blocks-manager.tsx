@@ -3,7 +3,6 @@
 import { useActionState, useMemo, useState } from "react";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SERVICE_LABELS } from "@/lib/labels";
-import { CENTER_OPEN_HOUR, CENTER_CLOSE_HOUR } from "@/lib/availability-slots";
 import type { AvailabilityBlock } from "@/lib/data/availability-blocks";
 import type { BlockFormState } from "@/lib/data/availability-block-submit";
 import type { ServiceType } from "@/types/database";
@@ -49,8 +48,13 @@ export function AvailabilityBlocksManager({
   blocks,
   createAction,
   deleteAction,
+  openingHour,
+  closingHour,
 }: {
   blocks: AvailabilityBlock[];
+  /** Horari del centre (configurable per l'admin). */
+  openingHour: number;
+  closingHour: number;
   createAction: (
     prev: BlockFormState,
     formData: FormData,
@@ -62,9 +66,9 @@ export function AvailabilityBlocksManager({
 
   const today = useMemo(() => {
     const d = new Date();
-    d.setHours(CENTER_OPEN_HOUR, 0, 0, 0);
+    d.setHours(openingHour, 0, 0, 0);
     return d;
-  }, []);
+  }, [openingHour]);
 
   // Amb "Dia complet" es demanen només dates i el servidor hi posa l'horari
   // del centre; si no, es demanen data i hora exactes.
@@ -73,7 +77,7 @@ export function AvailabilityBlocksManager({
   const [startAt, setStartAt] = useState(() => toLocalInput(today));
   const [endAt, setEndAt] = useState(() => {
     const d = new Date(today);
-    d.setHours(CENTER_CLOSE_HOUR, 0, 0, 0);
+    d.setHours(closingHour, 0, 0, 0);
     return toLocalInput(d);
   });
 
@@ -161,7 +165,7 @@ export function AvailabilityBlocksManager({
           />
           Dia complet
           <span className="text-xs text-brand-muted">
-            (de {pad(CENTER_OPEN_HOUR)}:00 a {pad(CENTER_CLOSE_HOUR)}:00)
+            (de {pad(openingHour)}:00 a {pad(closingHour)}:00)
           </span>
         </label>
 

@@ -1,9 +1,11 @@
 import { listAnnouncements } from "@/lib/data/announcements";
 import { CommunityBoard } from "@/components/community-board";
+import { assertModuleEnabled } from "@/lib/data/module-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrainerComunitatPage() {
+  await assertModuleEnabled("comunitat");
   const announcements = await listAnnouncements();
 
   return (

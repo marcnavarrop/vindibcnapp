@@ -1,4 +1,5 @@
 import { getViewer } from "@/lib/auth";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
@@ -21,6 +22,7 @@ export const dynamic = "force-dynamic";
 
 export default async function TrainerDisponibilitatPage() {
   const viewer = await getViewer();
+  const centerSettings = await getCenterSettings();
   const [rules, blocks] = viewer
     ? await Promise.all([
         listAvailabilityRules(viewer.id),
@@ -50,6 +52,8 @@ export default async function TrainerDisponibilitatPage() {
 
       <AvailabilityBlocksManager
         blocks={blocks}
+        openingHour={centerSettings.openingHour}
+        closingHour={centerSettings.closingHour}
         createAction={createBlockTrainerAction}
         deleteAction={deleteBlockTrainerAction}
       />

@@ -6,10 +6,12 @@ import {
   uploadDocumentAction,
   deleteDocumentAction,
 } from "@/app/(client)/client/documents/actions";
+import { assertModuleEnabled } from "@/lib/data/module-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientDocumentsPage() {
+  await assertModuleEnabled("documents");
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
   const documents = client ? await listClientDocuments(client.id) : [];

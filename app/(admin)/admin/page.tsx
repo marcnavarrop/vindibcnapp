@@ -192,7 +192,7 @@ export default async function AdminHome() {
           </div>
           {lowBonos.length === 0 ? (
             <p className="mt-1 text-xs text-brand-muted">
-              Cap bo per sota d&apos;una sessió.
+              Cap bo per sota del llindar configurat.
             </p>
           ) : (
             <ul className="mt-2 divide-y divide-brand-orange/20">
@@ -211,7 +211,7 @@ export default async function AdminHome() {
                       </span>
                     </span>
                     <span className="shrink-0 font-bold text-brand-orange">
-                      {b.remaining === 0 ? "0 sessions" : "1 sessió"}
+                      {b.remaining === 1 ? "1 sessió" : `${b.remaining} sessions`}
                     </span>
                   </Link>
                 </li>

@@ -109,3 +109,60 @@ export function getGroupTabs(role: Role, pathname: string): NavItem[] | null {
   }
   return null;
 }
+
+// ─────────────────────── Mòduls opcionals ───────────────────────
+
+/** Mòduls que l'admin pot desactivar des de Configuració → Centre. */
+export type ModuleFlags = {
+  comunitat: boolean;
+  sessionsProva: boolean;
+  documents: boolean;
+};
+
+export const ALL_MODULES_ON: ModuleFlags = {
+  comunitat: true,
+  sessionsProva: true,
+  documents: true,
+};
+
+/**
+ * Prefixos de ruta que pertanyen a cada mòdul. És la font única: la fan servir
+ * tant el filtre del menú com la protecció de les pàgines, de manera que no
+ * poden divergir.
+ */
+export const MODULE_PATHS: Record<keyof ModuleFlags, string[]> = {
+  comunitat: ["/admin/community", "/trainer/comunitat", "/client/comunitat"],
+  sessionsProva: ["/admin/prova", "/prova"],
+  documents: ["/client/documents"],
+};
+
+/** A quin mòdul pertany una ruta, si és que pertany a cap. */
+export function moduleOfPath(pathname: string): keyof ModuleFlags | null {
+  for (const [mod, prefixes] of Object.entries(MODULE_PATHS) as [
+    keyof ModuleFlags,
+    string[],
+  ][]) {
+    if (prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`)))
+      return mod;
+  }
+  return null;
+}
+
+/** Treu del menú les entrades dels mòduls desactivats. */
+export function filterNavByModules(
+  entries: NavEntry[],
+  modules: ModuleFlags,
+): NavEntry[] {
+  const visible = (href: string) => {
+    const mod = moduleOfPath(href);
+    return mod === null || modules[mod];
+  };
+  return entries
+    .map((e) => {
+      if (!isNavGroup(e)) return visible(e.href) ? e : null;
+      const children = e.children.filter((c) => visible(c.href));
+      // Un grup que es queda sense fills desapareix.
+      return children.length > 0 ? { ...e, children } : null;
+    })
+    .filter((e): e is NavEntry => e !== null);
+}

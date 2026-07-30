@@ -10,6 +10,7 @@ import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listTrainers } from "@/lib/data/clients";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   cancelReservationAction,
   completeReservationAction,
@@ -23,10 +24,11 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function ReservasPage() {
-  const [reservations, trainers, trials] = await Promise.all([
+  const [reservations, trainers, trials, centerSettings] = await Promise.all([
     listReservations(),
     listTrainers(),
     listActiveTrialHolds(),
+    getCenterSettings(),
   ]);
   const nowISO = new Date().toISOString();
 
@@ -57,6 +59,8 @@ export default async function ReservasPage() {
           trainers={trainers}
           nowISO={nowISO}
           newReservationBase="/admin/reservas/new"
+          openingHour={centerSettings.openingHour}
+          closingHour={centerSettings.closingHour}
           cancelAction={cancelReservationAction}
           completeAction={completeReservationAction}
           rescheduleAction={rescheduleReservationAction}

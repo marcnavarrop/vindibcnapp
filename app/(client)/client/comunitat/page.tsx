@@ -4,10 +4,12 @@ import { listAnnouncements } from "@/lib/data/announcements";
 import { listPollsForClient } from "@/lib/data/polls";
 import { CommunityBoard } from "@/components/community-board";
 import { PollCard } from "@/components/poll-card";
+import { assertModuleEnabled } from "@/lib/data/module-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientComunitatPage() {
+  await assertModuleEnabled("comunitat");
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
 

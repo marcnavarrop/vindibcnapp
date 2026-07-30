@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { getViewer } from "@/lib/auth";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import type { Role } from "@/lib/nav";
 
 /**
@@ -14,7 +15,10 @@ export async function AppShell({
   role: Role;
   children: React.ReactNode;
 }) {
-  const viewer = await getViewer();
+  const [viewer, settings] = await Promise.all([
+    getViewer(),
+    getCenterSettings(),
+  ]);
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -23,6 +27,7 @@ export async function AppShell({
         specialty={viewer?.specialty ?? null}
         fullName={viewer?.fullName ?? ""}
         email={viewer?.email ?? ""}
+        modules={settings.modules}
       />
       <div className="lg:pl-64">{children}</div>
     </div>

@@ -6,6 +6,8 @@ import {
   tomorrowMadrid,
 } from "@/lib/data/reminders";
 import { notifyOnce } from "@/lib/notifications";
+import { getCenterSettings } from "@/lib/data/center-settings";
+import { centerHour } from "@/lib/center-time";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +38,24 @@ async function handle(req: NextRequest) {
   const auth = req.headers.get("authorization");
   if (auth !== `Bearer ${secret}`)
     return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
+
+  // ─── Hora d'enviament configurable ───
+  // LIMITACIÓ: el pla gratuït de Vercel només permet UN cron diari, amb l'hora
+  // fixada a vercel.json (no es pot canviar sense desplegar). Així doncs,
+  // `reminder_hour_local` NO mou l'execució del cron: només decideix si, en la
+  // finestra en què el cron ja corre, toca enviar o no. Si l'hora local del
+  // centre encara no ha arribat al valor configurat, aquesta execució no envia
+  // res i els recordatoris sortiran en la del dia següent.
+  const { reminderHourLocal } = await getCenterSettings();
+  const horaLocal = centerHour(new Date());
+  if (horaLocal < reminderHourLocal) {
+    return NextResponse.json({
+      ok: true,
+      skipped: "encara no és l'hora configurada",
+      horaLocalDelCentre: horaLocal,
+      reminderHourLocal,
+    });
+  }
 
   const targets = await listTomorrowReminderTargets();
   let sent = 0;

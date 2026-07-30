@@ -22,8 +22,6 @@ import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
-const DEFAULT_OPEN = 7;
-const DEFAULT_CLOSE = 22;
 
 /** Nom i primer cognom (vista compacta). */
 const firstName = (name: string) => name.split(" ").slice(0, 2).join(" ");
@@ -136,6 +134,8 @@ export function WeeklyCalendar({
   manageableTrialIds = [],
   acceptTrialAction,
   rejectTrialAction,
+  openingHour = 7,
+  closingHour = 22,
 }: {
   reservations: ReservationListItem[];
   manageableIds: string[];
@@ -153,6 +153,9 @@ export function WeeklyCalendar({
   manageableTrialIds?: string[];
   acceptTrialAction?: ReservationAction;
   rejectTrialAction?: ReservationAction;
+  /** Horari del centre (configurable per l'admin). */
+  openingHour?: number;
+  closingHour?: number;
 }) {
   const router = useRouter();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -191,8 +194,8 @@ export function WeeklyCalendar({
     }
 
     const map = new Map<string, ReservationListItem[]>();
-    let minH = DEFAULT_OPEN;
-    let maxH = DEFAULT_CLOSE;
+    let minH = openingHour;
+    let maxH = closingHour;
     for (const r of inWeek) {
       if (r.status === "cancelled") continue;
       const d = new Date(r.scheduledAt);
@@ -215,7 +218,7 @@ export function WeeklyCalendar({
     const hrs: number[] = [];
     for (let h = minH; h < maxH; h++) hrs.push(h);
     return { cells: map, hours: hrs, groupOccupancy: occ, trialCells: trialMap };
-  }, [reservations, trials, weekStart, weekEnd]);
+  }, [reservations, trials, weekStart, weekEnd, openingHour, closingHour]);
 
   const monthLabel = new Intl.DateTimeFormat("ca-ES", {
     month: "long",

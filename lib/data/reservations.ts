@@ -11,6 +11,7 @@ import { listBlocksLite } from "@/lib/data/availability-blocks";
 import { isServiceAvailable, isInstantBlocked } from "@/lib/availability-slots";
 import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { notify, getProfileContact } from "@/lib/notifications";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
 import type { Database, ServiceType, ReservationStatus } from "@/types/database";
 
@@ -148,13 +149,20 @@ async function notifyTrainerBooking(
   });
 }
 
-/** Avisa el client que li queda 1 sessió al bo (best-effort). */
+/**
+ * Avisa el client que el bo se li acaba (best-effort). El llindar el configura
+ * l'admin (bonoLowThreshold); abans era fix a 1 sessió.
+ *
+ * Es dispara només en CREUAR el llindar, no cada vegada que hi és per sota:
+ * si no, cada reserva a partir d'aquí repetiria l'avís.
+ */
 async function notifyBonoLowIfNeeded(
   clientId: string,
   serviceType: ServiceType,
   remaining: number,
 ): Promise<void> {
-  if (remaining !== 1) return;
+  const { bonoLowThreshold } = await getCenterSettings();
+  if (remaining !== bonoLowThreshold) return;
   const c = await clientContact(clientId);
   if (!c) return;
   await notify({
@@ -600,6 +608,23 @@ export async function createClientReservation(
   if (Number.isNaN(when.getTime())) throw new Error("Data no vàlida.");
   if (when.getTime() <= Date.now())
     throw new Error("La data ha de ser futura.");
+
+  // Antelació mínima per reservar (configurable; 0 = sense restricció).
+  // Només s'aplica a l'autoservei del client: l'admin i els entrenadors poden
+  // seguir creant reserves per a qualsevol moment futur.
+  const { minBookingHours } = await getCenterSettings();
+  if (minBookingHours > 0) {
+    const marge = when.getTime() - Date.now();
+    if (marge < minBookingHours * 3600_000) {
+      const h = minBookingHours;
+      throw new Error(
+        h === 1
+          ? "Has de reservar com a mínim 1 hora abans."
+          : `Has de reservar com a mínim ${h} hores abans.`,
+      );
+    }
+  }
+
   const scheduledAt = when.toISOString();
   const { trainerId, serviceType } = input;
 

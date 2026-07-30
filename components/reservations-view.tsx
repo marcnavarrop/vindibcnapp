@@ -48,6 +48,8 @@ export function ReservationsView({
   rejectTrialAction,
   showCalendarFilters,
   showColleagueSelector,
+  openingHour,
+  closingHour,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -63,6 +65,9 @@ export function ReservationsView({
   allAvailability?: TrainerRuleLite[];
   /** Bloquejos temporals de tots els professionals (tapen l'ombrejat). */
   allBlocks?: TrainerBlockLite[];
+  /** Horari del centre (configurable per l'admin). */
+  openingHour?: number;
+  closingHour?: number;
   /** ID del trainer autenticat (per pre-seleccionar "La meva" disponibilitat). */
   myTrainerId?: string;
   trials?: TrialHoldItem[];
@@ -351,6 +356,8 @@ export function ReservationsView({
           rescheduleAction={rescheduleAction}
           availability={effectiveAvailability}
           blocks={effectiveBlocks}
+          openingHour={openingHour}
+          closingHour={closingHour}
           trials={trials}
           manageableTrialIds={manageableTrialIds}
           acceptTrialAction={acceptTrialAction}

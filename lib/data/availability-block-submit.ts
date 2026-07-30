@@ -1,6 +1,6 @@
 import "server-only";
 import { centerLocalToInstant } from "@/lib/center-time";
-import { CENTER_OPEN_HOUR, CENTER_CLOSE_HOUR } from "@/lib/availability-slots";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   createAvailabilityBlock,
   listReservationsInRange,
@@ -22,7 +22,11 @@ export type BlockFormState = {
 };
 
 /** Llegeix el rang del formulari, en mode "dia complet" o amb hores exactes. */
-function parseRange(fd: FormData): { startAt: string; endAt: string } {
+function parseRange(
+  fd: FormData,
+  openingHour: number,
+  closingHour: number,
+): { startAt: string; endAt: string } {
   const confirmStart = String(fd.get("confirmStartAt") ?? "");
   const confirmEnd = String(fd.get("confirmEndAt") ?? "");
   if (confirmStart && confirmEnd)
@@ -35,8 +39,8 @@ function parseRange(fd: FormData): { startAt: string; endAt: string } {
     const to = String(fd.get("endDay") ?? "").trim() || from;
     if (!from) throw new Error("Indica el dia d'inici.");
     return {
-      startAt: centerLocalToInstant(from, pad(CENTER_OPEN_HOUR) + ":00").toISOString(),
-      endAt: centerLocalToInstant(to, pad(CENTER_CLOSE_HOUR) + ":00").toISOString(),
+      startAt: centerLocalToInstant(from, pad(openingHour) + ":00").toISOString(),
+      endAt: centerLocalToInstant(to, pad(closingHour) + ":00").toISOString(),
     };
   }
 
@@ -64,9 +68,11 @@ export async function submitAvailabilityBlock(
   createdBy: string | null,
   fd: FormData,
 ): Promise<BlockFormState> {
+  const { openingHour, closingHour } = await getCenterSettings();
+
   let range: { startAt: string; endAt: string };
   try {
-    range = parseRange(fd);
+    range = parseRange(fd, openingHour, closingHour);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Dades no vàlides." };
   }

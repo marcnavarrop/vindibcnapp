@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
@@ -31,6 +32,7 @@ export default async function AdminDisponibilitatPage({
   const trainers = await listTrainersDetailed();
   const selected =
     trainers.find((t) => t.id === selectedId) ?? trainers[0] ?? null;
+  const centerSettings = await getCenterSettings();
   const [rules, blocks] = selected
     ? await Promise.all([
         listAvailabilityRules(selected.id),
@@ -85,6 +87,8 @@ export default async function AdminDisponibilitatPage({
           {selected && (
             <AvailabilityBlocksManager
               blocks={blocks}
+              openingHour={centerSettings.openingHour}
+              closingHour={centerSettings.closingHour}
               createAction={createBlockAdminAction.bind(null, selected.id)}
               deleteAction={deleteBlockAdminAction}
             />

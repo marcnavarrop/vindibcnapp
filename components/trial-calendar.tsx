@@ -13,8 +13,6 @@ import { TRIAL_SERVICE } from "@/lib/data/trial-bookings.constants";
 import type { PublicTrialData } from "@/lib/data/trial-bookings";
 import type { TrialFormState } from "@/app/prova/actions";
 
-const OPEN = 7;
-const CLOSE = 22;
 const HOUR = 60 * 60 * 1000;
 const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
 
@@ -64,9 +62,14 @@ function slotIsFree(
 export function TrialCalendar({
   data,
   action,
+  openingHour = 7,
+  closingHour = 22,
 }: {
   data: PublicTrialData;
   action: CreateAction;
+  /** Horari del centre (configurable per l'admin). */
+  openingHour?: number;
+  closingHour?: number;
 }) {
   const [view, setView] = useState<"day" | "week">("week");
   const [offset, setOffset] = useState(0);
@@ -94,9 +97,9 @@ export function TrialCalendar({
 
   const hours = useMemo(() => {
     const out: number[] = [];
-    for (let h = OPEN; h < CLOSE; h++) out.push(h);
+    for (let h = openingHour; h < closingHour; h++) out.push(h);
     return out;
-  }, []);
+  }, [openingHour, closingHour]);
 
   const periodLabel = useMemo(() => {
     if (view === "week")

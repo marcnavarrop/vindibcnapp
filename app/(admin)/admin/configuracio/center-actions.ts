@@ -6,6 +6,13 @@ import { updateCenterSettings } from "@/lib/data/center-settings";
 
 export type CenterSettingsState = { error?: string; ok?: boolean };
 
+/** Enter dins de rang, o `null` si el camp no és vàlid. */
+function intInRange(fd: FormData, name: string, min: number, max: number): number | null {
+  const n = parseInt(String(fd.get(name) ?? ""), 10);
+  if (!Number.isFinite(n) || n < min || n > max) return null;
+  return n;
+}
+
 export async function updateCenterSettingsAction(
   _prev: CenterSettingsState,
   fd: FormData,
@@ -29,6 +36,25 @@ export async function updateCenterSettingsAction(
     return { error: "El percentatge de descompte ha de ser entre 1 i 100." };
   }
 
+  const openingHour = intInRange(fd, "openingHour", 0, 22);
+  const closingHour = intInRange(fd, "closingHour", 1, 23);
+  if (openingHour === null || closingHour === null)
+    return { error: "L'horari ha de ser en hores senceres del dia (0–23)." };
+  if (closingHour <= openingHour)
+    return { error: "L'hora de tancament ha de ser posterior a la d'obertura." };
+
+  const minBookingHours = intInRange(fd, "minBookingHours", 0, 720);
+  if (minBookingHours === null)
+    return { error: "L'antelació mínima ha de ser entre 0 i 720 hores." };
+
+  const bonoLowThreshold = intInRange(fd, "bonoLowThreshold", 0, 50);
+  if (bonoLowThreshold === null)
+    return { error: "El llindar de bo ha de ser entre 0 i 50 sessions." };
+
+  const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);
+  if (reminderHourLocal === null)
+    return { error: "L'hora dels recordatoris ha de ser entre 0 i 23." };
+
   try {
     await updateCenterSettings({
       minCancellationHours: hours,
@@ -36,6 +62,16 @@ export async function updateCenterSettingsAction(
       referralProgramActive,
       referralRewardReferee,
       referralDiscountPercent: referralProgramActive ? referralDiscountPercent : undefined,
+      openingHour,
+      closingHour,
+      minBookingHours,
+      bonoLowThreshold,
+      reminderHourLocal,
+      modules: {
+        comunitat: fd.get("moduleComunitat") === "true",
+        sessionsProva: fd.get("moduleSessionsProva") === "true",
+        documents: fd.get("moduleDocuments") === "true",
+      },
     });
   } catch (e) {
     return {
@@ -43,6 +79,8 @@ export async function updateCenterSettingsAction(
     };
   }
 
-  revalidatePath("/admin/configuracio");
+  // Els mòduls i l'horari afecten menús i calendaris de tota l'app, no només
+  // aquesta pàgina: cal invalidar el layout arrel.
+  revalidatePath("/", "layout");
   return { ok: true };
 }

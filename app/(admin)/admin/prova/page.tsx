@@ -14,6 +14,7 @@ import {
   setTrialStatusAdminAction,
 } from "@/app/(admin)/admin/prova/actions";
 import type { TrialStatus } from "@/types/database";
+import { assertModuleEnabled } from "@/lib/data/module-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ function fmt(iso: string): string {
 }
 
 export default async function AdminProvaPage() {
+  await assertModuleEnabled("sessionsProva");
   const trials = await listTrialBookings();
   const pending = trials.filter((t) => t.status === "pending");
   const rest = trials.filter((t) => t.status !== "pending");

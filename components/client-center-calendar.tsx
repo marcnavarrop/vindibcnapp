@@ -22,8 +22,6 @@ import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
-const OPEN = 7;
-const CLOSE = 22;
 const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
 
 /** Abreviatura visual del tipo de sesión (indicador rápido). */
@@ -165,11 +163,16 @@ export function ClientCenterCalendar({
   createAction,
   cancelAction,
   minCancellationHours = 0,
+  openingHour = 7,
+  closingHour = 22,
 }: {
   data: ClientCenterData;
   createAction: CreateAction;
   cancelAction: CancelAction;
   minCancellationHours?: number;
+  /** Horari del centre (configurable per l'admin). */
+  openingHour?: number;
+  closingHour?: number;
 }) {
   const router = useRouter();
   const { bonoTypes, trainers, rules, blocks, reservations, assignedTrainerId } =
@@ -224,8 +227,8 @@ export function ClientCenterCalendar({
 
   // Rango horario a partir de reglas y reservas.
   const hours = useMemo(() => {
-    let minH = OPEN;
-    let maxH = CLOSE;
+    let minH = openingHour;
+    let maxH = closingHour;
     for (const r of rules) {
       minH = Math.min(minH, r.startHour);
       maxH = Math.max(maxH, r.endHour);
@@ -239,7 +242,7 @@ export function ClientCenterCalendar({
     const out: number[] = [];
     for (let h = minH; h < maxH; h++) out.push(h);
     return out;
-  }, [rules, reservations]);
+  }, [rules, reservations, openingHour, closingHour]);
 
   // Servicios que puede reservar (bonos), respetando el filtro de servicio.
   const canBook = (s: ServiceType) =>
@@ -252,7 +255,7 @@ export function ClientCenterCalendar({
     const cellDate = new Date(date);
     cellDate.setHours(h, 0, 0, 0);
     const inFuture = cellDate.getTime() > Date.now();
-    const inHours = h >= OPEN && h < CLOSE;
+    const inHours = h >= openingHour && h < closingHour;
     const day = localDateStr(cellDate);
     const items: CellItem[] = [];
 

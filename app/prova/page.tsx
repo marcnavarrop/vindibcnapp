@@ -3,6 +3,8 @@ import { Wordmark } from "@/components/wordmark";
 import { getPublicTrialData } from "@/lib/data/trial-bookings";
 import { TrialCalendar } from "@/components/trial-calendar";
 import { requestTrialAction } from "@/app/prova/actions";
+import { assertModuleEnabled } from "@/lib/data/module-guard";
+import { getCenterSettings } from "@/lib/data/center-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +14,11 @@ export const metadata = {
 };
 
 export default async function ProvaPage() {
-  const data = await getPublicTrialData();
+  await assertModuleEnabled("sessionsProva");
+  const [data, centerSettings] = await Promise.all([
+    getPublicTrialData(),
+    getCenterSettings(),
+  ]);
 
   return (
     <main className="mx-auto max-w-4xl p-6">
@@ -33,7 +39,12 @@ export default async function ProvaPage() {
         No cal crear cap compte.
       </p>
 
-      <TrialCalendar data={data} action={requestTrialAction} />
+      <TrialCalendar
+        data={data}
+        action={requestTrialAction}
+        openingHour={centerSettings.openingHour}
+        closingHour={centerSettings.closingHour}
+      />
     </main>
   );
 }

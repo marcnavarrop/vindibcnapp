@@ -2,6 +2,7 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore } from "@/lib/mock/store";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import {
@@ -222,7 +223,8 @@ function currentWeekDays(now: Date): string[] {
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboard> {
-  const raw = await gather();
+  // Les dades i la configuració són independents: van alhora.
+  const [raw, settings] = await Promise.all([gather(), getCenterSettings()]);
   const now = new Date();
 
   // ── 1. Ingressos del mes (pagaments reals, mai bonos pendents) ──
@@ -258,8 +260,9 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   // ── 3. Bonos a punt d'esgotar-se ──
   // Mateix criteri que l'avís bono_low (1 sessió). S'inclou el 0 per si algun
   // bo hagués quedat actiu sense sessions.
+  // Llindar configurable per l'admin (abans era fix a 1).
   const lowBonos: LowBono[] = raw.bonos
-    .filter((b) => b.status === "active" && b.remaining <= 1)
+    .filter((b) => b.status === "active" && b.remaining <= settings.bonoLowThreshold)
     .map((b) => ({
       bonoId: b.id,
       clientId: b.clientId,

@@ -39,6 +39,8 @@ export default async function ClientReservasPage() {
         createAction={createOwnReservationAction}
         cancelAction={cancelOwnReservationAction}
         minCancellationHours={centerSettings.minCancellationHours}
+        openingHour={centerSettings.openingHour}
+        closingHour={centerSettings.closingHour}
       />
     </main>
   );

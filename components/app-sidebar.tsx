@@ -8,7 +8,16 @@ import { Wordmark } from "@/components/wordmark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { USE_MOCK } from "@/lib/config";
 import { SPECIALTY_LABELS } from "@/lib/labels";
-import { NAV_GROUPS, isNavGroup, AREA_LABELS, HOME_PATH, type Role } from "@/lib/nav";
+import {
+  NAV_GROUPS,
+  isNavGroup,
+  AREA_LABELS,
+  HOME_PATH,
+  filterNavByModules,
+  ALL_MODULES_ON,
+  type Role,
+  type ModuleFlags,
+} from "@/lib/nav";
 import type { Specialty } from "@/types/database";
 
 /** Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área. */
@@ -46,11 +55,14 @@ export function AppSidebar({
   specialty = null,
   fullName = "",
   email = "",
+  modules = ALL_MODULES_ON,
 }: {
   role: Role;
   specialty?: Specialty | null;
   fullName?: string;
   email?: string;
+  /** Mòduls actius; els desactivats no surten al menú. */
+  modules?: ModuleFlags;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -70,6 +82,7 @@ export function AppSidebar({
           specialty={specialty}
           initial={initial}
           pathname={pathname}
+          modules={modules}
         />
       </aside>
 
@@ -116,6 +129,7 @@ export function AppSidebar({
           specialty={specialty}
           initial={initial}
           pathname={pathname}
+          modules={modules}
         />
           </div>
         </div>
@@ -129,11 +143,13 @@ function SidebarContent({
   specialty,
   initial,
   pathname,
+  modules,
 }: {
   role: Role;
   specialty: Specialty | null;
   initial: string;
   pathname: string;
+  modules: ModuleFlags;
 }) {
   return (
     <div className="flex h-full flex-col gap-4 p-4">
@@ -146,7 +162,7 @@ function SidebarContent({
 
       <nav className="flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1">
-          {NAV_GROUPS[role].map((entry) => {
+          {filterNavByModules(NAV_GROUPS[role], modules).map((entry) => {
             if (isNavGroup(entry)) {
               const active = entry.children.some(
                 (c) =>

@@ -36,10 +36,6 @@ export type AvailabilityBlockLite = {
 /** Bloqueo con el profesional dueño (para el calendario global). */
 export type TrainerBlockLite = AvailabilityBlockLite & { trainerId: string };
 
-/** Horario de apertura del centro, usado para los bloqueos de "día completo". */
-export const CENTER_OPEN_HOUR = 7;
-export const CENTER_CLOSE_HOUR = 22;
-
 /** ¿El instante `at` cae dentro de algún bloqueo? (inicio incluido, fin excluido) */
 export function isInstantBlocked(
   blocks: AvailabilityBlockLite[],
