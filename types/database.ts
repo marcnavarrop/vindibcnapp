@@ -36,6 +36,19 @@ export type TrialStatus =
   | "cancelled";
 /** Serveis d'entrenament (les sessions de prova mai són de fisioteràpia). */
 export type TrainingServiceType = Exclude<ServiceType, "fisioterapia">;
+
+/**
+ * Línia del desglossament d'una liquidació, tal com es desa a
+ * `settlements.session_breakdown`. És una fotografia: un cop generada, no es
+ * torna a calcular encara que canviïn les tarifes.
+ */
+export type SettlementBreakdownLine = {
+  serviceType: ServiceType;
+  sessions: number;
+  /** Tarifa aplicada. `null` si dins d'aquest tipus hi va haver més d'una. */
+  rate: number | null;
+  amount: number;
+};
 export type PaymentMethod = "card" | "cash";
 export type DiscountType = "percentage" | "fixed_amount";
 export type PromotionScope = "service" | "package";
@@ -913,6 +926,59 @@ export interface Database {
         Update: {
           status?: ReferralRewardStatus;
           used_in_bono_id?: string | null;
+        };
+        Relationships: [];
+      };
+      professional_rates: {
+        Row: {
+          id: string;
+          trainer_id: string;
+          service_type: ServiceType;
+          rate_amount: number;
+          effective_from: string;
+          effective_until: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trainer_id: string;
+          service_type: ServiceType;
+          rate_amount: number;
+          effective_from?: string;
+          effective_until?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          rate_amount?: number;
+          effective_from?: string;
+          effective_until?: string | null;
+        };
+        Relationships: [];
+      };
+      settlements: {
+        Row: {
+          id: string;
+          trainer_id: string;
+          period_start: string;
+          period_end: string;
+          total_amount: number;
+          session_breakdown: SettlementBreakdownLine[];
+          generated_at: string;
+          generated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          trainer_id: string;
+          period_start: string;
+          period_end: string;
+          total_amount: number;
+          session_breakdown?: SettlementBreakdownLine[];
+          generated_at?: string;
+          generated_by?: string | null;
+        };
+        Update: {
+          total_amount?: number;
+          session_breakdown?: SettlementBreakdownLine[];
         };
         Relationships: [];
       };
