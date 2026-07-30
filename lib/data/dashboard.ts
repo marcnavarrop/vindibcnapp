@@ -101,12 +101,11 @@ const TRIAL_HAPPENED = (status: TrialStatus) =>
   status === "confirmed" || status === "completed";
 
 async function gather(): Promise<Raw> {
-  const [rules, blocks] = await Promise.all([
-    listAllTrainerRulesLite(),
-    listAllBlocksLite(),
-  ]);
-
   if (USE_MOCK) {
+    const [rules, blocks] = await Promise.all([
+      listAllTrainerRulesLite(),
+      listAllBlocksLite(),
+    ]);
     const store = getStore();
     const clientNames = new Map<string, string>();
     for (const c of store.clients) {
@@ -148,8 +147,15 @@ async function gather(): Promise<Raw> {
 
   // Client amb sessió (no service_role): la RLS d'admin ja permet llegir-ho
   // tot, i així la pàgina no depèn només del middleware per protegir-se.
+  // Només construeix el client (llegeix cookies): no és cap viatge de xarxa.
   const admin = await createClient();
-  const [pay, bon, res, tri, cli, tra] = await Promise.all([
+
+  // Les VUIT consultes són independents entre si, així que van totes alhora.
+  // Abans les regles i els bloquejos s'esperaven a part, i les altres sis no
+  // arrencaven fins que aquelles dues havien tornat: un viatge de xarxa de més.
+  const [rules, blocks, pay, bon, res, tri, cli, tra] = await Promise.all([
+    listAllTrainerRulesLite(),
+    listAllBlocksLite(),
     admin.from("payments").select("amount, paid_at"),
     admin.from("bonos").select("id, client_id, price, status, remaining_sessions, service_type"),
     admin.from("reservations").select("trainer_id, scheduled_at, status"),
