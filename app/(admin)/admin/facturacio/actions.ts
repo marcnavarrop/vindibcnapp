@@ -19,18 +19,16 @@ async function requireAdmin(): Promise<{ id: string } | null> {
   return { id: viewer.id };
 }
 
-/** Desa la tarifa d'un professional per a un servei (tancant la vigent). */
+/** Desa la tarifa del centre per a un servei (tancant la vigent). */
 export async function updateRateAction(
   _prev: RateFormState,
   fd: FormData,
 ): Promise<RateFormState> {
   if (!(await requireAdmin())) return { error: "No autoritzat." };
 
-  const trainerId = String(fd.get("trainerId") ?? "");
   const serviceType = String(fd.get("serviceType") ?? "") as ServiceType;
   const amount = parseFloat(String(fd.get("rateAmount") ?? ""));
 
-  if (!trainerId) return { error: "Falta el professional." };
   if (!SERVICE_TYPES.includes(serviceType))
     return { error: "Tipus de servei invàlid." };
   if (!Number.isFinite(amount) || amount < 0)
@@ -38,7 +36,7 @@ export async function updateRateAction(
   if (amount > 100000) return { error: "L'import és massa alt." };
 
   try {
-    await setRate(trainerId, serviceType, Math.round(amount * 100) / 100);
+    await setRate(serviceType, Math.round(amount * 100) / 100);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en desar la tarifa." };
   }

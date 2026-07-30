@@ -955,6 +955,30 @@ export interface Database {
         };
         Relationships: [];
       };
+      service_rates: {
+        Row: {
+          id: string;
+          service_type: ServiceType;
+          rate_amount: number;
+          effective_from: string;
+          effective_until: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          service_type: ServiceType;
+          rate_amount: number;
+          effective_from?: string;
+          effective_until?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          rate_amount?: number;
+          effective_from?: string;
+          effective_until?: string | null;
+        };
+        Relationships: [];
+      };
       settlements: {
         Row: {
           id: string;

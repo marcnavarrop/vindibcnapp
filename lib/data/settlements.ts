@@ -8,9 +8,8 @@ const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 // ─── Tipus ───────────────────────────────────────────────────────────────────
 
-export type ProfessionalRate = {
+export type ServiceRate = {
   id: string;
-  trainerId: string;
   serviceType: ServiceType;
   rateAmount: number;
   effectiveFrom: string;
@@ -44,16 +43,14 @@ export type SettlementPreview = {
 
 function rowToRate(r: {
   id: string;
-  trainer_id: string;
   service_type: string;
   rate_amount: number | string;
   effective_from: string;
   effective_until: string | null;
   created_at: string;
-}): ProfessionalRate {
+}): ServiceRate {
   return {
     id: r.id,
-    trainerId: r.trainer_id,
     serviceType: r.service_type as ServiceType,
     rateAmount: Number(r.rate_amount),
     effectiveFrom: r.effective_from,
@@ -76,15 +73,16 @@ function shiftDay(dateStr: string, days: number): string {
 /**
  * Tarifa vigent per a un dia concret.
  *
- * Funció pura: rep totes les tarifes del professional i tria la que cobreix
- * `day`. Si n'hi hagués més d'una (dades inconsistents), guanya la de
+ * Funció pura: rep totes les tarifes del centre i tria la que cobreix `day`.
+ * No depèn del professional — la tarifa d'un servei és la mateixa per a
+ * tothom. Si n'hi hagués més d'una (dades inconsistents), guanya la de
  * `effective_from` més recent, que és la darrera que es va crear.
  */
 export function rateOn(
-  rates: ProfessionalRate[],
+  rates: ServiceRate[],
   serviceType: ServiceType,
   day: string,
-): ProfessionalRate | null {
+): ServiceRate | null {
   const candidates = rates.filter(
     (r) =>
       r.serviceType === serviceType &&
@@ -99,40 +97,32 @@ export function rateOn(
 
 // ─── Tarifes ────────────────────────────────────────────────────────────────
 
-/** Totes les tarifes (històric inclòs) d'un professional, o de tots. */
-export async function listRates(trainerId?: string): Promise<ProfessionalRate[]> {
+/** Totes les tarifes del centre, històric inclòs. */
+export async function listRates(): Promise<ServiceRate[]> {
   if (USE_MOCK) {
     const { getStore } = await import("@/lib/mock/store");
-    return getStore()
-      .professional_rates.filter((r) => !trainerId || r.trainer_id === trainerId)
-      .map(rowToRate);
+    return getStore().service_rates.map(rowToRate);
   }
 
   const supabase = await createClient();
-  let query = supabase
-    .from("professional_rates")
+  const { data, error } = await supabase
+    .from("service_rates")
     .select(
-      "id, trainer_id, service_type, rate_amount, effective_from, effective_until, created_at",
+      "id, service_type, rate_amount, effective_from, effective_until, created_at",
     )
     .order("effective_from", { ascending: false });
-  if (trainerId) query = query.eq("trainer_id", trainerId);
-
-  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []).map(rowToRate);
 }
 
-/** Tarifes vigents avui, indexades per `trainerId|serviceType`. */
-export async function currentRateMap(): Promise<Map<string, ProfessionalRate>> {
+/** Tarifes vigents avui, indexades per servei. */
+export async function currentRateMap(): Promise<Map<ServiceType, ServiceRate>> {
   const all = await listRates();
   const today = todayStr();
-  const map = new Map<string, ProfessionalRate>();
-  for (const trainerId of new Set(all.map((r) => r.trainerId))) {
-    const mine = all.filter((r) => r.trainerId === trainerId);
-    for (const st of SERVICE_TYPES) {
-      const r = rateOn(mine, st, today);
-      if (r) map.set(`${trainerId}|${st}`, r);
-    }
+  const map = new Map<ServiceType, ServiceRate>();
+  for (const st of SERVICE_TYPES) {
+    const r = rateOn(all, st, today);
+    if (r) map.set(st, r);
   }
   return map;
 }
@@ -147,7 +137,6 @@ export async function currentRateMap(): Promise<Map<string, ProfessionalRate>> {
  * fila no va arribar a estar vigent cap dia sencer.
  */
 export async function setRate(
-  trainerId: string,
   serviceType: ServiceType,
   rateAmount: number,
 ): Promise<void> {
@@ -157,24 +146,17 @@ export async function setRate(
   if (USE_MOCK) {
     const { getStore, saveStore } = await import("@/lib/mock/store");
     const store = getStore();
-    const current = rateOn(
-      store.professional_rates.filter((r) => r.trainer_id === trainerId).map(rowToRate),
-      serviceType,
-      today,
-    );
+    const current = rateOn(store.service_rates.map(rowToRate), serviceType, today);
     if (current) {
       if (current.effectiveFrom >= today) {
-        store.professional_rates = store.professional_rates.filter(
-          (r) => r.id !== current.id,
-        );
+        store.service_rates = store.service_rates.filter((r) => r.id !== current.id);
       } else {
-        const row = store.professional_rates.find((r) => r.id === current.id);
+        const row = store.service_rates.find((r) => r.id === current.id);
         if (row) row.effective_until = yesterday;
       }
     }
-    store.professional_rates.push({
+    store.service_rates.push({
       id: crypto.randomUUID(),
-      trainer_id: trainerId,
       service_type: serviceType,
       rate_amount: rateAmount,
       effective_from: today,
@@ -186,27 +168,25 @@ export async function setRate(
   }
 
   const admin = createAdminClient();
-  const existing = await listRates(trainerId);
-  const current = rateOn(existing, serviceType, today);
+  const current = rateOn(await listRates(), serviceType, today);
 
   if (current) {
     if (current.effectiveFrom >= today) {
       const { error } = await admin
-        .from("professional_rates")
+        .from("service_rates")
         .delete()
         .eq("id", current.id);
       if (error) throw new Error(error.message);
     } else {
       const { error } = await admin
-        .from("professional_rates")
+        .from("service_rates")
         .update({ effective_until: yesterday })
         .eq("id", current.id);
       if (error) throw new Error(error.message);
     }
   }
 
-  const { error } = await admin.from("professional_rates").insert({
-    trainer_id: trainerId,
+  const { error } = await admin.from("service_rates").insert({
     service_type: serviceType,
     rate_amount: rateAmount,
     effective_from: today,
@@ -277,7 +257,7 @@ export async function computeSettlement(
 ): Promise<SettlementPreview> {
   const [sessions, rates] = await Promise.all([
     completedSessions(trainerId, periodStart, periodEnd),
-    listRates(trainerId),
+    listRates(),
   ]);
 
   const acc = new Map<

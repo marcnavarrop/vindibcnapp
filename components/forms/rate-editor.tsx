@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { updateRateAction } from "@/app/(admin)/admin/facturacio/actions";
-import { SERVICE_LABELS, SERVICE_TYPES, formatDate } from "@/lib/labels";
+import { SERVICE_LABELS, formatDate } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
 
 export type RateRowData = {
@@ -17,13 +17,7 @@ export type RateRowData = {
  * d'un servei no toca les altres, i l'estat d'error queda al costat del camp
  * que l'ha provocat.
  */
-function RateRow({
-  trainerId,
-  row,
-}: {
-  trainerId: string;
-  row: RateRowData;
-}) {
+function RateRow({ row }: { row: RateRowData }) {
   const [state, action] = useActionState(updateRateAction, {});
 
   return (
@@ -31,7 +25,6 @@ function RateRow({
       action={action}
       className="flex flex-wrap items-center gap-3 border-b border-brand-border py-3 last:border-0"
     >
-      <input type="hidden" name="trainerId" value={trainerId} />
       <input type="hidden" name="serviceType" value={row.serviceType} />
 
       <div className="min-w-40 flex-1">
@@ -60,9 +53,7 @@ function RateRow({
         <SubmitButton>Desar</SubmitButton>
       </div>
 
-      {state.error && (
-        <p className="w-full text-xs text-error">{state.error}</p>
-      )}
+      {state.error && <p className="w-full text-xs text-error">{state.error}</p>}
       {state.ok && (
         <p className="w-full text-xs text-success">Tarifa actualitzada.</p>
       )}
@@ -70,37 +61,14 @@ function RateRow({
   );
 }
 
-export function RateEditor({
-  trainers,
-}: {
-  trainers: { id: string; name: string; rows: RateRowData[] }[];
-}) {
-  if (trainers.length === 0) {
-    return (
-      <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-        Encara no hi ha cap professional donat d&apos;alta.
-      </p>
-    );
-  }
-
+/** Les quatre tarifes del centre. No hi ha selector de professional: la
+ *  tarifa d'un servei és la mateixa per a tothom. */
+export function RateEditor({ rows }: { rows: RateRowData[] }) {
   return (
-    <div className="flex flex-col gap-4">
-      {trainers.map((t) => (
-        <section
-          key={t.id}
-          className="rounded-2xl border border-brand-border bg-white p-5"
-        >
-          <h2 className="mb-2 text-lg text-brand-dark">{t.name}</h2>
-          {SERVICE_TYPES.map((st) => {
-            const row = t.rows.find((r) => r.serviceType === st) ?? {
-              serviceType: st,
-              amount: null,
-              effectiveFrom: null,
-            };
-            return <RateRow key={st} trainerId={t.id} row={row} />;
-          })}
-        </section>
+    <section className="rounded-2xl border border-brand-border bg-white p-5">
+      {rows.map((row) => (
+        <RateRow key={row.serviceType} row={row} />
       ))}
-    </div>
+    </section>
   );
 }
