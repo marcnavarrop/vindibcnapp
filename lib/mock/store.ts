@@ -51,6 +51,10 @@ export type Store = {
   /** OBSOLETA (0038): substituïda per service_rates. */
   professional_rates: Tables["professional_rates"]["Row"][];
   service_rates: Tables["service_rates"]["Row"][];
+  bonus_service_weights: Tables["bonus_service_weights"]["Row"][];
+  bonus_tiers: Tables["bonus_tiers"]["Row"][];
+  bonus_worker_settings: Tables["bonus_worker_settings"]["Row"][];
+  bonus_payouts: Tables["bonus_payouts"]["Row"][];
   settlements: Tables["settlements"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
 };
@@ -89,6 +93,10 @@ function fromSeed(): Store {
     referral_rewards: structuredClone(seedReferralRewards),
     professional_rates: [],
     service_rates: [],
+    bonus_service_weights: [],
+    bonus_tiers: [],
+    bonus_worker_settings: [],
+    bonus_payouts: [],
     settlements: [],
     centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, opening_time: "07:00:00", closing_time: "22:00:00", min_booking_hours: 0, bono_low_threshold: 1, reminder_hour_local: 20, module_comunitat_enabled: true, module_sessions_prova_enabled: true, module_documents_enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
@@ -100,6 +108,10 @@ export function getStore(): Store {
     // Un fitxer escrit per una versió anterior no té les col·leccions noves.
     store.professional_rates ??= [];
     store.service_rates ??= [];
+    store.bonus_service_weights ??= [];
+    store.bonus_tiers ??= [];
+    store.bonus_worker_settings ??= [];
+    store.bonus_payouts ??= [];
     store.settlements ??= [];
     return store;
   } catch {

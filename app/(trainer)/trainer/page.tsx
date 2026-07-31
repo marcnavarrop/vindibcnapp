@@ -5,6 +5,7 @@ import { listReservations } from "@/lib/data/reservations";
 import { listAnnouncements } from "@/lib/data/announcements";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { TrainerUpcomingReservations } from "@/components/trainer-upcoming-reservations";
+import { TrainerBonusPanel } from "@/components/trainer-bonus-panel";
 import { formatLongDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,9 @@ export default async function TrainerHome() {
             {clients.length} clients assignats
           </p>
         </div>
+
+        {/* No renderitza res si aquest professional no té bonus actiu. */}
+        <TrainerBonusPanel trainerId={trainerId} />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SECTIONS.map((s) => (

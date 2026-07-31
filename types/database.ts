@@ -49,6 +49,20 @@ export type SettlementBreakdownLine = {
   rate: number | null;
   amount: number;
 };
+export type BonusPayoutFrequency = "annual" | "biannual";
+
+/**
+ * Tram aplicat en un bonus, tal com es desa a `bonus_payouts.tier_breakdown`.
+ * És una fotografia: no es recalcula encara que després canviïn els trams.
+ */
+export type BonusTierLine = {
+  minUnits: number;
+  maxUnits: number | null;
+  ratePerUnit: number;
+  /** Unitats del total que han caigut dins d'aquest tram. */
+  unitsInTier: number;
+  amount: number;
+};
 export type PaymentMethod = "card" | "cash";
 export type DiscountType = "percentage" | "fixed_amount";
 export type PromotionScope = "service" | "package";
@@ -979,6 +993,108 @@ export interface Database {
         };
         Relationships: [];
       };
+      bonus_service_weights: {
+        Row: {
+          id: string;
+          service_type: ServiceType;
+          weight: number;
+          effective_from: string;
+          effective_until: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          service_type: ServiceType;
+          weight: number;
+          effective_from?: string;
+          effective_until?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          weight?: number;
+          effective_from?: string;
+          effective_until?: string | null;
+        };
+        Relationships: [];
+      };
+      bonus_tiers: {
+        Row: {
+          id: string;
+          min_units: number;
+          max_units: number | null;
+          rate_per_unit: number;
+          effective_from: string;
+          effective_until: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          min_units: number;
+          max_units?: number | null;
+          rate_per_unit: number;
+          effective_from?: string;
+          effective_until?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          min_units?: number;
+          max_units?: number | null;
+          rate_per_unit?: number;
+          effective_from?: string;
+          effective_until?: string | null;
+        };
+        Relationships: [];
+      };
+      bonus_worker_settings: {
+        Row: {
+          trainer_id: string;
+          payout_frequency: BonusPayoutFrequency;
+          enabled: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          trainer_id: string;
+          payout_frequency?: BonusPayoutFrequency;
+          enabled?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          payout_frequency?: BonusPayoutFrequency;
+          enabled?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      bonus_payouts: {
+        Row: {
+          id: string;
+          trainer_id: string;
+          period_start: string;
+          period_end: string;
+          total_units: number;
+          total_amount: number;
+          tier_breakdown: BonusTierLine[];
+          generated_at: string;
+          generated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          trainer_id: string;
+          period_start: string;
+          period_end: string;
+          total_units: number;
+          total_amount: number;
+          tier_breakdown?: BonusTierLine[];
+          generated_at?: string;
+          generated_by?: string | null;
+        };
+        Update: {
+          total_units?: number;
+          total_amount?: number;
+          tier_breakdown?: BonusTierLine[];
+        };
+        Relationships: [];
+      };
       settlements: {
         Row: {
           id: string;
@@ -1011,6 +1127,7 @@ export interface Database {
     Functions: {
       current_role: { Args: Record<never, never>; Returns: UserRole };
       is_admin: { Args: Record<never, never>; Returns: boolean };
+      is_trainer: { Args: Record<never, never>; Returns: boolean };
       owns_client: { Args: { cid: string }; Returns: boolean };
       is_trainer_of: { Args: { cid: string }; Returns: boolean };
     };
@@ -1024,6 +1141,7 @@ export interface Database {
       exercise_category: ExerciseCategory;
       discount_type: DiscountType;
       promotion_scope: PromotionScope;
+      bonus_payout_frequency: BonusPayoutFrequency;
     };
     CompositeTypes: Record<never, never>;
   };
