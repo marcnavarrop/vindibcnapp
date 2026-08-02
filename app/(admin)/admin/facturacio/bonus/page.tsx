@@ -18,6 +18,7 @@ import {
   listPayouts,
   computeBonus,
   periodFor,
+  recentPeriods,
 } from "@/lib/data/bonus";
 import { SERVICE_TYPES, formatEur, formatDate } from "@/lib/labels";
 
@@ -76,10 +77,22 @@ export default async function BonusPage() {
           enabled,
           payoutFrequency: frequency,
           current: null,
+          periods: [],
         };
       }
       const period = periodFor(frequency);
       const progress = await computeBonus(t.id, period, frequency);
+      const periods = recentPeriods(frequency).map((p) => ({
+        start: p.start,
+        label: p.label,
+        closedOn:
+          payouts.find(
+            (x) =>
+              x.trainerId === t.id &&
+              x.periodStart === p.start &&
+              x.periodEnd === p.end,
+          )?.generatedAt ?? null,
+      }));
       return {
         trainerId: t.id,
         name: t.name,
@@ -90,6 +103,7 @@ export default async function BonusPage() {
           units: progress.totalUnits,
           amount: progress.totalAmount,
         },
+        periods,
       };
     }),
   );

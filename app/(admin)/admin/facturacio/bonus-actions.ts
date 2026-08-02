@@ -9,9 +9,11 @@ import {
   setWorkerSettings,
   computeBonus,
   createPayout,
-  periodFor,
+  findPayout,
+  recentPeriods,
   getWorkerSettings,
 } from "@/lib/data/bonus";
+import { formatDate } from "@/lib/labels";
 import type { ServiceType, BonusPayoutFrequency } from "@/types/database";
 
 export type BonusFormState = { error?: string; ok?: boolean };
@@ -100,7 +102,7 @@ export async function updateWorkerBonusAction(
   const enabled = fd.get("enabled") === "true";
 
   if (!trainerId) return { error: "Falta el professional." };
-  if (frequency !== "annual" && frequency !== "biannual")
+  if (frequency !== "annual" && frequency !== "biennial")
     return { error: "Freqüència invàlida." };
 
   try {
@@ -114,8 +116,11 @@ export async function updateWorkerBonusAction(
 }
 
 /**
- * Tanca el període en curs d'un professional i en desa el resultat.
- * Recalcula al servidor: no es fia de cap import que vingui del formulari.
+ * Tanca un període d'un professional i en desa el resultat.
+ *
+ * El període arriba del selector, però no ens en fiem: ha de ser un dels que
+ * corresponen a la freqüència d'aquest treballador. Els imports es recalculen
+ * sempre al servidor.
  */
 export async function generatePayoutAction(
   _prev: BonusFormState,
@@ -125,6 +130,7 @@ export async function generatePayoutAction(
   if (!admin) return { error: "No autoritzat." };
 
   const trainerId = String(fd.get("trainerId") ?? "");
+  const periodStart = String(fd.get("periodStart") ?? "");
   if (!trainerId) return { error: "Falta el professional." };
 
   try {
@@ -132,14 +138,28 @@ export async function generatePayoutAction(
     if (!settings || !settings.enabled)
       return { error: "Aquest professional no té el bonus actiu." };
 
-    const period = periodFor(settings.payoutFrequency);
+    const period = recentPeriods(settings.payoutFrequency, 8).find(
+      (p) => p.start === periodStart,
+    );
+    if (!period) return { error: "Període no vàlid per a aquest professional." };
+
+    const existing = await findPayout(trainerId, period.start, period.end);
+    if (existing)
+      return {
+        error: `Aquest període ja té un payout generat el ${formatDate(existing.generatedAt)}.`,
+      };
+
     const progress = await computeBonus(trainerId, period, settings.payoutFrequency);
     if (progress.totalUnits <= 0)
       return { error: "No hi ha unitats acumulades en aquest període." };
 
     await createPayout(progress, admin.id);
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Error en generar el bonus." };
+    // Cursa entre la comprovació i la inserció: qui guanya és l'índex UNIQUE.
+    const msg = e instanceof Error ? e.message : "";
+    if (msg === "DUPLICATE_PAYOUT" || msg.includes("bonus_payouts_unique_period"))
+      return { error: "Aquest període ja té un payout generat." };
+    return { error: msg || "Error en generar el bonus." };
   }
 
   revalidatePath("/admin/facturacio/bonus");

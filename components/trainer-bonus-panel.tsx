@@ -1,11 +1,28 @@
 import { computeCurrentBonus } from "@/lib/data/bonus";
 import { formatEur, formatDate, SERVICE_LABELS } from "@/lib/labels";
 
-/** Dies que falten perquè s'acabi el període (0 si avui és l'últim dia). */
-function daysLeft(periodEnd: string): number {
+/**
+ * Quant queda de període, en text.
+ *
+ * Un bienni pot deixar més de 700 dies per davant i "queden 731 dies" no diu
+ * res a ningú: a partir de dos mesos es parla de mesos, i del darrer mes
+ * ençà, de dies.
+ */
+function timeLeftLabel(periodEnd: string): string {
   const end = new Date(`${periodEnd}T00:00:00`).getTime();
   const today = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00").getTime();
-  return Math.max(0, Math.round((end - today) / 86_400_000));
+  const days = Math.max(0, Math.round((end - today) / 86_400_000));
+
+  if (days === 0) return "acaba avui";
+  if (days <= 60) return `queden ${days} dies`;
+
+  const months = Math.round(days / 30.4);
+  if (months < 24) return `queden uns ${months} mesos`;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return rest === 0
+    ? `queden uns ${years} anys`
+    : `queden uns ${years} anys i ${rest} mesos`;
 }
 
 /**
@@ -19,7 +36,7 @@ export async function TrainerBonusPanel({ trainerId }: { trainerId: string }) {
   if (!data) return null;
 
   const { progress } = data;
-  const left = daysLeft(progress.period.end);
+  const left = timeLeftLabel(progress.period.end);
   const tier = progress.currentTier;
 
   return (
@@ -29,7 +46,7 @@ export async function TrainerBonusPanel({ trainerId }: { trainerId: string }) {
           El teu bonus
         </h2>
         <span className="text-xs text-brand-muted">
-          {progress.period.label} · {left === 0 ? "acaba avui" : `queden ${left} dies`}
+          {progress.period.label} · {left}
         </span>
       </div>
 

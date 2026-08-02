@@ -51,7 +51,7 @@ export type BonusPayout = {
 export type BonusPeriod = {
   start: string;
   end: string;
-  /** "Any 2026", "2n semestre 2026". */
+  /** "Any 2026", "Bienni 2025–2026". */
   label: string;
 };
 
@@ -98,8 +98,21 @@ function vigentOn<T extends { effectiveFrom: string; effectiveUntil: string | nu
 }
 
 /**
+ * Any en què comença el bienni que conté `year`.
+ *
+ * Els biennis són parelles FIXES del calendari que arrenquen en any senar:
+ * 2025–2026, 2027–2028, 2029–2030… No depenen de quan es va activar el bonus
+ * de cada treballador, de manera que dos professionals tenen sempre el mateix
+ * període i els seus números són comparables. La contrapartida, assumida: qui
+ * entra a mig bienni té un primer període efectiu més curt.
+ */
+function biennumStart(year: number): number {
+  return year - ((year - 1) % 2);
+}
+
+/**
  * Període de bonus que conté `ref` segons la freqüència.
- * Anual: any natural. Semestral: gener–juny o juliol–desembre.
+ * Anual: any natural. Biennal: dos anys naturals consecutius.
  */
 export function periodFor(
   frequency: BonusPayoutFrequency,
@@ -109,10 +122,29 @@ export function periodFor(
   if (frequency === "annual") {
     return { start: `${y}-01-01`, end: `${y}-12-31`, label: `Any ${y}` };
   }
-  const firstHalf = ref.getMonth() < 6;
-  return firstHalf
-    ? { start: `${y}-01-01`, end: `${y}-06-30`, label: `1r semestre ${y}` }
-    : { start: `${y}-07-01`, end: `${y}-12-31`, label: `2n semestre ${y}` };
+  const from = biennumStart(y);
+  return {
+    start: `${from}-01-01`,
+    end: `${from + 1}-12-31`,
+    label: `Bienni ${from}–${from + 1}`,
+  };
+}
+
+/**
+ * El període en curs i els `count` anteriors, del més recent al més antic.
+ * Serveix per poder tancar un període passat des del panell de l'admin.
+ */
+export function recentPeriods(
+  frequency: BonusPayoutFrequency,
+  count = 4,
+  ref: Date = new Date(),
+): BonusPeriod[] {
+  const step = frequency === "annual" ? 1 : 2;
+  const out: BonusPeriod[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push(periodFor(frequency, new Date(ref.getFullYear() - i * step, 0, 1)));
+  }
+  return out;
 }
 
 /** Pes vigent d'un servei un dia concret. */
@@ -300,9 +332,9 @@ export async function setWeight(
 
 // ─── Trams ──────────────────────────────────────────────────────────────────
 
-/** Trams vigents avui, ordenats. */
-export async function listTiers(): Promise<BonusTier[]> {
-  const today = todayStr();
+/** Trams vigents el dia indicat (per defecte avui), ordenats. */
+export async function listTiers(onDay?: string): Promise<BonusTier[]> {
+  const day = onDay ?? todayStr();
 
   const rows = USE_MOCK
     ? (await import("@/lib/mock/store")).getStore().bonus_tiers
@@ -324,7 +356,7 @@ export async function listTiers(): Promise<BonusTier[]> {
     effectiveUntil: t.effective_until,
   }));
 
-  return vigentOn(tiers, today).sort((a, b) => a.minUnits - b.minUnits);
+  return vigentOn(tiers, day).sort((a, b) => a.minUnits - b.minUnits);
 }
 
 /**
@@ -511,19 +543,27 @@ async function completedSessions(
  * Estat del bonus d'un professional en un període.
  *
  * Les unitats es calculen amb el pes vigent el DIA de cada sessió (històric
- * protegit, com les tarifes). Els trams, en canvi, s'apliquen amb els vigents
- * avui sobre el total acumulat: un tram no és una propietat de cada sessió
- * sinó del volum del període, i el volum només es coneix al final.
+ * protegit, com les tarifes). Els trams, en canvi, s'apliquen sobre el total
+ * acumulat: un tram no és una propietat de cada sessió sinó del volum del
+ * període, i el volum només es coneix al final.
+ *
+ * Quins trams: els vigents al FINAL del període que es tanca. Per a un període
+ * ja passat això vol dir els que hi havia aleshores, no els d'avui — el que
+ * es liquida no pot dependre de quan es prem el botó. Per a un període encara
+ * en curs el final és futur, així que es fan servir els d'avui.
  */
 export async function computeBonus(
   trainerId: string,
   period: BonusPeriod,
   frequency: BonusPayoutFrequency,
 ): Promise<BonusProgress> {
+  const today = todayStr();
+  const tiersDay = period.end < today ? period.end : today;
+
   const [sessions, weights, tiers] = await Promise.all([
     completedSessions(trainerId, period.start, period.end),
     listWeights(),
-    listTiers(),
+    listTiers(tiersDay),
   ]);
 
   const acc = new Map<ServiceType, { sessions: number; units: number }>();
@@ -632,6 +672,19 @@ export async function listPayouts(trainerId?: string): Promise<BonusPayout[]> {
   }));
 }
 
+/** Payout ja existent per a aquest professional i període, si n'hi ha. */
+export async function findPayout(
+  trainerId: string,
+  periodStart: string,
+  periodEnd: string,
+): Promise<BonusPayout | null> {
+  const all = await listPayouts(trainerId);
+  return (
+    all.find((p) => p.periodStart === periodStart && p.periodEnd === periodEnd) ??
+    null
+  );
+}
+
 /** Congela el càlcul d'un període. A partir d'aquí no depèn de pesos ni trams. */
 export async function createPayout(
   progress: BonusProgress,
@@ -640,6 +693,14 @@ export async function createPayout(
   if (USE_MOCK) {
     const { getStore, saveStore } = await import("@/lib/mock/store");
     const store = getStore();
+    // El mock ha de fer complir el mateix UNIQUE que la base de dades.
+    const dup = store.bonus_payouts.some(
+      (p) =>
+        p.trainer_id === progress.trainerId &&
+        p.period_start === progress.period.start &&
+        p.period_end === progress.period.end,
+    );
+    if (dup) throw new Error("DUPLICATE_PAYOUT");
     const id = crypto.randomUUID();
     store.bonus_payouts.push({
       id,

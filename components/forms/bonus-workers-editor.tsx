@@ -16,6 +16,8 @@ export type WorkerRowData = {
   payoutFrequency: BonusPayoutFrequency;
   /** Estat del període en curs. `null` si no té el bonus actiu. */
   current: { periodLabel: string; units: number; amount: number } | null;
+  /** Períodes tancables (el vigent i els anteriors), amb el payout ja fet si n'hi ha. */
+  periods: { start: string; label: string; closedOn: string | null }[];
 };
 
 function WorkerRow({ row }: { row: WorkerRowData }) {
@@ -71,7 +73,7 @@ function WorkerRow({ row }: { row: WorkerRowData }) {
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm outline-none focus:border-brand-purple"
           >
             <option value="annual">Anual</option>
-            <option value="biannual">Semestral</option>
+            <option value="biennial">Biennal (cada 2 anys)</option>
           </select>
         </label>
 
@@ -81,9 +83,22 @@ function WorkerRow({ row }: { row: WorkerRowData }) {
         {state.ok && <p className="w-full text-xs text-success">Configuració desada.</p>}
       </form>
 
-      {row.current && (
+      {row.enabled && row.periods.length > 0 && (
         <form action={payoutAction} className="mt-2 flex flex-wrap items-center gap-3">
           <input type="hidden" name="trainerId" value={row.trainerId} />
+          <select
+            name="periodStart"
+            defaultValue={row.periods[0].start}
+            aria-label={`Període a tancar de ${row.name}`}
+            className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs outline-none focus:border-brand-purple"
+          >
+            {row.periods.map((p) => (
+              <option key={p.start} value={p.start}>
+                {p.label}
+                {p.closedOn ? " · ja tancat" : ""}
+              </option>
+            ))}
+          </select>
           <button
             type="submit"
             className="rounded-lg border border-brand-border px-3 py-1.5 text-xs font-bold text-brand-purple transition-colors hover:border-brand-purple"
@@ -91,7 +106,7 @@ function WorkerRow({ row }: { row: WorkerRowData }) {
             Tancar i generar payout
           </button>
           <span className="text-xs text-brand-muted">
-            Congela {row.current.periodLabel} amb els valors d&apos;ara.
+            Un període tancat no es pot tornar a generar.
           </span>
           {payoutState.error && (
             <span className="text-xs text-error">{payoutState.error}</span>

@@ -49,7 +49,7 @@ export type SettlementBreakdownLine = {
   rate: number | null;
   amount: number;
 };
-export type BonusPayoutFrequency = "annual" | "biannual";
+export type BonusPayoutFrequency = "annual" | "biennial";
 
 /**
  * Tram aplicat en un bonus, tal com es desa a `bonus_payouts.tier_breakdown`.
