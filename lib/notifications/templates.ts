@@ -411,6 +411,26 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "invoice_generated": {
+      subject = "La teva factura ja està disponible · VindiBCN";
+      block = {
+        heading: "Ja tens la factura del període",
+        intro: [
+          hola,
+          "L'administració ha tancat la teva liquidació i n'ha emès el document. El pots descarregar des de la teva àrea:",
+        ],
+        details: rows([
+          ["Període", d.period],
+          ["Total", d.total],
+        ]),
+        cta: { label: "Veure la meva factura", url: appLink("/trainer/factures") },
+        outro: [
+          "Document provisional: el format oficial final es confirmarà amb l'assessoria. Si hi veus res que no quadri, parla amb l'administració del centre.",
+        ],
+        footer: "trainer",
+      };
+      break;
+    }
     case "trainer_daily_agenda": {
       subject = "La teva agenda de demà · VindiBCN";
       let sessions: { time: string; client: string; service: string }[] = [];

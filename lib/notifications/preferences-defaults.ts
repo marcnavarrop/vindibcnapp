@@ -38,11 +38,33 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // Avís manual (trainer acciona explícitament) — desactivat a preferències.
   new_exercises_assigned_email: false,
   new_exercises_assigned_whatsapp: false,
+  // La factura s'envia sempre amb `ignorePreferences`; aquestes claus no tenen
+  // columna a BD ni surten a la UI, hi són perquè el tipus quedi complet.
+  invoice_generated_email: false,
+  invoice_generated_whatsapp: false,
 };
 
-export const PREFERENCE_KEYS = Object.keys(
-  DEFAULT_PREFERENCES,
-) as PreferenceKey[];
+/**
+ * Esdeveniments que s'envien SEMPRE, sense passar per preferències.
+ *
+ * Són avisos administratius que la persona no hauria de poder desactivar sense
+ * adonar-se'n (la factura de la seva pròpia liquidació). No tenen columna a
+ * `notification_preferences` ni surten a la UI de Configuració: qui els dispara
+ * ho fa amb `notify(..., { ignorePreferences: true })`.
+ */
+export type AlwaysSentEvent = "invoice_generated";
+
+/** Claus que sí tenen columna a BD. La resta ni es llegeixen ni es desen. */
+export type PersistedPreferenceKey = Exclude<
+  PreferenceKey,
+  `${AlwaysSentEvent}_${NotificationChannel}`
+>;
+
+export const PREFERENCE_KEYS = (
+  Object.keys(DEFAULT_PREFERENCES) as PreferenceKey[]
+).filter(
+  (k): k is PersistedPreferenceKey => !k.startsWith("invoice_generated_"),
+);
 
 export function prefKey(
   type: NotificationEventType,

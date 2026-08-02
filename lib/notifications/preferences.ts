@@ -7,6 +7,7 @@ import {
   PREFERENCE_KEYS,
   type NotificationPreferences,
   type PreferenceKey,
+  type PersistedPreferenceKey,
 } from "@/lib/notifications/preferences-defaults";
 
 function rowToPrefs(row: Record<string, unknown> | null): NotificationPreferences {
@@ -62,8 +63,9 @@ export async function updatePreferences(
   profileId: string,
   values: Partial<NotificationPreferences>,
 ): Promise<void> {
-  // Només claus vàlides (mai canals que no existeixin).
-  const clean: Partial<NotificationPreferences> = {};
+  // Només claus vàlides (mai canals que no existeixin, ni els avisos que
+  // s'envien sempre i no tenen columna a BD).
+  const clean: Partial<Record<PersistedPreferenceKey, boolean>> = {};
   for (const k of PREFERENCE_KEYS)
     if (typeof values[k] === "boolean") clean[k] = values[k];
 

@@ -1105,6 +1105,7 @@ export interface Database {
           session_breakdown: SettlementBreakdownLine[];
           generated_at: string;
           generated_by: string | null;
+          invoice_path: string | null;
         };
         Insert: {
           id?: string;
@@ -1115,10 +1116,12 @@ export interface Database {
           session_breakdown?: SettlementBreakdownLine[];
           generated_at?: string;
           generated_by?: string | null;
+          invoice_path?: string | null;
         };
         Update: {
           total_amount?: number;
           session_breakdown?: SettlementBreakdownLine[];
+          invoice_path?: string | null;
         };
         Relationships: [];
       };

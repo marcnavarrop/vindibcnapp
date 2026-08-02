@@ -20,7 +20,8 @@ export type NotificationEventType =
   // Avís de gestió per a l'admin:
   | "new_client_registered"
   // Avisos manuals (accionats pel trainer/admin, no apareixen a preferències):
-  | "new_exercises_assigned";
+  | "new_exercises_assigned"
+  | "invoice_generated";
 
 export type NotificationChannel = "email" | "whatsapp";
 
@@ -134,6 +135,15 @@ export const EVENT_META: Record<
     audience: [],
     group: "general",
   },
+  invoice_generated: {
+    label: "Factura generada",
+    description: "Quan l'administració tanca una liquidació teva i n'emet el document.",
+    // `audience: []` = fora de la UI de preferències a propòsit. És un avís
+    // administratiu sobre la pròpia retribució, no una comoditat: s'envia
+    // sempre (ignorePreferences), com els correus de compte.
+    audience: [],
+    group: "general",
+  },
 };
 
 /** Ordre de presentació dels esdeveniments a la UI. */
@@ -150,4 +160,5 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "trainer_daily_agenda",
   "new_client_registered",
   "new_exercises_assigned",
+  "invoice_generated",
 ];

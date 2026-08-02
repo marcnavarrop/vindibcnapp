@@ -26,6 +26,8 @@ export type Settlement = {
   breakdown: SettlementBreakdownLine[];
   generatedAt: string;
   generatedBy: string | null;
+  /** Ruta del PDF al Storage. Null = liquidació sense document generat. */
+  invoicePath: string | null;
 };
 
 /** Resultat d'un càlcul en viu, encara no desat. */
@@ -56,6 +58,33 @@ function rowToRate(r: {
     effectiveFrom: r.effective_from,
     effectiveUntil: r.effective_until,
     createdAt: r.created_at,
+  };
+}
+
+const SETTLEMENT_COLUMNS =
+  "id, trainer_id, period_start, period_end, total_amount, session_breakdown, generated_at, generated_by, invoice_path";
+
+function rowToSettlement(s: {
+  id: string;
+  trainer_id: string;
+  period_start: string;
+  period_end: string;
+  total_amount: number | string;
+  session_breakdown: SettlementBreakdownLine[] | null;
+  generated_at: string;
+  generated_by: string | null;
+  invoice_path?: string | null;
+}): Settlement {
+  return {
+    id: s.id,
+    trainerId: s.trainer_id,
+    periodStart: s.period_start,
+    periodEnd: s.period_end,
+    totalAmount: Number(s.total_amount),
+    breakdown: (s.session_breakdown ?? []) as SettlementBreakdownLine[],
+    generatedAt: s.generated_at,
+    generatedBy: s.generated_by,
+    invoicePath: s.invoice_path ?? null,
   };
 }
 
@@ -310,39 +339,51 @@ export async function listSettlements(trainerId?: string): Promise<Settlement[]>
     return getStore()
       .settlements.filter((s) => !trainerId || s.trainer_id === trainerId)
       .sort((a, b) => b.generated_at.localeCompare(a.generated_at))
-      .map((s) => ({
-        id: s.id,
-        trainerId: s.trainer_id,
-        periodStart: s.period_start,
-        periodEnd: s.period_end,
-        totalAmount: Number(s.total_amount),
-        breakdown: s.session_breakdown,
-        generatedAt: s.generated_at,
-        generatedBy: s.generated_by,
-      }));
+      .map(rowToSettlement);
   }
 
   const supabase = await createClient();
   let query = supabase
     .from("settlements")
-    .select(
-      "id, trainer_id, period_start, period_end, total_amount, session_breakdown, generated_at, generated_by",
-    )
+    .select(SETTLEMENT_COLUMNS)
     .order("generated_at", { ascending: false });
   if (trainerId) query = query.eq("trainer_id", trainerId);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return (data ?? []).map((s) => ({
-    id: s.id,
-    trainerId: s.trainer_id,
-    periodStart: s.period_start,
-    periodEnd: s.period_end,
-    totalAmount: Number(s.total_amount),
-    breakdown: (s.session_breakdown ?? []) as SettlementBreakdownLine[],
-    generatedAt: s.generated_at,
-    generatedBy: s.generated_by,
-  }));
+  return (data ?? []).map(rowToSettlement);
+}
+
+/** Una liquidació concreta. La RLS ja limita qui la pot llegir. */
+export async function getSettlement(id: string): Promise<Settlement | null> {
+  if (USE_MOCK) {
+    const { getStore } = await import("@/lib/mock/store");
+    const row = getStore().settlements.find((s) => s.id === id);
+    return row ? rowToSettlement(row) : null;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("settlements")
+    .select(SETTLEMENT_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? rowToSettlement(data) : null;
+}
+
+/** Ja hi ha una liquidació desada per a aquest professional i període exacte? */
+export async function findSettlementForPeriod(
+  trainerId: string,
+  periodStart: string,
+  periodEnd: string,
+): Promise<Settlement | null> {
+  const all = await listSettlements(trainerId);
+  return (
+    all.find(
+      (s) => s.periodStart === periodStart && s.periodEnd === periodEnd,
+    ) ?? null
+  );
 }
 
 /**
@@ -367,6 +408,7 @@ export async function createSettlement(
       session_breakdown: preview.lines,
       generated_at: new Date().toISOString(),
       generated_by: generatedBy,
+      invoice_path: null,
     });
     saveStore(store);
     return id;
@@ -387,4 +429,51 @@ export async function createSettlement(
     .single();
   if (error) throw new Error(error.message);
   return data.id;
+}
+
+/** Enganxa el PDF ja pujat a la liquidació. */
+export async function setSettlementInvoicePath(
+  settlementId: string,
+  invoicePath: string | null,
+): Promise<void> {
+  if (USE_MOCK) {
+    const { getStore, saveStore } = await import("@/lib/mock/store");
+    const store = getStore();
+    const row = store.settlements.find((s) => s.id === settlementId);
+    if (row) row.invoice_path = invoicePath;
+    saveStore(store);
+    return;
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("settlements")
+    .update({ invoice_path: invoicePath })
+    .eq("id", settlementId);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Esborra una liquidació.
+ *
+ * NO és una operació de negoci: una liquidació desada no s'edita mai (és la
+ * fotografia del càlcul). Existeix només per desfer una generació que ha
+ * fallat a mig camí i deixar-ho tot com estava, de manera que l'admin pugui
+ * tornar-ho a provar sense quedar-se una liquidació sense document.
+ */
+export async function deleteSettlement(settlementId: string): Promise<void> {
+  if (USE_MOCK) {
+    const { getStore, saveStore } = await import("@/lib/mock/store");
+    const store = getStore();
+    store.settlements = store.settlements.filter((s) => s.id !== settlementId);
+    saveStore(store);
+    return;
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("settlements")
+    .delete()
+    .eq("id", settlementId);
+  if (error) throw new Error(error.message);
 }

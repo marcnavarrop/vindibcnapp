@@ -1,17 +1,34 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
-import { SERVICE_TYPES } from "@/lib/labels";
+import { SERVICE_TYPES, formatEur, formatDate } from "@/lib/labels";
 import {
   setRate,
   computeSettlement,
   createSettlement,
+  setSettlementInvoicePath,
+  deleteSettlement,
+  getSettlement,
 } from "@/lib/data/settlements";
+import {
+  uploadSettlementInvoice,
+  deleteSettlementInvoice,
+  invoiceSignedUrl,
+  type InvoiceContent,
+} from "@/lib/data/settlement-invoices";
+import { notify, getProfileContact } from "@/lib/notifications";
 import type { ServiceType } from "@/types/database";
 
 export type RateFormState = { error?: string; ok?: boolean };
-export type SettlementFormState = { error?: string; ok?: boolean; savedId?: string };
+export type SettlementFormState = {
+  error?: string;
+  ok?: boolean;
+  savedId?: string;
+  /** Missatge de detall quan la factura s'ha desat però l'email no ha sortit. */
+  warning?: string;
+};
 
 async function requireAdmin(): Promise<{ id: string } | null> {
   const viewer = await getViewer();
@@ -46,11 +63,21 @@ export async function updateRateAction(
 }
 
 /**
- * Desa una liquidació. Recalcula al servidor a partir del període rebut i no
- * es fia dels imports que arribin del formulari: el total que es desa és el
- * que surt de les dades, no el que hagi pogut manipular el client.
+ * Genera la factura d'un període: desa la liquidació, emet el PDF, el puja al
+ * bucket privat i avisa el professional. És la confirmació del pas de revisió
+ * de la UI — fins aquí no s'ha tocat res.
+ *
+ * Recalcula al servidor a partir del període rebut i no es fia dels imports
+ * que arribin del formulari: el total que es desa és el que surt de les dades,
+ * no el que hagi pogut manipular el client.
+ *
+ * Tot o res: si el document falla, la liquidació que s'acabava de desar
+ * s'esborra. Val més no deixar-ne una sense factura —que ja no es podria
+ * completar des de la UI— que quedar-se a mitges. L'email, en canvi, és
+ * best-effort: `notify` no llança mai i la factura ja existeix i és
+ * descarregable encara que Resend estigui caigut.
  */
-export async function generateSettlementAction(
+export async function generateInvoiceAction(
   _prev: SettlementFormState,
   fd: FormData,
 ): Promise<SettlementFormState> {
@@ -67,16 +94,83 @@ export async function generateSettlementAction(
   if (periodEnd < periodStart)
     return { error: "La data final ha de ser posterior a la inicial." };
 
+  let savedId: string | null = null;
+  let uploadedPath: string | null = null;
   try {
     const preview = await computeSettlement(trainerId, periodStart, periodEnd);
     if (preview.lines.length === 0)
       return { error: "No hi ha sessions valorables en aquest període." };
-    const savedId = await createSettlement(preview, admin.id);
+
+    const contact = await getProfileContact(trainerId);
+    if (!contact) return { error: "Professional no trobat." };
+
+    savedId = await createSettlement(preview, admin.id);
+
+    const content: InvoiceContent = {
+      trainerName: contact.name ?? "Professional",
+      periodStart,
+      periodEnd,
+      lines: preview.lines,
+      total: preview.total,
+      generatedAt: new Date().toISOString(),
+    };
+
+    uploadedPath = await uploadSettlementInvoice({
+      trainerId,
+      settlementId: savedId,
+      content,
+    });
+    await setSettlementInvoicePath(savedId, uploadedPath);
+
+    await notify(
+      {
+        type: "invoice_generated",
+        recipient: contact,
+        relatedId: savedId,
+        data: {
+          name: contact.name ?? "",
+          period: `${formatDate(periodStart)} - ${formatDate(periodEnd)}`,
+          total: formatEur(preview.total),
+        },
+      },
+      { ignorePreferences: true },
+    );
+
     revalidatePath("/admin/facturacio/liquidacions");
-    return { ok: true, savedId };
-  } catch (e) {
+    revalidatePath("/trainer/factures");
     return {
-      error: e instanceof Error ? e.message : "Error en generar la liquidació.",
+      ok: true,
+      savedId,
+      warning: contact.email ? undefined : "El professional no té correu: no s'ha pogut enviar l'avís.",
+    };
+  } catch (e) {
+    // Desfés-ho tot perquè es pugui reintentar net: primer el PDF (si ja
+    // s'havia pujat quan va petar el pas següent) i després la liquidació.
+    if (uploadedPath)
+      await deleteSettlementInvoice(uploadedPath).catch(() => undefined);
+    if (savedId) await deleteSettlement(savedId).catch(() => undefined);
+    return {
+      error: e instanceof Error ? e.message : "Error en generar la factura.",
     };
   }
+}
+
+/** Descàrrega des del panell d'admin: comprova rol i redirigeix a la signed URL. */
+export async function downloadInvoiceAdminAction(fd: FormData): Promise<void> {
+  if (!(await requireAdmin())) redirect("/admin");
+
+  const settlementId = String(fd.get("settlementId") ?? "");
+  const settlement = settlementId ? await getSettlement(settlementId) : null;
+  if (!settlement?.invoicePath) redirect("/admin/facturacio/liquidacions");
+
+  const contact = await getProfileContact(settlement.trainerId);
+  const url = await invoiceSignedUrl(settlement.invoicePath, {
+    trainerName: contact?.name ?? "Professional",
+    periodStart: settlement.periodStart,
+    periodEnd: settlement.periodEnd,
+    lines: settlement.breakdown,
+    total: settlement.totalAmount,
+    generatedAt: settlement.generatedAt,
+  });
+  redirect(url);
 }

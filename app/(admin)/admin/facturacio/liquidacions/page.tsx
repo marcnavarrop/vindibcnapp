@@ -1,7 +1,8 @@
 import { GroupTabs } from "@/components/ui/group-tabs";
 import { FACTURACIO_TABS } from "@/app/(admin)/admin/facturacio/tabs";
 import { FacturacioNotice } from "@/components/facturacio-notice";
-import { GenerateSettlementButton } from "@/components/forms/generate-settlement-button";
+import { GenerateInvoiceButton } from "@/components/forms/generate-invoice-button";
+import { DownloadInvoiceButton } from "@/components/forms/download-invoice-button";
 import { listTrainers } from "@/lib/data/clients";
 import { computeSettlement, listSettlements } from "@/lib/data/settlements";
 import { SERVICE_LABELS, formatEur, formatDate } from "@/lib/labels";
@@ -205,10 +206,19 @@ export default async function LiquidacionsPage({
             )}
 
             {preview.lines.length > 0 && (
-              <GenerateSettlementButton
+              <GenerateInvoiceButton
                 trainerId={preview.trainerId}
+                trainerName={trainerName(preview.trainerId)}
                 periodStart={from}
                 periodEnd={to}
+                lines={preview.lines}
+                total={preview.total}
+                existingInvoice={settlements.some(
+                  (s) =>
+                    s.trainerId === preview.trainerId &&
+                    s.periodStart === from &&
+                    s.periodEnd === to,
+                )}
               />
             )}
           </section>
@@ -218,7 +228,8 @@ export default async function LiquidacionsPage({
         <h2 className="mb-1 text-lg text-brand-dark">Liquidacions generades</h2>
         <p className="mb-4 text-sm text-brand-muted">
           Cada una és una fotografia del càlcul del moment: no canvia encara que
-          després es modifiquin les tarifes.
+          després es modifiquin les tarifes. El professional en veu la factura a
+          la seva àrea.
         </p>
 
         {settlements.length === 0 ? (
@@ -242,9 +253,18 @@ export default async function LiquidacionsPage({
                       generada el {formatDate(s.generatedAt)}
                     </p>
                   </div>
-                  <span className="text-lg font-bold text-brand-purple">
-                    {formatEur(s.totalAmount)}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-brand-purple">
+                      {formatEur(s.totalAmount)}
+                    </span>
+                    {s.invoicePath ? (
+                      <DownloadInvoiceButton settlementId={s.id} scope="admin" />
+                    ) : (
+                      <span className="text-xs text-brand-muted">
+                        Sense factura
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {s.breakdown.length > 0 && (
                   <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-muted">
