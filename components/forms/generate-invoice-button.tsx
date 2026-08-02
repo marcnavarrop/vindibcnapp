@@ -62,21 +62,33 @@ export function GenerateInvoiceButton({
       <ConfirmDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Revisa la factura abans d'enviar-la"
-        description="Encara no s'ha desat ni enviat res. En confirmar es desarà la liquidació, es generarà el document i s'avisarà el professional per correu."
+        title={
+          existingInvoice
+            ? "Aquest període ja té factura"
+            : "Revisa la factura abans d'enviar-la"
+        }
+        description={
+          existingInvoice
+            ? "Un període només pot tenir una factura, i aquest ja en té una."
+            : "Encara no s'ha desat ni enviat res. En confirmar es desarà la liquidació, es generarà el document i s'avisarà el professional per correu."
+        }
         actions={
           <>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel·lar
+              {existingInvoice ? "Tancar" : "Cancel·lar"}
             </Button>
-            <form action={action}>
-              <input type="hidden" name="trainerId" value={trainerId} />
-              <input type="hidden" name="periodStart" value={periodStart} />
-              <input type="hidden" name="periodEnd" value={periodEnd} />
-              <SubmitButton pendingLabel="Generant…">
-                Sí, generar i enviar
-              </SubmitButton>
-            </form>
+            {/* Amb una factura ja generada la base de dades ho rebutjarà: val
+                més no oferir un botó condemnat a fallar. */}
+            {!existingInvoice && (
+              <form action={action}>
+                <input type="hidden" name="trainerId" value={trainerId} />
+                <input type="hidden" name="periodStart" value={periodStart} />
+                <input type="hidden" name="periodEnd" value={periodEnd} />
+                <SubmitButton pendingLabel="Generant…">
+                  Sí, generar i enviar
+                </SubmitButton>
+              </form>
+            )}
           </>
         }
       >
@@ -122,19 +134,20 @@ export function GenerateInvoiceButton({
           </span>
         </div>
 
-        {existingInvoice && (
+        {existingInvoice ? (
           <p className="mt-4 rounded-lg bg-brand-orange/10 p-3 text-xs text-brand-orange">
             Ja hi ha una liquidació desada d&apos;aquest professional per a
-            aquest mateix període. Si continues, se&apos;n crearà una segona amb
-            la seva pròpia factura i el professional rebrà un altre correu.
+            aquest mateix període, i no se&apos;n pot generar una segona. Si cal
+            refer-la, esborra abans la liquidació existent.
+          </p>
+        ) : (
+          <p className="mt-4 text-xs text-brand-muted">
+            El document que es genera porta imprès l&apos;avís de
+            provisionalitat: és un càlcul intern del centre, no un document amb
+            validesa fiscal fins que l&apos;assessoria confirmi el format
+            oficial.
           </p>
         )}
-
-        <p className="mt-4 text-xs text-brand-muted">
-          El document que es genera porta imprès l&apos;avís de provisionalitat:
-          és un càlcul intern del centre, no un document amb validesa fiscal
-          fins que l&apos;assessoria confirmi el format oficial.
-        </p>
       </ConfirmDialog>
     </div>
   );

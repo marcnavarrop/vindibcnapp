@@ -11,6 +11,7 @@ import {
   setSettlementInvoicePath,
   deleteSettlement,
   getSettlement,
+  findSettlementForPeriod,
 } from "@/lib/data/settlements";
 import {
   uploadSettlementInvoice,
@@ -104,6 +105,12 @@ export async function generateInvoiceAction(
     const contact = await getProfileContact(trainerId);
     if (!contact) return { error: "Professional no trobat." };
 
+    const existing = await findSettlementForPeriod(trainerId, periodStart, periodEnd);
+    if (existing)
+      return {
+        error: `Aquest període ja té una factura generada el ${formatDate(existing.generatedAt)}. Per refer-la, esborra abans la liquidació existent.`,
+      };
+
     savedId = await createSettlement(preview, admin.id);
 
     const content: InvoiceContent = {
@@ -149,9 +156,13 @@ export async function generateInvoiceAction(
     if (uploadedPath)
       await deleteSettlementInvoice(uploadedPath).catch(() => undefined);
     if (savedId) await deleteSettlement(savedId).catch(() => undefined);
-    return {
-      error: e instanceof Error ? e.message : "Error en generar la factura.",
-    };
+
+    // Cursa entre la comprovació i la inserció (dos clics seguits, dues
+    // pestanyes): qui hi posa el límit de debò és l'índex UNIQUE.
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("settlements_unique_period"))
+      return { error: "Aquest període ja té una factura generada." };
+    return { error: msg || "Error en generar la factura." };
   }
 }
 
