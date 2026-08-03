@@ -5,14 +5,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
-import { datetimeLocalToInstant, toCenterLocal } from "@/lib/center-time";
+import {
+  datetimeLocalToInstant,
+  centerDateStr,
+  centerWeekday,
+  centerHour,
+} from "@/lib/center-time";
 import { CENTER_EMAIL } from "@/lib/email";
 import { notify, getProfileContact } from "@/lib/notifications";
 import {
-  isServiceAvailable,
+  isServiceAvailableOn,
   isInstantBlocked,
   blocksOf,
-  localDateStr,
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
@@ -185,8 +189,10 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
   const busy = new Set<string>();
   const addBusy = (trainerId: string | null, iso: string) => {
     if (!trainerId) return;
+    // Clau en hora del CENTRE: el calendari públic la busca amb el dia i
+    // l'hora que pinta, i les regles del centre estan en aquesta hora.
     const d = new Date(iso);
-    busy.add(`${trainerId}|${localDateStr(d)}|${d.getHours()}`);
+    busy.add(`${trainerId}|${centerDateStr(d)}|${centerHour(d)}`);
   };
 
   if (USE_MOCK) {
@@ -252,7 +258,9 @@ function pickTrainer(
   // era i quedava dissimulat: com que la data d'entrada també es llegia
   // malament, els dos errors es compensaven i la comprovació encertava per
   // casualitat. En arreglar l'entrada, aquest va quedar al descobert.
-  const localWhen = toCenterLocal(when);
+  const day = centerDateStr(when);
+  const wd = centerWeekday(when);
+  const h = centerHour(when);
 
   for (const trainerId of new Set(candidates)) {
     if (!isFree(trainerId)) continue;
@@ -260,14 +268,7 @@ function pickTrainer(
     // bloquejos són instants absoluts: es comparen amb el `when` real.
     if (isInstantBlocked(blocksOf(blocks, trainerId), when)) continue;
     const trainerRules = rules.filter((r) => r.trainerId === trainerId);
-    if (
-      isServiceAvailable(
-        trainerRules,
-        localWhen,
-        localWhen.getHours(),
-        TRIAL_SERVICE,
-      )
-    )
+    if (isServiceAvailableOn(trainerRules, day, wd, h, TRIAL_SERVICE))
       return trainerId;
   }
   return null;
@@ -378,7 +379,13 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
       const trainerRules = rules.filter((r) => r.trainerId === tid);
       if (
         !isInstantBlocked(blocksOf(allBlocks, tid), when) &&
-        isServiceAvailable(trainerRules, when, when.getHours(), TRIAL_SERVICE) &&
+        isServiceAvailableOn(
+          trainerRules,
+          centerDateStr(when),
+          centerWeekday(when),
+          centerHour(when),
+          TRIAL_SERVICE,
+        ) &&
         (await isTrainerFreeReal(admin, tid, scheduledAt))
       ) {
         chosen = tid;

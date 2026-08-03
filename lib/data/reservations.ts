@@ -1,14 +1,14 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { USE_MOCK } from "@/lib/config";
-import { toCenterLocal } from "@/lib/center-time";
+import { centerDateStr, centerWeekday, centerHour } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
 import { listBlocksLite } from "@/lib/data/availability-blocks";
-import { isServiceAvailable, isInstantBlocked } from "@/lib/availability-slots";
+import { isServiceAvailableOn, isInstantBlocked } from "@/lib/availability-slots";
 import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
@@ -25,11 +25,19 @@ async function assertWithinAvailability(
     listAvailabilityLite(trainerId),
     listBlocksLite(trainerId),
   ]);
-  // El servidor corre en UTC; les regles usen hores locals del centre.
-  // toLocalDate converteix el Date UTC a un Date on els mètodes locals donen
-  // l'hora local del centre (CENTER_TZ), sense que calgui canviar isServiceAvailable.
-  const localWhen = toCenterLocal(when);
-  if (!isServiceAvailable(rules, localWhen, localWhen.getHours(), serviceType))
+  // Les regles estan escrites en hora del centre. En comptes de passar un Date
+  // i confiar que els getters locals del procés donin els valors del centre
+  // —cert només mentre el servidor corri en UTC—, se li donen el dia, el dia
+  // de la setmana i l'hora ja resolts.
+  if (
+    !isServiceAvailableOn(
+      rules,
+      centerDateStr(when),
+      centerWeekday(when),
+      centerHour(when),
+      serviceType,
+    )
+  )
     throw new Error(
       "Aquesta franja no està dins de la disponibilitat d'aquest professional per a aquest servei.",
     );

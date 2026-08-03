@@ -47,6 +47,11 @@ export function centerHour(utcDate: Date): number {
   return toCenterLocal(utcDate).getUTCHours();
 }
 
+/** Dia de la setmana al centre en la convenció del negoci (dilluns = 0). */
+export function centerWeekday(utcDate: Date): number {
+  return (toCenterLocal(utcDate).getUTCDay() + 6) % 7;
+}
+
 /**
  * Avui (YYYY-MM-DD) segons el rellotge del centre.
  *

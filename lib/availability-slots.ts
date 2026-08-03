@@ -77,12 +77,29 @@ export function blocksOf(
   return blocks.filter((b) => b.trainerId === trainerId);
 }
 
-/** Día de la semana de una fecha en la convención del negocio (lunes = 0). */
+/**
+ * Día de la semana en la convención del negocio (lunes = 0), leyendo la fecha
+ * con los getters LOCALES.
+ *
+ * Pensada para el navegador, donde la hora local es la que ve el usuario. En el
+ * servidor NO se debe usar: el proceso corre en UTC y una fecha del centro no
+ * se lee con getters locales. Ahí se usan las variantes `…On`, que reciben el
+ * día y el día de la semana ya resueltos (ver centerWeekday/centerDateStr).
+ */
 export function weekdayOf(date: Date): number {
   return (date.getDay() + 6) % 7;
 }
 
-/** Fecha local en formato YYYY-MM-DD (sin desfases de zona horaria). */
+/** Día de la semana (lunes = 0) de un día de calendario "YYYY-MM-DD". */
+export function weekdayOfDay(day: string): number {
+  return (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
+}
+
+/**
+ * Fecha en formato YYYY-MM-DD leída con los getters LOCALES.
+ *
+ * Misma advertencia que weekdayOf: es la variante del navegador.
+ */
 export function localDateStr(date: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
@@ -97,8 +114,18 @@ export function availableHoursForDate(
   rules: AvailabilityRuleLite[],
   date: Date,
 ): number[] {
-  const wd = weekdayOf(date);
-  const day = localDateStr(date);
+  return availableHoursOn(rules, localDateStr(date), weekdayOf(date));
+}
+
+/**
+ * Núcleo sin `Date`: recibe el día y el día de la semana ya resueltos, así que
+ * no puede equivocarse de zona horaria. Es la que usa el servidor.
+ */
+export function availableHoursOn(
+  rules: AvailabilityRuleLite[],
+  day: string,
+  wd: number,
+): number[] {
   const hours = new Set<number>();
   for (const r of rules) {
     if (r.weekday !== wd) continue;
@@ -115,8 +142,16 @@ export function isHourAvailable(
   date: Date,
   h: number,
 ): boolean {
-  const wd = weekdayOf(date);
-  const day = localDateStr(date);
+  return isHourAvailableOn(rules, localDateStr(date), weekdayOf(date), h);
+}
+
+/** Núcleo sin `Date` de isHourAvailable. */
+export function isHourAvailableOn(
+  rules: AvailabilityRuleLite[],
+  day: string,
+  wd: number,
+  h: number,
+): boolean {
   return rules.some(
     (r) =>
       r.weekday === wd &&
@@ -137,8 +172,23 @@ export function isServiceAvailable(
   h: number,
   service: ServiceType,
 ): boolean {
-  const wd = weekdayOf(date);
-  const day = localDateStr(date);
+  return isServiceAvailableOn(
+    rules,
+    localDateStr(date),
+    weekdayOf(date),
+    h,
+    service,
+  );
+}
+
+/** Núcleo sin `Date` de isServiceAvailable. La que usa el servidor. */
+export function isServiceAvailableOn(
+  rules: AvailabilityRuleLite[],
+  day: string,
+  wd: number,
+  h: number,
+  service: ServiceType,
+): boolean {
   return rules.some(
     (r) =>
       r.weekday === wd &&

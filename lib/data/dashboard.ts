@@ -6,7 +6,8 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import {
-  availableHoursForDate,
+  availableHoursOn,
+  weekdayOfDay,
   isInstantBlocked,
   blocksOf,
   type TrainerRuleLite,
@@ -307,9 +308,9 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
     let booked = 0;
 
     for (const day of weekDays) {
-      // Date "trampa" (UTC == hora local del centre) per casar amb les regles.
-      const dayDate = new Date(`${day}T12:00:00Z`);
-      for (const h of availableHoursForDate(rules, dayDate)) {
+      // Sense Date pel mig: el dia i el dia de la setmana van explícits, que és
+      // l'única manera que no depengui de la zona horària del procés.
+      for (const h of availableHoursOn(rules, day, weekdayOfDay(day))) {
         // El bloqueig és un instant real: cal l'hora del centre convertida.
         const slotInstant = centerLocalToInstant(day, `${String(h).padStart(2, "0")}:00`);
         if (isInstantBlocked(blocks, slotInstant)) continue;
