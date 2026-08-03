@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
-import { datetimeLocalToInstant } from "@/lib/center-time";
+import { datetimeLocalToInstant, toCenterLocal } from "@/lib/center-time";
 import { CENTER_EMAIL } from "@/lib/email";
 import { notify, getProfileContact } from "@/lib/notifications";
 import {
@@ -246,12 +246,28 @@ function pickTrainer(
   const candidates = rules
     .filter((r) => r.serviceTypes.includes(TRIAL_SERVICE))
     .map((r) => r.trainerId);
+
+  // Mateix criteri que assertAvailable a reservations.ts: les regles estan
+  // escrites en hores del centre, i el servidor corre en UTC. Abans això no hi
+  // era i quedava dissimulat: com que la data d'entrada també es llegia
+  // malament, els dos errors es compensaven i la comprovació encertava per
+  // casualitat. En arreglar l'entrada, aquest va quedar al descobert.
+  const localWhen = toCenterLocal(when);
+
   for (const trainerId of new Set(candidates)) {
     if (!isFree(trainerId)) continue;
-    // Un bloqueig temporal el treu del sorteig encara que tingui regla.
+    // Un bloqueig temporal el treu del sorteig encara que tingui regla. Els
+    // bloquejos són instants absoluts: es comparen amb el `when` real.
     if (isInstantBlocked(blocksOf(blocks, trainerId), when)) continue;
     const trainerRules = rules.filter((r) => r.trainerId === trainerId);
-    if (isServiceAvailable(trainerRules, when, when.getHours(), TRIAL_SERVICE))
+    if (
+      isServiceAvailable(
+        trainerRules,
+        localWhen,
+        localWhen.getHours(),
+        TRIAL_SERVICE,
+      )
+    )
       return trainerId;
   }
   return null;
