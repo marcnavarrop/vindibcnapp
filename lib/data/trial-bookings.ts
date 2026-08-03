@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
+import { datetimeLocalToInstant } from "@/lib/center-time";
 import { CENTER_EMAIL } from "@/lib/email";
 import { notify, getProfileContact } from "@/lib/notifications";
 import {
@@ -224,7 +225,14 @@ export type CreateTrialInput = {
   fullName: string;
   email: string;
   phone: string;
-  scheduledAt: string; // ISO
+  /**
+   * Hora de rellotge del CENTRE, tal com surt del calendari públic
+   * ("2026-08-04T10:00"). No és un ISO absolut: deia que ho era i no ho ha
+   * estat mai, i llegir-lo amb `new Date()` el interpretava en la zona del
+   * servidor (UTC a Vercel), de manera que qui demanava les 10:00 rebia la
+   * confirmació per a les 12:00.
+   */
+  scheduledAt: string;
   ip: string | null;
 };
 
@@ -256,8 +264,8 @@ function pickTrainer(
  * entrenador lliure automàticament (el visitant no tria professional).
  */
 export async function createTrialBooking(input: CreateTrialInput): Promise<void> {
-  const when = new Date(input.scheduledAt);
-  if (Number.isNaN(when.getTime())) throw new Error("Data no vàlida.");
+  const when = datetimeLocalToInstant(input.scheduledAt);
+  if (!when) throw new Error("Data no vàlida.");
   const nowMs = Date.now();
   const delta = when.getTime() - nowMs;
   if (delta < MIN_ADVANCE_MS)

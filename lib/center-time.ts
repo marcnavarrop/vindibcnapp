@@ -47,6 +47,16 @@ export function centerHour(utcDate: Date): number {
   return toCenterLocal(utcDate).getUTCHours();
 }
 
+/**
+ * Avui (YYYY-MM-DD) segons el rellotge del centre.
+ *
+ * No és `new Date().toISOString().slice(0,10)`: això dona el dia UTC, que entre
+ * mitjanit i les 2 de la matinada d'aquí encara és el dia anterior.
+ */
+export function centerToday(): string {
+  return centerDateStr(new Date());
+}
+
 /** Desfasament (ms) entre UTC i l'hora del centre en un instant donat. */
 function centerOffsetMs(at: Date): number {
   const asUTC = new Date(at.toLocaleString("en-US", { timeZone: "UTC" }));

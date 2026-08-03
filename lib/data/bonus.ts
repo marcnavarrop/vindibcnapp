@@ -2,6 +2,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SERVICE_TYPES } from "@/lib/labels";
+import { centerToday } from "@/lib/center-time";
+import { completedSessions, shiftDay } from "@/lib/data/completed-sessions";
 import type {
   ServiceType,
   BonusPayoutFrequency,
@@ -75,14 +77,9 @@ export type BonusProgress = {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+/** Avui segons el rellotge del centre, no el dia UTC del servidor. */
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function shiftDay(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
+  return centerToday();
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -499,45 +496,6 @@ export async function setWorkerSettings(
 }
 
 // ─── Càlcul ─────────────────────────────────────────────────────────────────
-
-async function completedSessions(
-  trainerId: string,
-  periodStart: string,
-  periodEnd: string,
-): Promise<{ day: string; serviceType: ServiceType }[]> {
-  const fromISO = new Date(`${periodStart}T00:00:00`).toISOString();
-  const toISO = new Date(`${shiftDay(periodEnd, 1)}T00:00:00`).toISOString();
-
-  if (USE_MOCK) {
-    const { getStore } = await import("@/lib/mock/store");
-    return getStore()
-      .reservations.filter(
-        (r) =>
-          r.trainer_id === trainerId &&
-          r.status === "completed" &&
-          r.scheduled_at >= fromISO &&
-          r.scheduled_at < toISO,
-      )
-      .map((r) => ({
-        day: new Date(r.scheduled_at).toISOString().slice(0, 10),
-        serviceType: r.service_type,
-      }));
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("reservations")
-    .select("scheduled_at, service_type")
-    .eq("trainer_id", trainerId)
-    .eq("status", "completed")
-    .gte("scheduled_at", fromISO)
-    .lt("scheduled_at", toISO);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => ({
-    day: r.scheduled_at.slice(0, 10),
-    serviceType: r.service_type,
-  }));
-}
 
 /**
  * Estat del bonus d'un professional en un període.

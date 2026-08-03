@@ -2,6 +2,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SERVICE_TYPES } from "@/lib/labels";
+import { centerToday } from "@/lib/center-time";
+import { completedSessions, shiftDay } from "@/lib/data/completed-sessions";
 import type { ServiceType, SettlementBreakdownLine } from "@/types/database";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -88,15 +90,15 @@ function rowToSettlement(s: {
   };
 }
 
-/** Data local (Europe/Madrid ja és la zona del centre) en format YYYY-MM-DD. */
+/**
+ * Avui segons el rellotge del centre (YYYY-MM-DD).
+ *
+ * Abans feia `toISOString().slice(0,10)`, que és el dia UTC: el comentari deia
+ * "hora local" i el codi no ho complia, de manera que entre mitjanit i les 2
+ * una tarifa nova es donava d'alta amb la data d'ahir.
+ */
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function shiftDay(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
+  return centerToday();
 }
 
 /**
@@ -225,51 +227,6 @@ export async function setRate(
 }
 
 // ─── Càlcul ─────────────────────────────────────────────────────────────────
-
-type CompletedSession = { day: string; serviceType: ServiceType };
-
-/** Sessions completades d'un professional dins del període (dates incloses). */
-async function completedSessions(
-  trainerId: string,
-  periodStart: string,
-  periodEnd: string,
-): Promise<CompletedSession[]> {
-  // El període es dona en dates locals; el filtre es fa sobre l'instant, des
-  // del primer moment de periodStart fins al primer moment del dia següent a
-  // periodEnd (exclòs), per no perdre les sessions de la tarda del darrer dia.
-  const fromISO = new Date(`${periodStart}T00:00:00`).toISOString();
-  const toISO = new Date(`${shiftDay(periodEnd, 1)}T00:00:00`).toISOString();
-
-  if (USE_MOCK) {
-    const { getStore } = await import("@/lib/mock/store");
-    return getStore()
-      .reservations.filter(
-        (r) =>
-          r.trainer_id === trainerId &&
-          r.status === "completed" &&
-          r.scheduled_at >= fromISO &&
-          r.scheduled_at < toISO,
-      )
-      .map((r) => ({
-        day: new Date(r.scheduled_at).toISOString().slice(0, 10),
-        serviceType: r.service_type,
-      }));
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("reservations")
-    .select("scheduled_at, service_type")
-    .eq("trainer_id", trainerId)
-    .eq("status", "completed")
-    .gte("scheduled_at", fromISO)
-    .lt("scheduled_at", toISO);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => ({
-    day: r.scheduled_at.slice(0, 10),
-    serviceType: r.service_type,
-  }));
-}
 
 /**
  * Calcula la liquidació d'un període SENSE desar-la.
