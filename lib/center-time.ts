@@ -67,3 +67,25 @@ export function centerLocalToInstant(dateStr: string, hhmm: string): Date {
   const refined = centerOffsetMs(first);
   return refined === offset ? first : new Date(naive - refined);
 }
+
+/**
+ * Converteix el valor d'un `<input type="datetime-local">` en l'instant real.
+ *
+ * El valor d'aquests inputs ("2026-08-02T23:30") no porta zona horària, i
+ * `new Date(...)` el llegiria en la zona del PROCÉS — que a Vercel és UTC. Qui
+ * escriu les 23:30 al panell vol dir les 23:30 del centre, no les 23:30 UTC:
+ * sense aquesta conversió la reserva es desa una o dues hores desplaçada.
+ *
+ * Retorna null si el valor no és una data vàlida, perquè qui crida pugui
+ * respondre amb el seu propi missatge d'error.
+ */
+export function datetimeLocalToInstant(value: string): Date | null {
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(value.trim());
+  if (!m) return null;
+  try {
+    const at = centerLocalToInstant(m[1], m[2]);
+    return Number.isNaN(at.getTime()) ? null : at;
+  } catch {
+    return null;
+  }
+}

@@ -8,6 +8,7 @@ import {
   completeReservation,
   rescheduleReservation,
 } from "@/lib/data/reservations";
+import { datetimeLocalToInstant } from "@/lib/center-time";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
 export async function createReservationAction(
@@ -24,8 +25,9 @@ export async function createReservationAction(
   if (repeatWeeks < 1 || repeatWeeks > 52)
     return { error: "Les repeticions han d'estar entre 1 i 52." };
 
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return { error: "La data no és vàlida." };
+  // L'hora que s'escriu al panell és hora del centre, no del servidor.
+  const date = datetimeLocalToInstant(raw);
+  if (!date) return { error: "La data no és vàlida." };
 
   try {
     await createReservation(
@@ -61,8 +63,8 @@ export async function completeReservationAction(formData: FormData) {
 export async function rescheduleReservationAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const raw = String(formData.get("scheduledAt") ?? "");
-  const date = new Date(raw);
-  if (!id || Number.isNaN(date.getTime())) return;
+  const date = datetimeLocalToInstant(raw);
+  if (!id || !date) return;
   await rescheduleReservation(id, date.toISOString());
   revalidatePath("/admin/reservas");
 }
