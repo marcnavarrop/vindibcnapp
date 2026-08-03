@@ -1,4 +1,5 @@
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { centerToday } from "@/lib/center-time";
 import { FACTURACIO_TABS } from "@/app/(admin)/admin/facturacio/tabs";
 import { FacturacioNotice } from "@/components/facturacio-notice";
 import { GenerateInvoiceButton } from "@/components/forms/generate-invoice-button";
@@ -17,7 +18,7 @@ function monthRange(month: string): { from: string; to: string } {
 }
 
 function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  return centerToday().slice(0, 7);
 }
 
 const isDay = (v: string | undefined): v is string =>

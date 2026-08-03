@@ -1,3 +1,4 @@
+import { centerDateStr } from "@/lib/center-time";
 import type {
   ServiceType,
   BonoStatus,
@@ -158,9 +159,14 @@ export function formatDayHeading(iso: string): string {
   }).format(new Date(iso));
 }
 
-/** Clave de día (YYYY-MM-DD) para agrupar. */
+/**
+ * Clave de día (YYYY-MM-DD) para agrupar, en hora del centro.
+ *
+ * Con `toISOString()` una sesión de madrugada se agrupaba bajo el día
+ * anterior, porque esa es su fecha en UTC.
+ */
 export function dayKey(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+  return centerDateStr(new Date(iso));
 }
 
 /** Fecha larga en catalán con la inicial en mayúscula (p. ej. "Dimecres, 25 de juny"). */

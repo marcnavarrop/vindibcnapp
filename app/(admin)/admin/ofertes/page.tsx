@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { centerToday } from "@/lib/center-time";
 
 const TABS = [
   { href: "/admin/serveis", label: "Serveis" },
@@ -19,7 +20,7 @@ function promotionStatus(p: {
   startsAt: string;
   endsAt: string;
 }): { label: string; tone: "success" | "warn" | "neutral" | "danger" } {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = centerToday();
   if (!p.active) return { label: "Desactivada", tone: "neutral" };
   if (p.startsAt > today) return { label: "Futura", tone: "warn" };
   if (p.endsAt < today) return { label: "Caducada", tone: "neutral" };

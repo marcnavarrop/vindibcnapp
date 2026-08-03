@@ -1,3 +1,4 @@
+import { centerToday } from "@/lib/center-time";
 import Link from "next/link";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { GroupTabs } from "@/components/ui/group-tabs";
@@ -39,7 +40,7 @@ export default async function AdminDisponibilitatPage({
         listUpcomingBlocks(selected.id),
       ])
     : [[], []];
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = centerToday();
 
   return (
     <>

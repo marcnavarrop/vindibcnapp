@@ -1,3 +1,4 @@
+import { centerToday } from "@/lib/center-time";
 import { addProgressAction, deleteProgressAction } from "@/app/actions/client-progress-actions";
 import type { AssignedExercise } from "@/lib/data/client-exercises";
 import type { ExerciseProgressEntry } from "@/lib/data/exercise-progress";
@@ -99,7 +100,7 @@ export function ClientProgressPanel({
                   <input
                     type="date"
                     name="recordedAt"
-                    defaultValue={new Date().toISOString().slice(0, 10)}
+                    defaultValue={centerToday()}
                     className="rounded-lg border border-brand-border bg-white px-2 py-1.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
                   />
                 </label>

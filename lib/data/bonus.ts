@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SERVICE_TYPES } from "@/lib/labels";
-import { centerToday } from "@/lib/center-time";
+import { centerToday, centerDateStr } from "@/lib/center-time";
 import { completedSessions, shiftDay } from "@/lib/data/completed-sessions";
 import type {
   ServiceType,
@@ -108,14 +108,23 @@ function biennumStart(year: number): number {
 }
 
 /**
- * Període de bonus que conté `ref` segons la freqüència.
- * Anual: any natural. Biennal: dos anys naturals consecutius.
+ * Any natural segons el rellotge del CENTRE.
+ *
+ * `ref.getFullYear()` dona l'any del procés, i a Vercel el procés va en UTC:
+ * la primera hora de l'1 de gener aquí encara és 31 de desembre allà. Amb el
+ * bonus això no era un detall de presentació — decidia quin període es tanca,
+ * i un payout va a una taula que no es recalcula mai i que només admet un
+ * tancament per període.
  */
-export function periodFor(
+function centerYear(ref: Date): number {
+  return Number(centerDateStr(ref).slice(0, 4));
+}
+
+/** Període que correspon a un any natural concret. */
+function periodOfYear(
   frequency: BonusPayoutFrequency,
-  ref: Date = new Date(),
+  y: number,
 ): BonusPeriod {
-  const y = ref.getFullYear();
   if (frequency === "annual") {
     return { start: `${y}-01-01`, end: `${y}-12-31`, label: `Any ${y}` };
   }
@@ -128,8 +137,23 @@ export function periodFor(
 }
 
 /**
+ * Període de bonus que conté `ref` segons la freqüència.
+ * Anual: any natural. Biennal: dos anys naturals consecutius.
+ */
+export function periodFor(
+  frequency: BonusPayoutFrequency,
+  ref: Date = new Date(),
+): BonusPeriod {
+  return periodOfYear(frequency, centerYear(ref));
+}
+
+/**
  * El període en curs i els `count` anteriors, del més recent al més antic.
  * Serveix per poder tancar un període passat des del panell de l'admin.
+ *
+ * L'aritmètica es fa sobre l'any, no construint dates: `new Date(y, 0, 1)` és
+ * mitjanit del procés i tornava a introduir la zona horària per la porta del
+ * darrere.
  */
 export function recentPeriods(
   frequency: BonusPayoutFrequency,
@@ -137,10 +161,9 @@ export function recentPeriods(
   ref: Date = new Date(),
 ): BonusPeriod[] {
   const step = frequency === "annual" ? 1 : 2;
+  const y = centerYear(ref);
   const out: BonusPeriod[] = [];
-  for (let i = 0; i < count; i++) {
-    out.push(periodFor(frequency, new Date(ref.getFullYear() - i * step, 0, 1)));
-  }
+  for (let i = 0; i < count; i++) out.push(periodOfYear(frequency, y - i * step));
   return out;
 }
 

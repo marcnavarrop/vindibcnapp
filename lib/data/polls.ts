@@ -1,4 +1,5 @@
 import "server-only";
+import { centerToday } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,6 +45,15 @@ export type PollForClient = {
   createdAt: string;
   options: PollOption[];
   myOptionIds: string[]; // empty = not voted yet
+  /**
+   * Si l'enquesta ja no accepta respostes, decidit AL SERVIDOR.
+   *
+   * El client no ho pot calcular: `new Date()` al navegador és l'hora de qui
+   * mira, i una enquesta del centre ha d'estar oberta o tancada igual per a
+   * tothom. A més, així la pantalla i la validació de submitPollResponse
+   * miren el mateix rellotge i no poden discrepar.
+   */
+  closed: boolean;
 };
 
 export type PollInput = {
@@ -245,6 +255,7 @@ export async function listPollsForClient(
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((o) => ({ id: o.id, label: o.label, sortOrder: o.sort_order })),
     myOptionIds: myMap.get(p.id) ?? [],
+    closed: !p.active || (p.closes_at != null && p.closes_at < centerToday()),
   }));
 }
 
@@ -263,7 +274,7 @@ export async function submitPollResponse(
     .single();
   if (pErr) throw pErr;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = centerToday();
   if (!poll.active || (poll.closes_at && poll.closes_at < today)) {
     throw new Error("Aquesta enquesta ja no accepta respostes.");
   }

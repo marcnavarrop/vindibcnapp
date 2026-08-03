@@ -1,3 +1,4 @@
+import { centerToday } from "@/lib/center-time";
 import { getViewer } from "@/lib/auth";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { GroupTabs } from "@/components/ui/group-tabs";
@@ -29,7 +30,7 @@ export default async function TrainerDisponibilitatPage() {
         listUpcomingBlocks(viewer.id),
       ])
     : [[], []];
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = centerToday();
 
   return (
     <>

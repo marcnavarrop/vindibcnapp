@@ -1,4 +1,5 @@
 import "server-only";
+import { centerToday } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Service } from "@/lib/data/services";
@@ -301,7 +302,9 @@ export async function getEffectivePrices(
   services: Service[],
   today?: string,
 ): Promise<Map<string, EffectivePrice>> {
-  const todayStr = today ?? new Date().toISOString().slice(0, 10);
+  // Dia del centre: una oferta que comença avui ha de valer des de la
+  // mitjanit d'aquí, no des de les 02:00 (que és quan el dia canvia en UTC).
+  const todayStr = today ?? centerToday();
   const promotions = await listActivePromotions(todayStr);
   const result = new Map<string, EffectivePrice>();
   for (const s of services) {

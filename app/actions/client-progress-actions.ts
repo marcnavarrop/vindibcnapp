@@ -1,4 +1,5 @@
 "use server";
+import { centerToday } from "@/lib/center-time";
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import {
@@ -11,7 +12,7 @@ export async function addProgressAction(formData: FormData): Promise<void> {
   if (!viewer || (viewer.role !== "admin" && viewer.role !== "trainer")) return;
 
   const clientExerciseId = formData.get("clientExerciseId") as string;
-  const recordedAt = (formData.get("recordedAt") as string) || new Date().toISOString().slice(0, 10);
+  const recordedAt = (formData.get("recordedAt") as string) || centerToday();
   const weightKg = parseFloat(formData.get("weightKg") as string);
   const repsRaw = formData.get("reps") as string;
   const notes = (formData.get("notes") as string) || null;

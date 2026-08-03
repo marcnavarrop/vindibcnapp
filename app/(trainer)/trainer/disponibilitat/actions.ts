@@ -1,5 +1,7 @@
 "use server";
 
+import { centerToday } from "@/lib/center-time";
+
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import {
@@ -30,8 +32,7 @@ export async function createAvailabilityTrainerAction(formData: FormData) {
     startTime: String(formData.get("startTime") ?? ""),
     endTime: String(formData.get("endTime") ?? ""),
     validFrom:
-      String(formData.get("validFrom") ?? "") ||
-      new Date().toISOString().slice(0, 10),
+      String(formData.get("validFrom") ?? "") || centerToday(),
     validUntil: String(formData.get("validUntil") ?? "").trim() || null,
     serviceTypes: parseServiceTypes(formData.getAll("serviceTypes")),
   });

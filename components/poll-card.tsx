@@ -8,10 +8,8 @@ import { formatDate } from "@/lib/labels";
 export function PollCard({ poll }: { poll: PollForClient }) {
   const formRef = useRef<HTMLFormElement>(null);
   const hasVoted = poll.myOptionIds.length > 0;
-  const isClosed =
-    !poll.active ||
-    (poll.closesAt != null &&
-      poll.closesAt < new Date().toISOString().slice(0, 10));
+  // El servidor ja ho ha decidit en hora del centre: aquí no es recalcula.
+  const isClosed = poll.closed;
 
   const totalVotes = poll.options.reduce((s, _o) => s, 0); // computed below per option
   // We don't have vote counts on the client view — just show "ja has votat"

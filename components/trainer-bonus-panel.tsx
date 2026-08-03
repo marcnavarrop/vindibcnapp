@@ -1,4 +1,5 @@
 import { computeCurrentBonus } from "@/lib/data/bonus";
+import { centerToday } from "@/lib/center-time";
 import { formatEur, formatDate, SERVICE_LABELS } from "@/lib/labels";
 
 /**
@@ -9,8 +10,8 @@ import { formatEur, formatDate, SERVICE_LABELS } from "@/lib/labels";
  * ençà, de dies.
  */
 function timeLeftLabel(periodEnd: string): string {
-  const end = new Date(`${periodEnd}T00:00:00`).getTime();
-  const today = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00").getTime();
+  const end = new Date(`${periodEnd}T00:00:00Z`).getTime();
+  const today = new Date(`${centerToday()}T00:00:00Z`).getTime();
   const days = Math.max(0, Math.round((end - today) / 86_400_000));
 
   if (days === 0) return "acaba avui";
