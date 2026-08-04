@@ -432,7 +432,14 @@ export async function createReservation(
       });
     }
     bono.remaining_sessions -= weeks;
-    if (bono.remaining_sessions === 0) bono.status = "completed";
+    // Un bo sense pagar que esgota sessions NO és "completat": si es
+    // marqués així, ni l'admin el podria cobrar ni el barrido d'impagats el
+    // trobaria mai. Es queda pendent fins que algú el pagui o decaigui.
+    if (bono.remaining_sessions === 0 && bono.status === "active")
+      bono.status = "completed";
+    // Primera reserva feta amb aquest bo: engega el compte del termini de
+    // pagament i ja no es torna a tocar.
+    bono.first_reservation_at ??= new Date().toISOString();
     saveStore(store);
     const trainerName = input.trainerId
       ? (store.profiles.find((p) => p.id === input.trainerId)?.full_name ?? null)
@@ -453,7 +460,7 @@ export async function createReservation(
   const supabase = await createClient();
   const { data: bono, error: bErr } = await supabase
     .from("bonos")
-    .select("id, client_id, service_type, remaining_sessions")
+    .select("id, client_id, service_type, remaining_sessions, status, first_reservation_at")
     .eq("id", input.bonoId)
     .single();
   if (bErr || !bono) throw new Error("Bo no trobat.");
@@ -479,7 +486,13 @@ export async function createReservation(
     .from("bonos")
     .update({
       remaining_sessions: remaining,
-      ...(remaining === 0 ? { status: "completed" as const } : {}),
+      // Només el bo ja pagat passa a "completat" (veure la nota del camí mock).
+      ...(remaining === 0 && bono.status === "active"
+        ? { status: "completed" as const }
+        : {}),
+      ...(bono.first_reservation_at
+        ? {}
+        : { first_reservation_at: new Date().toISOString() }),
     })
     .eq("id", bono.id);
   if (uErr) throw uErr;
@@ -685,7 +698,9 @@ export async function createClientReservation(
       created_at: new Date().toISOString(),
     });
     bono.remaining_sessions -= 1;
-    if (bono.remaining_sessions === 0) bono.status = "completed";
+    if (bono.remaining_sessions === 0 && bono.status === "active")
+      bono.status = "completed";
+    bono.first_reservation_at ??= new Date().toISOString();
     saveStore(store);
     const trainerName =
       store.profiles.find((p) => p.id === trainerId)?.full_name ?? null;
@@ -733,7 +748,7 @@ export async function createClientReservation(
   // 3. Bono más antiguo activo de este tipo con sesiones (FIFO).
   const { data: bono, error: bErr } = await admin
     .from("bonos")
-    .select("id, remaining_sessions")
+    .select("id, remaining_sessions, status, first_reservation_at")
     .eq("client_id", client.id)
     .eq("service_type", serviceType)
     .in("status", ["active", "pending_payment"])
@@ -768,7 +783,12 @@ export async function createClientReservation(
     .from("bonos")
     .update({
       remaining_sessions: nextRemaining,
-      ...(nextRemaining === 0 ? { status: "completed" as const } : {}),
+      ...(nextRemaining === 0 && bono.status === "active"
+        ? { status: "completed" as const }
+        : {}),
+      ...(bono.first_reservation_at
+        ? {}
+        : { first_reservation_at: new Date().toISOString() }),
     })
     .eq("id", bono.id)
     .eq("remaining_sessions", bono.remaining_sessions)

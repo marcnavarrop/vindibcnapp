@@ -4,6 +4,7 @@ import {
   listTomorrowReminderTargets,
   listTomorrowTrainerAgendas,
   listExpiringBonoTargets,
+  cancelOverduePendingBonos,
   tomorrowMadrid,
   BONO_EXPIRY_WARNING_DAYS,
 } from "@/lib/data/reminders";
@@ -132,9 +133,36 @@ async function handle(req: NextRequest) {
     else expSkipped++;
   }
 
+  // ─── Bons pendents de pagament que han passat el termini ───
+  // Anul·la el bo i allibera les franges futures que ocupava. Un bo que mai
+  // s'ha fet servir per reservar no entra aquí: no li treu el lloc a ningú.
+  const unpaid = await cancelOverduePendingBonos();
+  let unpaidSent = 0;
+  let unpaidSkipped = 0;
+  for (const b of unpaid) {
+    const did = await notifyOnce({
+      type: "bono_unpaid_cancelled",
+      recipient: b.recipient,
+      relatedId: b.relatedId,
+      data: {
+        name: b.recipient.name ?? "",
+        service: SERVICE_LABELS[b.serviceType],
+        cancelled: String(b.cancelledCount),
+      },
+    });
+    if (did) unpaidSent++;
+    else unpaidSkipped++;
+  }
+
   return NextResponse.json({
     ok: true,
     day: tomorrowMadrid(),
+    bonosUnpaid: {
+      cancelled: unpaid.length,
+      sessionsFreed: unpaid.reduce((n, b) => n + b.cancelledCount, 0),
+      processed: unpaidSent,
+      skipped_already_sent: unpaidSkipped,
+    },
     bonosExpiring: {
       window_days: BONO_EXPIRY_WARNING_DAYS,
       targets: expiring.length,

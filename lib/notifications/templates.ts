@@ -363,6 +363,27 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "bono_unpaid_cancelled": {
+      subject = "El teu bo ha quedat anul·lat · VindiBCN";
+      block = {
+        heading: "No hem pogut confirmar el pagament del teu bo",
+        intro: [
+          hola,
+          "El teu bo estava pendent de pagar al centre i no ens consta que s'hagi cobrat dins del termini, així que ha quedat anul·lat.",
+          "Això vol dir que les sessions que hi tenies reservades s'han cancel·lat i les franges han tornat a quedar lliures.",
+        ],
+        details: rows([
+          ["Servei", d.service],
+          ["Sessions cancel·lades", d.cancelled],
+        ]),
+        cta: { label: "Tornar a comprar el bo", url: appLink("/client/bonos/comprar") },
+        outro: [
+          "Si ja l'havies pagat o creus que hi ha hagut un error, parla amb el centre i ho arreglem de seguida: no cal que tornis a pagar res.",
+        ],
+        footer: "client",
+      };
+      break;
+    }
     case "community": {
       subject = `${d.title ? esc(d.title) + " · " : ""}Novetats de VindiBCN`;
       block = {

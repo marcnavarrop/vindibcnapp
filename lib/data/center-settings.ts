@@ -23,6 +23,10 @@ export type CenterSettings = {
    * Canviar-lo NO afecta els bons ja comprats: cadascun porta la seva data.
    */
   bonoExpiryMonths: number | null;
+  /** Anul·lar els bons pendents de pagament que no es cobren a temps. */
+  pendingPaymentCancelEnabled: boolean;
+  /** Hores des de la primera reserva feta amb el bo. Null = sense termini. */
+  pendingPaymentCancelHours: number | null;
   modules: {
     comunitat: boolean;
     sessionsProva: boolean;
@@ -42,6 +46,8 @@ const DEFAULT: CenterSettings = {
   bonoLowThreshold: 1,
   reminderHourLocal: 20,
   bonoExpiryMonths: null,
+  pendingPaymentCancelEnabled: false,
+  pendingPaymentCancelHours: null,
   modules: { comunitat: true, sessionsProva: true, documents: true },
 };
 
@@ -76,6 +82,8 @@ export async function getCenterSettings(): Promise<CenterSettings> {
       bonoLowThreshold: cs?.bono_low_threshold ?? DEFAULT.bonoLowThreshold,
       reminderHourLocal: cs?.reminder_hour_local ?? DEFAULT.reminderHourLocal,
       bonoExpiryMonths: cs?.bono_expiry_months ?? null,
+      pendingPaymentCancelEnabled: cs?.pending_payment_cancel_enabled ?? false,
+      pendingPaymentCancelHours: cs?.pending_payment_cancel_hours ?? null,
       modules: {
         comunitat: cs?.module_comunitat_enabled ?? DEFAULT.modules.comunitat,
         sessionsProva: cs?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
@@ -99,7 +107,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     .from("center_settings")
     // Literal inline a propòsit: amb una constant, Supabase perd la inferència.
     .select(
-      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled",
+      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, pending_payment_cancel_enabled, pending_payment_cancel_hours, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled",
     )
     .single();
 
@@ -115,6 +123,8 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     bonoLowThreshold: data?.bono_low_threshold ?? DEFAULT.bonoLowThreshold,
     reminderHourLocal: data?.reminder_hour_local ?? DEFAULT.reminderHourLocal,
     bonoExpiryMonths: data?.bono_expiry_months ?? null,
+    pendingPaymentCancelEnabled: data?.pending_payment_cancel_enabled ?? false,
+    pendingPaymentCancelHours: data?.pending_payment_cancel_hours ?? null,
     modules: {
       comunitat: data?.module_comunitat_enabled ?? DEFAULT.modules.comunitat,
       sessionsProva: data?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
@@ -143,6 +153,8 @@ export async function updateCenterSettings(
       bono_low_threshold: DEFAULT.bonoLowThreshold,
       reminder_hour_local: DEFAULT.reminderHourLocal,
       bono_expiry_months: DEFAULT.bonoExpiryMonths,
+      pending_payment_cancel_enabled: DEFAULT.pendingPaymentCancelEnabled,
+      pending_payment_cancel_hours: DEFAULT.pendingPaymentCancelHours,
       module_comunitat_enabled: DEFAULT.modules.comunitat,
       module_sessions_prova_enabled: DEFAULT.modules.sessionsProva,
       module_documents_enabled: DEFAULT.modules.documents,
@@ -161,6 +173,8 @@ export async function updateCenterSettings(
     if (input.bonoLowThreshold !== undefined) cs.bono_low_threshold = input.bonoLowThreshold;
     if (input.reminderHourLocal !== undefined) cs.reminder_hour_local = input.reminderHourLocal;
     if (input.bonoExpiryMonths !== undefined) cs.bono_expiry_months = input.bonoExpiryMonths;
+    if (input.pendingPaymentCancelEnabled !== undefined) cs.pending_payment_cancel_enabled = input.pendingPaymentCancelEnabled;
+    if (input.pendingPaymentCancelHours !== undefined) cs.pending_payment_cancel_hours = input.pendingPaymentCancelHours;
     if (input.modules?.comunitat !== undefined) cs.module_comunitat_enabled = input.modules.comunitat;
     if (input.modules?.sessionsProva !== undefined) cs.module_sessions_prova_enabled = input.modules.sessionsProva;
     if (input.modules?.documents !== undefined) cs.module_documents_enabled = input.modules.documents;
@@ -183,6 +197,8 @@ export async function updateCenterSettings(
     ...(input.bonoLowThreshold !== undefined && { bono_low_threshold: input.bonoLowThreshold }),
     ...(input.reminderHourLocal !== undefined && { reminder_hour_local: input.reminderHourLocal }),
     ...(input.bonoExpiryMonths !== undefined && { bono_expiry_months: input.bonoExpiryMonths }),
+    ...(input.pendingPaymentCancelEnabled !== undefined && { pending_payment_cancel_enabled: input.pendingPaymentCancelEnabled }),
+    ...(input.pendingPaymentCancelHours !== undefined && { pending_payment_cancel_hours: input.pendingPaymentCancelHours }),
     ...(input.modules?.comunitat !== undefined && { module_comunitat_enabled: input.modules.comunitat }),
     ...(input.modules?.sessionsProva !== undefined && { module_sessions_prova_enabled: input.modules.sessionsProva }),
     ...(input.modules?.documents !== undefined && { module_documents_enabled: input.modules.documents }),

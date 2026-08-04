@@ -98,7 +98,7 @@ function fromSeed(): Store {
     bonus_worker_settings: [],
     bonus_payouts: [],
     settlements: [],
-    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, opening_time: "07:00:00", closing_time: "22:00:00", min_booking_hours: 0, bono_low_threshold: 1, reminder_hour_local: 20, bono_expiry_months: null, module_comunitat_enabled: true, module_sessions_prova_enabled: true, module_documents_enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, opening_time: "07:00:00", closing_time: "22:00:00", min_booking_hours: 0, bono_low_threshold: 1, reminder_hour_local: 20, bono_expiry_months: null, pending_payment_cancel_enabled: false, pending_payment_cancel_hours: null, module_comunitat_enabled: true, module_sessions_prova_enabled: true, module_documents_enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
 }
 

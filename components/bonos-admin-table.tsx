@@ -18,6 +18,8 @@ const STATUS_TONE: Record<
   pending_payment: "warn",
   // Caducat NO és neutral com "completat": s'han perdut sessions pagades.
   expired: "danger",
+  // Anul·lat per impagament: també és pèrdua, i l'etiqueta n'explica el motiu.
+  unpaid: "danger",
 };
 
 type Filter = "all" | "pending_payment" | "active";

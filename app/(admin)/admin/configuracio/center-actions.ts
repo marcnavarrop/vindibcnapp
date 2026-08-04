@@ -57,6 +57,14 @@ export async function updateCenterSettingsAction(
     return { error: "La caducitat dels bons ha de ser entre 0 i 120 mesos." };
   const bonoExpiryMonths = bonoExpiryMonthsRaw === 0 ? null : bonoExpiryMonthsRaw;
 
+  const pendingPaymentCancelEnabled =
+    fd.get("pendingPaymentCancelEnabled") === "true";
+  const pendingPaymentCancelHours = intInRange(fd, "pendingPaymentCancelHours", 1, 8760);
+  // Només es valida si l'ajust està actiu: amb el toggle apagat, un valor
+  // rar al camp no ha de bloquejar el desat de tota la resta.
+  if (pendingPaymentCancelEnabled && pendingPaymentCancelHours === null)
+    return { error: "El termini per cobrar ha de ser entre 1 i 8760 hores." };
+
   const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);
   if (reminderHourLocal === null)
     return { error: "L'hora dels recordatoris ha de ser entre 0 i 23." };
@@ -73,6 +81,8 @@ export async function updateCenterSettingsAction(
       minBookingHours,
       bonoLowThreshold,
       bonoExpiryMonths,
+      pendingPaymentCancelEnabled,
+      pendingPaymentCancelHours: pendingPaymentCancelHours ?? undefined,
       reminderHourLocal,
       modules: {
         comunitat: fd.get("moduleComunitat") === "true",

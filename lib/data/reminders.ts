@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { getStore } from "@/lib/mock/store";
 import { SERVICE_LABELS } from "@/lib/labels";
 import type { NotificationRecipient } from "@/lib/notifications/types";
@@ -407,6 +408,125 @@ export async function listExpiringBonoTargets(
   for (const b of (data ?? []) as unknown as Row[]) {
     const p = b.client?.profile;
     push(b, p ? { profileId: p.id, email: p.email, phone: p.phone, name: p.full_name } : null);
+  }
+  return out;
+}
+
+// ─── Bons pendents de pagament que decauen ───────────────────────────────────
+
+export type UnpaidBonoTarget = {
+  bonoId: string;
+  relatedId: string;
+  recipient: NotificationRecipient;
+  serviceType: ServiceType;
+  /** Reserves futures que s'han cancel·lat en anul·lar el bo. */
+  cancelledCount: number;
+};
+
+/**
+ * Anul·la els bons pendents de pagament que ja han passat el termini i
+ * allibera les franges que ocupaven.
+ *
+ * El termini es compta des de la PRIMERA reserva feta amb el bo: qui l'ha
+ * comprat però encara no l'ha estrenat no li treu el lloc a ningú, i per això
+ * un bo amb `first_reservation_at` nul no es toca mai, per vell que sigui.
+ *
+ * Només cancel·la reserves FUTURES: les sessions que el client ja ha fet no
+ * es desfan, i el deute per aquelles queda viu al marge d'aquest procés.
+ *
+ * Torna els bons anul·lats perquè qui crida enviï l'avís. Idempotent per
+ * construcció: en canviar l'estat, el bo ja no torna a sortir a la consulta.
+ */
+export async function cancelOverduePendingBonos(
+  now = new Date(),
+): Promise<UnpaidBonoTarget[]> {
+  const { pendingPaymentCancelEnabled, pendingPaymentCancelHours } =
+    await getCenterSettings();
+  if (!pendingPaymentCancelEnabled || !pendingPaymentCancelHours) return [];
+
+  const limit = new Date(
+    now.getTime() - pendingPaymentCancelHours * 60 * 60 * 1000,
+  ).toISOString();
+  const nowISO = now.toISOString();
+  const out: UnpaidBonoTarget[] = [];
+
+  if (USE_MOCK) {
+    const { getStore, saveStore } = await import("@/lib/mock/store");
+    const store = getStore();
+    for (const b of store.bonos) {
+      if (b.status !== "pending_payment") continue;
+      if (!b.first_reservation_at) continue;
+      if (b.first_reservation_at > limit) continue;
+
+      let cancelled = 0;
+      for (const r of store.reservations)
+        if (r.bono_id === b.id && r.status === "booked" && r.scheduled_at > nowISO) {
+          r.status = "cancelled";
+          cancelled++;
+        }
+      b.status = "unpaid";
+
+      const client = store.clients.find((c) => c.id === b.client_id);
+      const p = store.profiles.find((x) => x.id === client?.profile_id);
+      if (p)
+        out.push({
+          bonoId: b.id,
+          relatedId: stableUuid(`bono-unpaid:${b.id}`),
+          recipient: { profileId: p.id, email: p.email, phone: p.phone, name: p.full_name },
+          serviceType: b.service_type,
+          cancelledCount: cancelled,
+        });
+    }
+    saveStore(store);
+    return out;
+  }
+
+  const admin = createAdminClient();
+  const { data: overdue } = await admin
+    .from("bonos")
+    .select(
+      `id, service_type,
+       client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(id, full_name, email, phone))`,
+    )
+    .eq("status", "pending_payment")
+    .not("first_reservation_at", "is", null)
+    .lte("first_reservation_at", limit);
+
+  type Row = {
+    id: string;
+    service_type: ServiceType;
+    client: {
+      profile: { id: string; full_name: string | null; email: string | null; phone: string | null } | null;
+    } | null;
+  };
+
+  for (const b of (overdue ?? []) as unknown as Row[]) {
+    // Primer alliberar les franges, després tancar el bo: si alguna cosa peta pel
+    // mig, el bo segueix pendent i el barrido del dia següent hi tornarà.
+    const { data: freed } = await admin
+      .from("reservations")
+      .update({ status: "cancelled" })
+      .eq("bono_id", b.id)
+      .eq("status", "booked")
+      .gt("scheduled_at", nowISO)
+      .select("id");
+
+    const { error } = await admin
+      .from("bonos")
+      .update({ status: "unpaid" })
+      .eq("id", b.id)
+      .eq("status", "pending_payment");
+    if (error) continue;
+
+    const p = b.client?.profile;
+    if (p)
+      out.push({
+        bonoId: b.id,
+        relatedId: stableUuid(`bono-unpaid:${b.id}`),
+        recipient: { profileId: p.id, email: p.email, phone: p.phone, name: p.full_name },
+        serviceType: b.service_type,
+        cancelledCount: (freed ?? []).length,
+      });
   }
   return out;
 }

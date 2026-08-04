@@ -13,6 +13,7 @@ export type NotificationEventType =
   | "trial_status"
   | "bono_low"
   | "bono_expiring_soon"
+  | "bono_unpaid_cancelled"
   | "community"
   // Avisos que rep el professional com a dueño de la seva agenda:
   | "trainer_booking_received"
@@ -106,6 +107,12 @@ export const EVENT_META: Record<
     audience: ["client"],
     group: "general",
   },
+  bono_unpaid_cancelled: {
+    label: "Bo anul·lat per impagament",
+    description: "Si un bo pendent de pagament decau i es cancel·len les sessions reservades.",
+    audience: ["client"],
+    group: "general",
+  },
   community: {
     label: "Novetats de la comunitat",
     description: "Nous anuncis del centre.",
@@ -160,6 +167,7 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "session_reminder",
   "bono_low",
   "bono_expiring_soon",
+  "bono_unpaid_cancelled",
   "trial_request",
   "trial_status",
   "community",

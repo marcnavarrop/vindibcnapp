@@ -117,6 +117,12 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
   const [trainersSeColleagues, setTrainersSeColleagues] = useState(
     settings.trainersSeColleaguesReservations,
   );
+  const [pendingCancel, setPendingCancel] = useState(
+    settings.pendingPaymentCancelEnabled,
+  );
+  const [pendingCancelHours, setPendingCancelHours] = useState(
+    String(settings.pendingPaymentCancelHours ?? 48),
+  );
   const [referralActive, setReferralActive] = useState(settings.referralProgramActive);
   const [referralReferee, setReferralReferee] = useState(settings.referralRewardReferee);
   const [referralPercent, setReferralPercent] = useState(
@@ -177,7 +183,7 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
 
       <Group
         title="Bons"
-        desc="Quan avisem el client que se li acaba el bo i quant temps és vàlid des de la compra."
+        desc="Quan avisem el client que se li acaba el bo, quant temps és vàlid i què passa si no es cobra."
       >
         <NumField
           name="bonoLowThreshold"
@@ -197,6 +203,57 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           max={120}
           defaultValue={settings.bonoExpiryMonths ?? 0}
         />
+
+        <Toggle
+          name="pendingPaymentCancelEnabled"
+          title="Anul·lar bons pendents de pagament no cobrats a temps"
+          desc="Si el pagament no arriba dins del termini, el bo decau i les sessions futures que hi havia reservades es cancel·len, alliberant les franges. El termini es compta des de la primera reserva feta amb el bo: qui encara no l'ha estrenat no es toca mai."
+          checked={pendingCancel}
+          onChange={setPendingCancel}
+        />
+
+        {/* Mateix patró que als referits: el valor viatja en un input ocult
+            FORA del fieldset, perquè un fieldset deshabilitat no envia els
+            seus camps i el termini es perdria en desactivar el toggle. */}
+        <input
+          type="hidden"
+          name="pendingPaymentCancelHours"
+          value={pendingCancelHours}
+        />
+        <fieldset
+          disabled={!pendingCancel}
+          className={`flex flex-col gap-5 border-l-2 pl-4 transition-opacity ${
+            pendingCancel
+              ? "border-brand-purple/30"
+              : "border-brand-border opacity-50"
+          }`}
+        >
+          <div>
+            <label
+              htmlFor="pendingPaymentCancelHours"
+              className="mb-1 block text-sm font-bold text-brand-dark"
+            >
+              Termini per cobrar
+            </label>
+            <p className="mb-3 text-xs text-brand-muted">
+              Hores des de la primera reserva feta amb el bo. Passat aquest
+              marge sense constar el cobrament, el bo s&apos;anul·la.
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                id="pendingPaymentCancelHours"
+                type="number"
+                min={1}
+                max={8760}
+                step={1}
+                value={pendingCancelHours}
+                onChange={(e) => setPendingCancelHours(e.target.value)}
+                className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none disabled:cursor-not-allowed disabled:bg-brand-bg"
+              />
+              <span className="text-sm text-brand-muted">hores</span>
+            </div>
+          </div>
+        </fieldset>
       </Group>
 
       <Group

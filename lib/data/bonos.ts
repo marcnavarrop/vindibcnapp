@@ -177,6 +177,7 @@ export async function createBono(input: BonoInput): Promise<string> {
       status: "active",
       purchased_at: now,
       expires_at: expiresAt,
+      first_reservation_at: null,
       created_at: now,
     });
     saveStore(store);
@@ -277,6 +278,7 @@ export async function createPendingBono(input: {
       remaining_sessions: serviceRow.default_sessions,
       price: finalPrice,
       expires_at: expiresAt,
+      first_reservation_at: null,
       status: "pending_payment",
       purchased_at: now,
       created_at: now,

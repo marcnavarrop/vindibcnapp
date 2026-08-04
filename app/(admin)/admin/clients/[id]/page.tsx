@@ -106,7 +106,7 @@ export default async function ClientDetailPage({
                   tone={
                     b.status === "active"
                       ? "success"
-                      : b.status === "expired"
+                      : b.status === "expired" || b.status === "unpaid"
                         ? "danger"
                         : "neutral"
                   }

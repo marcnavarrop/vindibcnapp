@@ -27,6 +27,9 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // informació que el client vol tenir, no una comoditat opcional.
   bono_expiring_soon_email: true,
   bono_expiring_soon_whatsapp: false,
+  // Al client se li han cancel·lat sessions: assabentar-se'n no és opcional.
+  bono_unpaid_cancelled_email: true,
+  bono_unpaid_cancelled_whatsapp: false,
   community_email: false,
   community_whatsapp: false,
   // Avisos del professional sobre la seva agenda (operatius = true).
