@@ -215,7 +215,9 @@ export function ReservationsView({
           ))}
         </div>
 
-        {!!allAvailability && view === "calendar" && (
+        {/* Només té sentit per a qui TÉ disponibilitat pròpia: l'admin rep les
+            regles de tothom, però la seva capa és l'altra (per professional). */}
+        {!!allAvailability && !!myTrainerId && view === "calendar" && (
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input
               type="checkbox"
