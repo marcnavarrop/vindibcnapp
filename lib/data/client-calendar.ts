@@ -5,6 +5,7 @@ import { getStore } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
+import { isBonoExpired } from "@/lib/data/bonos";
 import type { TrainerRuleLite, TrainerBlockLite } from "@/lib/availability-slots";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
@@ -83,7 +84,10 @@ export async function getClientCenterData(
             (b) =>
               b.client_id === client.id &&
               (b.status === "active" || b.status === "pending_payment") &&
-              b.remaining_sessions > 0,
+              b.remaining_sessions > 0 &&
+              // Un bo caducat no habilita res: si no, el calendari oferiria
+              // franges que el servidor rebutjaria en intentar reservar-les.
+              !isBonoExpired(b),
           )
           .map((b) => b.service_type),
       ),
@@ -138,7 +142,7 @@ export async function getClientCenterData(
   const [bonoRows, trainerRows, rules, blocks, resRows] = await Promise.all([
     admin
       .from("bonos")
-      .select("service_type, status, remaining_sessions")
+      .select("service_type, status, remaining_sessions, expires_at")
       .eq("client_id", client.id),
     admin.from("profiles").select("id, full_name").eq("role", "trainer"),
     listAllTrainerRulesLite(),
@@ -152,7 +156,12 @@ export async function getClientCenterData(
   const bonoTypes = [
     ...new Set(
       (bonoRows.data ?? [])
-        .filter((b) => (b.status === "active" || b.status === "pending_payment") && b.remaining_sessions > 0)
+        .filter(
+          (b) =>
+            (b.status === "active" || b.status === "pending_payment") &&
+            b.remaining_sessions > 0 &&
+            !isBonoExpired(b),
+        )
         .map((b) => b.service_type),
     ),
   ];
