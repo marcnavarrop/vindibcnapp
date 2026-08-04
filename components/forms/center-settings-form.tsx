@@ -5,8 +5,9 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { updateCenterSettingsAction } from "@/app/(admin)/admin/configuracio/center-actions";
 import type { CenterSettings } from "@/lib/data/center-settings";
 
-/** Bloc temàtic: títol + barra esquerra, el mateix patró que les opcions
- *  dependents del sistema de referits. */
+/** Bloc temàtic: títol, descripció i barra esquerra. Tots els ajustos de la
+ *  pàgina n'usen un, perquè cap secció es vegi diferent de les altres només
+ *  per haver-se afegit en un altre moment. */
 function Group({
   title,
   desc,
@@ -130,184 +131,9 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
       action={action}
       className="flex flex-col gap-6 rounded-2xl border border-brand-border bg-white p-6"
     >
-      <div>
-        <label
-          htmlFor="minCancellationHours"
-          className="mb-1 block text-sm font-bold text-brand-dark"
-        >
-          Hores mínimes per cancel·lar una reserva
-        </label>
-        <p className="mb-3 text-xs text-brand-muted">
-          El client no podrà cancel·lar si la sessió és en menys d&apos;aquest
-          nombre d&apos;hores. Posa 0 per permetre cancel·lació fins al darrer
-          moment.
-        </p>
-        <div className="flex items-center gap-3">
-          <input
-            id="minCancellationHours"
-            name="minCancellationHours"
-            type="number"
-            min={0}
-            max={168}
-            step={1}
-            required
-            defaultValue={settings.minCancellationHours}
-            className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none"
-          />
-          <span className="text-sm text-brand-muted">hores</span>
-        </div>
-      </div>
-
-      <div className="border-t border-brand-border pt-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold text-brand-dark">
-              Els entrenadors veuen les reserves dels companys
-            </p>
-            <p className="mt-0.5 text-xs text-brand-muted">
-              Permet la coordinació entre professionals mostrant les reserves de
-              tots al calendari. Si està desactivat, cada entrenador només veu
-              les seves pròpies reserves.
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={trainersSeColleagues}
-            onClick={() => setTrainersSeColleagues((v) => !v)}
-            className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple ${
-              trainersSeColleagues ? "bg-brand-purple" : "bg-brand-border"
-            }`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                trainersSeColleagues ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-        {/* Hidden input que envia el valor real al server action */}
-        <input
-          type="hidden"
-          name="trainersSeColleaguesReservations"
-          value={trainersSeColleagues ? "true" : "false"}
-        />
-      </div>
-
-      {/* ── Sistema de referits ── */}
-      <div className="border-t border-brand-border pt-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold text-brand-dark">
-              Sistema de referits actiu
-            </p>
-            <p className="mt-0.5 text-xs text-brand-muted">
-              Permet que els clients comparteixin el seu codi personal per
-              obtenir descomptes quan algú nou s&apos;apunta gràcies a ells.
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={referralActive}
-            onClick={() => setReferralActive((v) => !v)}
-            className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple ${
-              referralActive ? "bg-brand-purple" : "bg-brand-border"
-            }`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                referralActive ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-        <input type="hidden" name="referralProgramActive" value={referralActive ? "true" : "false"} />
-      </div>
-
-      {/*
-        Els valors viatgen en inputs ocults FORA del fieldset: un fieldset
-        deshabilitat no envia els seus camps, i el server action interpreta
-        un percentatge absent com a 10 (center-actions.ts).
-      */}
-      <input
-        type="hidden"
-        name="referralRewardReferee"
-        value={referralReferee ? "true" : "false"}
-      />
-      <input
-        type="hidden"
-        name="referralDiscountPercent"
-        value={referralPercent}
-      />
-
-      {/* Opcions dependents: sagnades i lligades al toggle mestre per la barra
-          esquerra. `disabled` al fieldset les treu també del tab order. */}
-      <fieldset
-        disabled={!referralActive}
-        className={`-mt-2 ml-1 flex flex-col gap-5 border-l-2 pl-5 transition-opacity ${
-          referralActive
-            ? "border-brand-purple/30"
-            : "border-brand-border opacity-50"
-        }`}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold text-brand-dark">
-              Recompensar també el nou client
-            </p>
-            <p className="mt-0.5 text-xs text-brand-muted">
-              A més del client que refereix, el nou client (referit) també rep
-              el mateix descompte en la seva propera compra.
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={referralReferee}
-            onClick={() => setReferralReferee((v) => !v)}
-            className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple disabled:cursor-not-allowed ${
-              referralReferee ? "bg-brand-purple" : "bg-brand-border"
-            }`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                referralReferee ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-
-        <div>
-          <label
-            htmlFor="referralDiscountPercent"
-            className="mb-1 block text-sm font-bold text-brand-dark"
-          >
-            Percentatge de descompte de referit
-          </label>
-          <p className="mb-3 text-xs text-brand-muted">
-            S&apos;aplica tant al client que refereix com al nou client (si
-            l&apos;opció anterior està activa).
-          </p>
-          <div className="flex items-center gap-3">
-            <input
-              id="referralDiscountPercent"
-              type="number"
-              min={1}
-              max={100}
-              step={0.5}
-              value={referralPercent}
-              onChange={(e) => setReferralPercent(e.target.value)}
-              className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none disabled:cursor-not-allowed disabled:bg-brand-bg"
-            />
-            <span className="text-sm text-brand-muted">%</span>
-          </div>
-        </div>
-      </fieldset>
-
       <Group
-        title="Horari"
-        desc="Defineix la franja que mostren tots els calendaris i quanta antelació cal per reservar."
+        title="Horari i reserves"
+        desc="La franja que mostren tots els calendaris i quanta antelació cal per reservar o cancel·lar."
       >
         <div className="grid gap-5 sm:grid-cols-2">
           <NumField
@@ -338,11 +164,20 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           max={720}
           defaultValue={settings.minBookingHours}
         />
+        <NumField
+          name="minCancellationHours"
+          label="Antelació mínima per cancel·lar"
+          help="El client no podrà cancel·lar si la sessió és en menys d'aquest nombre d'hores. Posa 0 per permetre cancel·lació fins al darrer moment."
+          unit="hores"
+          min={0}
+          max={168}
+          defaultValue={settings.minCancellationHours}
+        />
       </Group>
 
       <Group
-        title="Notificacions"
-        desc="Quan avisem el client que se li acaba o li caduca el bo, i a quina hora surten els recordatoris."
+        title="Bons"
+        desc="Quan avisem el client que se li acaba el bo i quant temps és vàlid des de la compra."
       >
         <NumField
           name="bonoLowThreshold"
@@ -362,6 +197,12 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           max={120}
           defaultValue={settings.bonoExpiryMonths ?? 0}
         />
+      </Group>
+
+      <Group
+        title="Notificacions"
+        desc="A quina hora surten els avisos automàtics del dia."
+      >
         <NumField
           name="reminderHourLocal"
           label="Hora dels recordatoris"
@@ -371,6 +212,112 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           max={23}
           defaultValue={settings.reminderHourLocal}
         />
+      </Group>
+
+      <Group
+        title="Coordinació entre professionals"
+        desc="Què veu cada entrenador de l'agenda dels seus companys."
+      >
+        <Toggle
+          name="trainersSeColleaguesReservations"
+          title="Els entrenadors veuen les reserves dels companys"
+          desc="Permet la coordinació entre professionals mostrant les reserves de tots al calendari. Si està desactivat, cada entrenador només veu les seves pròpies reserves."
+          checked={trainersSeColleagues}
+          onChange={setTrainersSeColleagues}
+        />
+      </Group>
+
+      <Group
+        title="Referits"
+        desc="Descomptes per als clients que en porten de nous."
+      >
+        <Toggle
+          name="referralProgramActive"
+          title="Sistema de referits actiu"
+          desc="Permet que els clients comparteixin el seu codi personal per obtenir descomptes quan algú nou s'apunta gràcies a ells."
+          checked={referralActive}
+          onChange={setReferralActive}
+        />
+
+        {/*
+          Els valors viatgen en inputs ocults FORA del fieldset: un fieldset
+          deshabilitat no envia els seus camps, i el server action interpreta
+          un percentatge absent com a 10 (center-actions.ts).
+        */}
+        <input
+          type="hidden"
+          name="referralRewardReferee"
+          value={referralReferee ? "true" : "false"}
+        />
+        <input
+          type="hidden"
+          name="referralDiscountPercent"
+          value={referralPercent}
+        />
+
+        {/* Opcions dependents: sagnades i lligades al toggle mestre per la barra
+            esquerra. `disabled` al fieldset les treu també del tab order. */}
+        <fieldset
+          disabled={!referralActive}
+          className={`flex flex-col gap-5 border-l-2 pl-4 transition-opacity ${
+            referralActive
+              ? "border-brand-purple/30"
+              : "border-brand-border opacity-50"
+          }`}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-brand-dark">
+                Recompensar també el nou client
+              </p>
+              <p className="mt-0.5 text-xs text-brand-muted">
+                A més del client que refereix, el nou client (referit) també rep
+                el mateix descompte en la seva propera compra.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={referralReferee}
+              onClick={() => setReferralReferee((v) => !v)}
+              className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple disabled:cursor-not-allowed ${
+                referralReferee ? "bg-brand-purple" : "bg-brand-border"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                  referralReferee ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div>
+            <label
+              htmlFor="referralDiscountPercent"
+              className="mb-1 block text-sm font-bold text-brand-dark"
+            >
+              Percentatge de descompte de referit
+            </label>
+            <p className="mb-3 text-xs text-brand-muted">
+              S&apos;aplica tant al client que refereix com al nou client (si
+              l&apos;opció anterior està activa).
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                id="referralDiscountPercent"
+                type="number"
+                min={1}
+                max={100}
+                step={0.5}
+                value={referralPercent}
+                onChange={(e) => setReferralPercent(e.target.value)}
+                className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none disabled:cursor-not-allowed disabled:bg-brand-bg"
+              />
+              <span className="text-sm text-brand-muted">%</span>
+            </div>
+          </div>
+        </fieldset>
       </Group>
 
       <Group
