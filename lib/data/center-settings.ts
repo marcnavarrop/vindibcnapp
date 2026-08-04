@@ -1,5 +1,4 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -78,8 +77,18 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     };
   }
 
-  const supabase = await createClient();
-  const { data } = await supabase
+  // Client de servei, no el de sessió: aquesta configuració la necessiten
+  // pàgines PÚBLIQUES (la home, el login, /prova) on no hi ha ningú autenticat,
+  // i la RLS de center_settings no deixa llegir res a un anònim. Amb el client
+  // de sessió, `data` sortia null i tot queia als valors per defecte: un mòdul
+  // desactivat es veia actiu per a qualsevol visitant, i el guard de la ruta
+  // no arribava a saltar mai.
+  //
+  // No obre cap forat: aquí només es llegeix configuració del centre (horaris,
+  // llindars, mòduls), i qui decideix què se'n publica és el servidor. Escriure
+  // ja passava per aquest mateix client.
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("center_settings")
     // Literal inline a propòsit: amb una constant, Supabase perd la inferència.
     .select(
