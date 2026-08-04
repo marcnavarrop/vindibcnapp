@@ -10,6 +10,8 @@ import { ReservationsView } from "@/components/reservations-view";
 import { listReservations } from "@/lib/data/reservations";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listTrainers } from "@/lib/data/clients";
+import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   cancelReservationAction,
@@ -24,12 +26,16 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function ReservasPage() {
-  const [reservations, trainers, trials, centerSettings] = await Promise.all([
-    listReservations(),
-    listTrainers(),
-    listActiveTrialHolds(),
-    getCenterSettings(),
-  ]);
+  const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks] =
+    await Promise.all([
+      listReservations(),
+      listTrainers(),
+      listActiveTrialHolds(),
+      getCenterSettings(),
+      // Per a la capa opcional de disponibilitat del calendari.
+      listAllTrainerRulesLite(),
+      listAllBlocksLite(),
+    ]);
   const nowISO = new Date().toISOString();
 
   return (
@@ -68,6 +74,8 @@ export default async function ReservasPage() {
           manageableTrialIds={trials.map((t) => t.id)}
           acceptTrialAction={acceptTrialAdminAction}
           rejectTrialAction={rejectTrialAdminAction}
+          allAvailability={allAvailability}
+          allBlocks={allBlocks}
           showCalendarFilters
         />
       </main>

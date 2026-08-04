@@ -18,6 +18,7 @@ import {
   type AvailabilityBlockLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
+import { proColor } from "@/lib/pro-colors";
 import type { ServiceType } from "@/types/database";
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
@@ -84,6 +85,14 @@ export function ReservationsView({
   const [selectedColleagues, setSelectedColleagues] = useState<Set<string>>(new Set());
 
   // ── Filtres del calendari d'admin ──────────────────────────────────────────
+  // Capa de disponibilitat de l'admin. Desactivada en obrir: és informació
+  // extra sobre el que ja es veu, i qui obre l'agenda ve a mirar les reserves.
+  const [showAvailLayer, setShowAvailLayer] = useState(false);
+  // Tots marcats: l'admin desmarca qui no li interessa, no al revés.
+  const [hiddenAvailTrainers, setHiddenAvailTrainers] = useState<Set<string>>(
+    new Set(),
+  );
+
   const [filterTrainer, setFilterTrainer] = useState<string>(NO_FILTER);
   const [filterService, setFilterService] = useState<string>(NO_FILTER);
   const [filterClient, setFilterClient] = useState<string>("");
@@ -157,6 +166,31 @@ export function ReservationsView({
     return blocksOf(allBlocks, myTrainerId);
   }, [allBlocks, myTrainerId]);
 
+  // Professionals amb alguna regla: qui no en té no pinta res ni surt al llistat.
+  const trainersWithRules = useMemo(() => {
+    if (!allAvailability) return [];
+    const withRules = new Set(allAvailability.map((r) => r.trainerId));
+    return trainers.filter((t) => withRules.has(t.id));
+  }, [allAvailability, trainers]);
+
+  const availabilityLayers = useMemo(() => {
+    if (!showCalendarFilters || !showAvailLayer || !allAvailability) return undefined;
+    return trainersWithRules
+      .filter((t) => !hiddenAvailTrainers.has(t.id))
+      .map((t) => ({
+        trainerId: t.id,
+        name: t.name,
+        color: proColor(t.id),
+        rules: allAvailability.filter((r) => r.trainerId === t.id),
+      }));
+  }, [
+    showCalendarFilters,
+    showAvailLayer,
+    allAvailability,
+    trainersWithRules,
+    hiddenAvailTrainers,
+  ]);
+
   const colleagues = trainers.filter((t) => t.id !== myTrainerId);
 
   return (
@@ -218,6 +252,57 @@ export function ReservationsView({
               <span className="text-brand-charcoal">{t.name}</span>
             </label>
           ))}
+        </div>
+      )}
+
+      {/* ── Capa de disponibilitat (admin) ─────────────────────────────────── */}
+      {showCalendarFilters && view === "calendar" && trainersWithRules.length > 0 && (
+        <div className="mb-4 rounded-xl border border-brand-border bg-white px-3 py-2.5">
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showAvailLayer}
+              onChange={(e) => setShowAvailLayer(e.target.checked)}
+              className="h-3.5 w-3.5 accent-brand-purple"
+            />
+            <span className="font-bold text-brand-charcoal">
+              Mostrar disponibilitat
+            </span>
+            <span className="text-xs text-brand-muted">
+              Ombreja les franges lliures de cada professional, amb el seu color.
+            </span>
+          </label>
+
+          {showAvailLayer && (
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-brand-border pt-2.5">
+              {trainersWithRules.map((t) => (
+                <label
+                  key={t.id}
+                  className="flex cursor-pointer items-center gap-1.5 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!hiddenAvailTrainers.has(t.id)}
+                    onChange={() =>
+                      setHiddenAvailTrainers((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(t.id)) next.delete(t.id);
+                        else next.add(t.id);
+                        return next;
+                      })
+                    }
+                    className="h-3.5 w-3.5 accent-brand-purple"
+                  />
+                  <span
+                    aria-hidden
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: proColor(t.id) }}
+                  />
+                  <span className="text-brand-charcoal">{t.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -348,6 +433,8 @@ export function ReservationsView({
 
       {view === "calendar" ? (
         <WeeklyCalendar
+          availabilityLayers={availabilityLayers}
+          layerBlocks={allBlocks ?? []}
           reservations={filteredReservations}
           manageableIds={manageableIds ?? reservations.map((r) => r.id)}
           newReservationBase={newReservationBase}

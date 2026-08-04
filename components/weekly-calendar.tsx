@@ -12,8 +12,10 @@ import {
 import {
   isHourAvailable,
   isHourBlocked,
+  blocksOf,
   type AvailabilityRuleLite,
   type AvailabilityBlockLite,
+  type TrainerBlockLite,
 } from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
@@ -130,6 +132,8 @@ export function WeeklyCalendar({
   rescheduleAction,
   availability,
   blocks,
+  availabilityLayers,
+  layerBlocks = [],
   trials = [],
   manageableTrialIds = [],
   acceptTrialAction,
@@ -148,6 +152,19 @@ export function WeeklyCalendar({
   availability?: AvailabilityRuleLite[];
   /** Bloquejos temporals: tapen la disponibilitat setmanal al ombrejat. */
   blocks?: AvailabilityBlockLite[];
+  /**
+   * Disponibilitat de diversos professionals alhora, cadascun amb el seu color.
+   * A la vista del trainer n'hi ha prou amb `availability` (la seva, en verd);
+   * aquí n'hi ha diverses superposades i cal saber de qui és cadascuna.
+   */
+  availabilityLayers?: {
+    trainerId: string;
+    name: string;
+    color: string;
+    rules: AvailabilityRuleLite[];
+  }[];
+  /** Bloquejos de tots els professionals de `availabilityLayers`. */
+  layerBlocks?: TrainerBlockLite[];
   /** Sessions de prova (pending/confirmed) per pintar diferenciades. */
   trials?: TrialHoldItem[];
   manageableTrialIds?: string[];
@@ -305,6 +322,13 @@ export function WeeklyCalendar({
                   availability &&
                   isHourAvailable(availability, slot, h) &&
                   !isHourBlocked(blocks ?? [], slot, h);
+                // Qui té aquesta franja disponible. Un bloqueig temporal
+                // (vacances, baixa) el treu encara que la regla setmanal hi sigui.
+                const freeHere = (availabilityLayers ?? []).filter(
+                  (l) =>
+                    isHourAvailable(l.rules, slot, h) &&
+                    !isHourBlocked(blocksOf(layerBlocks, l.trainerId), slot, h),
+                );
                 return (
                   <div
                     key={dayIdx}
@@ -316,12 +340,35 @@ export function WeeklyCalendar({
                         goNew();
                     }}
                     className={clsx(
-                      "min-h-[3.25rem] cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60",
+                      "relative min-h-[3.25rem] cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60",
                       inAvailability && "bg-emerald-400/10 ring-1 ring-inset ring-emerald-300/40",
                     )}
                     aria-label={`Nova reserva ${DAY_NAMES[dayIdx]} ${pad(h)}:00`}
+                    title={
+                      freeHere.length
+                        ? `Disponible: ${freeHere.map((l) => l.name).join(", ")}`
+                        : undefined
+                    }
                   >
-                    <div className="flex flex-col gap-1">
+                    {/* Ombrejat de disponibilitat, darrere de tot i sense
+                        capturar clics: les reserves reals manen. Amb més d'un
+                        professional la cel·la es reparteix en bandes verticals,
+                        una per cadascun i del seu color. */}
+                    {freeHere.length > 0 && (
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 flex"
+                      >
+                        {freeHere.map((l) => (
+                          <div
+                            key={l.trainerId}
+                            className="h-full flex-1"
+                            style={{ backgroundColor: `${l.color}20` }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <div className="relative flex flex-col gap-1">
                       {items.map((r) => (
                         <ReservationCard
                           key={r.id}

@@ -17,6 +17,7 @@ import {
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
+import { proColor } from "@/lib/pro-colors";
 import type { ServiceType } from "@/types/database";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
@@ -65,26 +66,6 @@ const SVC_ICON: Record<ServiceType, React.ReactNode> = {
   ),
 };
 
-/** Paleta determinista por profesional (mismo color siempre). */
-const PRO_PALETTE = [
-  "#642263", // lila de marca
-  "#ff6d17", // naranja de acento
-  "#1d8a8a", // verd-blau
-  "#965495", // lila claro
-  "#b45309", // ámbar oscuro
-  "#2563eb", // azul
-  "#be185d", // magenta
-  "#15803d", // verde
-];
-function hashStr(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
-function proColor(id: string | null): string {
-  if (!id) return "#8a8f98";
-  return PRO_PALETTE[hashStr(id) % PRO_PALETTE.length];
-}
 /** Primer nom (per a la vista compacta de les fitxes). */
 const firstName = (name: string) => name.split(" ")[0];
 
