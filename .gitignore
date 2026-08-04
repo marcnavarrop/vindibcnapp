@@ -41,3 +41,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Scripts temporals de verificació (no formen part del projecte)
+__*.mjs
+__*.mts
