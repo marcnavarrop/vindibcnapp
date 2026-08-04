@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { TrialCta } from "@/components/trial-cta";
 
 /**
  * Página de inicio. Identidad VindiBCN: hero oscuro con destellos de marca
  * (morado/naranja) y accesos a la app.
  */
-export default function Home() {
+export default async function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
       <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-brand-dark p-10 text-white shadow-xl">
@@ -35,12 +36,7 @@ export default function Home() {
             >
               Crear compte
             </Link>
-            <Link
-              href="/prova"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-bold tracking-wide uppercase transition-colors hover:bg-white/20"
-            >
-              🎁 Sessió de prova gratuïta
-            </Link>
+            <TrialCta variant="hero" />
           </nav>
 
           <p className="text-xs text-white/40">
