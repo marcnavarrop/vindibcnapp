@@ -85,9 +85,10 @@ export function ReservationsView({
   const [selectedColleagues, setSelectedColleagues] = useState<Set<string>>(new Set());
 
   // ── Filtres del calendari d'admin ──────────────────────────────────────────
-  // Capa de disponibilitat de l'admin. Desactivada en obrir: és informació
-  // extra sobre el que ja es veu, i qui obre l'agenda ve a mirar les reserves.
-  const [showAvailLayer, setShowAvailLayer] = useState(false);
+  // Capa de disponibilitat de l'admin, encesa en obrir: saber qui té hores
+  // lliures forma part de llegir l'agenda, no és un extra que s'hagi d'anar a
+  // buscar. Qui només vulgui veure les reserves l'apaga d'un clic.
+  const [showAvailLayer, setShowAvailLayer] = useState(true);
   // Tots marcats: l'admin desmarca qui no li interessa, no al revés.
   const [hiddenAvailTrainers, setHiddenAvailTrainers] = useState<Set<string>>(
     new Set(),

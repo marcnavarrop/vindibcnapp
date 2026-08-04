@@ -11,10 +11,7 @@ import {
 import {
   weekdayOf,
   localDateStr,
-  isHourBlocked,
-  blocksOf,
-  type TrainerRuleLite,
-  type TrainerBlockLite,
+  offeredServices,
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import { proColor } from "@/lib/pro-colors";
@@ -94,32 +91,6 @@ const toLocalInput = (d: Date) =>
   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
     d.getHours(),
   )}:${pad(d.getMinutes())}`;
-
-/** Servicios que un profesional ofrece en (fecha, hora) según sus reglas. */
-function offeredServices(
-  rules: TrainerRuleLite[],
-  blocks: TrainerBlockLite[],
-  trainerId: string,
-  date: Date,
-  h: number,
-): Set<ServiceType> {
-  // Un bloqueig temporal tapa la regla setmanal: la franja deixa de ser
-  // reservable encara que hi hagi horari definit.
-  if (isHourBlocked(blocksOf(blocks, trainerId), date, h))
-    return new Set<ServiceType>();
-  const wd = weekdayOf(date);
-  const day = localDateStr(date);
-  const out = new Set<ServiceType>();
-  for (const r of rules) {
-    if (r.trainerId !== trainerId) continue;
-    if (r.weekday !== wd) continue;
-    if (day < r.validFrom) continue;
-    if (r.validUntil && day > r.validUntil) continue;
-    if (h < r.startHour || h >= r.endHour) continue;
-    for (const s of r.serviceTypes) out.add(s);
-  }
-  return out;
-}
 
 /** Un elemento a pintar en una celda (chip). */
 type CellItem =

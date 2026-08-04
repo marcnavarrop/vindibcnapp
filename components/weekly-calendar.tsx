@@ -8,13 +8,15 @@ import {
   SERVICE_COLORS,
   RESERVATION_STATUS_LABELS,
   GROUP_CAPACITY,
+  SERVICE_TYPES,
 } from "@/lib/labels";
 import {
   isHourAvailable,
   isHourBlocked,
-  blocksOf,
+  offeredServices,
   type AvailabilityRuleLite,
   type AvailabilityBlockLite,
+  type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
@@ -161,7 +163,7 @@ export function WeeklyCalendar({
     trainerId: string;
     name: string;
     color: string;
-    rules: AvailabilityRuleLite[];
+    rules: TrainerRuleLite[];
   }[];
   /** Bloquejos de tots els professionals de `availabilityLayers`. */
   layerBlocks?: TrainerBlockLite[];
@@ -324,11 +326,23 @@ export function WeeklyCalendar({
                   !isHourBlocked(blocks ?? [], slot, h);
                 // Qui té aquesta franja disponible. Un bloqueig temporal
                 // (vacances, baixa) el treu encara que la regla setmanal hi sigui.
-                const freeHere = (availabilityLayers ?? []).filter(
-                  (l) =>
-                    isHourAvailable(l.rules, slot, h) &&
-                    !isHourBlocked(blocksOf(layerBlocks, l.trainerId), slot, h),
-                );
+                // offeredServices ja té en compte les regles I els bloquejos
+                // temporals: si torna buit, aquest professional no hi és.
+                const freeHere = (availabilityLayers ?? [])
+                  .map((l) => {
+                    const svc = offeredServices(
+                      l.rules,
+                      layerBlocks,
+                      l.trainerId,
+                      slot,
+                      h,
+                    );
+                    return { ...l, services: SERVICE_TYPES.filter((st) => svc.has(st)) };
+                  })
+                  .filter((l) => l.services.length > 0);
+                // Amb 4 bandes o més cap icona hi cap de manera llegible: es
+                // queden només el color i el tooltip, que no perden res.
+                const showSvcIcons = freeHere.length > 0 && freeHere.length <= 3;
                 return (
                   <div
                     key={dayIdx}
@@ -346,7 +360,14 @@ export function WeeklyCalendar({
                     aria-label={`Nova reserva ${DAY_NAMES[dayIdx]} ${pad(h)}:00`}
                     title={
                       freeHere.length
-                        ? `Disponible: ${freeHere.map((l) => l.name).join(", ")}`
+                        ? `Disponible: ${freeHere
+                            .map(
+                              (l) =>
+                                `${l.name} (${l.services
+                                  .map((st) => SERVICE_LABELS[st])
+                                  .join(", ")})`,
+                            )
+                            .join(" · ")}`
                         : undefined
                     }
                   >
@@ -362,9 +383,20 @@ export function WeeklyCalendar({
                         {freeHere.map((l) => (
                           <div
                             key={l.trainerId}
-                            className="h-full flex-1"
+                            className="flex h-full flex-1 items-end justify-center gap-[2px] overflow-hidden pb-0.5"
                             style={{ backgroundColor: `${l.color}20` }}
-                          />
+                          >
+                            {showSvcIcons &&
+                              l.services.map((st) => (
+                                <span
+                                  key={st}
+                                  className="shrink-0 leading-none opacity-60"
+                                  style={{ color: l.color }}
+                                >
+                                  {SVC_ICON[st]}
+                                </span>
+                              ))}
+                          </div>
                         ))}
                       </div>
                     )}
