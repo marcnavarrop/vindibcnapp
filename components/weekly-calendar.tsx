@@ -340,9 +340,9 @@ export function WeeklyCalendar({
                     return { ...l, services: SERVICE_TYPES.filter((st) => svc.has(st)) };
                   })
                   .filter((l) => l.services.length > 0);
-                // Amb 4 bandes o més cap icona hi cap de manera llegible: es
-                // queden només el color i el tooltip, que no perden res.
-                const showSvcIcons = freeHere.length > 0 && freeHere.length <= 3;
+                // Fins a 2 hi caben nom i servei escrits; de 3 en amunt
+                // només un recompte (veure FreeSlotChip).
+                const compactFree = freeHere.length === 2;
                 return (
                   <div
                     key={dayIdx}
@@ -354,7 +354,10 @@ export function WeeklyCalendar({
                         goNew();
                     }}
                     className={clsx(
-                      "relative min-h-[3.25rem] cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60",
+                      "relative cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60",
+                      // La fila només creix quan hi ha disponibilitat a pintar:
+                      // qui no fa servir la capa no paga l'alçada extra.
+                      freeHere.length > 0 ? "min-h-[4.75rem]" : "min-h-[3.25rem]",
                       inAvailability && "bg-emerald-400/10 ring-1 ring-inset ring-emerald-300/40",
                     )}
                     aria-label={`Nova reserva ${DAY_NAMES[dayIdx]} ${pad(h)}:00`}
@@ -371,35 +374,6 @@ export function WeeklyCalendar({
                         : undefined
                     }
                   >
-                    {/* Ombrejat de disponibilitat, darrere de tot i sense
-                        capturar clics: les reserves reals manen. Amb més d'un
-                        professional la cel·la es reparteix en bandes verticals,
-                        una per cadascun i del seu color. */}
-                    {freeHere.length > 0 && (
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 flex"
-                      >
-                        {freeHere.map((l) => (
-                          <div
-                            key={l.trainerId}
-                            className="flex h-full flex-1 items-end justify-center gap-[2px] overflow-hidden pb-0.5"
-                            style={{ backgroundColor: `${l.color}20` }}
-                          >
-                            {showSvcIcons &&
-                              l.services.map((st) => (
-                                <span
-                                  key={st}
-                                  className="shrink-0 leading-none opacity-60"
-                                  style={{ color: l.color }}
-                                >
-                                  {SVC_ICON[st]}
-                                </span>
-                              ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                     <div className="relative flex flex-col gap-1">
                       {items.map((r) => (
                         <ReservationCard
@@ -427,6 +401,21 @@ export function WeeklyCalendar({
                           }}
                         />
                       ))}
+                      {/* Disponibilitat lliure: sempre DESOTA les reserves,
+                          que continuen sent el primer que es llegeix. */}
+                      {freeHere.length > 2 ? (
+                        <FreeSlotCount layers={freeHere} />
+                      ) : (
+                        freeHere.map((l) => (
+                          <FreeSlotChip
+                            key={l.trainerId}
+                            name={l.name}
+                            color={l.color}
+                            services={l.services}
+                            compact={compactFree}
+                          />
+                        ))
+                      )}
                     </div>
                   </div>
                 );
@@ -671,6 +660,98 @@ function ReservationCard({
         {status === "almost_full" && " · Gairebé ple"}
       </span>
     </button>
+  );
+}
+
+/**
+ * Franja LLIURE d'un professional.
+ *
+ * Deliberadament la mateixa forma que una fitxa de reserva, però buida: vora
+ * esquerra del color de qui la té lliure i contorn discontinu. Ple = ocupat,
+ * contorn = per omplir; així les dues es distingeixen pel pes visual, sense
+ * haver de llegir res per saber quina és quina.
+ *
+ * `compact` és el cas de dos professionals a la mateixa franja: es baixa un
+ * punt la mida perquè les dues fitxes hi càpiguen senceres, sense truncar.
+ */
+function FreeSlotChip({
+  name,
+  color,
+  services,
+  compact,
+}: {
+  name: string;
+  color: string;
+  services: ServiceType[];
+  compact: boolean;
+}) {
+  return (
+    <div
+      style={{
+        borderLeft: `3px solid ${color}`,
+        backgroundColor: `${color}14`,
+        borderTopColor: `${color}73`,
+        borderRightColor: `${color}73`,
+        borderBottomColor: `${color}73`,
+      }}
+      className={clsx(
+        "rounded-md border border-dashed px-1.5 leading-tight",
+        compact ? "py-[1px]" : "py-0.5",
+      )}
+    >
+      <span
+        className={clsx(
+          "block truncate font-bold",
+          compact ? "text-[10px]" : "text-[11px]",
+        )}
+        style={{ color }}
+      >
+        {firstName(name)}
+      </span>
+      {services.map((st) => (
+        <span
+          key={st}
+          className={clsx(
+            "flex items-center gap-0.5 truncate text-brand-muted",
+            compact ? "text-[9px]" : "text-[10px]",
+          )}
+        >
+          <span className="shrink-0">{SVC_ICON[st]}</span>
+          {SERVICE_LABELS[st]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Tres professionals o més a la mateixa franja.
+ *
+ * Amb tres fitxes no hi cabria cap nom sencer, i truncar-ho tot no diria res.
+ * Es diu quants són i de qui, amb un punt del color de cadascun; el detall
+ * complet és al `title` de la cel·la i el multicheck permet reduir-los.
+ */
+function FreeSlotCount({
+  layers,
+}: {
+  layers: { trainerId: string; color: string }[];
+}) {
+  return (
+    <div className="flex items-center gap-1 rounded-md border border-dashed border-brand-border bg-brand-bg/60 px-1.5 py-0.5">
+      <span className="flex shrink-0 items-center gap-[2px]">
+        {layers.map((l) => (
+          <span
+            key={l.trainerId}
+            aria-hidden
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: l.color }}
+          />
+        ))}
+      </span>
+      <span className="truncate text-[10px] font-bold text-brand-muted">
+        {layers.length} lliures
+      </span>
+    </div>
   );
 }
 
