@@ -23,6 +23,10 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   trial_status_whatsapp: false,
   bono_low_email: false,
   bono_low_whatsapp: false,
+  // Actiu per defecte: que un bo pagat estigui a punt de caducar és
+  // informació que el client vol tenir, no una comoditat opcional.
+  bono_expiring_soon_email: true,
+  bono_expiring_soon_whatsapp: false,
   community_email: false,
   community_whatsapp: false,
   // Avisos del professional sobre la seva agenda (operatius = true).

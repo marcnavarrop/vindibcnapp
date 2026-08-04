@@ -3,11 +3,14 @@ import { SERVICE_LABELS } from "@/lib/labels";
 import {
   listTomorrowReminderTargets,
   listTomorrowTrainerAgendas,
+  listExpiringBonoTargets,
   tomorrowMadrid,
+  BONO_EXPIRY_WARNING_DAYS,
 } from "@/lib/data/reminders";
+import { sweepExpiredBonos } from "@/lib/data/bonos";
 import { notifyOnce } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { centerHour } from "@/lib/center-time";
+import { centerHour, centerToday } from "@/lib/center-time";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +23,16 @@ function fmtWhen(iso: string): string {
     minute: "2-digit",
     timeZone: "Europe/Madrid",
   }).format(new Date(iso));
+}
+
+/** Data curta en català a partir d'un dia YYYY-MM-DD. */
+function fmtDay(day: string): string {
+  return new Intl.DateTimeFormat("ca-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Madrid",
+  }).format(new Date(`${day}T12:00:00Z`));
 }
 
 /**
@@ -94,9 +107,40 @@ async function handle(req: NextRequest) {
     else agendaSkipped++;
   }
 
+  // ─── Bons a punt de caducar ───
+  // S'enganxa al cron que ja existeix en comptes de muntar-ne un de nou: el
+  // pla gratuït de Vercel només en permet un al dia. Abans de mirar quins
+  // caduquen aviat, es tanquen els que ja ho han fet.
+  await sweepExpiredBonos();
+  const expiring = await listExpiringBonoTargets(centerToday());
+  let expSent = 0;
+  let expSkipped = 0;
+  for (const b of expiring) {
+    const did = await notifyOnce({
+      type: "bono_expiring_soon",
+      recipient: b.recipient,
+      relatedId: b.relatedId,
+      data: {
+        name: b.recipient.name ?? "",
+        service: SERVICE_LABELS[b.serviceType],
+        remaining: String(b.remainingSessions),
+        expiresAt: fmtDay(b.expiresAt),
+        when: `el ${fmtDay(b.expiresAt)}`,
+      },
+    });
+    if (did) expSent++;
+    else expSkipped++;
+  }
+
   return NextResponse.json({
     ok: true,
     day: tomorrowMadrid(),
+    bonosExpiring: {
+      window_days: BONO_EXPIRY_WARNING_DAYS,
+      targets: expiring.length,
+      processed: expSent,
+      skipped_already_sent: expSkipped,
+    },
     reminders: { targets: targets.length, processed: sent, skipped_already_sent: skipped },
     agendas: { trainers: agendas.length, processed: agendaSent, skipped_already_sent: agendaSkipped },
   });

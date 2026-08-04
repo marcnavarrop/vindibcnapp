@@ -51,6 +51,12 @@ export async function updateCenterSettingsAction(
   if (bonoLowThreshold === null)
     return { error: "El llindar de bo ha de ser entre 0 i 50 sessions." };
 
+  // 0 (o buit) vol dir "sense caducitat": es desa com a null.
+  const bonoExpiryMonthsRaw = intInRange(fd, "bonoExpiryMonths", 0, 120);
+  if (bonoExpiryMonthsRaw === null)
+    return { error: "La caducitat dels bons ha de ser entre 0 i 120 mesos." };
+  const bonoExpiryMonths = bonoExpiryMonthsRaw === 0 ? null : bonoExpiryMonthsRaw;
+
   const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);
   if (reminderHourLocal === null)
     return { error: "L'hora dels recordatoris ha de ser entre 0 i 23." };
@@ -66,6 +72,7 @@ export async function updateCenterSettingsAction(
       closingHour,
       minBookingHours,
       bonoLowThreshold,
+      bonoExpiryMonths,
       reminderHourLocal,
       modules: {
         comunitat: fd.get("moduleComunitat") === "true",

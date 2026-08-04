@@ -342,7 +342,7 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
 
       <Group
         title="Notificacions"
-        desc="Quan avisem el client que se li acaba el bo i a quina hora surten els recordatoris."
+        desc="Quan avisem el client que se li acaba o li caduca el bo, i a quina hora surten els recordatoris."
       >
         <NumField
           name="bonoLowThreshold"
@@ -352,6 +352,15 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           min={0}
           max={50}
           defaultValue={settings.bonoLowThreshold}
+        />
+        <NumField
+          name="bonoExpiryMonths"
+          label="Caducitat dels bons"
+          help="Mesos de validesa des de la compra. Buit o 0 = sense caducitat. Només afecta els bons que es comprin a partir d'ara: els ja venuts conserven la seva data."
+          unit="mesos"
+          min={0}
+          max={120}
+          defaultValue={settings.bonoExpiryMonths ?? 0}
         />
         <NumField
           name="reminderHourLocal"

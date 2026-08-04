@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { USE_MOCK } from "@/lib/config";
-import { centerDateStr, centerWeekday, centerHour } from "@/lib/center-time";
+import { centerDateStr, centerWeekday, centerHour, centerToday } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
@@ -12,6 +12,7 @@ import { isServiceAvailableOn, isInstantBlocked } from "@/lib/availability-slots
 import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
+import { isBonoExpired } from "@/lib/data/bonos";
 import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
 import type { Database, ServiceType, ReservationStatus } from "@/types/database";
 
@@ -646,7 +647,9 @@ export async function createClientReservation(
           b.client_id === client.id &&
           b.service_type === serviceType &&
           (b.status === "active" || b.status === "pending_payment") &&
-          b.remaining_sessions > 0,
+          b.remaining_sessions > 0 &&
+          // Un bo caducat no serveix encara que l'escombrat no hi hagi passat.
+          !isBonoExpired(b),
       )
       .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
     if (!bono)
@@ -735,6 +738,8 @@ export async function createClientReservation(
     .eq("service_type", serviceType)
     .in("status", ["active", "pending_payment"])
     .gt("remaining_sessions", 0)
+    // Caducats fora: o no en tenen data, o encara no ha passat.
+    .or(`expires_at.is.null,expires_at.gte.${centerToday()}`)
     .order("purchased_at", { ascending: true })
     .limit(1)
     .maybeSingle();

@@ -344,6 +344,25 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "bono_expiring_soon": {
+      subject = "El teu bo caduca aviat · VindiBCN";
+      block = {
+        heading: "El teu bo està a punt de caducar",
+        intro: [
+          hola,
+          `Encara et queden sessions per fer i el bo caduca ${d.when}. Si el vols aprofitar, reserva-les abans.`,
+        ],
+        details: rows([
+          ["Servei", d.service],
+          ["Sessions sense fer", d.remaining],
+          ["Caduca el", d.expiresAt],
+        ]),
+        cta: { label: "Reservar una sessió", url: appLink("/client/reservas") },
+        outro: ["Si no hi arribes a temps, parla amb el centre i ho mirem."],
+        footer: "client",
+      };
+      break;
+    }
     case "community": {
       subject = `${d.title ? esc(d.title) + " · " : ""}Novetats de VindiBCN`;
       block = {

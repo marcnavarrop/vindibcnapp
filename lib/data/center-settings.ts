@@ -18,6 +18,11 @@ export type CenterSettings = {
   bonoLowThreshold: number;
   /** Hora local del centre a partir de la qual s'envien els recordatoris. */
   reminderHourLocal: number;
+  /**
+   * Mesos de validesa d'un bo des de la compra. Null = sense caducitat.
+   * Canviar-lo NO afecta els bons ja comprats: cadascun porta la seva data.
+   */
+  bonoExpiryMonths: number | null;
   modules: {
     comunitat: boolean;
     sessionsProva: boolean;
@@ -36,6 +41,7 @@ const DEFAULT: CenterSettings = {
   minBookingHours: 0,
   bonoLowThreshold: 1,
   reminderHourLocal: 20,
+  bonoExpiryMonths: null,
   modules: { comunitat: true, sessionsProva: true, documents: true },
 };
 
@@ -69,6 +75,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
       minBookingHours: cs?.min_booking_hours ?? DEFAULT.minBookingHours,
       bonoLowThreshold: cs?.bono_low_threshold ?? DEFAULT.bonoLowThreshold,
       reminderHourLocal: cs?.reminder_hour_local ?? DEFAULT.reminderHourLocal,
+      bonoExpiryMonths: cs?.bono_expiry_months ?? null,
       modules: {
         comunitat: cs?.module_comunitat_enabled ?? DEFAULT.modules.comunitat,
         sessionsProva: cs?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
@@ -92,7 +99,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     .from("center_settings")
     // Literal inline a propòsit: amb una constant, Supabase perd la inferència.
     .select(
-      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled",
+      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled",
     )
     .single();
 
@@ -107,6 +114,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     minBookingHours: data?.min_booking_hours ?? DEFAULT.minBookingHours,
     bonoLowThreshold: data?.bono_low_threshold ?? DEFAULT.bonoLowThreshold,
     reminderHourLocal: data?.reminder_hour_local ?? DEFAULT.reminderHourLocal,
+    bonoExpiryMonths: data?.bono_expiry_months ?? null,
     modules: {
       comunitat: data?.module_comunitat_enabled ?? DEFAULT.modules.comunitat,
       sessionsProva: data?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
@@ -134,6 +142,7 @@ export async function updateCenterSettings(
       min_booking_hours: DEFAULT.minBookingHours,
       bono_low_threshold: DEFAULT.bonoLowThreshold,
       reminder_hour_local: DEFAULT.reminderHourLocal,
+      bono_expiry_months: DEFAULT.bonoExpiryMonths,
       module_comunitat_enabled: DEFAULT.modules.comunitat,
       module_sessions_prova_enabled: DEFAULT.modules.sessionsProva,
       module_documents_enabled: DEFAULT.modules.documents,
@@ -151,6 +160,7 @@ export async function updateCenterSettings(
     if (input.minBookingHours !== undefined) cs.min_booking_hours = input.minBookingHours;
     if (input.bonoLowThreshold !== undefined) cs.bono_low_threshold = input.bonoLowThreshold;
     if (input.reminderHourLocal !== undefined) cs.reminder_hour_local = input.reminderHourLocal;
+    if (input.bonoExpiryMonths !== undefined) cs.bono_expiry_months = input.bonoExpiryMonths;
     if (input.modules?.comunitat !== undefined) cs.module_comunitat_enabled = input.modules.comunitat;
     if (input.modules?.sessionsProva !== undefined) cs.module_sessions_prova_enabled = input.modules.sessionsProva;
     if (input.modules?.documents !== undefined) cs.module_documents_enabled = input.modules.documents;
@@ -172,6 +182,7 @@ export async function updateCenterSettings(
     ...(input.minBookingHours !== undefined && { min_booking_hours: input.minBookingHours }),
     ...(input.bonoLowThreshold !== undefined && { bono_low_threshold: input.bonoLowThreshold }),
     ...(input.reminderHourLocal !== undefined && { reminder_hour_local: input.reminderHourLocal }),
+    ...(input.bonoExpiryMonths !== undefined && { bono_expiry_months: input.bonoExpiryMonths }),
     ...(input.modules?.comunitat !== undefined && { module_comunitat_enabled: input.modules.comunitat }),
     ...(input.modules?.sessionsProva !== undefined && { module_sessions_prova_enabled: input.modules.sessionsProva }),
     ...(input.modules?.documents !== undefined && { module_documents_enabled: input.modules.documents }),

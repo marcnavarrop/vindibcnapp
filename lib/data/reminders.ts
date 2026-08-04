@@ -317,3 +317,96 @@ export async function listTomorrowTrainerAgendas(
     };
   });
 }
+
+// ─── Bons a punt de caducar ──────────────────────────────────────────────────
+
+/**
+ * Dies d'antelació de l'avís de caducitat.
+ *
+ * Fix i no configurable a propòsit: només decideix quan surt un correu de
+ * cortesia, i una setmana és temps de sobres per reservar el que queda. Fer-ho
+ * configurable afegiria un ajust més a Configuració que ningú tocaria mai.
+ */
+export const BONO_EXPIRY_WARNING_DAYS = 7;
+
+export type ExpiringBonoTarget = {
+  relatedId: string;
+  recipient: NotificationRecipient;
+  serviceType: ServiceType;
+  remainingSessions: number;
+  expiresAt: string;
+};
+
+/**
+ * Bons que caduquen dins dels propers `BONO_EXPIRY_WARNING_DAYS` dies, encara
+ * utilitzables i amb sessions sense fer.
+ *
+ * `relatedId` és determinista a partir de l'id del bo i la seva data de
+ * caducitat: així `notifyOnce` no reenvia l'avís cada dia que el cron corre
+ * dins de la finestra, però sí que en tornaria a enviar un si algun dia la
+ * data canviés.
+ */
+export async function listExpiringBonoTargets(
+  today: string,
+): Promise<ExpiringBonoTarget[]> {
+  const limit = new Date(`${today}T00:00:00Z`);
+  limit.setUTCDate(limit.getUTCDate() + BONO_EXPIRY_WARNING_DAYS);
+  const limitStr = limit.toISOString().slice(0, 10);
+  const out: ExpiringBonoTarget[] = [];
+
+  const push = (
+    b: { id: string; service_type: ServiceType; remaining_sessions: number; expires_at: string | null },
+    recipient: NotificationRecipient | null,
+  ) => {
+    if (!recipient || !b.expires_at) return;
+    out.push({
+      relatedId: stableUuid(`bono-expiring:${b.id}:${b.expires_at}`),
+      recipient,
+      serviceType: b.service_type,
+      remainingSessions: b.remaining_sessions,
+      expiresAt: b.expires_at,
+    });
+  };
+
+  if (USE_MOCK) {
+    const store = getStore();
+    for (const b of store.bonos) {
+      if (b.status !== "active" && b.status !== "pending_payment") continue;
+      if (!b.expires_at) continue;
+      if (b.expires_at < today || b.expires_at > limitStr) continue;
+      if (b.remaining_sessions <= 0) continue;
+      const client = store.clients.find((c) => c.id === b.client_id);
+      const p = store.profiles.find((x) => x.id === client?.profile_id);
+      push(b, p ? { profileId: p.id, email: p.email, phone: p.phone, name: p.full_name } : null);
+    }
+    return out;
+  }
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("bonos")
+    .select(
+      `id, service_type, remaining_sessions, expires_at,
+       client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(id, full_name, email, phone))`,
+    )
+    .in("status", ["active", "pending_payment"])
+    .gt("remaining_sessions", 0)
+    .not("expires_at", "is", null)
+    .gte("expires_at", today)
+    .lte("expires_at", limitStr);
+
+  type Row = {
+    id: string;
+    service_type: ServiceType;
+    remaining_sessions: number;
+    expires_at: string | null;
+    client: {
+      profile: { id: string; full_name: string | null; email: string | null; phone: string | null } | null;
+    } | null;
+  };
+  for (const b of (data ?? []) as unknown as Row[]) {
+    const p = b.client?.profile;
+    push(b, p ? { profileId: p.id, email: p.email, phone: p.phone, name: p.full_name } : null);
+  }
+  return out;
+}

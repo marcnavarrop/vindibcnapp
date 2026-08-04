@@ -2,6 +2,7 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isBonoExpired } from "@/lib/data/bonos";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import type {
@@ -32,6 +33,8 @@ export type ClientBono = {
   remainingSessions: number;
   price: number;
   status: BonoStatus;
+  /** Data de caducitat fixada en comprar-lo. Null = no caduca. */
+  expiresAt: string | null;
 };
 
 export type ClientReservation = {
@@ -76,7 +79,10 @@ function toListItem(clientId: string, store = getStore()): ClientListItem {
     ? store.profiles.find((p) => p.id === client.assigned_trainer_id)
     : null;
   const bonos = store.bonos.filter(
-    (b) => b.client_id === clientId && (b.status === "active" || b.status === "pending_payment"),
+    (b) =>
+      b.client_id === clientId &&
+      (b.status === "active" || b.status === "pending_payment") &&
+      !isBonoExpired(b),
   );
   return {
     id: client.id,
@@ -111,7 +117,7 @@ export async function listClients(
       `id, profile_id,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
-       bonos(remaining_sessions, status)`,
+       bonos(remaining_sessions, status, expires_at)`,
     )
     .order("created_at", { ascending: true });
   if (trainerId) query = query.eq("assigned_trainer_id", trainerId);
@@ -128,10 +134,16 @@ export async function listClients(
       phone: string | null;
     } | null;
     trainer: { full_name: string | null } | null;
-    bonos: { remaining_sessions: number; status: string }[];
+    bonos: { remaining_sessions: number; status: BonoStatus; expires_at: string | null }[];
   };
   return (data as unknown as Row[]).map((row) => {
-    const active = row.bonos.filter((b) => b.status === "active" || b.status === "pending_payment");
+    // Un bo caducat no compta com a actiu encara que l'escombrat no hi hagi
+    // passat: la data mana sobre l'estat desat.
+    const active = row.bonos.filter(
+      (b) =>
+        (b.status === "active" || b.status === "pending_payment") &&
+        !isBonoExpired(b),
+    );
     return {
       id: row.id,
       profileId: row.profile_id,
@@ -164,6 +176,7 @@ function buildDetail(clientId: string): ClientDetail | null {
         remainingSessions: b.remaining_sessions,
         price: b.price,
         status: b.status,
+        expiresAt: b.expires_at ?? null,
       })),
     reservations: store.reservations
       .filter((r) => r.client_id === clientId)
@@ -207,6 +220,7 @@ type DetailRow = {
   trainer: { full_name: string | null } | null;
   bonos: {
     id: string;
+    expires_at: string | null;
     service_type: ServiceType;
     total_sessions: number;
     remaining_sessions: number;
@@ -239,7 +253,7 @@ async function fetchClientDetail(
       `id, profile_id, assigned_trainer_id, notes, clinical_notes, general_notes,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
-       bonos(id, service_type, total_sessions, remaining_sessions, price, status),
+       bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at),
        reservations(id, scheduled_at, service_type, status, trainer:profiles!reservations_trainer_id_fkey(full_name)),
        payments(id, amount, method, paid_at)`,
     )
@@ -270,6 +284,7 @@ async function fetchClientDetail(
       remainingSessions: b.remaining_sessions,
       price: b.price,
       status: b.status,
+      expiresAt: b.expires_at ?? null,
     })),
     reservations: row.reservations
       .slice()

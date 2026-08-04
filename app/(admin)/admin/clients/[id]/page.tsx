@@ -96,7 +96,21 @@ export default async function ClientDetailPage({
                   {b.remainingSessions} / {b.totalSessions} sessions
                 </span>
                 <span>{formatEur(b.price)}</span>
-                <Badge tone={b.status === "active" ? "success" : "neutral"}>
+                {b.expiresAt && (
+                  <span className="text-xs text-brand-muted">
+                    {b.status === "expired" ? "va caducar" : "caduca"} el{" "}
+                    {formatDate(b.expiresAt)}
+                  </span>
+                )}
+                <Badge
+                  tone={
+                    b.status === "active"
+                      ? "success"
+                      : b.status === "expired"
+                        ? "danger"
+                        : "neutral"
+                  }
+                >
                   {BONO_STATUS_LABELS[b.status]}
                 </Badge>
               </Row>

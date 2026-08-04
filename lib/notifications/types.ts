@@ -12,6 +12,7 @@ export type NotificationEventType =
   | "trial_request"
   | "trial_status"
   | "bono_low"
+  | "bono_expiring_soon"
   | "community"
   // Avisos que rep el professional com a dueño de la seva agenda:
   | "trainer_booking_received"
@@ -99,6 +100,12 @@ export const EVENT_META: Record<
     audience: ["client"],
     group: "general",
   },
+  bono_expiring_soon: {
+    label: "Bo a punt de caducar",
+    description: "Uns dies abans que caduqui un bo amb sessions sense fer.",
+    audience: ["client"],
+    group: "general",
+  },
   community: {
     label: "Novetats de la comunitat",
     description: "Nous anuncis del centre.",
@@ -152,6 +159,7 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "reservation_cancelled",
   "session_reminder",
   "bono_low",
+  "bono_expiring_soon",
   "trial_request",
   "trial_status",
   "community",

@@ -23,7 +23,9 @@ export type BonoStatus =
   | "active"
   | "completed"
   | "cancelled"
-  | "pending_payment";
+  | "pending_payment"
+  /** Va caducar amb sessions sense fer. No és el mateix que 'completed'. */
+  | "expired";
 export type ReferralRewardStatus = "pending" | "used" | "expired";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type TrialStatus =
@@ -174,6 +176,7 @@ export interface Database {
           price: number;
           status: BonoStatus;
           purchased_at: string;
+          expires_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -185,6 +188,7 @@ export interface Database {
           price: number;
           status?: BonoStatus;
           purchased_at?: string;
+          expires_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -196,6 +200,7 @@ export interface Database {
           price?: number;
           status?: BonoStatus;
           purchased_at?: string;
+          expires_at?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -542,6 +547,8 @@ export interface Database {
           new_client_registered_email: boolean;
           new_client_registered_whatsapp: boolean;
           new_exercises_assigned_email: boolean;
+          bono_expiring_soon_email: boolean;
+          bono_expiring_soon_whatsapp: boolean;
           new_exercises_assigned_whatsapp: boolean;
           created_at: string;
         };
@@ -571,6 +578,8 @@ export interface Database {
           new_client_registered_email?: boolean;
           new_client_registered_whatsapp?: boolean;
           new_exercises_assigned_email?: boolean;
+          bono_expiring_soon_email?: boolean;
+          bono_expiring_soon_whatsapp?: boolean;
           new_exercises_assigned_whatsapp?: boolean;
           created_at?: string;
         };
@@ -600,6 +609,8 @@ export interface Database {
           new_client_registered_email: boolean;
           new_client_registered_whatsapp: boolean;
           new_exercises_assigned_email: boolean;
+          bono_expiring_soon_email: boolean;
+          bono_expiring_soon_whatsapp: boolean;
           new_exercises_assigned_whatsapp: boolean;
           created_at: string;
         }>;
@@ -874,6 +885,7 @@ export interface Database {
           min_booking_hours: number;
           bono_low_threshold: number;
           reminder_hour_local: number;
+          bono_expiry_months: number | null;
           module_comunitat_enabled: boolean;
           module_sessions_prova_enabled: boolean;
           module_documents_enabled: boolean;
@@ -892,6 +904,7 @@ export interface Database {
           min_booking_hours?: number;
           bono_low_threshold?: number;
           reminder_hour_local?: number;
+          bono_expiry_months?: number | null;
           module_comunitat_enabled?: boolean;
           module_sessions_prova_enabled?: boolean;
           module_documents_enabled?: boolean;
@@ -909,6 +922,7 @@ export interface Database {
           min_booking_hours?: number;
           bono_low_threshold?: number;
           reminder_hour_local?: number;
+          bono_expiry_months?: number | null;
           module_comunitat_enabled?: boolean;
           module_sessions_prova_enabled?: boolean;
           module_documents_enabled?: boolean;

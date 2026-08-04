@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur } from "@/lib/labels";
+import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
 import { markBonoPaidAction } from "@/app/(admin)/admin/bonos/actions";
 import type { BonoListItem } from "@/lib/data/bonos";
 import type { BonoStatus } from "@/types/database";
@@ -16,6 +16,8 @@ const STATUS_TONE: Record<
   completed: "neutral",
   cancelled: "danger",
   pending_payment: "warn",
+  // Caducat NO és neutral com "completat": s'han perdut sessions pagades.
+  expired: "danger",
 };
 
 type Filter = "all" | "pending_payment" | "active";
@@ -71,6 +73,7 @@ export function BonosAdminTable({ bonos }: { bonos: BonoListItem[] }) {
               <th className="px-4 py-3 font-bold">Servei</th>
               <th className="px-4 py-3 font-bold">Sessions</th>
               <th className="px-4 py-3 font-bold">Preu</th>
+              <th className="px-4 py-3 font-bold">Caduca</th>
               <th className="px-4 py-3 font-bold">Estat</th>
               <th className="px-4 py-3 font-bold"></th>
             </tr>
@@ -98,6 +101,9 @@ export function BonosAdminTable({ bonos }: { bonos: BonoListItem[] }) {
                     )}
                 </td>
                 <td className="px-4 py-3">{formatEur(b.price)}</td>
+                <td className="px-4 py-3 text-brand-muted">
+                  {b.expiresAt ? formatDate(b.expiresAt) : "—"}
+                </td>
                 <td className="px-4 py-3">
                   <Badge tone={STATUS_TONE[b.status]}>
                     {BONO_STATUS_LABELS[b.status]}

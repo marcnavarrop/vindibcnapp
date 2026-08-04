@@ -5,7 +5,80 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { createPayment, bonoConcept } from "@/lib/data/payments";
 import { maybeGenerateReferralRewards, applyReferralReward, getPendingReferralReward } from "@/lib/data/referral";
+import { getCenterSettings } from "@/lib/data/center-settings";
+import { centerToday } from "@/lib/center-time";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
+
+// ─── Caducitat ───────────────────────────────────────────────────────────────
+
+/**
+ * Data de caducitat d'un bo comprat ara, segons la configuració d'AQUEST
+ * moment. Es desa al bo i no es torna a calcular mai: si demà el centre canvia
+ * els mesos de validesa, els bons ja venuts conserven la seva data.
+ */
+export async function expiryForNewBono(): Promise<string | null> {
+  const { bonoExpiryMonths } = await getCenterSettings();
+  if (!bonoExpiryMonths || bonoExpiryMonths <= 0) return null;
+  const [y, m, d] = centerToday().split("-").map(Number);
+  // Dia 0 del mes següent = últim dia del mes: si el dia d'origen no existeix
+  // al mes de destí (31 de gener + 1 mes), es queda a l'últim dia d'aquell mes
+  // en comptes de saltar al mes següent.
+  const total = m - 1 + bonoExpiryMonths;
+  const ty = y + Math.floor(total / 12);
+  const tm = (total % 12) + 1;
+  const lastDay = new Date(Date.UTC(ty, tm, 0)).getUTCDate();
+  const day = Math.min(d, lastDay);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${ty}-${pad(tm)}-${pad(day)}`;
+}
+
+/** Estats en què un bo encara compta com a utilitzable (si no ha caducat). */
+const USABLE: BonoStatus[] = ["active", "pending_payment"];
+
+/**
+ * Un bo caducat és el que té data passada i encara consta com a utilitzable.
+ * Es mira contra el dia del CENTRE: un bo caduca a la mitjanit d'aquí.
+ */
+export function isBonoExpired(
+  b: { status: BonoStatus; expires_at: string | null },
+  today: string = centerToday(),
+): boolean {
+  return (
+    USABLE.includes(b.status) && b.expires_at !== null && b.expires_at < today
+  );
+}
+
+/**
+ * Marca com 'expired' els bons que ja ho estan.
+ *
+ * Peresós i oportunista, com les sessions de prova: no cal cap cron, n'hi ha
+ * prou amb passar-hi cada cop que es consulten. Encara que aquesta passada no
+ * hagi corregut, `isBonoExpired` ja els descarta a tot arreu, així que un bo
+ * caducat no és utilitzable ni un instant abans que s'hi escrigui l'estat.
+ */
+export async function sweepExpiredBonos(): Promise<void> {
+  const today = centerToday();
+
+  if (USE_MOCK) {
+    const store = getStore();
+    let changed = false;
+    for (const b of store.bonos)
+      if (isBonoExpired(b, today)) {
+        b.status = "expired";
+        changed = true;
+      }
+    if (changed) saveStore(store);
+    return;
+  }
+
+  const admin = createAdminClient();
+  await admin
+    .from("bonos")
+    .update({ status: "expired" })
+    .in("status", USABLE)
+    .not("expires_at", "is", null)
+    .lt("expires_at", today);
+}
 
 export type BonoListItem = {
   id: string;
@@ -15,6 +88,8 @@ export type BonoListItem = {
   remainingSessions: number;
   price: number;
   status: BonoStatus;
+  /** Data de caducitat fixada en comprar-lo. Null = no caduca. */
+  expiresAt: string | null;
 };
 
 function clientName(clientId: string, store: Store): string {
@@ -24,6 +99,8 @@ function clientName(clientId: string, store: Store): string {
 }
 
 export async function listBonos(): Promise<BonoListItem[]> {
+  await sweepExpiredBonos();
+
   if (USE_MOCK) {
     const store = getStore();
     return store.bonos.map((b) => ({
@@ -34,6 +111,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
       remainingSessions: b.remaining_sessions,
       price: b.price,
       status: b.status,
+      expiresAt: b.expires_at ?? null,
     }));
   }
 
@@ -42,7 +120,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
   const { data, error } = await supabase
     .from("bonos")
     .select(
-      `id, service_type, total_sessions, remaining_sessions, price, status,
+      `id, service_type, total_sessions, remaining_sessions, price, status, expires_at,
        client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
     )
     .order("created_at", { ascending: false });
@@ -55,6 +133,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
     remaining_sessions: number;
     price: number;
     status: BonoStatus;
+    expires_at: string | null;
     client: { profile: { full_name: string | null } | null } | null;
   };
   return (data as unknown as Row[]).map((r) => ({
@@ -65,6 +144,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
     remainingSessions: r.remaining_sessions,
     price: r.price,
     status: r.status,
+    expiresAt: r.expires_at,
   }));
 }
 
@@ -80,6 +160,8 @@ export type BonoInput = {
 /** Crea un bono para un cliente (sesiones restantes = totales al comprarlo). */
 export async function createBono(input: BonoInput): Promise<string> {
   let bonoId: string;
+  // Es calcula ARA i es desa: a partir d'aquí el bo ja no depèn de la config.
+  const expiresAt = await expiryForNewBono();
 
   if (USE_MOCK) {
     const store = getStore();
@@ -94,6 +176,7 @@ export async function createBono(input: BonoInput): Promise<string> {
       price: input.price,
       status: "active",
       purchased_at: now,
+      expires_at: expiresAt,
       created_at: now,
     });
     saveStore(store);
@@ -108,6 +191,7 @@ export async function createBono(input: BonoInput): Promise<string> {
         remaining_sessions: input.totalSessions,
         price: input.price,
         status: "active",
+        expires_at: expiresAt,
       })
       .select("id")
       .single();
@@ -148,6 +232,9 @@ export async function createPendingBono(input: {
   profileId: string;
   serviceId: string;
 }): Promise<string> {
+  // La caducitat es compta des de la COMPRA, no des del pagament: un bo
+  // pendent de pagar ja té la seva data des del primer moment.
+  const expiresAt = await expiryForNewBono();
   const { getEffectivePrice } = await import("@/lib/data/promotions");
 
   if (USE_MOCK) {
@@ -189,6 +276,7 @@ export async function createPendingBono(input: {
       total_sessions: serviceRow.default_sessions,
       remaining_sessions: serviceRow.default_sessions,
       price: finalPrice,
+      expires_at: expiresAt,
       status: "pending_payment",
       purchased_at: now,
       created_at: now,
@@ -245,6 +333,7 @@ export async function createPendingBono(input: {
       remaining_sessions: serviceRow.default_sessions,
       price: finalPrice,
       status: "pending_payment",
+      expires_at: expiresAt,
     })
     .select("id")
     .single();
