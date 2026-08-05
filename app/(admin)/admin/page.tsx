@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { getAdminDashboard } from "@/lib/data/dashboard";
-import { formatEur, formatLongDate, SERVICE_LABELS } from "@/lib/labels";
+import { LowBonosCard } from "@/components/low-bonos-card";
+import { Kpi, pct1 } from "@/components/ui/kpi";
+import { formatEur, formatLongDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
@@ -16,61 +18,6 @@ const SECTIONS = [
   { href: "/admin/exercicis", title: "Exercicis", desc: "Biblioteca d'exercicis amb vídeo." },
   { href: "/admin/community", title: "Comunitat", desc: "Anuncis i novetats del centre." },
 ];
-
-const pct1 = (n: number) =>
-  n.toLocaleString("ca-ES", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
-
-/** Targeta KPI. `tone` "warn" per a les que demanen acció de l'admin. */
-function Kpi({
-  label,
-  value,
-  hint,
-  tone = "neutral",
-  href,
-  children,
-}: {
-  label: string;
-  value: string;
-  hint?: React.ReactNode;
-  tone?: "neutral" | "warn";
-  href?: string;
-  children?: React.ReactNode;
-}) {
-  const warn = tone === "warn";
-  const body = (
-    <div
-      className={`flex h-full flex-col rounded-2xl border p-4 transition-colors ${
-        warn
-          ? "border-brand-orange/40 bg-brand-orange/5 hover:border-brand-orange"
-          : "border-brand-border bg-white hover:border-brand-purple"
-      }`}
-    >
-      <div
-        className={`text-xs font-bold tracking-wide uppercase ${
-          warn ? "text-brand-orange" : "text-brand-muted"
-        }`}
-      >
-        {label}
-      </div>
-      <div
-        className={`mt-1 text-2xl font-bold ${
-          warn ? "text-brand-orange" : "text-brand-purple"
-        }`}
-      >
-        {value}
-      </div>
-      {hint && <div className="mt-1 text-xs text-brand-muted">{hint}</div>}
-      {children}
-    </div>
-  );
-  return href ? (
-    <Link href={href} className="block h-full">
-      {body}
-    </Link>
-  ) : (
-    body
-  );
-}
 
 export default async function AdminHome() {
   const [viewer, d] = await Promise.all([getViewer(), getAdminDashboard()]);
@@ -169,56 +116,11 @@ export default async function AdminHome() {
         />
 
         {/* Ocupa la cel·la restant del grid; la llista pot créixer. */}
-        <div
-          className={`col-span-2 flex h-full flex-col rounded-2xl border p-4 lg:col-span-1 ${
-            lowBonos.length > 0
-              ? "border-brand-orange/40 bg-brand-orange/5"
-              : "border-brand-border bg-white"
-          }`}
-        >
-          <div
-            className={`text-xs font-bold tracking-wide uppercase ${
-              lowBonos.length > 0 ? "text-brand-orange" : "text-brand-muted"
-            }`}
-          >
-            Bons a punt d&apos;esgotar-se
-          </div>
-          <div
-            className={`mt-1 text-2xl font-bold ${
-              lowBonos.length > 0 ? "text-brand-orange" : "text-brand-purple"
-            }`}
-          >
-            {lowBonos.length}
-          </div>
-          {lowBonos.length === 0 ? (
-            <p className="mt-1 text-xs text-brand-muted">
-              Cap bo per sota del llindar configurat.
-            </p>
-          ) : (
-            <ul className="mt-2 divide-y divide-brand-orange/20">
-              {lowBonos.map((b) => (
-                <li key={b.bonoId}>
-                  <Link
-                    href={`/admin/clients/${b.clientId}`}
-                    className="flex items-baseline justify-between gap-2 py-1.5 text-xs hover:underline"
-                  >
-                    <span className="truncate">
-                      <span className="font-bold text-brand-dark">
-                        {b.clientName}
-                      </span>{" "}
-                      <span className="text-brand-muted">
-                        {SERVICE_LABELS[b.serviceType]}
-                      </span>
-                    </span>
-                    <span className="shrink-0 font-bold text-brand-orange">
-                      {b.remaining === 1 ? "1 sessió" : `${b.remaining} sessions`}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <LowBonosCard
+          bonos={lowBonos}
+          clientHrefBase="/admin/clients"
+          className="col-span-2 lg:col-span-1"
+        />
       </div>
 
       {/* Seccions */}

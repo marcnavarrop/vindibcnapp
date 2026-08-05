@@ -3,13 +3,23 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore } from "@/lib/mock/store";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { listAllTrainerRulesLite } from "@/lib/data/availability";
-import { listAllBlocksLite } from "@/lib/data/availability-blocks";
+import {
+  listAllTrainerRulesLite,
+  listAvailabilityLite,
+} from "@/lib/data/availability";
+import {
+  listAllBlocksLite,
+  listBlocksLite,
+} from "@/lib/data/availability-blocks";
+import { isBonoExpired } from "@/lib/data/bonos";
+import { listTrialBookings } from "@/lib/data/trial-bookings";
 import {
   availableHoursOn,
   weekdayOfDay,
   isInstantBlocked,
   blocksOf,
+  type AvailabilityRuleLite,
+  type AvailabilityBlockLite,
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
@@ -19,7 +29,7 @@ import {
   centerHour,
   centerLocalToInstant,
 } from "@/lib/center-time";
-import type { ServiceType, TrialStatus } from "@/types/database";
+import type { BonoStatus, ServiceType, TrialStatus } from "@/types/database";
 
 // ─────────────────────── Tipus de sortida ───────────────────────
 
@@ -223,6 +233,41 @@ function currentWeekDays(now: Date): string[] {
   });
 }
 
+/**
+ * Ocupació d'un professional en uns dies concrets.
+ *
+ * Slots = hores amb regla activa, menys les tapades per un bloqueig. Qui crida
+ * diu què compta com a reservat (`isBooked`) perquè el tauler d'admin fa la
+ * cerca per professional dins d'un conjunt global i el del professional només
+ * té les seves: el càlcul, que és el que ha de coincidir, és el mateix.
+ */
+function occupancyOf(
+  rules: AvailabilityRuleLite[],
+  blocks: AvailabilityBlockLite[],
+  weekDays: string[],
+  isBooked: (day: string, hour: number) => boolean,
+): { slots: number; booked: number; pct: number } {
+  let slots = 0;
+  let booked = 0;
+
+  for (const day of weekDays) {
+    // Sense Date pel mig: el dia i el dia de la setmana van explícits, que és
+    // l'única manera que no depengui de la zona horària del procés.
+    for (const h of availableHoursOn(rules, day, weekdayOfDay(day))) {
+      // El bloqueig és un instant real: cal l'hora del centre convertida.
+      const slotInstant = centerLocalToInstant(
+        day,
+        `${String(h).padStart(2, "0")}:00`,
+      );
+      if (isInstantBlocked(blocks, slotInstant)) continue;
+      slots++;
+      if (isBooked(day, h)) booked++;
+    }
+  }
+
+  return { slots, booked, pct: slots > 0 ? (booked / slots) * 100 : 0 };
+}
+
 export async function getAdminDashboard(): Promise<AdminDashboard> {
   // Les dades i la configuració són independents: van alhora.
   const [raw, settings] = await Promise.all([gather(), getCenterSettings()]);
@@ -288,7 +333,6 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   }
 
   // ── 5. Ocupació de franges de la setmana ──
-  // Slots = hores amb regla activa, menys les tapades per un bloqueig.
   const trainerIds = [...new Set(raw.rules.map((r) => r.trainerId))];
   const bookedKeys = new Set<string>();
   for (const r of raw.reservations) {
@@ -302,22 +346,12 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   let bookedTotal = 0;
 
   for (const trainerId of trainerIds) {
-    const rules = raw.rules.filter((r) => r.trainerId === trainerId);
-    const blocks = blocksOf(raw.blocks, trainerId);
-    let slots = 0;
-    let booked = 0;
-
-    for (const day of weekDays) {
-      // Sense Date pel mig: el dia i el dia de la setmana van explícits, que és
-      // l'única manera que no depengui de la zona horària del procés.
-      for (const h of availableHoursOn(rules, day, weekdayOfDay(day))) {
-        // El bloqueig és un instant real: cal l'hora del centre convertida.
-        const slotInstant = centerLocalToInstant(day, `${String(h).padStart(2, "0")}:00`);
-        if (isInstantBlocked(blocks, slotInstant)) continue;
-        slots++;
-        if (bookedKeys.has(`${trainerId}|${day}|${h}`)) booked++;
-      }
-    }
+    const { slots, booked, pct } = occupancyOf(
+      raw.rules.filter((r) => r.trainerId === trainerId),
+      blocksOf(raw.blocks, trainerId),
+      weekDays,
+      (day, h) => bookedKeys.has(`${trainerId}|${day}|${h}`),
+    );
 
     slotsTotal += slots;
     bookedTotal += booked;
@@ -326,7 +360,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
       trainerName: raw.trainerNames.get(trainerId) ?? "—",
       slots,
       booked,
-      pct: slots > 0 ? (booked / slots) * 100 : 0,
+      pct,
     });
   }
 
@@ -357,5 +391,213 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
       total: happened.length,
       pct: happened.length > 0 ? (converted / happened.length) * 100 : null,
     },
+  };
+}
+
+// ═══════════════════ Tauler del professional ═══════════════════
+// Les mateixes mètriques d'operativa que veu l'admin, però limitades a qui
+// mira: ni ingressos ni pendents de cobrament, que són del negoci i no seus.
+
+export type TrainerDashboard = {
+  sessions: { today: number; week: number };
+  clients: number;
+  /** Bons dels SEUS clients assignats per sota del llindar del centre. */
+  lowBonos: LowBono[];
+  pendingTrials: number;
+  occupancy: { slots: number; booked: number; pct: number };
+};
+
+type RawTrainer = {
+  reservations: { scheduledAt: string; status: string }[];
+  bonos: (RawBono & { expiresAt: string | null })[];
+  clientNames: Map<string, string>;
+  clientCount: number;
+  rules: AvailabilityRuleLite[];
+  blocks: AvailabilityBlockLite[];
+};
+
+/**
+ * Dades del professional. Tot filtrat per ell a la consulta, no després:
+ * la RLS li deixa llegir reserves i bons de tot el centre per coordinar-se,
+ * així que si el filtre no és a la consulta, el tauler li ensenyaria números
+ * dels companys sense que res ho impedeixi.
+ */
+async function gatherTrainer(trainerId: string): Promise<RawTrainer> {
+  if (USE_MOCK) {
+    const [rules, blocks] = await Promise.all([
+      listAvailabilityLite(trainerId),
+      listBlocksLite(trainerId),
+    ]);
+    const store = getStore();
+    const myClients = store.clients.filter(
+      (c) => c.assigned_trainer_id === trainerId,
+    );
+    const myClientIds = new Set(myClients.map((c) => c.id));
+    const clientNames = new Map<string, string>();
+    for (const c of myClients) {
+      const p = store.profiles.find((x) => x.id === c.profile_id);
+      clientNames.set(c.id, p?.full_name ?? "—");
+    }
+
+    return {
+      reservations: store.reservations
+        .filter((r) => r.trainer_id === trainerId)
+        .map((r) => ({ scheduledAt: r.scheduled_at, status: r.status })),
+      bonos: store.bonos
+        .filter((b) => myClientIds.has(b.client_id))
+        .map((b) => ({
+          id: b.id,
+          clientId: b.client_id,
+          price: b.price,
+          status: b.status,
+          remaining: b.remaining_sessions,
+          serviceType: b.service_type,
+          expiresAt: b.expires_at,
+        })),
+      clientNames,
+      clientCount: myClients.length,
+      rules,
+      blocks,
+    };
+  }
+
+  const supabase = await createClient();
+
+  // Les cinc consultes són independents: totes alhora.
+  const [rules, blocks, res, bon, cli] = await Promise.all([
+    listAvailabilityLite(trainerId),
+    listBlocksLite(trainerId),
+    supabase
+      .from("reservations")
+      .select("scheduled_at, status")
+      .eq("trainer_id", trainerId),
+    // !inner perquè el filtre és sobre el client, no sobre el bo: sense join
+    // intern, PostgREST tornaria també els bons dels clients d'altres.
+    supabase
+      .from("bonos")
+      .select(
+        `id, client_id, price, status, remaining_sessions, service_type, expires_at,
+         client:clients!inner(assigned_trainer_id,
+           profile:profiles!clients_profile_id_fkey(full_name))`,
+      )
+      .eq("client.assigned_trainer_id", trainerId),
+    supabase.from("clients").select("id").eq("assigned_trainer_id", trainerId),
+  ]);
+
+  type BonoRow = {
+    id: string;
+    client_id: string;
+    price: number;
+    status: BonoStatus;
+    remaining_sessions: number;
+    service_type: ServiceType;
+    expires_at: string | null;
+    client: { profile: { full_name: string | null } | null } | null;
+  };
+
+  const clientNames = new Map<string, string>();
+  const bonos = ((bon.data ?? []) as unknown as BonoRow[]).map((b) => {
+    clientNames.set(b.client_id, b.client?.profile?.full_name ?? "—");
+    return {
+      id: b.id,
+      clientId: b.client_id,
+      price: b.price,
+      status: b.status,
+      remaining: b.remaining_sessions,
+      serviceType: b.service_type,
+      expiresAt: b.expires_at,
+    };
+  });
+
+  return {
+    reservations: (res.data ?? []).map((r) => ({
+      scheduledAt: r.scheduled_at,
+      status: r.status,
+    })),
+    bonos,
+    clientNames,
+    clientCount: (cli.data ?? []).length,
+    rules,
+    blocks,
+  };
+}
+
+export async function getTrainerDashboard(
+  trainerId: string,
+): Promise<TrainerDashboard> {
+  // Sense sessió no hi ha res a comptar; evita una consulta amb un id buit.
+  if (!trainerId)
+    return {
+      sessions: { today: 0, week: 0 },
+      clients: 0,
+      lowBonos: [],
+      pendingTrials: 0,
+      occupancy: { slots: 0, booked: 0, pct: 0 },
+    };
+
+  // Dades, configuració i proves són independents: van alhora.
+  const [raw, settings, trials] = await Promise.all([
+    gatherTrainer(trainerId),
+    getCenterSettings(),
+    listTrialBookings(trainerId),
+  ]);
+  const now = new Date();
+
+  // ── Sessions d'avui / aquesta setmana ──
+  const todayStr = centerDateStr(now);
+  const weekDays = currentWeekDays(now);
+  const weekSet = new Set(weekDays);
+
+  let today = 0;
+  let week = 0;
+  const bookedKeys = new Set<string>();
+  for (const r of raw.reservations) {
+    if (!COUNTS_AS_SESSION(r.status)) continue;
+    const d = new Date(r.scheduledAt);
+    const day = centerDateStr(d);
+    if (day === todayStr) today++;
+    if (weekSet.has(day)) week++;
+    bookedKeys.add(`${day}|${centerHour(d)}`);
+  }
+
+  // ── Bons a punt d'esgotar-se ──
+  // Mateix llindar que el tauler d'admin. A més es descarta el bo caducat:
+  // aquí la data mana sobre l'estat desat, com a la resta de l'app, perquè
+  // perseguir la renovació d'un bo que ja no es pot fer servir no té sentit.
+  const lowBonos: LowBono[] = raw.bonos
+    .filter(
+      (b) =>
+        b.status === "active" &&
+        b.remaining <= settings.bonoLowThreshold &&
+        !isBonoExpired({ status: b.status, expires_at: b.expiresAt }),
+    )
+    .map((b) => ({
+      bonoId: b.id,
+      clientId: b.clientId,
+      clientName: raw.clientNames.get(b.clientId) ?? "—",
+      serviceType: b.serviceType,
+      remaining: b.remaining,
+    }))
+    .sort(
+      (a, b) =>
+        a.remaining - b.remaining || a.clientName.localeCompare(b.clientName),
+    );
+
+  // ── Sol·licituds de prova pendents ──
+  // listTrialBookings ja hi ha passat l'escombrat de caducitat, així que una
+  // sol·licitud vençuda no s'hi compta encara que ningú l'hagi tocada.
+  const pendingTrials = trials.filter((t) => t.status === "pending").length;
+
+  // ── Ocupació de la seva disponibilitat aquesta setmana ──
+  const occupancy = occupancyOf(raw.rules, raw.blocks, weekDays, (day, h) =>
+    bookedKeys.has(`${day}|${h}`),
+  );
+
+  return {
+    sessions: { today, week },
+    clients: raw.clientCount,
+    lowBonos,
+    pendingTrials,
+    occupancy,
   };
 }

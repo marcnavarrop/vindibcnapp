@@ -3,9 +3,12 @@ import { getViewer } from "@/lib/auth";
 import { listClients } from "@/lib/data/clients";
 import { listReservations } from "@/lib/data/reservations";
 import { listAnnouncements } from "@/lib/data/announcements";
+import { getTrainerDashboard } from "@/lib/data/dashboard";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { TrainerUpcomingReservations } from "@/components/trainer-upcoming-reservations";
 import { TrainerBonusPanel } from "@/components/trainer-bonus-panel";
+import { LowBonosCard } from "@/components/low-bonos-card";
+import { Kpi, pct1 } from "@/components/ui/kpi";
 import { formatLongDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
@@ -24,10 +27,11 @@ const SECTIONS = [
 export default async function TrainerHome() {
   const viewer = await getViewer();
   const trainerId = viewer?.id ?? "";
-  const [clients, allReservations, announcements] = await Promise.all([
+  const [clients, allReservations, announcements, kpi] = await Promise.all([
     listClients(trainerId),
     listReservations(), // totes les reserves del centre per al toggle Els meus / Tots
     listAnnouncements(),
+    getTrainerDashboard(trainerId),
   ]);
 
   return (
@@ -40,6 +44,72 @@ export default async function TrainerHome() {
           <p className="mt-1 text-sm text-brand-muted">
             {clients.length} clients assignats
           </p>
+        </div>
+
+        {/* Resum del dia. Mateixes targetes que el tauler d'admin, però només
+            amb el que és seu: res d'ingressos ni de pendents de cobrament. */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <Kpi
+            label="Sessions"
+            value={String(kpi.sessions.today)}
+            hint={`avui · ${kpi.sessions.week} aquesta setmana`}
+            href="/trainer/reservas"
+          />
+
+          {/* Sempre visible, també amb zero: que no hi hagi res pendent és
+              informació, i una graella que canvia de mida cada dia es llegeix
+              pitjor. El to d'avís només salta quan demana acció. */}
+          <Kpi
+            label="Proves pendents"
+            value={String(kpi.pendingTrials)}
+            tone={kpi.pendingTrials > 0 ? "warn" : "neutral"}
+            hint={
+              kpi.pendingTrials === 0
+                ? "Cap sol·licitud per respondre"
+                : kpi.pendingTrials === 1
+                  ? "1 sol·licitud esperant resposta"
+                  : `${kpi.pendingTrials} sol·licituds esperant resposta`
+            }
+            href="/trainer/reservas"
+          />
+
+          <Kpi
+            label="Els teus clients"
+            value={String(kpi.clients)}
+            hint={
+              kpi.clients === 1 ? "client assignat" : "clients assignats a tu"
+            }
+            href="/trainer/clients"
+          />
+
+          <Kpi
+            label="Ocupació setmanal"
+            value={
+              kpi.occupancy.slots > 0 ? `${pct1(kpi.occupancy.pct)}%` : "—"
+            }
+            hint={
+              kpi.occupancy.slots > 0
+                ? `${kpi.occupancy.booked} de ${kpi.occupancy.slots} franges teves`
+                : "Sense disponibilitat definida"
+            }
+            href="/trainer/disponibilitat"
+          >
+            {kpi.occupancy.slots > 0 && (
+              <div className="mt-3 h-1 overflow-hidden rounded-full bg-brand-bg">
+                <div
+                  className="h-full rounded-full bg-brand-purple"
+                  style={{ width: `${Math.min(100, kpi.occupancy.pct)}%` }}
+                />
+              </div>
+            )}
+          </Kpi>
+
+          {/* Ocupa la cel·la restant del grid; la llista pot créixer. */}
+          <LowBonosCard
+            bonos={kpi.lowBonos}
+            clientHrefBase="/trainer/clients"
+            className="col-span-2 lg:col-span-1"
+          />
         </div>
 
         {/* No renderitza res si aquest professional no té bonus actiu. */}
