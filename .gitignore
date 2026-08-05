@@ -45,3 +45,4 @@ next-env.d.ts
 # Scripts temporals de verificació (no formen part del projecte)
 __*.mjs
 __*.mts
+__*.json
