@@ -171,7 +171,7 @@ export async function updateTrainerSpecialty(
   if (USE_MOCK) {
     const store = getStore();
     const p = store.profiles.find((x) => x.id === id && x.role === "trainer");
-    if (!p) throw new Error("Entrenador/a no trobat/da.");
+    if (!p) throw new Error("Professional no trobat/da.");
     p.specialty = specialty;
     saveStore(store);
     return;
@@ -201,7 +201,7 @@ export async function setTrainerAvatar(
   if (USE_MOCK) {
     const store = getStore();
     const p = store.profiles.find((x) => x.id === id && x.role === "trainer");
-    if (!p) throw new Error("Entrenador/a no trobat/da.");
+    if (!p) throw new Error("Professional no trobat/da.");
     p.avatar_path = avatarPath;
     saveStore(store);
   } else {

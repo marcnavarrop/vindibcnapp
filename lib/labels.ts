@@ -123,7 +123,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Administració",
-  trainer: "Entrenador/a",
+  trainer: "Professional",
   client: "Client",
 };
 

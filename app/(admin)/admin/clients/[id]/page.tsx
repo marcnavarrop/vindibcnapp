@@ -57,7 +57,7 @@ export default async function ClientDetailPage({
       content: (
         <div className="flex flex-col gap-6">
           <section className="grid gap-4 sm:grid-cols-3">
-            <Info label="Entrenador/a" value={client.trainerName ?? "Sense assignar"} />
+            <Info label="Professional" value={client.trainerName ?? "Sense assignar"} />
             <Info label="Bons actius" value={String(client.activeBonos)} />
             <Info label="Sessions restants" value={String(client.remainingSessions)} />
           </section>

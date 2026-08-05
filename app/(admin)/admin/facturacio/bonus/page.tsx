@@ -146,7 +146,7 @@ export default async function BonusPage() {
         </Group>
 
         <Group
-          title="Treballadors"
+          title="Professionals"
           desc="Qui té bonus i cada quant se li tanca. És l'únic paràmetre que varia per professional."
         >
           <BonusWorkersEditor rows={workerRows} />

@@ -28,7 +28,7 @@ export default async function EditTrainerPage({
           ← Tornar
         </Link>
         <h1 className="mt-1 mb-6 text-2xl text-brand-dark">
-          Editar entrenador/a
+          Editar professional
         </h1>
 
         <TrainerForm

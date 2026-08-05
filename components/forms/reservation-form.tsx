@@ -65,7 +65,7 @@ export function ReservationForm({
       />
 
       <SelectField
-        label="Entrenador/a"
+        label="Professional"
         name="trainerId"
         placeholder="Sense assignar"
         options={trainers.map((t) => ({ value: t.id, label: t.name }))}

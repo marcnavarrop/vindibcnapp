@@ -6,7 +6,7 @@ import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
   { href: "/admin/clients", label: "Clients" },
-  { href: "/admin/entrenadors", label: "Entrenadors" },
+  { href: "/admin/entrenadors", label: "Professionals" },
 ];
 
 export const dynamic = "force-dynamic";

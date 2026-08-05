@@ -81,9 +81,9 @@ export function ReservationsAgenda({
           value={trainer}
           onChange={(e) => setTrainer(e.target.value)}
           className={selectClass}
-          aria-label="Filtrar per entrenador/a"
+          aria-label="Filtrar per professional"
         >
-          <option value="">Tots els entrenadors</option>
+          <option value="">Tots els professionals</option>
           {trainers.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}

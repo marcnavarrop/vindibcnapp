@@ -61,7 +61,7 @@ export function ClientForm({
         defaultValue={defaults?.phone}
       />
       <SelectField
-        label="Entrenador/a assignat/da"
+        label="Professional assignat/da"
         name="assignedTrainerId"
         placeholder="Sense assignar"
         defaultValue={defaults?.assignedTrainerId}

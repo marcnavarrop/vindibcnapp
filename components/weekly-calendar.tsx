@@ -816,7 +816,7 @@ function ReservationModal({
         <dl className="mt-4 flex flex-col gap-2 text-sm">
           <Field label="Servei" value={SERVICE_LABELS[r.serviceType]} />
           <Field label="Estat" value={RESERVATION_STATUS_LABELS[r.status]} />
-          {r.trainerName && <Field label="Entrenador/a" value={r.trainerName} />}
+          {r.trainerName && <Field label="Professional" value={r.trainerName} />}
         </dl>
 
         {canManage && (

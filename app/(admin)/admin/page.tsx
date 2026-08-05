@@ -6,8 +6,8 @@ import { formatEur, formatLongDate, SERVICE_LABELS } from "@/lib/labels";
 export const dynamic = "force-dynamic";
 
 const SECTIONS = [
-  { href: "/admin/clients", title: "Clients", desc: "Fitxes, entrenador/a assignat/da i bons." },
-  { href: "/admin/entrenadors", title: "Entrenadors", desc: "Equip, especialitat i clients assignats." },
+  { href: "/admin/clients", title: "Clients", desc: "Fitxes, professional assignat/da i bons." },
+  { href: "/admin/entrenadors", title: "Professionals", desc: "Equip, especialitat i clients assignats." },
   { href: "/admin/bonos", title: "Bons", desc: "Paquets de sessions i el seu estat." },
   { href: "/admin/reservas", title: "Reserves", desc: "Agenda de sessions." },
   { href: "/admin/prova", title: "Sessions de prova", desc: "Sol·licituds de prova gratuïta i conversió." },

@@ -17,7 +17,7 @@ export function isNavGroup(e: NavEntry): e is NavGroup {
 
 export const AREA_LABELS: Record<Role, string> = {
   admin: "Administració",
-  trainer: "Entrenador/a",
+  trainer: "Professional",
   client: "La meva àrea",
 };
 
@@ -39,7 +39,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
       label: "Persones",
       children: [
         { href: "/admin/clients", label: "Clients" },
-        { href: "/admin/entrenadors", label: "Entrenadors" },
+        { href: "/admin/entrenadors", label: "Professionals" },
       ],
     },
     {

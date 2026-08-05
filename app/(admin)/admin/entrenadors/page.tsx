@@ -8,7 +8,7 @@ import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
   { href: "/admin/clients", label: "Clients" },
-  { href: "/admin/entrenadors", label: "Entrenadors" },
+  { href: "/admin/entrenadors", label: "Professionals" },
 ];
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import { ResendInviteButton } from "@/components/resend-invite-button";
@@ -32,13 +32,13 @@ export default async function EntrenadorsPage() {
             >
               ← Tornar
             </Link>
-            <h1 className="mt-1 text-2xl text-brand-dark">Entrenadors</h1>
+            <h1 className="mt-1 text-2xl text-brand-dark">Professionals</h1>
           </div>
           <Link
             href="/admin/entrenadors/new"
             className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
           >
-            + Nou entrenador/a
+            + Nou professional
           </Link>
         </div>
 

@@ -58,7 +58,7 @@ export function TrainerClientsTable({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca per nom, correu o entrenador/a…"
+          placeholder="Cerca per nom, correu o professional…"
           className="w-full max-w-sm rounded-lg border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
         />
         <span className="text-sm whitespace-nowrap text-brand-muted">
@@ -71,7 +71,7 @@ export function TrainerClientsTable({
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Client</th>
-              <th className="px-4 py-3 font-bold">Entrenador/a</th>
+              <th className="px-4 py-3 font-bold">Professional</th>
               <th className="px-4 py-3 font-bold">Bons actius</th>
               <th className="px-4 py-3 font-bold">Sessions rest.</th>
             </tr>

@@ -72,7 +72,7 @@ export function ClientsTable({
             Entrenador/a: {trainerFilter.name ?? "desconegut/da"}
             <Link
               href="/admin/clients"
-              aria-label="Treure el filtre d'entrenador/a"
+              aria-label="Treure el filtre de professional"
               title="Treure el filtre"
               className="inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-brand-purple/20"
             >
@@ -98,7 +98,7 @@ export function ClientsTable({
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Client</th>
               <th className="px-4 py-3 font-bold">Contacte</th>
-              <th className="px-4 py-3 font-bold">Entrenador/a</th>
+              <th className="px-4 py-3 font-bold">Professional</th>
               <th className="px-4 py-3 font-bold">Bons actius</th>
               <th className="px-4 py-3 font-bold">Sessions rest.</th>
               <th className="px-4 py-3 font-bold"></th>
@@ -150,7 +150,7 @@ export function ClientsTable({
                     ? "No s'ha trobat cap client amb aquesta cerca."
                     : trainerFilter.name
                       ? `${trainerFilter.name} no té cap client assignat.`
-                      : "Aquest entrenador/a ja no existeix."}
+                      : "Aquest professional ja no existeix."}
                 </td>
               </tr>
             )}

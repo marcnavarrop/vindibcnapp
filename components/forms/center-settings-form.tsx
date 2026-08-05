@@ -273,12 +273,12 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
 
       <Group
         title="Coordinació entre professionals"
-        desc="Què veu cada entrenador de l'agenda dels seus companys."
+        desc="Què veu cada professional de l'agenda dels seus companys."
       >
         <Toggle
           name="trainersSeColleaguesReservations"
-          title="Els entrenadors veuen les reserves dels companys"
-          desc="Permet la coordinació entre professionals mostrant les reserves de tots al calendari. Si està desactivat, cada entrenador només veu les seves pròpies reserves."
+          title="Els professionals veuen les reserves dels companys"
+          desc="Permet la coordinació entre professionals mostrant les reserves de tots al calendari. Si està desactivat, cada professional només veu les seves pròpies reserves."
           checked={trainersSeColleagues}
           onChange={setTrainersSeColleagues}
         />
@@ -384,7 +384,7 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
         <Toggle
           name="moduleComunitat"
           title="Comunitat"
-          desc="Anuncis, novetats i enquestes per a clients i entrenadors."
+          desc="Anuncis, novetats i enquestes per a clients i professionals."
           checked={modComunitat}
           onChange={setModComunitat}
         />

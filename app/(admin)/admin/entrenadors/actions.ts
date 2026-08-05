@@ -59,7 +59,7 @@ export async function createTrainerAction(
     id = await createTrainer(input);
   } catch (e) {
     return {
-      error: e instanceof Error ? e.message : "Error en crear l'entrenador/a.",
+      error: e instanceof Error ? e.message : "Error en crear el/la professional.",
     };
   }
 

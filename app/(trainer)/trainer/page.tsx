@@ -35,7 +35,7 @@ export default async function TrainerHome() {
         <div>
           <p className="text-sm text-brand-muted">{formatLongDate(new Date())}</p>
           <h1 className="mt-0.5 text-2xl text-brand-dark">
-            Hola, {viewer?.fullName?.split(" ")[0] ?? "entrenador/a"}
+            Hola, {viewer?.fullName?.split(" ")[0] ?? "professional"}
           </h1>
           <p className="mt-1 text-sm text-brand-muted">
             {clients.length} clients assignats

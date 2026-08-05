@@ -444,7 +444,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         heading: "Tens exercicis nous assignats!",
         intro: [
           hola,
-          "El teu entrenador/a t'ha afegit exercicis nous. Consulta'ls a la teva àrea per veure les instruccions i els vídeos.",
+          "El teu professional t'ha afegit exercicis nous. Consulta'ls a la teva àrea per veure les instruccions i els vídeos.",
         ],
         cta: { label: "Veure els meus exercicis", url: appLink("/client/exercicis") },
         footer: "client",
