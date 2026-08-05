@@ -38,7 +38,7 @@ export async function mockRegisterAction(input: {
     weight_kg: null,
     gender: null,
     emergency_contact: null,
-    objective: null,
+    objective: null, avatar_path: null,
     created_at: new Date().toISOString(),
   });
   saveStore(store);

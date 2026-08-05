@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { TrainerForm } from "@/components/forms/trainer-form";
 import { updateTrainerSpecialtyAction } from "@/app/(admin)/admin/entrenadors/actions";
 import { getTrainer } from "@/lib/data/trainers";
+import { avatarUrl } from "@/lib/data/avatars";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function EditTrainerPage({
   const trainer = await getTrainer(id);
   if (!trainer) notFound();
 
+  const currentAvatar = await avatarUrl(trainer.avatarPath);
   const action = updateTrainerSpecialtyAction.bind(null, id);
 
   return (
@@ -26,7 +28,7 @@ export default async function EditTrainerPage({
           ← Tornar
         </Link>
         <h1 className="mt-1 mb-6 text-2xl text-brand-dark">
-          Editar especialitat
+          Editar entrenador/a
         </h1>
 
         <TrainerForm
@@ -36,6 +38,7 @@ export default async function EditTrainerPage({
             fullName: trainer.fullName,
             email: trainer.email,
             specialty: trainer.specialty,
+            avatarUrl: currentAvatar,
           }}
           submitLabel="Desar"
           cancelHref="/admin/entrenadors"

@@ -359,7 +359,7 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
       weight_kg: null,
       gender: null,
       emergency_contact: null,
-      objective: null,
+      objective: null, avatar_path: null,
       created_at: createdAt,
     });
     store.clients.push({

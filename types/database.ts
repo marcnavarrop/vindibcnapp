@@ -95,6 +95,7 @@ export interface Database {
           gender: Gender | null;
           emergency_contact: string | null;
           objective: string | null;
+          avatar_path: string | null;
           created_at: string;
         };
         Insert: {
@@ -111,6 +112,7 @@ export interface Database {
           gender?: Gender | null;
           emergency_contact?: string | null;
           objective?: string | null;
+          avatar_path?: string | null;
           created_at?: string;
         };
         Update: {
@@ -127,6 +129,7 @@ export interface Database {
           gender?: Gender | null;
           emergency_contact?: string | null;
           objective?: string | null;
+          avatar_path?: string | null;
           created_at?: string;
         };
         Relationships: [];

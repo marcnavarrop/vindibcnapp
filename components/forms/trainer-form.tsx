@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Avatar } from "@/components/ui/avatar";
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { Specialty } from "@/types/database";
@@ -17,6 +18,8 @@ export type TrainerDefaults = {
   fullName: string;
   email: string;
   specialty: Specialty | null;
+  /** Signed URL de la foto actual, si en té. */
+  avatarUrl?: string | null;
 };
 
 /**
@@ -37,6 +40,20 @@ export function TrainerForm({
   cancelHref: string;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
+  const fileRef = useRef<HTMLInputElement>(null);
+  // Vista prèvia del fitxer triat; si no n'hi ha cap, la foto que ja tenia.
+  const [preview, setPreview] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
+
+  // L'URL de l'objecte es allibera en canviar de fitxer o en desmuntar: si no,
+  // cada tria deixaria un blob viu a la memòria de la pestanya.
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  const current = removed ? null : (preview ?? defaults?.avatarUrl ?? null);
 
   return (
     <form
@@ -61,6 +78,60 @@ export function TrainerForm({
           <div className="text-sm text-brand-muted">{defaults?.email}</div>
         </div>
       )}
+
+      <div>
+        <p className="mb-1 text-sm font-bold text-brand-dark">Foto de perfil</p>
+        <p className="mb-3 text-xs text-brand-muted">
+          Opcional. JPG, PNG o WEBP, fins a 3 MB. Si no n&apos;hi ha, es mostra
+          la inicial com fins ara.
+        </p>
+        <div className="flex items-center gap-4">
+          <Avatar
+            name={defaults?.fullName ?? ""}
+            email={defaults?.email ?? ""}
+            url={current}
+            size={64}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              name="avatar"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                if (preview) URL.revokeObjectURL(preview);
+                setPreview(URL.createObjectURL(f));
+                setRemoved(false);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple"
+            >
+              {current ? "Canviar foto" : "Triar foto"}
+            </button>
+            {current && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (preview) URL.revokeObjectURL(preview);
+                  setPreview(null);
+                  setRemoved(true);
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+                className="rounded-lg px-3 py-1.5 text-xs font-bold text-brand-muted hover:text-error"
+              >
+                Treure
+              </button>
+            )}
+          </div>
+        </div>
+        <input type="hidden" name="removeAvatar" value={removed ? "true" : "false"} />
+      </div>
 
       <SelectField
         label="Especialitat"

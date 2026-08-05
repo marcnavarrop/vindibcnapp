@@ -3,6 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
+import { deleteAvatar } from "@/lib/data/avatars";
 import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import type { Specialty } from "@/types/database";
 
@@ -12,6 +13,8 @@ export type TrainerListItem = {
   email: string;
   specialty: Specialty | null;
   clientCount: number;
+  /** Ruta de la foto al Storage. Null = sense foto (es mostra la inicial). */
+  avatarPath: string | null;
 };
 
 export type TrainerDetail = {
@@ -19,6 +22,7 @@ export type TrainerDetail = {
   fullName: string;
   email: string;
   specialty: Specialty | null;
+  avatarPath: string | null;
 };
 
 export type TrainerInput = {
@@ -38,6 +42,7 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
         fullName: p.full_name ?? "—",
         email: p.email ?? "",
         specialty: p.specialty,
+        avatarPath: p.avatar_path ?? null,
         clientCount: store.clients.filter(
           (c) => c.assigned_trainer_id === p.id,
         ).length,
@@ -49,7 +54,7 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, email, specialty")
+        .select("id, full_name, email, specialty, avatar_path")
         .eq("role", "trainer")
         .order("full_name"),
       supabase.from("clients").select("assigned_trainer_id"),
@@ -71,6 +76,7 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
     fullName: t.full_name ?? "—",
     email: t.email ?? "",
     specialty: t.specialty,
+    avatarPath: t.avatar_path ?? null,
     clientCount: counts.get(t.id) ?? 0,
   }));
 }
@@ -87,6 +93,7 @@ export async function getTrainer(id: string): Promise<TrainerDetail | null> {
           fullName: p.full_name ?? "—",
           email: p.email ?? "",
           specialty: p.specialty,
+          avatarPath: p.avatar_path ?? null,
         }
       : null;
   }
@@ -94,7 +101,7 @@ export async function getTrainer(id: string): Promise<TrainerDetail | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, specialty, role")
+    .select("id, full_name, email, specialty, role, avatar_path")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -104,6 +111,7 @@ export async function getTrainer(id: string): Promise<TrainerDetail | null> {
     fullName: data.full_name ?? "—",
     email: data.email ?? "",
     specialty: data.specialty,
+    avatarPath: data.avatar_path ?? null,
   };
 }
 
@@ -130,6 +138,7 @@ export async function createTrainer(input: TrainerInput): Promise<string> {
       gender: null,
       emergency_contact: null,
       objective: null,
+      avatar_path: null,
       created_at: new Date().toISOString(),
     });
     saveStore(store);
@@ -174,4 +183,35 @@ export async function updateTrainerSpecialty(
     .update({ specialty })
     .eq("id", id);
   if (error) throw error;
+}
+
+/**
+ * Fixa (o treu) la foto de perfil d'un professional.
+ *
+ * La ruta nova es desa ABANS d'esborrar l'antiga: si l'esborrat fallés,
+ * quedaria un fitxer orfe al bucket, que és molt més benigne que una fila
+ * apuntant a un fitxer que ja no existeix.
+ */
+export async function setTrainerAvatar(
+  id: string,
+  avatarPath: string | null,
+): Promise<void> {
+  const previous = (await getTrainer(id))?.avatarPath ?? null;
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const p = store.profiles.find((x) => x.id === id && x.role === "trainer");
+    if (!p) throw new Error("Entrenador/a no trobat/da.");
+    p.avatar_path = avatarPath;
+    saveStore(store);
+  } else {
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("profiles")
+      .update({ avatar_path: avatarPath })
+      .eq("id", id);
+    if (error) throw error;
+  }
+
+  if (previous && previous !== avatarPath) await deleteAvatar(previous);
 }

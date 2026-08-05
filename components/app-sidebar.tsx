@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "@/lib/utils";
+import { Avatar } from "@/components/ui/avatar";
 import { Wordmark } from "@/components/wordmark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { USE_MOCK } from "@/lib/config";
@@ -26,23 +27,6 @@ function areaSubtitle(role: Role, specialty: Specialty | null): string {
   return AREA_LABELS[role];
 }
 
-/** Inicial para el avatar: del nombre completo o, si falta, del correo. */
-function initialOf(fullName: string, email: string): string {
-  const src = (fullName || email).trim();
-  return src ? src[0].toUpperCase() : "?";
-}
-
-function Avatar({ initial }: { initial: string }) {
-  return (
-    <div
-      aria-hidden
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-orange text-sm font-bold text-white"
-    >
-      {initial}
-    </div>
-  );
-}
-
 /**
  * Navegación lateral común a las tres áreas (admin/trainer/client),
  * parametrizada por rol.
@@ -55,18 +39,20 @@ export function AppSidebar({
   specialty = null,
   fullName = "",
   email = "",
+  avatarUrl = null,
   modules = ALL_MODULES_ON,
 }: {
   role: Role;
   specialty?: Specialty | null;
   fullName?: string;
   email?: string;
+  /** Signed URL de la foto de perfil. Si falta, es pinta la inicial. */
+  avatarUrl?: string | null;
   /** Mòduls actius; els desactivats no surten al menú. */
   modules?: ModuleFlags;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const initial = initialOf(fullName, email);
 
   // Cierra el panel al navegar.
   useEffect(() => {
@@ -80,7 +66,9 @@ export function AppSidebar({
         <SidebarContent
           role={role}
           specialty={specialty}
-          initial={initial}
+          fullName={fullName}
+          email={email}
+          avatarUrl={avatarUrl}
           pathname={pathname}
           modules={modules}
         />
@@ -102,7 +90,7 @@ export function AppSidebar({
           </Link>
         </div>
         <div className="flex items-center gap-2">
-          <Avatar initial={initial} />
+          <Avatar name={fullName} email={email} url={avatarUrl} />
           <SignOutButton />
         </div>
       </header>
@@ -127,7 +115,9 @@ export function AppSidebar({
             <SidebarContent
           role={role}
           specialty={specialty}
-          initial={initial}
+          fullName={fullName}
+          email={email}
+          avatarUrl={avatarUrl}
           pathname={pathname}
           modules={modules}
         />
@@ -141,13 +131,17 @@ export function AppSidebar({
 function SidebarContent({
   role,
   specialty,
-  initial,
+  fullName,
+  email,
+  avatarUrl,
   pathname,
   modules,
 }: {
   role: Role;
   specialty: Specialty | null;
-  initial: string;
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
   pathname: string;
   modules: ModuleFlags;
 }) {
@@ -208,7 +202,7 @@ function SidebarContent({
       </nav>
 
       <div className="flex items-center gap-3 border-t border-white/10 px-2 pt-4">
-        <Avatar initial={initial} />
+        <Avatar name={fullName} email={email} url={avatarUrl} />
         <SignOutButton />
         {USE_MOCK && (
           <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">

@@ -6,6 +6,7 @@ import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { isBonoExpired } from "@/lib/data/bonos";
+import { avatarUrls } from "@/lib/data/avatars";
 import type { TrainerRuleLite, TrainerBlockLite } from "@/lib/availability-slots";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
@@ -25,7 +26,7 @@ export type ClientCenterData = {
   assignedTrainerId: string | null;
   /** Tipos de servicio que el cliente puede reservar (bonos activos con sesiones). */
   bonoTypes: ServiceType[];
-  trainers: { id: string; name: string }[];
+  trainers: { id: string; name: string; avatarUrl: string | null }[];
   rules: TrainerRuleLite[];
   /** Bloquejos temporals que tapen les regles setmanals. */
   blocks: TrainerBlockLite[];
@@ -94,7 +95,7 @@ export async function getClientCenterData(
     ];
     const trainers = store.profiles
       .filter((p) => p.role === "trainer")
-      .map((p) => ({ id: p.id, name: p.full_name ?? "—" }));
+      .map((p) => ({ id: p.id, name: p.full_name ?? "—", avatarUrl: null }));
     const rules = store.availability_rules.map((r) => ({
       trainerId: r.trainer_id,
       weekday: r.weekday,
@@ -144,7 +145,7 @@ export async function getClientCenterData(
       .from("bonos")
       .select("service_type, status, remaining_sessions, expires_at")
       .eq("client_id", client.id),
-    admin.from("profiles").select("id, full_name").eq("role", "trainer"),
+    admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer"),
     listAllTrainerRulesLite(),
     listAllBlocksLite(),
     admin
@@ -165,9 +166,14 @@ export async function getClientCenterData(
         .map((b) => b.service_type),
     ),
   ];
+  // Les fotos, totes d'un cop: la llegenda les pinta juntes.
+  const avatars = await avatarUrls(
+    (trainerRows.data ?? []).map((t) => t.avatar_path),
+  );
   const trainers = (trainerRows.data ?? []).map((t) => ({
     id: t.id,
     name: t.full_name ?? "—",
+    avatarUrl: avatars.get(t.avatar_path ?? "") ?? null,
   }));
   const reservations: CenterReservation[] = (resRows.data ?? []).map((r) => ({
     id: r.id,

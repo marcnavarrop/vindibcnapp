@@ -1,3 +1,6 @@
+import { Avatar } from "@/components/ui/avatar";
+import { avatarUrls } from "@/lib/data/avatars";
+import { proColor } from "@/lib/pro-colors";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { listTrainersDetailed } from "@/lib/data/trainers";
@@ -14,6 +17,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EntrenadorsPage() {
   const trainers = await listTrainersDetailed();
+  // Les signed URLs es demanen totes d'un cop: una per fila serien N viatges.
+  const avatars = await avatarUrls(trainers.map((t) => t.avatarPath));
 
   return (
     <>
@@ -55,7 +60,16 @@ export default async function EntrenadorsPage() {
                   className="border-b border-brand-border last:border-0 hover:bg-brand-bg/50"
                 >
                   <td className="px-4 py-3 font-bold text-brand-dark">
-                    {t.fullName}
+                    <span className="flex items-center gap-2.5">
+                      <Avatar
+                        name={t.fullName}
+                        email={t.email}
+                        url={avatars.get(t.avatarPath ?? "") ?? null}
+                        size={32}
+                        color={proColor(t.id)}
+                      />
+                      {t.fullName}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-brand-muted">{t.email}</td>
                   <td className="px-4 py-3">

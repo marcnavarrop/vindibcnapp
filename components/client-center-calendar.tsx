@@ -15,6 +15,7 @@ import {
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import { proColor } from "@/lib/pro-colors";
+import { Avatar } from "@/components/ui/avatar";
 import type { ServiceType } from "@/types/database";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
@@ -401,9 +402,13 @@ export function ClientCenterCalendar({
               key={t.id}
               className="flex items-center gap-1.5 text-xs font-bold text-brand-charcoal"
             >
-              <span
-                className="inline-block h-3 w-3 rounded-full"
-                style={{ backgroundColor: proColor(t.id) }}
+              {/* La foto substitueix el punt de color; sense foto, el punt
+                  segueix sent el cercle amb la inicial del seu color. */}
+              <Avatar
+                name={t.name}
+                url={t.avatarUrl}
+                size={18}
+                color={proColor(t.id)}
               />
               {firstName(t.name)}
             </span>
