@@ -1,3 +1,4 @@
+import { CENTER_TZ } from "@/lib/config";
 import { centerDateStr } from "@/lib/center-time";
 import type {
   ServiceType,
@@ -171,12 +172,21 @@ export function dayKey(iso: string): string {
   return centerDateStr(new Date(iso));
 }
 
-/** Fecha larga en catalán con la inicial en mayúscula (p. ej. "Dimecres, 25 de juny"). */
+/**
+ * Fecha larga en catalán con la inicial en mayúscula (p. ej. "Dimecres, 25 de juny").
+ *
+ * En hora del CENTRO, no la del proceso: es la cabecera "hoy" de los dos
+ * inicios, que se renderiza en el servidor (UTC). Entre medianoche y las 2 h
+ * de aquí, en UTC todavía es el día anterior, y la cabecera contradecía a los
+ * KPI de debajo —que sí cuentan por día del centro— diciendo "ahir" mientras
+ * la tarjeta contaba las sesiones de hoy.
+ */
 export function formatLongDate(date: Date): string {
   const s = new Intl.DateTimeFormat("ca-ES", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: CENTER_TZ,
   }).format(date);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
