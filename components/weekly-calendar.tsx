@@ -576,7 +576,7 @@ function TrialModal({
           </div>
         ) : (
           <p className="mt-5 text-sm text-brand-muted">
-            Només l&apos;entrenador/a d&apos;aquesta prova la pot gestionar.
+            Només el professional d&apos;aquesta prova la pot gestionar.
           </p>
         )}
 

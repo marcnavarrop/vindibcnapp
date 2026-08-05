@@ -35,7 +35,7 @@ export default async function ProvaPage() {
       <h1 className="text-2xl text-brand-dark">Sessió de prova gratuïta</h1>
       <p className="mt-2 mb-6 max-w-2xl text-sm text-brand-muted">
         Prova un entrenament personal sense compromís. Tria una franja lliure i
-        deixa&apos;ns les teves dades: un/a entrenador/a confirmarà la teva sessió.
+        deixa&apos;ns les teves dades: un professional confirmarà la teva sessió.
         No cal crear cap compte.
       </p>
 

@@ -32,7 +32,7 @@ export default async function ClientExercicisPage() {
     <main className="mx-auto max-w-5xl p-6">
       <h1 className="mb-1 text-2xl text-brand-dark">Exercicis</h1>
       <p className="mb-6 text-sm text-brand-muted">
-        Els exercicis que t&apos;ha assignat el teu entrenador/a i la biblioteca
+        Els exercicis que t&apos;ha assignat el teu professional i la biblioteca
         del centre.
       </p>
 

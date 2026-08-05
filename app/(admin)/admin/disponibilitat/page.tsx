@@ -48,12 +48,12 @@ export default async function AdminDisponibilitatPage({
       <main className="mx-auto max-w-5xl p-6">
       <h1 className="mb-1 text-2xl text-brand-dark">Disponibilitat</h1>
       <p className="mb-6 text-sm text-brand-muted">
-        Gestiona els horaris de cada entrenador/a.
+        Gestiona els horaris de cada professional.
       </p>
 
       {trainers.length === 0 ? (
         <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-          No hi ha entrenadors.
+          No hi ha professionals.
         </p>
       ) : (
         <>

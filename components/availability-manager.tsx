@@ -149,7 +149,7 @@ export function AvailabilityManager({
       {/* Reglas agrupadas por día */}
       {byDay.length === 0 ? (
         <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
-          Aquest entrenador/a encara no té cap disponibilitat definida. Mentre no
+          Aquest professional encara no té cap disponibilitat definida. Mentre no
           n&apos;hi hagi cap, els clients no poden reservar amb ell/ella.
         </p>
       ) : (

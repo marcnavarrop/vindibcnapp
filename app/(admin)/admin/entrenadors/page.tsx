@@ -119,7 +119,7 @@ export default async function EntrenadorsPage() {
                     colSpan={5}
                     className="px-4 py-8 text-center text-sm text-brand-muted"
                   >
-                    Encara no hi ha entrenadors. Crea&apos;n un de nou.
+                    Encara no hi ha professionals. Crea&apos;n un de nou.
                   </td>
                 </tr>
               )}

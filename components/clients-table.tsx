@@ -69,7 +69,7 @@ export function ClientsTable({
 
         {trainerFilter && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple/10 py-1 pr-1 pl-3 text-xs font-bold text-brand-purple">
-            Entrenador/a: {trainerFilter.name ?? "desconegut/da"}
+            Professional: {trainerFilter.name ?? "desconegut/da"}
             <Link
               href="/admin/clients"
               aria-label="Treure el filtre de professional"

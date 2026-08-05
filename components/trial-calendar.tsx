@@ -226,7 +226,7 @@ export function TrialCalendar({
 
       <p className="mt-3 text-xs text-brand-muted">
         Tria una franja lliure per demanar la teva sessió de prova gratuïta. Cal
-        un mínim de 24 h d&apos;antelació. Rebràs la confirmació de l&apos;entrenador/a.
+        un mínim de 24 h d&apos;antelació. Rebràs la confirmació del professional.
       </p>
 
       {slot && (
@@ -275,7 +275,7 @@ function RequestModal({
             <p className="text-sm text-brand-muted">
               La teva sessió de prova està{" "}
               <strong className="text-brand-dark">pendent de confirmació</strong>{" "}
-              per part de l&apos;entrenador/a. T&apos;avisarem per correu quan la
+              per part del professional. T&apos;avisarem per correu quan la
               confirmi. Gràcies!
             </p>
             <button

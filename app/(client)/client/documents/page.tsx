@@ -21,7 +21,7 @@ export default async function ClientDocumentsPage() {
       <h1 className="mb-1 text-2xl text-brand-dark">Documents</h1>
       <p className="mb-6 text-sm text-brand-muted">
         Puja informes mèdics, radiografies o qualsevol document relacionat amb
-        el teu seguiment. Només tu i el teu entrenador/a els podeu consultar.
+        el teu seguiment. Només tu i el teu professional els podeu consultar.
       </p>
       {client ? (
         <DocumentsClientPanel
