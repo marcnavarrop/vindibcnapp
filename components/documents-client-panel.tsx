@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useRef, useTransition } from "react";
+import { formatDate } from "@/lib/labels";
 import type { ClientDocument } from "@/lib/data/client-documents";
 import type { DocFormState } from "@/app/(client)/client/documents/actions";
 
@@ -21,14 +22,6 @@ function formatBytes(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("ca-ES", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(iso));
 }
 
 function fileIcon(mimeType: string | null): string {

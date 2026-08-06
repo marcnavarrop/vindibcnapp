@@ -136,12 +136,31 @@ export function formatEur(amount: number): string {
   }).format(amount);
 }
 
+/**
+ * Todo lo que se muestre al usuario va en hora del CENTRO.
+ *
+ * Sin `timeZone`, Intl formatea con la del proceso, y eso hace que una misma
+ * fila se lea distinta según dónde se renderice: en Vercel (UTC) un instante
+ * entre las 00:00 y las 02:00 de aquí cae todavía en el día anterior, y en el
+ * navegador de alguien que consulte desde fuera de España, en el suyo.
+ *
+ * El centro es uno y está en Barcelona: la fecha de una sesión, de un cobro o
+ * de una factura es la de aquí, la mire quien la mire y desde donde la mire.
+ *
+ * Las columnas `date` (períodos de liquidación, vigencia de tarifas,
+ * caducidad de bonos) no se ven afectadas: llegan como "YYYY-MM-DD", se
+ * parsean como medianoche UTC y el desplazamiento de Madrid es siempre
+ * positivo, así que caen en el mismo día con y sin esto.
+ */
+const CENTER_DATE_PARTS = { timeZone: CENTER_TZ } as const;
+
 /** Formatea una fecha ISO en formato corto. */
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("ca-ES", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    ...CENTER_DATE_PARTS,
   }).format(new Date(iso));
 }
 
@@ -150,6 +169,7 @@ export function formatTime(iso: string): string {
   return new Intl.DateTimeFormat("ca-ES", {
     hour: "2-digit",
     minute: "2-digit",
+    ...CENTER_DATE_PARTS,
   }).format(new Date(iso));
 }
 
@@ -159,6 +179,7 @@ export function formatDayHeading(iso: string): string {
     weekday: "long",
     day: "numeric",
     month: "long",
+    ...CENTER_DATE_PARTS,
   }).format(new Date(iso));
 }
 
@@ -186,7 +207,7 @@ export function formatLongDate(date: Date): string {
     weekday: "long",
     day: "numeric",
     month: "long",
-    timeZone: CENTER_TZ,
+    ...CENTER_DATE_PARTS,
   }).format(date);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
