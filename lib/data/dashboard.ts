@@ -80,6 +80,8 @@ type RawBono = {
   status: string;
   remaining: number;
   serviceType: ServiceType;
+  /** Null = no caduca. Cal per descartar els caducats dels bons baixos. */
+  expiresAt: string | null;
 };
 type RawReservation = {
   trainerId: string | null;
@@ -140,6 +142,7 @@ async function gather(): Promise<Raw> {
         status: b.status,
         remaining: b.remaining_sessions,
         serviceType: b.service_type,
+        expiresAt: b.expires_at,
       })),
       reservations: store.reservations.map((r) => ({
         trainerId: r.trainer_id,
@@ -169,7 +172,7 @@ async function gather(): Promise<Raw> {
     listAllTrainerRulesLite(),
     listAllBlocksLite(),
     admin.from("payments").select("amount, paid_at"),
-    admin.from("bonos").select("id, client_id, price, status, remaining_sessions, service_type"),
+    admin.from("bonos").select("id, client_id, price, status, remaining_sessions, service_type, expires_at"),
     admin.from("reservations").select("trainer_id, scheduled_at, status"),
     admin.from("trial_bookings").select("status, converted_client_id"),
     admin
@@ -200,6 +203,7 @@ async function gather(): Promise<Raw> {
       status: b.status,
       remaining: b.remaining_sessions,
       serviceType: b.service_type,
+      expiresAt: b.expires_at,
     })),
     reservations: (res.data ?? []).map((r) => ({
       trainerId: r.trainer_id,
@@ -307,8 +311,17 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   // Mateix criteri que l'avís bono_low (1 sessió). S'inclou el 0 per si algun
   // bo hagués quedat actiu sense sessions.
   // Llindar configurable per l'admin (abans era fix a 1).
+  // El bo caducat en queda fora: aquesta targeta és una llista de gent a qui
+  // oferir renovació, i un bo que ja no es pot fer servir no hi porta. La data
+  // mana sobre l'estat desat, perquè l'escombrat de caducitat és peresós i pot
+  // no haver-hi passat encara.
   const lowBonos: LowBono[] = raw.bonos
-    .filter((b) => b.status === "active" && b.remaining <= settings.bonoLowThreshold)
+    .filter(
+      (b) =>
+        b.status === "active" &&
+        b.remaining <= settings.bonoLowThreshold &&
+        !isBonoExpired({ status: b.status, expires_at: b.expiresAt }),
+    )
     .map((b) => ({
       bonoId: b.id,
       clientId: b.clientId,
@@ -409,7 +422,7 @@ export type TrainerDashboard = {
 
 type RawTrainer = {
   reservations: { scheduledAt: string; status: string }[];
-  bonos: (RawBono & { expiresAt: string | null })[];
+  bonos: RawBono[];
   clientNames: Map<string, string>;
   clientCount: number;
   rules: AvailabilityRuleLite[];
