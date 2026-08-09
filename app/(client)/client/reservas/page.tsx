@@ -1,6 +1,7 @@
 import { getViewer } from "@/lib/auth";
 import { getClientCenterData } from "@/lib/data/client-calendar";
 import { getCenterSettings } from "@/lib/data/center-settings";
+import { getColorPalette } from "@/lib/data/colors";
 import { ClientCenterCalendar } from "@/components/client-center-calendar";
 import {
   createOwnReservationAction,
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientReservasPage() {
   const viewer = await getViewer();
-  const [data, centerSettings] = await Promise.all([
+  const [data, centerSettings, palette] = await Promise.all([
     viewer
       ? getClientCenterData(viewer.id)
       : Promise.resolve({
@@ -24,6 +25,7 @@ export default async function ClientReservasPage() {
           reservations: [],
         }),
     getCenterSettings(),
+    getColorPalette(),
   ]);
 
   return (
@@ -36,6 +38,7 @@ export default async function ClientReservasPage() {
 
       <ClientCenterCalendar
         data={data}
+        palette={palette}
         createAction={createOwnReservationAction}
         cancelAction={cancelOwnReservationAction}
         minCancellationHours={centerSettings.minCancellationHours}

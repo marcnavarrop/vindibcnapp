@@ -2,6 +2,7 @@ import { getViewer } from "@/lib/auth";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { getPendingReferralReward } from "@/lib/data/referral";
+import { getColorPalette } from "@/lib/data/colors";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
 import { RouteTabs } from "@/components/ui/route-tabs";
 
@@ -24,9 +25,10 @@ export default async function ComprarBonoPage() {
     : Promise.resolve(null);
 
   const services = await servicesPromise;
-  const [effectivePricesMap, pendingReferralReward] = await Promise.all([
+  const [effectivePricesMap, pendingReferralReward, palette] = await Promise.all([
     getEffectivePrices(services),
     rewardPromise,
+    getColorPalette(),
   ]);
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
@@ -40,6 +42,7 @@ export default async function ComprarBonoPage() {
 
       <BuyBonoForm
         services={services}
+        palette={palette}
         effectivePrices={effectivePrices}
         pendingReferralReward={pendingReferralReward}
       />

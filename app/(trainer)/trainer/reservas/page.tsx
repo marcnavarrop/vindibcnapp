@@ -13,6 +13,7 @@ import { listClients, listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { getCenterSettings } from "@/lib/data/center-settings";
+import { getColorPalette } from "@/lib/data/colors";
 import {
   cancelTrainerReservationAction,
   completeTrainerReservationAction,
@@ -36,6 +37,7 @@ export default async function TrainerReservasPage() {
     allBlocks,
     trials,
     centerSettings,
+    palette,
   ] = await Promise.all([
       listReservations(),
       listTrainers(),
@@ -44,6 +46,7 @@ export default async function TrainerReservasPage() {
       listAllBlocksLite(),
       listActiveTrialHolds(),
       getCenterSettings(),
+      getColorPalette(),
     ]);
   // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
   const manageableTrialIds = trials
@@ -84,6 +87,7 @@ export default async function TrainerReservasPage() {
         </div>
 
         <ReservationsView
+          palette={palette}
           reservations={visibleReservations}
           trainers={trainers}
           nowISO={nowISO}

@@ -13,6 +13,7 @@ import { listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { getCenterSettings } from "@/lib/data/center-settings";
+import { getColorPalette } from "@/lib/data/colors";
 import {
   cancelReservationAction,
   completeReservationAction,
@@ -26,7 +27,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function ReservasPage() {
-  const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks] =
+  const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, palette] =
     await Promise.all([
       listReservations(),
       listTrainers(),
@@ -35,6 +36,7 @@ export default async function ReservasPage() {
       // Per a la capa opcional de disponibilitat del calendari.
       listAllTrainerRulesLite(),
       listAllBlocksLite(),
+      getColorPalette(),
     ]);
   const nowISO = new Date().toISOString();
 
@@ -61,6 +63,7 @@ export default async function ReservasPage() {
         </div>
 
         <ReservationsView
+          palette={palette}
           reservations={reservations}
           trainers={trainers}
           nowISO={nowISO}

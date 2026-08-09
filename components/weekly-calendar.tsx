@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { clsx } from "@/lib/utils";
 import {
   SERVICE_LABELS,
-  SERVICE_COLORS,
   RESERVATION_STATUS_LABELS,
   GROUP_CAPACITY,
   SERVICE_TYPES,
@@ -21,6 +20,7 @@ import {
 } from "@/lib/availability-slots";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
+import { colorOfService, type ColorPalette } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
@@ -142,6 +142,7 @@ export function WeeklyCalendar({
   rejectTrialAction,
   openingHour = 7,
   closingHour = 22,
+  palette,
 }: {
   reservations: ReservationListItem[];
   manageableIds: string[];
@@ -172,6 +173,8 @@ export function WeeklyCalendar({
   manageableTrialIds?: string[];
   acceptTrialAction?: ReservationAction;
   rejectTrialAction?: ReservationAction;
+  /** Colors del centre, ja resolts (una sola càrrega per pàgina). */
+  palette: ColorPalette;
   /** Horari del centre (configurable per l'admin). */
   openingHour?: number;
   closingHour?: number;
@@ -379,6 +382,7 @@ export function WeeklyCalendar({
                         <ReservationCard
                           key={r.id}
                           r={r}
+                          palette={palette}
                           canManage={manageable.has(r.id)}
                           occupancy={
                             r.serviceType === "grupo_reducido"
@@ -433,6 +437,7 @@ export function WeeklyCalendar({
       {selected && (
         <ReservationModal
           r={selected}
+          palette={palette}
           canManage={manageable.has(selected.id)}
           cancelAction={cancelAction}
           completeAction={completeAction}
@@ -618,16 +623,18 @@ function ReservationCard({
   canManage,
   occupancy,
   onClick,
+  palette,
 }: {
   r: ReservationListItem;
   canManage: boolean;
   occupancy?: number;
   onClick: (e: React.MouseEvent) => void;
+  palette: ColorPalette;
 }) {
   const isGroup = r.serviceType === "grupo_reducido" && occupancy != null;
   const status = isGroup ? getOccupancyStatus(occupancy!) : null;
   const oc = status ? OCCUPANCY_COLORS[status] : null;
-  const color = SERVICE_COLORS[r.serviceType];
+  const color = colorOfService(palette, r.serviceType);
   const cancelled = r.status === "cancelled";
 
   return (
@@ -762,8 +769,10 @@ function ReservationModal({
   completeAction,
   rescheduleAction,
   onClose,
+  palette,
 }: {
   r: ReservationListItem;
+  palette: ColorPalette;
   canManage: boolean;
   cancelAction: ReservationAction;
   completeAction: ReservationAction;
@@ -809,7 +818,7 @@ function ReservationModal({
       >
         <div
           className="mb-3 h-1.5 w-12 rounded-full"
-          style={{ backgroundColor: SERVICE_COLORS[r.serviceType] }}
+          style={{ backgroundColor: colorOfService(palette, r.serviceType) }}
         />
         <h2 className="text-lg font-bold text-brand-dark">{r.clientName}</h2>
         <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>

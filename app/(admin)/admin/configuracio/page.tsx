@@ -4,6 +4,10 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
 import { ChangePasswordForm } from "@/components/forms/change-password-form";
 import { CenterSettingsForm } from "@/components/forms/center-settings-form";
+import { ColorsForm } from "@/components/forms/colors-form";
+import { getColorPalette } from "@/lib/data/colors";
+import { listTrainersDetailed } from "@/lib/data/trainers";
+import { avatarUrls } from "@/lib/data/avatars";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { USE_MOCK } from "@/lib/config";
 
@@ -11,15 +15,29 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminConfigPage() {
   const viewer = await getViewer();
-  const [prefs, centerSettings] = await Promise.all([
+  const [prefs, centerSettings, palette, trainers] = await Promise.all([
     viewer ? getPreferences(viewer.id) : Promise.resolve(null),
     getCenterSettings(),
+    getColorPalette(),
+    listTrainersDetailed(),
   ]);
+  const avatars = await avatarUrls(trainers.map((t) => t.avatarPath));
+  const professionals = trainers.map((t) => ({
+    id: t.id,
+    name: t.fullName,
+    avatarUrl: avatars.get(t.avatarPath ?? "") ?? null,
+  }));
 
   const tabs = [
     {
       label: "Centre",
       content: <CenterSettingsForm settings={centerSettings} />,
+    },
+    {
+      label: "Colors",
+      content: (
+        <ColorsForm palette={palette} professionals={professionals} />
+      ),
     },
     {
       label: "Notificacions",

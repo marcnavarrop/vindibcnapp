@@ -1,6 +1,7 @@
 import { Avatar } from "@/components/ui/avatar";
 import { avatarUrls } from "@/lib/data/avatars";
-import { proColor } from "@/lib/pro-colors";
+import { getColorPalette } from "@/lib/data/colors";
+import { colorOfPro } from "@/lib/colors";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { listTrainersDetailed } from "@/lib/data/trainers";
@@ -16,7 +17,10 @@ import { ResendInviteButton } from "@/components/resend-invite-button";
 export const dynamic = "force-dynamic";
 
 export default async function EntrenadorsPage() {
-  const trainers = await listTrainersDetailed();
+  const [trainers, palette] = await Promise.all([
+    listTrainersDetailed(),
+    getColorPalette(),
+  ]);
   // Les signed URLs es demanen totes d'un cop: una per fila serien N viatges.
   const avatars = await avatarUrls(trainers.map((t) => t.avatarPath));
 
@@ -66,7 +70,7 @@ export default async function EntrenadorsPage() {
                         email={t.email}
                         url={avatars.get(t.avatarPath ?? "") ?? null}
                         size={32}
-                        color={proColor(t.id)}
+                        color={colorOfPro(palette, t.id)}
                       />
                       {t.fullName}
                     </span>

@@ -6,7 +6,6 @@ import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import {
   SERVICE_LABELS,
-  SERVICE_COLORS,
   SERVICE_TYPES,
 } from "@/lib/labels";
 import type { ReservationListItem } from "@/lib/data/reservations";
@@ -18,7 +17,11 @@ import {
   type AvailabilityBlockLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
-import { proColor } from "@/lib/pro-colors";
+import {
+  colorOfPro,
+  colorOfService,
+  type ColorPalette,
+} from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
@@ -51,6 +54,7 @@ export function ReservationsView({
   showColleagueSelector,
   openingHour,
   closingHour,
+  palette,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -69,6 +73,8 @@ export function ReservationsView({
   /** Horari del centre (configurable per l'admin). */
   openingHour?: number;
   closingHour?: number;
+  /** Colors del centre, ja resolts. Es carreguen un cop a la pàgina. */
+  palette: ColorPalette;
   /** ID del trainer autenticat (per pre-seleccionar "La meva" disponibilitat). */
   myTrainerId?: string;
   trials?: TrialHoldItem[];
@@ -181,7 +187,7 @@ export function ReservationsView({
       .map((t) => ({
         trainerId: t.id,
         name: t.name,
-        color: proColor(t.id),
+        color: colorOfPro(palette, t.id),
         rules: allAvailability.filter((r) => r.trainerId === t.id),
       }));
   }, [
@@ -190,6 +196,7 @@ export function ReservationsView({
     allAvailability,
     trainersWithRules,
     hiddenAvailTrainers,
+    palette,
   ]);
 
   const colleagues = trainers.filter((t) => t.id !== myTrainerId);
@@ -299,7 +306,7 @@ export function ReservationsView({
                   <span
                     aria-hidden
                     className="h-3 w-3 shrink-0 rounded-full"
-                    style={{ backgroundColor: proColor(t.id) }}
+                    style={{ backgroundColor: colorOfPro(palette, t.id) }}
                   />
                   <span className="text-brand-charcoal">{t.name}</span>
                 </label>
@@ -425,7 +432,7 @@ export function ReservationsView({
               <span key={s} className="flex items-center gap-1 text-xs text-brand-muted">
                 <span
                   className="inline-block h-2.5 w-2.5 rounded-sm"
-                  style={{ backgroundColor: SERVICE_COLORS[s as ServiceType] }}
+                  style={{ backgroundColor: colorOfService(palette, s as ServiceType) }}
                 />
                 {SERVICE_LABELS[s as ServiceType]}
               </span>
@@ -436,6 +443,7 @@ export function ReservationsView({
 
       {view === "calendar" ? (
         <WeeklyCalendar
+          palette={palette}
           availabilityLayers={availabilityLayers}
           layerBlocks={allBlocks ?? []}
           reservations={filteredReservations}

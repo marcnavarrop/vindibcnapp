@@ -14,7 +14,7 @@ import {
   offeredServices,
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
-import { proColor } from "@/lib/pro-colors";
+import { colorOfPro, type ColorPalette } from "@/lib/colors";
 import { Avatar } from "@/components/ui/avatar";
 import type { ServiceType } from "@/types/database";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
@@ -118,11 +118,14 @@ export function ClientCenterCalendar({
   minCancellationHours = 0,
   openingHour = 7,
   closingHour = 22,
+  palette,
 }: {
   data: ClientCenterData;
   createAction: CreateAction;
   cancelAction: CancelAction;
   minCancellationHours?: number;
+  /** Colors del centre, ja resolts. Es carreguen un cop a la pàgina. */
+  palette: ColorPalette;
   /** Horari del centre (configurable per l'admin). */
   openingHour?: number;
   closingHour?: number;
@@ -408,7 +411,7 @@ export function ClientCenterCalendar({
                 name={t.name}
                 url={t.avatarUrl}
                 size={18}
-                color={proColor(t.id)}
+                color={colorOfPro(palette, t.id)}
               />
               {firstName(t.name)}
             </span>
@@ -496,7 +499,7 @@ export function ClientCenterCalendar({
                   >
                     <div className="flex flex-col gap-1">
                       {items.map((it, idx) => {
-                        const color = proColor(it.trainerId);
+                        const color = colorOfPro(palette, it.trainerId);
                         if (it.kind === "own") {
                           // Verd propi coherent amb el semàfor de grups (#16a34a = green-600)
                           const ownBg = "#dcfce7"; // green-100

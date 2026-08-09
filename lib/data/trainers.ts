@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { deleteAvatar } from "@/lib/data/avatars";
+import { assignInitialProColor } from "@/lib/data/colors";
 import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import type { Specialty } from "@/types/database";
 
@@ -142,6 +143,7 @@ export async function createTrainer(input: TrainerInput): Promise<string> {
       created_at: new Date().toISOString(),
     });
     saveStore(store);
+    await assignInitialProColor(id);
     return id;
   }
 
@@ -160,6 +162,9 @@ export async function createTrainer(input: TrainerInput): Promise<string> {
     .update({ specialty: input.specialty })
     .eq("id", id);
   if (updErr) throw updErr;
+  // Color per defecte des del primer moment: així no cal que l'admin hi entri
+  // perquè el nou professional es distingeixi als calendaris.
+  await assignInitialProColor(id);
   return id;
 }
 

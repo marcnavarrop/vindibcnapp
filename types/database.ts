@@ -1027,6 +1027,40 @@ export interface Database {
         };
         Relationships: [];
       };
+      professional_colors: {
+        Row: {
+          trainer_id: string;
+          color: string;
+          updated_at: string;
+        };
+        Insert: {
+          trainer_id: string;
+          color: string;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      service_type_colors: {
+        Row: {
+          service_type: ServiceType;
+          color: string;
+          updated_at: string;
+        };
+        Insert: {
+          service_type: ServiceType;
+          color: string;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       bonus_service_weights: {
         Row: {
           id: string;

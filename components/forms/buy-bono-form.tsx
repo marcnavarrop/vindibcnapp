@@ -2,7 +2,8 @@
 
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatEur, SERVICE_LABELS, SERVICE_COLORS } from "@/lib/labels";
+import { formatEur, SERVICE_LABELS } from "@/lib/labels";
+import { colorOfService, type ColorPalette } from "@/lib/colors";
 import {
   createPendingBonoAction,
   type FormState,
@@ -119,10 +120,12 @@ function Step1ServiceType({
   services,
   effectivePrices,
   onSelect,
+  palette,
 }: {
   services: Service[];
   effectivePrices: Record<string, EffectivePrice>;
   onSelect: (type: ServiceType) => void;
+  palette: ColorPalette;
 }) {
   // Agrupa per serviceType i calcula preu mínim efectiu
   const groups = useMemo(() => {
@@ -146,7 +149,7 @@ function Step1ServiceType({
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {groups.map(({ type, minPrice, hasDiscount }) => {
-          const color = SERVICE_COLORS[type];
+          const color = colorOfService(palette, type);
           const bgColor = `${color}18`;
           const borderColor = `${color}40`;
           return (
@@ -219,8 +222,10 @@ function Step2Package({
   effectivePrices,
   onSelect,
   onBack,
+  palette,
 }: {
   services: Service[];
+  palette: ColorPalette;
   serviceType: ServiceType;
   selectedId: string;
   effectivePrices: Record<string, EffectivePrice>;
@@ -244,7 +249,7 @@ function Step2Package({
     }).id;
   }, [pkgs, effectivePrices]);
 
-  const color = SERVICE_COLORS[serviceType];
+  const color = colorOfService(palette, serviceType);
 
   return (
     <div className="flex flex-col gap-4">
@@ -358,10 +363,13 @@ export function BuyBonoForm({
   services,
   effectivePrices = {},
   pendingReferralReward = null,
+  palette,
 }: {
   services: Service[];
   effectivePrices?: Record<string, EffectivePrice>;
   pendingReferralReward?: PendingReward | null;
+  /** Colors del centre, ja resolts. */
+  palette: ColorPalette;
 }) {
   const [state, formAction] = useActionState(
     createPendingBonoAction,
@@ -424,6 +432,7 @@ export function BuyBonoForm({
       {step === 1 && (
         <Step1ServiceType
           services={services}
+          palette={palette}
           effectivePrices={effectivePrices}
           onSelect={(type) => {
             setServiceType(type);
@@ -443,6 +452,7 @@ export function BuyBonoForm({
           <div className="rounded-2xl border border-brand-border bg-white p-5">
             <Step2Package
               services={services}
+              palette={palette}
               serviceType={serviceType}
               selectedId={serviceId}
               effectivePrices={effectivePrices}
