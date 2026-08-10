@@ -48,7 +48,7 @@ const FEATURES = [
 
 export function BrandPanel() {
   return (
-    <div className="relative flex flex-col justify-between gap-5 overflow-hidden bg-brand-purple px-6 py-7 text-white sm:gap-6 sm:p-8 lg:p-10">
+    <div className="relative flex flex-col gap-4 overflow-hidden bg-brand-purple px-6 py-7 text-white sm:gap-4 sm:p-8 lg:p-10">
       {/* Degradat i lluïssors de marca */}
       <div
         aria-hidden
@@ -63,7 +63,7 @@ export function BrandPanel() {
         className="pointer-events-none absolute -top-16 right-10 h-56 w-56 rounded-full bg-[radial-gradient(circle,#c77dff_0%,transparent_70%)] opacity-30"
       />
 
-      <div className="relative flex flex-col gap-4">
+      <div className="relative flex flex-col gap-3">
         {/* Logo: la "v" és l'isotip real; la resta, el nom en taronja. */}
         <div className="flex items-center gap-0.5">
           <img
@@ -71,7 +71,7 @@ export function BrandPanel() {
             alt="VindiBCN"
             width={52}
             height={52}
-            className="h-10 w-10 object-contain sm:h-12 sm:w-12"
+            className="h-9 w-9 object-contain sm:h-11 sm:w-11"
           />
           <span className="font-display text-3xl leading-none font-bold tracking-tight text-brand-orange sm:text-4xl">
             indi
@@ -82,7 +82,7 @@ export function BrandPanel() {
           Àrea client
         </span>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           <h2 className="font-display text-2xl leading-tight font-bold text-balance sm:text-[1.75rem]">
             El teu centre, al teu abast
           </h2>
@@ -94,22 +94,28 @@ export function BrandPanel() {
       </div>
 
       {/* Il·lustració.
-          `flex-1 min-h-0` + `object-contain`: absorbeix l'espai que sobra i
+          `flex-1 min-h-0` + `object-contain`: agafa tot l'espai que sobra i
           s'encongeix quan la finestra és baixa, en comptes de fer créixer el
           panell i obligar a fer scroll. Mai es deforma ni es retalla.
-          La imatge porta el seu propi fons fosc, que no és exactament el del
-          panell. Sense res, s'hi veia el rectangle retallat en sec; amb
-          `mix-blend-screen` passava el contrari (li aclaria el fons i el
-          rectangle es veia MÉS). La solució és una màscara radial ampla: el
-          centre es veu sencer i les vores es fonen amb el degradat. */}
-      <div className="relative hidden min-h-0 flex-1 items-center justify-center sm:flex">
+
+          Els marges negatius la fan sagnar cap als costats: a la referència la
+          composició ocupa gairebé tota l'amplada, amb el lotus i el calendari
+          als extrems, i centrada amb marge es veia com una miniatura.
+
+          Sense màscara ni mescla: el fitxer ja porta transparència. El PNG
+          original venia amb el seu propi fons morat, que no era exactament el
+          del panell i deixava un rectangle visible; provar-ho amb màscara
+          radial o `mix-blend-screen` només movia el problema de lloc. Els
+          traços s'han separat del fons per contrast local, així que ara la
+          il·lustració seu sobre el degradat sense cap vora. */}
+      <div className="relative -mx-5 hidden min-h-0 flex-1 items-center justify-center sm:-mx-7 sm:flex lg:-mx-9">
         <img
           src="/images/hero-entrenament.webp"
           alt=""
           aria-hidden
-          width={1536}
-          height={1024}
-          className="h-full max-h-64 w-full object-contain [mask-image:radial-gradient(ellipse_at_center,black_42%,transparent_78%)]"
+          width={1285}
+          height={986}
+          className="h-full w-full object-contain"
         />
       </div>
 
@@ -120,9 +126,9 @@ export function BrandPanel() {
         {FEATURES.map((f) => (
           <li
             key={f.title}
-            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur-sm sm:block sm:p-3.5"
+            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur-sm sm:block sm:p-3"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white sm:mb-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white sm:mb-1.5">
               <svg
                 width="17"
                 height="17"
