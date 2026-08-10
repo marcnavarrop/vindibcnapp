@@ -107,7 +107,7 @@ function UpdatePasswordInner() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-brand-bg p-6">
       <div className={SHELL}>
         <div className="mb-6 flex flex-col gap-1">
-          <Wordmark />
+          <Wordmark height={30} />
           <h1 className="text-xl text-brand-dark">Crea la teva contrasenya</h1>
         </div>
 

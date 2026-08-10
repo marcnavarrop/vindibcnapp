@@ -104,7 +104,7 @@ export default function RegisterPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
         <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
-          <Wordmark className="mb-4 block" />
+          <Wordmark height={34} className="mb-4" />
           <h1 className="text-xl text-brand-dark">Compte creat</h1>
           <p className="mt-3 text-sm text-brand-muted">
             Revisa el teu correu si la confirmació per email està activada.
@@ -126,7 +126,7 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
       <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
         <div className="mb-8 flex flex-col gap-1">
-          <Wordmark />
+          <Wordmark height={30} />
           <h1 className="text-xl text-brand-dark">Crear compte</h1>
         </div>
 

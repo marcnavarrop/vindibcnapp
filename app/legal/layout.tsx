@@ -12,7 +12,7 @@ export default function LegalLayout({
       <header className="border-b border-brand-border bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/">
-            <Wordmark className="text-xl" />
+            <Wordmark height={26} />
           </Link>
           <nav className="flex gap-4 text-xs font-bold tracking-wide text-brand-muted uppercase">
             <Link href="/legal/privacitat" className="hover:text-brand-purple">

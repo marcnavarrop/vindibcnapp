@@ -86,7 +86,7 @@ export function AppSidebar({
             <MenuIcon />
           </button>
           <Link href={HOME_PATH[role]}>
-            <Wordmark className="text-xl text-white" />
+            <Wordmark height={26} />
           </Link>
         </div>
         <div className="flex items-center gap-2">
@@ -148,8 +148,8 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <Link href={HOME_PATH[role]} className="px-2 pt-2">
-        <Wordmark className="text-2xl text-white" />
-        <span className="mt-0.5 block text-xs font-bold tracking-widest text-white/60 uppercase">
+        <Wordmark height={30} />
+        <span className="mt-1.5 block text-xs font-bold tracking-widest text-white/60 uppercase">
           {areaSubtitle(role, specialty)}
         </span>
       </Link>

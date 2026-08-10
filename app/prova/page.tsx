@@ -23,7 +23,7 @@ export default async function ProvaPage() {
   return (
     <main className="mx-auto max-w-4xl p-6">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <Wordmark />
+        <Wordmark height={30} />
         <Link
           href="/login"
           className="text-sm font-bold text-brand-muted hover:text-brand-purple"

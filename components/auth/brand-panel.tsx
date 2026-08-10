@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { Wordmark } from "@/components/wordmark";
 
 /**
  * Panell de marca de la pantalla d'entrada.
@@ -64,19 +65,9 @@ export function BrandPanel() {
       />
 
       <div className="relative flex flex-col gap-3">
-        {/* Logo: la "v" és l'isotip real; la resta, el nom en taronja. */}
-        <div className="flex items-center gap-0.5">
-          <img
-            src="/logo_vindi.png"
-            alt="VindiBCN"
-            width={52}
-            height={52}
-            className="h-9 w-9 object-contain sm:h-11 sm:w-11"
-          />
-          <span className="font-display text-3xl leading-none font-bold tracking-tight text-brand-orange sm:text-4xl">
-            indi
-          </span>
-        </div>
+        {/* Logotip oficial. Abans eren l'isotip i el text "indi" muntats a mà;
+            ara és el mateix fitxer que la resta de l'app. */}
+        <Wordmark height={48} />
 
         <span className="w-fit rounded-full border border-white/25 px-3 py-1 text-[11px] font-bold tracking-[0.14em] text-white/80 uppercase">
           Àrea client
