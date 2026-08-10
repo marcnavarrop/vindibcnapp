@@ -6,7 +6,10 @@ import { clsx } from "@/lib/utils";
 import {
   weekdayOf,
   localDateStr,
+  isHourBlocked,
+  blocksOf,
   type TrainerRuleLite,
+  type TrainerBlockLite,
 } from "@/lib/availability-slots";
 import { TRIAL_SERVICE } from "@/lib/data/trial-bookings.constants";
 // (valor compartit sense `server-only`, segur en un client component)
@@ -42,6 +45,7 @@ const toLocalInput = (d: Date) =>
 function slotIsFree(
   rules: TrainerRuleLite[],
   busy: Set<string>,
+  blocks: TrainerBlockLite[],
   date: Date,
   h: number,
 ): boolean {
@@ -54,6 +58,8 @@ function slotIsFree(
     if (h < r.startHour || h >= r.endHour) continue;
     if (!r.serviceTypes.includes(TRIAL_SERVICE)) continue;
     if (busy.has(`${r.trainerId}|${day}|${h}`)) continue;
+    // Vacances o absències: la regla setmanal hi és, però aquell dia no.
+    if (isHourBlocked(blocksOf(blocks, r.trainerId), date, h)) continue;
     return true; // hi ha com a mínim un entrenador lliure
   }
   return false;
@@ -81,6 +87,7 @@ export function TrialCalendar({
 
   const busy = useMemo(() => new Set(data.busy), [data.busy]);
   const rules = data.rules;
+  const blocks = data.blocks;
 
   const minMs = Date.now() + 24 * HOUR;
   const maxMs = Date.now() + 30 * 24 * HOUR;
@@ -201,7 +208,7 @@ export function TrialCalendar({
                 const bookable =
                   t >= minMs &&
                   t <= maxMs &&
-                  slotIsFree(rules, busy, cellDate, h);
+                  slotIsFree(rules, busy, blocks, cellDate, h);
                 return (
                   <div
                     key={dayIdx}

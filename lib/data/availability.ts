@@ -1,6 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import {
   availableHoursForDate,
@@ -105,7 +106,15 @@ export async function listAvailabilityLite(
   return (data ?? []).map(toLite);
 }
 
-/** Todas las reglas de TODOS los profesionales (para el calendario global). */
+/**
+ * Todas las reglas de TODOS los profesionales (para el calendario global).
+ *
+ * Client de SERVEI i no de sessió, com `getCenterSettings`: la RLS obre el
+ * SELECT als autenticats, i /prova és una pàgina PÚBLICA. Amb el client de
+ * sessió, un visitant anònim rebia zero files SENSE cap error, i el calendari
+ * de la sessió de prova es quedava buit per a tothom. No hi ha exposició nova:
+ * qualsevol autenticat ja les podia llegir totes, i són horaris d'obertura.
+ */
 export async function listAllTrainerRulesLite(): Promise<TrainerRuleLite[]> {
   if (USE_MOCK) {
     return getStore().availability_rules.map((r) => ({
@@ -113,7 +122,7 @@ export async function listAllTrainerRulesLite(): Promise<TrainerRuleLite[]> {
       ...toLite(r),
     }));
   }
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("availability_rules")
     .select(

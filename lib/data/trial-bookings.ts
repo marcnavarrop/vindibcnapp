@@ -167,6 +167,14 @@ export type PublicTrialData = {
   rules: TrainerRuleLite[];
   /** Claus `${trainerId}|${YYYY-MM-DD}|${hour}` de forats ja ocupats. */
   busy: string[];
+  /**
+   * Bloquejos (vacances, absències) dels mateixos entrenadors.
+   *
+   * Van a part de `busy` perquè són intervals, no forats concrets: expandir
+   * dues setmanes de vacances a claus d'hora en hora infla la resposta per
+   * res, i el calendari ja sap creuar intervals amb `isHourBlocked`.
+   */
+  blocks: TrainerBlockLite[];
 };
 
 /**
@@ -175,7 +183,10 @@ export type PublicTrialData = {
  * La ocupació combina reserves 'booked' i proves actives (pending/confirmed).
  */
 export async function getPublicTrialData(): Promise<PublicTrialData> {
-  const allRules = await listAllTrainerRulesLite();
+  const [allRules, allBlocks] = await Promise.all([
+    listAllTrainerRulesLite(),
+    listAllBlocksLite(),
+  ]);
   // Només regles que ofereixen com a mínim el servei de prova (ep_individual).
   const rules = allRules
     .filter((r) => r.serviceTypes.includes(TRIAL_SERVICE))
@@ -202,7 +213,7 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
       if (r.status === "booked") addBusy(r.trainer_id, r.scheduled_at);
     for (const t of store.trial_bookings)
       if (isActiveHold(t, now)) addBusy(t.trainer_id, t.scheduled_at);
-    return { rules, busy: [...busy] };
+    return { rules, busy: [...busy], blocks: blocksOfRules(allBlocks, rules) };
   }
 
   const admin = createAdminClient();
@@ -222,7 +233,21 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
   for (const t of trials.data ?? [])
     if (t.status === "confirmed" || t.expires_at >= nowISO)
       addBusy(t.trainer_id, t.scheduled_at);
-  return { rules, busy: [...busy] };
+  return { rules, busy: [...busy], blocks: blocksOfRules(allBlocks, rules) };
+}
+
+/**
+ * Només els bloquejos dels entrenadors que surten a /prova.
+ *
+ * Filtrar-los evita enviar al públic les absències de qui no hi apareix (el
+ * fisio, per exemple): és informació de plantilla que la pàgina no necessita.
+ */
+function blocksOfRules(
+  blocks: TrainerBlockLite[],
+  rules: TrainerRuleLite[],
+): TrainerBlockLite[] {
+  const ids = new Set(rules.map((r) => r.trainerId));
+  return blocks.filter((b) => ids.has(b.trainerId));
 }
 
 // ─────────────── Crear una sol·licitud de prova ───────────────

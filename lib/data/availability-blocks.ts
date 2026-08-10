@@ -1,6 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import type {
   AvailabilityBlockLite,
@@ -79,7 +80,12 @@ export async function listBlocksLite(
   return (data ?? []).map((b) => ({ startAt: b.start_at, endAt: b.end_at }));
 }
 
-/** Bloqueos de TODOS los profesionales (calendario global del cliente). */
+/**
+ * Bloqueos de TODOS los profesionales (calendario global del cliente).
+ *
+ * Client de SERVEI pel mateix motiu que `listAllTrainerRulesLite`: /prova és
+ * pública i amb el de sessió un visitant no en rebia cap.
+ */
 export async function listAllBlocksLite(): Promise<TrainerBlockLite[]> {
   if (USE_MOCK) {
     return getStore().availability_blocks.map((b) => ({
@@ -88,7 +94,7 @@ export async function listAllBlocksLite(): Promise<TrainerBlockLite[]> {
       endAt: b.end_at,
     }));
   }
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("availability_blocks")
     .select("trainer_id, start_at, end_at");

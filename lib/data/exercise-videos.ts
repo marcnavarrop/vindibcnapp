@@ -1,23 +1,18 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkExerciseVideo } from "@/lib/exercise-video.constants";
 
 const BUCKET = "exercise-videos";
-const MAX_SIZE = 200 * 1024 * 1024; // 200 MB
-const ALLOWED_MIME = new Set(["video/mp4", "video/quicktime"]);
 const SIGNED_URL_TTL = 3600; // 1 hora
+
+/** Reexportat perquè qui ja l'importava d'aquí no s'hagi d'assabentar. */
+export { MAX_VIDEO_MB } from "@/lib/exercise-video.constants";
 
 export function validateExerciseVideo(
   file: File,
 ): { ok: true } | { ok: false; error: string } {
-  if (file.size > MAX_SIZE)
-    return {
-      ok: false,
-      error: `El vídeo supera el límit de 200 MB (${(file.size / 1024 / 1024).toFixed(0)} MB).`,
-    };
-  if (!ALLOWED_MIME.has(file.type))
-    return { ok: false, error: "Format no acceptat. Usa MP4 o MOV." };
-  return { ok: true };
+  return checkExerciseVideo(file);
 }
 
 export async function uploadExerciseVideo(

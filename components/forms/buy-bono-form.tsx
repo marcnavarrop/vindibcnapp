@@ -13,6 +13,8 @@ import type { EffectivePrice } from "@/lib/data/promotions";
 import type { PendingReward } from "@/lib/data/referral";
 import type { ServiceType } from "@/types/database";
 import { PriceDisplay } from "@/components/ui/price-display";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 // ─── Icones SVG inline per tipus de servei ───────────────────────────────────
 function IconIndividual({ color }: { color: string }) {
@@ -377,6 +379,15 @@ export function BuyBonoForm({
   );
 
   const [step, setStep] = useState<1 | 2>(1);
+  /**
+   * Confirmació abans de crear el bo.
+   *
+   * "Pagar al centre" creava el bo amb un sol clic, i el bo ja serveix per
+   * reservar de seguida. Costava adonar-se que s'havia adquirit res: va
+   * confondre fins i tot qui coneix l'app. El pas del mig només explica què
+   * passarà; la lògica de negoci no canvia.
+   */
+  const [confirming, setConfirming] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
 
@@ -513,7 +524,8 @@ export function BuyBonoForm({
             </span>
 
             <button
-              type="submit"
+              type="button"
+              onClick={() => setConfirming(true)}
               className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
             >
               <span className="font-bold text-brand-dark">Pagar al centre</span>
@@ -541,6 +553,55 @@ export function BuyBonoForm({
 
           {state.error && (
             <p className="text-sm text-error">{state.error}</p>
+          )}
+
+          {selected && (
+            <ConfirmDialog
+              open={confirming}
+              onClose={() => setConfirming(false)}
+              title="Confirmes la reserva del bo?"
+              actions={
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(false)}
+                    className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                  >
+                    Cancel·lar
+                  </button>
+                  <SubmitButton>Confirmar</SubmitButton>
+                </>
+              }
+            >
+              <div className="flex flex-col gap-3 text-sm">
+                <div className="rounded-xl bg-brand-bg px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-bold text-brand-dark">
+                      {selected.name}
+                    </span>
+                    <PriceDisplay
+                      ep={
+                        effectivePrices[selected.id] ?? {
+                          originalPrice: selected.price,
+                          finalPrice: selected.price,
+                          discountAmount: 0,
+                          discountLabel: "",
+                          hasDiscount: false,
+                        }
+                      }
+                    />
+                  </div>
+                  <p className="mt-0.5 text-brand-muted">
+                    {SERVICE_LABELS[selected.serviceType]} ·{" "}
+                    {selected.defaultSessions} sessions
+                  </p>
+                </div>
+                <p className="text-brand-charcoal">
+                  En confirmar, aquest bo ja es podrà fer servir per reservar.
+                  El pagues al centre quan vulguis.
+                </p>
+              </div>
+            </ConfirmDialog>
           )}
         </form>
       )}

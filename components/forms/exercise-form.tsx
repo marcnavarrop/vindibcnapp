@@ -7,6 +7,10 @@ import { SelectField } from "@/components/ui/select";
 import { TextAreaField } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
+import {
+  checkExerciseVideo,
+  VIDEO_LIMIT_LABEL,
+} from "@/lib/exercise-video.constants";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ExerciseCategory } from "@/types/database";
 
@@ -42,10 +46,22 @@ export function ExerciseForm({
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
   const [videoMode, setVideoMode] = useState<VideoMode>(initialMode(defaults));
+  /**
+   * Error del fitxer detectat AQUÍ, abans d'enviar res.
+   *
+   * Sense això, un vídeo massa gros no arribava ni al servidor: Next talla la
+   * petició pel `bodySizeLimit` i el resultat era una pantalla d'"Application
+   * error", no un missatge. Comprovar-ho al navegador estalvia el viatge i,
+   * sobretot, diu què passa.
+   */
+  const [fileError, setFileError] = useState<string | null>(null);
 
   return (
     <form
       action={formAction}
+      onSubmit={(e) => {
+        if (fileError) e.preventDefault();
+      }}
       encType="multipart/form-data"
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
@@ -108,7 +124,7 @@ export function ExerciseForm({
               />
             )}
             <label className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-              Fitxer de vídeo (MP4 / MOV, màx. 200 MB)
+              Fitxer de vídeo ({VIDEO_LIMIT_LABEL})
             </label>
             {defaults?.videoFilePath && (
               <p className="rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
@@ -121,8 +137,19 @@ export function ExerciseForm({
               name="videoFile"
               accept="video/mp4,video/quicktime,.mp4,.mov"
               capture="environment"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (!f) return setFileError(null);
+                const check = checkExerciseVideo(f);
+                setFileError(check.ok ? null : check.error);
+              }}
               className="text-sm text-brand-dark file:mr-3 file:rounded-lg file:border-0 file:bg-brand-purple file:px-3 file:py-1 file:text-xs file:font-bold file:text-white file:tracking-wide file:uppercase"
             />
+            {fileError && (
+              <p className="text-sm text-error" role="alert">
+                {fileError}
+              </p>
+            )}
           </div>
         )}
       </div>
