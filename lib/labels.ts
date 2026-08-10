@@ -10,6 +10,8 @@ import type {
   Specialty,
   PreferredLanguage,
   Gender,
+  SupportCategory,
+  SupportStatus,
 } from "@/types/database";
 
 export const SPECIALTY_LABELS: Record<Specialty, string> = {
@@ -110,6 +112,30 @@ export const BONO_STATUS_LABELS: Record<BonoStatus, string> = {
   expired: "Caducat",
   unpaid: "Anul·lat per impagament",
 };
+
+export const SUPPORT_CATEGORY_LABELS: Record<SupportCategory, string> = {
+  bug: "Error",
+  pregunta: "Pregunta",
+  suggeriment: "Suggeriment",
+};
+
+export const SUPPORT_CATEGORIES: SupportCategory[] = [
+  "bug",
+  "pregunta",
+  "suggeriment",
+];
+
+export const SUPPORT_STATUS_LABELS: Record<SupportStatus, string> = {
+  open: "Obert",
+  in_progress: "En curs",
+  resolved: "Resolt",
+};
+
+export const SUPPORT_STATUSES: SupportStatus[] = [
+  "open",
+  "in_progress",
+  "resolved",
+];
 
 export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   booked: "Reservada",

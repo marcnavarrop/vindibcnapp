@@ -23,7 +23,9 @@ export type NotificationEventType =
   | "new_client_registered"
   // Avisos manuals (accionats pel trainer/admin, no apareixen a preferències):
   | "new_exercises_assigned"
-  | "invoice_generated";
+  | "invoice_generated"
+  // Avís intern cap a qui desenvolupa l'app (no és cap usuari del centre):
+  | "support_ticket_created";
 
 export type NotificationChannel = "email" | "whatsapp";
 
@@ -158,6 +160,15 @@ export const EVENT_META: Record<
     audience: [],
     group: "general",
   },
+  support_ticket_created: {
+    label: "Nou tiquet de suport",
+    description: "Quan algú de l'equip reporta una incidència o un dubte.",
+    // `audience: []` com invoice_generated: el destinatari és qui desenvolupa
+    // l'app, que no té compte al centre i per tant no té cap pantalla de
+    // preferències on triar si el vol rebre.
+    audience: [],
+    group: "general",
+  },
 };
 
 /** Ordre de presentació dels esdeveniments a la UI. */
@@ -177,4 +188,5 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "new_client_registered",
   "new_exercises_assigned",
   "invoice_generated",
+  "support_ticket_created",
 ];

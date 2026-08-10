@@ -12,6 +12,9 @@
 
 export type UserRole = "admin" | "trainer" | "client";
 export type Specialty = "entrenador" | "fisioterapeuta";
+
+export type SupportCategory = "bug" | "pregunta" | "suggeriment";
+export type SupportStatus = "open" | "in_progress" | "resolved";
 export type PreferredLanguage = "ca" | "es" | "en";
 export type Gender = "home" | "dona" | "altre" | "ns_nc";
 export type ServiceType =
@@ -1024,6 +1027,33 @@ export interface Database {
           rate_amount?: number;
           effective_from?: string;
           effective_until?: string | null;
+        };
+        Relationships: [];
+      };
+      support_tickets: {
+        Row: {
+          id: string;
+          created_by: string;
+          title: string;
+          description: string;
+          category: SupportCategory;
+          status: SupportStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          created_by: string;
+          title: string;
+          description: string;
+          category: SupportCategory;
+          status?: SupportStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: SupportStatus;
+          updated_at?: string;
         };
         Relationships: [];
       };

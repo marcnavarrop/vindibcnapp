@@ -496,6 +496,29 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "support_ticket_created": {
+      // L'assumpte porta la categoria i el títol perquè es pugui triar què
+      // mirar primer des de la safata, sense obrir el correu.
+      subject = `[Suport · ${d.category}] ${d.title} · VindiBCN`;
+      block = {
+        heading: "Nou tiquet de suport",
+        intro: [
+          `${d.reporter} ha obert un tiquet des de ${d.area}.`,
+          // La descripció sencera va al cos i no només a l'app: així es pot
+          // valorar la incidència des del mòbil sense haver d'entrar-hi.
+          d.description,
+        ],
+        details: rows([
+          ["Títol", d.title],
+          ["Categoria", d.category],
+          ["Qui ho reporta", d.reporter],
+          ["Data", d.when],
+        ]),
+        cta: { label: "Veure els tiquets", url: appLink("/admin/suport") },
+        footer: "plain",
+      };
+      break;
+    }
   }
 
   return { subject, html: layout(block), text: plain(block) };

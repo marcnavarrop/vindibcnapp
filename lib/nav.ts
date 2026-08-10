@@ -75,6 +75,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     },
     { href: "/admin/exercicis", label: "Exercicis" },
     { href: "/admin/community", label: "Comunitat" },
+    { href: "/admin/suport", label: "Suport" },
     { href: "/admin/configuracio", label: "Configuració" },
   ],
   trainer: [
@@ -91,6 +92,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/trainer/factures", label: "Les meves factures" },
     { href: "/trainer/exercicis", label: "Exercicis" },
     { href: "/trainer/comunitat", label: "Comunitat" },
+    { href: "/trainer/suport", label: "Suport" },
     { href: "/trainer/configuracio", label: "Configuració" },
   ],
   client: [

@@ -56,6 +56,7 @@ export type Store = {
   bonus_worker_settings: Tables["bonus_worker_settings"]["Row"][];
   bonus_payouts: Tables["bonus_payouts"]["Row"][];
   settlements: Tables["settlements"]["Row"][];
+  support_tickets: Tables["support_tickets"]["Row"][];
   professional_colors: Tables["professional_colors"]["Row"][];
   service_type_colors: Tables["service_type_colors"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
@@ -103,6 +104,7 @@ function fromSeed(): Store {
     bonus_worker_settings: [],
     bonus_payouts: [],
     settlements: [],
+    support_tickets: [],
     professional_colors: [],
     // Mateixa llavor que la migració 0046: els colors que ja feia servir el codi.
     service_type_colors: [
