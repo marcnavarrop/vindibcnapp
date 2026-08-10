@@ -19,11 +19,15 @@ export const metadata: Metadata = {
  */
 export default async function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-brand-bg p-0 sm:p-6">
-      <div className="grid w-full max-w-5xl overflow-hidden bg-white shadow-xl sm:rounded-3xl lg:grid-cols-2">
+    /* `lg:h-dvh` + `lg:overflow-hidden`: en escriptori la pantalla cap sencera
+       i no es fa scroll per arribar al botó d'entrar. El `max-h` evita que en
+       pantalles molt altes (1440p) la targeta s'estiri i quedi buida pel mig.
+       En mòbil es manté el flux natural: allà sí que s'ha de poder desplaçar. */
+    <main className="flex min-h-dvh items-center justify-center bg-brand-bg p-0 sm:p-4 lg:h-dvh lg:overflow-hidden lg:p-6">
+      <div className="grid w-full max-w-5xl overflow-hidden bg-white shadow-xl sm:rounded-3xl lg:h-full lg:max-h-[840px] lg:grid-cols-2">
         <BrandPanel />
 
-        <div className="flex flex-col justify-center gap-8 p-8 sm:p-10 lg:p-12">
+        <div className="flex flex-col justify-center gap-6 overflow-y-auto p-8 sm:p-10">
           <LoginPanel trialCta={<TrialCta />} />
 
           <footer className="text-center text-xs text-brand-muted">

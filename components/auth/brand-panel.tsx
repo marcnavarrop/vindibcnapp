@@ -8,129 +8,10 @@
  * prou feina amb el formulari, i perquè si algun dia el registre estrena la
  * mateixa composició, el panell ja és aquí.
  *
- * S'usa <img> i no next/image per al logo: és un PNG local i petit que es
- * pinta a mida fixa, i next/image només hi afegiria feina.
+ * S'usa <img> i no next/image a propòsit: són dos fitxers locals que es pinten
+ * a mida coneguda, i next/image només hi afegiria configuració per no guanyar
+ * res mesurable.
  */
-
-/** Il·lustració de línia: figura fent una gambada, envoltada del que ofereix el centre. */
-function HeroIllustration() {
-  return (
-    <svg
-      viewBox="0 0 420 300"
-      fill="none"
-      className="h-auto w-full max-w-sm"
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id="vindiStroke" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ff6d17" />
-          <stop offset="100%" stopColor="#c77dff" />
-        </linearGradient>
-      </defs>
-
-      {/* Cercle de fons */}
-      <circle
-        cx="210"
-        cy="150"
-        r="118"
-        stroke="#ffffff"
-        strokeOpacity="0.14"
-        strokeWidth="1"
-      />
-      <circle
-        cx="210"
-        cy="150"
-        r="140"
-        stroke="#ffffff"
-        strokeOpacity="0.07"
-        strokeWidth="1"
-        strokeDasharray="3 7"
-      />
-
-      {/* ── Figura fent una gambada, de perfil mirant a la dreta ──
-          L'asimetria és el que fa que es llegeixi: cama de davant flexionada
-          cap a la dreta, cama del darrere estirada cap enrere. Simètrica es
-          veia com un triangle, no com algú entrenant. */}
-      <g
-        stroke="url(#vindiStroke)"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {/* Monyo i cap */}
-        <circle cx="198" cy="92" r="12" />
-        <circle cx="182" cy="84" r="6.5" />
-        {/* Coll */}
-        <path d="M199 104l3 11" />
-        {/* Tors, lleugerament endavant */}
-        <path d="M202 115c1 13-1 26-4 37" />
-        {/* Pelvis */}
-        <path d="M190 152h16" />
-        {/* Cama de davant: cuixa, tíbia i peu */}
-        <path d="M204 153c12 7 22 15 25 25" />
-        <path d="M229 178c1 11 1 19 0 26" />
-        <path d="M224 204h18" />
-        {/* Cama del darrere: estirada, genoll baix */}
-        <path d="M194 153c-10 10-21 21-28 33" />
-        <path d="M166 186c-6 7-11 13-15 17" />
-        <path d="M145 203h18" />
-        {/* Braços */}
-        <path d="M205 119c6 10 8 20 5 31" />
-        <path d="M199 119c-6 10-9 20-8 31" />
-      </g>
-
-      {/* Terra */}
-      <path
-        d="M148 206h132"
-        stroke="#ffffff"
-        strokeOpacity="0.25"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeDasharray="2 9"
-      />
-
-      {/* ── Icones al voltant ── */}
-      <g
-        stroke="#c77dff"
-        strokeOpacity="0.9"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {/* Flor de lotus */}
-        <g transform="translate(70 100)">
-          <path d="M15 24c-9-3-14-10-14-17 5-1 11 1 14 6" />
-          <path d="M15 24c9-3 14-10 14-17-5-1-11 1-14 6" />
-          <path d="M15 24c-5-7-6-15-1-22 6 5 7 15 1 22z" />
-        </g>
-
-        {/* Manuella */}
-        <g transform="translate(56 172)">
-          <rect x="0" y="6" width="6" height="14" rx="2" />
-          <rect x="30" y="6" width="6" height="14" rx="2" />
-          <path d="M6 13h24" strokeWidth="3" />
-        </g>
-
-        {/* Calendari amb marca */}
-        <g transform="translate(298 92)">
-          <rect x="0" y="5" width="46" height="42" rx="7" />
-          <path d="M0 18h46M13 0v9M33 0v9" />
-          <path d="M13 32l7 7 13-14" stroke="#ff6d17" strokeWidth="2.4" />
-        </g>
-
-        {/* Cor */}
-        <g transform="translate(304 176)">
-          <path d="M17 32S2 22 2 12A9 9 0 0117 6.5 9 9 0 0132 12c0 10-15 20-15 20z" />
-        </g>
-      </g>
-
-      {/* Punts d'accent */}
-      <circle cx="120" cy="140" r="3.5" fill="#ff6d17" />
-      <circle cx="296" cy="150" r="3" fill="#c77dff" />
-      <circle cx="252" cy="66" r="2.5" fill="#ff6d17" fillOpacity="0.7" />
-    </svg>
-  );
-}
 
 const FEATURES = [
   {
@@ -167,7 +48,7 @@ const FEATURES = [
 
 export function BrandPanel() {
   return (
-    <div className="relative flex flex-col justify-between gap-6 overflow-hidden bg-brand-purple px-6 py-8 text-white sm:gap-8 sm:p-10 lg:p-12">
+    <div className="relative flex flex-col justify-between gap-5 overflow-hidden bg-brand-purple px-6 py-7 text-white sm:gap-6 sm:p-8 lg:p-10">
       {/* Degradat i lluïssors de marca */}
       <div
         aria-hidden
@@ -182,7 +63,7 @@ export function BrandPanel() {
         className="pointer-events-none absolute -top-16 right-10 h-56 w-56 rounded-full bg-[radial-gradient(circle,#c77dff_0%,transparent_70%)] opacity-30"
       />
 
-      <div className="relative flex flex-col gap-6">
+      <div className="relative flex flex-col gap-4">
         {/* Logo: la "v" és l'isotip real; la resta, el nom en taronja. */}
         <div className="flex items-center gap-0.5">
           <img
@@ -190,9 +71,9 @@ export function BrandPanel() {
             alt="VindiBCN"
             width={52}
             height={52}
-            className="h-11 w-11 object-contain sm:h-13 sm:w-13"
+            className="h-10 w-10 object-contain sm:h-12 sm:w-12"
           />
-          <span className="font-display text-4xl leading-none font-bold tracking-tight text-brand-orange sm:text-5xl">
+          <span className="font-display text-3xl leading-none font-bold tracking-tight text-brand-orange sm:text-4xl">
             indi
           </span>
         </div>
@@ -201,8 +82,8 @@ export function BrandPanel() {
           Àrea client
         </span>
 
-        <div className="flex flex-col gap-3">
-          <h2 className="font-display text-2xl leading-tight font-bold text-balance sm:text-3xl">
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-2xl leading-tight font-bold text-balance sm:text-[1.75rem]">
             El teu centre, al teu abast
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-white/70">
@@ -212,10 +93,24 @@ export function BrandPanel() {
         </div>
       </div>
 
-      {/* La il·lustració és decoració: en pantalles baixes desapareix abans que
-          res del que informa. */}
-      <div className="relative hidden justify-center py-2 sm:flex">
-        <HeroIllustration />
+      {/* Il·lustració.
+          `flex-1 min-h-0` + `object-contain`: absorbeix l'espai que sobra i
+          s'encongeix quan la finestra és baixa, en comptes de fer créixer el
+          panell i obligar a fer scroll. Mai es deforma ni es retalla.
+          La imatge porta el seu propi fons fosc, que no és exactament el del
+          panell. Sense res, s'hi veia el rectangle retallat en sec; amb
+          `mix-blend-screen` passava el contrari (li aclaria el fons i el
+          rectangle es veia MÉS). La solució és una màscara radial ampla: el
+          centre es veu sencer i les vores es fonen amb el degradat. */}
+      <div className="relative hidden min-h-0 flex-1 items-center justify-center sm:flex">
+        <img
+          src="/images/hero-entrenament.webp"
+          alt=""
+          aria-hidden
+          width={1536}
+          height={1024}
+          className="h-full max-h-64 w-full object-contain [mask-image:radial-gradient(ellipse_at_center,black_42%,transparent_78%)]"
+        />
       </div>
 
       {/* En mòbil, en fila (icona a l'esquerra) per no menjar-se la pantalla
