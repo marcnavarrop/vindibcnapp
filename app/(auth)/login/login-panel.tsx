@@ -5,15 +5,29 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
-import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/input";
+import { PasswordField } from "@/components/ui/password-field";
 import { ROLE_LABELS } from "@/lib/labels";
 import { safeRedirect } from "@/lib/auth-redirect";
 import type { UserRole } from "@/types/database";
 
-const SHELL =
-  "w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm";
+function MailIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="2.5" y="5" width="19" height="14" rx="3" />
+      <path d="M3 7l9 6 9-6" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="4" y="10" width="16" height="11" rx="3" />
+      <path d="M8 10V7a4 4 0 018 0v3" />
+    </svg>
+  );
+}
 
 /** Login simulado: elige un rol y entra sin contraseña (modo demo). */
 function MockLogin() {
@@ -30,16 +44,16 @@ function MockLogin() {
   const roles: UserRole[] = ["admin", "trainer", "client"];
 
   return (
-    <div className={SHELL}>
-      <div className="mb-6 flex flex-col gap-1">
-        <Wordmark />
-        <h1 className="text-xl text-brand-dark">Entrar (mode demo)</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="font-display text-2xl font-bold text-brand-dark sm:text-3xl">
+          Entrar (mode demo)
+        </h1>
+        <p className="text-sm text-brand-muted">
+          Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són
+          d&apos;exemple.
+        </p>
       </div>
-
-      <p className="mb-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
-        Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són
-        d&apos;exemple.
-      </p>
 
       <div className="flex flex-col gap-3">
         {roles.map((role) => (
@@ -57,7 +71,7 @@ function MockLogin() {
 }
 
 /** Login real contra Supabase. */
-function LoginForm() {
+function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
   const searchParams = useSearchParams();
   // Missatge d'error que pot arribar del callback (enllaç caducat, etc.).
   const [error, setError] = useState<string | null>(
@@ -123,55 +137,80 @@ function LoginForm() {
   }
 
   return (
-    <div className={SHELL}>
-      <div className="mb-8 flex flex-col gap-1">
-        <Wordmark />
-        <h1 className="text-xl text-brand-dark">Iniciar sessió</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="font-display text-2xl font-bold text-brand-dark sm:text-3xl">
+          Benvingut de nou
+        </h1>
+        <p className="text-sm leading-relaxed text-brand-muted">
+          Inicia sessió per accedir al teu espai personal i continuar cuidant de
+          tu.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Camps no controlats: sense estat de React no hi pot haver desajust
             amb l'autocompletat. Els valors es llegeixen del FormData al submit. */}
-        <Field
-          label="Correu electrònic"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-        />
-        <Field
+        <div className="flex flex-col gap-1.5 text-sm">
+          <label htmlFor="email" className="font-medium text-brand-charcoal">
+            Correu electrònic
+          </label>
+          <div className="relative">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-brand-muted"
+            >
+              <MailIcon />
+            </span>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="exemple@correu.cat"
+              className="w-full rounded-xl border border-brand-border bg-white py-2.5 pr-3 pl-10 text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
+            />
+          </div>
+        </div>
+
+        <PasswordField
           label="Contrasenya"
           name="password"
-          type="password"
           required
           autoComplete="current-password"
+          placeholder="Introdueix la teva contrasenya"
+          icon={<LockIcon />}
         />
+
+        <div className="flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="text-sm font-medium text-brand-purple hover:text-brand-orange"
+          >
+            Has oblidat la contrasenya?
+          </Link>
+        </div>
 
         {error && <p className="text-sm text-error">{error}</p>}
 
-        <Button type="submit" disabled={loading}>
-          {loading ? "Entrant…" : "Entrar"}
-        </Button>
-      </form>
-
-      <p className="mt-4 text-sm text-brand-muted">
-        <Link
-          href="/forgot-password"
-          className="font-bold text-brand-purple hover:text-brand-orange"
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl bg-brand-orange px-4 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
         >
-          Has oblidat la contrasenya?
-        </Link>
-      </p>
+          {loading ? "Entrant…" : "Iniciar sessió"}
+        </button>
 
-      <p className="mt-2 text-sm text-brand-muted">
-        No tens compte?{" "}
         <Link
           href="/register"
-          className="font-bold text-brand-purple hover:text-brand-orange"
+          className="w-full rounded-xl border border-brand-orange px-4 py-3 text-center text-sm font-bold text-brand-orange transition-colors hover:bg-brand-orange/5"
         >
           Crear compte
         </Link>
-      </p>
+
+        {trialCta}
+      </form>
     </div>
   );
 }
@@ -180,7 +219,14 @@ function LoginForm() {
  * Part interactiva del login. Viu separada de la pàgina perquè la pàgina ha de
  * ser un component de servidor: necessita llegir la configuració del centre
  * per decidir si ensenya la crida a la sessió de prova.
+ *
+ * `trialCta` arriba com a prop i no s'importa aquí perquè és un component de
+ * servidor (llegeix la configuració): la pàgina el renderitza i el passa fet.
  */
-export function LoginPanel() {
-  return <Suspense>{USE_MOCK ? <MockLogin /> : <LoginForm />}</Suspense>;
+export function LoginPanel({ trialCta }: { trialCta?: React.ReactNode }) {
+  return (
+    <Suspense>
+      {USE_MOCK ? <MockLogin /> : <LoginForm trialCta={trialCta} />}
+    </Suspense>
+  );
 }

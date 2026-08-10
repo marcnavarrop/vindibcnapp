@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { getCenterSettings } from "@/lib/data/center-settings";
 
+function GiftIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="9" width="18" height="12" rx="2" />
+      <path d="M3 13h18M12 9v12" />
+      <path d="M12 9S10.5 3 7.5 3a2.5 2.5 0 000 5H12zM12 9s1.5-6 4.5-6a2.5 2.5 0 010 5H12z" />
+    </svg>
+  );
+}
+
 /**
  * Crida a l'acció cap a la sessió de prova gratuïta.
  *
@@ -9,29 +19,21 @@ import { getCenterSettings } from "@/lib/data/center-settings";
  * pitjor que no tenir-lo: un visitant hi clicava i es trobava una porta
  * tancada, sense saber si s'havia equivocat ell.
  *
- * Viu en un component propi perquè el mateix enllaç surt a la home pública i
- * al login, i la comprovació no s'ha de duplicar (ni oblidar-se al tercer lloc
- * on es posi).
+ * Viu en un component propi —encara que ara només surti a la pantalla
+ * d'entrada— perquè la comprovació del mòdul no s'ha de tornar a escriure al
+ * segon lloc on es posi l'enllaç.
  */
-export async function TrialCta({
-  variant,
-}: {
-  /** `hero`: sobre el fons fosc de la home. `card`: sota la targeta del login. */
-  variant: "hero" | "card";
-}) {
+export async function TrialCta() {
   const settings = await getCenterSettings();
   if (!settings.modules.sessionsProva) return null;
 
-  const className =
-    variant === "hero"
-      ? "inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-bold tracking-wide uppercase transition-colors hover:bg-white/20"
-      : "mt-5 inline-flex items-center gap-2 rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold text-brand-purple hover:border-brand-purple";
-
   return (
-    <Link href="/prova" className={className}>
-      {variant === "hero"
-        ? "🎁 Sessió de prova gratuïta"
-        : "🎁 Vols provar-nos? Demana una sessió de prova gratuïta"}
+    <Link
+      href="/prova"
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-purple/8 px-4 py-3 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/15"
+    >
+      <GiftIcon />
+      Sessió de prova gratuïta
     </Link>
   );
 }

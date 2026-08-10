@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Field } from "@/components/ui/input";
+import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -72,28 +72,25 @@ export function ChangePasswordForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex max-w-sm flex-col gap-4">
-        <Field
+        <PasswordField
           label="Contrasenya actual"
           name="current"
-          type="password"
           autoComplete="current-password"
           required
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
         />
-        <Field
+        <PasswordField
           label="Nova contrasenya"
           name="password"
-          type="password"
           autoComplete="new-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Field
+        <PasswordField
           label="Repeteix la nova contrasenya"
           name="confirm"
-          type="password"
           autoComplete="new-password"
           required
           value={confirm}

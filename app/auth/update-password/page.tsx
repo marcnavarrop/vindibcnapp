@@ -6,7 +6,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/input";
+import { PasswordField } from "@/components/ui/password-field";
 import { roleHome } from "@/lib/auth-redirect";
 import type { UserRole } from "@/types/database";
 
@@ -127,18 +127,16 @@ function UpdatePasswordInner() {
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {/* Camps no controlats: es llegeixen del FormData al submit. */}
-            <Field
+            <PasswordField
               label="Nova contrasenya"
               name="password"
-              type="password"
               required
               minLength={8}
               autoComplete="new-password"
             />
-            <Field
+            <PasswordField
               label="Repeteix la contrasenya"
               name="confirm"
-              type="password"
               required
               minLength={8}
               autoComplete="new-password"

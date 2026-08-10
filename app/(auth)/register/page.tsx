@@ -7,6 +7,7 @@ import { USE_MOCK } from "@/lib/config";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
+import { PasswordField } from "@/components/ui/password-field";
 import {
   recordRegistrationConsentAction,
   notifyNewRegistrationAction,
@@ -147,10 +148,9 @@ export default function RegisterPage() {
             autoComplete="email"
           />
 
-          <Field
+          <PasswordField
             label="Contrasenya"
             name="password"
-            type="password"
             required
             minLength={6}
             autoComplete="new-password"
