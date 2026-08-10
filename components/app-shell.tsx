@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { SupportFab } from "@/components/support-fab";
 import { getViewer } from "@/lib/auth";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { avatarUrl } from "@/lib/data/avatars";
@@ -47,6 +48,14 @@ export async function AppShell({
         modules={settings.modules}
       />
       <div className="lg:pl-64">{children}</div>
+
+      {/* Accés ràpid al suport des de qualsevol pantalla de les àrees internes.
+          Va aquí i no a cada pàgina: així no se'n pot quedar cap sense.
+          El client NO el veu: el suport és un canal de l'equip cap a qui
+          desenvolupa, i la RLS ni tan sols el deixaria obrir cap tiquet. */}
+      {role !== "client" && (
+        <SupportFab basePath={`/${role}/suport`} />
+      )}
     </div>
   );
 }

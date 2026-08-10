@@ -110,6 +110,21 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
 }
 
 /**
+ * Els darrers tiquets OBERTS PER UN MATEIX.
+ *
+ * Sempre els propis, també per a l'admin: el widget flotant és accés ràpid al
+ * que has reportat tu. La vista de gestió de tot l'equip segueix sent la
+ * pàgina completa, que és on l'admin hi treballa.
+ */
+export async function listMyRecentTickets(
+  profileId: string,
+  limit = 5,
+): Promise<SupportTicket[]> {
+  const all = await listSupportTickets();
+  return all.filter((t) => t.createdBy === profileId).slice(0, limit);
+}
+
+/**
  * Crea un tiquet a nom de qui el reporta.
  *
  * `created_by` el posa el servidor a partir de la sessió, mai el formulari:
