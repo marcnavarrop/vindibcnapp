@@ -17,7 +17,7 @@ import { Wordmark } from "@/components/wordmark";
 const FEATURES = [
   {
     title: "Reserves en 1 clic",
-    desc: "Reserva, modifica o anul·la en segons.",
+    desc: "Reserva o anul·la en segons.",
     icon: (
       <>
         <rect x="3" y="5" width="18" height="16" rx="3" />
@@ -27,7 +27,7 @@ const FEATURES = [
   },
   {
     title: "Seguiment de bons",
-    desc: "Consulta els teus bons i sessions disponibles.",
+    desc: "Sessions i bons, sempre al dia.",
     icon: (
       <>
         <path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 000-4z" />
@@ -37,7 +37,7 @@ const FEATURES = [
   },
   {
     title: "Comunitat i avisos",
-    desc: "Rep novetats i avisos del teu centre.",
+    desc: "Novetats i avisos del centre.",
     icon: (
       <>
         <path d="M18 8A6 6 0 006 8c0 7-3 8-3 8h18s-3-1-3-8z" />
@@ -110,16 +110,16 @@ export function BrandPanel() {
         />
       </div>
 
-      {/* En mòbil, en fila (icona a l'esquerra) per no menjar-se la pantalla
-          abans d'arribar al formulari, que és a què ve la gent. A partir de
-          `sm` recuperen la graella de tres columnes del disseny. */}
+      {/* Sempre en fila: icona en un quadrat a l'esquerra i, a la dreta,
+          títol i descripció. Apilades (icona a dalt, text a sota) feien la
+          fila el doble d'alta i li menjaven l'espai a la il·lustració. */}
       <ul className="relative grid gap-2.5 sm:grid-cols-3">
         {FEATURES.map((f) => (
           <li
             key={f.title}
-            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur-sm sm:block sm:p-3"
+            className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.07] p-2.5 backdrop-blur-sm"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white sm:mb-1.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
               <svg
                 width="17"
                 height="17"
