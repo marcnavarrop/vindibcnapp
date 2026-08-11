@@ -199,6 +199,14 @@ export function formatTime(iso: string): string {
   }).format(new Date(iso));
 }
 
+/** Mes abreujat ("ag.", "set."), per als calendaris compactes. */
+export function formatMonthShort(iso: string): string {
+  return new Intl.DateTimeFormat("ca-ES", {
+    month: "short",
+    ...CENTER_DATE_PARTS,
+  }).format(new Date(iso));
+}
+
 /** Cabecera de día: "dilluns, 22 de juny". */
 export function formatDayHeading(iso: string): string {
   return new Intl.DateTimeFormat("ca-ES", {

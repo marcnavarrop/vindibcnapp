@@ -43,6 +43,9 @@ export type ClientReservation = {
   serviceType: ServiceType;
   status: ReservationStatus;
   trainerName: string | null;
+  /** Per pintar la seva foto i el seu color. Null si la reserva no en té. */
+  trainerId: string | null;
+  trainerAvatarPath: string | null;
 };
 
 export type ClientPayment = {
@@ -191,6 +194,8 @@ function buildDetail(clientId: string): ClientDetail | null {
           serviceType: r.service_type,
           status: r.status,
           trainerName: trainer?.full_name ?? null,
+          trainerId: r.trainer_id ?? null,
+          trainerAvatarPath: trainer?.avatar_path ?? null,
         };
       }),
     payments: store.payments
@@ -232,7 +237,8 @@ type DetailRow = {
     scheduled_at: string;
     service_type: ServiceType;
     status: ReservationStatus;
-    trainer: { full_name: string | null } | null;
+    trainer_id: string | null;
+    trainer: { full_name: string | null; avatar_path: string | null } | null;
   }[];
   payments: {
     id: string;
@@ -254,7 +260,7 @@ async function fetchClientDetail(
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at),
-       reservations(id, scheduled_at, service_type, status, trainer:profiles!reservations_trainer_id_fkey(full_name)),
+       reservations(id, scheduled_at, service_type, status, trainer_id, trainer:profiles!reservations_trainer_id_fkey(full_name, avatar_path)),
        payments(id, amount, method, paid_at)`,
     )
     .eq(column, value)
@@ -295,6 +301,8 @@ async function fetchClientDetail(
         serviceType: r.service_type,
         status: r.status,
         trainerName: r.trainer?.full_name ?? null,
+        trainerId: r.trainer_id ?? null,
+        trainerAvatarPath: r.trainer?.avatar_path ?? null,
       })),
     payments: row.payments.map((p) => ({
       id: p.id,
