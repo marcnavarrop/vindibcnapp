@@ -14,6 +14,7 @@ import type { PendingReward } from "@/lib/data/referral";
 import type { ServiceType } from "@/types/database";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 // ─── Icones SVG inline per tipus de servei ───────────────────────────────────
@@ -388,6 +389,8 @@ export function BuyBonoForm({
    * passarà; la lògica de negoci no canvia.
    */
   const [confirming, setConfirming] = useState(false);
+  /** Condicions acceptades. Es reinicia cada cop que s'obre el diàleg. */
+  const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
 
@@ -398,16 +401,22 @@ export function BuyBonoForm({
 
   // Estat: bo creat amb èxit
   if (state.ok) {
+    // Mateix tractament que una reserva confirmada: el tic verd animat i el
+    // titular en verd. Comprar un bo és tan "fet!" com reservar una sessió i
+    // fins ara se'n sortia amb un text pla.
     return (
-      <div className="rounded-2xl border border-brand-border bg-white p-8 text-center">
-        <p className="text-lg font-bold text-brand-dark">Bo reservat</p>
-        <p className="mt-2 text-sm text-brand-muted">
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
+        <AnimatedFeedback type="success" />
+        <p className="text-xl font-bold text-success">
+          Compra realitzada correctament
+        </p>
+        <p className="max-w-sm text-sm text-brand-muted">
           Paga&apos;l al centre quan vulguis. Ja pots fer servir les sessions
           per reservar mentre estigui pendent de pagament.
         </p>
         <Link
           href="/client/bonos"
-          className="mt-5 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+          className="mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
         >
           Veure els meus bonos
         </Link>
@@ -569,7 +578,12 @@ export function BuyBonoForm({
                   >
                     Cancel·lar
                   </button>
-                  <SubmitButton>Confirmar</SubmitButton>
+                  <SubmitButton
+                    pendingLabel="Comprant…"
+                    disabled={!acceptsTerms}
+                  >
+                    Confirmar
+                  </SubmitButton>
                 </>
               }
             >
@@ -600,6 +614,26 @@ export function BuyBonoForm({
                   En confirmar, aquest bo ja es podrà fer servir per reservar.
                   El pagues al centre quan vulguis.
                 </p>
+
+                <label className="flex cursor-pointer items-start gap-2.5 text-brand-charcoal">
+                  <input
+                    type="checkbox"
+                    checked={acceptsTerms}
+                    onChange={(e) => setAcceptsTerms(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
+                  />
+                  <span>
+                    Accepto les{" "}
+                    <Link
+                      href="/legal/avis-legal"
+                      target="_blank"
+                      className="font-bold text-brand-purple underline hover:text-brand-orange"
+                    >
+                      condicions de compra
+                    </Link>
+                    .
+                  </span>
+                </label>
               </div>
             </ConfirmDialog>
           )}

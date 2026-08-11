@@ -19,6 +19,8 @@ import { Avatar } from "@/components/ui/avatar";
 import type { ServiceType } from "@/types/database";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
+import { PendingSubmit } from "@/components/ui/pending-submit";
+import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
 const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
@@ -659,39 +661,6 @@ export function ClientCenterCalendar({
 }
 
 /** Icona animada de feedback (confirmació verda / cancel·lació vermella). */
-function AnimatedFeedback({ type }: { type: "success" | "cancel" }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 10);
-    return () => clearTimeout(t);
-  }, []);
-  const isOk = type === "success";
-  const color = isOk ? "#16a34a" : "#ef4444";
-  const bg = isOk ? "#dcfce7" : "#fee2e2";
-  return (
-    <div
-      style={{
-        width: 72, height: 72, borderRadius: "50%",
-        backgroundColor: bg,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        transform: mounted ? "scale(1)" : "scale(0.35)",
-        opacity: mounted ? 1 : 0,
-        transition: "transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease",
-      }}
-    >
-      {isOk ? (
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      ) : (
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" aria-hidden>
-          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      )}
-    </div>
-  );
-}
-
 function CreateModal({
   trainerId,
   otherPartyName: trainerNameFull,
@@ -772,12 +741,15 @@ function CreateModal({
           <p className="mb-3 text-sm text-error">{state.error}</p>
         )}
         <div className="flex items-center gap-2">
-          <button
-            type="submit"
-            className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
+          {/* Mentre la reserva viatja al servidor hi havia uns segons sense
+              cap senyal, i convidaven a tornar a clicar. Ara el botó ho diu i
+              es bloqueja, que és el que evita la reserva doble. */}
+          <PendingSubmit
+            pendingLabel="Reservant…"
+            className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
           >
             Reservar
-          </button>
+          </PendingSubmit>
           <button
             type="button"
             onClick={onClose}
