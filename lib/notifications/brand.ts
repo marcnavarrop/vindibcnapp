@@ -37,12 +37,27 @@ export function appLink(path: string): string {
 }
 
 /**
- * URL pública (HTTPS) del logo per a la capçalera dels emails. Per defecte, el
- * fitxer del repo `public/logo_vindi.png` servit pel domini de l'app (a Vercel,
- * el domini de producció automàticament). Es pot sobreescriure amb `EMAIL_LOGO_URL`
- * (p. ex. un CDN). Sempre s'acompanya del text "VindiBCN", així que si un client
- * bloqueja la imatge la marca segueix llegint-se.
+ * URL pública (HTTPS) del logo per a la capçalera dels emails: el mateix
+ * fitxer que fa servir tota l'app (`public/images/logo-vindi.png`), servit pel
+ * domini de l'app. Es pot sobreescriure amb `EMAIL_LOGO_URL` (p. ex. un CDN).
+ *
+ * Ha de ser una URL absoluta i pública: un correu s'obre fora de l'app i cap
+ * client de correu pot resoldre una ruta relativa del projecte.
+ *
+ * És un PNG amb transparència a propòsit, no un WebP: el canal alfa el
+ * suporten tots els clients de correu i deixa que el logo caigui damunt del
+ * lila de la capçalera sense cap caixa al voltant, mentre que el WebP encara
+ * no es veu a Outlook d'escriptori.
  */
 export function emailLogoUrl(): string {
-  return process.env.EMAIL_LOGO_URL || appLink("/logo_vindi.png");
+  return process.env.EMAIL_LOGO_URL || appLink("/images/logo-vindi.png");
 }
+
+/**
+ * Mida del logo a la capçalera del correu, en píxels.
+ *
+ * Van als atributs `width`/`height` de l'`<img>` i no només a l'estil: Outlook
+ * ignora part del CSS i, sense els atributs, reserva la mida original del
+ * fitxer i ensenya el logo gegant. La proporció és la del fitxer (299×120).
+ */
+export const EMAIL_LOGO_SIZE = { width: 100, height: 40 } as const;

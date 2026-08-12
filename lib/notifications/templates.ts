@@ -1,6 +1,12 @@
 import "server-only";
 import type { NotificationEvent } from "@/lib/notifications/types";
-import { BRAND, CENTER_NAME, appLink, emailLogoUrl } from "@/lib/notifications/brand";
+import {
+  BRAND,
+  CENTER_NAME,
+  appLink,
+  emailLogoUrl,
+  EMAIL_LOGO_SIZE,
+} from "@/lib/notifications/brand";
 
 /** Escapa text per evitar injecció d'HTML des de dades d'usuari. */
 function esc(s: string): string {
@@ -83,16 +89,22 @@ function footer(kind: FooterKind): string {
   </td></tr>`;
 }
 
-/** Capçalera de marca: icona del logo + wordmark "VindiBCN" (blanc/taronja). */
+/**
+ * Capçalera de marca: el logotip oficial, el mateix fitxer que la resta de
+ * l'app, damunt del lila.
+ *
+ * Abans eren dues coses —l'isotip petit i el nom escrit al costat en HTML— i
+ * el correu era l'últim lloc on la marca es veia diferent. Ara el nom ja va
+ * dins de la imatge, així que el text del costat sobrava.
+ *
+ * L'`alt` porta estil propi perquè, quan un client bloqueja les imatges (i
+ * Outlook i Gmail ho fan per defecte amb remitents desconeguts), el que quedi
+ * sigui "VindiBCN" en blanc i gros damunt del lila, no el text diminut i
+ * negre per defecte.
+ */
 function brandHeader(): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-    <td style="vertical-align:middle;padding-right:10px;">
-      <img src="${emailLogoUrl()}" width="34" height="34" alt="${CENTER_NAME}" style="display:block;width:34px;height:34px;border:0;outline:none;text-decoration:none;">
-    </td>
-    <td style="vertical-align:middle;">
-      <span style="font-size:22px;font-weight:800;letter-spacing:-0.5px;color:${BRAND.white};">Vindi<span style="color:${BRAND.orange};">BCN</span></span>
-    </td>
-  </tr></table>`;
+  const { width, height } = EMAIL_LOGO_SIZE;
+  return `<img src="${emailLogoUrl()}" width="${width}" height="${height}" alt="${CENTER_NAME}" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:${BRAND.white};">`;
 }
 
 function layout(block: Block): string {
