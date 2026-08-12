@@ -24,6 +24,9 @@ export type NotificationEventType =
   // Avisos manuals (accionats pel trainer/admin, no apareixen a preferències):
   | "new_exercises_assigned"
   | "invoice_generated"
+  // Vals de regal:
+  | "gift_voucher_redeemed"
+  | "gift_voucher_gifted"
   // Avís intern cap a qui desenvolupa l'app (no és cap usuari del centre):
   | "support_ticket_created";
 
@@ -160,6 +163,21 @@ export const EVENT_META: Record<
     audience: [],
     group: "general",
   },
+  gift_voucher_redeemed: {
+    label: "T'han bescanviat un regal",
+    description: "Quan algú fa servir un val de regal que has comprat.",
+    audience: ["client"],
+    group: "general",
+  },
+  gift_voucher_gifted: {
+    label: "Val de regal enviat",
+    description: "El correu amb el codi que s'envia a qui rep el regal.",
+    // `audience: []`: el destinatari és qui rep el regal, que pot no tenir
+    // compte al centre. L'envia qui compra, explícitament, amb una adreça que
+    // escriu ell: no hi ha cap preferència a consultar.
+    audience: [],
+    group: "general",
+  },
   support_ticket_created: {
     label: "Nou tiquet de suport",
     description: "Quan algú de l'equip reporta una incidència o un dubte.",
@@ -188,5 +206,7 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "new_client_registered",
   "new_exercises_assigned",
   "invoice_generated",
+  "gift_voucher_redeemed",
+  "gift_voucher_gifted",
   "support_ticket_created",
 ];

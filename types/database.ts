@@ -31,6 +31,19 @@ export type BonoStatus =
   | "expired"
   /** Anul·lat perquè no es va cobrar dins del termini. */
   | "unpaid";
+/**
+ * Estat d'un val de regal.
+ *
+ * A diferència d'un bo, 'pending_payment' aquí NO és utilitzable: qui bescanvia
+ * pot ser algú sense cap relació amb el pagament, així que el val no val res
+ * fins que el centre confirma que l'ha cobrat.
+ */
+export type GiftVoucherStatus =
+  | "pending_payment"
+  | "active"
+  | "redeemed"
+  | "expired"
+  | "cancelled";
 export type ReferralRewardStatus = "pending" | "used" | "expired";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type TrialStatus =
@@ -186,6 +199,7 @@ export interface Database {
           purchased_at: string;
           expires_at: string | null;
           first_reservation_at: string | null;
+          gift_voucher_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -199,6 +213,7 @@ export interface Database {
           purchased_at?: string;
           expires_at?: string | null;
           first_reservation_at?: string | null;
+          gift_voucher_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -212,6 +227,73 @@ export interface Database {
           purchased_at?: string;
           expires_at?: string | null;
           first_reservation_at?: string | null;
+          gift_voucher_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      gift_vouchers: {
+        Row: {
+          id: string;
+          code: string;
+          service_id: string;
+          buyer_client_id: string;
+          recipient_name: string | null;
+          recipient_email: string | null;
+          message: string | null;
+          price: number;
+          service_type: ServiceType;
+          total_sessions: number;
+          package_name: string;
+          purchased_at: string;
+          expires_at: string;
+          status: GiftVoucherStatus;
+          redeemed_at: string | null;
+          redeemed_by_client_id: string | null;
+          redeemed_bono_id: string | null;
+          pdf_path: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          service_id: string;
+          buyer_client_id: string;
+          recipient_name?: string | null;
+          recipient_email?: string | null;
+          message?: string | null;
+          price: number;
+          service_type: ServiceType;
+          total_sessions: number;
+          package_name: string;
+          purchased_at?: string;
+          expires_at: string;
+          status?: GiftVoucherStatus;
+          redeemed_at?: string | null;
+          redeemed_by_client_id?: string | null;
+          redeemed_bono_id?: string | null;
+          pdf_path?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          service_id?: string;
+          buyer_client_id?: string;
+          recipient_name?: string | null;
+          recipient_email?: string | null;
+          message?: string | null;
+          price?: number;
+          service_type?: ServiceType;
+          total_sessions?: number;
+          package_name?: string;
+          purchased_at?: string;
+          expires_at?: string;
+          status?: GiftVoucherStatus;
+          redeemed_at?: string | null;
+          redeemed_by_client_id?: string | null;
+          redeemed_bono_id?: string | null;
+          pdf_path?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -555,6 +637,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp: boolean;
           trainer_daily_agenda_email: boolean;
           trainer_daily_agenda_whatsapp: boolean;
+          gift_voucher_redeemed_email: boolean;
+          gift_voucher_redeemed_whatsapp: boolean;
           new_client_registered_email: boolean;
           new_client_registered_whatsapp: boolean;
           new_exercises_assigned_email: boolean;
@@ -588,6 +672,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp?: boolean;
           trainer_daily_agenda_email?: boolean;
           trainer_daily_agenda_whatsapp?: boolean;
+          gift_voucher_redeemed_email?: boolean;
+          gift_voucher_redeemed_whatsapp?: boolean;
           new_client_registered_email?: boolean;
           new_client_registered_whatsapp?: boolean;
           new_exercises_assigned_email?: boolean;
@@ -621,6 +707,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp: boolean;
           trainer_daily_agenda_email: boolean;
           trainer_daily_agenda_whatsapp: boolean;
+          gift_voucher_redeemed_email: boolean;
+          gift_voucher_redeemed_whatsapp: boolean;
           new_client_registered_email: boolean;
           new_client_registered_whatsapp: boolean;
           new_exercises_assigned_email: boolean;
@@ -908,6 +996,8 @@ export interface Database {
           module_comunitat_enabled: boolean;
           module_sessions_prova_enabled: boolean;
           module_documents_enabled: boolean;
+          gift_vouchers_enabled: boolean;
+          gift_voucher_expiry_months: number;
           created_at: string;
           updated_at: string;
         };
@@ -929,6 +1019,8 @@ export interface Database {
           module_comunitat_enabled?: boolean;
           module_sessions_prova_enabled?: boolean;
           module_documents_enabled?: boolean;
+          gift_vouchers_enabled?: boolean;
+          gift_voucher_expiry_months?: number;
           created_at?: string;
           updated_at?: string;
         };

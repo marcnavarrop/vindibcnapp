@@ -27,6 +27,14 @@ export type CenterSettings = {
   pendingPaymentCancelEnabled: boolean;
   /** Hores des de la primera reserva feta amb el bo. Null = sense termini. */
   pendingPaymentCancelHours: number | null;
+  /**
+   * Es poden VENDRE vals de regal nous. Els ja venuts es continuen podent
+   * bescanviar encara que estigui desactivat: el centre ja n'ha cobrat el
+   * preu i qui té el codi no té la culpa que el centre canviï d'idea.
+   */
+  giftVouchersEnabled: boolean;
+  /** Mesos de validesa d'un val des de la compra. Es desa a cada val. */
+  giftVoucherExpiryMonths: number;
   modules: {
     comunitat: boolean;
     sessionsProva: boolean;
@@ -48,6 +56,8 @@ const DEFAULT: CenterSettings = {
   bonoExpiryMonths: null,
   pendingPaymentCancelEnabled: false,
   pendingPaymentCancelHours: null,
+  giftVouchersEnabled: true,
+  giftVoucherExpiryMonths: 12,
   modules: { comunitat: true, sessionsProva: true, documents: true },
 };
 
@@ -84,6 +94,8 @@ export async function getCenterSettings(): Promise<CenterSettings> {
       bonoExpiryMonths: cs?.bono_expiry_months ?? null,
       pendingPaymentCancelEnabled: cs?.pending_payment_cancel_enabled ?? false,
       pendingPaymentCancelHours: cs?.pending_payment_cancel_hours ?? null,
+      giftVouchersEnabled: cs?.gift_vouchers_enabled ?? DEFAULT.giftVouchersEnabled,
+      giftVoucherExpiryMonths: cs?.gift_voucher_expiry_months ?? DEFAULT.giftVoucherExpiryMonths,
       modules: {
         comunitat: cs?.module_comunitat_enabled ?? DEFAULT.modules.comunitat,
         sessionsProva: cs?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
@@ -107,7 +119,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     .from("center_settings")
     // Literal inline a propòsit: amb una constant, Supabase perd la inferència.
     .select(
-      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, pending_payment_cancel_enabled, pending_payment_cancel_hours, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled",
+      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, pending_payment_cancel_enabled, pending_payment_cancel_hours, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled, gift_vouchers_enabled, gift_voucher_expiry_months",
     )
     .single();
 
@@ -125,6 +137,8 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     bonoExpiryMonths: data?.bono_expiry_months ?? null,
     pendingPaymentCancelEnabled: data?.pending_payment_cancel_enabled ?? false,
     pendingPaymentCancelHours: data?.pending_payment_cancel_hours ?? null,
+    giftVouchersEnabled: data?.gift_vouchers_enabled ?? DEFAULT.giftVouchersEnabled,
+    giftVoucherExpiryMonths: data?.gift_voucher_expiry_months ?? DEFAULT.giftVoucherExpiryMonths,
     modules: {
       comunitat: data?.module_comunitat_enabled ?? DEFAULT.modules.comunitat,
       sessionsProva: data?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
@@ -155,6 +169,8 @@ export async function updateCenterSettings(
       bono_expiry_months: DEFAULT.bonoExpiryMonths,
       pending_payment_cancel_enabled: DEFAULT.pendingPaymentCancelEnabled,
       pending_payment_cancel_hours: DEFAULT.pendingPaymentCancelHours,
+      gift_vouchers_enabled: DEFAULT.giftVouchersEnabled,
+      gift_voucher_expiry_months: DEFAULT.giftVoucherExpiryMonths,
       module_comunitat_enabled: DEFAULT.modules.comunitat,
       module_sessions_prova_enabled: DEFAULT.modules.sessionsProva,
       module_documents_enabled: DEFAULT.modules.documents,
@@ -175,6 +191,8 @@ export async function updateCenterSettings(
     if (input.bonoExpiryMonths !== undefined) cs.bono_expiry_months = input.bonoExpiryMonths;
     if (input.pendingPaymentCancelEnabled !== undefined) cs.pending_payment_cancel_enabled = input.pendingPaymentCancelEnabled;
     if (input.pendingPaymentCancelHours !== undefined) cs.pending_payment_cancel_hours = input.pendingPaymentCancelHours;
+    if (input.giftVouchersEnabled !== undefined) cs.gift_vouchers_enabled = input.giftVouchersEnabled;
+    if (input.giftVoucherExpiryMonths !== undefined) cs.gift_voucher_expiry_months = input.giftVoucherExpiryMonths;
     if (input.modules?.comunitat !== undefined) cs.module_comunitat_enabled = input.modules.comunitat;
     if (input.modules?.sessionsProva !== undefined) cs.module_sessions_prova_enabled = input.modules.sessionsProva;
     if (input.modules?.documents !== undefined) cs.module_documents_enabled = input.modules.documents;
@@ -199,6 +217,8 @@ export async function updateCenterSettings(
     ...(input.bonoExpiryMonths !== undefined && { bono_expiry_months: input.bonoExpiryMonths }),
     ...(input.pendingPaymentCancelEnabled !== undefined && { pending_payment_cancel_enabled: input.pendingPaymentCancelEnabled }),
     ...(input.pendingPaymentCancelHours !== undefined && { pending_payment_cancel_hours: input.pendingPaymentCancelHours }),
+    ...(input.giftVouchersEnabled !== undefined && { gift_vouchers_enabled: input.giftVouchersEnabled }),
+    ...(input.giftVoucherExpiryMonths !== undefined && { gift_voucher_expiry_months: input.giftVoucherExpiryMonths }),
     ...(input.modules?.comunitat !== undefined && { module_comunitat_enabled: input.modules.comunitat }),
     ...(input.modules?.sessionsProva !== undefined && { module_sessions_prova_enabled: input.modules.sessionsProva }),
     ...(input.modules?.documents !== undefined && { module_documents_enabled: input.modules.documents }),

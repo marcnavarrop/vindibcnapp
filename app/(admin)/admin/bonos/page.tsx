@@ -2,11 +2,7 @@ import Link from "next/link";
 import { listBonos } from "@/lib/data/bonos";
 import { BonosAdminTable } from "@/components/bonos-admin-table";
 import { GroupTabs } from "@/components/ui/group-tabs";
-
-const TABS = [
-  { href: "/admin/bonos", label: "Bons" },
-  { href: "/admin/pagos", label: "Pagaments" },
-];
+import { BONS_TABS } from "@/lib/admin-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +11,7 @@ export default async function BonosPage() {
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
+      <GroupTabs tabs={BONS_TABS} />
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin"

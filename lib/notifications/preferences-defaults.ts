@@ -53,6 +53,13 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // ni preferències. També s'envia amb `ignorePreferences`.
   support_ticket_created_email: false,
   support_ticket_created_whatsapp: false,
+  // Actiu per defecte: qui ha pagat un regal vol saber que ha arribat.
+  gift_voucher_redeemed_email: true,
+  gift_voucher_redeemed_whatsapp: false,
+  // El correu del regal el dispara qui compra cap a una adreça que escriu ell;
+  // no hi ha cap perfil ni cap preferència a consultar (ignorePreferences).
+  gift_voucher_gifted_email: false,
+  gift_voucher_gifted_whatsapp: false,
 };
 
 /**
@@ -63,12 +70,16 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
  * `notification_preferences` ni surten a la UI de Configuració: qui els dispara
  * ho fa amb `notify(..., { ignorePreferences: true })`.
  */
-export type AlwaysSentEvent = "invoice_generated" | "support_ticket_created";
+export type AlwaysSentEvent =
+  | "invoice_generated"
+  | "support_ticket_created"
+  | "gift_voucher_gifted";
 
 /** Els mateixos, en valor, per poder filtrar-los en temps d'execució. */
 export const ALWAYS_SENT_EVENTS: AlwaysSentEvent[] = [
   "invoice_generated",
   "support_ticket_created",
+  "gift_voucher_gifted",
 ];
 
 /** Claus que sí tenen columna a BD. La resta ni es llegeixen ni es desen. */

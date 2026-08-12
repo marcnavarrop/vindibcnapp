@@ -40,11 +40,11 @@ export const seedClients: Client[] = [
 ];
 
 export const seedBonos: Bono[] = [
-  { id: "b-1", client_id: "c-ana", service_type: "ep_individual", total_sessions: 10, remaining_sessions: 6, price: 400, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, created_at: now },
-  { id: "b-2", client_id: "c-ana", service_type: "fisioterapia", total_sessions: 5, remaining_sessions: 5, price: 250, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, created_at: now },
-  { id: "b-3", client_id: "c-pau", service_type: "grupo_reducido", total_sessions: 8, remaining_sessions: 2, price: 200, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, created_at: now },
-  { id: "b-4", client_id: "c-marta", service_type: "ep_parejas", total_sessions: 10, remaining_sessions: 0, price: 350, status: "completed", purchased_at: now, expires_at: null, first_reservation_at: null, created_at: now },
-  { id: "b-5", client_id: "c-oriol", service_type: "ep_individual", total_sessions: 5, remaining_sessions: 5, price: 220, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, created_at: now },
+  { id: "b-1", client_id: "c-ana", service_type: "ep_individual", total_sessions: 10, remaining_sessions: 6, price: 400, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, gift_voucher_id: null, created_at: now },
+  { id: "b-2", client_id: "c-ana", service_type: "fisioterapia", total_sessions: 5, remaining_sessions: 5, price: 250, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, gift_voucher_id: null, created_at: now },
+  { id: "b-3", client_id: "c-pau", service_type: "grupo_reducido", total_sessions: 8, remaining_sessions: 2, price: 200, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, gift_voucher_id: null, created_at: now },
+  { id: "b-4", client_id: "c-marta", service_type: "ep_parejas", total_sessions: 10, remaining_sessions: 0, price: 350, status: "completed", purchased_at: now, expires_at: null, first_reservation_at: null, gift_voucher_id: null, created_at: now },
+  { id: "b-5", client_id: "c-oriol", service_type: "ep_individual", total_sessions: 5, remaining_sessions: 5, price: 220, status: "active", purchased_at: now, expires_at: null, first_reservation_at: null, gift_voucher_id: null, created_at: now },
 ];
 
 export const seedReservations: Reservation[] = [
@@ -126,6 +126,8 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     trainer_booking_cancelled_whatsapp: false,
     trainer_daily_agenda_email: false,
     trainer_daily_agenda_whatsapp: false,
+    gift_voucher_redeemed_email: true,
+    gift_voucher_redeemed_whatsapp: false,
     new_client_registered_email: true,
     new_client_registered_whatsapp: false,
     new_exercises_assigned_email: false,

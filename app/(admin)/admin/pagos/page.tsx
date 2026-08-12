@@ -3,11 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { listPayments } from "@/lib/data/payments";
 import { PAYMENT_METHOD_LABELS, formatEur, formatDate } from "@/lib/labels";
 import { GroupTabs } from "@/components/ui/group-tabs";
-
-const TABS = [
-  { href: "/admin/bonos", label: "Bons" },
-  { href: "/admin/pagos", label: "Pagaments" },
-];
+import { BONS_TABS } from "@/lib/admin-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +13,7 @@ export default async function PagosPage() {
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
+      <GroupTabs tabs={BONS_TABS} />
       <main className="mx-auto max-w-5xl p-6">
         <div className="flex items-center justify-between gap-4">
           <div>

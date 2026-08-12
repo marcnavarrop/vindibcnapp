@@ -531,6 +531,53 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "gift_voucher_redeemed": {
+      subject = "Ja han fet servir el teu regal · VindiBCN";
+      block = {
+        heading: "El teu regal ha arribat",
+        intro: [
+          hola,
+          d.recipient
+            ? `${d.recipient} ha bescanviat el val de regal que li vas comprar.`
+            : "Algú ha bescanviat el val de regal que vas comprar.",
+        ],
+        details: rows([
+          ["Regal", d.package],
+          ["Codi", d.code],
+          ["Data", d.when],
+        ]),
+        outro: ["Gràcies per regalar benestar. Ens veiem al centre!"],
+        footer: "client",
+      };
+      break;
+    }
+    case "gift_voucher_gifted": {
+      // Va a qui rep el regal, que pot no tenir compte al centre: el correu ha
+      // de bastar-se sol. Porta el codi al cos i no com a adjunt, perquè un
+      // adjunt es perd i un codi es pot escriure des del mòbil.
+      subject = `Tens un regal de ${d.buyer || "algú"} · VindiBCN`;
+      block = {
+        heading: d.recipient ? `${d.recipient}, tens un regal!` : "Tens un regal!",
+        intro: [
+          d.buyer
+            ? `${d.buyer} t'ha regalat sessions a VindiBCN.`
+            : "T'han regalat sessions a VindiBCN.",
+          ...(d.message ? [`"${d.message}"`] : []),
+          "Aquest és el teu codi. Guarda'l: és el que hauràs d'escriure per activar-lo.",
+        ],
+        details: rows([
+          ["Codi", d.code],
+          ["Regal", d.package],
+          ["Vàlid fins al", d.expires],
+        ]),
+        cta: { label: "Bescanviar el regal", url: appLink("/client/bonos") },
+        outro: [
+          "Entra a la teva àrea de client (o registra-t'hi si encara no en tens), ves a Bons i escriu el codi. Les sessions s'afegiran al teu compte.",
+        ],
+        footer: "plain",
+      };
+      break;
+    }
   }
 
   return { subject, html: layout(block), text: plain(block) };

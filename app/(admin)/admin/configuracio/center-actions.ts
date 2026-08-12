@@ -65,6 +65,12 @@ export async function updateCenterSettingsAction(
   if (pendingPaymentCancelEnabled && pendingPaymentCancelHours === null)
     return { error: "El termini per cobrar ha de ser entre 1 i 8760 hores." };
 
+  const giftVouchersEnabled = fd.get("giftVouchersEnabled") === "true";
+  const giftVoucherExpiryMonths = intInRange(fd, "giftVoucherExpiryMonths", 1, 120);
+  // Com el termini de cobrament: només es valida si l'ajust està actiu.
+  if (giftVouchersEnabled && giftVoucherExpiryMonths === null)
+    return { error: "La caducitat dels vals de regal ha de ser entre 1 i 120 mesos." };
+
   const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);
   if (reminderHourLocal === null)
     return { error: "L'hora dels recordatoris ha de ser entre 0 i 23." };
@@ -83,6 +89,8 @@ export async function updateCenterSettingsAction(
       bonoExpiryMonths,
       pendingPaymentCancelEnabled,
       pendingPaymentCancelHours: pendingPaymentCancelHours ?? undefined,
+      giftVouchersEnabled,
+      giftVoucherExpiryMonths: giftVoucherExpiryMonths ?? undefined,
       reminderHourLocal,
       modules: {
         comunitat: fd.get("moduleComunitat") === "true",

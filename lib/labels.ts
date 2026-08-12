@@ -12,6 +12,7 @@ import type {
   Gender,
   SupportCategory,
   SupportStatus,
+  GiftVoucherStatus,
 } from "@/types/database";
 
 export const SPECIALTY_LABELS: Record<Specialty, string> = {
@@ -111,6 +112,27 @@ export const BONO_STATUS_LABELS: Record<BonoStatus, string> = {
   pending_payment: "Pendent de pagament",
   expired: "Caducat",
   unpaid: "Anul·lat per impagament",
+};
+
+/**
+ * "de" o "d'" segons com comenci la paraula següent.
+ *
+ * Fa falta perquè els noms dels serveis els tria el centre i n'hi ha que
+ * comencen per vocal: "8 sessions de EP Individual" es llegia malament al val
+ * imprès i al missatge de confirmació.
+ */
+export function deOf(word: string): string {
+  return /^[aeiouàèéíòóúAEIOUÀÈÉÍÒÓÚ]/.test(word.trim())
+    ? `d'${word}`
+    : `de ${word}`;
+}
+
+export const GIFT_VOUCHER_STATUS_LABELS: Record<GiftVoucherStatus, string> = {
+  pending_payment: "Pendent de pagament",
+  active: "Actiu",
+  redeemed: "Bescanviat",
+  expired: "Caducat",
+  cancelled: "Anul·lat",
 };
 
 export const SUPPORT_CATEGORY_LABELS: Record<SupportCategory, string> = {

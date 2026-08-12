@@ -6,10 +6,16 @@ export function ReferralCodeCard({
   code,
   referredCount,
   discountPercent,
+  bare = false,
 }: {
   code: string | null;
   referredCount: number;
   discountPercent: number;
+  /**
+   * Sense caixa ni títol propis: quan ja va dins d'un diàleg que en posa un,
+   * repetir-los feia "El teu codi de referit" dues vegades seguides.
+   */
+  bare?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -21,8 +27,12 @@ export function ReferralCodeCard({
   }
 
   return (
-    <div className="rounded-2xl border border-brand-border bg-white p-6">
-      <p className="mb-1 text-sm font-bold text-brand-dark">El teu codi de referit</p>
+    <div className={bare ? "" : "rounded-2xl border border-brand-border bg-white p-6"}>
+      {!bare && (
+        <p className="mb-1 text-sm font-bold text-brand-dark">
+          El teu codi de referit
+        </p>
+      )}
       <p className="mb-4 text-xs text-brand-muted">
         Comparteix-lo amb amics. Quan es registrin amb el teu codi i paguin el
         seu primer bo, tots dos rebreu un {discountPercent}% de descompte en la

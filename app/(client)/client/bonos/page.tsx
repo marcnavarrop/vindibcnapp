@@ -1,5 +1,8 @@
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
+import { getCenterSettings } from "@/lib/data/center-settings";
+import { hasOutstandingGiftVouchers } from "@/lib/data/gift-vouchers";
+import { RedeemGiftVoucher } from "@/components/forms/redeem-gift-voucher";
 import { Badge } from "@/components/ui/badge";
 import { RouteTabs } from "@/components/ui/route-tabs";
 import {
@@ -19,7 +22,17 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientBonosPage() {
   const viewer = await getViewer();
-  const client = viewer ? await getClientByProfile(viewer.id) : null;
+  const [client, settings] = await Promise.all([
+    viewer ? getClientByProfile(viewer.id) : Promise.resolve(null),
+    getCenterSettings(),
+  ]);
+
+  // El camp de canvi surt si el centre ven vals O si en queda algun de venut
+  // sense bescanviar. Apagar la venda no pot deixar sense sortida algú que ja
+  // ha pagat un regal; i un centre que no els ha fet servir mai no ha de
+  // carregar amb un camp que no li diu res.
+  const showRedeem =
+    settings.giftVouchersEnabled || (await hasOutstandingGiftVouchers());
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -32,6 +45,8 @@ export default async function ClientBonosPage() {
         </p>
       ) : (
         <div className="flex flex-col gap-6">
+          {showRedeem && <RedeemGiftVoucher />}
+
           <Panel title="Els meus bons">
             {client.bonos.length === 0 ? (
               <Empty>Encara no tens cap bo.</Empty>

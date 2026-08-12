@@ -123,6 +123,10 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
   const [pendingCancelHours, setPendingCancelHours] = useState(
     String(settings.pendingPaymentCancelHours ?? 48),
   );
+  const [giftVouchers, setGiftVouchers] = useState(settings.giftVouchersEnabled);
+  const [giftVoucherMonths, setGiftVoucherMonths] = useState(
+    String(settings.giftVoucherExpiryMonths),
+  );
   const [referralActive, setReferralActive] = useState(settings.referralProgramActive);
   const [referralReferee, setReferralReferee] = useState(settings.referralRewardReferee);
   const [referralPercent, setReferralPercent] = useState(
@@ -251,6 +255,55 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
                 className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none disabled:cursor-not-allowed disabled:bg-brand-bg"
               />
               <span className="text-sm text-brand-muted">hores</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <Toggle
+          name="giftVouchersEnabled"
+          title="Vendre vals de regal"
+          desc="Deixa que els clients comprin un paquet de sessions per regalar-lo. Si ho desactives deixaran de poder-ne comprar de nous, però els vals ja venuts es continuaran podent bescanviar: el centre ja n'ha cobrat el preu."
+          checked={giftVouchers}
+          onChange={setGiftVouchers}
+        />
+
+        {/* El valor va en un input ocult FORA del fieldset, com el termini de
+            cobrament: un fieldset deshabilitat no envia els seus camps i els
+            mesos es perdrien en desactivar el toggle. */}
+        <input
+          type="hidden"
+          name="giftVoucherExpiryMonths"
+          value={giftVoucherMonths}
+        />
+        <fieldset
+          disabled={!giftVouchers}
+          className={`flex flex-col gap-5 border-l-2 pl-4 transition-opacity ${
+            giftVouchers ? "border-brand-purple/30" : "border-brand-border opacity-50"
+          }`}
+        >
+          <div>
+            <label
+              htmlFor="giftVoucherExpiryMonths"
+              className="mb-1 block text-sm font-bold text-brand-dark"
+            >
+              Caducitat dels vals de regal
+            </label>
+            <p className="mb-3 text-xs text-brand-muted">
+              Mesos de validesa des de la compra. Només afecta els vals que es
+              venguin a partir d&apos;ara: els ja venuts conserven la seva data.
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                id="giftVoucherExpiryMonths"
+                type="number"
+                min={1}
+                max={120}
+                step={1}
+                value={giftVoucherMonths}
+                onChange={(e) => setGiftVoucherMonths(e.target.value)}
+                className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none disabled:cursor-not-allowed disabled:bg-brand-bg"
+              />
+              <span className="text-sm text-brand-muted">mesos</span>
             </div>
           </div>
         </fieldset>

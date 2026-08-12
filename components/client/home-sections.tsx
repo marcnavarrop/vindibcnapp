@@ -454,37 +454,3 @@ export function NextSessionCard({
     </section>
   );
 }
-
-// ───────────────────────── Referits ─────────────────────────
-
-export function ReferralCta() {
-  return (
-    <section className="relative overflow-hidden rounded-2xl bg-brand-purple p-5 text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(150deg,#3d0f3c_0%,#642263_60%,#7d2b7b_100%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -bottom-12 h-40 w-40 rounded-full bg-[radial-gradient(circle,var(--color-brand-orange)_0%,transparent_65%)] opacity-50"
-      />
-      <div className="relative">
-        <p className="text-base leading-tight font-bold text-balance">
-          Porta un amic i guanyeu tots dos!
-        </p>
-        <p className="mt-1.5 text-sm text-white/70">
-          Descobreix el nostre programa de recomanacions.
-        </p>
-        {/* El codi ja viu a Configuració → Dades personals; aquí només s'hi
-            porta, no es duplica res. */}
-        <Link
-          href="/client/configuracio"
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition-colors hover:bg-white/25"
-        >
-          <Icon name="gift" size={15} />
-          Saber-ne més
-        </Link>
-      </div>
-    </section>
-  );
-}
