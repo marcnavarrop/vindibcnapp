@@ -34,7 +34,7 @@ export default async function ComprarBonoPage() {
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl text-brand-dark">Bonos</h1>
+      <h1 className="mb-4 text-2xl text-brand-dark">Bons</h1>
       <RouteTabs tabs={BONO_TABS} />
       <p className="mb-6 text-sm text-brand-muted">
         Tria un servei i com vols pagar-lo.

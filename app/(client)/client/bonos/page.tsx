@@ -23,7 +23,7 @@ export default async function ClientBonosPage() {
 
   return (
     <main className="mx-auto max-w-5xl p-6">
-      <h1 className="mb-4 text-2xl text-brand-dark">Bonos</h1>
+      <h1 className="mb-4 text-2xl text-brand-dark">Bons</h1>
       <RouteTabs tabs={BONO_TABS} />
 
       {!client ? (

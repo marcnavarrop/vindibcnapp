@@ -1,9 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
+import { clsx } from "@/lib/utils";
 
-export function SignOutButton() {
+export function SignOutButton({
+  /**
+   * `compact` és el botonet blanc de sempre (barra de mòbil i peu dels menús
+   * d'admin i professional). `panel` és el botó ample i buidat del peu del
+   * menú del client, sobre el lila.
+   */
+  variant = "compact",
+}: {
+  variant?: "compact" | "panel";
+} = {}) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -22,15 +33,21 @@ export function SignOutButton() {
     router.refresh();
   }
 
-  // Botó propi (compacte) en lloc del <Button> global, que força px-4/uppercase
-  // amples: aquí el volem petit i proporcionat al peu del menú.
+  // Botó propi en lloc del <Button> global, que força px-4/uppercase amples:
+  // aquí el volem proporcionat al peu del menú.
   return (
     <button
       type="button"
       onClick={handleSignOut}
-      className="shrink-0 rounded-lg border border-brand-border bg-white px-2.5 py-1.5 text-xs font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-brand-bg"
+      className={clsx(
+        "rounded-lg text-xs font-bold tracking-wide uppercase transition-colors",
+        variant === "panel"
+          ? "flex w-full items-center justify-center gap-2 border border-white/25 px-3 py-2.5 text-white hover:bg-white/10"
+          : "shrink-0 border border-brand-border bg-white px-2.5 py-1.5 text-brand-charcoal hover:bg-brand-bg",
+      )}
     >
       Tancar sessió
+      {variant === "panel" && <LogOut size={15} aria-hidden />}
     </button>
   );
 }

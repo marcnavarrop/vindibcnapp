@@ -4,7 +4,33 @@
  */
 export type Role = "admin" | "trainer" | "client";
 
-export type NavItem = { href: string; label: string; exact?: boolean };
+/**
+ * Icona de cada entrada del menú. És un nom, no el component: aquest fitxer
+ * l'importen també Server Components i ha de seguir sent dades planes. El
+ * sidebar (que sí que és de client) tradueix el nom a la icona de debò.
+ */
+export type NavIcon =
+  | "home"
+  | "ticket"
+  | "calendar"
+  | "dumbbell"
+  | "document"
+  | "community"
+  | "profile"
+  | "settings";
+
+export type NavItem = {
+  href: string;
+  label: string;
+  exact?: boolean;
+  icon?: NavIcon;
+  /**
+   * Drecera cap a un tros d'una altra pàgina (p. ex. "Perfil", que és la
+   * primera pestanya de Configuració). No s'il·lumina mai encara que la ruta
+   * coincideixi: qui mana sobre l'estat actiu és l'entrada de la pàgina.
+   */
+  shortcut?: boolean;
+};
 
 /** Grup de seccions relacionades que apareix com una sola entrada al sidebar. */
 export type NavGroup = { label: string; children: NavItem[] };
@@ -18,7 +44,7 @@ export function isNavGroup(e: NavEntry): e is NavGroup {
 export const AREA_LABELS: Record<Role, string> = {
   admin: "Administració",
   trainer: "Professional",
-  client: "La meva àrea",
+  client: "Àrea client",
 };
 
 export const HOME_PATH: Record<Role, string> = {
@@ -26,6 +52,15 @@ export const HOME_PATH: Record<Role, string> = {
   trainer: "/trainer",
   client: "/client",
 };
+
+/**
+ * On viu el perfil del client: la primera pestanya de Configuració.
+ *
+ * No hi ha cap pàgina `/client/perfil`, i les dues entrades del menú que hi
+ * porten ("Perfil" i el bloc del peu del sidebar) surten d'aquí per no
+ * repetir la ruta a tres llocs.
+ */
+export const CLIENT_PROFILE_PATH = "/client/configuracio";
 
 /**
  * Estructura de navegació amb grups. Substitueix NAV al sidebar.
@@ -93,14 +128,24 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/trainer/comunitat", label: "Comunitat" },
     { href: "/trainer/configuracio", label: "Configuració" },
   ],
+  // El client és l'única àrea amb icones de moment: el seu menú es va
+  // redissenyar abans que el d'admin i professional, que segueixen amb la
+  // llista de text de sempre fins que els toqui.
   client: [
-    { href: "/client", label: "Inici", exact: true },
-    { href: "/client/bonos", label: "Bonos" },
-    { href: "/client/reservas", label: "Reserves" },
-    { href: "/client/exercicis", label: "Exercicis" },
-    { href: "/client/documents", label: "Documents" },
-    { href: "/client/comunitat", label: "Comunitat" },
-    { href: "/client/configuracio", label: "Configuració" },
+    { href: "/client", label: "Inici", exact: true, icon: "home" },
+    { href: "/client/bonos", label: "Bons", icon: "ticket" },
+    { href: "/client/reservas", label: "Reserves", icon: "calendar" },
+    // La ruta segueix sent /client/exercicis: només canvia com se'n diu.
+    { href: "/client/exercicis", label: "Entrenaments", icon: "dumbbell" },
+    { href: "/client/documents", label: "Documents", icon: "document" },
+    { href: "/client/comunitat", label: "Comunitat", icon: "community" },
+    {
+      href: CLIENT_PROFILE_PATH,
+      label: "Perfil",
+      icon: "profile",
+      shortcut: true,
+    },
+    { href: "/client/configuracio", label: "Configuració", icon: "settings" },
   ],
 };
 

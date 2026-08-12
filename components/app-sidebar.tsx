@@ -3,6 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  House,
+  Ticket,
+  CalendarDays,
+  Dumbbell,
+  FileText,
+  Users,
+  User,
+  Settings,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import { clsx } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Wordmark } from "@/components/wordmark";
@@ -16,10 +28,24 @@ import {
   HOME_PATH,
   filterNavByModules,
   ALL_MODULES_ON,
+  CLIENT_PROFILE_PATH,
   type Role,
   type ModuleFlags,
+  type NavIcon,
 } from "@/lib/nav";
 import type { Specialty } from "@/types/database";
+
+/** Del nom que hi ha a la configuració del menú a la icona de debò. */
+const NAV_ICONS: Record<NavIcon, LucideIcon> = {
+  home: House,
+  ticket: Ticket,
+  calendar: CalendarDays,
+  dumbbell: Dumbbell,
+  document: FileText,
+  community: Users,
+  profile: User,
+  settings: Settings,
+};
 
 /** Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área. */
 function areaSubtitle(role: Role, specialty: Specialty | null): string {
@@ -164,52 +190,53 @@ function SidebarContent({
               );
               return (
                 <li key={entry.label}>
-                  <Link
+                  <NavLink
                     href={entry.children[0].href}
-                    className={clsx(
-                      "flex items-center rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold transition-colors",
-                      active
-                        ? "border-brand-orange bg-white/15 text-white"
-                        : "border-transparent text-white/80 hover:bg-white/10 hover:text-white",
-                    )}
-                  >
-                    {entry.label}
-                  </Link>
+                    label={entry.label}
+                    active={active}
+                  />
                 </li>
               );
             }
-            const active = entry.exact
-              ? pathname === entry.href
-              : pathname === entry.href ||
-                pathname.startsWith(`${entry.href}/`);
+            // Una drecera (p. ex. "Perfil") comparteix ruta amb l'entrada de
+            // debò: no s'il·lumina mai, o hi hauria dos elements actius alhora.
+            const active =
+              !entry.shortcut &&
+              (entry.exact
+                ? pathname === entry.href
+                : pathname === entry.href ||
+                  pathname.startsWith(`${entry.href}/`));
             return (
-              <li key={entry.href}>
-                <Link
+              <li key={entry.label}>
+                <NavLink
                   href={entry.href}
-                  className={clsx(
-                    "flex items-center rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold transition-colors",
-                    active
-                      ? "border-brand-orange bg-white/15 text-white"
-                      : "border-transparent text-white/80 hover:bg-white/10 hover:text-white",
-                  )}
-                >
-                  {entry.label}
-                </Link>
+                  label={entry.label}
+                  icon={entry.icon}
+                  active={active}
+                />
               </li>
             );
           })}
         </ul>
       </nav>
 
-      <div className="flex items-center gap-3 border-t border-white/10 px-2 pt-4">
-        <Avatar name={fullName} email={email} url={avatarUrl} />
-        <SignOutButton />
-        {USE_MOCK && (
-          <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
-            Demo
-          </span>
-        )}
-      </div>
+      {role === "client" ? (
+        <ClientFooter
+          fullName={fullName}
+          email={email}
+          avatarUrl={avatarUrl}
+        />
+      ) : (
+        <div className="flex items-center gap-3 border-t border-white/10 px-2 pt-4">
+          <Avatar name={fullName} email={email} url={avatarUrl} />
+          <SignOutButton />
+          {USE_MOCK && (
+            <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
+              Demo
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-x-2 gap-y-1 px-1 text-[10px] text-white/40">
         <Link href="/legal/privacitat" className="hover:text-white/70">
@@ -224,6 +251,92 @@ function SidebarContent({
           Cookies
         </Link>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Una entrada del menú. La icona és opcional: les àrees d'admin i professional
+ * encara no en tenen i han de seguir veient-se igual que abans.
+ */
+function NavLink({
+  href,
+  label,
+  icon,
+  active,
+}: {
+  href: string;
+  label: string;
+  icon?: NavIcon;
+  active: boolean;
+}) {
+  const Icon = icon ? NAV_ICONS[icon] : null;
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={clsx(
+        "flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold transition-colors",
+        active
+          ? "border-brand-orange bg-white/15 text-white"
+          : "border-transparent text-white/80 hover:bg-white/10 hover:text-white",
+      )}
+    >
+      {Icon && (
+        <Icon
+          size={19}
+          strokeWidth={1.9}
+          aria-hidden
+          className={clsx("shrink-0", !active && "text-white/70")}
+        />
+      )}
+      {label}
+    </Link>
+  );
+}
+
+/**
+ * Peu del menú del client: qui és, un accés al seu perfil i sortir.
+ *
+ * El bloc sencer és l'enllaç —nom, subtítol i cursor— perquè la zona on es pot
+ * clicar sigui la que es veu. La fletxa apunta cap a la dreta i no cap avall a
+ * propòsit: aquí no s'obre cap menú, es va a una altra pantalla.
+ */
+function ClientFooter({
+  fullName,
+  email,
+  avatarUrl,
+}: {
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-t border-white/10 px-1 pt-4">
+      <Link
+        href={CLIENT_PROFILE_PATH}
+        className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-white/10"
+      >
+        <Avatar name={fullName} email={email} url={avatarUrl} size={38} />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-sm font-bold text-white">
+              {fullName || "El meu compte"}
+            </span>
+            {USE_MOCK && (
+              <span className="shrink-0 rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
+                Demo
+              </span>
+            )}
+          </span>
+          <span className="block truncate text-xs text-white/60">
+            Veure el meu perfil
+          </span>
+        </span>
+        <ChevronRight size={18} aria-hidden className="shrink-0 text-white/50" />
+      </Link>
+
+      <SignOutButton variant="panel" />
     </div>
   );
 }
