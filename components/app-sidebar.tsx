@@ -12,6 +12,9 @@ import {
   Users,
   User,
   Settings,
+  Contact,
+  Package,
+  Receipt,
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
@@ -45,6 +48,9 @@ const NAV_ICONS: Record<NavIcon, LucideIcon> = {
   community: Users,
   profile: User,
   settings: Settings,
+  people: Contact,
+  catalog: Package,
+  billing: Receipt,
 };
 
 /** Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área. */
@@ -193,6 +199,7 @@ function SidebarContent({
                   <NavLink
                     href={entry.children[0].href}
                     label={entry.label}
+                    icon={entry.icon}
                     active={active}
                   />
                 </li>
@@ -220,23 +227,15 @@ function SidebarContent({
         </ul>
       </nav>
 
-      {role === "client" ? (
-        <ClientFooter
-          fullName={fullName}
-          email={email}
-          avatarUrl={avatarUrl}
-        />
-      ) : (
-        <div className="flex items-center gap-3 border-t border-white/10 px-2 pt-4">
-          <Avatar name={fullName} email={email} url={avatarUrl} />
-          <SignOutButton />
-          {USE_MOCK && (
-            <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
-              Demo
-            </span>
-          )}
-        </div>
-      )}
+      <SidebarFooter
+        fullName={fullName}
+        email={email}
+        avatarUrl={avatarUrl}
+        // Només el client té on anar: el seu perfil és la primera pestanya de
+        // Configuració. Admin i professional no tenen cap pàgina de perfil, i
+        // un enllaç que no porta enlloc és pitjor que cap enllaç.
+        profileHref={role === "client" ? CLIENT_PROFILE_PATH : null}
+      />
 
       <div className="flex flex-wrap gap-x-2 gap-y-1 px-1 text-[10px] text-white/40">
         <Link href="/legal/privacitat" className="hover:text-white/70">
@@ -296,45 +295,62 @@ function NavLink({
 }
 
 /**
- * Peu del menú del client: qui és, un accés al seu perfil i sortir.
+ * Peu del menú: qui ha entrat i com sortir.
  *
- * El bloc sencer és l'enllaç —nom, subtítol i cursor— perquè la zona on es pot
- * clicar sigui la que es veu. La fletxa apunta cap a la dreta i no cap avall a
+ * Amb `profileHref` el bloc sencer és l'enllaç —nom, subtítol i fletxa—
+ * perquè la zona on es pot clicar sigui la que es veu; sense, és només la
+ * fitxa de qui hi ha dins. La fletxa apunta a la dreta i no cap avall a
  * propòsit: aquí no s'obre cap menú, es va a una altra pantalla.
  */
-function ClientFooter({
+function SidebarFooter({
   fullName,
   email,
   avatarUrl,
+  profileHref,
 }: {
   fullName: string;
   email: string;
   avatarUrl: string | null;
+  profileHref: string | null;
 }) {
-  return (
-    <div className="flex flex-col gap-3 border-t border-white/10 px-1 pt-4">
-      <Link
-        href={CLIENT_PROFILE_PATH}
-        className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-white/10"
-      >
-        <Avatar name={fullName} email={email} url={avatarUrl} size={38} />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2">
-            <span className="truncate text-sm font-bold text-white">
-              {fullName || "El meu compte"}
-            </span>
-            {USE_MOCK && (
-              <span className="shrink-0 rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
-                Demo
-              </span>
-            )}
+  const identity = (
+    <>
+      <Avatar name={fullName} email={email} url={avatarUrl} size={38} />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-bold text-white">
+            {fullName || "El meu compte"}
           </span>
+          {USE_MOCK && (
+            <span className="shrink-0 rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
+              Demo
+            </span>
+          )}
+        </span>
+        {profileHref && (
           <span className="block truncate text-xs text-white/60">
             Veure el meu perfil
           </span>
-        </span>
+        )}
+      </span>
+      {profileHref && (
         <ChevronRight size={18} aria-hidden className="shrink-0 text-white/50" />
-      </Link>
+      )}
+    </>
+  );
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-white/10 px-1 pt-4">
+      {profileHref ? (
+        <Link
+          href={profileHref}
+          className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-white/10"
+        >
+          {identity}
+        </Link>
+      ) : (
+        <div className="flex items-center gap-3 px-1 py-1.5">{identity}</div>
+      )}
 
       <SignOutButton variant="panel" />
     </div>

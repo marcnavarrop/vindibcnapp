@@ -17,7 +17,10 @@ export type NavIcon =
   | "document"
   | "community"
   | "profile"
-  | "settings";
+  | "settings"
+  | "people"
+  | "catalog"
+  | "billing";
 
 export type NavItem = {
   href: string;
@@ -33,7 +36,7 @@ export type NavItem = {
 };
 
 /** Grup de seccions relacionades que apareix com una sola entrada al sidebar. */
-export type NavGroup = { label: string; children: NavItem[] };
+export type NavGroup = { label: string; children: NavItem[]; icon?: NavIcon };
 
 export type NavEntry = NavItem | NavGroup;
 
@@ -68,10 +71,15 @@ export const CLIENT_PROFILE_PATH = "/client/configuracio";
  * i com pestanyes dins de cada pàgina del grup.
  */
 export const NAV_GROUPS: Record<Role, NavEntry[]> = {
+  // Un concepte que es repeteix a dues àrees porta la mateixa icona: les
+  // reserves són el calendari als tres rols, els bons el tiquet, i la
+  // configuració l'engranatge. Qui faci servir dues àrees no ha de reaprendre
+  // el menú.
   admin: [
-    { href: "/admin", label: "Inici", exact: true },
+    { href: "/admin", label: "Inici", exact: true, icon: "home" },
     {
       label: "Persones",
+      icon: "people",
       children: [
         { href: "/admin/clients", label: "Clients" },
         { href: "/admin/entrenadors", label: "Professionals" },
@@ -79,6 +87,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     },
     {
       label: "Reserves",
+      icon: "calendar",
       children: [
         { href: "/admin/reservas", label: "Reserves" },
         { href: "/admin/disponibilitat", label: "Disponibilitat" },
@@ -87,6 +96,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     },
     {
       label: "Bons i pagaments",
+      icon: "ticket",
       children: [
         { href: "/admin/bonos", label: "Bons" },
         { href: "/admin/pagos", label: "Pagaments" },
@@ -95,6 +105,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     },
     {
       label: "Catàleg",
+      icon: "catalog",
       children: [
         { href: "/admin/serveis", label: "Serveis" },
         { href: "/admin/ofertes", label: "Ofertes" },
@@ -102,31 +113,37 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     },
     {
       label: "Facturació",
+      icon: "billing",
       children: [
         { href: "/admin/facturacio/tarifes", label: "Tarifes" },
         { href: "/admin/facturacio/liquidacions", label: "Liquidacions" },
         { href: "/admin/facturacio/bonus", label: "Bonus" },
       ],
     },
-    { href: "/admin/exercicis", label: "Exercicis" },
-    { href: "/admin/community", label: "Comunitat" },
-    { href: "/admin/configuracio", label: "Configuració" },
+    { href: "/admin/exercicis", label: "Exercicis", icon: "dumbbell" },
+    { href: "/admin/community", label: "Comunitat", icon: "community" },
+    { href: "/admin/configuracio", label: "Configuració", icon: "settings" },
   ],
   trainer: [
-    { href: "/trainer", label: "Inici", exact: true },
-    { href: "/trainer/clients", label: "Clients" },
+    { href: "/trainer", label: "Inici", exact: true, icon: "home" },
+    { href: "/trainer/clients", label: "Clients", icon: "people" },
     {
       label: "Reserves",
+      icon: "calendar",
       children: [
         { href: "/trainer/reservas", label: "Reserves" },
         { href: "/trainer/disponibilitat", label: "Disponibilitat" },
       ],
     },
-    { href: "/trainer/bonos", label: "Bons" },
-    { href: "/trainer/factures", label: "Les meves factures" },
-    { href: "/trainer/exercicis", label: "Exercicis" },
-    { href: "/trainer/comunitat", label: "Comunitat" },
-    { href: "/trainer/configuracio", label: "Configuració" },
+    { href: "/trainer/bonos", label: "Bons", icon: "ticket" },
+    {
+      href: "/trainer/factures",
+      label: "Les meves factures",
+      icon: "billing",
+    },
+    { href: "/trainer/exercicis", label: "Exercicis", icon: "dumbbell" },
+    { href: "/trainer/comunitat", label: "Comunitat", icon: "community" },
+    { href: "/trainer/configuracio", label: "Configuració", icon: "settings" },
   ],
   // El client és l'única àrea amb icones de moment: el seu menú es va
   // redissenyar abans que el d'admin i professional, que segueixen amb la
