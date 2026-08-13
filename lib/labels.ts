@@ -127,6 +127,11 @@ export function deOf(word: string): string {
     : `de ${word}`;
 }
 
+/** "1 sessió" / "8 sessions". El plural s'escapava als correus. */
+export function sessionsLabel(n: number): string {
+  return `${n} ${n === 1 ? "sessió" : "sessions"}`;
+}
+
 export const GIFT_VOUCHER_STATUS_LABELS: Record<GiftVoucherStatus, string> = {
   pending_payment: "Pendent de pagament",
   active: "Actiu",

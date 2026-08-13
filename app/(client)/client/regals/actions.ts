@@ -12,7 +12,7 @@ import {
 import { uploadGiftVoucherPdf } from "@/lib/data/gift-voucher-doc";
 import { getClientByProfile } from "@/lib/data/clients";
 import { notify } from "@/lib/notifications";
-import { formatDate } from "@/lib/labels";
+import { formatDate, sessionsLabel } from "@/lib/labels";
 
 export type BuyState = {
   error?: string;
@@ -145,7 +145,7 @@ export async function sendGiftVoucherAction(
         recipient: voucher.recipientName ?? "",
         buyer: viewer.fullName ?? "",
         code: voucher.code,
-        package: `${voucher.packageName} · ${voucher.totalSessions} sessions`,
+        package: `${voucher.packageName} · ${sessionsLabel(voucher.totalSessions)}`,
         expires: formatDate(voucher.expiresAt),
         message: voucher.message ?? "",
       },

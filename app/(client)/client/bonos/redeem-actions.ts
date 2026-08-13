@@ -7,7 +7,7 @@ import {
   giftVoucherBuyerContact,
 } from "@/lib/data/gift-vouchers";
 import { notify, getProfileContact } from "@/lib/notifications";
-import { SERVICE_LABELS, deOf, formatDate, formatTime } from "@/lib/labels";
+import { SERVICE_LABELS, deOf, sessionsLabel, formatDate, formatTime } from "@/lib/labels";
 
 export type RedeemState = {
   error?: string;
@@ -49,7 +49,7 @@ export async function redeemGiftVoucherAction(
         data: {
           name: contact.name ?? "",
           recipient: buyer.recipientName ?? "",
-          package: `${buyer.packageName} · ${result.sessions} sessions`,
+          package: `${buyer.packageName} · ${sessionsLabel(result.sessions)}`,
           code: code.trim().toUpperCase(),
           when: `${formatDate(new Date().toISOString())}, ${formatTime(new Date().toISOString())}`,
         },
@@ -60,6 +60,6 @@ export async function redeemGiftVoucherAction(
   revalidatePath("/client");
   return {
     ok: true,
-    detail: `${result.sessions} ${result.sessions === 1 ? "sessió" : "sessions"} ${deOf(SERVICE_LABELS[result.serviceType])}`,
+    detail: `${sessionsLabel(result.sessions)} ${deOf(SERVICE_LABELS[result.serviceType])}`,
   };
 }
