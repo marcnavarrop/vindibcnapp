@@ -46,3 +46,6 @@ next-env.d.ts
 __*.mjs
 __*.mts
 __*.json
+
+# Scripts de verificació d'un sol ús (mai han d'anar al repo)
+tmp-*
