@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   SERVICE_LABELS,
   GIFT_VOUCHER_STATUS_LABELS,
+  sessionsLabel,
   formatEur,
   formatDate,
 } from "@/lib/labels";
@@ -106,7 +107,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                 <td className="px-4 py-3">
                   {v.packageName}
                   <span className="block text-xs text-brand-muted">
-                    {v.totalSessions} sessions · {SERVICE_LABELS[v.serviceType]}
+                    {sessionsLabel(v.totalSessions)} · {SERVICE_LABELS[v.serviceType]}
                   </span>
                 </td>
                 <td className="px-4 py-3">{formatEur(v.price)}</td>
