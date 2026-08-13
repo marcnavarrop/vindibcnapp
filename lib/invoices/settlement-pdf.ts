@@ -1,5 +1,6 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { embedBrandLogo, logoWidthFor } from "@/lib/invoices/brand-logo";
 import { BRAND, CENTER_NAME } from "@/lib/notifications/brand";
 import { SERVICE_LABELS, formatEur, formatDate } from "@/lib/labels";
 import type { SettlementBreakdownLine } from "@/types/database";
@@ -172,15 +173,31 @@ export async function renderSettlementInvoicePdf(
     color: PURPLE,
   });
 
+  // El logotip de debò, el mateix que el val de regal i els correus. Abans
+  // aquí hi havia "Vindi" + "BCN" escrit en Helvetica: era l'aproximació que
+  // teníem quan encara no hi havia un fitxer únic de marca, i es notava al
+  // costat de qualsevol altra pantalla. Si el fitxer no es pot llegir, es
+  // torna a escriure el nom: una factura sense logo és millor que cap factura.
   const wordmarkY = A4.height - 52;
-  drawText(ctx, "Vindi", { x: MARGIN, y: wordmarkY, size: 24, bold: true, color: WHITE });
-  drawText(ctx, "BCN", {
-    x: MARGIN + ctx.bold.widthOfTextAtSize("Vindi", 24),
-    y: wordmarkY,
-    size: 24,
-    bold: true,
-    color: ORANGE,
-  });
+  const logo = await embedBrandLogo(doc);
+  if (logo) {
+    const h = 26;
+    page.drawImage(logo, {
+      x: MARGIN,
+      y: wordmarkY - 4,
+      width: logoWidthFor(logo, h),
+      height: h,
+    });
+  } else {
+    drawText(ctx, "Vindi", { x: MARGIN, y: wordmarkY, size: 24, bold: true, color: WHITE });
+    drawText(ctx, "BCN", {
+      x: MARGIN + ctx.bold.widthOfTextAtSize("Vindi", 24),
+      y: wordmarkY,
+      size: 24,
+      bold: true,
+      color: ORANGE,
+    });
+  }
   drawText(ctx, "Centre d'entrenament personal i fisioteràpia", {
     x: MARGIN,
     y: wordmarkY - 18,

@@ -1,7 +1,6 @@
 import "server-only";
-import fs from "node:fs/promises";
-import path from "node:path";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { embedBrandLogo, logoWidthFor } from "@/lib/invoices/brand-logo";
 import { BRAND, CENTER_NAME } from "@/lib/notifications/brand";
 import { SERVICE_LABELS, deOf, formatDate } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
@@ -95,22 +94,6 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
   return lines;
 }
 
-/**
- * El logotip, llegit del mateix fitxer que fa servir tota l'app.
- *
- * Es llegeix del disc i no per HTTP: generar el val no pot dependre que l'app
- * es pugui cridar a si mateixa. Si el fitxer no hi fos, el document es genera
- * igual amb el nom escrit: val més un val sense logo que cap val.
- */
-async function embedLogo(doc: PDFDocument) {
-  try {
-    const file = path.join(process.cwd(), "public", "images", "logo-vindi.png");
-    return await doc.embedPng(await fs.readFile(file));
-  } catch {
-    return null;
-  }
-}
-
 export type GiftVoucherPdfInput = {
   code: string;
   packageName: string;
@@ -136,7 +119,7 @@ export async function renderGiftVoucherPdf(
     regular: await doc.embedFont(StandardFonts.Helvetica),
     bold: await doc.embedFont(StandardFonts.HelveticaBold),
   };
-  const logo = await embedLogo(doc);
+  const logo = await embedBrandLogo(doc);
   const center = PAGE.width / 2;
 
   // ── Banda de marca ────────────────────────────────────────────────────────
@@ -159,7 +142,7 @@ export async function renderGiftVoucherPdf(
 
   if (logo) {
     const h = 40;
-    const w = (logo.width / logo.height) * h;
+    const w = logoWidthFor(logo, h);
     page.drawImage(logo, { x: MARGIN, y: PAGE.height - band + 40, width: w, height: h });
   } else {
     drawText(ctx, "Vindi", {
