@@ -8,6 +8,7 @@ import {
   setServiceTypeColor,
 } from "@/lib/data/colors";
 import { SERVICE_TYPES } from "@/lib/labels";
+import { isReservedGreen } from "@/lib/pro-colors";
 import type { ServiceType } from "@/types/database";
 
 export type ColorsState = { error?: string; ok?: boolean };
@@ -36,6 +37,15 @@ export async function updateColorsAction(
     if (key.startsWith("pro:")) {
       if (!isHexColor(value))
         return { error: `Color no vàlid: "${raw}". Ha de ser un hex #rrggbb.` };
+      // El verd està reservat al calendari del client: hi vol dir "aquesta
+      // reserva és teva" i "aquest grup té plaça". Si un professional en
+      // pogués dur un, el mateix color significaria dues coses a la mateixa
+      // pantalla. La paleta per defecte ja no en té, però l'admin pot escriure
+      // qualsevol hex a mà i aquí és on es tanca.
+      if (isReservedGreen(value))
+        return {
+          error: `El verd està reservat per a les teves reserves i els grups amb plaça al calendari del client. Tria un altre color per a aquest professional (has provat "${raw}").`,
+        };
       pros.push([key.slice(4), value]);
     } else if (key.startsWith("svc:")) {
       const type = key.slice(4) as ServiceType;

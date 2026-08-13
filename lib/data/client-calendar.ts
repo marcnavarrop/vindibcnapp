@@ -10,7 +10,12 @@ import { avatarUrls } from "@/lib/data/avatars";
 import type { TrainerRuleLite, TrainerBlockLite } from "@/lib/availability-slots";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
-/** Reserva del centro para el calendario del cliente (SIN nombres de otros). */
+/**
+ * Reserva del centre per al calendari del client.
+ *
+ * Les reserves d'altres persones arriben ANÒNIMES: aquest tipus no té camp de
+ * nom... amb UNA excepció acotada, `mateName`.
+ */
 export type CenterReservation = {
   id: string;
   trainerId: string | null;
@@ -18,7 +23,35 @@ export type CenterReservation = {
   serviceType: ServiceType;
   status: ReservationStatus;
   isOwn: boolean;
+  /**
+   * Nom de pila de qui té la reserva, NOMÉS si és de 'grupo_reducido'.
+   *
+   * A una classe de grup et trobes físicament els companys: amagar-ne el nom
+   * no protegeix res i només fa la pantalla més pobra. A qualsevol altre
+   * servei —individual o parelles— això val `null` i no surt del servidor,
+   * perquè allà sí que hi ha una expectativa raonable de discreció: qui va al
+   * fisioterapeuta o a una sessió individual no ho està ensenyant a ningú.
+   *
+   * L'exclusió es fa AQUÍ, en projectar, i no al component: així el nom no
+   * arriba mai al navegador per als serveis que no toca, per molt que després
+   * algú es descuidi de filtrar-lo a la vista.
+   */
+  mateName: string | null;
 };
+
+/** Del nom complet al nom de pila: és l'únic tros que es publica. */
+function firstName(full: string | null | undefined): string | null {
+  const n = (full ?? "").trim();
+  return n ? n.split(/\s+/)[0] : null;
+}
+
+/** El nom només viatja si la reserva és de grup. Punt únic de decisió. */
+function mateNameFor(
+  serviceType: ServiceType,
+  fullName: string | null | undefined,
+): string | null {
+  return serviceType === "grupo_reducido" ? firstName(fullName) : null;
+}
 
 export type ClientCenterData = {
   clientId: string | null;
@@ -69,6 +102,8 @@ export async function getClientCenterData(
       serviceType: h.serviceType,
       status: "booked" as ReservationStatus,
       isOwn: false,
+      // Una prova encara no és de ningú del centre: cap nom, ni de grup.
+      mateName: null,
     }));
 
   if (USE_MOCK) {
@@ -107,14 +142,19 @@ export async function getClientCenterData(
     }));
     const reservations = store.reservations
       .filter((r) => r.status !== "cancelled")
-      .map((r) => ({
-        id: r.id,
-        trainerId: r.trainer_id,
-        scheduledAt: r.scheduled_at,
-        serviceType: r.service_type,
-        status: r.status,
-        isOwn: r.client_id === client.id,
-      }));
+      .map((r) => {
+        const c = store.clients.find((x) => x.id === r.client_id);
+        const name = store.profiles.find((p) => p.id === c?.profile_id)?.full_name;
+        return {
+          id: r.id,
+          trainerId: r.trainer_id,
+          scheduledAt: r.scheduled_at,
+          serviceType: r.service_type,
+          status: r.status,
+          isOwn: r.client_id === client.id,
+          mateName: mateNameFor(r.service_type, name),
+        };
+      });
     return {
       clientId: client.id,
       assignedTrainerId: client.assigned_trainer_id ?? null,
@@ -148,9 +188,16 @@ export async function getClientCenterData(
     admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer"),
     listAllTrainerRulesLite(),
     listAllBlocksLite(),
+    // El nom del client s'incorpora a la consulta, però NOMÉS surt d'aquí per
+    // a les reserves de grup (vegeu `mateNameFor`). La consulta va amb el
+    // client de servei, com tota la resta d'aquest fitxer: qui decideix què es
+    // publica és aquesta projecció, no la RLS.
     admin
       .from("reservations")
-      .select("id, client_id, trainer_id, scheduled_at, service_type, status")
+      .select(
+        `id, client_id, trainer_id, scheduled_at, service_type, status,
+         client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
+      )
       .neq("status", "cancelled"),
   ]);
 
@@ -175,13 +222,25 @@ export async function getClientCenterData(
     name: t.full_name ?? "—",
     avatarUrl: avatars.get(t.avatar_path ?? "") ?? null,
   }));
-  const reservations: CenterReservation[] = (resRows.data ?? []).map((r) => ({
+  type ResRow = {
+    id: string;
+    client_id: string;
+    trainer_id: string | null;
+    scheduled_at: string;
+    service_type: ServiceType;
+    status: ReservationStatus;
+    client: { profile: { full_name: string | null } | null } | null;
+  };
+  const reservations: CenterReservation[] = (
+    (resRows.data ?? []) as unknown as ResRow[]
+  ).map((r) => ({
     id: r.id,
     trainerId: r.trainer_id,
     scheduledAt: r.scheduled_at,
     serviceType: r.service_type,
     status: r.status,
     isOwn: r.client_id === client.id,
+    mateName: mateNameFor(r.service_type, r.client?.profile?.full_name),
   }));
 
   return {

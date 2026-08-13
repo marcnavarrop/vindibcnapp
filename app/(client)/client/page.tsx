@@ -111,9 +111,11 @@ export default async function ClientHome() {
 
       <QuickActions />
 
-      <ActiveBonos bonos={bonos} />
+      {/* Primer les reserves i després els bons: el que un client mira en
+          obrir l'app és quan té la pròxima sessió, no quantes li queden. Amb
+          els bons a sobre, l'agenda quedava sota la línia de scroll.
 
-      {/* Dues columnes a partir de `lg`: l'agenda a l'esquerra i, a la dreta,
+          Dues columnes a partir de `lg`: l'agenda a l'esquerra i, a la dreta,
           la pròxima sessió. En mòbil van una sota l'altra, amb la pròxima
           sessió PRIMER: és el que es mira quan s'obre l'app. */}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -136,6 +138,8 @@ export default async function ClientHome() {
           )}
         </div>
       </div>
+
+      <ActiveBonos bonos={bonos} />
 
       {/* Comunitat i les targetes de creixement comparteixen la mateixa
           graella: el mur a l'esquerra i les targetes com a columna al costat.

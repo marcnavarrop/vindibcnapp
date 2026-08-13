@@ -97,7 +97,16 @@ const toLocalInput = (d: Date) =>
 
 /** Un elemento a pintar en una celda (chip). */
 type CellItem =
-  | { kind: "own"; id: string; trainerId: string | null; service: ServiceType; slot: Date; groupCount?: number }
+  | {
+      kind: "own";
+      id: string;
+      trainerId: string | null;
+      service: ServiceType;
+      slot: Date;
+      groupCount?: number;
+      /** Noms de pila dels ALTRES del grup. Buit si no és una sessió de grup. */
+      mates?: string[];
+    }
   | { kind: "occupied"; trainerId: string | null; service: ServiceType }
   | {
       kind: "group";
@@ -105,6 +114,8 @@ type CellItem =
       count: number;
       joinable: boolean;
       slot: Date;
+      /** Qui ja s'hi ha apuntat, pel nom de pila. */
+      mates: string[];
     }
   | {
       kind: "free";
@@ -148,6 +159,8 @@ export function ClientCenterCalendar({
     trainerId: string;
     service: ServiceType;
     slot: Date;
+    /** Qui ja hi és, si és un grup. Buit a la resta de serveis. */
+    mates?: string[];
   } | null>(null);
   const [own, setOwn] = useState<CellItem & { kind: "own" } | null>(null);
 
@@ -236,6 +249,14 @@ export function ClientCenterCalendar({
       );
       const offered = offeredServices(rules, blocks, t.id, cellDate, h);
 
+      // Els noms només existeixen a les reserves de grup: el servidor no els
+      // envia per a cap altre servei (vegeu `mateName` a client-calendar.ts).
+      const groupMates = (exclude?: string) =>
+        groupHere
+          .filter((r) => r.id !== exclude)
+          .map((r) => r.mateName)
+          .filter((n): n is string => !!n);
+
       // Mis sesiones (siempre visibles).
       for (const r of ownHere)
         items.push({
@@ -245,6 +266,8 @@ export function ClientCenterCalendar({
           service: r.serviceType,
           slot: new Date(r.scheduledAt),
           groupCount: r.serviceType === "grupo_reducido" ? groupHere.length : undefined,
+          mates:
+            r.serviceType === "grupo_reducido" ? groupMates(r.id) : undefined,
         });
       if (ownHere.length > 0) continue;
 
@@ -269,6 +292,7 @@ export function ClientCenterCalendar({
           trainerId: t.id,
           count,
           joinable,
+          mates: groupMates(),
           slot: new Date(groupHere[0].scheduledAt),
         });
         continue;
@@ -524,6 +548,9 @@ export function ClientCenterCalendar({
                               </span>
                               <span className="block truncate text-brand-muted">
                                 {firstName(trainerName(it.trainerId))}
+                                {it.mates && it.mates.length > 0
+                                  ? ` · amb ${it.mates.join(", ")}`
+                                  : ""}
                               </span>
                             </button>
                           );
@@ -554,6 +581,7 @@ export function ClientCenterCalendar({
                                         trainerId: it.trainerId!,
                                         service: "grupo_reducido",
                                         slot: it.slot,
+                                        mates: it.mates,
                                       })
                                   : undefined
                               }
@@ -581,6 +609,18 @@ export function ClientCenterCalendar({
                                     ? "Gairebé ple"
                                     : "Plaça lliure"}
                               </span>
+                              {/* A una classe de grup ja et trobes els
+                                  companys: saber-ho abans d'apuntar-t'hi és
+                                  part de decidir si hi vas. */}
+                              {it.mates.length > 0 && (
+                                <span
+                                  className="block truncate font-normal opacity-80"
+                                  style={{ color: oc.text }}
+                                  title={it.mates.join(", ")}
+                                >
+                                  {it.mates.join(", ")}
+                                </span>
+                              )}
                             </button>
                           );
                         }
@@ -627,7 +667,8 @@ export function ClientCenterCalendar({
       <p className="mt-3 text-xs text-brand-muted">
         Es mostren totes les franjas lliures del centre que pots reservar segons
         els teus bons, amb el color de cada professional. Les sessions d&apos;altres
-        persones apareixen com a «Ocupat»; als grups amb plaça pots apuntar-t&apos;hi.
+        persones apareixen com a «Ocupat»; als grups amb plaça pots apuntar-t&apos;hi
+        i veus qui ja s&apos;hi ha apuntat.
       </p>
 
       {book && (
@@ -636,6 +677,7 @@ export function ClientCenterCalendar({
           otherPartyName={trainerName(book.trainerId)}
           service={book.service}
           slot={book.slot}
+          mates={book.mates}
           action={createAction}
           onClose={() => setBook(null)}
           onDone={() => {
@@ -649,6 +691,7 @@ export function ClientCenterCalendar({
         <OwnModal
           service={own.service}
           otherPartyName={trainerName(own.trainerId)}
+          mates={own.mates}
           id={own.id}
           scheduledAt={own.slot.toISOString()}
           minCancellationHours={minCancellationHours}
@@ -660,12 +703,26 @@ export function ClientCenterCalendar({
   );
 }
 
+/**
+ * Els companys d'una sessió de grup.
+ *
+ * No pinta res si la llista és buida, que és el cas de TOTS els serveis que no
+ * són 'grupo_reducido': el servidor no els hi envia mai cap nom (vegeu
+ * `mateName` a lib/data/client-calendar.ts). Aquí no hi ha cap filtre de
+ * privacitat a mantenir, perquè la decisió ja s'ha pres abans d'arribar-hi.
+ */
+function GroupMates({ mates, label }: { mates: string[]; label: string }) {
+  if (mates.length === 0) return null;
+  return <Field label={label} value={mates.join(", ")} />;
+}
+
 /** Icona animada de feedback (confirmació verda / cancel·lació vermella). */
 function CreateModal({
   trainerId,
   otherPartyName: trainerNameFull,
   service,
   slot,
+  mates = [],
   action,
   onClose,
   onDone,
@@ -674,6 +731,8 @@ function CreateModal({
   otherPartyName: string;
   service: ServiceType;
   slot: Date;
+  /** Companys de grup ja apuntats. Sempre buit si no és 'grupo_reducido'. */
+  mates?: string[];
   action: CreateAction;
   onClose: () => void;
   onDone: () => void;
@@ -706,6 +765,7 @@ function CreateModal({
         <dl className="mt-4 flex flex-col gap-2 text-sm">
           <Field label="Servei" value={SERVICE_LABELS[service]} />
           <Field label="Professional" value={trainerName} />
+          <GroupMates mates={mates} label="Amb" />
         </dl>
         <div className="mt-5 flex flex-col items-center gap-3">
           <AddToCalendarButton
@@ -732,6 +792,7 @@ function CreateModal({
       <dl className="mt-4 flex flex-col gap-2 text-sm">
         <Field label="Servei" value={SERVICE_LABELS[service]} />
         <Field label="Professional" value={trainerName} />
+        <GroupMates mates={mates} label="Ja s'hi han apuntat" />
       </dl>
       <form action={formAction} className="mt-5">
         <input type="hidden" name="trainerId" value={trainerId} />
@@ -768,6 +829,7 @@ function OwnModal({
   otherPartyName: trainerNameFull,
   id,
   scheduledAt,
+  mates = [],
   minCancellationHours,
   cancelAction,
   onClose,
@@ -776,6 +838,8 @@ function OwnModal({
   otherPartyName: string;
   id: string;
   scheduledAt: string;
+  /** Companys de grup. Sempre buit si no és 'grupo_reducido'. */
+  mates?: string[];
   minCancellationHours: number;
   cancelAction: CancelAction;
   onClose: () => void;
@@ -821,6 +885,7 @@ function OwnModal({
       <dl className="mt-4 flex flex-col gap-2 text-sm">
         <Field label="Servei" value={SERVICE_LABELS[service]} />
         <Field label="Professional" value={trainerName} />
+        <GroupMates mates={mates} label="Amb tu hi ha" />
       </dl>
       <div className="mt-4">
         <AddToCalendarButton

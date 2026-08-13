@@ -171,34 +171,38 @@ export function KpiRow({ kpis }: { kpis: ClientKpis }) {
 
 // ─────────────────────── Accions ràpides ───────────────────────
 
+/**
+ * Les tres coses que un client ve a fer.
+ *
+ * Eren cinc i amb un títol de secció a sobre. "Els meus pagaments" i
+ * "Actualitzar dades" no són el que algú obre l'app per fer —es consulten un
+ * cop cada molt—, i tenir-les aquí feia els cinc botons petits i iguals entre
+ * ells. Segueixen a un clic des de Bons i des de Configuració.
+ *
+ * Sense capçalera: uns botons grossos i amb icona ja diuen què són, i el títol
+ * només afegia una línia de text entre el resum de dalt i l'acció.
+ */
 export function QuickActions() {
   const actions: { icon: IconName; label: string; href: string }[] = [
     { icon: "calendarPlus", label: "Reservar sessió", href: "/client/reservas" },
     { icon: "ticket", label: "Comprar bo", href: "/client/bonos/comprar" },
     { icon: "dumbbell", label: "Els meus entrenaments", href: "/client/exercicis" },
-    { icon: "euro", label: "Els meus pagaments", href: "/client/bonos" },
-    { icon: "user", label: "Actualitzar dades", href: "/client/configuracio" },
   ];
 
   return (
-    <section>
-      <h2 className="mb-2 text-xs font-bold tracking-widest text-brand-muted uppercase">
-        Accions ràpides
-      </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {actions.map((a) => (
-          <Link
-            key={a.href}
-            href={a.href}
-            className="flex items-center gap-2.5 rounded-2xl border border-brand-border bg-white px-3 py-3 text-sm font-bold text-brand-dark transition-colors hover:border-brand-purple"
-          >
-            <span className="shrink-0 text-brand-orange">
-              <Icon name={a.icon} size={17} />
-            </span>
-            <span className="min-w-0 leading-tight text-balance">{a.label}</span>
-          </Link>
-        ))}
-      </div>
+    <section className="grid gap-3 sm:grid-cols-3">
+      {actions.map((a) => (
+        <Link
+          key={a.href}
+          href={a.href}
+          className="flex items-center gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-base font-bold text-brand-dark transition-colors hover:border-brand-purple hover:bg-brand-purple/5"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange">
+            <Icon name={a.icon} size={21} />
+          </span>
+          <span className="min-w-0 leading-tight text-balance">{a.label}</span>
+        </Link>
+      ))}
     </section>
   );
 }
