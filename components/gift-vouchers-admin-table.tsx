@@ -76,14 +76,13 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-        <table className="w-full min-w-[58rem] text-left text-sm">
+        <table className="w-full min-w-[48rem] text-left text-sm">
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Codi</th>
               <th className="px-4 py-3 font-bold">Comprador</th>
               <th className="px-4 py-3 font-bold">Paquet</th>
               <th className="px-4 py-3 font-bold">Preu</th>
-              <th className="px-4 py-3 font-bold">Comprat</th>
               <th className="px-4 py-3 font-bold">Caduca</th>
               <th className="px-4 py-3 font-bold">Estat</th>
               <th className="px-4 py-3 font-bold"></th>
@@ -96,11 +95,10 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                   <span className="font-mono font-bold whitespace-nowrap text-brand-purple">
                     {v.code}
                   </span>
-                  {v.recipientName && (
-                    <span className="block text-xs text-brand-muted">
-                      per a {v.recipientName}
-                    </span>
-                  )}
+                  <span className="block text-xs text-brand-muted">
+                    {v.recipientName ? `per a ${v.recipientName} · ` : ""}
+                    {formatDate(v.purchasedAt)}
+                  </span>
                 </td>
                 <td className="px-4 py-3 font-bold text-brand-dark">
                   {v.buyerName}
@@ -112,9 +110,6 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                   </span>
                 </td>
                 <td className="px-4 py-3">{formatEur(v.price)}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-brand-muted">
-                  {formatDate(v.purchasedAt)}
-                </td>
                 <td className="px-4 py-3 text-brand-muted">
                   {v.status === "redeemed" && v.redeemedAt ? (
                     <span className="text-brand-dark">
@@ -135,7 +130,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                   </Badge>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                     <a
                       href={`/client/regals/${v.id}/pdf`}
                       className="text-xs font-bold text-brand-muted hover:text-brand-purple"
@@ -173,7 +168,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={7}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
                   Sense vals en aquest filtre.
