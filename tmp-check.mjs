@@ -1,0 +1,14 @@
+import { createClient } from "@supabase/supabase-js";
+import fs from "node:fs";
+const env = Object.fromEntries(fs.readFileSync(".env.local","utf8").split("\n").filter(l=>l.includes("=")&&!l.startsWith("#")).map(l=>[l.slice(0,l.indexOf("=")).trim(), l.slice(l.indexOf("=")+1).trim()]));
+const a = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:{persistSession:false} });
+const cs = await a.from("center_settings").select("gift_vouchers_enabled, gift_voucher_expiry_months").single();
+console.log("center_settings:", cs.error ?? cs.data);
+const gv = await a.from("gift_vouchers").select("id", { count:"exact", head:true });
+console.log("gift_vouchers:", gv.error ?? `OK (${gv.count} files)`);
+const b = await a.from("bonos").select("gift_voucher_id").limit(1);
+console.log("bonos.gift_voucher_id:", b.error ?? "OK");
+const np = await a.from("notification_preferences").select("gift_voucher_redeemed_email").limit(1);
+console.log("prefs:", np.error ?? "OK");
+const { data: buckets } = await a.storage.listBuckets();
+console.log("bucket gift-vouchers:", buckets?.find(x=>x.id==="gift-vouchers") ? "OK (privat="+!buckets.find(x=>x.id==="gift-vouchers").public+")" : "NO HI ÉS");
