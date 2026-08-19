@@ -7,7 +7,17 @@ import { slotHasRoom, createClientReservation, cancelClientReservation } from "@
 import { addToWaitlist, slotKeyOf } from "@/lib/data/waitlist";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
-import { offeredServices, localDateStr } from "@/lib/availability-slots";
+import {
+  isServiceAvailableOn,
+  isInstantBlocked,
+  blocksOf,
+} from "@/lib/availability-slots";
+import {
+  centerDateStr,
+  centerHour,
+  centerWeekday,
+  centerLocalToInstant,
+} from "@/lib/center-time";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   generateOccurrences,
@@ -77,12 +87,23 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
   if (ctx.error)
     return { occurrences: [], bonoRemaining: 0, bonoId: null, error: ctx.error };
 
+  // Les dates es generen en hora del CENTRE i es tornen a convertir a
+  // instants. Sumar 7×24 h sobre l'instant cru semblaria equivalent, però no
+  // ho és: creuant el canvi d'hora la sèrie es desplaçaria una hora, i qui
+  // reserva "cada dijous a les 10" espera les 10 tot l'any.
+  const firstDay = centerDateStr(first);
+  const firstHour = centerHour(first);
   const dates = generateOccurrences({
-    first,
+    first: new Date(`${firstDay}T00:00:00Z`),
     frequency: req.frequency,
     endDate: req.endDate,
     occurrenceCount: req.occurrenceCount,
-  });
+  }).map((d) =>
+    centerLocalToInstant(
+      d.toISOString().slice(0, 10),
+      `${String(firstHour).padStart(2, "0")}:00`,
+    ),
+  );
 
   const occurrences: ResolvedOccurrence[] = [];
   // Còpia local de l'ocupació: cada confirmació d'aquesta mateixa sèrie ha de
@@ -99,16 +120,12 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
     const here = taken.filter(
       (s) => s.trainer_id === req.trainerId && s.scheduled_at === iso,
     );
-    const offered = offeredServices(
-      ctx.rules,
-      ctx.blocks,
-      req.trainerId,
-      when,
-      when.getHours(),
-    );
 
     // 2. La franja exacta, lliure i dins de la disponibilitat del professional.
-    if (offered.has(req.serviceType) && slotHasRoom(here, req.serviceType)) {
+    if (
+      ctx.offers(req.trainerId, when, req.serviceType) &&
+      slotHasRoom(here, req.serviceType)
+    ) {
       occurrences.push({
         requestedAt: iso,
         requestedTrainerId: req.trainerId,
@@ -190,8 +207,8 @@ function findAlternative(
   taken: SlotRow[],
   ctx: Ctx,
 ): ResolvedOccurrence["alternative"] | null {
-  const day = localDateStr(when);
-  const hour = when.getHours();
+  const day = centerDateStr(when);
+  const hour = centerHour(when);
 
   const free = (trainerId: string, at: Date) => {
     const iso = at.toISOString();
@@ -199,9 +216,8 @@ function findAlternative(
       (s) => s.trainer_id === trainerId && s.scheduled_at === iso,
     );
     return (
-      offeredServices(ctx.rules, ctx.blocks, trainerId, at, at.getHours()).has(
-        req.serviceType,
-      ) && slotHasRoom(here, req.serviceType)
+      ctx.offers(trainerId, at, req.serviceType) &&
+      slotHasRoom(here, req.serviceType)
     );
   };
 
@@ -209,10 +225,11 @@ function findAlternative(
   for (let delta = 1; delta <= 6; delta++) {
     for (const h of [hour - delta, hour + delta]) {
       if (h < ctx.openingHour || h >= ctx.closingHour) continue;
-      const at = new Date(when);
-      at.setHours(h, 0, 0, 0);
+      // L'hora es construeix en hora del CENTRE i es converteix a instant:
+      // `setHours` sobre l'instant faria servir la zona del procés (UTC a
+      // Vercel) i buscaria alternatives al mig de la matinada d'aquí.
+      const at = centerLocalToInstant(day, `${String(h).padStart(2, "0")}:00`);
       if (at.getTime() <= Date.now()) continue;
-      if (localDateStr(at) !== day) continue;
       if (free(req.trainerId, at))
         return {
           scheduledAt: at.toISOString(),
@@ -252,6 +269,16 @@ type Ctx = {
   trainerName: (id: string) => string;
   openingHour: number;
   closingHour: number;
+  /**
+   * Ofereix aquest professional aquest servei en aquest instant?
+   *
+   * Es resol en hora del CENTRE, no la del procés. És l'error que ens va
+   * mossegar a producció: `offeredServices` i companyia llegeixen la data amb
+   * els getters LOCALS —estan pensats per al navegador, on local = centre— i
+   * a Vercel el procés va en UTC, de manera que una sessió de les 10 del matí
+   * d'aquí es comprovava contra les 8 i queia fora de l'horari del centre.
+   */
+  offers: (trainerId: string, at: Date, service: ServiceType) => boolean;
 };
 
 /** Tot el que fa falta per resoldre, demanat d'un sol cop. */
@@ -267,7 +294,25 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     trainerName: () => "—",
     openingHour: 7,
     closingHour: 22,
+    offers: () => false,
   };
+  /** Compartit pels dos backends: la disponibilitat no depèn d'on siguin les dades. */
+  const makeOffers =
+    (
+      rules: Awaited<ReturnType<typeof listAllTrainerRulesLite>>,
+      blocks: Awaited<ReturnType<typeof listAllBlocksLite>>,
+    ) =>
+    (trainerId: string, at: Date, service: ServiceType) => {
+      if (isInstantBlocked(blocksOf(blocks, trainerId), at)) return false;
+      return isServiceAvailableOn(
+        rules.filter((r) => r.trainerId === trainerId),
+        centerDateStr(at),
+        centerWeekday(at),
+        centerHour(at),
+        service,
+      );
+    };
+
   const settings = await getCenterSettings();
 
   if (USE_MOCK) {
@@ -289,6 +334,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     const names = new Map(
       store.profiles.filter((p) => p.role === "trainer").map((p) => [p.id, p.full_name ?? "—"]),
     );
+    const rules = await listAllTrainerRulesLite();
+    const blocks = await listAllBlocksLite();
     return {
       bonoId: bono.id,
       bonoRemaining: bono.remaining_sessions,
@@ -300,12 +347,13 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
           scheduled_at: r.scheduled_at,
           service_type: r.service_type,
         })),
-      rules: await listAllTrainerRulesLite(),
-      blocks: await listAllBlocksLite(),
+      rules,
+      blocks,
       trainers: [...names.keys()],
       trainerName: (id) => names.get(id) ?? "—",
       openingHour: settings.openingHour,
       closingHour: settings.closingHour,
+      offers: makeOffers(rules, blocks),
     };
   }
 
@@ -354,6 +402,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     trainerName: (id) => names.get(id) ?? "—",
     openingHour: settings.openingHour,
     closingHour: settings.closingHour,
+    offers: makeOffers(rules, blocks),
   };
 }
 
