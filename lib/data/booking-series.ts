@@ -66,6 +66,25 @@ type SlotRow = {
 };
 
 /**
+ * Ocupació d'una franja concreta.
+ *
+ * Es compara per INSTANT i no per cadena: Postgres torna
+ * "2026-09-03T08:00:00+00:00" i `toISOString()` escriu
+ * "2026-09-03T08:00:00.000Z". És el mateix moment i dues cadenes diferents, i
+ * comparant-les amb `===` una franja ocupada semblava lliure.
+ */
+function occupancyAt(
+  taken: SlotRow[],
+  trainerId: string,
+  at: Date,
+): SlotRow[] {
+  const t = at.getTime();
+  return taken.filter(
+    (s) => s.trainer_id === trainerId && new Date(s.scheduled_at).getTime() === t,
+  );
+}
+
+/**
  * Calcula com quedaria la sèrie, sense escriure res.
  *
  * L'ordre de decisió de cada ocurrència és el de l'especificació i s'aplica
@@ -117,9 +136,7 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
     if (remaining <= 0) break;
 
     const iso = when.toISOString();
-    const here = taken.filter(
-      (s) => s.trainer_id === req.trainerId && s.scheduled_at === iso,
-    );
+    const here = occupancyAt(taken, req.trainerId, when);
 
     // 2. La franja exacta, lliure i dins de la disponibilitat del professional.
     if (
@@ -211,10 +228,7 @@ function findAlternative(
   const hour = centerHour(when);
 
   const free = (trainerId: string, at: Date) => {
-    const iso = at.toISOString();
-    const here = taken.filter(
-      (s) => s.trainer_id === trainerId && s.scheduled_at === iso,
-    );
+    const here = occupancyAt(taken, trainerId, at);
     return (
       ctx.offers(trainerId, at, req.serviceType) &&
       slotHasRoom(here, req.serviceType)
