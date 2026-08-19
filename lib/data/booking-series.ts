@@ -138,8 +138,10 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
     const iso = when.toISOString();
     const here = occupancyAt(taken, req.trainerId, when);
 
-    // 2. La franja exacta, lliure i dins de la disponibilitat del professional.
+    // 2. La franja exacta, lliure, dins de la disponibilitat del professional i
+    //    sense xocar amb una altra reserva del client a la mateixa hora.
     if (
+      !ctx.ownAt.has(when.getTime()) &&
       ctx.offers(req.trainerId, when, req.serviceType) &&
       slotHasRoom(here, req.serviceType)
     ) {
@@ -154,6 +156,7 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
         service_type: req.serviceType,
       });
       remaining -= 1;
+      ctx.ownAt.add(when.getTime());
       continue;
     }
 
@@ -177,6 +180,14 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
           requestedTrainerId: req.trainerId,
           status: "alternativa_proposada",
           alternative: alt,
+        });
+        // L'alternativa ocupa hora encara que estigui pendent d'acceptar: si
+        // no, la següent ocurrència podria proposar la mateixa i xocarien.
+        ctx.ownAt.add(new Date(alt.scheduledAt).getTime());
+        taken.push({
+          trainer_id: alt.trainerId,
+          scheduled_at: alt.scheduledAt,
+          service_type: req.serviceType,
         });
         continue;
       }
@@ -228,6 +239,7 @@ function findAlternative(
   const hour = centerHour(when);
 
   const free = (trainerId: string, at: Date) => {
+    if (ctx.ownAt.has(at.getTime())) return false;
     const here = occupancyAt(taken, trainerId, at);
     return (
       ctx.offers(trainerId, at, req.serviceType) &&
@@ -293,6 +305,14 @@ type Ctx = {
    * d'aquí es comprovava contra les 8 i queia fora de l'horari del centre.
    */
   offers: (trainerId: string, at: Date, service: ServiceType) => boolean;
+  /**
+   * Instants on el client JA té una reserva, amb qui sigui.
+   *
+   * `createClientReservation` rebutja dues reserves a la mateixa hora, i sense
+   * mirar-ho aquí el pla prometia una alternativa que després no es podia
+   * crear: la sèrie deia "confirmada" i al commit sortia com a fallida.
+   */
+  ownAt: Set<number>;
 };
 
 /** Tot el que fa falta per resoldre, demanat d'un sol cop. */
@@ -309,6 +329,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     openingHour: 7,
     closingHour: 22,
     offers: () => false,
+    ownAt: new Set<number>(),
   };
   /** Compartit pels dos backends: la disponibilitat no depèn d'on siguin les dades. */
   const makeOffers =
@@ -368,6 +389,11 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       openingHour: settings.openingHour,
       closingHour: settings.closingHour,
       offers: makeOffers(rules, blocks),
+      ownAt: new Set(
+        store.reservations
+          .filter((r) => r.client_id === client.id && r.status === "booked")
+          .map((r) => new Date(r.scheduled_at).getTime()),
+      ),
     };
   }
 
@@ -391,7 +417,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
         .order("purchased_at", { ascending: true }),
       admin
         .from("reservations")
-        .select("trainer_id, scheduled_at, service_type")
+        .select("trainer_id, scheduled_at, service_type, client_id")
         .eq("status", "booked"),
       admin.from("profiles").select("id, full_name").eq("role", "trainer"),
       listAllTrainerRulesLite(),
@@ -417,6 +443,11 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     openingHour: settings.openingHour,
     closingHour: settings.closingHour,
     offers: makeOffers(rules, blocks),
+    ownAt: new Set(
+      ((res ?? []) as (SlotRow & { client_id: string })[])
+        .filter((r) => r.client_id === client.id)
+        .map((r) => new Date(r.scheduled_at).getTime()),
+    ),
   };
 }
 
