@@ -104,7 +104,11 @@ type CellItem =
       service: ServiceType;
       slot: Date;
       groupCount?: number;
-      /** Noms de pila dels ALTRES del grup. Buit si no és una sessió de grup. */
+      /**
+       * Noms de pila dels ALTRES del grup, per al detall que s'obre en clicar.
+       * A la graella NO hi surten: una cel·la del calendari es veu de lluny i
+       * sense voler-ho, i qui hi ha apuntat és cosa de qui obre la sessió.
+       */
       mates?: string[];
     }
   | { kind: "occupied"; trainerId: string | null; service: ServiceType }
@@ -114,7 +118,7 @@ type CellItem =
       count: number;
       joinable: boolean;
       slot: Date;
-      /** Qui ja s'hi ha apuntat, pel nom de pila. */
+      /** Qui ja s'hi ha apuntat, pel nom de pila. Només per al detall. */
       mates: string[];
     }
   | {
@@ -548,9 +552,6 @@ export function ClientCenterCalendar({
                               </span>
                               <span className="block truncate text-brand-muted">
                                 {firstName(trainerName(it.trainerId))}
-                                {it.mates && it.mates.length > 0
-                                  ? ` · amb ${it.mates.join(", ")}`
-                                  : ""}
                               </span>
                             </button>
                           );
@@ -609,18 +610,6 @@ export function ClientCenterCalendar({
                                     ? "Gairebé ple"
                                     : "Plaça lliure"}
                               </span>
-                              {/* A una classe de grup ja et trobes els
-                                  companys: saber-ho abans d'apuntar-t'hi és
-                                  part de decidir si hi vas. */}
-                              {it.mates.length > 0 && (
-                                <span
-                                  className="block truncate font-normal opacity-80"
-                                  style={{ color: oc.text }}
-                                  title={it.mates.join(", ")}
-                                >
-                                  {it.mates.join(", ")}
-                                </span>
-                              )}
                             </button>
                           );
                         }
@@ -667,8 +656,8 @@ export function ClientCenterCalendar({
       <p className="mt-3 text-xs text-brand-muted">
         Es mostren totes les franjas lliures del centre que pots reservar segons
         els teus bons, amb el color de cada professional. Les sessions d&apos;altres
-        persones apareixen com a «Ocupat»; als grups amb plaça pots apuntar-t&apos;hi
-        i veus qui ja s&apos;hi ha apuntat.
+        persones apareixen com a «Ocupat»; als grups amb plaça pots apuntar-t&apos;hi,
+        i en obrir-los veus qui ja hi és.
       </p>
 
       {book && (
@@ -705,6 +694,11 @@ export function ClientCenterCalendar({
 
 /**
  * Els companys d'una sessió de grup.
+ *
+ * NOMÉS es fa servir als diàlegs de detall, mai a la graella: la cel·la del
+ * calendari es veu de lluny i sense voler-ho —n'hi ha prou amb passar per
+ * davant d'una pantalla—, mentre que obrir la sessió és un gest deliberat.
+ * A la graella hi queda el comptador d'ocupació de sempre.
  *
  * No pinta res si la llista és buida, que és el cas de TOTS els serveis que no
  * són 'grupo_reducido': el servidor no els hi envia mai cap nom (vegeu
