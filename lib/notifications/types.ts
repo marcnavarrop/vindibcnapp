@@ -24,6 +24,8 @@ export type NotificationEventType =
   // Avisos manuals (accionats pel trainer/admin, no apareixen a preferències):
   | "new_exercises_assigned"
   | "invoice_generated"
+  // Llista d'espera:
+  | "waitlist_fulfilled"
   // Vals de regal:
   | "gift_voucher_redeemed"
   | "gift_voucher_gifted"
@@ -163,6 +165,12 @@ export const EVENT_META: Record<
     audience: [],
     group: "general",
   },
+  waitlist_fulfilled: {
+    label: "Plaça de la llista d'espera",
+    description: "Quan s'allibera una plaça que esperaves i te la confirmem.",
+    audience: ["client"],
+    group: "general",
+  },
   gift_voucher_redeemed: {
     label: "T'han bescanviat un regal",
     description: "Quan algú fa servir un val de regal que has comprat.",
@@ -206,6 +214,7 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "new_client_registered",
   "new_exercises_assigned",
   "invoice_generated",
+  "waitlist_fulfilled",
   "gift_voucher_redeemed",
   "gift_voucher_gifted",
   "support_ticket_created",

@@ -2,7 +2,8 @@ import { getViewer } from "@/lib/auth";
 import { getClientCenterData } from "@/lib/data/client-calendar";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
-import { ClientCenterCalendar } from "@/components/client-center-calendar";
+import { ClientReservasView } from "@/components/client/reservas-view";
+import { listActiveSeries } from "@/lib/data/booking-series";
 import {
   createOwnReservationAction,
   cancelOwnReservationAction,
@@ -28,15 +29,19 @@ export default async function ClientReservasPage() {
     getColorPalette(),
   ]);
 
+  // Les sèries vives del client, per poder-les cancel·lar senceres.
+  const series = data.clientId ? await listActiveSeries(data.clientId) : [];
+
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <main className="mx-auto max-w-6xl p-6">
       <h1 className="mb-1 text-2xl text-brand-dark">Reserves</h1>
       <p className="mb-6 text-sm text-brand-muted">
         Reserva en qualsevol franja lliure del centre. Veus les disponibilitats
-        de tots els professionals segons els serveis dels teus bons.
+        de tots els professionals segons els serveis dels teus bons. Des del
+        diàleg de reserva pots repetir-la en bucle.
       </p>
 
-      <ClientCenterCalendar
+      <ClientReservasView
         data={data}
         palette={palette}
         createAction={createOwnReservationAction}
@@ -44,6 +49,7 @@ export default async function ClientReservasPage() {
         minCancellationHours={centerSettings.minCancellationHours}
         openingHour={centerSettings.openingHour}
         closingHour={centerSettings.closingHour}
+        series={series}
       />
     </main>
   );

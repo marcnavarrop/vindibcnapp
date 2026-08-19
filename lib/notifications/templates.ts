@@ -531,6 +531,27 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "waitlist_fulfilled": {
+      subject = "Tens plaça! · VindiBCN";
+      block = {
+        heading: "S'ha alliberat la plaça que esperaves",
+        intro: [
+          hola,
+          "Algú ha cancel·lat i t'hem confirmat la sessió automàticament. Ja la tens a la teva agenda:",
+        ],
+        details: rows([
+          ["Data i hora", d.when],
+          ["Servei", d.service],
+          ["Professional", d.trainer],
+        ]),
+        cta: { label: "Veure la meva reserva", url: appLink("/client/reservas") },
+        outro: [
+          "Si al final no hi pots anar, cancel·la-la com abans millor perquè una altra persona la pugui aprofitar.",
+        ],
+        footer: "client",
+      };
+      break;
+    }
     case "gift_voucher_redeemed": {
       subject = "Ja han fet servir el teu regal · VindiBCN";
       block = {

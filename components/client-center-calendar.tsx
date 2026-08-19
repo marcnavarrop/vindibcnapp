@@ -69,11 +69,11 @@ const SVC_ICON: Record<ServiceType, React.ReactNode> = {
 /** Primer nom (per a la vista compacta de les fitxes). */
 const firstName = (name: string) => name.split(" ")[0];
 
-type CreateAction = (
+export type CreateAction = (
   prev: FormState,
   formData: FormData,
 ) => Promise<FormState>;
-type CancelAction = (
+export type CancelAction = (
   prev: { error?: string; ok?: boolean },
   formData: FormData,
 ) => Promise<{ error?: string; ok?: boolean }>;
@@ -136,10 +136,22 @@ export function ClientCenterCalendar({
   openingHour = 7,
   closingHour = 22,
   palette,
+  onPickSeries,
 }: {
   data: ClientCenterData;
   createAction: CreateAction;
   cancelAction: CancelAction;
+  /**
+   * Si hi és, el diàleg de reserva ofereix també "repetir en bucle" amb
+   * aquesta mateixa franja com a punt de partida. Opcional a propòsit: el
+   * calendari segueix servint tal qual allà on no hi hagi assistent.
+   */
+  onPickSeries?: (seed: {
+    scheduledAt: string;
+    trainerId: string;
+    trainerName: string;
+    service: ServiceType;
+  }) => void;
   minCancellationHours?: number;
   /** Colors del centre, ja resolts. Es carreguen un cop a la pàgina. */
   palette: ColorPalette;
@@ -667,6 +679,17 @@ export function ClientCenterCalendar({
           service={book.service}
           slot={book.slot}
           mates={book.mates}
+          onPickSeries={
+            onPickSeries
+              ? () =>
+                  onPickSeries({
+                    scheduledAt: book.slot.toISOString(),
+                    trainerId: book.trainerId,
+                    trainerName: trainerName(book.trainerId),
+                    service: book.service,
+                  })
+              : undefined
+          }
           action={createAction}
           onClose={() => setBook(null)}
           onDone={() => {
@@ -717,6 +740,7 @@ function CreateModal({
   service,
   slot,
   mates = [],
+  onPickSeries,
   action,
   onClose,
   onDone,
@@ -727,6 +751,8 @@ function CreateModal({
   slot: Date;
   /** Companys de grup ja apuntats. Sempre buit si no és 'grupo_reducido'. */
   mates?: string[];
+  /** Obre l'assistent de reserva en bucle amb aquesta franja. */
+  onPickSeries?: () => void;
   action: CreateAction;
   onClose: () => void;
   onDone: () => void;
@@ -788,6 +814,16 @@ function CreateModal({
         <Field label="Professional" value={trainerName} />
         <GroupMates mates={mates} label="Ja s'hi han apuntat" />
       </dl>
+      {onPickSeries && (
+        <button
+          type="button"
+          onClick={onPickSeries}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-purple px-4 py-2.5 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/5"
+        >
+          Repetir en bucle a partir d&apos;aquesta
+        </button>
+      )}
+
       <form action={formAction} className="mt-5">
         <input type="hidden" name="trainerId" value={trainerId} />
         <input type="hidden" name="serviceType" value={service} />

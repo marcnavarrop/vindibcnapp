@@ -459,12 +459,22 @@ export async function cancelOverduePendingBonos(
       if (b.first_reservation_at > limit) continue;
 
       let cancelled = 0;
+      const freedMock: { trainer_id: string | null; scheduled_at: string; service_type: ServiceType }[] = [];
       for (const r of store.reservations)
         if (r.bono_id === b.id && r.status === "booked" && r.scheduled_at > nowISO) {
           r.status = "cancelled";
+          freedMock.push(r);
           cancelled++;
         }
       b.status = "unpaid";
+      saveStore(store);
+      const { promoteFromWaitlist } = await import("@/lib/data/waitlist");
+      for (const f of freedMock)
+        await promoteFromWaitlist({
+          trainerId: f.trainer_id,
+          scheduledAt: f.scheduled_at,
+          serviceType: f.service_type,
+        });
 
       const client = store.clients.find((c) => c.id === b.client_id);
       const p = store.profiles.find((x) => x.id === client?.profile_id);
@@ -509,7 +519,21 @@ export async function cancelOverduePendingBonos(
       .eq("bono_id", b.id)
       .eq("status", "booked")
       .gt("scheduled_at", nowISO)
-      .select("id");
+      .select("id, trainer_id, scheduled_at, service_type");
+
+    // Les franges que acaben de quedar lliures són tan bones com qualsevol
+    // altra per a qui les esperava: mateix hook que les altres cancel·lacions.
+    const { promoteFromWaitlist } = await import("@/lib/data/waitlist");
+    for (const f of (freed ?? []) as unknown as {
+      trainer_id: string | null;
+      scheduled_at: string;
+      service_type: ServiceType;
+    }[])
+      await promoteFromWaitlist({
+        trainerId: f.trainer_id,
+        scheduledAt: f.scheduled_at,
+        serviceType: f.service_type,
+      });
 
     const { error } = await admin
       .from("bonos")

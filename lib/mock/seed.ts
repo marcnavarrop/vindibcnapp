@@ -48,9 +48,9 @@ export const seedBonos: Bono[] = [
 ];
 
 export const seedReservations: Reservation[] = [
-  { id: "r-1", client_id: "c-ana", bono_id: "b-1", trainer_id: "u-trainer-laia", scheduled_at: "2026-06-22T08:00:00.000Z", service_type: "ep_individual", status: "booked", created_at: now },
-  { id: "r-2", client_id: "c-pau", bono_id: "b-3", trainer_id: "u-trainer-laia", scheduled_at: "2026-06-22T17:00:00.000Z", service_type: "grupo_reducido", status: "booked", created_at: now },
-  { id: "r-3", client_id: "c-marta", bono_id: "b-4", trainer_id: "u-trainer-jordi", scheduled_at: "2026-06-18T09:00:00.000Z", service_type: "ep_parejas", status: "completed", created_at: now },
+  { id: "r-1", client_id: "c-ana", bono_id: "b-1", trainer_id: "u-trainer-laia", scheduled_at: "2026-06-22T08:00:00.000Z", service_type: "ep_individual", status: "booked", series_id: null, created_at: now },
+  { id: "r-2", client_id: "c-pau", bono_id: "b-3", trainer_id: "u-trainer-laia", scheduled_at: "2026-06-22T17:00:00.000Z", service_type: "grupo_reducido", status: "booked", series_id: null, created_at: now },
+  { id: "r-3", client_id: "c-marta", bono_id: "b-4", trainer_id: "u-trainer-jordi", scheduled_at: "2026-06-18T09:00:00.000Z", service_type: "ep_parejas", status: "completed", series_id: null, created_at: now },
 ];
 
 export const seedServices: Service[] = [
@@ -126,6 +126,8 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     trainer_booking_cancelled_whatsapp: false,
     trainer_daily_agenda_email: false,
     trainer_daily_agenda_whatsapp: false,
+    waitlist_fulfilled_email: true,
+    waitlist_fulfilled_whatsapp: false,
     gift_voucher_redeemed_email: true,
     gift_voucher_redeemed_whatsapp: false,
     new_client_registered_email: true,

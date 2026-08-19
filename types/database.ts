@@ -44,6 +44,12 @@ export type GiftVoucherStatus =
   | "redeemed"
   | "expired"
   | "cancelled";
+/** Cada quant es repeteix una sèrie de reserves. */
+export type BookingFrequency = "weekly" | "biweekly" | "monthly";
+
+/** Estat d'una entrada a la llista d'espera. */
+export type WaitlistStatus = "waiting" | "fulfilled" | "expired" | "cancelled";
+
 export type ReferralRewardStatus = "pending" | "used" | "expired";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type TrialStatus =
@@ -298,6 +304,96 @@ export interface Database {
         };
         Relationships: [];
       };
+      booking_series: {
+        Row: {
+          id: string;
+          client_id: string;
+          bono_id: string | null;
+          service_type: ServiceType;
+          base_trainer_id: string | null;
+          frequency: BookingFrequency;
+          end_date: string | null;
+          occurrence_count: number | null;
+          book_only_available: boolean;
+          allow_alternatives: boolean;
+          allow_waitlist: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          bono_id?: string | null;
+          service_type: ServiceType;
+          base_trainer_id?: string | null;
+          frequency: BookingFrequency;
+          end_date?: string | null;
+          occurrence_count?: number | null;
+          book_only_available?: boolean;
+          allow_alternatives?: boolean;
+          allow_waitlist?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          client_id: string;
+          bono_id: string | null;
+          service_type: ServiceType;
+          base_trainer_id: string | null;
+          frequency: BookingFrequency;
+          end_date: string | null;
+          occurrence_count: number | null;
+          book_only_available: boolean;
+          allow_alternatives: boolean;
+          allow_waitlist: boolean;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
+      waitlist_entries: {
+        Row: {
+          id: string;
+          client_id: string;
+          bono_id: string | null;
+          service_type: ServiceType;
+          trainer_id: string | null;
+          desired_date: string;
+          desired_time: string;
+          series_id: string | null;
+          status: WaitlistStatus;
+          created_at: string;
+          fulfilled_at: string | null;
+          fulfilled_reservation_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          bono_id?: string | null;
+          service_type: ServiceType;
+          trainer_id?: string | null;
+          desired_date: string;
+          desired_time: string;
+          series_id?: string | null;
+          status?: WaitlistStatus;
+          created_at?: string;
+          fulfilled_at?: string | null;
+          fulfilled_reservation_id?: string | null;
+        };
+        Update: Partial<{
+          id: string;
+          client_id: string;
+          bono_id: string | null;
+          service_type: ServiceType;
+          trainer_id: string | null;
+          desired_date: string;
+          desired_time: string;
+          series_id: string | null;
+          status: WaitlistStatus;
+          created_at: string;
+          fulfilled_at: string | null;
+          fulfilled_reservation_id: string | null;
+        }>;
+        Relationships: [];
+      };
       reservations: {
         Row: {
           id: string;
@@ -307,6 +403,7 @@ export interface Database {
           scheduled_at: string;
           service_type: ServiceType;
           status: ReservationStatus;
+          series_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -317,6 +414,7 @@ export interface Database {
           scheduled_at: string;
           service_type: ServiceType;
           status?: ReservationStatus;
+          series_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -327,6 +425,7 @@ export interface Database {
           scheduled_at?: string;
           service_type?: ServiceType;
           status?: ReservationStatus;
+          series_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -637,6 +736,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp: boolean;
           trainer_daily_agenda_email: boolean;
           trainer_daily_agenda_whatsapp: boolean;
+          waitlist_fulfilled_email: boolean;
+          waitlist_fulfilled_whatsapp: boolean;
           gift_voucher_redeemed_email: boolean;
           gift_voucher_redeemed_whatsapp: boolean;
           new_client_registered_email: boolean;
@@ -672,6 +773,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp?: boolean;
           trainer_daily_agenda_email?: boolean;
           trainer_daily_agenda_whatsapp?: boolean;
+          waitlist_fulfilled_email?: boolean;
+          waitlist_fulfilled_whatsapp?: boolean;
           gift_voucher_redeemed_email?: boolean;
           gift_voucher_redeemed_whatsapp?: boolean;
           new_client_registered_email?: boolean;
@@ -707,6 +810,8 @@ export interface Database {
           trainer_booking_cancelled_whatsapp: boolean;
           trainer_daily_agenda_email: boolean;
           trainer_daily_agenda_whatsapp: boolean;
+          waitlist_fulfilled_email: boolean;
+          waitlist_fulfilled_whatsapp: boolean;
           gift_voucher_redeemed_email: boolean;
           gift_voucher_redeemed_whatsapp: boolean;
           new_client_registered_email: boolean;

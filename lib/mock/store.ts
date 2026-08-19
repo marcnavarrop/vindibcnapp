@@ -58,6 +58,8 @@ export type Store = {
   settlements: Tables["settlements"]["Row"][];
   support_tickets: Tables["support_tickets"]["Row"][];
   gift_vouchers: Tables["gift_vouchers"]["Row"][];
+  booking_series: Tables["booking_series"]["Row"][];
+  waitlist_entries: Tables["waitlist_entries"]["Row"][];
   professional_colors: Tables["professional_colors"]["Row"][];
   service_type_colors: Tables["service_type_colors"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
@@ -99,6 +101,8 @@ function fromSeed(): Store {
     client_documents: structuredClone(seedClientDocuments),
     referral_rewards: structuredClone(seedReferralRewards),
     gift_vouchers: [],
+    booking_series: [],
+    waitlist_entries: [],
     professional_rates: [],
     service_rates: [],
     bonus_service_weights: [],

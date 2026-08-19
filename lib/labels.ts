@@ -13,6 +13,7 @@ import type {
   SupportCategory,
   SupportStatus,
   GiftVoucherStatus,
+  BookingFrequency,
 } from "@/types/database";
 
 export const SPECIALTY_LABELS: Record<Specialty, string> = {
@@ -131,6 +132,23 @@ export function deOf(word: string): string {
 export function sessionsLabel(n: number): string {
   return `${n} ${n === 1 ? "sessió" : "sessions"}`;
 }
+
+export const FREQUENCY_LABELS: Record<BookingFrequency, string> = {
+  weekly: "Setmana",
+  biweekly: "2 setmanes",
+  monthly: "Mes",
+};
+
+/** Com es diu i com es pinta cada resultat d'una ocurrència de la sèrie. */
+export const OCCURRENCE_LABELS: Record<
+  "confirmada" | "alternativa_proposada" | "llista_espera" | "sense_places",
+  { label: string; tone: "success" | "warn" | "info" | "danger" }
+> = {
+  confirmada: { label: "Confirmada", tone: "success" },
+  alternativa_proposada: { label: "Alternativa proposada", tone: "warn" },
+  llista_espera: { label: "Llista d'espera", tone: "info" },
+  sense_places: { label: "Sense places", tone: "danger" },
+};
 
 export const GIFT_VOUCHER_STATUS_LABELS: Record<GiftVoucherStatus, string> = {
   pending_payment: "Pendent de pagament",

@@ -1,0 +1,431 @@
+import "server-only";
+import { USE_MOCK } from "@/lib/config";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getStore, saveStore } from "@/lib/mock/store";
+import { slotHasRoom } from "@/lib/data/reservations";
+import { isBonoExpired } from "@/lib/data/bonos";
+import { notify, getProfileContact } from "@/lib/notifications";
+import { SERVICE_LABELS, formatDayHeading, formatTime } from "@/lib/labels";
+import { centerDateStr, centerLocalToInstant } from "@/lib/center-time";
+import type { ServiceType, WaitlistStatus } from "@/types/database";
+
+/**
+ * Llista d'espera: qui es queda fora d'una franja plena i què passa quan
+ * s'allibera.
+ *
+ * `promoteFromWaitlist` és el PUNT ÚNIC que criden TOTS els camins que
+ * cancel·len una reserva (el client des de la seva àrea, l'admin o el
+ * professional des de l'agenda, i l'escombrat de bons impagats). Viu aquí i no
+ * dins de cadascun perquè ja ens ha passat massa vegades avui que una regla
+ * escrita a tres llocs s'arreglava a dos: si demà apareix un quart camí de
+ * cancel·lació, l'única cosa que ha de fer és cridar aquesta funció.
+ */
+
+/** L'hora d'una franja tal com es desa a la cua: data i hora del CENTRE. */
+export function slotKeyOf(scheduledAt: string): {
+  date: string;
+  time: string;
+} {
+  const d = new Date(scheduledAt);
+  const date = centerDateStr(d);
+  // `desired_time` és un `time` de Postgres: sempre "HH:MM:SS".
+  const hhmm = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Madrid",
+  }).format(d);
+  return { date, time: `${hhmm}:00` };
+}
+
+export type WaitlistEntryInput = {
+  clientId: string;
+  bonoId: string | null;
+  serviceType: ServiceType;
+  trainerId: string | null;
+  /** Data i hora desitjades, en hora del CENTRE. */
+  desiredDate: string;
+  desiredTime: string;
+  seriesId?: string | null;
+};
+
+export async function addToWaitlist(input: WaitlistEntryInput): Promise<string> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const id = crypto.randomUUID();
+    store.waitlist_entries.push({
+      id,
+      client_id: input.clientId,
+      bono_id: input.bonoId,
+      service_type: input.serviceType,
+      trainer_id: input.trainerId,
+      desired_date: input.desiredDate,
+      desired_time: input.desiredTime,
+      series_id: input.seriesId ?? null,
+      status: "waiting",
+      created_at: new Date().toISOString(),
+      fulfilled_at: null,
+      fulfilled_reservation_id: null,
+    });
+    saveStore(store);
+    return id;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("waitlist_entries")
+    .insert({
+      client_id: input.clientId,
+      bono_id: input.bonoId,
+      service_type: input.serviceType,
+      trainer_id: input.trainerId,
+      desired_date: input.desiredDate,
+      desired_time: input.desiredTime,
+      series_id: input.seriesId ?? null,
+    })
+    .select("id")
+    .single();
+  if (error || !data) throw new Error("No s'ha pogut apuntar a la llista d'espera.");
+  return data.id;
+}
+
+export type PromotionResult =
+  | { promoted: false; reason: string }
+  | { promoted: true; clientId: string; reservationId: string };
+
+/**
+ * S'ha alliberat una franja: entra el primer de la cua, si n'hi ha.
+ *
+ * MAI llança. Una cancel·lació no pot fallar perquè la promoció hagi anat
+ * malament: qui cancel·lava tenia dret a fer-ho, i el pitjor cas acceptable és
+ * que la plaça es quedi lliure i el següent de la cua ho intenti un altre dia.
+ *
+ * Es prova amb els candidats en ordre d'antiguitat i s'atura al primer que
+ * entra de debò: si el més antic ja no té sessions al bo o ja té una altra
+ * reserva a aquella hora, no bloqueja la cua per als altres.
+ */
+export async function promoteFromWaitlist(freed: {
+  trainerId: string | null;
+  scheduledAt: string;
+  serviceType: ServiceType;
+}): Promise<PromotionResult> {
+  try {
+    const { date, time } = slotKeyOf(freed.scheduledAt);
+
+    if (USE_MOCK) return promoteMock(freed, date, time);
+
+    const admin = createAdminClient();
+
+    // Candidats: mateixa franja exacta, encara esperant, del més antic al
+    // més nou. `trainer_id` null = "m'és igual qui" i també hi entra.
+    let q = admin
+      .from("waitlist_entries")
+      .select("id, client_id, bono_id, service_type")
+      .eq("status", "waiting")
+      .eq("desired_date", date)
+      .eq("desired_time", time)
+      .eq("service_type", freed.serviceType)
+      .order("created_at", { ascending: true });
+    q = freed.trainerId
+      ? q.or(`trainer_id.eq.${freed.trainerId},trainer_id.is.null`)
+      : q.is("trainer_id", null);
+    const { data: candidates } = await q;
+    if (!candidates || candidates.length === 0)
+      return { promoted: false, reason: "Ningú a la cua." };
+
+    // La franja ha de seguir tenint lloc: en un grup, alliberar-ne una plaça no
+    // vol dir que el grup s'hagi buidat.
+    const { data: existing } = await admin
+      .from("reservations")
+      .select("service_type, client_id")
+      .eq("trainer_id", freed.trainerId ?? "")
+      .eq("scheduled_at", freed.scheduledAt)
+      .eq("status", "booked");
+    const occupied = (existing ?? []) as { service_type: ServiceType; client_id: string }[];
+    if (!slotHasRoom(occupied, freed.serviceType))
+      return { promoted: false, reason: "La franja segueix plena." };
+
+    for (const c of candidates) {
+      // Ja hi és? (pot passar en un grup on el mateix client hi tingui plaça)
+      if (occupied.some((o) => o.client_id === c.client_id)) continue;
+
+      // Ha de tenir sessions. Es mira el bo que va apuntar i, si ja no serveix,
+      // qualsevol altre del mateix tipus: el que compta és que pugui venir.
+      const { data: bonos } = await admin
+        .from("bonos")
+        .select("id, remaining_sessions, status, expires_at, first_reservation_at, total_sessions")
+        .eq("client_id", c.client_id)
+        .eq("service_type", c.service_type)
+        .in("status", ["active", "pending_payment"])
+        .gt("remaining_sessions", 0)
+        .order("purchased_at", { ascending: true });
+      const bono = (bonos ?? []).find(
+        (b) => !isBonoExpired({ status: b.status, expires_at: b.expires_at }),
+      );
+      if (!bono) continue;
+
+      // Cap altra reserva seva a la mateixa hora.
+      const { data: clash } = await admin
+        .from("reservations")
+        .select("id")
+        .eq("client_id", c.client_id)
+        .eq("scheduled_at", freed.scheduledAt)
+        .eq("status", "booked")
+        .maybeSingle();
+      if (clash) continue;
+
+      // Reclam atòmic de la sessió, com a la reserva normal.
+      const next = bono.remaining_sessions - 1;
+      const { data: claimed } = await admin
+        .from("bonos")
+        .update({
+          remaining_sessions: next,
+          ...(next === 0 && bono.status === "active"
+            ? { status: "completed" as const }
+            : {}),
+          ...(bono.first_reservation_at
+            ? {}
+            : { first_reservation_at: new Date().toISOString() }),
+        })
+        .eq("id", bono.id)
+        .eq("remaining_sessions", bono.remaining_sessions)
+        .select("id")
+        .single();
+      if (!claimed) continue;
+
+      const { data: created, error: rErr } = await admin
+        .from("reservations")
+        .insert({
+          client_id: c.client_id,
+          bono_id: bono.id,
+          trainer_id: freed.trainerId,
+          scheduled_at: freed.scheduledAt,
+          service_type: c.service_type,
+          status: "booked",
+        })
+        .select("id")
+        .single();
+      if (rErr || !created) {
+        // Torna la sessió: la plaça se l'ha endut algú altre pel mig.
+        await admin
+          .from("bonos")
+          .update({ remaining_sessions: bono.remaining_sessions, status: "active" })
+          .eq("id", bono.id);
+        continue;
+      }
+
+      // `eq("status","waiting")` tanca la cursa: si dues cancel·lacions
+      // simultànies miren la mateixa entrada, només una la promociona.
+      const { data: marked } = await admin
+        .from("waitlist_entries")
+        .update({
+          status: "fulfilled" as WaitlistStatus,
+          fulfilled_at: new Date().toISOString(),
+          fulfilled_reservation_id: created.id,
+        })
+        .eq("id", c.id)
+        .eq("status", "waiting")
+        .select("id");
+      if (!marked || marked.length === 0) {
+        // Ha guanyat l'altra: es desfà la reserva que acabem de crear.
+        await admin.from("reservations").delete().eq("id", created.id);
+        await admin
+          .from("bonos")
+          .update({ remaining_sessions: bono.remaining_sessions })
+          .eq("id", bono.id);
+        continue;
+      }
+
+      await notifyPromotion(c.client_id, freed);
+      return { promoted: true, clientId: c.client_id, reservationId: created.id };
+    }
+
+    return { promoted: false, reason: "Cap candidat podia agafar-la." };
+  } catch {
+    // Best-effort absolut: mai tombar una cancel·lació per això.
+    return { promoted: false, reason: "Error en la promoció." };
+  }
+}
+
+async function promoteMock(
+  freed: { trainerId: string | null; scheduledAt: string; serviceType: ServiceType },
+  date: string,
+  time: string,
+): Promise<PromotionResult> {
+  const store = getStore();
+  const candidates = store.waitlist_entries
+    .filter(
+      (w) =>
+        w.status === "waiting" &&
+        w.desired_date === date &&
+        w.desired_time === time &&
+        w.service_type === freed.serviceType &&
+        (w.trainer_id === null || w.trainer_id === freed.trainerId),
+    )
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  if (candidates.length === 0) return { promoted: false, reason: "Ningú a la cua." };
+
+  const occupied = store.reservations.filter(
+    (r) =>
+      r.trainer_id === freed.trainerId &&
+      r.scheduled_at === freed.scheduledAt &&
+      r.status === "booked",
+  );
+  if (!slotHasRoom(occupied, freed.serviceType))
+    return { promoted: false, reason: "La franja segueix plena." };
+
+  for (const c of candidates) {
+    if (occupied.some((o) => o.client_id === c.client_id)) continue;
+    const bono = store.bonos
+      .filter(
+        (b) =>
+          b.client_id === c.client_id &&
+          b.service_type === c.service_type &&
+          (b.status === "active" || b.status === "pending_payment") &&
+          b.remaining_sessions > 0 &&
+          !isBonoExpired(b),
+      )
+      .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
+    if (!bono) continue;
+    if (
+      store.reservations.some(
+        (r) =>
+          r.client_id === c.client_id &&
+          r.scheduled_at === freed.scheduledAt &&
+          r.status === "booked",
+      )
+    )
+      continue;
+
+    const id = crypto.randomUUID();
+    store.reservations.push({
+      id,
+      client_id: c.client_id,
+      bono_id: bono.id,
+      trainer_id: freed.trainerId,
+      scheduled_at: freed.scheduledAt,
+      service_type: c.service_type,
+      status: "booked",
+      series_id: null,
+      created_at: new Date().toISOString(),
+    });
+    bono.remaining_sessions -= 1;
+    if (bono.remaining_sessions === 0 && bono.status === "active")
+      bono.status = "completed";
+    c.status = "fulfilled";
+    c.fulfilled_at = new Date().toISOString();
+    c.fulfilled_reservation_id = id;
+    saveStore(store);
+    await notifyPromotion(c.client_id, freed);
+    return { promoted: true, clientId: c.client_id, reservationId: id };
+  }
+  return { promoted: false, reason: "Cap candidat podia agafar-la." };
+}
+
+/** Avisa qui entra des de la cua. Respecta preferències; mai llança. */
+async function notifyPromotion(
+  clientId: string,
+  freed: { trainerId: string | null; scheduledAt: string; serviceType: ServiceType },
+): Promise<void> {
+  const profileId = await profileOfClient(clientId);
+  if (!profileId) return;
+  const contact = await getProfileContact(profileId);
+  if (!contact) return;
+  const trainer = freed.trainerId ? await getProfileContact(freed.trainerId) : null;
+  await notify({
+    type: "waitlist_fulfilled",
+    recipient: contact,
+    relatedId: freed.scheduledAt,
+    data: {
+      name: contact.name ?? "",
+      when: `${formatDayHeading(freed.scheduledAt)}, ${formatTime(freed.scheduledAt)}`,
+      service: SERVICE_LABELS[freed.serviceType],
+      trainer: trainer?.name ?? "",
+    },
+  });
+}
+
+async function profileOfClient(clientId: string): Promise<string | null> {
+  if (USE_MOCK)
+    return getStore().clients.find((c) => c.id === clientId)?.profile_id ?? null;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("clients")
+    .select("profile_id")
+    .eq("id", clientId)
+    .maybeSingle();
+  return data?.profile_id ?? null;
+}
+
+// ─── Lectura per a la UI ────────────────────────────────────────────────────
+
+export type WaitlistItem = {
+  id: string;
+  serviceType: ServiceType;
+  trainerId: string | null;
+  desiredAt: string;
+  status: WaitlistStatus;
+  seriesId: string | null;
+};
+
+/** Les esperes d'un client, de la més propera a la més llunyana. */
+export async function listWaitlistForClient(
+  clientId: string,
+): Promise<WaitlistItem[]> {
+  const toItem = (w: {
+    id: string;
+    service_type: ServiceType;
+    trainer_id: string | null;
+    desired_date: string;
+    desired_time: string;
+    status: WaitlistStatus;
+    series_id: string | null;
+  }): WaitlistItem => ({
+    id: w.id,
+    serviceType: w.service_type,
+    trainerId: w.trainer_id,
+    desiredAt: centerLocalToInstant(
+      w.desired_date,
+      w.desired_time.slice(0, 5),
+    ).toISOString(),
+    status: w.status,
+    seriesId: w.series_id,
+  });
+
+  if (USE_MOCK)
+    return getStore()
+      .waitlist_entries.filter((w) => w.client_id === clientId)
+      .map(toItem)
+      .sort((a, b) => a.desiredAt.localeCompare(b.desiredAt));
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("waitlist_entries")
+    .select("id, service_type, trainer_id, desired_date, desired_time, status, series_id")
+    .eq("client_id", clientId)
+    .order("desired_date", { ascending: true });
+  return (data ?? []).map(toItem);
+}
+
+/** El client es desapunta d'una espera seva. */
+export async function cancelWaitlistEntry(
+  clientId: string,
+  entryId: string,
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const w = store.waitlist_entries.find(
+      (x) => x.id === entryId && x.client_id === clientId,
+    );
+    if (w && w.status === "waiting") w.status = "cancelled";
+    saveStore(store);
+    return;
+  }
+  const admin = createAdminClient();
+  await admin
+    .from("waitlist_entries")
+    .update({ status: "cancelled" })
+    .eq("id", entryId)
+    .eq("client_id", clientId)
+    .eq("status", "waiting");
+}

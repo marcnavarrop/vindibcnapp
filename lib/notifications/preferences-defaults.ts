@@ -53,6 +53,10 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // ni preferències. També s'envia amb `ignorePreferences`.
   support_ticket_created_email: false,
   support_ticket_created_whatsapp: false,
+  // Actiu per defecte: se t'acaba de crear una reserva sense demanar-la en
+  // aquell moment; assabentar-se'n no és opcional.
+  waitlist_fulfilled_email: true,
+  waitlist_fulfilled_whatsapp: false,
   // Actiu per defecte: qui ha pagat un regal vol saber que ha arribat.
   gift_voucher_redeemed_email: true,
   gift_voucher_redeemed_whatsapp: false,

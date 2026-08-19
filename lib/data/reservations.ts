@@ -212,6 +212,18 @@ async function restoreBonoSession(supabase: DB, bonoId: string): Promise<void> {
  * misma hora, EXCEPTO 'grupo_reducido', que admite hasta GROUP_CAPACITY (y solo
  * si no hay ya una sesión individual ocupando la franja). Lanza si está ocupada.
  */
+export function slotHasRoom(
+  existing: { service_type: ServiceType }[],
+  newService: ServiceType,
+): boolean {
+  if (newService === "grupo_reducido")
+    return (
+      !existing.some((e) => e.service_type !== "grupo_reducido") &&
+      existing.length < GROUP_CAPACITY
+    );
+  return existing.length === 0;
+}
+
 function assertSlotFree(
   existing: { service_type: ServiceType }[],
   newService: ServiceType,
@@ -428,6 +440,7 @@ export async function createReservation(
         scheduled_at,
         service_type: bono.service_type,
         status: "booked",
+        series_id: null,
         created_at: new Date().toISOString(),
       });
     }
@@ -508,6 +521,27 @@ export async function createReservation(
   await notifyBonoLowIfNeeded(bono.client_id, bono.service_type, remaining);
 }
 
+
+/**
+ * Una franja s'ha alliberat: que hi entri qui l'esperava.
+ *
+ * Import dinàmic per trencar el cicle (waitlist.ts importa `slotHasRoom`
+ * d'aquest fitxer). Mai llança: `promoteFromWaitlist` ja s'ho empassa tot, i
+ * una cancel·lació no pot fallar perquè la cua vagi malament.
+ */
+async function afterCancel(r: {
+  trainer_id: string | null;
+  scheduled_at: string;
+  service_type: ServiceType;
+}): Promise<void> {
+  const { promoteFromWaitlist } = await import("@/lib/data/waitlist");
+  await promoteFromWaitlist({
+    trainerId: r.trainer_id,
+    scheduledAt: r.scheduled_at,
+    serviceType: r.service_type,
+  });
+}
+
 /** Cancela una reserva reservada y devuelve la sesión a su bono. */
 export async function cancelReservation(id: string): Promise<void> {
   if (USE_MOCK) {
@@ -531,13 +565,14 @@ export async function cancelReservation(id: string): Promise<void> {
       scheduledAt: r.scheduled_at,
       serviceType: r.service_type,
     });
+    await afterCancel(r);
     return;
   }
 
   const supabase = await createClient();
   const { data: r, error } = await supabase
     .from("reservations")
-    .select("id, status, bono_id, client_id, scheduled_at, service_type")
+    .select("id, status, bono_id, client_id, scheduled_at, service_type, trainer_id")
     .eq("id", id)
     .single();
   if (error || !r) throw new Error("Reserva no trobada.");
@@ -553,6 +588,11 @@ export async function cancelReservation(id: string): Promise<void> {
   await notifyReservation(r.client_id, "reservation_cancelled", {
     scheduledAt: r.scheduled_at,
     serviceType: r.service_type,
+  });
+  await afterCancel({
+    trainer_id: r.trainer_id,
+    scheduled_at: r.scheduled_at,
+    service_type: r.service_type,
   });
 }
 
@@ -695,6 +735,7 @@ export async function createClientReservation(
       scheduled_at: scheduledAt,
       service_type: serviceType,
       status: "booked",
+      series_id: null,
       created_at: new Date().toISOString(),
     });
     bono.remaining_sessions -= 1;
@@ -875,6 +916,7 @@ export async function cancelClientReservation(
         serviceType: r.service_type,
       });
     }
+    await afterCancel(r);
     return;
   }
 
@@ -920,6 +962,11 @@ export async function cancelClientReservation(
       scheduledAt: r.scheduled_at,
       serviceType: r.service_type,
     });
+  await afterCancel({
+    trainer_id: r.trainer_id,
+    scheduled_at: r.scheduled_at,
+    service_type: r.service_type,
+  });
 }
 
 /** Reserva para el calendario del cliente: SIN nombres de otros clientes. */
