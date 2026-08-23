@@ -605,7 +605,12 @@ async function insertSeries(
   if (USE_MOCK) {
     const store = getStore();
     const id = crypto.randomUUID();
-    store.booking_series.push({ id, ...row, created_at: new Date().toISOString() });
+    store.booking_series.push({
+      id,
+      ...row,
+      status: "active",
+      created_at: new Date().toISOString(),
+    });
     saveStore(store);
     return id;
   }
@@ -631,10 +636,15 @@ async function insertSeries(
  *
  * Les que no es puguin cancel·lar (per l'antelació mínima) es compten i es
  * diuen: la resta sí que cau, i el client sap exactament què li queda.
+ *
+ * La sèrie queda marcada com a 'cancelled' encara que alguna reserva no s'hagi
+ * pogut anul·lar: el que diu l'estat és què va decidir el client, i el client
+ * la va cancel·lar. Les que es queden són l'excepció, i ja se li diuen.
  */
 export async function cancelSeries(
   profileId: string,
   seriesId: string,
+  clientId: string,
 ): Promise<{ cancelled: number; kept: number }> {
   const nowISO = new Date().toISOString();
   let ids: string[] = [];
@@ -673,7 +683,37 @@ export async function cancelSeries(
   // Les esperes de la sèrie ja no tenen sentit: si el client la cancel·la
   // sencera, no vol que d'aquí a tres dies li aparegui una plaça d'aquella cua.
   await cancelSeriesWaitlist(seriesId);
+  await closeSeries(seriesId, clientId, "cancelled");
   return { cancelled, kept };
+}
+
+/**
+ * Tanca una sèrie donant-li l'estat final.
+ *
+ * Va sempre acotada al client: així una sèrie d'algú altre no es pot tancar
+ * ni per error ni a propòsit, encara que arribi l'id per la petició.
+ */
+async function closeSeries(
+  seriesId: string,
+  clientId: string,
+  status: "cancelled" | "completed",
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const s = store.booking_series.find(
+      (x) => x.id === seriesId && x.client_id === clientId,
+    );
+    if (s && s.status === "active") s.status = status;
+    saveStore(store);
+    return;
+  }
+  const admin = createAdminClient();
+  await admin
+    .from("booking_series")
+    .update({ status })
+    .eq("id", seriesId)
+    .eq("client_id", clientId)
+    .eq("status", "active");
 }
 
 async function cancelSeriesWaitlist(seriesId: string): Promise<void> {
@@ -703,30 +743,62 @@ export type SeriesSummary = {
   nextAt: string | null;
 };
 
-/** Les sèries amb reserves futures d'un client. */
+/**
+ * Les sèries vives d'un client, i de passada les que ja s'han acabat.
+ *
+ * Aquí és on es tanca una sèrie que ha arribat al final sola: quan totes les
+ * seves ocurrències ja han passat, no li queda cap reserva futura i tampoc cap
+ * espera pendent, passa a 'completed'. Es fa peresosament en aquesta lectura,
+ * com la caducitat de les proves gratuïtes, perquè no cal cap tasca programada
+ * per a una cosa que només importa quan algú la mira: el dia que el client obre
+ * les seves reserves, l'estat ja hi és correcte.
+ *
+ * Una sèrie que no va arribar a reservar res també es tanca aquí. No és el cas
+ * bonic, però tampoc hi queda res per fer-hi, i deixar-la 'active' per sempre
+ * seria mentir més que dir-ne 'completed'.
+ *
+ * Les esperes compten: mentre en quedi alguna a la cua, la sèrie encara pot
+ * rebre una plaça si algú cancel·la, i per tant no s'ha acabat.
+ */
 export async function listActiveSeries(clientId: string): Promise<SeriesSummary[]> {
   const nowISO = new Date().toISOString();
 
   if (USE_MOCK) {
     const store = getStore();
-    return store.booking_series
-      .filter((s) => s.client_id === clientId)
-      .map((s) => {
-        const future = store.reservations
-          .filter(
-            (r) =>
-              r.series_id === s.id && r.status === "booked" && r.scheduled_at > nowISO,
-          )
-          .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
-        return {
-          id: s.id,
-          serviceType: s.service_type,
-          frequency: s.frequency,
-          upcoming: future.length,
-          nextAt: future[0]?.scheduled_at ?? null,
-        };
-      })
-      .filter((s) => s.upcoming > 0);
+    const mine = store.booking_series.filter(
+      (s) => s.client_id === clientId && s.status === "active",
+    );
+    const out: SeriesSummary[] = [];
+    let changed = false;
+
+    for (const s of mine) {
+      const future = store.reservations
+        .filter(
+          (r) =>
+            r.series_id === s.id && r.status === "booked" && r.scheduled_at > nowISO,
+        )
+        .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
+      const waiting = store.waitlist_entries.some(
+        (w) => w.series_id === s.id && w.status === "waiting",
+      );
+      if (future.length === 0) {
+        if (!waiting) {
+          s.status = "completed";
+          changed = true;
+        }
+        continue;
+      }
+      out.push({
+        id: s.id,
+        serviceType: s.service_type,
+        frequency: s.frequency,
+        upcoming: future.length,
+        nextAt: future[0].scheduled_at,
+      });
+    }
+
+    if (changed) saveStore(store);
+    return out;
   }
 
   const admin = createAdminClient();
@@ -734,29 +806,58 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
     .from("booking_series")
     .select("id, service_type, frequency")
     .eq("client_id", clientId)
+    .eq("status", "active")
     .order("created_at", { ascending: false });
   if (!series || series.length === 0) return [];
 
-  const { data: res } = await admin
-    .from("reservations")
-    .select("series_id, scheduled_at")
-    .in("series_id", series.map((s) => s.id))
-    .eq("status", "booked")
-    .gt("scheduled_at", nowISO)
-    .order("scheduled_at", { ascending: true });
+  const ids = series.map((s) => s.id);
+  const [{ data: res }, { data: waits }] = await Promise.all([
+    admin
+      .from("reservations")
+      .select("series_id, scheduled_at")
+      .in("series_id", ids)
+      .eq("status", "booked")
+      .gt("scheduled_at", nowISO)
+      .order("scheduled_at", { ascending: true }),
+    admin
+      .from("waitlist_entries")
+      .select("series_id")
+      .in("series_id", ids)
+      .eq("status", "waiting"),
+  ]);
 
-  return series
-    .map((s) => {
-      const future = (res ?? []).filter((r) => r.series_id === s.id);
-      return {
-        id: s.id,
-        serviceType: s.service_type,
-        frequency: s.frequency,
-        upcoming: future.length,
-        nextAt: future[0]?.scheduled_at ?? null,
-      };
-    })
-    .filter((s) => s.upcoming > 0);
+  const out: SeriesSummary[] = [];
+  const finished: string[] = [];
+
+  for (const s of series) {
+    const future = (res ?? []).filter((r) => r.series_id === s.id);
+    if (future.length === 0) {
+      if (!(waits ?? []).some((w) => w.series_id === s.id)) finished.push(s.id);
+      continue;
+    }
+    out.push({
+      id: s.id,
+      serviceType: s.service_type,
+      frequency: s.frequency,
+      upcoming: future.length,
+      nextAt: future[0].scheduled_at,
+    });
+  }
+
+  // El barrido. No es fa esperar el resultat de la lectura: si falla, la
+  // llista que veu el client és igualment correcta i el pròxim cop es torna a
+  // intentar. `status = 'active'` a la condició evita trepitjar una sèrie que
+  // s'hagi cancel·lat entremig.
+  if (finished.length > 0) {
+    await admin
+      .from("booking_series")
+      .update({ status: "completed" })
+      .in("id", finished)
+      .eq("client_id", clientId)
+      .eq("status", "active");
+  }
+
+  return out;
 }
 
 export { localDayString };

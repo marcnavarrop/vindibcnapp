@@ -47,6 +47,15 @@ export type GiftVoucherStatus =
 /** Cada quant es repeteix una sèrie de reserves. */
 export type BookingFrequency = "weekly" | "biweekly" | "monthly";
 
+/**
+ * Com ha acabat una sèrie.
+ *
+ * 'completed' vol dir que el temps li ha passat per sobre (totes les
+ * ocurrències són al passat), no que el client hi hagi fet res: la diferència
+ * amb 'cancelled' és justament aquesta.
+ */
+export type BookingSeriesStatus = "active" | "cancelled" | "completed";
+
 /** Estat d'una entrada a la llista d'espera. */
 export type WaitlistStatus = "waiting" | "fulfilled" | "expired" | "cancelled";
 
@@ -317,6 +326,7 @@ export interface Database {
           book_only_available: boolean;
           allow_alternatives: boolean;
           allow_waitlist: boolean;
+          status: BookingSeriesStatus;
           created_at: string;
         };
         Insert: {
@@ -331,6 +341,7 @@ export interface Database {
           book_only_available?: boolean;
           allow_alternatives?: boolean;
           allow_waitlist?: boolean;
+          status?: BookingSeriesStatus;
           created_at?: string;
         };
         Update: Partial<{
@@ -345,6 +356,7 @@ export interface Database {
           book_only_available: boolean;
           allow_alternatives: boolean;
           allow_waitlist: boolean;
+          status: BookingSeriesStatus;
           created_at: string;
         }>;
         Relationships: [];

@@ -123,12 +123,13 @@ export async function cancelSeriesAction(
 
   // La sèrie ha de ser d'aquest client: `cancelSeries` itera amb la
   // cancel·lació individual, que ja ho comprova reserva per reserva, però
-  // val més no ni començar amb una sèrie d'algú altre.
+  // val més no ni començar amb una sèrie d'algú altre. El client també fa
+  // d'acotació en marcar la sèrie com a cancel·lada.
   const client = await getClientByProfile(viewer.id);
   if (!client) return { error: "No tens fitxa de client." };
 
   try {
-    const res = await cancelSeries(viewer.id, seriesId);
+    const res = await cancelSeries(viewer.id, seriesId, client.id);
     revalidatePath("/client/reservas");
     revalidatePath("/client");
     return { ok: true, cancelled: res.cancelled, kept: res.kept };

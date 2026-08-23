@@ -7,6 +7,7 @@ import { ClientCenterCalendar } from "@/components/client-center-calendar";
 import { SeriesWizard, type SeriesSeed } from "@/components/forms/series-wizard";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import {
   cancelSeriesAction,
   type CancelSeriesState,
@@ -51,10 +52,30 @@ export function ClientReservasView({
 }) {
   const router = useRouter();
   const [seed, setSeed] = useState<SeriesSeed | null>(null);
+  // Quina sèrie s'està cancel·lant. Viu AQUÍ, i no a la fila de la llista,
+  // perquè en cancel·lar-la la fila desapareix: si el diàleg hi visqués a
+  // dins, se n'aniria amb ella abans que ningú llegís el resultat.
+  const [cancelling, setCancelling] = useState<{
+    id: string;
+    count: number;
+  } | null>(null);
 
   return (
     <div className="flex flex-col gap-6">
-      {series.length > 0 && <SeriesList series={series} />}
+      {series.length > 0 && (
+        <SeriesList
+          series={series}
+          onCancel={(id, count) => setCancelling({ id, count })}
+        />
+      )}
+
+      {cancelling && (
+        <CancelSeriesDialog
+          seriesId={cancelling.id}
+          count={cancelling.count}
+          onClose={() => setCancelling(null)}
+        />
+      )}
 
       <div
         className={
@@ -101,7 +122,13 @@ export function ClientReservasView({
 }
 
 /** Les sèries vives, amb l'acció de cancel·lar-les senceres. */
-function SeriesList({ series }: { series: SeriesSummary[] }) {
+function SeriesList({
+  series,
+  onCancel,
+}: {
+  series: SeriesSummary[];
+  onCancel: (id: string, count: number) => void;
+}) {
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
       <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
@@ -127,7 +154,13 @@ function SeriesList({ series }: { series: SeriesSummary[] }) {
                 pròxima: {formatDayHeading(s.nextAt)}, {formatTime(s.nextAt)}
               </span>
             )}
-            <CancelSeriesButton seriesId={s.id} count={s.upcoming} />
+            <button
+              type="button"
+              onClick={() => onCancel(s.id, s.upcoming)}
+              className="ml-auto rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error"
+            >
+              Cancel·lar la sèrie
+            </button>
           </div>
         ))}
       </div>
@@ -135,74 +168,97 @@ function SeriesList({ series }: { series: SeriesSummary[] }) {
   );
 }
 
-function CancelSeriesButton({
+/**
+ * Cancel·lar la sèrie sencera, amb el resultat dins del mateix diàleg.
+ *
+ * El "X cancel·lades" es va escriure primer dins de la fila de la llista i no
+ * s'arribava a llegir mai: el `revalidatePath` del server action repinta la
+ * pàgina, la sèrie ja no hi surt i la fila —amb el missatge a dins— se'n va
+ * abans que ningú el vegi. Retardar el `router.refresh()` no ho arreglava,
+ * perquè qui esborrava el missatge era la revalidació, no el refresc.
+ *
+ * Per això el diàleg penja de la vista sencera i no de la fila: la llista pot
+ * desaparèixer a sota que el resultat es queda a la pantalla, amb el mateix tic
+ * animat que la cancel·lació d'una reserva solta, fins que es tanca.
+ */
+function CancelSeriesDialog({
   seriesId,
   count,
+  onClose,
 }: {
   seriesId: string;
   count: number;
+  onClose: () => void;
 }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [state, action] = useActionState(
     cancelSeriesAction,
     {} as CancelSeriesState,
   );
 
-  if (state.ok)
-    return (
-      <span className="ml-auto text-xs font-bold text-success">
-        {state.cancelled} cancel·lades
-        {state.kept ? ` · ${state.kept} massa a prop per cancel·lar` : ""}
-      </span>
-    );
-
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="ml-auto rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error"
-      >
-        Cancel·lar la sèrie
-      </button>
-
-      <ConfirmDialog
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Cancel·lar tota la sèrie?"
-        actions={
-          <>
+      {state.ok ? (
+        <ConfirmDialog
+          open
+          onClose={onClose}
+          title="Sèrie cancel·lada"
+          actions={
             <button
               type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+              onClick={onClose}
+              className="rounded-lg bg-error/10 px-4 py-2 text-sm font-bold text-error hover:bg-error/20"
             >
-              Deixar-ho estar
+              Tancar
             </button>
-            <form
-              action={(fd) => {
-                action(fd);
-                setOpen(false);
-                router.refresh();
-              }}
-            >
-              <input type="hidden" name="seriesId" value={seriesId} />
-              <SubmitButton pendingLabel="Cancel·lant…">
-                Cancel·lar-les totes
-              </SubmitButton>
-            </form>
-          </>
-        }
-      >
-        <p className="text-sm text-brand-charcoal">
-          S&apos;anul·laran les {count} sessions futures d&apos;aquesta sèrie i
-          les sessions tornaran al teu bo. Les que ja estiguin massa a prop per
-          cancel·lar-se es quedaran, i t&apos;ho direm.
-        </p>
-      </ConfirmDialog>
-      {state.error && (
-        <span className="ml-auto text-xs text-error">{state.error}</span>
+          }
+        >
+          <div className="flex flex-col items-center gap-3 py-2 text-center">
+            <AnimatedFeedback type="cancel" />
+            <p className="text-sm font-bold text-brand-dark">
+              {state.cancelled}{" "}
+              {state.cancelled === 1
+                ? "sessió cancel·lada"
+                : "sessions cancel·lades"}
+            </p>
+            <p className="text-sm text-brand-muted">
+              {state.kept
+                ? `${state.kept === 1 ? "Una sessió s'ha quedat" : `${state.kept} sessions s'han quedat`} perquè ja eren massa a prop per cancel·lar-les.`
+                : "Les sessions han tornat al teu bo."}
+            </p>
+          </div>
+        </ConfirmDialog>
+      ) : (
+        <ConfirmDialog
+          open
+          onClose={onClose}
+          title="Cancel·lar tota la sèrie?"
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+              >
+                Deixar-ho estar
+              </button>
+              <form action={action}>
+                <input type="hidden" name="seriesId" value={seriesId} />
+                <SubmitButton pendingLabel="Cancel·lant…">
+                  Cancel·lar-les totes
+                </SubmitButton>
+              </form>
+            </>
+          }
+        >
+          <p className="text-sm text-brand-charcoal">
+            S&apos;anul·laran les {count} sessions futures d&apos;aquesta sèrie i
+            les sessions tornaran al teu bo. Les que ja estiguin massa a prop per
+            cancel·lar-se es quedaran, i t&apos;ho direm.
+          </p>
+          {state.error && (
+            <p className="mt-3 text-xs text-error">{state.error}</p>
+          )}
+        </ConfirmDialog>
       )}
     </>
   );
