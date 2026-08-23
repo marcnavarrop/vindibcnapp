@@ -138,6 +138,19 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
     const iso = when.toISOString();
     const here = occupancyAt(taken, req.trainerId, when);
 
+    // L'antelació mínima del centre val també aquí. Sense això el pla
+    // prometia una primera sessió massa a prop que després
+    // `createClientReservation` rebutjava, i sortia com a fallida.
+    if (when.getTime() - Date.now() < ctx.minBookingMs) {
+      occurrences.push({
+        requestedAt: iso,
+        requestedTrainerId: req.trainerId,
+        status: "sense_places",
+        note: "Massa a prop per reservar-la.",
+      });
+      continue;
+    }
+
     // 2. La franja exacta, lliure, dins de la disponibilitat del professional i
     //    sense xocar amb una altra reserva del client a la mateixa hora.
     if (
@@ -255,7 +268,7 @@ function findAlternative(
       // `setHours` sobre l'instant faria servir la zona del procés (UTC a
       // Vercel) i buscaria alternatives al mig de la matinada d'aquí.
       const at = centerLocalToInstant(day, `${String(h).padStart(2, "0")}:00`);
-      if (at.getTime() <= Date.now()) continue;
+      if (at.getTime() - Date.now() < ctx.minBookingMs) continue;
       if (free(req.trainerId, at))
         return {
           scheduledAt: at.toISOString(),
@@ -305,6 +318,8 @@ type Ctx = {
    * d'aquí es comprovava contra les 8 i queia fora de l'horari del centre.
    */
   offers: (trainerId: string, at: Date, service: ServiceType) => boolean;
+  /** Antelació mínima per reservar, en mil·lisegons. 0 = sense restricció. */
+  minBookingMs: number;
   /**
    * Instants on el client JA té una reserva, amb qui sigui.
    *
@@ -329,6 +344,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     openingHour: 7,
     closingHour: 22,
     offers: () => false,
+    minBookingMs: 0,
     ownAt: new Set<number>(),
   };
   /** Compartit pels dos backends: la disponibilitat no depèn d'on siguin les dades. */
@@ -389,6 +405,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       openingHour: settings.openingHour,
       closingHour: settings.closingHour,
       offers: makeOffers(rules, blocks),
+      minBookingMs: settings.minBookingHours * 3600_000,
       ownAt: new Set(
         store.reservations
           .filter((r) => r.client_id === client.id && r.status === "booked")
@@ -443,6 +460,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     openingHour: settings.openingHour,
     closingHour: settings.closingHour,
     offers: makeOffers(rules, blocks),
+    minBookingMs: settings.minBookingHours * 3600_000,
     ownAt: new Set(
       ((res ?? []) as (SlotRow & { client_id: string })[])
         .filter((r) => r.client_id === client.id)
