@@ -8,7 +8,11 @@ import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { avatarUrls } from "@/lib/data/avatars";
 import type { TrainerRuleLite, TrainerBlockLite } from "@/lib/availability-slots";
-import type { ServiceType, ReservationStatus } from "@/types/database";
+import type {
+  ServiceType,
+  ReservationStatus,
+  BonoStatus,
+} from "@/types/database";
 
 /**
  * Reserva del centre per al calendari del client.
@@ -59,6 +63,15 @@ export type ClientCenterData = {
   assignedTrainerId: string | null;
   /** Tipos de servicio que el cliente puede reservar (bonos activos con sesiones). */
   bonoTypes: ServiceType[];
+  /**
+   * Sessions disponibles per servei, per poder-ho dir abans de reservar.
+   *
+   * És el que li queda al bo que farà servir la PRÒXIMA reserva —el més antic
+   * amb sessions—, no la suma de tots els bons d'aquell servei. Sumar-los
+   * enganyaria a l'assistent de bucle, que no reparteix una sèrie entre dos
+   * bons: amb un bo de 2 i un altre de 7, una sèrie de 5 s'atura a la segona.
+   */
+  bonoSessions: Partial<Record<ServiceType, number>>;
   trainers: { id: string; name: string; avatarUrl: string | null }[];
   rules: TrainerRuleLite[];
   /** Bloquejos temporals que tapen les regles setmanals. */
@@ -70,11 +83,54 @@ const EMPTY: ClientCenterData = {
   clientId: null,
   assignedTrainerId: null,
   bonoTypes: [],
+  bonoSessions: {},
   trainers: [],
   rules: [],
   blocks: [],
   reservations: [],
 };
+
+/** Un bo serveix si està viu, no ha caducat i li queden sessions. */
+function isUsableBono(b: {
+  status: BonoStatus;
+  remaining_sessions: number;
+  expires_at: string | null;
+}): boolean {
+  return (
+    (b.status === "active" || b.status === "pending_payment") &&
+    b.remaining_sessions > 0 &&
+    // Un bo caducat no habilita res: si no, el calendari oferiria franges
+    // que el servidor rebutjaria en intentar reservar-les.
+    !isBonoExpired(b)
+  );
+}
+
+/**
+ * Sessions per servei, mirant el mateix bo que triarà la reserva.
+ *
+ * L'ordre importa: el motor agafa sempre el bo més antic amb sessions, i
+ * aquesta xifra ha de ser la d'aquell mateix bo perquè el que diu la pantalla
+ * i el que farà el servidor no es contradiguin.
+ */
+function sessionsByService(
+  rows: {
+    service_type: ServiceType;
+    status: BonoStatus;
+    remaining_sessions: number;
+    expires_at: string | null;
+    purchased_at: string;
+  }[],
+): Partial<Record<ServiceType, number>> {
+  const out: Partial<Record<ServiceType, number>> = {};
+  for (const b of [...rows].sort((a, c) =>
+    a.purchased_at.localeCompare(c.purchased_at),
+  )) {
+    if (!isUsableBono(b)) continue;
+    if (out[b.service_type] === undefined)
+      out[b.service_type] = b.remaining_sessions;
+  }
+  return out;
+}
 
 /**
  * Datos para el calendario GLOBAL del cliente: la disponibilidad de todos los
@@ -113,21 +169,9 @@ export async function getClientCenterData(
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === profileId);
     if (!client) return EMPTY;
-    const bonoTypes = [
-      ...new Set(
-        store.bonos
-          .filter(
-            (b) =>
-              b.client_id === client.id &&
-              (b.status === "active" || b.status === "pending_payment") &&
-              b.remaining_sessions > 0 &&
-              // Un bo caducat no habilita res: si no, el calendari oferiria
-              // franges que el servidor rebutjaria en intentar reservar-les.
-              !isBonoExpired(b),
-          )
-          .map((b) => b.service_type),
-      ),
-    ];
+    const meusBonos = store.bonos.filter((b) => b.client_id === client.id);
+    const bonoSessions = sessionsByService(meusBonos);
+    const bonoTypes = Object.keys(bonoSessions) as ServiceType[];
     const trainers = store.profiles
       .filter((p) => p.role === "trainer")
       .map((p) => ({ id: p.id, name: p.full_name ?? "—", avatarUrl: null }));
@@ -159,6 +203,7 @@ export async function getClientCenterData(
       clientId: client.id,
       assignedTrainerId: client.assigned_trainer_id ?? null,
       bonoTypes,
+      bonoSessions,
       trainers,
       rules,
       blocks: await listAllBlocksLite(),
@@ -183,7 +228,7 @@ export async function getClientCenterData(
   const [bonoRows, trainerRows, rules, blocks, resRows] = await Promise.all([
     admin
       .from("bonos")
-      .select("service_type, status, remaining_sessions, expires_at")
+      .select("service_type, status, remaining_sessions, expires_at, purchased_at")
       .eq("client_id", client.id),
     admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer"),
     listAllTrainerRulesLite(),
@@ -201,18 +246,8 @@ export async function getClientCenterData(
       .neq("status", "cancelled"),
   ]);
 
-  const bonoTypes = [
-    ...new Set(
-      (bonoRows.data ?? [])
-        .filter(
-          (b) =>
-            (b.status === "active" || b.status === "pending_payment") &&
-            b.remaining_sessions > 0 &&
-            !isBonoExpired(b),
-        )
-        .map((b) => b.service_type),
-    ),
-  ];
+  const bonoSessions = sessionsByService(bonoRows.data ?? []);
+  const bonoTypes = Object.keys(bonoSessions) as ServiceType[];
   // Les fotos, totes d'un cop: la llegenda les pinta juntes.
   const avatars = await avatarUrls(
     (trainerRows.data ?? []).map((t) => t.avatar_path),
@@ -247,6 +282,7 @@ export async function getClientCenterData(
     clientId: client.id,
     assignedTrainerId: client.assigned_trainer_id ?? null,
     bonoTypes,
+    bonoSessions,
     trainers,
     rules,
     blocks,

@@ -108,6 +108,7 @@ export function ClientReservasView({
           <div className="xl:sticky xl:top-4">
             <SeriesWizard
               seed={seed}
+              remainingSessions={data.bonoSessions[seed.serviceType]}
               onClose={() => setSeed(null)}
               onDone={() => {
                 setSeed(null);

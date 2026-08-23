@@ -20,6 +20,7 @@ export default async function ClientReservasPage() {
           clientId: null,
           assignedTrainerId: null,
           bonoTypes: [],
+          bonoSessions: {},
           trainers: [],
           rules: [],
           blocks: [],

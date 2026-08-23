@@ -11,6 +11,7 @@ import {
   formatDayHeading,
   formatTime,
   sessionsLabel,
+  deOf,
 } from "@/lib/labels";
 import { summarize, type ResolvedOccurrence } from "@/lib/booking-series-core";
 import {
@@ -42,10 +43,16 @@ const FREQUENCIES: BookingFrequency[] = ["weekly", "biweekly", "monthly"];
 
 export function SeriesWizard({
   seed,
+  remainingSessions,
   onClose,
   onDone,
 }: {
   seed: SeriesSeed;
+  /**
+   * Sessions que queden al bo d'aquest servei, per saber d'un cop d'ull si
+   * arribaran per a tota la sèrie sense haver d'anar a mirar-ho a "Bons".
+   */
+  remainingSessions?: number;
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -180,6 +187,21 @@ export function SeriesWizard({
           {seed.groupFree && (
             <p className="mt-2 text-sm font-bold text-success">
               Places disponibles: {seed.groupFree.free} de {seed.groupFree.capacity}
+            </p>
+          )}
+          {/* El sostre de la sèrie, dit abans de demanar-la: aquestes són les
+              sessions que hi ha per repartir, i és el que decideix fins on
+              podrà arribar. */}
+          {remainingSessions !== undefined && (
+            <p
+              className={clsx(
+                "mt-3 border-t border-brand-border pt-3 text-sm font-bold",
+                remainingSessions === 0 ? "text-error" : "text-brand-purple",
+              )}
+            >
+              {remainingSessions === 0
+                ? `No et queden sessions al bo ${deOf(SERVICE_LABELS[seed.serviceType])}.`
+                : `Et ${remainingSessions === 1 ? "queda" : "queden"} ${sessionsLabel(remainingSessions)} al teu bo ${deOf(SERVICE_LABELS[seed.serviceType])}.`}
             </p>
           )}
         </div>
@@ -398,7 +420,20 @@ function Panel({
   onClose: () => void;
 }) {
   return (
-    <aside className="flex h-full flex-col gap-5 overflow-y-auto rounded-2xl border border-brand-border bg-white p-5">
+    /**
+     * El panell es desplaça sol.
+     *
+     * Abans creixia tant com calgués i, per arribar al final de la llista
+     * d'ocurrències o al botó de confirmar, s'havia de desplaçar tota la
+     * pàgina, calendari inclòs. Ara té l'alçada acotada a la finestra i el seu
+     * propi desplaçament; `overscroll-contain` evita que en arribar al final
+     * la roda continuï movent el calendari de sota.
+     *
+     * Només a partir de `xl`, que és on el panell viu al costat del calendari
+     * i es queda enganxat. Per sota va apilat i és millor que flueixi amb la
+     * pàgina: acotar-lo allà seria una caixeta amb scroll dins d'una altra.
+     */
+    <aside className="flex flex-col gap-5 rounded-2xl border border-brand-border bg-white p-5 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:overscroll-contain">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-bold text-brand-dark">{title}</h2>
         <button
