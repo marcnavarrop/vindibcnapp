@@ -715,6 +715,19 @@ export function ClientCenterCalendar({
           scheduledAt={own.slot.toISOString()}
           minCancellationHours={minCancellationHours}
           cancelAction={cancelAction}
+          onPickSeries={
+            onPickSeries && own.trainerId
+              ? () => {
+                  onPickSeries({
+                    scheduledAt: own.slot.toISOString(),
+                    trainerId: own.trainerId as string,
+                    trainerName: trainerName(own.trainerId),
+                    service: own.service,
+                  });
+                  setOwn(null);
+                }
+              : undefined
+          }
           onClose={() => setOwn(null)}
         />
       )}
@@ -869,6 +882,7 @@ function OwnModal({
   mates = [],
   minCancellationHours,
   cancelAction,
+  onPickSeries,
   onClose,
 }: {
   service: ServiceType;
@@ -879,6 +893,8 @@ function OwnModal({
   mates?: string[];
   minCancellationHours: number;
   cancelAction: CancelAction;
+  /** Obrir l'assistent de bucle prenent aquesta sessió com a origen. */
+  onPickSeries?: () => void;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -931,6 +947,21 @@ function OwnModal({
           scheduledAt={scheduledAt}
         />
       </div>
+      {/* Repetir una sessió que ja tens és, de fet, el moment natural de
+          voler-ho: primer reserves i després penses que la vols cada setmana.
+          Abans només es podia des d'una franja lliure, i qui ja l'havia
+          reservada no tenia cap manera de dir-ho. La sessió d'aquí s'adopta a
+          la sèrie amb el seu `series_id` (vegeu `ja_reservada`), de manera que
+          no es duplica ni es queda fora quan es cancel·li la sèrie sencera. */}
+      {onPickSeries && (
+        <button
+          type="button"
+          onClick={onPickSeries}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-purple px-4 py-2.5 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/5"
+        >
+          Repetir en bucle a partir d&apos;aquesta
+        </button>
+      )}
       {canCancel ? (
         confirming ? (
           <>

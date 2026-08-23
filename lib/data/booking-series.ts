@@ -218,11 +218,13 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
         requestedAt: iso,
         requestedTrainerId: req.trainerId,
         status: "sense_places",
-        // El motiu, dit tal com és: no és el mateix que la franja se l'hagi
-        // quedat algú altre que xocar amb una reserva teva.
-        note: own
-          ? "A aquella hora ja hi tens una altra sessió."
-          : "La franja estava ocupada.",
+        // El motiu, dit tal com és. Són tres casos diferents i abans es deien
+        // tots igual ("la franja estava ocupada"), que només és cert al tercer.
+        note: !own
+          ? "La franja estava ocupada."
+          : own.seriesId
+            ? "Aquesta sessió ja forma part d'una altra sèrie."
+            : "A aquella hora ja hi tens una altra sessió.",
       });
       continue;
     }
