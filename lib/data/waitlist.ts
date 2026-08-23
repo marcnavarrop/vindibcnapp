@@ -236,7 +236,7 @@ export async function promoteFromWaitlist(freed: {
         continue;
       }
 
-      await notifyPromotion(c.client_id, freed);
+      await notifyPromotion(c.client_id, freed, created.id);
       return { promoted: true, clientId: c.client_id, reservationId: created.id };
     }
 
@@ -316,7 +316,7 @@ async function promoteMock(
     c.fulfilled_at = new Date().toISOString();
     c.fulfilled_reservation_id = id;
     saveStore(store);
-    await notifyPromotion(c.client_id, freed);
+    await notifyPromotion(c.client_id, freed, id);
     return { promoted: true, clientId: c.client_id, reservationId: id };
   }
   return { promoted: false, reason: "Cap candidat podia agafar-la." };
@@ -326,6 +326,7 @@ async function promoteMock(
 async function notifyPromotion(
   clientId: string,
   freed: { trainerId: string | null; scheduledAt: string; serviceType: ServiceType },
+  reservationId: string,
 ): Promise<void> {
   const profileId = await profileOfClient(clientId);
   if (!profileId) return;
@@ -335,7 +336,10 @@ async function notifyPromotion(
   await notify({
     type: "waitlist_fulfilled",
     recipient: contact,
-    relatedId: freed.scheduledAt,
+    // La reserva acabada de crear, no l'instant: `notification_log.related_id`
+    // és un uuid, i amb una marca de temps la inserció fallava. `notify` s'ho
+    // empassava tot i l'avís no quedava registrat enlloc.
+    relatedId: reservationId,
     data: {
       name: contact.name ?? "",
       when: `${formatDayHeading(freed.scheduledAt)}, ${formatTime(freed.scheduledAt)}`,
