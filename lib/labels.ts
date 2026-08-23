@@ -141,10 +141,15 @@ export const FREQUENCY_LABELS: Record<BookingFrequency, string> = {
 
 /** Com es diu i com es pinta cada resultat d'una ocurrència de la sèrie. */
 export const OCCURRENCE_LABELS: Record<
-  "confirmada" | "alternativa_proposada" | "llista_espera" | "sense_places",
+  | "confirmada"
+  | "ja_reservada"
+  | "alternativa_proposada"
+  | "llista_espera"
+  | "sense_places",
   { label: string; tone: "success" | "warn" | "info" | "danger" }
 > = {
   confirmada: { label: "Confirmada", tone: "success" },
+  ja_reservada: { label: "Ja reservada", tone: "success" },
   alternativa_proposada: { label: "Alternativa proposada", tone: "warn" },
   llista_espera: { label: "Llista d'espera", tone: "info" },
   sense_places: { label: "Sense places", tone: "danger" },

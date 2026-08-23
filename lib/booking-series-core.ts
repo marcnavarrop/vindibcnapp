@@ -67,9 +67,18 @@ export function localDayString(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Com ha quedat cada ocurrència després de resoldre-la. */
+/**
+ * Com ha quedat cada ocurrència després de resoldre-la.
+ *
+ * `ja_reservada` és la sessió d'origen: la que el client ja tenia reservada
+ * abans de dir "repeteix-me-la". No es torna a reservar —ja hi és— però tampoc
+ * és un fracàs: s'adopta a la sèrie. Barrejar-la amb `sense_places`, que és el
+ * que passava, deixava la reserva original fora de la sèrie i, en cancel·lar-la
+ * sencera, allà es quedava.
+ */
 export type OccurrenceStatus =
   | "confirmada"
+  | "ja_reservada"
   | "alternativa_proposada"
   | "llista_espera"
   | "sense_places";
@@ -96,6 +105,7 @@ export function summarize(occurrences: ResolvedOccurrence[]) {
   return {
     total: occurrences.length,
     confirmed: occurrences.filter((o) => o.status === "confirmada").length,
+    alreadyBooked: occurrences.filter((o) => o.status === "ja_reservada").length,
     alternatives: occurrences.filter((o) => o.status === "alternativa_proposada")
       .length,
     waitlisted: occurrences.filter((o) => o.status === "llista_espera").length,

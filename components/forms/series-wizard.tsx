@@ -57,8 +57,14 @@ export function SeriesWizard({
   const [waitlist, setWaitlist] = useState(false);
 
   const [occurrences, setOccurrences] = useState<ResolvedOccurrence[] | null>(null);
+  const [bono, setBono] = useState<{ remaining: number; skipped: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ created: number; waitlisted: number; failed: number } | null>(null);
+  const [done, setDone] = useState<{
+    created: number;
+    adopted: number;
+    waitlisted: number;
+    failed: number;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
 
   const input: SeriesFormInput = {
@@ -80,9 +86,14 @@ export function SeriesWizard({
       if (res.error) {
         setError(res.error);
         setOccurrences(null);
+        setBono(null);
         return;
       }
       setOccurrences(res.occurrences ?? []);
+      setBono({
+        remaining: res.bonoRemaining ?? 0,
+        skipped: res.skippedForBono ?? 0,
+      });
     });
   }
 
@@ -108,6 +119,7 @@ export function SeriesWizard({
       }
       setDone({
         created: res.created ?? 0,
+        adopted: res.adopted ?? 0,
         waitlisted: res.waitlisted ?? 0,
         failed: res.failed ?? 0,
       });
@@ -124,6 +136,8 @@ export function SeriesWizard({
           <p className="text-lg font-bold text-success">Ja ho tens tot reservat</p>
           <p className="text-sm text-brand-muted">
             {sessionsLabel(done.created)} confirmades
+            {done.adopted > 0 &&
+              ` · ${done.adopted === 1 ? "la que ja tenies" : `${done.adopted} que ja tenies`} afegida${done.adopted === 1 ? "" : "es"} a la sèrie`}
             {done.waitlisted > 0 && ` · ${done.waitlisted} a la llista d'espera`}
             {done.failed > 0 && ` · ${done.failed} que no s'han pogut crear`}
           </p>
@@ -304,9 +318,25 @@ export function SeriesWizard({
             />
             <Stat n={stats.waitlisted} label="en espera" tone="text-brand-purple" />
           </div>
+          {stats.alreadyBooked > 0 && (
+            <p className="mt-2 text-xs text-success">
+              {stats.alreadyBooked === 1
+                ? "1 ja la tenies reservada: s'afegirà a la sèrie i es cancel·larà amb ella."
+                : `${stats.alreadyBooked} ja les tenies reservades: s'afegiran a la sèrie i es cancel·laran amb ella.`}
+            </p>
+          )}
           {stats.unavailable > 0 && (
             <p className="mt-2 text-xs text-brand-muted">
               {stats.unavailable} sense plaça: aquestes no es reservaran.
+            </p>
+          )}
+          {/* Quan el bo s'acaba, la sèrie es queda curta. Abans això passava
+              en silenci: la llista s'acabava i prou. */}
+          {bono && bono.skipped > 0 && (
+            <p className="mt-2 text-xs font-bold text-brand-orange">
+              El teu bo només tenia {sessionsLabel(bono.remaining)}: no s&apos;han
+              pogut generar {bono.skipped}{" "}
+              {bono.skipped === 1 ? "ocurrència més" : "ocurrències més"}.
             </p>
           )}
 
@@ -314,7 +344,10 @@ export function SeriesWizard({
             <button
               type="button"
               onClick={confirm}
-              disabled={pending || stats.confirmed + stats.waitlisted === 0}
+              disabled={
+                pending ||
+                stats.confirmed + stats.waitlisted + stats.alreadyBooked === 0
+              }
               className="rounded-lg bg-brand-purple px-5 py-2.5 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light disabled:opacity-60"
             >
               {pending ? "Creant la sèrie…" : "Confirmar sèrie"}

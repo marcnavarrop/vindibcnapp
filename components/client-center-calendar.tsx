@@ -681,13 +681,20 @@ export function ClientCenterCalendar({
           mates={book.mates}
           onPickSeries={
             onPickSeries
-              ? () =>
+              ? () => {
                   onPickSeries({
                     scheduledAt: book.slot.toISOString(),
                     trainerId: book.trainerId,
                     trainerName: trainerName(book.trainerId),
                     service: book.service,
-                  })
+                  });
+                  // El diàleg es tanca en obrir l'assistent. Quedant-se obert,
+                  // el "Reservar" seguia allà mentre l'assistent es muntava al
+                  // costat amb la MATEIXA franja: qui el premia es reservava la
+                  // sessió d'origen pel seu compte, i la sèrie ja no la trobava
+                  // lliure. D'aquí sortia la reserva que no es cancel·lava mai.
+                  setBook(null);
+                }
               : undefined
           }
           action={createAction}

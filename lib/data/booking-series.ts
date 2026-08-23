@@ -56,6 +56,12 @@ export type SeriesPlan = {
   /** Sessions que li queden al bo que es farà servir. */
   bonoRemaining: number;
   bonoId: string | null;
+  /**
+   * Ocurrències que es demanaven i no s'han arribat ni a mirar perquè el bo
+   * s'havia acabat. Es diu perquè, si no, la llista simplement s'acabava abans
+   * d'hora i semblava que l'assistent no hagués entès el que se li demanava.
+   */
+  skippedForBono: number;
   error?: string;
 };
 
@@ -100,11 +106,11 @@ function occupancyAt(
 export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
   const first = new Date(req.firstAt);
   if (Number.isNaN(first.getTime()))
-    return { occurrences: [], bonoRemaining: 0, bonoId: null, error: "Data no vàlida." };
+    return { occurrences: [], bonoRemaining: 0, bonoId: null, skippedForBono: 0, error: "Data no vàlida." };
 
   const ctx = await loadContext(req);
   if (ctx.error)
-    return { occurrences: [], bonoRemaining: 0, bonoId: null, error: ctx.error };
+    return { occurrences: [], bonoRemaining: 0, bonoId: null, skippedForBono: 0, error: ctx.error };
 
   // Les dates es generen en hora del CENTRE i es tornen a convertir a
   // instants. Sumar 7×24 h sobre l'instant cru semblaria equivalent, però no
@@ -131,12 +137,41 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
   const taken = [...ctx.slots];
   let remaining = ctx.bonoRemaining;
 
+  let skippedForBono = 0;
+
   for (const when of dates) {
-    // 1. Sense sessions: s'atura la sèrie aquí.
-    if (remaining <= 0) break;
+    // 1. Sense sessions: s'atura la sèrie aquí. Es compta el que queda fora
+    //    per poder-ho dir: abans la llista simplement s'acabava abans d'hora i
+    //    ningú explicava per què faltaven ocurrències.
+    if (remaining <= 0) {
+      skippedForBono++;
+      continue;
+    }
 
     const iso = when.toISOString();
     const here = occupancyAt(taken, req.trainerId, when);
+
+    // 0. La sessió que ja tens reservada, que normalment és la d'origen: la
+    //    que vas reservar tu i sobre la qual has premut "repetir en bucle".
+    //    S'adopta a la sèrie tal com està —no es torna a reservar ni gasta
+    //    sessió del bo— sempre que sigui exactament la mateixa cosa (mateix
+    //    professional i mateix servei) i no pertanyi ja a una altra sèrie,
+    //    perquè robar-la-hi la deixaria fora de les seves cancel·lacions.
+    const own = ctx.ownAt.get(when.getTime());
+    if (
+      own &&
+      own.seriesId === null &&
+      own.trainerId === req.trainerId &&
+      own.service === req.serviceType
+    ) {
+      occurrences.push({
+        requestedAt: iso,
+        requestedTrainerId: req.trainerId,
+        status: "ja_reservada",
+        note: "Ja la tens reservada; s'afegirà a la sèrie.",
+      });
+      continue;
+    }
 
     // L'antelació mínima del centre val també aquí. Sense això el pla
     // prometia una primera sessió massa a prop que després
@@ -154,7 +189,7 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
     // 2. La franja exacta, lliure, dins de la disponibilitat del professional i
     //    sense xocar amb una altra reserva del client a la mateixa hora.
     if (
-      !ctx.ownAt.has(when.getTime()) &&
+      !own &&
       ctx.offers(req.trainerId, when, req.serviceType) &&
       slotHasRoom(here, req.serviceType)
     ) {
@@ -169,7 +204,11 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
         service_type: req.serviceType,
       });
       remaining -= 1;
-      ctx.ownAt.add(when.getTime());
+      ctx.ownAt.set(when.getTime(), {
+        trainerId: req.trainerId,
+        service: req.serviceType,
+        seriesId: null,
+      });
       continue;
     }
 
@@ -179,7 +218,11 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
         requestedAt: iso,
         requestedTrainerId: req.trainerId,
         status: "sense_places",
-        note: "La franja estava ocupada.",
+        // El motiu, dit tal com és: no és el mateix que la franja se l'hagi
+        // quedat algú altre que xocar amb una reserva teva.
+        note: own
+          ? "A aquella hora ja hi tens una altra sessió."
+          : "La franja estava ocupada.",
       });
       continue;
     }
@@ -196,7 +239,11 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
         });
         // L'alternativa ocupa hora encara que estigui pendent d'acceptar: si
         // no, la següent ocurrència podria proposar la mateixa i xocarien.
-        ctx.ownAt.add(new Date(alt.scheduledAt).getTime());
+        ctx.ownAt.set(new Date(alt.scheduledAt).getTime(), {
+          trainerId: alt.trainerId,
+          service: req.serviceType,
+          seriesId: null,
+        });
         taken.push({
           trainer_id: alt.trainerId,
           scheduled_at: alt.scheduledAt,
@@ -229,6 +276,7 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
     occurrences,
     bonoRemaining: ctx.bonoRemaining,
     bonoId: ctx.bonoId,
+    skippedForBono,
   };
 }
 
@@ -321,13 +369,23 @@ type Ctx = {
   /** Antelació mínima per reservar, en mil·lisegons. 0 = sense restricció. */
   minBookingMs: number;
   /**
-   * Instants on el client JA té una reserva, amb qui sigui.
+   * Què té reservat el client a cada instant, amb qui sigui.
    *
    * `createClientReservation` rebutja dues reserves a la mateixa hora, i sense
    * mirar-ho aquí el pla prometia una alternativa que després no es podia
    * crear: la sèrie deia "confirmada" i al commit sortia com a fallida.
+   *
+   * Guarda el professional, el servei i la sèrie de cadascuna perquè no és el
+   * mateix xocar amb una reserva teva d'una altra cosa que trobar-te la mateixa
+   * sessió que vols repetir: aquesta segona s'adopta (`ja_reservada`).
    */
-  ownAt: Set<number>;
+  ownAt: Map<number, OwnSlot>;
+};
+
+type OwnSlot = {
+  trainerId: string | null;
+  service: ServiceType;
+  seriesId: string | null;
 };
 
 /** Tot el que fa falta per resoldre, demanat d'un sol cop. */
@@ -345,7 +403,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     closingHour: 22,
     offers: () => false,
     minBookingMs: 0,
-    ownAt: new Set<number>(),
+    ownAt: new Map<number, OwnSlot>(),
   };
   /** Compartit pels dos backends: la disponibilitat no depèn d'on siguin les dades. */
   const makeOffers =
@@ -406,10 +464,17 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       closingHour: settings.closingHour,
       offers: makeOffers(rules, blocks),
       minBookingMs: settings.minBookingHours * 3600_000,
-      ownAt: new Set(
+      ownAt: new Map(
         store.reservations
           .filter((r) => r.client_id === client.id && r.status === "booked")
-          .map((r) => new Date(r.scheduled_at).getTime()),
+          .map((r) => [
+            new Date(r.scheduled_at).getTime(),
+            {
+              trainerId: r.trainer_id,
+              service: r.service_type,
+              seriesId: r.series_id,
+            },
+          ]),
       ),
     };
   }
@@ -434,7 +499,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
         .order("purchased_at", { ascending: true }),
       admin
         .from("reservations")
-        .select("trainer_id, scheduled_at, service_type, client_id")
+        .select("trainer_id, scheduled_at, service_type, client_id, series_id")
         .eq("status", "booked"),
       admin.from("profiles").select("id, full_name").eq("role", "trainer"),
       listAllTrainerRulesLite(),
@@ -461,10 +526,17 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     closingHour: settings.closingHour,
     offers: makeOffers(rules, blocks),
     minBookingMs: settings.minBookingHours * 3600_000,
-    ownAt: new Set(
-      ((res ?? []) as (SlotRow & { client_id: string })[])
+    ownAt: new Map(
+      ((res ?? []) as (SlotRow & { client_id: string; series_id: string | null })[])
         .filter((r) => r.client_id === client.id)
-        .map((r) => new Date(r.scheduled_at).getTime()),
+        .map((r) => [
+          new Date(r.scheduled_at).getTime(),
+          {
+            trainerId: r.trainer_id,
+            service: r.service_type,
+            seriesId: r.series_id,
+          },
+        ]),
     ),
   };
 }
@@ -474,6 +546,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
 export type CommitResult = {
   seriesId: string;
   created: number;
+  /** Reserves que ja existien i s'han incorporat a la sèrie. */
+  adopted: number;
   waitlisted: number;
   failed: number;
 };
@@ -488,6 +562,11 @@ export type CommitResult = {
  * per saltar-se validacions (antelació mínima, disponibilitat, aforament,
  * reclam atòmic de la sessió del bo). Si una ocurrència falla, es compta com a
  * fallida i la resta continua: val més una sèrie incompleta que cap.
+ *
+ * L'excepció és la sessió d'origen: aquella ja està reservada i no s'ha de
+ * tornar a crear, només ADOPTAR (posar-li el `series_id`). Sense això quedava
+ * fora de la sèrie i sobrevivia a la cancel·lació de tota la sèrie, que és el
+ * bug que ens va portar aquí.
  */
 export async function commitSeries(
   req: SeriesRequest,
@@ -498,10 +577,29 @@ export async function commitSeries(
 
   const seriesId = await insertSeries(req, ctx.clientId, ctx.bonoId);
   let created = 0;
+  let adopted = 0;
   let waitlisted = 0;
   let failed = 0;
 
   for (const o of decided) {
+    // La sessió que el client ja tenia: s'incorpora tal com està. No es crea
+    // res ni es toca cap bo —la sessió ja la va gastar quan la va reservar.
+    if (o.status === "ja_reservada") {
+      if (!o.requestedTrainerId) {
+        failed++;
+        continue;
+      }
+      const ok = await tagReservation(
+        o.requestedTrainerId,
+        o.requestedAt,
+        ctx.clientId,
+        seriesId,
+      );
+      if (ok) adopted++;
+      else failed++;
+      continue;
+    }
+
     // Les alternatives només compten si el client hi ha dit que sí (la UI les
     // marca com a 'confirmada' en acceptar-les).
     if (o.status === "confirmada") {
@@ -545,43 +643,59 @@ export async function commitSeries(
     }
   }
 
-  return { seriesId, created, waitlisted, failed };
+  return { seriesId, created, adopted, waitlisted, failed };
 }
 
 /**
- * Marca la reserva acabada de crear amb el `series_id`.
+ * Posa el `series_id` a una reserva viva del client en aquella franja.
+ *
+ * Serveix per a les dues coses, i és el mateix gest: etiquetar la reserva que
+ * la sèrie acaba de crear i adoptar la que el client ja tenia.
  *
  * `createClientReservation` no en sap res de sèries —i millor que segueixi
- * així—, de manera que l'etiqueta es posa just després buscant la fila per la
- * seva clau natural (client + professional + instant).
+ * així—, de manera que l'etiqueta es posa després buscant la fila per la seva
+ * clau natural (client + professional + instant).
+ *
+ * Només toca les que no tenen sèrie: si la reserva ja és d'una altra, se li
+ * hauria de robar, i llavors la sèrie antiga deixaria de poder-la cancel·lar.
+ *
+ * Torna si l'ha trobada, perquè una adopció fallida ha de comptar com a tal i
+ * no passar en silenci.
  */
 async function tagReservation(
   trainerId: string,
   scheduledAt: string,
   clientId: string,
   seriesId: string,
-): Promise<void> {
+): Promise<boolean> {
   if (USE_MOCK) {
     const store = getStore();
+    // Per INSTANT, no per cadena: la reserva d'origen la va desar un altre
+    // camí i el mateix moment es pot haver escrit de dues maneres.
+    const t = new Date(scheduledAt).getTime();
     const r = store.reservations.find(
       (x) =>
         x.client_id === clientId &&
         x.trainer_id === trainerId &&
-        x.scheduled_at === scheduledAt &&
-        x.status === "booked",
+        new Date(x.scheduled_at).getTime() === t &&
+        x.status === "booked" &&
+        x.series_id === null,
     );
     if (r) r.series_id = seriesId;
     saveStore(store);
-    return;
+    return Boolean(r);
   }
   const admin = createAdminClient();
-  await admin
+  const { data } = await admin
     .from("reservations")
     .update({ series_id: seriesId })
     .eq("client_id", clientId)
     .eq("trainer_id", trainerId)
     .eq("scheduled_at", scheduledAt)
-    .eq("status", "booked");
+    .eq("status", "booked")
+    .is("series_id", null)
+    .select("id");
+  return (data ?? []).length > 0;
 }
 
 async function insertSeries(
@@ -600,6 +714,9 @@ async function insertSeries(
     book_only_available: req.bookOnlyAvailable,
     allow_alternatives: req.allowAlternatives,
     allow_waitlist: req.allowWaitlist,
+    // D'on surt la sèrie. Sense això, davant d'una sèrie que hagués sortit
+    // malament no hi havia manera de saber quina sessió l'havia originat.
+    first_at: req.firstAt,
   };
 
   if (USE_MOCK) {

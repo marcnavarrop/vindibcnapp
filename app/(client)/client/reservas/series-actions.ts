@@ -37,6 +37,8 @@ export type CalculateState = {
   error?: string;
   occurrences?: ResolvedOccurrence[];
   bonoRemaining?: number;
+  /** Ocurrències que no s'han pogut generar perquè el bo s'havia acabat. */
+  skippedForBono?: number;
 };
 
 function toRequest(profileId: string, input: SeriesFormInput): SeriesRequest {
@@ -67,13 +69,19 @@ export async function calculateSeriesAction(
 
   const plan = await resolveSeries(toRequest(viewer.id, input));
   if (plan.error) return { error: plan.error };
-  return { occurrences: plan.occurrences, bonoRemaining: plan.bonoRemaining };
+  return {
+    occurrences: plan.occurrences,
+    bonoRemaining: plan.bonoRemaining,
+    skippedForBono: plan.skippedForBono,
+  };
 }
 
 export type ConfirmState = {
   error?: string;
   ok?: boolean;
   created?: number;
+  /** Reserves que ja existien i s'han incorporat a la sèrie. */
+  adopted?: number;
   waitlisted?: number;
   failed?: number;
 };
@@ -93,6 +101,7 @@ export async function confirmSeriesAction(
     return {
       ok: true,
       created: res.created,
+      adopted: res.adopted,
       waitlisted: res.waitlisted,
       failed: res.failed,
     };
