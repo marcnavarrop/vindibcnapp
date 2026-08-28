@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { ClientCenterCalendar } from "@/components/client-center-calendar";
-import { SeriesWizard, type SeriesSeed } from "@/components/forms/series-wizard";
+import {
+  SeriesReview,
+  type SeriesReviewState,
+} from "@/components/forms/series-wizard";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
@@ -51,7 +54,9 @@ export function ClientReservasView({
   series: SeriesSummary[];
 }) {
   const router = useRouter();
-  const [seed, setSeed] = useState<SeriesSeed | null>(null);
+  // La sèrie ja calculada, esperant que la revisin. La configuració viu ara
+  // dins del diàleg de reserva; aquí només hi arriba el resultat.
+  const [review, setReview] = useState<SeriesReviewState | null>(null);
   // Quina sèrie s'està cancel·lant. Viu AQUÍ, i no a la fila de la llista,
   // perquè en cancel·lar-la la fila desapareix: si el diàleg hi visqués a
   // dins, se n'aniria amb ella abans que ningú llegís el resultat.
@@ -79,7 +84,7 @@ export function ClientReservasView({
 
       <div
         className={
-          seed
+          review
             ? "grid items-start gap-6 xl:grid-cols-[1fr_26rem]"
             : "grid items-start gap-6"
         }
@@ -93,25 +98,18 @@ export function ClientReservasView({
             minCancellationHours={minCancellationHours}
             openingHour={openingHour}
             closingHour={closingHour}
-            onPickSeries={(s) =>
-              setSeed({
-                scheduledAt: s.scheduledAt,
-                trainerId: s.trainerId,
-                trainerName: s.trainerName,
-                serviceType: s.service,
-              })
-            }
+            onSeriesReady={setReview}
+            onDialogOpen={() => setReview(null)}
           />
         </div>
 
-        {seed && (
+        {review && (
           <div className="xl:sticky xl:top-4">
-            <SeriesWizard
-              seed={seed}
-              remainingSessions={data.bonoSessions[seed.serviceType]}
-              onClose={() => setSeed(null)}
+            <SeriesReview
+              review={review}
+              onClose={() => setReview(null)}
               onDone={() => {
-                setSeed(null);
+                setReview(null);
                 router.refresh();
               }}
             />

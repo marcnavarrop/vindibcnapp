@@ -21,6 +21,11 @@ import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
+import {
+  RecurrenceFields,
+  type SeriesSeed,
+  type SeriesReviewState,
+} from "@/components/forms/series-wizard";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
 const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
@@ -136,22 +141,26 @@ export function ClientCenterCalendar({
   openingHour = 7,
   closingHour = 22,
   palette,
-  onPickSeries,
+  onSeriesReady,
+  onDialogOpen,
 }: {
   data: ClientCenterData;
   createAction: CreateAction;
   cancelAction: CancelAction;
   /**
-   * Si hi és, el diàleg de reserva ofereix també "repetir en bucle" amb
-   * aquesta mateixa franja com a punt de partida. Opcional a propòsit: el
-   * calendari segueix servint tal qual allà on no hi hagi assistent.
+   * Si hi és, els diàlegs ofereixen també repetir la sessió en bucle i, un cop
+   * calculada, entreguen aquí el resultat perquè algú el pinti. Opcional a
+   * propòsit: el calendari segueix servint tal qual allà on no calgui.
    */
-  onPickSeries?: (seed: {
-    scheduledAt: string;
-    trainerId: string;
-    trainerName: string;
-    service: ServiceType;
-  }) => void;
+  onSeriesReady?: (review: SeriesReviewState) => void;
+  /**
+   * S'avisa en obrir qualsevol diàleg.
+   *
+   * Serveix per tancar el panell de revisió: tenir-lo obert parlant d'un dia
+   * mentre un diàleg en parla d'un altre era la confusió que es podia donar
+   * abans, i amb això no hi ha mai dues intencions a la pantalla.
+   */
+  onDialogOpen?: () => void;
   minCancellationHours?: number;
   /** Colors del centre, ja resolts. Es carreguen un cop a la pàgina. */
   palette: ColorPalette;
@@ -179,6 +188,17 @@ export function ClientCenterCalendar({
     mates?: string[];
   } | null>(null);
   const [own, setOwn] = useState<CellItem & { kind: "own" } | null>(null);
+
+  // Obrir qualsevol diàleg tanca el que hi hagi obert a fora (el panell de
+  // revisió). Una intenció a la pantalla, i sempre la que s'acaba de clicar.
+  const openBook = (b: NonNullable<typeof book>) => {
+    onDialogOpen?.();
+    setBook(b);
+  };
+  const openOwn = (o: CellItem & { kind: "own" }) => {
+    onDialogOpen?.();
+    setOwn(o);
+  };
 
   // Vista por defecto según el ancho de pantalla (móvil = diaria).
   useEffect(() => {
@@ -550,7 +570,7 @@ export function ClientCenterCalendar({
                             <button
                               key={`own-${it.id}`}
                               type="button"
-                              onClick={() => setOwn(it)}
+                              onClick={() => openOwn(it)}
                               style={{
                                 backgroundColor: ownBg,
                                 border: `2px solid ${ownBorder}`,
@@ -590,7 +610,7 @@ export function ClientCenterCalendar({
                               onClick={
                                 it.joinable
                                   ? () =>
-                                      setBook({
+                                      openBook({
                                         trainerId: it.trainerId!,
                                         service: "grupo_reducido",
                                         slot: it.slot,
@@ -631,7 +651,7 @@ export function ClientCenterCalendar({
                             key={`free-${it.trainerId}-${it.service}`}
                             type="button"
                             onClick={() =>
-                              setBook({
+                              openBook({
                                 trainerId: it.trainerId,
                                 service: it.service,
                                 slot: it.slot,
@@ -679,21 +699,19 @@ export function ClientCenterCalendar({
           service={book.service}
           slot={book.slot}
           mates={book.mates}
-          onPickSeries={
-            onPickSeries
-              ? () => {
-                  onPickSeries({
-                    scheduledAt: book.slot.toISOString(),
-                    trainerId: book.trainerId,
-                    trainerName: trainerName(book.trainerId),
-                    service: book.service,
-                  });
-                  // El diàleg es tanca en obrir l'assistent. Quedant-se obert,
-                  // el "Reservar" seguia allà mentre l'assistent es muntava al
-                  // costat amb la MATEIXA franja: qui el premia es reservava la
-                  // sessió d'origen pel seu compte, i la sèrie ja no la trobava
-                  // lliure. D'aquí sortia la reserva que no es cancel·lava mai.
+          seed={{
+            scheduledAt: book.slot.toISOString(),
+            trainerId: book.trainerId,
+            trainerName: trainerName(book.trainerId),
+            serviceType: book.service,
+          }}
+          remainingSessions={data.bonoSessions[book.service]}
+          onSeriesReady={
+            onSeriesReady
+              ? (review) => {
+                  // El diàleg deixa pas al panell de revisió: mai els dos.
                   setBook(null);
+                  onSeriesReady(review);
                 }
               : undefined
           }
@@ -715,16 +733,22 @@ export function ClientCenterCalendar({
           scheduledAt={own.slot.toISOString()}
           minCancellationHours={minCancellationHours}
           cancelAction={cancelAction}
-          onPickSeries={
-            onPickSeries && own.trainerId
-              ? () => {
-                  onPickSeries({
-                    scheduledAt: own.slot.toISOString(),
-                    trainerId: own.trainerId as string,
-                    trainerName: trainerName(own.trainerId),
-                    service: own.service,
-                  });
+          seed={
+            own.trainerId
+              ? {
+                  scheduledAt: own.slot.toISOString(),
+                  trainerId: own.trainerId,
+                  trainerName: trainerName(own.trainerId),
+                  serviceType: own.service,
+                }
+              : undefined
+          }
+          remainingSessions={data.bonoSessions[own.service]}
+          onSeriesReady={
+            onSeriesReady
+              ? (review) => {
                   setOwn(null);
+                  onSeriesReady(review);
                 }
               : undefined
           }
@@ -760,7 +784,9 @@ function CreateModal({
   service,
   slot,
   mates = [],
-  onPickSeries,
+  seed,
+  remainingSessions,
+  onSeriesReady,
   action,
   onClose,
   onDone,
@@ -771,13 +797,16 @@ function CreateModal({
   slot: Date;
   /** Companys de grup ja apuntats. Sempre buit si no és 'grupo_reducido'. */
   mates?: string[];
-  /** Obre l'assistent de reserva en bucle amb aquesta franja. */
-  onPickSeries?: () => void;
+  /** La franja, per si es vol repetir en bucle. */
+  seed?: SeriesSeed;
+  remainingSessions?: number;
+  onSeriesReady?: (review: SeriesReviewState) => void;
   action: CreateAction;
   onClose: () => void;
   onDone: () => void;
 }) {
   const trainerName = firstName(trainerNameFull);
+  const [recurrent, setRecurrent] = useState(false);
   const [state, formAction] = useActionState(action, {} as FormState);
   useEffect(() => {
     if (state.ok) onDone();
@@ -834,42 +863,67 @@ function CreateModal({
         <Field label="Professional" value={trainerName} />
         <GroupMates mates={mates} label="Ja s'hi han apuntat" />
       </dl>
-      {onPickSeries && (
-        <button
-          type="button"
-          onClick={onPickSeries}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-purple px-4 py-2.5 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/5"
-        >
-          Repetir en bucle a partir d&apos;aquesta
-        </button>
+      {/* Repetir-la és la mateixa decisió que fer-la, i per això es plega
+          aquí sota en comptes d'obrir una altra superfície. */}
+      {seed && onSeriesReady && (
+        <label className="mt-4 flex cursor-pointer items-center gap-2.5 rounded-lg border border-brand-border p-3">
+          <input
+            type="checkbox"
+            checked={recurrent}
+            onChange={(e) => setRecurrent(e.target.checked)}
+            className="h-4 w-4 shrink-0 accent-brand-purple"
+          />
+          <span className="text-sm font-bold text-brand-charcoal">
+            Fer-ho recurrent
+          </span>
+        </label>
       )}
 
-      <form action={formAction} className="mt-5">
-        <input type="hidden" name="trainerId" value={trainerId} />
-        <input type="hidden" name="serviceType" value={service} />
-        <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
-        {state.error && (
-          <p className="mb-3 text-sm text-error">{state.error}</p>
-        )}
-        <div className="flex items-center gap-2">
-          {/* Mentre la reserva viatja al servidor hi havia uns segons sense
-              cap senyal, i convidaven a tornar a clicar. Ara el botó ho diu i
-              es bloqueja, que és el que evita la reserva doble. */}
-          <PendingSubmit
-            pendingLabel="Reservant…"
-            className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
-          >
-            Reservar
-          </PendingSubmit>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
-          >
-            Cancel·lar
-          </button>
-        </div>
-      </form>
+      {/* Un sol botó primari a cada moment: o reserves aquesta, o mires com
+          quedaria la sèrie. Mai els dos alhora. */}
+      {recurrent && seed && onSeriesReady ? (
+        <RecurrenceFields
+          seed={seed}
+          remainingSessions={remainingSessions}
+          onReady={onSeriesReady}
+          secondaryAction={
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+            >
+              Cancel·lar
+            </button>
+          }
+        />
+      ) : (
+        <form action={formAction} className="mt-5">
+          <input type="hidden" name="trainerId" value={trainerId} />
+          <input type="hidden" name="serviceType" value={service} />
+          <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
+          {state.error && (
+            <p className="mb-3 text-sm text-error">{state.error}</p>
+          )}
+          <div className="flex items-center gap-2">
+            {/* Mentre la reserva viatja al servidor hi havia uns segons sense
+                cap senyal, i convidaven a tornar a clicar. Ara el botó ho diu i
+                es bloqueja, que és el que evita la reserva doble. */}
+            <PendingSubmit
+              pendingLabel="Reservant…"
+              className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
+            >
+              Reservar
+            </PendingSubmit>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+            >
+              Cancel·lar
+            </button>
+          </div>
+        </form>
+      )}
     </Overlay>
   );
 }
@@ -882,7 +936,9 @@ function OwnModal({
   mates = [],
   minCancellationHours,
   cancelAction,
-  onPickSeries,
+  seed,
+  remainingSessions,
+  onSeriesReady,
   onClose,
 }: {
   service: ServiceType;
@@ -893,14 +949,17 @@ function OwnModal({
   mates?: string[];
   minCancellationHours: number;
   cancelAction: CancelAction;
-  /** Obrir l'assistent de bucle prenent aquesta sessió com a origen. */
-  onPickSeries?: () => void;
+  /** Aquesta sessió, com a origen d'una sèrie. */
+  seed?: SeriesSeed;
+  remainingSessions?: number;
+  onSeriesReady?: (review: SeriesReviewState) => void;
   onClose: () => void;
 }) {
   const router = useRouter();
   const [state, action] = useActionState(cancelAction, {});
   const [confirming, setConfirming] = useState(false);
   const [cancelled, setCancelled] = useState(false);
+  const [recurrent, setRecurrent] = useState(false);
   useEffect(() => {
     if (state.ok) setCancelled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -953,59 +1012,79 @@ function OwnModal({
           reservada no tenia cap manera de dir-ho. La sessió d'aquí s'adopta a
           la sèrie amb el seu `series_id` (vegeu `ja_reservada`), de manera que
           no es duplica ni es queda fora quan es cancel·li la sèrie sencera. */}
-      {onPickSeries && (
+      {seed && onSeriesReady && !recurrent && (
         <button
           type="button"
-          onClick={onPickSeries}
+          onClick={() => setRecurrent(true)}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-purple px-4 py-2.5 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/5"
         >
           Repetir en bucle a partir d&apos;aquesta
         </button>
       )}
-      {canCancel ? (
-        confirming ? (
-          <>
-            <p className="mt-5 text-sm font-bold text-brand-dark">
-              Segur que vols cancel·lar aquesta reserva?
-            </p>
-            <div className="mt-3 flex gap-2">
-              <form action={action} className="flex-1">
-                <input type="hidden" name="id" value={id} />
-                <button
-                  type="submit"
-                  className="w-full rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-80"
-                >
-                  Sí, cancel·la
-                </button>
-              </form>
-              <button
-                type="button"
-                onClick={() => setConfirming(false)}
-                className="flex-1 rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
-              >
-                No, torna
-              </button>
-            </div>
-            {state.error && (
-              <p className="mt-2 text-xs text-error">{state.error}</p>
-            )}
-          </>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className="mt-5 w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
-          >
-            Cancel·lar reserva
-          </button>
-        )
-      ) : (
-        <p className="mt-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
-          Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys{" "}
-          {minCancellationHours} h d&apos;antelació). Contacta amb el centre si
-          tens una urgència.
-        </p>
+      {/* Mentre s'està configurant la repetició, la cancel·lació desapareix:
+          "Cancel·lar reserva" just sota de "Veure les sessions" és massa fàcil
+          de prémer per error, i són dues coses oposades. */}
+      {recurrent && seed && onSeriesReady && (
+        <RecurrenceFields
+          seed={seed}
+          remainingSessions={remainingSessions}
+          onReady={onSeriesReady}
+          secondaryAction={
+            <button
+              type="button"
+              onClick={() => setRecurrent(false)}
+              className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+            >
+              Enrere
+            </button>
+          }
+        />
       )}
+      {!recurrent &&
+        (canCancel ? (
+          confirming ? (
+            <>
+              <p className="mt-5 text-sm font-bold text-brand-dark">
+                Segur que vols cancel·lar aquesta reserva?
+              </p>
+              <div className="mt-3 flex gap-2">
+                <form action={action} className="flex-1">
+                  <input type="hidden" name="id" value={id} />
+                  <button
+                    type="submit"
+                    className="w-full rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-80"
+                  >
+                    Sí, cancel·la
+                  </button>
+                </form>
+                <button
+                  type="button"
+                  onClick={() => setConfirming(false)}
+                  className="flex-1 rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                >
+                  No, torna
+                </button>
+              </div>
+              {state.error && (
+                <p className="mt-2 text-xs text-error">{state.error}</p>
+              )}
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="mt-5 w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
+            >
+              Cancel·lar reserva
+            </button>
+          )
+        ) : (
+          <p className="mt-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
+            Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys{" "}
+            {minCancellationHours} h d&apos;antelació). Contacta amb el centre si
+            tens una urgència.
+          </p>
+        ))}
       <button
         type="button"
         onClick={onClose}
@@ -1029,8 +1108,10 @@ function Overlay({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
     >
+      {/* max-w-md i no sm: amb els camps de repetició plegats a dins, el
+          diàleg de 384 px es quedava estret. */}
       <div
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
