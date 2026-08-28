@@ -803,56 +803,90 @@ export async function createClientReservation(
   if (!bono)
     throw new Error("No tens cap bo actiu d'aquest tipus amb sessions.");
 
-  // 4. La franja del profesional no puede solaparse (salvo grupo con aforo).
-  const { data: existing, error: eErr } = await admin
-    .from("reservations")
-    .select("service_type")
-    .eq("trainer_id", trainerId)
-    .eq("scheduled_at", scheduledAt)
-    .eq("status", "booked");
-  if (eErr) throw eErr;
-  // Les proves 'pending'/'confirmed' també ocupen el forat.
-  const holds = await fetchActiveHoldsAt(admin, trainerId, scheduledAt);
-  assertSlotFree(
-    [...((existing ?? []) as { service_type: ServiceType }[]), ...holds],
-    serviceType,
-  );
-
-  // 5. Reclamo atómico de la sesión (decrement-first con bloqueo optimista).
   const nextRemaining = bono.remaining_sessions - 1;
-  const { data: claimed, error: dErr } = await admin
-    .from("bonos")
-    .update({
-      remaining_sessions: nextRemaining,
-      ...(nextRemaining === 0 && bono.status === "active"
-        ? { status: "completed" as const }
-        : {}),
-      ...(bono.first_reservation_at
-        ? {}
-        : { first_reservation_at: new Date().toISOString() }),
-    })
-    .eq("id", bono.id)
-    .eq("remaining_sessions", bono.remaining_sessions)
-    .select("id")
-    .single();
-  if (dErr || !claimed)
-    throw new Error("Aquest bo no té sessions disponibles.");
 
-  // 6. Inserta la reserva; si falla, devuelve la sesión reclamada.
-  const { error: rErr } = await admin.from("reservations").insert({
-    client_id: client.id,
-    bono_id: bono.id,
-    trainer_id: trainerId,
-    scheduled_at: scheduledAt,
-    service_type: serviceType,
-    status: "booked",
-  });
-  if (rErr) {
-    await admin
+  if (serviceType === "grupo_reducido") {
+    // 4-6 (grup). Comptar places aquí i inserir després és una cursa: entre el
+    // recompte i l'INSERT no hi ha res, i deu peticions simultànies veuen
+    // totes la mateixa franja buida. Als serveis individuals no passa perquè
+    // l'índex únic de la 0007 hi posa una garantia de base de dades; un grup
+    // admet quatre files legítimes i cap índex ho pot expressar.
+    //
+    // Per això tot el tram crític viu dins d'una funció de Postgres que agafa
+    // un advisory lock de la franja: comptar, reclamar la sessió del bo i
+    // inserir passen en una sola transacció i per torns. Les altres franges no
+    // s'esperen.
+    const { data: res, error: gErr } = await admin.rpc("book_group_slot", {
+      p_client_id: client.id,
+      p_bono_id: bono.id,
+      p_expected_remaining: bono.remaining_sessions,
+      p_trainer_id: trainerId,
+      p_scheduled_at: scheduledAt,
+      p_capacity: GROUP_CAPACITY,
+    });
+    if (gErr) throw new Error("No s'ha pogut crear la reserva.");
+    if (!res || !res.ok) {
+      // Els mateixos missatges de sempre: qui reserva no ha de notar que per
+      // dins això ha canviat de lloc.
+      if (res?.reason === "taken")
+        throw new Error("Aquesta franja ja està ocupada.");
+      if (res?.reason === "no_sessions")
+        throw new Error("Aquest bo no té sessions disponibles.");
+      throw new Error("El grup d'aquesta franja ja està complet.");
+    }
+  } else {
+    // 4. La franja del profesional no puede solaparse. Aquí la garantia real
+    //    és l'índex únic de la 0007: aquesta comprovació és per donar un error
+    //    entenedor abans, no per evitar la cursa.
+    const { data: existing, error: eErr } = await admin
+      .from("reservations")
+      .select("service_type")
+      .eq("trainer_id", trainerId)
+      .eq("scheduled_at", scheduledAt)
+      .eq("status", "booked");
+    if (eErr) throw eErr;
+    // Les proves 'pending'/'confirmed' també ocupen el forat.
+    const holds = await fetchActiveHoldsAt(admin, trainerId, scheduledAt);
+    assertSlotFree(
+      [...((existing ?? []) as { service_type: ServiceType }[]), ...holds],
+      serviceType,
+    );
+
+    // 5. Reclamo atómico de la sesión (decrement-first con bloqueo optimista).
+    const { data: claimed, error: dErr } = await admin
       .from("bonos")
-      .update({ remaining_sessions: bono.remaining_sessions, status: "active" })
-      .eq("id", bono.id);
-    throw new Error("Aquesta franja ja està ocupada.");
+      .update({
+        remaining_sessions: nextRemaining,
+        ...(nextRemaining === 0 && bono.status === "active"
+          ? { status: "completed" as const }
+          : {}),
+        ...(bono.first_reservation_at
+          ? {}
+          : { first_reservation_at: new Date().toISOString() }),
+      })
+      .eq("id", bono.id)
+      .eq("remaining_sessions", bono.remaining_sessions)
+      .select("id")
+      .single();
+    if (dErr || !claimed)
+      throw new Error("Aquest bo no té sessions disponibles.");
+
+    // 6. Inserta la reserva; si falla, devuelve la sesión reclamada.
+    const { error: rErr } = await admin.from("reservations").insert({
+      client_id: client.id,
+      bono_id: bono.id,
+      trainer_id: trainerId,
+      scheduled_at: scheduledAt,
+      service_type: serviceType,
+      status: "booked",
+    });
+    if (rErr) {
+      await admin
+        .from("bonos")
+        .update({ remaining_sessions: bono.remaining_sessions, status: "active" })
+        .eq("id", bono.id);
+      throw new Error("Aquesta franja ja està ocupada.");
+    }
   }
 
   const trainer = await getProfileContact(trainerId);

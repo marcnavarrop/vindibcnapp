@@ -59,6 +59,17 @@ export type BookingSeriesStatus = "active" | "cancelled" | "completed";
 /** Estat d'una entrada a la llista d'espera. */
 export type WaitlistStatus = "waiting" | "fulfilled" | "expired" | "cancelled";
 
+/**
+ * Què ha passat en intentar agafar una plaça de grup (funció `book_group_slot`).
+ *
+ * 'taken' = la franja se l'ha quedada una sessió que no és de grup;
+ * 'full' = ja hi ha l'aforament sencer; 'no_sessions' = el bo ha canviat sota
+ * els peus de qui el va llegir i el reclam optimista no ha entrat.
+ */
+export type GroupBookingResult =
+  | { ok: true; id: string; remaining: number }
+  | { ok: false; reason: "taken" | "full" | "no_sessions" };
+
 export type ReferralRewardStatus = "pending" | "used" | "expired";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type TrialStatus =
@@ -1448,6 +1459,21 @@ export interface Database {
       is_trainer: { Args: Record<never, never>; Returns: boolean };
       owns_client: { Args: { cid: string }; Returns: boolean };
       is_trainer_of: { Args: { cid: string }; Returns: boolean };
+      /**
+       * Reserva una plaça de grup serialitzant per franja (0053). Retorna
+       * {ok:true,id,remaining} o {ok:false,reason:'taken'|'full'|'no_sessions'}.
+       */
+      book_group_slot: {
+        Args: {
+          p_client_id: string;
+          p_bono_id: string;
+          p_expected_remaining: number;
+          p_trainer_id: string;
+          p_scheduled_at: string;
+          p_capacity: number;
+        };
+        Returns: GroupBookingResult;
+      };
     };
     Enums: {
       user_role: UserRole;
