@@ -123,6 +123,7 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
   const [pendingCancelHours, setPendingCancelHours] = useState(
     String(settings.pendingPaymentCancelHours ?? 48),
   );
+  const [waitlist, setWaitlist] = useState(settings.waitlistEnabled);
   const [giftVouchers, setGiftVouchers] = useState(settings.giftVouchersEnabled);
   const [giftVoucherMonths, setGiftVoucherMonths] = useState(
     String(settings.giftVoucherExpiryMonths),
@@ -321,6 +322,19 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           min={0}
           max={23}
           defaultValue={settings.reminderHourLocal}
+        />
+      </Group>
+
+      <Group
+        title="Llista d'espera"
+        desc="Què pot fer un client quan la sessió que vol està plena."
+      >
+        <Toggle
+          name="waitlistEnabled"
+          title="Permetre apuntar-se a la llista d'espera"
+          desc="Quan una sessió de grup està completa, el client pot apuntar-se a la cua i, si algú cancel·la, la plaça li passa automàticament. Si ho desactives no s'hi podrà apuntar ningú més, però els qui ja hi són seguiran entrant quan s'alliberi una plaça: se'ls va dir que se'ls avisaria."
+          checked={waitlist}
+          onChange={setWaitlist}
         />
       </Group>
 

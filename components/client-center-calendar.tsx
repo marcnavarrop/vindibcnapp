@@ -26,6 +26,11 @@ import {
   type SeriesSeed,
   type SeriesReviewState,
 } from "@/components/forms/series-wizard";
+import {
+  joinWaitlistAction,
+  leaveWaitlistAction,
+  type WaitlistState,
+} from "@/app/(client)/client/reservas/waitlist-actions";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
 const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
@@ -122,6 +127,12 @@ type CellItem =
       trainerId: string | null;
       count: number;
       joinable: boolean;
+      /**
+       * Plena, però el client s'hi podria apuntar a la cua: té bo del servei,
+       * és al futur i no té res més a aquella hora. Que la cua estigui oberta
+       * ho decideix el centre i es mira a part.
+       */
+      waitlistable: boolean;
       slot: Date;
       /** Qui ja s'hi ha apuntat, pel nom de pila. Només per al detall. */
       mates: string[];
@@ -143,10 +154,16 @@ export function ClientCenterCalendar({
   palette,
   onSeriesReady,
   onDialogOpen,
+  waitlistEnabled = false,
+  waitlist = [],
 }: {
   data: ClientCenterData;
   createAction: CreateAction;
   cancelAction: CancelAction;
+  /** El centre accepta inscripcions noves a la cua. */
+  waitlistEnabled?: boolean;
+  /** Les esperes VIVES del client, per no oferir-li apuntar-s'hi dos cops. */
+  waitlist?: { id: string; trainerId: string | null; desiredAt: string }[];
   /**
    * Si hi és, els diàlegs ofereixen també repetir la sessió en bucle i, un cop
    * calculada, entreguen aquí el resultat perquè algú el pinti. Opcional a
@@ -188,6 +205,24 @@ export function ClientCenterCalendar({
     mates?: string[];
   } | null>(null);
   const [own, setOwn] = useState<CellItem & { kind: "own" } | null>(null);
+  const [wait, setWait] = useState<{
+    trainerId: string;
+    slot: Date;
+    /** Si ja hi és, l'id de l'entrada, per poder-se donar de baixa. */
+    entryId: string | null;
+  } | null>(null);
+
+  // Les esperes vives, per franja. Es compara per INSTANT: la cua desa data i
+  // hora del centre i el calendari treballa amb instants; casar-ho per cadena
+  // seria tornar a ensopegar amb la mateixa pedra de sempre.
+  const waitingIndex = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const w of waitlist)
+      m.set(`${w.trainerId}|${new Date(w.desiredAt).getTime()}`, w.id);
+    return m;
+  }, [waitlist]);
+  const waitingAt = (trainerId: string | null, slot: Date) =>
+    waitingIndex.get(`${trainerId}|${slot.getTime()}`) ?? null;
 
   // Obrir qualsevol diàleg tanca el que hi hagi obert a fora (el panell de
   // revisió). Una intenció a la pantalla, i sempre la que s'acaba de clicar.
@@ -198,6 +233,10 @@ export function ClientCenterCalendar({
   const openOwn = (o: CellItem & { kind: "own" }) => {
     onDialogOpen?.();
     setOwn(o);
+  };
+  const openWait = (w: NonNullable<typeof wait>) => {
+    onDialogOpen?.();
+    setWait(w);
   };
 
   // Vista por defecto según el ancho de pantalla (móvil = diaria).
@@ -321,13 +360,16 @@ export function ClientCenterCalendar({
       if (groupHere.length > 0) {
         const count = groupHere.length;
         const hasFree = count < GROUP_CAPACITY;
-        const joinable =
-          hasFree && inFuture && inHours && canBook("grupo_reducido") && !clientAlreadyBookedThisHour;
+        const pot =
+          inFuture && inHours && canBook("grupo_reducido") && !clientAlreadyBookedThisHour;
         items.push({
           kind: "group",
           trainerId: t.id,
           count,
-          joinable,
+          joinable: hasFree && pot,
+          // Les mateixes condicions, però amb la sessió plena: si podries
+          // reservar-la si hi hagués lloc, també pots fer cua.
+          waitlistable: !hasFree && pot,
           mates: groupMates(),
           slot: new Date(groupHere[0].scheduledAt),
         });
@@ -602,11 +644,15 @@ export function ClientCenterCalendar({
                         if (it.kind === "group") {
                           const status = getOccupancyStatus(it.count);
                           const oc = OCCUPANCY_COLORS[status];
+                          // Plena però amb cua oberta: la fitxa deixa de ser un
+                          // carreró sense sortida i obre el diàleg d'espera.
+                          const canWait = waitlistEnabled && it.waitlistable;
+                          const waiting = waitingAt(it.trainerId, it.slot);
                           return (
                             <button
                               key={`grp-${idx}`}
                               type="button"
-                              disabled={!it.joinable}
+                              disabled={!it.joinable && !canWait}
                               onClick={
                                 it.joinable
                                   ? () =>
@@ -616,7 +662,14 @@ export function ClientCenterCalendar({
                                         slot: it.slot,
                                         mates: it.mates,
                                       })
-                                  : undefined
+                                  : canWait
+                                    ? () =>
+                                        openWait({
+                                          trainerId: it.trainerId!,
+                                          slot: it.slot,
+                                          entryId: waiting,
+                                        })
+                                    : undefined
                               }
                               style={{
                                 backgroundColor: oc.bg,
@@ -624,7 +677,7 @@ export function ClientCenterCalendar({
                               }}
                               className={clsx(
                                 "block w-full rounded-md px-1.5 py-1 text-left text-[11px] font-bold leading-tight",
-                                it.joinable
+                                it.joinable || canWait
                                   ? "cursor-pointer hover:brightness-95"
                                   : "cursor-not-allowed opacity-80",
                               )}
@@ -636,11 +689,15 @@ export function ClientCenterCalendar({
                                 className="block font-normal"
                                 style={{ color: oc.text }}
                               >
-                                {status === "full"
-                                  ? "Complet"
-                                  : status === "almost_full"
-                                    ? "Gairebé ple"
-                                    : "Plaça lliure"}
+                                {waiting
+                                  ? "Ets a la llista"
+                                  : status === "full"
+                                    ? canWait
+                                      ? "Complet · fer cua"
+                                      : "Complet"
+                                    : status === "almost_full"
+                                      ? "Gairebé ple"
+                                      : "Plaça lliure"}
                               </span>
                             </button>
                           );
@@ -706,6 +763,7 @@ export function ClientCenterCalendar({
             serviceType: book.service,
           }}
           remainingSessions={data.bonoSessions[book.service]}
+          waitlistEnabled={waitlistEnabled}
           onSeriesReady={
             onSeriesReady
               ? (review) => {
@@ -744,6 +802,7 @@ export function ClientCenterCalendar({
               : undefined
           }
           remainingSessions={data.bonoSessions[own.service]}
+          waitlistEnabled={waitlistEnabled}
           onSeriesReady={
             onSeriesReady
               ? (review) => {
@@ -755,7 +814,165 @@ export function ClientCenterCalendar({
           onClose={() => setOwn(null)}
         />
       )}
+
+      {wait && (
+        <WaitlistModal
+          trainerName={trainerName(wait.trainerId)}
+          slot={wait.slot}
+          trainerId={wait.trainerId}
+          entryId={wait.entryId}
+          onClose={() => setWait(null)}
+          onDone={() => {
+            setWait(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * Sessió de grup completa: apuntar-se a la cua o donar-se de baixa.
+ *
+ * Fins ara una sessió plena era un carreró sense sortida —deia "Complet" i
+ * fins aquí—, i la cua només existia dins de l'assistent de sèries. És la
+ * mateixa taula i la mateixa promoció: aquesta entrada simplement no té sèrie.
+ */
+function WaitlistModal({
+  trainerName: trainerNameFull,
+  slot,
+  trainerId,
+  entryId,
+  onClose,
+  onDone,
+}: {
+  trainerName: string;
+  slot: Date;
+  trainerId: string;
+  /** Ja hi és a la cua? Llavors el que s'ofereix és la baixa. */
+  entryId: string | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [joinState, join] = useActionState(joinWaitlistAction, {} as WaitlistState);
+  const [leaveState, leave] = useActionState(leaveWaitlistAction, {} as WaitlistState);
+
+  const when = new Intl.DateTimeFormat("ca-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(slot);
+
+  if (joinState.ok)
+    return (
+      <Overlay onClose={onDone}>
+        <div className="flex flex-col items-center gap-3 py-2 text-center">
+          <AnimatedFeedback type="success" />
+          <h2 className="text-xl font-bold text-brand-dark">
+            T&apos;hem apuntat a la llista d&apos;espera
+          </h2>
+          <p className="text-sm text-brand-muted">
+            Et notificarem si s&apos;allibera una plaça. Si arriba, la reserva es
+            fa sola i et descomptem la sessió del bo.
+          </p>
+          <p className="text-sm font-bold text-brand-dark capitalize">{when}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onDone}
+          className="mt-5 w-full rounded-lg bg-brand-purple px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light"
+        >
+          Tancar
+        </button>
+      </Overlay>
+    );
+
+  if (leaveState.ok)
+    return (
+      <Overlay onClose={onDone}>
+        <div className="flex flex-col items-center gap-3 py-2 text-center">
+          <AnimatedFeedback type="cancel" />
+          <h2 className="text-xl font-bold text-brand-dark">
+            Ja no ets a la llista
+          </h2>
+          <p className="text-sm text-brand-muted">
+            No t&apos;avisarem si s&apos;allibera una plaça d&apos;aquesta sessió.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onDone}
+          className="mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20"
+        >
+          Tancar
+        </button>
+      </Overlay>
+    );
+
+  return (
+    <Overlay onClose={onClose}>
+      <h2 className="text-lg font-bold text-brand-dark">
+        {entryId ? "Ets a la llista d'espera" : "Sessió completa"}
+      </h2>
+      <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
+      <dl className="mt-4 flex flex-col gap-2 text-sm">
+        <Field label="Servei" value={SERVICE_LABELS.grupo_reducido} />
+        <Field label="Professional" value={firstName(trainerNameFull)} />
+      </dl>
+
+      {entryId ? (
+        <>
+          <p className="mt-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-charcoal">
+            Si algú cancel·la, la plaça passa a ser teva automàticament i
+            t&apos;avisem. No cal que estiguis pendent.
+          </p>
+          <form action={leave} className="mt-5">
+            <input type="hidden" name="entryId" value={entryId} />
+            {leaveState.error && (
+              <p className="mb-3 text-sm text-error">{leaveState.error}</p>
+            )}
+            <PendingSubmit
+              pendingLabel="Donant de baixa…"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 disabled:opacity-60"
+            >
+              Donar-me de baixa de la llista
+            </PendingSubmit>
+          </form>
+        </>
+      ) : (
+        <>
+          <p className="mt-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-charcoal">
+            Aquesta sessió no té places lliures. Pots apuntar-te a la llista
+            d&apos;espera: si algú cancel·la, la plaça és teva i t&apos;avisem.
+          </p>
+          <form action={join} className="mt-5">
+            <input type="hidden" name="trainerId" value={trainerId} />
+            <input type="hidden" name="serviceType" value="grupo_reducido" />
+            <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
+            {joinState.error && (
+              <p className="mb-3 text-sm text-error">{joinState.error}</p>
+            )}
+            <PendingSubmit
+              pendingLabel="Apuntant-te…"
+              className="w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
+            >
+              Apuntar-me a la llista d&apos;espera
+            </PendingSubmit>
+          </form>
+        </>
+      )}
+
+      <button
+        type="button"
+        onClick={onClose}
+        className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+      >
+        Tancar
+      </button>
+    </Overlay>
   );
 }
 
@@ -786,6 +1003,7 @@ function CreateModal({
   mates = [],
   seed,
   remainingSessions,
+  waitlistEnabled,
   onSeriesReady,
   action,
   onClose,
@@ -800,6 +1018,7 @@ function CreateModal({
   /** La franja, per si es vol repetir en bucle. */
   seed?: SeriesSeed;
   remainingSessions?: number;
+  waitlistEnabled?: boolean;
   onSeriesReady?: (review: SeriesReviewState) => void;
   action: CreateAction;
   onClose: () => void;
@@ -885,6 +1104,7 @@ function CreateModal({
         <RecurrenceFields
           seed={seed}
           remainingSessions={remainingSessions}
+          waitlistEnabled={waitlistEnabled}
           onReady={onSeriesReady}
           secondaryAction={
             <button
@@ -938,6 +1158,7 @@ function OwnModal({
   cancelAction,
   seed,
   remainingSessions,
+  waitlistEnabled,
   onSeriesReady,
   onClose,
 }: {
@@ -952,6 +1173,7 @@ function OwnModal({
   /** Aquesta sessió, com a origen d'una sèrie. */
   seed?: SeriesSeed;
   remainingSessions?: number;
+  waitlistEnabled?: boolean;
   onSeriesReady?: (review: SeriesReviewState) => void;
   onClose: () => void;
 }) {
@@ -1028,6 +1250,7 @@ function OwnModal({
         <RecurrenceFields
           seed={seed}
           remainingSessions={remainingSessions}
+          waitlistEnabled={waitlistEnabled}
           onReady={onSeriesReady}
           secondaryAction={
             <button

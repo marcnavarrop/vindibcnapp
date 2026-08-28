@@ -71,6 +71,8 @@ export async function updateCenterSettingsAction(
   if (giftVouchersEnabled && giftVoucherExpiryMonths === null)
     return { error: "La caducitat dels vals de regal ha de ser entre 1 i 120 mesos." };
 
+  const waitlistEnabled = fd.get("waitlistEnabled") === "true";
+
   const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);
   if (reminderHourLocal === null)
     return { error: "L'hora dels recordatoris ha de ser entre 0 i 23." };
@@ -91,6 +93,7 @@ export async function updateCenterSettingsAction(
       pendingPaymentCancelHours: pendingPaymentCancelHours ?? undefined,
       giftVouchersEnabled,
       giftVoucherExpiryMonths: giftVoucherExpiryMonths ?? undefined,
+      waitlistEnabled,
       reminderHourLocal,
       modules: {
         comunitat: fd.get("moduleComunitat") === "true",

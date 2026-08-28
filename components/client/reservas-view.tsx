@@ -43,6 +43,8 @@ export function ClientReservasView({
   openingHour,
   closingHour,
   series,
+  waitlistEnabled,
+  waitlist,
 }: {
   data: ClientCenterData;
   palette: ColorPalette;
@@ -52,6 +54,10 @@ export function ClientReservasView({
   openingHour: number;
   closingHour: number;
   series: SeriesSummary[];
+  /** El centre accepta inscripcions noves a la llista d'espera. */
+  waitlistEnabled: boolean;
+  /** Les esperes vives del client, per no oferir-li apuntar-s'hi dos cops. */
+  waitlist: { id: string; trainerId: string | null; desiredAt: string }[];
 }) {
   const router = useRouter();
   // La sèrie ja calculada, esperant que la revisin. La configuració viu ara
@@ -100,6 +106,8 @@ export function ClientReservasView({
             closingHour={closingHour}
             onSeriesReady={setReview}
             onDialogOpen={() => setReview(null)}
+            waitlistEnabled={waitlistEnabled}
+            waitlist={waitlist}
           />
         </div>
 

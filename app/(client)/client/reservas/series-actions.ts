@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   resolveSeries,
   commitSeries,
@@ -41,7 +42,14 @@ export type CalculateState = {
   skippedForBono?: number;
 };
 
-function toRequest(profileId: string, input: SeriesFormInput): SeriesRequest {
+async function toRequest(
+  profileId: string,
+  input: SeriesFormInput,
+): Promise<SeriesRequest> {
+  // Amb la cua tancada pel centre, la sèrie no en pot crear cap entrada per
+  // molt que ho demani el formulari. Es talla aquí i no només a la pantalla:
+  // amagar una casella no impedeix que algú enviï el camp a mà.
+  const { waitlistEnabled } = await getCenterSettings();
   return {
     profileId,
     firstAt: input.firstAt,
@@ -52,7 +60,7 @@ function toRequest(profileId: string, input: SeriesFormInput): SeriesRequest {
     occurrenceCount: input.occurrenceCount,
     bookOnlyAvailable: input.bookOnlyAvailable,
     allowAlternatives: input.allowAlternatives,
-    allowWaitlist: input.allowWaitlist,
+    allowWaitlist: waitlistEnabled && input.allowWaitlist,
   };
 }
 
@@ -67,7 +75,7 @@ export async function calculateSeriesAction(
   if (!input.endDate && !input.occurrenceCount)
     return { error: "Digues fins quan es repeteix o quantes sessions vols." };
 
-  const plan = await resolveSeries(toRequest(viewer.id, input));
+  const plan = await resolveSeries(await toRequest(viewer.id, input));
   if (plan.error) return { error: plan.error };
   return {
     occurrences: plan.occurrences,
@@ -95,7 +103,7 @@ export async function confirmSeriesAction(
   if (decided.length === 0) return { error: "No hi ha res a confirmar." };
 
   try {
-    const res = await commitSeries(toRequest(viewer.id, input), decided);
+    const res = await commitSeries(await toRequest(viewer.id, input), decided);
     revalidatePath("/client/reservas");
     revalidatePath("/client");
     return {

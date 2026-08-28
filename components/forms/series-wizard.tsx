@@ -68,12 +68,18 @@ const FREQUENCIES: BookingFrequency[] = ["weekly", "biweekly", "monthly"];
 export function RecurrenceFields({
   seed,
   remainingSessions,
+  waitlistEnabled = false,
   onReady,
   secondaryAction,
 }: {
   seed: SeriesSeed;
   /** Sessions del bo d'aquest servei, per saber si arribaran. */
   remainingSessions?: number;
+  /**
+   * El centre accepta inscripcions noves a la cua. Si no, l'opció ni surt;
+   * el servidor també la ignora, que és el que de debò la tanca.
+   */
+  waitlistEnabled?: boolean;
   onReady: (review: SeriesReviewState) => void;
   /** El botó de tancar del diàleg amfitrió, al costat del primari. */
   secondaryAction?: React.ReactNode;
@@ -213,13 +219,15 @@ export function RecurrenceFields({
               title="Proposar alternatives automàtiques"
               desc="Et suggerim la millor alternativa possible i tu decideixes si l'acceptes."
             />
-            <Check
-              checked={waitlist}
-              disabled={onlyAvailable}
-              onChange={setWaitlist}
-              title="Afegir a la llista d'espera si no hi ha plaça"
-              desc="T'apuntem a la cua i, si algú cancel·la, la plaça és teva."
-            />
+            {waitlistEnabled && (
+              <Check
+                checked={waitlist}
+                disabled={onlyAvailable}
+                onChange={setWaitlist}
+                title="Afegir a la llista d'espera si no hi ha plaça"
+                desc="T'apuntem a la cua i, si algú cancel·la, la plaça és teva."
+              />
+            )}
           </div>
         )}
       </div>

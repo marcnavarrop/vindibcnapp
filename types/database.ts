@@ -1118,6 +1118,7 @@ export interface Database {
           module_documents_enabled: boolean;
           gift_vouchers_enabled: boolean;
           gift_voucher_expiry_months: number;
+          waitlist_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -1141,6 +1142,7 @@ export interface Database {
           module_documents_enabled?: boolean;
           gift_vouchers_enabled?: boolean;
           gift_voucher_expiry_months?: number;
+          waitlist_enabled?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -1161,6 +1163,9 @@ export interface Database {
           module_comunitat_enabled?: boolean;
           module_sessions_prova_enabled?: boolean;
           module_documents_enabled?: boolean;
+          gift_vouchers_enabled?: boolean;
+          gift_voucher_expiry_months?: number;
+          waitlist_enabled?: boolean;
           updated_at?: string;
         };
         Relationships: [];

@@ -5,6 +5,7 @@ import { getStore, saveStore } from "@/lib/mock/store";
 import { slotHasRoom } from "@/lib/data/reservations";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { notify, getProfileContact } from "@/lib/notifications";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { SERVICE_LABELS, formatDayHeading, formatTime } from "@/lib/labels";
 import { centerDateStr, centerLocalToInstant } from "@/lib/center-time";
 import type { ServiceType, WaitlistStatus } from "@/types/database";
@@ -87,6 +88,159 @@ export async function addToWaitlist(input: WaitlistEntryInput): Promise<string> 
     .single();
   if (error || !data) throw new Error("No s'ha pogut apuntar a la llista d'espera.");
   return data.id;
+}
+
+/**
+ * El client s'apunta a la cua d'una franja plena, sense passar per cap sèrie.
+ *
+ * Totes les condicions es comproven AQUÍ i no a la pantalla: amagar el botó no
+ * és protegir res, i aquesta funció és l'única porta d'entrada per a una espera
+ * solta. L'ordre és el mateix que faria una persona raonable:
+ *
+ *   1. El centre ha de tenir la cua oberta.
+ *   2. La sessió ha de ser al futur (apuntar-se a ahir no vol dir res).
+ *   3. Has de tenir un bo que et deixi venir: si s'alliberés la plaça i no la
+ *      poguessis fer servir, apuntar-t'hi seria enganyar-te.
+ *   4. La franja ha d'estar realment plena; si hi ha lloc, el que toca és
+ *      reservar-la i no fer cua.
+ *   5. Ni dues vegades a la mateixa cua ni tenir-hi ja una reserva.
+ */
+export async function joinWaitlist(input: {
+  profileId: string;
+  trainerId: string;
+  serviceType: ServiceType;
+  scheduledAt: string;
+}): Promise<string> {
+  const { waitlistEnabled } = await getCenterSettings();
+  if (!waitlistEnabled)
+    throw new Error("La llista d'espera no està disponible ara mateix.");
+
+  const when = new Date(input.scheduledAt);
+  if (Number.isNaN(when.getTime())) throw new Error("Data no vàlida.");
+  if (when.getTime() <= Date.now())
+    throw new Error("Aquesta sessió ja ha passat.");
+
+  const { date, time } = slotKeyOf(input.scheduledAt);
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.profile_id === input.profileId);
+    if (!client) throw new Error("No tens fitxa de client.");
+
+    const bono = store.bonos.find(
+      (b) =>
+        b.client_id === client.id &&
+        b.service_type === input.serviceType &&
+        (b.status === "active" || b.status === "pending_payment") &&
+        b.remaining_sessions > 0 &&
+        !isBonoExpired(b),
+    );
+    if (!bono)
+      throw new Error("Necessites un bo actiu d'aquest servei amb sessions.");
+
+    const here = store.reservations.filter(
+      (r) =>
+        r.trainer_id === input.trainerId &&
+        new Date(r.scheduled_at).getTime() === when.getTime() &&
+        r.status === "booked",
+    );
+    if (slotHasRoom(here, input.serviceType))
+      throw new Error("Aquesta sessió encara té plaça: pots reservar-la.");
+    if (here.some((r) => r.client_id === client.id))
+      throw new Error("Ja tens una reserva en aquesta sessió.");
+    if (
+      store.reservations.some(
+        (r) =>
+          r.client_id === client.id &&
+          new Date(r.scheduled_at).getTime() === when.getTime() &&
+          r.status === "booked",
+      )
+    )
+      throw new Error("Ja tens una altra sessió a aquesta hora.");
+    if (
+      store.waitlist_entries.some(
+        (w) =>
+          w.client_id === client.id &&
+          w.status === "waiting" &&
+          w.desired_date === date &&
+          w.desired_time === time &&
+          w.service_type === input.serviceType,
+      )
+    )
+      throw new Error("Ja ets a la llista d'espera d'aquesta sessió.");
+
+    return addToWaitlist({
+      clientId: client.id,
+      bonoId: bono.id,
+      serviceType: input.serviceType,
+      trainerId: input.trainerId,
+      desiredDate: date,
+      desiredTime: time,
+    });
+  }
+
+  const admin = createAdminClient();
+  const { data: client } = await admin
+    .from("clients")
+    .select("id")
+    .eq("profile_id", input.profileId)
+    .maybeSingle();
+  if (!client) throw new Error("No tens fitxa de client.");
+
+  const { data: bonos } = await admin
+    .from("bonos")
+    .select("id, remaining_sessions, status, expires_at")
+    .eq("client_id", client.id)
+    .eq("service_type", input.serviceType)
+    .in("status", ["active", "pending_payment"])
+    .gt("remaining_sessions", 0)
+    .order("purchased_at", { ascending: true });
+  const bono = (bonos ?? []).find(
+    (b) => !isBonoExpired({ status: b.status, expires_at: b.expires_at }),
+  );
+  if (!bono)
+    throw new Error("Necessites un bo actiu d'aquest servei amb sessions.");
+
+  const { data: here } = await admin
+    .from("reservations")
+    .select("service_type, client_id")
+    .eq("trainer_id", input.trainerId)
+    .eq("scheduled_at", input.scheduledAt)
+    .eq("status", "booked");
+  const occupied = (here ?? []) as { service_type: ServiceType; client_id: string }[];
+  if (slotHasRoom(occupied, input.serviceType))
+    throw new Error("Aquesta sessió encara té plaça: pots reservar-la.");
+  if (occupied.some((r) => r.client_id === client.id))
+    throw new Error("Ja tens una reserva en aquesta sessió.");
+
+  const { data: clash } = await admin
+    .from("reservations")
+    .select("id")
+    .eq("client_id", client.id)
+    .eq("scheduled_at", input.scheduledAt)
+    .eq("status", "booked")
+    .maybeSingle();
+  if (clash) throw new Error("Ja tens una altra sessió a aquesta hora.");
+
+  const { data: already } = await admin
+    .from("waitlist_entries")
+    .select("id")
+    .eq("client_id", client.id)
+    .eq("status", "waiting")
+    .eq("desired_date", date)
+    .eq("desired_time", time)
+    .eq("service_type", input.serviceType)
+    .maybeSingle();
+  if (already) throw new Error("Ja ets a la llista d'espera d'aquesta sessió.");
+
+  return addToWaitlist({
+    clientId: client.id,
+    bonoId: bono.id,
+    serviceType: input.serviceType,
+    trainerId: input.trainerId,
+    desiredDate: date,
+    desiredTime: time,
+  });
 }
 
 export type PromotionResult =
