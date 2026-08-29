@@ -350,7 +350,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
           hola,
           `Et queda només 1 sessió al teu bo de ${d.service ?? ""}.`,
         ],
-        cta: { label: "Renovar el meu bo", url: appLink("/client/bonos/comprar") },
+        cta: { label: "Renovar el meu bo", url: appLink("/client/bonos") },
         outro: ["Renova'l quan vulguis per no quedar-te sense sessions."],
         footer: "client",
       };
@@ -388,7 +388,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
           ["Servei", d.service],
           ["Sessions cancel·lades", d.cancelled],
         ]),
-        cta: { label: "Tornar a comprar el bo", url: appLink("/client/bonos/comprar") },
+        cta: { label: "Tornar a comprar el bo", url: appLink("/client/bonos") },
         outro: [
           "Si ja l'havies pagat o creus que hi ha hagut un error, parla amb el centre i ho arreglem de seguida: no cal que tornis a pagar res.",
         ],

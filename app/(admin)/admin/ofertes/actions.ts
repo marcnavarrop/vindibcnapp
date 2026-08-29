@@ -113,7 +113,7 @@ export async function createOfertaAction(
 
     revalidatePath("/admin/ofertes");
     revalidatePath("/admin/serveis");
-    revalidatePath("/client/bonos/comprar");
+    revalidatePath("/client/bonos");
 
     if (overlap) redirect("/admin/ofertes?overlap=1");
     redirect("/admin/ofertes");
@@ -159,7 +159,7 @@ export async function updateOfertaAction(
 
     revalidatePath("/admin/ofertes");
     revalidatePath("/admin/serveis");
-    revalidatePath("/client/bonos/comprar");
+    revalidatePath("/client/bonos");
 
     if (overlap) redirect("/admin/ofertes?overlap=1");
     redirect("/admin/ofertes");
@@ -181,7 +181,7 @@ export async function toggleOfertaAction(fd: FormData): Promise<void> {
   }
   revalidatePath("/admin/ofertes");
   revalidatePath("/admin/serveis");
-  revalidatePath("/client/bonos/comprar");
+  revalidatePath("/client/bonos");
 }
 
 export async function deleteOfertaAction(fd: FormData): Promise<void> {
@@ -194,5 +194,5 @@ export async function deleteOfertaAction(fd: FormData): Promise<void> {
   }
   revalidatePath("/admin/ofertes");
   revalidatePath("/admin/serveis");
-  revalidatePath("/client/bonos/comprar");
+  revalidatePath("/client/bonos");
 }

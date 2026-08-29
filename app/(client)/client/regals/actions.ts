@@ -90,7 +90,7 @@ export async function buyGiftVoucherAction(
   }
 
   revalidatePath("/client/regals");
-  revalidatePath("/client/bonos");
+  revalidatePath("/client/bonos/meus");
   return {
     ok: true,
     voucher: {

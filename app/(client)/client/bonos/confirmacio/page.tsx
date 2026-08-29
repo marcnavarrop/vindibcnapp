@@ -11,8 +11,8 @@ import { SERVICE_LABELS, formatEur } from "@/lib/labels";
 export const dynamic = "force-dynamic";
 
 const BONO_TABS = [
-  { href: "/client/bonos/comprar", label: "Comprar bo nou", accent: true },
-  { href: "/client/bonos", label: "Els meus bons" },
+  { href: "/client/bonos", label: "Comprar bo nou", accent: true },
+  { href: "/client/bonos/meus", label: "Els meus bons" },
 ];
 
 /**
@@ -28,7 +28,7 @@ export default async function BonoCheckoutConfirmationPage({
   searchParams: Promise<{ session_id?: string }>;
 }) {
   const { session_id: sessionId } = await searchParams;
-  if (!sessionId) redirect("/client/bonos");
+  if (!sessionId) redirect("/client/bonos/meus");
 
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
@@ -45,7 +45,7 @@ export default async function BonoCheckoutConfirmationPage({
 
       {!mine ? (
         <AwaitingPayment
-          fallbackHref="/client/bonos"
+          fallbackHref="/client/bonos/meus"
           fallbackLabel="Veure els meus bons"
         />
       ) : (
@@ -74,7 +74,7 @@ export default async function BonoCheckoutConfirmationPage({
               Reservar una sessió
             </Link>
             <Link
-              href="/client/bonos"
+              href="/client/bonos/meus"
               className="inline-flex rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-dark hover:border-brand-purple hover:text-brand-purple"
             >
               Veure els meus bons

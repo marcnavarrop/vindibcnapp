@@ -185,7 +185,7 @@ export function KpiRow({ kpis }: { kpis: ClientKpis }) {
 export function QuickActions() {
   const actions: { icon: IconName; label: string; href: string }[] = [
     { icon: "calendarPlus", label: "Reservar sessió", href: "/client/reservas" },
-    { icon: "ticket", label: "Comprar bo", href: "/client/bonos/comprar" },
+    { icon: "ticket", label: "Comprar bo", href: "/client/bonos" },
     { icon: "dumbbell", label: "Els meus entrenaments", href: "/client/exercicis" },
   ];
 
@@ -223,7 +223,7 @@ export function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
           Bons actius
         </h2>
         <Link
-          href="/client/bonos"
+          href="/client/bonos/meus"
           className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
         >
           Veure tots els bons →
@@ -234,7 +234,7 @@ export function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
         <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
           Encara no tens cap bo actiu.{" "}
           <Link
-            href="/client/bonos/comprar"
+            href="/client/bonos"
             className="font-bold text-brand-purple hover:text-brand-orange"
           >
             Compra&apos;n un

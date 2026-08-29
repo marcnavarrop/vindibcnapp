@@ -74,7 +74,7 @@ export async function updateColorsAction(
     "/admin/entrenadors",
     "/trainer/reservas",
     "/client/reservas",
-    "/client/bonos/comprar",
+    "/client/bonos",
   ])
     revalidatePath(path);
 

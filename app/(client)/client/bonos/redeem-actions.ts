@@ -56,7 +56,7 @@ export async function redeemGiftVoucherAction(
       });
   }
 
-  revalidatePath("/client/bonos");
+  revalidatePath("/client/bonos/meus");
   revalidatePath("/client");
   return {
     ok: true,

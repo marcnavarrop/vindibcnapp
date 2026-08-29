@@ -449,7 +449,7 @@ export function VoucherReady({
       </section>
 
       <Link
-        href="/client/bonos"
+        href="/client/bonos/meus"
         className="self-start text-sm font-bold text-brand-purple hover:text-brand-orange"
       >
         ← Tornar als meus bons

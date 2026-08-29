@@ -9,7 +9,7 @@ import {
   startBonoCheckoutAction,
   type FormState,
   type CheckoutState,
-} from "@/app/(client)/client/bonos/comprar/actions";
+} from "@/app/(client)/client/bonos/buy-actions";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
 import type { PendingReward } from "@/lib/data/referral";
@@ -86,7 +86,7 @@ export function BuyBonoForm({
           per reservar mentre estigui pendent de pagament.
         </p>
         <Link
-          href="/client/bonos"
+          href="/client/bonos/meus"
           className="mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
         >
           Veure els meus bonos

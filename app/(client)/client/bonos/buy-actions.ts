@@ -32,7 +32,7 @@ export async function createPendingBonoAction(
     };
   }
 
-  revalidatePath("/client/bonos");
+  revalidatePath("/client/bonos/meus");
   return { ok: true };
 }
 

@@ -145,7 +145,7 @@ export async function startBonoCheckout(input: {
       referralRewardId: quote.referralRewardId ?? "",
     },
     successPath: "/client/bonos/confirmacio",
-    cancelPath: "/client/bonos/comprar",
+    cancelPath: "/client/bonos",
     customerEmail: input.email,
     clientReferenceId: quote.clientId,
   });
