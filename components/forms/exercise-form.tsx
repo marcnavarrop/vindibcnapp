@@ -39,10 +39,13 @@ export function ExerciseForm({
   action,
   defaults,
   submitLabel,
+  cancelHref,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   defaults?: ExerciseDefaults;
   submitLabel: string;
+  /** On torna el "Cancel·lar": cada àrea a la seva biblioteca. */
+  cancelHref: string;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
   const [videoMode, setVideoMode] = useState<VideoMode>(initialMode(defaults));
@@ -159,7 +162,7 @@ export function ExerciseForm({
       <div className="flex items-center gap-3">
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
-          href="/admin/exercicis"
+          href={cancelHref}
           className="text-sm font-bold text-brand-muted hover:text-brand-purple"
         >
           Cancel·lar

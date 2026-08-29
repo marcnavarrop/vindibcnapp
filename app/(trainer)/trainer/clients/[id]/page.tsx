@@ -19,6 +19,7 @@ import {
   assignExerciseTrainerAction,
   removeExerciseTrainerAction,
 } from "@/app/(trainer)/trainer/clients/exercises-actions";
+import { markTrainerBonoPaidAction } from "@/app/(trainer)/trainer/bonos/actions";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -103,9 +104,33 @@ export default async function TrainerClientDetailPage({
                   {b.remainingSessions} / {b.totalSessions} sessions
                 </span>
                 <span>{formatEur(b.price)}</span>
-                <Badge tone={b.status === "active" ? "success" : "neutral"}>
+                <Badge
+                  tone={
+                    b.status === "active"
+                      ? "success"
+                      : b.status === "pending_payment"
+                        ? "warn"
+                        : "neutral"
+                  }
+                >
                   {BONO_STATUS_LABELS[b.status]}
                 </Badge>
+                {/*
+                  Només per als clients propis: `canManage` és la mateixa
+                  condició que deixa afegir-los un bo, i la RLS de la 0056 la
+                  torna a comprovar a la base.
+                */}
+                {canManage && b.status === "pending_payment" && (
+                  <form action={markTrainerBonoPaidAction} className="ml-auto">
+                    <input type="hidden" name="bonoId" value={b.id} />
+                    <button
+                      type="submit"
+                      className="rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light"
+                    >
+                      Marcar com pagat
+                    </button>
+                  </form>
+                )}
               </Row>
             ))
           )}

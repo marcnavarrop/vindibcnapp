@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getViewer } from "@/lib/auth";
 import {
   createExercise,
   updateExercise,
@@ -16,6 +17,29 @@ import {
 import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ExerciseCategory } from "@/types/database";
+
+/**
+ * Accions de la biblioteca d'exercicis, compartides per l'admin i el
+ * professional.
+ *
+ * `basePath` ve lligat des de cada pàgina ("/admin/exercicis" o
+ * "/trainer/exercicis") perquè la redirecció i la revalidació acabin a l'àrea
+ * de qui les fa servir. La resta és idèntica: la RLS `exercises_write` (0003)
+ * ja donava permís als dos rols des del principi; només no s'havia ensenyat mai
+ * a la interfície del professional.
+ */
+
+/**
+ * Qui pot tocar la biblioteca. La RLS ja ho impedeix a un client, però una
+ * acció de servidor exposada ha de dir que no ella mateixa i amb un missatge,
+ * no deixar que rebori una política tres capes més avall.
+ */
+async function assertCanManage(): Promise<string | null> {
+  const viewer = await getViewer();
+  if (!viewer || (viewer.role !== "admin" && viewer.role !== "trainer"))
+    return "No autoritzat.";
+  return null;
+}
 
 async function parse(formData: FormData): Promise<{ input: ExerciseInput } | { error: string }> {
   const str = (k: string) => String(formData.get(k) ?? "").trim();
@@ -60,9 +84,13 @@ function validate(input: ExerciseInput): string | null {
 }
 
 export async function createExerciseAction(
+  basePath: string,
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const denied = await assertCanManage();
+  if (denied) return { error: denied };
+
   const parsed = await parse(formData);
   if ("error" in parsed) return { error: parsed.error };
   const { input } = parsed;
@@ -93,15 +121,19 @@ export async function createExerciseAction(
     }
   }
 
-  revalidatePath("/admin/exercicis");
-  redirect("/admin/exercicis");
+  revalidatePath(basePath);
+  redirect(basePath);
 }
 
 export async function updateExerciseAction(
+  basePath: string,
   id: string,
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const denied = await assertCanManage();
+  if (denied) return { error: denied };
+
   const parsed = await parse(formData);
   if ("error" in parsed) return { error: parsed.error };
   const { input } = parsed;
@@ -134,12 +166,13 @@ export async function updateExerciseAction(
     return { error: e instanceof Error ? e.message : "Error en desar." };
   }
 
-  revalidatePath("/admin/exercicis");
-  redirect("/admin/exercicis");
+  revalidatePath(basePath);
+  redirect(basePath);
 }
 
-export async function deleteExerciseAction(formData: FormData) {
+export async function deleteExerciseAction(basePath: string, formData: FormData) {
+  if (await assertCanManage()) return;
   const id = String(formData.get("id") ?? "");
   if (id) await deleteExercise(id);
-  revalidatePath("/admin/exercicis");
+  revalidatePath(basePath);
 }

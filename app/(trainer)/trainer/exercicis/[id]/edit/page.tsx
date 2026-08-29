@@ -6,9 +6,9 @@ import { updateExerciseAction } from "@/lib/actions/exercise-actions";
 
 export const dynamic = "force-dynamic";
 
-const BASE = "/admin/exercicis";
+const BASE = "/trainer/exercicis";
 
-export default async function EditExercisePage({
+export default async function EditTrainerExercisePage({
   params,
 }: {
   params: Promise<{ id: string }>;

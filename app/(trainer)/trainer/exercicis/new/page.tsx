@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ExerciseForm } from "@/components/forms/exercise-form";
 import { createExerciseAction } from "@/lib/actions/exercise-actions";
 
-const BASE = "/admin/exercicis";
+const BASE = "/trainer/exercicis";
 
-export default function NewExercisePage() {
+export default function NewTrainerExercisePage() {
   return (
     <main className="mx-auto max-w-5xl p-6">
       <Link

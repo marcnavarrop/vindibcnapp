@@ -519,6 +519,23 @@ export async function getBonoByStripeSession(sessionId: string): Promise<{
 }
 
 /**
+ * De quin client és un bo. Serveix per comprovar, abans de tocar-lo, que és
+ * d'algú de qui es tenen competències.
+ */
+export async function getBonoClientId(bonoId: string): Promise<string | null> {
+  if (USE_MOCK)
+    return getStore().bonos.find((b) => b.id === bonoId)?.client_id ?? null;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("bonos")
+    .select("client_id")
+    .eq("id", bonoId)
+    .maybeSingle();
+  return data?.client_id ?? null;
+}
+
+/**
  * Marca un bono pendiente como pagado: lo activa y registra el cobro en
  * efectivo (lo hace el admin cuando el cliente paga en el centro).
  */
