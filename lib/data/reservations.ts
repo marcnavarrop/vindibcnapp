@@ -14,7 +14,13 @@ import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
-import type { Database, ServiceType, ReservationStatus } from "@/types/database";
+import { getViewer } from "@/lib/auth";
+import type {
+  Database,
+  ServiceType,
+  ReservationStatus,
+  BonoStatus,
+} from "@/types/database";
 
 /** Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio. */
 async function assertWithinAvailability(
@@ -410,6 +416,95 @@ export type ReservationInput = {
 };
 
 /**
+ * Les places de grup que crea l'admin o el professional, una per data.
+ *
+ * Va per `book_group_slot` com la reserva del client: comptar i inserir des de
+ * l'aplicació és una cursa, i un grup no es pot protegir amb un índex únic.
+ *
+ * Dues coses que aquest camí ha de resoldre i el del client no:
+ *
+ * 1. LA FUNCIÓ NOMÉS LA POT CRIDAR EL SERVICE_ROLE, i aquest camí s'autoritzava
+ *    fins ara amb la RLS del client de sessió (`reservations_trainer_write`).
+ *    En passar per la clau de servei, aquella comprovació desapareix i s'ha de
+ *    tornar a fer aquí a mà: admin, o el professional assignat a aquest client.
+ *    És exactament la mateixa condició que la política, escrita en TypeScript.
+ *
+ * 2. Amb `repeatWeeks` hi ha diverses dates i la funció en reserva una cada
+ *    cop. Si la tercera setmana ja és plena, es desfan les dues primeres: fins
+ *    ara l'INSERT de N files era tot o res, i no té sentit que ara et quedin
+ *    dues setmanes soltes d'una petició de cinc.
+ *
+ * Torna les sessions que queden al bo.
+ */
+async function createGroupReservations(
+  bono: {
+    id: string;
+    client_id: string;
+    remaining_sessions: number;
+    status: BonoStatus;
+  },
+  trainerId: string | null,
+  dates: string[],
+): Promise<number> {
+  if (!trainerId)
+    throw new Error("Una sessió de grup necessita un professional.");
+
+  const viewer = await getViewer();
+  if (!viewer) throw new Error("No autoritzat.");
+  if (viewer.role !== "admin") {
+    if (viewer.role !== "trainer") throw new Error("No autoritzat.");
+    const admin = createAdminClient();
+    const { data: seu } = await admin
+      .from("clients")
+      .select("id")
+      .eq("id", bono.client_id)
+      .eq("assigned_trainer_id", viewer.id)
+      .maybeSingle();
+    if (!seu) throw new Error("Aquest client no és teu.");
+  }
+
+  const admin = createAdminClient();
+  const fetes: string[] = [];
+  let restant = bono.remaining_sessions;
+
+  for (const scheduledAt of dates) {
+    const { data: res, error } = await admin.rpc("book_group_slot", {
+      p_client_id: bono.client_id,
+      p_bono_id: bono.id,
+      p_expected_remaining: restant,
+      p_trainer_id: trainerId,
+      p_scheduled_at: scheduledAt,
+      p_capacity: GROUP_CAPACITY,
+    });
+
+    if (error || !res || !res.ok) {
+      // Desfem el que hagi entrat: la petició era d'N setmanes o cap.
+      if (fetes.length > 0)
+        await admin.from("reservations").delete().in("id", fetes);
+      await admin
+        .from("bonos")
+        .update({
+          remaining_sessions: bono.remaining_sessions,
+          status: bono.status,
+        })
+        .eq("id", bono.id);
+      if (error) throw new Error("No s'ha pogut crear la reserva.");
+      const motiu = res && !res.ok ? res.reason : null;
+      if (motiu === "taken")
+        throw new Error("Aquesta franja ja està ocupada.");
+      if (motiu === "no_sessions")
+        throw new Error("Aquest bo no té sessions disponibles.");
+      throw new Error("El grup d'aquesta franja ja està complet.");
+    }
+
+    fetes.push(res.id);
+    restant = res.remaining;
+  }
+
+  return restant;
+}
+
+/**
  * Crea una o més reserves a partir d'un bo, consumint una sessió per reserva.
  * Amb `repeatWeeks > 1` crea una reserva cada setmana a la mateixa hora.
  */
@@ -432,6 +527,20 @@ export async function createReservation(
         `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
       );
     for (const scheduled_at of dates) {
+      // L'aforament també es respecta en simulació: si no, un grup s'omplia
+      // sense límit en local i petava en real, que és la pitjor manera
+      // d'assabentar-se'n.
+      assertSlotFree(
+        store.reservations
+          .filter(
+            (r) =>
+              r.trainer_id === input.trainerId &&
+              r.scheduled_at === scheduled_at &&
+              r.status === "booked",
+          )
+          .map((r) => ({ service_type: r.service_type })),
+        bono.service_type,
+      );
       store.reservations.push({
         id: crypto.randomUUID(),
         client_id: bono.client_id,
@@ -482,33 +591,41 @@ export async function createReservation(
       `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
     );
 
-  const { error: rErr } = await supabase.from("reservations").insert(
-    dates.map((scheduled_at) => ({
-      client_id: bono.client_id,
-      bono_id: bono.id,
-      trainer_id: input.trainerId,
-      scheduled_at,
-      service_type: bono.service_type,
-      status: "booked" as const,
-    })),
-  );
-  if (rErr) throw rErr;
+  // L'aforament d'un grup no el pot garantir cap índex únic (quatre files són
+  // quatre files legítimes), així que aquest cas passa per la funció de
+  // Postgres que serialitza per franja, igual que la reserva del client.
+  const remaining = bono.service_type === "grupo_reducido"
+    ? await createGroupReservations(bono, input.trainerId, dates)
+    : bono.remaining_sessions - weeks;
 
-  const remaining = bono.remaining_sessions - weeks;
-  const { error: uErr } = await supabase
-    .from("bonos")
-    .update({
-      remaining_sessions: remaining,
-      // Només el bo ja pagat passa a "completat" (veure la nota del camí mock).
-      ...(remaining === 0 && bono.status === "active"
-        ? { status: "completed" as const }
-        : {}),
-      ...(bono.first_reservation_at
-        ? {}
-        : { first_reservation_at: new Date().toISOString() }),
-    })
-    .eq("id", bono.id);
-  if (uErr) throw uErr;
+  if (bono.service_type !== "grupo_reducido") {
+    const { error: rErr } = await supabase.from("reservations").insert(
+      dates.map((scheduled_at) => ({
+        client_id: bono.client_id,
+        bono_id: bono.id,
+        trainer_id: input.trainerId,
+        scheduled_at,
+        service_type: bono.service_type,
+        status: "booked" as const,
+      })),
+    );
+    if (rErr) throw rErr;
+
+    const { error: uErr } = await supabase
+      .from("bonos")
+      .update({
+        remaining_sessions: remaining,
+        // Només el bo ja pagat passa a "completat" (veure la nota del camí mock).
+        ...(remaining === 0 && bono.status === "active"
+          ? { status: "completed" as const }
+          : {}),
+        ...(bono.first_reservation_at
+          ? {}
+          : { first_reservation_at: new Date().toISOString() }),
+      })
+      .eq("id", bono.id);
+    if (uErr) throw uErr;
+  }
 
   const trainer = input.trainerId
     ? await getProfileContact(input.trainerId)
