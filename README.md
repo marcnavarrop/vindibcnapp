@@ -4,14 +4,13 @@ Aplicación web de gestión para un centro de entrenamiento personal y
 fisioterapia: clientes, bonos, reservas y pagos. Sustituye a Trainingym.
 
 **Stack:** Next.js 15 (App Router, TypeScript) · Tailwind CSS · Supabase
-(base de datos + Auth) · Vercel (hosting) · Stripe (pagos, en una fase
-posterior).
+(base de datos + Auth) · Vercel (hosting) · Stripe (cobro con tarjeta).
 
 > Estado: **MVP funcional**. Autenticación por roles, gestión de clientes,
 > bonos, reservas (con repetición semanal), catálogo de servicios, biblioteca
 > de ejercicios y progreso, registro de cobros y tablón de comunidad — todo
-> con lógica de negocio real sobre Supabase. Pendientes principales: cobro
-> online con Stripe y pulido del diseño de marca.
+> con lógica de negocio real sobre Supabase. El cobro con tarjeta va por Stripe
+> Checkout. Pendiente principal: pulido del diseño de marca.
 
 ## Módulos
 
@@ -25,7 +24,7 @@ posterior).
 | Ejercicios y progreso      | ✅ Completo (biblioteca + mediciones por cliente)              |
 | Comunidad (anuncios)       | ✅ Completo (tablón con CRUD, feed para entrenadores/as)       |
 | Pagos                      | ✅ Registro de cobros (al vender un bono y alta manual, efectivo/tarjeta) |
-| Stripe (cobro online)      | ❌ No empezado (fase posterior)                                |
+| Stripe (cobro online)      | ✅ Checkout alojado en compra de bono y vales de regalo        |
 
 ## Modo simulación (mock) vs. real
 
@@ -124,6 +123,54 @@ npm run dev
 Abre [http://localhost:3000](http://localhost:3000).
 
 ---
+
+## Pago con tarjeta (Stripe Checkout)
+
+Hay dos formas de pagar un bono o un vale de regalo: **pagar al centro** (crea
+el registro en `pending_payment` y lo activa el admin al cobrar) o **pagar con
+tarjeta**, que usa [Stripe Checkout](https://stripe.com/docs/payments/checkout)
+alojado — la página de pago es de Stripe, así que los datos de la tarjeta no
+pasan nunca por este dominio.
+
+**La regla que ordena todo el flujo:** pulsar "Pagar amb targeta" **no crea
+nada**. El bono o el vale nacen cuando Stripe confirma el cobro mediante el
+webhook `checkout.session.completed`. La redirección de vuelta no vale como
+prueba de pago (se puede cerrar la pestaña, o escribir la URL de éxito a mano),
+así que la pantalla de confirmación sólo *consulta* si el webhook ya ha pasado y
+espera si todavía no.
+
+| Pieza                                   | Papel                                              |
+| --------------------------------------- | -------------------------------------------------- |
+| `lib/stripe.ts`                         | Cliente de Stripe, interruptor y origen público     |
+| `lib/data/stripe-checkout.ts`           | Abre la sesión y cumple el pago (única fuente)      |
+| `app/api/webhooks/stripe/route.ts`      | Verifica la firma y despacha el evento              |
+| `/client/bonos/confirmacio`             | Vuelta del pago de un bono                          |
+| `/client/regals/confirmacio`            | Vuelta del pago de un vale                          |
+
+Un evento de Stripe puede llegar **más de una vez**. La protección no es una
+comprobación en el código sino un índice **único** sobre
+`stripe_checkout_session_id` en `bonos` y en `gift_vouchers` (migración `0054`):
+el segundo intento rebota con un `23505` que el webhook lee como "ya estaba
+hecho" y responde 200. Mismo criterio que el aforo de grupos: la garantía la da
+la base, no la suerte.
+
+El webhook queda **fuera del `matcher` del middleware** a propósito, como
+`/api/cron/*`: lo autentica la firma de Stripe, no una sesión, y no llama a
+`getViewer()`.
+
+Si faltan las claves de Stripe, el botón de tarjeta simplemente no aparece y
+sólo se ofrece "Pagar al centre". En modo simulación tampoco se ofrece.
+
+### Probarlo en local
+
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+El `whsec_...` que imprime ese comando es el `STRIPE_WEBHOOK_SECRET` **de
+local**, distinto del que da el Dashboard al registrar el endpoint de
+producción. Tarjeta de prueba: `4242 4242 4242 4242`, cualquier fecha futura y
+cualquier CVC.
 
 ## Roles y rutas protegidas
 

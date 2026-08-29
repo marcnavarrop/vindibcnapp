@@ -1,6 +1,7 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { SERVICE_LABELS } from "@/lib/labels";
 import type { PaymentMethod, ServiceType } from "@/types/database";
@@ -77,44 +78,90 @@ export type PaymentInput = {
   method: PaymentMethod;
   /** Concepte comptable (p. ex. "Bo de 8 sessions · EP Individual"). */
   concept?: string | null;
+  /** Referència del cobrament a Stripe, quan ve d'una targeta. */
+  stripePaymentId?: string | null;
 };
+
+/** La fila, igual per als dos camins. */
+function paymentRow(input: PaymentInput) {
+  return {
+    client_id: input.clientId,
+    bono_id: input.bonoId,
+    amount: input.amount,
+    method: input.method,
+    concept: input.concept ?? null,
+    stripe_payment_id: input.stripePaymentId ?? null,
+  };
+}
 
 /** Registra un cobro (efectivo o tarjeta). No procesa el pago: solo lo anota. */
 export async function createPayment(input: PaymentInput): Promise<string> {
-  if (USE_MOCK) {
-    const store = getStore();
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-    store.payments.push({
-      id,
-      client_id: input.clientId,
-      bono_id: input.bonoId,
-      stripe_payment_id: null,
-      amount: input.amount,
-      currency: "eur",
-      method: input.method,
-      concept: input.concept ?? null,
-      paid_at: now,
-      created_at: now,
-    });
-    saveStore(store);
-    return id;
-  }
+  if (USE_MOCK) return mockPayment(input);
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("payments")
-    .insert({
-      client_id: input.clientId,
-      bono_id: input.bonoId,
-      amount: input.amount,
-      method: input.method,
-      concept: input.concept ?? null,
-    })
+    .insert(paymentRow(input))
     .select("id")
     .single();
   if (error) throw error;
   return data.id;
+}
+
+/**
+ * El mateix cobrament, però escrit amb la clau de servei.
+ *
+ * El fa servir el webhook de Stripe, que no té sessió de ningú: la RLS de
+ * `payments` només deixa escriure els administradors, i allà no n'hi ha cap
+ * —qui autentica la petició és la signatura de Stripe, no una cookie—. La
+ * separació és deliberada: els camins amb sessió segueixen passant per la RLS
+ * i només aquest, que ja no en té, se la salta.
+ */
+export async function createSystemPayment(
+  input: PaymentInput,
+): Promise<string | null> {
+  if (USE_MOCK) {
+    const store = getStore();
+    if (
+      input.stripePaymentId &&
+      store.payments.some((p) => p.stripe_payment_id === input.stripePaymentId)
+    )
+      return null;
+    return mockPayment(input);
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("payments")
+    .insert(paymentRow(input))
+    .select("id")
+    .single();
+  // 23505 amb l'índex de la 0054: aquest cobrament ja estava anotat. Passa quan
+  // Stripe reintenta un compliment que va quedar a mitges, i és exactament el
+  // que ha de passar: torna null i qui crida segueix amb la resta de passos.
+  if (error?.code === "23505") return null;
+  if (error) throw error;
+  return data.id;
+}
+
+function mockPayment(input: PaymentInput): string {
+  const store = getStore();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  store.payments.push({
+    id,
+    client_id: input.clientId,
+    bono_id: input.bonoId,
+    stripe_payment_id: input.stripePaymentId ?? null,
+    amount: input.amount,
+    currency: "eur",
+    method: input.method,
+    concept: input.concept ?? null,
+    paid_at: now,
+    created_at: now,
+  });
+  saveStore(store);
+  return id;
 }
 
 export type PaymentFormData = {

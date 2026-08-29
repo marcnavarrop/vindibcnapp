@@ -6,7 +6,9 @@ import { SERVICE_LABELS } from "@/lib/labels";
 import type { ColorPalette } from "@/lib/colors";
 import {
   createPendingBonoAction,
+  startBonoCheckoutAction,
   type FormState,
+  type CheckoutState,
 } from "@/app/(client)/client/bonos/comprar/actions";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
@@ -24,16 +26,26 @@ export function BuyBonoForm({
   effectivePrices = {},
   pendingReferralReward = null,
   palette,
+  stripeEnabled = false,
 }: {
   services: Service[];
   effectivePrices?: Record<string, EffectivePrice>;
   pendingReferralReward?: PendingReward | null;
   /** Colors del centre, ja resolts. */
   palette: ColorPalette;
+  /** Es pot pagar amb targeta? Ho decideix el servidor, no el navegador. */
+  stripeEnabled?: boolean;
 }) {
   const [state, formAction] = useActionState(
     createPendingBonoAction,
     {} as FormState,
+  );
+  // Segona sortida del MATEIX formulari: el botó de targeta hi entra amb
+  // `formAction`. Així els camps ocults (el paquet triat) es comparteixen i no
+  // cal duplicar cap formulari.
+  const [checkoutState, checkoutAction] = useActionState(
+    startBonoCheckoutAction,
+    {} as CheckoutState,
   );
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -45,7 +57,7 @@ export function BuyBonoForm({
    * confondre fins i tot qui coneix l'app. El pas del mig només explica què
    * passarà; la lògica de negoci no canvia.
    */
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState<null | "center" | "card">(null);
   /** Condicions acceptades. Es reinicia cada cop que s'obre el diàleg. */
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
@@ -191,7 +203,7 @@ export function BuyBonoForm({
 
             <button
               type="button"
-              onClick={() => setConfirming(true)}
+              onClick={() => setConfirming("center")}
               className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
             >
               <span className="font-bold text-brand-dark">Pagar al centre</span>
@@ -201,46 +213,64 @@ export function BuyBonoForm({
               </span>
             </button>
 
-            <div
-              aria-disabled
-              className="flex cursor-not-allowed flex-col items-start rounded-xl border border-brand-border bg-brand-bg px-4 py-3 text-left opacity-70"
-            >
-              <span className="flex items-center gap-2 font-bold text-brand-muted">
-                Pagar amb targeta
-                <span className="rounded-full bg-brand-orange/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
-                  Pròximament
+            {stripeEnabled && (
+              <button
+                type="button"
+                onClick={() => setConfirming("card")}
+                className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
+              >
+                <span className="font-bold text-brand-dark">
+                  Pagar amb targeta
                 </span>
-              </span>
-              <span className="text-xs text-brand-muted">
-                El pagament en línia amb targeta encara no està disponible.
-              </span>
-            </div>
+                <span className="text-xs text-brand-muted">
+                  Paga ara en línia i el bo queda actiu de seguida. T&apos;enviem
+                  a la pàgina segura de Stripe.
+                </span>
+              </button>
+            )}
           </div>
 
           {state.error && (
             <p className="text-sm text-error">{state.error}</p>
           )}
+          {checkoutState.error && (
+            <p className="text-sm text-error">{checkoutState.error}</p>
+          )}
 
           {selected && (
             <ConfirmDialog
-              open={confirming}
-              onClose={() => setConfirming(false)}
-              title="Confirmes la reserva del bo?"
+              open={confirming !== null}
+              onClose={() => setConfirming(null)}
+              title={
+                confirming === "card"
+                  ? "Confirmes la compra del bo?"
+                  : "Confirmes la reserva del bo?"
+              }
               actions={
                 <>
                   <button
                     type="button"
-                    onClick={() => setConfirming(false)}
+                    onClick={() => setConfirming(null)}
                     className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
                   >
                     Cancel·lar
                   </button>
-                  <SubmitButton
-                    pendingLabel="Comprant…"
-                    disabled={!acceptsTerms}
-                  >
-                    Confirmar
-                  </SubmitButton>
+                  {confirming === "card" ? (
+                    <SubmitButton
+                      formAction={checkoutAction}
+                      pendingLabel="Anant a Stripe…"
+                      disabled={!acceptsTerms}
+                    >
+                      Pagar amb targeta
+                    </SubmitButton>
+                  ) : (
+                    <SubmitButton
+                      pendingLabel="Comprant…"
+                      disabled={!acceptsTerms}
+                    >
+                      Confirmar
+                    </SubmitButton>
+                  )}
                 </>
               }
             >
@@ -268,8 +298,9 @@ export function BuyBonoForm({
                   </p>
                 </div>
                 <p className="text-brand-charcoal">
-                  En confirmar, aquest bo ja es podrà fer servir per reservar.
-                  El pagues al centre quan vulguis.
+                  {confirming === "card"
+                    ? "Et portem a la pàgina de pagament de Stripe. El bo es crea quan el pagament es confirmi; si no acabes de pagar, no es crea res."
+                    : "En confirmar, aquest bo ja es podrà fer servir per reservar. El pagues al centre quan vulguis."}
                 </p>
 
                 <label className="flex cursor-pointer items-start gap-2.5 text-brand-charcoal">

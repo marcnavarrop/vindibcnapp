@@ -3,6 +3,7 @@ import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { getPendingReferralReward } from "@/lib/data/referral";
 import { getColorPalette } from "@/lib/data/colors";
+import { stripeEnabled } from "@/lib/stripe";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
 import { RouteTabs } from "@/components/ui/route-tabs";
 
@@ -45,6 +46,7 @@ export default async function ComprarBonoPage() {
         palette={palette}
         effectivePrices={effectivePrices}
         pendingReferralReward={pendingReferralReward}
+        stripeEnabled={stripeEnabled()}
       />
     </main>
   );

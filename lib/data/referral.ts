@@ -210,6 +210,47 @@ export async function applyReferralReward(
 }
 
 /** Returns referral code and count of clients this client has referred. */
+/**
+ * Consumeix la recompensa NOMÉS si encara està pendent. Torna si l'ha aplicada.
+ *
+ * Cal per al pagament amb targeta: el descompte es calcula en obrir la sessió
+ * de Stripe i no es gasta fins que el cobrament es confirma, que poden ser
+ * minuts després. Entremig el client podria haver comprat un altre bo pagant al
+ * centre i haver-la gastat allà. Sense el `eq('status','pending')`, el webhook
+ * la tornaria a marcar com a usada i li canviaria el bo de destí: la mateixa
+ * recompensa constaria gastada dues vegades i cap dels dos registres diria la
+ * veritat.
+ *
+ * Si torna false, el client ja ha pagat el preu amb descompte a Stripe i no
+ * s'hi pot fer res: mana el rebut. Es deixa passar a posta.
+ */
+export async function applyReferralRewardIfPending(
+  rewardId: string,
+  bonoId: string,
+): Promise<boolean> {
+  if (USE_MOCK) {
+    const { getStore, saveStore } = await import("@/lib/mock/store");
+    const store = getStore();
+    const reward = store.referral_rewards.find(
+      (r) => r.id === rewardId && r.status === "pending",
+    );
+    if (!reward) return false;
+    reward.status = "used";
+    reward.used_in_bono_id = bonoId;
+    saveStore(store);
+    return true;
+  }
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("referral_rewards")
+    .update({ status: "used", used_in_bono_id: bonoId })
+    .eq("id", rewardId)
+    .eq("status", "pending")
+    .select("id");
+  return (data?.length ?? 0) > 0;
+}
+
 export async function getReferralStats(profileId: string): Promise<{
   code: string | null;
   referredCount: number;

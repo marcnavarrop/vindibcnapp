@@ -14,6 +14,7 @@ export function SubmitButton({
   variant,
   className,
   disabled,
+  formAction,
 }: {
   children: React.ReactNode;
   pendingLabel?: string;
@@ -21,6 +22,12 @@ export function SubmitButton({
   className?: string;
   /** Motiu propi per bloquejar-lo, a més de l'enviament en curs. */
   disabled?: boolean;
+  /**
+   * Server action pròpia d'aquest botó, quan el mateix formulari té més d'una
+   * sortida (p. ex. pagar al centre o pagar amb targeta). `useFormStatus` mira
+   * el formulari, no el botó, així que la rodeta funciona igual amb totes dues.
+   */
+  formAction?: React.ComponentProps<typeof Button>["formAction"];
 }) {
   const { pending } = useFormStatus();
   return (
@@ -30,6 +37,7 @@ export function SubmitButton({
       aria-busy={pending}
       variant={variant}
       className={className}
+      formAction={formAction}
     >
       {pending ? (
         <span className="inline-flex items-center gap-2">

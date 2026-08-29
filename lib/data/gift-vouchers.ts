@@ -289,84 +289,64 @@ export type CreateGiftVoucherInput = {
   message?: string | null;
 };
 
-/**
- * Crea un val 'pending_payment'.
- *
- * El preu i les sessions surten del CATÀLEG, mai del navegador: el client només
- * envia quin paquet vol. S'apliquen les ofertes públiques del catàleg però NO
- * la recompensa de referit del comprador: aquell descompte és personal, i
- * gastar-lo en un paquet que farà servir un altre no és el que espera ningú.
- */
-export async function createGiftVoucher(
-  input: CreateGiftVoucherInput,
-): Promise<{ id: string; code: string }> {
-  const settings = await getCenterSettings();
-  if (!settings.giftVouchersEnabled)
-    throw new Error("Els vals de regal no estan disponibles ara mateix.");
+export type GiftVoucherQuote = {
+  clientId: string;
+  serviceId: string;
+  serviceType: ServiceType;
+  totalSessions: number;
+  packageName: string;
+  finalPrice: number;
+};
 
-  const expiresAt = giftVoucherExpiry(settings.giftVoucherExpiryMonths);
-  const recipientName = clean(input.recipientName, 120);
-  const recipientEmail = clean(input.recipientEmail, 160);
-  const message = clean(input.message, 500);
+/**
+ * Preu i paquet d'un val, resolts al servidor.
+ *
+ * S'apliquen les ofertes públiques del catàleg però NO la recompensa de referit
+ * del comprador: aquell descompte és personal, i gastar-lo en un paquet que
+ * farà servir un altre no és el que espera ningú. Igual que amb els bons, viu
+ * en una sola funció perquè el que cobra Stripe i el que es desa al val no
+ * puguin divergir mai.
+ */
+export async function quoteGiftVoucher(input: {
+  profileId: string;
+  serviceId: string;
+}): Promise<GiftVoucherQuote> {
+  let clientId: string;
+  let s: {
+    id: string;
+    service_type: ServiceType;
+    name: string;
+    price: number;
+    default_sessions: number;
+    active: boolean;
+  };
 
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === input.profileId);
     if (!client) throw new Error("Client no trobat.");
-    const s = store.services.find((x) => x.id === input.serviceId && x.active);
-    if (!s) throw new Error("Servei no vàlid.");
+    const row = store.services.find((x) => x.id === input.serviceId && x.active);
+    if (!row) throw new Error("Servei no vàlid.");
+    clientId = client.id;
+    s = row;
+  } else {
+    const admin = createAdminClient();
+    const { data: client } = await admin
+      .from("clients")
+      .select("id")
+      .eq("profile_id", input.profileId)
+      .maybeSingle();
+    if (!client) throw new Error("Client no trobat.");
 
-    const ep = await getEffectivePrice({
-      id: s.id,
-      serviceType: s.service_type,
-      name: s.name,
-      price: s.price,
-      defaultSessions: s.default_sessions,
-      active: s.active,
-    });
-
-    const id = crypto.randomUUID();
-    const code = generateVoucherCode();
-    const now = new Date().toISOString();
-    store.gift_vouchers.push({
-      id,
-      code,
-      service_id: s.id,
-      buyer_client_id: client.id,
-      recipient_name: recipientName,
-      recipient_email: recipientEmail,
-      message,
-      price: ep.finalPrice,
-      service_type: s.service_type,
-      total_sessions: s.default_sessions,
-      package_name: s.name,
-      purchased_at: now,
-      expires_at: expiresAt,
-      status: "pending_payment",
-      redeemed_at: null,
-      redeemed_by_client_id: null,
-      redeemed_bono_id: null,
-      pdf_path: null,
-      created_at: now,
-    });
-    saveStore(store);
-    return { id, code };
+    const { data: row } = await admin
+      .from("services")
+      .select("id, service_type, name, price, default_sessions, active")
+      .eq("id", input.serviceId)
+      .maybeSingle();
+    if (!row || !row.active) throw new Error("Servei no vàlid.");
+    clientId = client.id;
+    s = row;
   }
-
-  const admin = createAdminClient();
-  const { data: client } = await admin
-    .from("clients")
-    .select("id")
-    .eq("profile_id", input.profileId)
-    .maybeSingle();
-  if (!client) throw new Error("Client no trobat.");
-
-  const { data: s } = await admin
-    .from("services")
-    .select("id, service_type, name, price, default_sessions, active")
-    .eq("id", input.serviceId)
-    .maybeSingle();
-  if (!s || !s.active) throw new Error("Servei no vàlid.");
 
   const ep = await getEffectivePrice({
     id: s.id,
@@ -377,6 +357,78 @@ export async function createGiftVoucher(
     active: s.active,
   });
 
+  return {
+    clientId,
+    serviceId: s.id,
+    serviceType: s.service_type,
+    totalSessions: s.default_sessions,
+    packageName: s.name,
+    finalPrice: ep.finalPrice,
+  };
+}
+
+/**
+ * Crea un val a partir d'una fotografia JA resolta del paquet.
+ *
+ * És el que fa servir el webhook de Stripe. No torna a consultar el catàleg ni
+ * mira l'interruptor del mòdul, i és a posta: quan arriba el webhook els diners
+ * ja hi són, i si entremig el centre ha desactivat un servei o ha tancat la
+ * venda de vals, negar-se a crear el val deixaria un cobrament sense res a
+ * canvi. Mateix criteri que amb la llista d'espera a la 0052: es tanca la
+ * venda, no el que ja s'ha venut.
+ */
+export async function createGiftVoucherFromSnapshot(input: {
+  snapshot: GiftVoucherQuote;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  message?: string | null;
+  status: Extract<GiftVoucherStatus, "pending_payment" | "active">;
+  stripeCheckoutSessionId?: string | null;
+  /** Preu ja cobrat, si ve d'un pagament. Si no, el de la fotografia. */
+  price?: number;
+  expiryMonths: number;
+}): Promise<{ id: string; code: string } | null> {
+  const q = input.snapshot;
+  const expiresAt = giftVoucherExpiry(input.expiryMonths);
+  const recipientName = clean(input.recipientName, 120);
+  const recipientEmail = clean(input.recipientEmail, 160);
+  const message = clean(input.message, 500);
+  const price = input.price ?? q.finalPrice;
+  const sessionId = input.stripeCheckoutSessionId ?? null;
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const id = crypto.randomUUID();
+    const code = generateVoucherCode();
+    const now = new Date().toISOString();
+    store.gift_vouchers.push({
+      id,
+      code,
+      service_id: q.serviceId,
+      buyer_client_id: q.clientId,
+      recipient_name: recipientName,
+      recipient_email: recipientEmail,
+      message,
+      price,
+      service_type: q.serviceType,
+      total_sessions: q.totalSessions,
+      package_name: q.packageName,
+      purchased_at: now,
+      expires_at: expiresAt,
+      status: input.status,
+      redeemed_at: null,
+      redeemed_by_client_id: null,
+      redeemed_bono_id: null,
+      pdf_path: null,
+      stripe_checkout_session_id: sessionId,
+      created_at: now,
+    });
+    saveStore(store);
+    return { id, code };
+  }
+
+  const admin = createAdminClient();
+
   // El codi és únic a la base. Si el sorteig xoca amb un que ja existeix, es
   // torna a provar: amb 31^8 combinacions no hauria de passar mai, però un
   // error 23505 a la cara de qui compra sí que seria un problema real.
@@ -386,24 +438,85 @@ export async function createGiftVoucher(
       .from("gift_vouchers")
       .insert({
         code,
-        service_id: s.id,
-        buyer_client_id: client.id,
+        service_id: q.serviceId,
+        buyer_client_id: q.clientId,
         recipient_name: recipientName,
         recipient_email: recipientEmail,
         message,
-        price: ep.finalPrice,
-        service_type: s.service_type,
-        total_sessions: s.default_sessions,
-        package_name: s.name,
+        price,
+        service_type: q.serviceType,
+        total_sessions: q.totalSessions,
+        package_name: q.packageName,
         expires_at: expiresAt,
-        status: "pending_payment",
+        status: input.status,
+        stripe_checkout_session_id: sessionId,
       })
       .select("id, code")
       .single();
     if (!error && data) return { id: data.id, code: data.code };
     if (error?.code !== "23505") throw new Error("No s'ha pogut crear el val.");
+    // Dos índexs únics poden saltar aquí. Si el que ha rebotat és el de la
+    // sessió de Stripe, aquest val JA existeix i tornar-ho a provar amb un
+    // codi nou només crearia el duplicat que volíem evitar.
+    if (error.message.includes("stripe_session")) return null;
   }
   throw new Error("No s'ha pogut generar un codi lliure. Torna-ho a provar.");
+}
+
+/**
+ * Crea un val 'pending_payment' per pagar al centre.
+ *
+ * El preu i les sessions surten del CATÀLEG, mai del navegador: el client només
+ * envia quin paquet vol.
+ */
+export async function createGiftVoucher(
+  input: CreateGiftVoucherInput,
+): Promise<{ id: string; code: string }> {
+  const settings = await getCenterSettings();
+  if (!settings.giftVouchersEnabled)
+    throw new Error("Els vals de regal no estan disponibles ara mateix.");
+
+  const snapshot = await quoteGiftVoucher({
+    profileId: input.profileId,
+    serviceId: input.serviceId,
+  });
+
+  const created = await createGiftVoucherFromSnapshot({
+    snapshot,
+    recipientName: input.recipientName,
+    recipientEmail: input.recipientEmail,
+    message: input.message,
+    status: "pending_payment",
+    expiryMonths: settings.giftVoucherExpiryMonths,
+  });
+  // Sense sessió de Stripe l'únic de la 0054 no hi participa, així que aquí
+  // mai pot tornar null.
+  if (!created) throw new Error("No s'ha pogut crear el val.");
+  return created;
+}
+
+/** El val d'una sessió de Checkout, per a la pantalla de tornada de Stripe. */
+export async function getGiftVoucherByStripeSession(
+  sessionId: string,
+): Promise<GiftVoucher | null> {
+  if (USE_MOCK) {
+    const v = getStore().gift_vouchers.find(
+      (x) => x.stripe_checkout_session_id === sessionId,
+    );
+    if (!v) return null;
+    return {
+      ...toVoucher(v as unknown as Row),
+      buyerName: mockName(v.buyer_client_id) ?? "—",
+      redeemedByName: mockName(v.redeemed_by_client_id),
+    };
+  }
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("gift_vouchers")
+    .select(SELECT)
+    .eq("stripe_checkout_session_id", sessionId)
+    .maybeSingle();
+  return data ? toVoucher(data as unknown as Row) : null;
 }
 
 function clean(value: string | null | undefined, max: number): string | null {
@@ -566,6 +679,7 @@ export async function redeemGiftVoucher(input: {
       expires_at: null,
       first_reservation_at: null,
       gift_voucher_id: v.id,
+      stripe_checkout_session_id: null,
       created_at: now,
     });
     v.status = "redeemed";

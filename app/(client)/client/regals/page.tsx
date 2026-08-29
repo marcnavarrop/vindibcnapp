@@ -4,6 +4,7 @@ import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
+import { stripeEnabled } from "@/lib/stripe";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listGiftVouchersBought } from "@/lib/data/gift-vouchers";
 import { GiftVoucherForm } from "@/components/forms/gift-voucher-form";
@@ -45,6 +46,7 @@ export default async function RegalsPage() {
         services={services}
         palette={palette}
         effectivePrices={Object.fromEntries(effectivePricesMap)}
+        stripeEnabled={stripeEnabled()}
       />
 
       {bought.length > 0 && (

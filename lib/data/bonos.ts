@@ -3,8 +3,13 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
-import { createPayment, bonoConcept } from "@/lib/data/payments";
-import { maybeGenerateReferralRewards, applyReferralReward, getPendingReferralReward } from "@/lib/data/referral";
+import { createPayment, createSystemPayment, bonoConcept } from "@/lib/data/payments";
+import {
+  maybeGenerateReferralRewards,
+  applyReferralReward,
+  applyReferralRewardIfPending,
+  getPendingReferralReward,
+} from "@/lib/data/referral";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerToday } from "@/lib/center-time";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
@@ -179,6 +184,7 @@ export async function createBono(input: BonoInput): Promise<string> {
       expires_at: expiresAt,
       first_reservation_at: null,
       gift_voucher_id: null,
+      stripe_checkout_session_id: null,
       created_at: now,
     });
     saveStore(store);
@@ -223,12 +229,112 @@ export async function createBono(input: BonoInput): Promise<string> {
 // salen del catálogo, nunca del cliente.
 
 /**
- * Crea un bono 'pending_payment' per al client.
- * Aplica automàticament el millor descompte entre:
- *   a) la promoció activa del catàleg (getEffectivePrice)
- *   b) un referral_reward pendent del client
- * No es combinen: s'aplica només el que dóna un % major.
- * Si s'aplica la recompensa de referit, queda marcada com a 'used'.
+ * Preu i dades del paquet que compra un client, amb el descompte ja resolt.
+ *
+ * Viu en una sola funció a propòsit. La regla —el millor entre l'oferta del
+ * catàleg i la recompensa de referit, mai les dues— la necessiten ara tres
+ * camins: la compra per pagar al centre, la sessió de Stripe (que ha de cobrar
+ * EXACTAMENT el mateix) i el webhook. Amb una còpia per camí, el dia que la
+ * regla canviï el client veurà un preu a la pantalla i un altre a la targeta.
+ */
+export type BonoPurchaseQuote = {
+  clientId: string;
+  serviceType: ServiceType;
+  totalSessions: number;
+  packageName: string;
+  /** Preu final, amb el millor descompte ja aplicat. */
+  finalPrice: number;
+  /** Recompensa de referit que justifica aquest preu, si s'ha fet servir. */
+  referralRewardId: string | null;
+};
+
+export async function quoteBonoPurchase(input: {
+  profileId: string;
+  serviceId: string;
+}): Promise<BonoPurchaseQuote> {
+  const { getEffectivePrice } = await import("@/lib/data/promotions");
+
+  // Fitxa del client i paquet del catàleg, segons el mode.
+  let clientId: string;
+  let service: {
+    id: string;
+    serviceType: ServiceType;
+    name: string;
+    price: number;
+    defaultSessions: number;
+    active: boolean;
+  };
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.profile_id === input.profileId);
+    if (!client) throw new Error("Client no trobat.");
+    const row = store.services.find((x) => x.id === input.serviceId && x.active);
+    if (!row) throw new Error("Servei no vàlid.");
+    clientId = client.id;
+    service = {
+      id: row.id,
+      serviceType: row.service_type,
+      name: row.name,
+      price: row.price,
+      defaultSessions: row.default_sessions,
+      active: row.active,
+    };
+  } else {
+    const admin = createAdminClient();
+    const { data: client, error: cErr } = await admin
+      .from("clients")
+      .select("id")
+      .eq("profile_id", input.profileId)
+      .single();
+    if (cErr || !client) throw new Error("Client no trobat.");
+
+    const { data: row, error: sErr } = await admin
+      .from("services")
+      .select("service_type, price, default_sessions, active, name")
+      .eq("id", input.serviceId)
+      .single();
+    if (sErr || !row || !row.active) throw new Error("Servei no vàlid.");
+
+    clientId = client.id;
+    service = {
+      id: input.serviceId,
+      serviceType: row.service_type,
+      name: row.name,
+      price: row.price,
+      defaultSessions: row.default_sessions,
+      active: row.active,
+    };
+  }
+
+  // El millor descompte, i només un: l'oferta pública del catàleg o la
+  // recompensa personal de referit. No es combinen.
+  const ep = await getEffectivePrice(service);
+  const promoDiscountPct =
+    service.price > 0 ? ((service.price - ep.finalPrice) / service.price) * 100 : 0;
+
+  const pendingReward = await getPendingReferralReward(input.profileId);
+  const useReferral =
+    pendingReward !== null && pendingReward.discountPercent > promoDiscountPct;
+
+  const finalPrice = useReferral
+    ? Math.round(service.price * (1 - pendingReward!.discountPercent / 100) * 100) / 100
+    : ep.finalPrice;
+
+  return {
+    clientId,
+    serviceType: service.serviceType,
+    totalSessions: service.defaultSessions,
+    packageName: service.name,
+    finalPrice,
+    referralRewardId: useReferral ? pendingReward!.id : null,
+  };
+}
+
+/**
+ * Crea un bono 'pending_payment' per al client (pagament al centre).
+ * El preu i les sessions surten del catàleg via `quoteBonoPurchase`: el
+ * navegador només diu quin paquet vol.
  */
 export async function createPendingBono(input: {
   profileId: string;
@@ -237,113 +343,179 @@ export async function createPendingBono(input: {
   // La caducitat es compta des de la COMPRA, no des del pagament: un bo
   // pendent de pagar ja té la seva data des del primer moment.
   const expiresAt = await expiryForNewBono();
-  const { getEffectivePrice } = await import("@/lib/data/promotions");
+  const quote = await quoteBonoPurchase(input);
 
+  let id: string;
   if (USE_MOCK) {
     const store = getStore();
-    const client = store.clients.find((c) => c.profile_id === input.profileId);
-    if (!client) throw new Error("Client no trobat.");
-    const serviceRow = store.services.find(
-      (s) => s.id === input.serviceId && s.active,
-    );
-    if (!serviceRow) throw new Error("Servei no vàlid.");
-    const service = {
-      id: serviceRow.id,
-      serviceType: serviceRow.service_type,
-      name: serviceRow.name,
-      price: serviceRow.price,
-      defaultSessions: serviceRow.default_sessions,
-      active: serviceRow.active,
-    };
-    const ep = await getEffectivePrice(service);
-    const promoDiscountPct = serviceRow.price > 0
-      ? ((serviceRow.price - ep.finalPrice) / serviceRow.price) * 100
-      : 0;
-
-    const pendingReward = await getPendingReferralReward(input.profileId);
-    const useReferral =
-      pendingReward !== null &&
-      pendingReward.discountPercent > promoDiscountPct;
-
-    const finalPrice = useReferral
-      ? Math.round(serviceRow.price * (1 - pendingReward!.discountPercent / 100) * 100) / 100
-      : ep.finalPrice;
-
-    const id = crypto.randomUUID();
+    id = crypto.randomUUID();
     const now = new Date().toISOString();
     store.bonos.push({
       id,
-      client_id: client.id,
-      service_type: serviceRow.service_type,
-      total_sessions: serviceRow.default_sessions,
-      remaining_sessions: serviceRow.default_sessions,
-      price: finalPrice,
+      client_id: quote.clientId,
+      service_type: quote.serviceType,
+      total_sessions: quote.totalSessions,
+      remaining_sessions: quote.totalSessions,
+      price: quote.finalPrice,
       expires_at: expiresAt,
       first_reservation_at: null,
       gift_voucher_id: null,
+      stripe_checkout_session_id: null,
       status: "pending_payment",
       purchased_at: now,
       created_at: now,
     });
     saveStore(store);
-    if (useReferral) await applyReferralReward(pendingReward!.id, id);
-    return id;
+  } else {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("bonos")
+      .insert({
+        client_id: quote.clientId,
+        service_type: quote.serviceType,
+        total_sessions: quote.totalSessions,
+        remaining_sessions: quote.totalSessions,
+        price: quote.finalPrice,
+        status: "pending_payment",
+        expires_at: expiresAt,
+      })
+      .select("id")
+      .single();
+    if (error || !data) throw new Error("No s'ha pogut crear el bo.");
+    id = data.id;
   }
 
+  if (quote.referralRewardId) await applyReferralReward(quote.referralRewardId, id);
+  return id;
+}
+
+/**
+ * Crea el bo d'una compra JA COBRADA amb targeta. El crida el webhook de
+ * Stripe, mai el navegador.
+ *
+ * Neix 'active' i no passa per 'pending_payment': els diners ja hi són.
+ *
+ * Complir una compra són VÀRIES escriptures (el bo, el cobrament, la
+ * recompensa de referit) i entre dues qualssevol es pot caure. Per això la
+ * funció està feta per poder-se repetir sencera: si el bo ja hi era, no es crea
+ * un segon —ho impedeix l'índex únic de la 0054, no cap comprovació d'aquí— i
+ * els passos següents es tornen a intentar igualment, perquè cadascun sap
+ * quedar-se quiet si ja estava fet. Així un reintent de Stripe acaba el que va
+ * quedar a mitges en comptes de donar-ho tot per fet.
+ */
+export async function createPaidBono(input: {
+  clientId: string;
+  serviceType: ServiceType;
+  totalSessions: number;
+  /** El que Stripe ha cobrat, en euros. */
+  price: number;
+  stripeCheckoutSessionId: string;
+  stripePaymentId: string | null;
+  referralRewardId: string | null;
+}): Promise<{ id: string; created: boolean }> {
+  const expiresAt = await expiryForNewBono();
   const admin = createAdminClient();
-  const { data: client, error: cErr } = await admin
-    .from("clients")
-    .select("id")
-    .eq("profile_id", input.profileId)
-    .single();
-  if (cErr || !client) throw new Error("Client no trobat.");
-
-  const { data: serviceRow, error: sErr } = await admin
-    .from("services")
-    .select("service_type, price, default_sessions, active, name")
-    .eq("id", input.serviceId)
-    .single();
-  if (sErr || !serviceRow || !serviceRow.active)
-    throw new Error("Servei no vàlid.");
-
-  const service = {
-    id: input.serviceId,
-    serviceType: serviceRow.service_type,
-    name: serviceRow.name,
-    price: serviceRow.price,
-    defaultSessions: serviceRow.default_sessions,
-    active: serviceRow.active,
-  };
-  const ep = await getEffectivePrice(service);
-  const promoDiscountPct = serviceRow.price > 0
-    ? ((serviceRow.price - ep.finalPrice) / serviceRow.price) * 100
-    : 0;
-
-  const pendingReward = await getPendingReferralReward(input.profileId);
-  const useReferral =
-    pendingReward !== null &&
-    pendingReward.discountPercent > promoDiscountPct;
-
-  const finalPrice = useReferral
-    ? Math.round(serviceRow.price * (1 - pendingReward!.discountPercent / 100) * 100) / 100
-    : ep.finalPrice;
 
   const { data, error } = await admin
     .from("bonos")
     .insert({
-      client_id: client.id,
-      service_type: serviceRow.service_type,
-      total_sessions: serviceRow.default_sessions,
-      remaining_sessions: serviceRow.default_sessions,
-      price: finalPrice,
-      status: "pending_payment",
+      client_id: input.clientId,
+      service_type: input.serviceType,
+      total_sessions: input.totalSessions,
+      remaining_sessions: input.totalSessions,
+      price: input.price,
+      status: "active",
       expires_at: expiresAt,
+      stripe_checkout_session_id: input.stripeCheckoutSessionId,
     })
     .select("id")
     .single();
-  if (error || !data) throw new Error("No s'ha pogut crear el bo.");
-  if (useReferral) await applyReferralReward(pendingReward!.id, data.id);
-  return data.id;
+
+  let bonoId: string;
+  let created: boolean;
+
+  if (error?.code === "23505") {
+    // Aquesta sessió ja tenia bo. Es recupera per poder acabar la resta de
+    // passos: no es dona la compra per closa només perquè el bo hi sigui.
+    const existing = await getBonoByStripeSession(input.stripeCheckoutSessionId);
+    if (!existing)
+      throw new Error("El bo consta duplicat però no s'ha pogut recuperar.");
+    bonoId = existing.id;
+    created = false;
+  } else if (error || !data) {
+    throw new Error(`No s'ha pogut crear el bo: ${error?.message}`);
+  } else {
+    bonoId = data.id;
+    created = true;
+  }
+
+  // Idempotent per l'índex de `stripe_payment_id` (0054): si ja estava anotat,
+  // torna null i no passa res.
+  await createSystemPayment({
+    clientId: input.clientId,
+    bonoId,
+    amount: input.price,
+    method: "card",
+    concept: bonoConcept(input.serviceType, input.totalSessions),
+    stripePaymentId: input.stripePaymentId,
+  });
+
+  // La recompensa de referit es consumeix ARA, no en obrir la sessió: si el
+  // client abandona el pagament, el descompte segueix sent seu. Condicional
+  // perquè entremig podria haver-la gastat en una altra compra —i perquè en un
+  // reintent ja estarà gastada per nosaltres mateixos.
+  if (input.referralRewardId)
+    await applyReferralRewardIfPending(input.referralRewardId, bonoId);
+
+  // Mateixa regla que en cobrar al centre: les recompenses de qui el va portar
+  // es generen quan el pagament es confirma. És idempotent.
+  await maybeGenerateReferralRewards(input.clientId);
+
+  return { id: bonoId, created };
+}
+
+/**
+ * El bo d'una sessió de Checkout, per a la pantalla de tornada de Stripe.
+ * Torna null mentre el webhook no hagi passat: la pàgina ho ensenya com a
+ * "confirmant el pagament" i no crea res pel seu compte.
+ */
+export async function getBonoByStripeSession(sessionId: string): Promise<{
+  id: string;
+  serviceType: ServiceType;
+  totalSessions: number;
+  price: number;
+  clientId: string;
+} | null> {
+  if (USE_MOCK) {
+    const b = getStore().bonos.find(
+      (x) => x.stripe_checkout_session_id === sessionId,
+    );
+    return b
+      ? {
+          id: b.id,
+          serviceType: b.service_type,
+          totalSessions: b.total_sessions,
+          price: b.price,
+          clientId: b.client_id,
+        }
+      : null;
+  }
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("bonos")
+    .select("id, service_type, total_sessions, price, client_id")
+    .eq("stripe_checkout_session_id", sessionId)
+    .maybeSingle();
+  return data
+    ? {
+        id: data.id,
+        serviceType: data.service_type,
+        totalSessions: data.total_sessions,
+        price: Number(data.price),
+        clientId: data.client_id,
+      }
+    : null;
 }
 
 /**

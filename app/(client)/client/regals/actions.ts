@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
+import { startGiftVoucherCheckout } from "@/lib/data/stripe-checkout";
+import { stripeEnabled } from "@/lib/stripe";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   createGiftVoucher,
@@ -154,4 +157,53 @@ export async function sendGiftVoucherAction(
   );
 
   return { ok: true };
+}
+
+export type CheckoutState = { error?: string };
+
+/**
+ * Pagar el val amb targeta: obre la sessió de Stripe i hi envia el client.
+ *
+ * Com amb els bons, aquí NO es crea res: el val el crea el webhook quan Stripe
+ * confirma el cobrament, i neix ja 'active' —no hi ha cap cobrament que el
+ * centre hagi de confirmar després—. La dedicatòria viatja a les metadades de
+ * la sessió i torna dins l'esdeveniment signat.
+ */
+export async function startGiftVoucherCheckoutAction(
+  _prev: CheckoutState,
+  formData: FormData,
+): Promise<CheckoutState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+
+  // Mateixa comprovació que a la compra al centre, i pel mateix motiu: amagar
+  // el botó no impedeix cridar l'acció.
+  const { giftVouchersEnabled } = await getCenterSettings();
+  if (!giftVouchersEnabled)
+    return { error: "Els vals de regal no estan disponibles ara mateix." };
+
+  if (!stripeEnabled())
+    return { error: "El pagament amb targeta no està disponible ara mateix." };
+
+  const serviceId = String(formData.get("serviceId") ?? "");
+  if (!serviceId) return { error: "Tria un paquet." };
+
+  let result;
+  try {
+    result = await startGiftVoucherCheckout({
+      profileId: viewer.id,
+      serviceId,
+      email: viewer.email || null,
+      recipientName: String(formData.get("recipientName") ?? "") || null,
+      recipientEmail: String(formData.get("recipientEmail") ?? "") || null,
+      message: String(formData.get("message") ?? "") || null,
+    });
+  } catch (e) {
+    return {
+      error: e instanceof Error ? e.message : "No s'ha pogut iniciar el pagament.",
+    };
+  }
+
+  if ("error" in result) return { error: result.error };
+  redirect(result.url);
 }

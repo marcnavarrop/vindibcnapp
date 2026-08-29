@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "vindi-mock", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "--port", "3100"], "port": 3100, "env": { "NEXT_PUBLIC_USE_MOCK": "true" } }
+    { "name": "vindi-mock", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "--port", "3100"], "port": 3100, "env": { "NEXT_PUBLIC_USE_MOCK": "true" } },
+    { "name": "vindi-real", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3000 }
   ]
 }

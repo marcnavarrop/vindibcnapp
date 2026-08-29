@@ -7,8 +7,10 @@ import type { ColorPalette } from "@/lib/colors";
 import {
   buyGiftVoucherAction,
   sendGiftVoucherAction,
+  startGiftVoucherCheckoutAction,
   type BuyState,
   type SendState,
+  type CheckoutState,
 } from "@/app/(client)/client/regals/actions";
 import { ServiceTypeStep, PackageStep } from "@/components/forms/service-picker";
 import type { Service } from "@/lib/data/services";
@@ -31,15 +33,25 @@ export function GiftVoucherForm({
   services,
   effectivePrices = {},
   palette,
+  stripeEnabled = false,
 }: {
   services: Service[];
   effectivePrices?: Record<string, EffectivePrice>;
   palette: ColorPalette;
+  /** Es pot pagar amb targeta? Ho decideix el servidor, no el navegador. */
+  stripeEnabled?: boolean;
 }) {
   const [state, formAction] = useActionState(buyGiftVoucherAction, {} as BuyState);
+  // Segona sortida del mateix formulari, com a la compra d'un bo: el botó de
+  // targeta hi entra amb `formAction` i comparteix els camps ocults, inclosa
+  // la dedicatòria.
+  const [checkoutState, checkoutAction] = useActionState(
+    startGiftVoucherCheckoutAction,
+    {} as CheckoutState,
+  );
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState<null | "center" | "card">(null);
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
@@ -167,7 +179,7 @@ export function GiftVoucherForm({
 
             <button
               type="button"
-              onClick={() => setConfirming(true)}
+              onClick={() => setConfirming("center")}
               className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
             >
               <span className="font-bold text-brand-dark">Pagar al centre</span>
@@ -177,41 +189,55 @@ export function GiftVoucherForm({
               </span>
             </button>
 
-            <div
-              aria-disabled
-              className="flex cursor-not-allowed flex-col items-start rounded-xl border border-brand-border bg-brand-bg px-4 py-3 text-left opacity-70"
-            >
-              <span className="flex items-center gap-2 font-bold text-brand-muted">
-                Pagar amb targeta
-                <span className="rounded-full bg-brand-orange/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
-                  Pròximament
+            {stripeEnabled && (
+              <button
+                type="button"
+                onClick={() => setConfirming("card")}
+                className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
+              >
+                <span className="font-bold text-brand-dark">
+                  Pagar amb targeta
                 </span>
-              </span>
-              <span className="text-xs text-brand-muted">
-                El pagament en línia amb targeta encara no està disponible.
-              </span>
-            </div>
+                <span className="text-xs text-brand-muted">
+                  Paga ara en línia i el val queda bescanviable de seguida.
+                  T&apos;enviem a la pàgina segura de Stripe.
+                </span>
+              </button>
+            )}
           </div>
 
           {state.error && <p className="text-sm text-error">{state.error}</p>}
+          {checkoutState.error && (
+            <p className="text-sm text-error">{checkoutState.error}</p>
+          )}
 
           {selected && (
             <ConfirmDialog
-              open={confirming}
-              onClose={() => setConfirming(false)}
+              open={confirming !== null}
+              onClose={() => setConfirming(null)}
               title="Confirmes la compra del val?"
               actions={
                 <>
                   <button
                     type="button"
-                    onClick={() => setConfirming(false)}
+                    onClick={() => setConfirming(null)}
                     className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
                   >
                     Cancel·lar
                   </button>
-                  <SubmitButton pendingLabel="Creant el val…" disabled={!acceptsTerms}>
-                    Confirmar
-                  </SubmitButton>
+                  {confirming === "card" ? (
+                    <SubmitButton
+                      formAction={checkoutAction}
+                      pendingLabel="Anant a Stripe…"
+                      disabled={!acceptsTerms}
+                    >
+                      Pagar amb targeta
+                    </SubmitButton>
+                  ) : (
+                    <SubmitButton pendingLabel="Creant el val…" disabled={!acceptsTerms}>
+                      Confirmar
+                    </SubmitButton>
+                  )}
                 </>
               }
             >
@@ -238,9 +264,20 @@ export function GiftVoucherForm({
                   </p>
                 </div>
                 <p className="text-brand-charcoal">
-                  En confirmar es genera el val amb el seu codi i el podràs
-                  descarregar. <strong>No serà bescanviable</strong> fins que
-                  paguis al centre i s&apos;hi confirmi el cobrament.
+                  {confirming === "card" ? (
+                    <>
+                      Et portem a la pàgina de pagament de Stripe. El val es
+                      genera quan el pagament es confirmi i ja neix{" "}
+                      <strong>bescanviable</strong>; si no acabes de pagar, no es
+                      crea res.
+                    </>
+                  ) : (
+                    <>
+                      En confirmar es genera el val amb el seu codi i el podràs
+                      descarregar. <strong>No serà bescanviable</strong> fins que
+                      paguis al centre i s&apos;hi confirmi el cobrament.
+                    </>
+                  )}
                 </p>
 
                 <label className="flex cursor-pointer items-start gap-2.5 text-brand-charcoal">
@@ -287,14 +324,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 // ───────────────────────── Pantalla d'èxit ─────────────────────────
 
-function VoucherReady({
+export function VoucherReady({
   voucher,
   defaultEmail,
   recipientName,
+  /**
+   * Ja cobrat? Un val pagat amb targeta neix 'active' i es pot bescanviar de
+   * seguida; un de pagat al centre encara no. La pantalla és la mateixa, però
+   * dir-li al client que "s'activarà quan paguis" quan ja ha pagat seria fals.
+   */
+  alreadyPaid = false,
 }: {
   voucher: { id: string; code: string; expiresAt: string; packageName: string };
   defaultEmail: string;
   recipientName: string;
+  alreadyPaid?: boolean;
 }) {
   const [sendState, sendAction] = useActionState(
     sendGiftVoucherAction,
@@ -312,12 +356,16 @@ function VoucherReady({
     <div className="flex max-w-xl flex-col gap-5">
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
         <AnimatedFeedback type="success" />
-        <p className="text-xl font-bold text-success">El val ja és teu</p>
+        <p className="text-xl font-bold text-success">
+          {alreadyPaid ? "Pagament confirmat" : "El val ja és teu"}
+        </p>
         <p className="max-w-sm text-sm text-brand-muted">
           {recipientName
             ? `Ja pots donar-li a ${recipientName}.`
             : "Ja el pots regalar."}{" "}
-          Recorda que s&apos;activarà quan paguis al centre.
+          {alreadyPaid
+            ? "Ja està pagat i és bescanviable des d'ara."
+            : "Recorda que s'activarà quan paguis al centre."}
         </p>
 
         <div className="mt-2 flex flex-col items-center gap-2">

@@ -226,6 +226,7 @@ export interface Database {
           expires_at: string | null;
           first_reservation_at: string | null;
           gift_voucher_id: string | null;
+          stripe_checkout_session_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -240,6 +241,7 @@ export interface Database {
           expires_at?: string | null;
           first_reservation_at?: string | null;
           gift_voucher_id?: string | null;
+          stripe_checkout_session_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -254,6 +256,7 @@ export interface Database {
           expires_at?: string | null;
           first_reservation_at?: string | null;
           gift_voucher_id?: string | null;
+          stripe_checkout_session_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -278,6 +281,7 @@ export interface Database {
           redeemed_by_client_id: string | null;
           redeemed_bono_id: string | null;
           pdf_path: string | null;
+          stripe_checkout_session_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -299,6 +303,7 @@ export interface Database {
           redeemed_by_client_id?: string | null;
           redeemed_bono_id?: string | null;
           pdf_path?: string | null;
+          stripe_checkout_session_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -320,6 +325,7 @@ export interface Database {
           redeemed_by_client_id?: string | null;
           redeemed_bono_id?: string | null;
           pdf_path?: string | null;
+          stripe_checkout_session_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
