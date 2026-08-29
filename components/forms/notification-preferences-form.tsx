@@ -47,15 +47,14 @@ export function NotificationPreferencesForm({
           Notificacions
         </h2>
         <p className="mt-1 text-xs text-brand-muted">
-          Tria com vols rebre cada avís. WhatsApp arribarà pròximament.
+          Tria de quins avisos vols rebre un correu.
         </p>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-brand-border">
-        <div className="grid grid-cols-[1fr_5rem_6rem] items-center gap-2 border-b border-brand-border bg-brand-bg px-4 py-2 text-xs font-bold tracking-wide text-brand-muted uppercase">
+        <div className="grid grid-cols-[1fr_5rem] items-center gap-2 border-b border-brand-border bg-brand-bg px-4 py-2 text-xs font-bold tracking-wide text-brand-muted uppercase">
           <span>Avís</span>
           <span className="text-center">Email</span>
-          <span className="text-center">WhatsApp</span>
         </div>
 
         {groups.map(({ group, events: groupEvents }) => (
@@ -96,7 +95,7 @@ function PrefRow({
 }) {
   const meta = EVENT_META[type];
   return (
-    <div className="grid grid-cols-[1fr_5rem_6rem] items-center gap-2 border-b border-brand-border px-4 py-3 last:border-0">
+    <div className="grid grid-cols-[1fr_5rem] items-center gap-2 border-b border-brand-border px-4 py-3 last:border-0">
       <div>
         <div className="text-sm font-bold text-brand-dark">{meta.label}</div>
         <div className="text-xs text-brand-muted">{meta.description}</div>
@@ -109,18 +108,6 @@ function PrefRow({
           className="h-5 w-5 accent-brand-purple"
           aria-label={`${meta.label} per email`}
         />
-      </div>
-      <div className="flex flex-col items-center gap-0.5">
-        <input
-          type="checkbox"
-          name={prefKey(type, "whatsapp")}
-          disabled
-          className="h-5 w-5 cursor-not-allowed opacity-40"
-          aria-label={`${meta.label} per WhatsApp (pròximament)`}
-        />
-        <span className="rounded bg-brand-bg px-1 text-[9px] font-bold text-brand-muted uppercase">
-          Pròximament
-        </span>
       </div>
     </div>
   );

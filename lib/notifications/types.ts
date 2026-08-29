@@ -32,7 +32,16 @@ export type NotificationEventType =
   // Avís intern cap a qui desenvolupa l'app (no és cap usuari del centre):
   | "support_ticket_created";
 
-export type NotificationChannel = "email" | "whatsapp";
+/**
+ * Canal d'enviament. Només email.
+ *
+ * Es manté com a tipus d'un sol valor i no s'elimina perquè
+ * `notification_log.channel` i `alreadySent()` el segueixen fent servir per
+ * distingir enviaments, i el dia que entri un canal nou (SMS, push) el punt
+ * d'extensió ja és aquí. WhatsApp va sortir a la 0055: mai va arribar a
+ * enviar res.
+ */
+export type NotificationChannel = "email";
 
 export type NotificationLogStatus = "sent" | "failed" | "skipped_preference";
 

@@ -7,63 +7,43 @@ import type {
 export type PreferenceKey = `${NotificationEventType}_${NotificationChannel}`;
 
 /**
- * Preferències per defecte. L'essencial activat per email; la resta i tot
- * WhatsApp desactivat (WhatsApp encara no funciona).
+ * Preferències per defecte. Només email: l'essencial activat, la resta no.
  */
 export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   reservation_confirmed_email: true,
-  reservation_confirmed_whatsapp: false,
   reservation_cancelled_email: true,
-  reservation_cancelled_whatsapp: false,
   session_reminder_email: false,
-  session_reminder_whatsapp: false,
   trial_request_email: false,
-  trial_request_whatsapp: false,
   trial_status_email: true,
-  trial_status_whatsapp: false,
   bono_low_email: false,
-  bono_low_whatsapp: false,
   // Actiu per defecte: que un bo pagat estigui a punt de caducar és
   // informació que el client vol tenir, no una comoditat opcional.
   bono_expiring_soon_email: true,
-  bono_expiring_soon_whatsapp: false,
   // Al client se li han cancel·lat sessions: assabentar-se'n no és opcional.
   bono_unpaid_cancelled_email: true,
-  bono_unpaid_cancelled_whatsapp: false,
   community_email: false,
-  community_whatsapp: false,
   // Avisos del professional sobre la seva agenda (operatius = true).
   trainer_booking_received_email: true,
-  trainer_booking_received_whatsapp: false,
   trainer_booking_cancelled_email: true,
-  trainer_booking_cancelled_whatsapp: false,
   trainer_daily_agenda_email: false,
-  trainer_daily_agenda_whatsapp: false,
   // Avís a l'admin quan algú es registra (email actiu per defecte).
   new_client_registered_email: true,
-  new_client_registered_whatsapp: false,
   // Avís manual (trainer acciona explícitament) — desactivat a preferències.
   new_exercises_assigned_email: false,
-  new_exercises_assigned_whatsapp: false,
   // La factura s'envia sempre amb `ignorePreferences`; aquestes claus no tenen
   // columna a BD ni surten a la UI, hi són perquè el tipus quedi complet.
   invoice_generated_email: false,
-  invoice_generated_whatsapp: false,
   // Igual: el tiquet de suport va a qui desenvolupa l'app, que no té perfil
   // ni preferències. També s'envia amb `ignorePreferences`.
   support_ticket_created_email: false,
-  support_ticket_created_whatsapp: false,
   // Actiu per defecte: se t'acaba de crear una reserva sense demanar-la en
   // aquell moment; assabentar-se'n no és opcional.
   waitlist_fulfilled_email: true,
-  waitlist_fulfilled_whatsapp: false,
   // Actiu per defecte: qui ha pagat un regal vol saber que ha arribat.
   gift_voucher_redeemed_email: true,
-  gift_voucher_redeemed_whatsapp: false,
   // El correu del regal el dispara qui compra cap a una adreça que escriu ell;
   // no hi ha cap perfil ni cap preferència a consultar (ignorePreferences).
   gift_voucher_gifted_email: false,
-  gift_voucher_gifted_whatsapp: false,
 };
 
 /**

@@ -12,8 +12,7 @@ export type PrefsFormState = { error?: string; ok?: boolean };
 
 /**
  * Desa les preferències de notificació del propi usuari (viewer). Només toca
- * les claus vàlides. Els canals WhatsApp arriben sempre desactivats des de la
- * UI (encara no funcionen).
+ * les claus vàlides.
  */
 export async function updateNotificationPreferencesAction(
   _prev: PrefsFormState,

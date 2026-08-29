@@ -9,16 +9,10 @@ import {
 } from "@/lib/notifications/preferences-defaults";
 import { writeLog, alreadySent } from "@/lib/notifications/log";
 import { sendViaEmail } from "@/lib/notifications/channels/email";
-import { sendViaWhatsApp } from "@/lib/notifications/channels/whatsapp";
-import type {
-  NotificationChannel,
-  NotificationEvent,
-} from "@/lib/notifications/types";
+import type { NotificationEvent } from "@/lib/notifications/types";
 
 export type { NotificationEvent } from "@/lib/notifications/types";
 export { alreadySent } from "@/lib/notifications/log";
-
-const CHANNELS: NotificationChannel[] = ["email", "whatsapp"];
 
 /**
  * Punt únic d'enviament. Resol les preferències del destinatari i, per cada
@@ -37,35 +31,32 @@ export async function notify(
       ? await getPreferences(recipient.profileId)
       : { ...DEFAULT_PREFERENCES };
 
-    for (const channel of CHANNELS) {
-      const key = prefKey(event.type, channel);
-      if (!opts?.ignorePreferences && !prefs[key]) {
-        await writeLog({
-          profileId: recipient.profileId,
-          recipient: channel === "email" ? recipient.email : recipient.phone,
-          eventType: event.type,
-          channel,
-          status: "skipped_preference",
-          relatedId: event.relatedId ?? null,
-        });
-        continue;
-      }
-
-      const result =
-        channel === "email"
-          ? await sendViaEmail(event, recipient)
-          : await sendViaWhatsApp(event, recipient);
-
+    // Un sol canal: l'email. El bucle sobre canals que hi havia aquí només
+    // servia per acompanyar-lo d'un WhatsApp que mai va enviar res.
+    const key = prefKey(event.type, "email");
+    if (!opts?.ignorePreferences && !prefs[key]) {
       await writeLog({
         profileId: recipient.profileId,
-        recipient: channel === "email" ? recipient.email : recipient.phone,
+        recipient: recipient.email,
         eventType: event.type,
-        channel,
-        status: result.status,
-        error: result.error ?? null,
+        channel: "email",
+        status: "skipped_preference",
         relatedId: event.relatedId ?? null,
       });
+      return;
     }
+
+    const result = await sendViaEmail(event, recipient);
+
+    await writeLog({
+      profileId: recipient.profileId,
+      recipient: recipient.email,
+      eventType: event.type,
+      channel: "email",
+      status: result.status,
+      error: result.error ?? null,
+      relatedId: event.relatedId ?? null,
+    });
   } catch {
     // Best-effort absolut: mai tombar el flux de negoci per una notificació.
   }
