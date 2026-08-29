@@ -2,19 +2,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExerciseForm } from "@/components/forms/exercise-form";
 import { getExercise } from "@/lib/data/exercises";
+import { listExerciseCategories } from "@/lib/data/exercise-categories";
 import { updateExerciseAction } from "@/lib/actions/exercise-actions";
 
 export const dynamic = "force-dynamic";
 
 const BASE = "/admin/exercicis";
 
-export default async function EditExercisePage({
+export default async function EditAdminExercisePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const exercise = await getExercise(id);
+  const [exercise, categories] = await Promise.all([
+    getExercise(id),
+    listExerciseCategories(),
+  ]);
   if (!exercise) notFound();
 
   return (
@@ -31,9 +35,11 @@ export default async function EditExercisePage({
         action={updateExerciseAction.bind(null, BASE, id)}
         submitLabel="Desar canvis"
         cancelHref={BASE}
+        categories={categories}
+        basePath={BASE}
         defaults={{
           name: exercise.name,
-          category: exercise.category,
+          categoryId: exercise.categoryId,
           description: exercise.description ?? "",
           videoUrl: exercise.videoUrl ?? "",
           videoFilePath: exercise.videoFilePath,

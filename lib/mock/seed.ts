@@ -15,6 +15,7 @@ type Reservation = Database["public"]["Tables"]["reservations"]["Row"];
 type Payment = Database["public"]["Tables"]["payments"]["Row"];
 type Service = Database["public"]["Tables"]["services"]["Row"];
 type Exercise = Database["public"]["Tables"]["exercises"]["Row"];
+type ExerciseCategoryRow = Database["public"]["Tables"]["exercise_categories"]["Row"];
 type ExerciseProgress = Database["public"]["Tables"]["exercise_progress"]["Row"];
 type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 type ClientExercise = Database["public"]["Tables"]["client_exercises"]["Row"];
@@ -68,10 +69,20 @@ export const seedServices: Service[] = [
   { id: "s-fis-10", service_type: "fisioterapia", name: "Bo de 10 sessions", price: 420, default_sessions: 10, active: true, created_at: now },
 ];
 
+// Les mateixes que sembra la 0057.
+export const seedExerciseCategories: ExerciseCategoryRow[] = [
+  { id: "cat-forca", name: "Força", created_at: now },
+  { id: "cat-mobilitat", name: "Mobilitat", created_at: now },
+  { id: "cat-cardio", name: "Cardio", created_at: now },
+  { id: "cat-rehabilitacio", name: "Rehabilitació", created_at: now },
+  { id: "cat-core", name: "Core", created_at: now },
+];
+
 export const seedExercises: Exercise[] = [
-  { id: "e-esquat", name: "Esquat amb barra", category: "forca", description: "Treball de cames i glutis. Mantingues l'esquena recta.", video_url: "https://www.youtube.com/watch?v=ultWZbUMPL8", video_file_path: null, created_at: now },
-  { id: "e-planxa", name: "Planxa abdominal", category: "core", description: "Manté el cos alineat 30-60 segons.", video_url: null, video_file_path: null, created_at: now },
-  { id: "e-mobilitat-malucs", name: "Mobilitat de malucs", category: "mobilitat", description: "Rutina de mobilitat articular per a malucs.", video_url: null, video_file_path: null, created_at: now },
+  { id: "e-esquat", name: "Esquat amb barra", category: "cat-forca", description: "Treball de cames i glutis. Mantingues l'esquena recta.", video_url: "https://www.youtube.com/watch?v=ultWZbUMPL8", video_file_path: null, created_at: now },
+  { id: "e-planxa", name: "Planxa abdominal", category: "cat-core", description: "Manté el cos alineat 30-60 segons.", video_url: null, video_file_path: null, created_at: now },
+  { id: "e-mobilitat-malucs", name: "Mobilitat de malucs", category: "cat-mobilitat", description: "Rutina de mobilitat articular per a malucs.", video_url: null, video_file_path: null, created_at: now },
+  { id: "e-cinta", name: "Cinta de córrer", category: "cat-cardio", description: "20 minuts a ritme suau.", video_url: "https://vimeo.com/76979871", video_file_path: null, created_at: now },
 ];
 
 export const seedAvailabilityRules: AvailabilityRule[] = [

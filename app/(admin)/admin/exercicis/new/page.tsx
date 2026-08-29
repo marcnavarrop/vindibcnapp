@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { ExerciseForm } from "@/components/forms/exercise-form";
+import { listExerciseCategories } from "@/lib/data/exercise-categories";
 import { createExerciseAction } from "@/lib/actions/exercise-actions";
+
+export const dynamic = "force-dynamic";
 
 const BASE = "/admin/exercicis";
 
-export default function NewExercisePage() {
+export default async function NewAdminExercisePage() {
+  const categories = await listExerciseCategories();
+
   return (
     <main className="mx-auto max-w-5xl p-6">
       <Link
@@ -19,6 +24,8 @@ export default function NewExercisePage() {
         action={createExerciseAction.bind(null, BASE)}
         submitLabel="Crear exercici"
         cancelHref={BASE}
+        categories={categories}
+        basePath={BASE}
       />
     </main>
   );

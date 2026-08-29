@@ -9,6 +9,7 @@ import {
   seedReservations,
   seedPayments,
   seedServices,
+  seedExerciseCategories,
   seedExercises,
   seedExerciseProgress,
   seedAnnouncements,
@@ -34,6 +35,7 @@ export type Store = {
   reservations: Tables["reservations"]["Row"][];
   payments: Tables["payments"]["Row"][];
   services: Tables["services"]["Row"][];
+  exercise_categories: Tables["exercise_categories"]["Row"][];
   exercises: Tables["exercises"]["Row"][];
   exercise_progress: Tables["exercise_progress"]["Row"][];
   announcements: Tables["announcements"]["Row"][];
@@ -86,6 +88,7 @@ function fromSeed(): Store {
     reservations: structuredClone(seedReservations),
     payments: structuredClone(seedPayments),
     services: structuredClone(seedServices),
+    exercise_categories: structuredClone(seedExerciseCategories),
     exercises: structuredClone(seedExercises),
     exercise_progress: structuredClone(seedExerciseProgress),
     announcements: structuredClone(seedAnnouncements),

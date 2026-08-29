@@ -2,12 +2,14 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore, saveStore } from "@/lib/mock/store";
-import type { ExerciseCategory } from "@/types/database";
 
 export type Exercise = {
   id: string;
   name: string;
-  category: ExerciseCategory;
+  /** FK a exercise_categories (0057). */
+  categoryId: string;
+  /** El nom que es veu. Ve de la taula, ja no d'un mapa d'etiquetes. */
+  categoryName: string;
   description: string | null;
   videoUrl: string | null;
   videoFilePath: string | null;
@@ -15,7 +17,7 @@ export type Exercise = {
 
 export type ExerciseInput = {
   name: string;
-  category: ExerciseCategory;
+  categoryId: string;
   description: string | null;
   videoUrl: string | null;
   videoFilePath: string | null;
@@ -24,45 +26,72 @@ export type ExerciseInput = {
 type Row = {
   id: string;
   name: string;
-  category: ExerciseCategory;
+  category: string;
   description: string | null;
   video_url: string | null;
   video_file_path: string | null;
+  cat?: { name: string } | null;
 };
 
 const toExercise = (r: Row): Exercise => ({
   id: r.id,
   name: r.name,
-  category: r.category,
+  categoryId: r.category,
+  categoryName: r.cat?.name ?? "—",
   description: r.description,
   videoUrl: r.video_url,
   videoFilePath: r.video_file_path,
 });
 
-export async function listExercises(): Promise<Exercise[]> {
-  if (USE_MOCK) return getStore().exercises.map(toExercise);
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("exercises")
-    .select("id, name, category, description, video_url, video_file_path")
-    .order("name", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(toExercise);
-}
+/** El nom de la categoria s'incrusta sempre: la biblioteca l'ensenya a cada fitxa. */
+const SELECT =
+  "id, name, category, description, video_url, video_file_path, cat:exercise_categories!exercises_category_fkey(name)";
 
-export async function getExercise(id: string): Promise<Exercise | null> {
+export async function listExercises(): Promise<Exercise[]> {
   if (USE_MOCK) {
-    const e = getStore().exercises.find((x) => x.id === id);
-    return e ? toExercise(e) : null;
+    const store = getStore();
+    return store.exercises.map((e) =>
+      toExercise({
+        ...e,
+        cat: {
+          name:
+            store.exercise_categories.find((c) => c.id === e.category)?.name ??
+            "—",
+        },
+      } as unknown as Row),
+    );
   }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("exercises")
-    .select("id, name, category, description, video_url, video_file_path")
+    .select(SELECT)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data as unknown as Row[]).map(toExercise);
+}
+
+export async function getExercise(id: string): Promise<Exercise | null> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const e = store.exercises.find((x) => x.id === id);
+    if (!e) return null;
+    return toExercise({
+      ...e,
+      cat: {
+        name:
+          store.exercise_categories.find((c) => c.id === e.category)?.name ??
+          "—",
+      },
+    } as unknown as Row);
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("exercises")
+    .select(SELECT)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data ? toExercise(data) : null;
+  return data ? toExercise(data as unknown as Row) : null;
 }
 
 export async function createExercise(input: ExerciseInput): Promise<string> {
@@ -72,7 +101,7 @@ export async function createExercise(input: ExerciseInput): Promise<string> {
     store.exercises.push({
       id,
       name: input.name,
-      category: input.category,
+      category: input.categoryId,
       description: input.description,
       video_url: input.videoUrl,
       video_file_path: input.videoFilePath,
@@ -86,7 +115,7 @@ export async function createExercise(input: ExerciseInput): Promise<string> {
     .from("exercises")
     .insert({
       name: input.name,
-      category: input.category,
+      category: input.categoryId,
       description: input.description,
       video_url: input.videoUrl,
       video_file_path: input.videoFilePath,
@@ -107,7 +136,7 @@ export async function updateExercise(
     const e = store.exercises.find((x) => x.id === id);
     if (!e) throw new Error("Exercici no trobat.");
     e.name = input.name;
-    e.category = input.category;
+    e.category = input.categoryId;
     e.description = input.description;
     e.video_url = input.videoUrl;
     e.video_file_path = input.videoFilePath;
@@ -126,7 +155,7 @@ export async function updateExercise(
     .from("exercises")
     .update({
       name: input.name,
-      category: input.category,
+      category: input.categoryId,
       description: input.description,
       video_url: input.videoUrl,
       video_file_path: input.videoFilePath,

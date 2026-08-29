@@ -2,13 +2,12 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore, saveStore } from "@/lib/mock/store";
-import type { ExerciseCategory } from "@/types/database";
 
 export type AssignedExercise = {
   id: string; // id de la asignación (client_exercises.id)
   exerciseId: string;
   name: string;
-  category: ExerciseCategory;
+  categoryName: string;
   description: string | null;
   videoUrl: string | null;
   videoFilePath: string | null;
@@ -30,7 +29,9 @@ export async function listClientExercises(
           id: ce.id,
           exerciseId: ce.exercise_id,
           name: ex?.name ?? "—",
-          category: (ex?.category ?? "forca") as ExerciseCategory,
+          categoryName:
+            store.exercise_categories.find((c) => c.id === ex?.category)?.name ??
+            "—",
           description: ex?.description ?? null,
           videoUrl: ex?.video_url ?? null,
           videoFilePath: ex?.video_file_path ?? null,
@@ -46,7 +47,10 @@ export async function listClientExercises(
     .from("client_exercises")
     .select(
       `id, exercise_id, notes, assigned_at,
-       exercise:exercises!client_exercises_exercise_id_fkey(name, category, description, video_url, video_file_path)`,
+       exercise:exercises!client_exercises_exercise_id_fkey(
+         name, description, video_url, video_file_path,
+         cat:exercise_categories!exercises_category_fkey(name)
+       )`,
     )
     .eq("client_id", clientId)
     .order("assigned_at", { ascending: false });
@@ -59,17 +63,17 @@ export async function listClientExercises(
     assigned_at: string;
     exercise: {
       name: string;
-      category: ExerciseCategory;
       description: string | null;
       video_url: string | null;
       video_file_path: string | null;
+      cat: { name: string } | null;
     } | null;
   };
   return (data as unknown as Row[]).map((r) => ({
     id: r.id,
     exerciseId: r.exercise_id,
     name: r.exercise?.name ?? "—",
-    category: r.exercise?.category ?? "forca",
+    categoryName: r.exercise?.cat?.name ?? "—",
     description: r.exercise?.description ?? null,
     videoUrl: r.exercise?.video_url ?? null,
     videoFilePath: r.exercise?.video_file_path ?? null,

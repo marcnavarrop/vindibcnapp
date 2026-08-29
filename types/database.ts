@@ -112,12 +112,6 @@ export type BonusTierLine = {
 export type PaymentMethod = "card" | "cash";
 export type DiscountType = "percentage" | "fixed_amount";
 export type PromotionScope = "service" | "package";
-export type ExerciseCategory =
-  | "forca"
-  | "mobilitat"
-  | "cardio"
-  | "rehabilitacio"
-  | "core";
 
 export interface Database {
   public: {
@@ -531,11 +525,29 @@ export interface Database {
         };
         Relationships: [];
       };
+      exercise_categories: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       exercises: {
         Row: {
           id: string;
           name: string;
-          category: ExerciseCategory;
+          category: string;
           description: string | null;
           video_url: string | null;
           video_file_path: string | null;
@@ -544,7 +556,7 @@ export interface Database {
         Insert: {
           id?: string;
           name: string;
-          category: ExerciseCategory;
+          category: string;
           description?: string | null;
           video_url?: string | null;
           video_file_path?: string | null;
@@ -553,7 +565,7 @@ export interface Database {
         Update: {
           id?: string;
           name?: string;
-          category?: ExerciseCategory;
+          category?: string;
           description?: string | null;
           video_url?: string | null;
           video_file_path?: string | null;
@@ -1440,7 +1452,6 @@ export interface Database {
       reservation_status: ReservationStatus;
       trial_status: TrialStatus;
       payment_method: PaymentMethod;
-      exercise_category: ExerciseCategory;
       discount_type: DiscountType;
       promotion_scope: PromotionScope;
       bonus_payout_frequency: BonusPayoutFrequency;

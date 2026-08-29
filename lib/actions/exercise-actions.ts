@@ -14,9 +14,7 @@ import {
   uploadExerciseVideo,
   validateExerciseVideo,
 } from "@/lib/data/exercise-videos";
-import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
-import type { ExerciseCategory } from "@/types/database";
 
 /**
  * Accions de la biblioteca d'exercicis, compartides per l'admin i el
@@ -68,7 +66,7 @@ async function parse(formData: FormData): Promise<{ input: ExerciseInput } | { e
   return {
     input: {
       name: str("name"),
-      category: formData.get("category") as ExerciseCategory,
+      categoryId: str("category"),
       description: str("description") || null,
       videoUrl,
       videoFilePath,
@@ -78,8 +76,9 @@ async function parse(formData: FormData): Promise<{ input: ExerciseInput } | { e
 
 function validate(input: ExerciseInput): string | null {
   if (!input.name) return "El nom és obligatori.";
-  if (!(input.category in EXERCISE_CATEGORY_LABELS))
-    return "Tria una categoria.";
+  // Que la categoria existeixi ho garanteix la clau forana de la 0057: aquí
+  // només cal que se n'hagi triat una.
+  if (!input.categoryId) return "Tria una categoria.";
   return null;
 }
 

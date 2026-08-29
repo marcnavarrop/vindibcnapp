@@ -4,7 +4,7 @@ import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { Badge } from "@/components/ui/badge";
-import { EXERCISE_CATEGORY_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import { ExerciseVideoPlayer } from "@/components/exercise-video-player";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ export default async function ClientExercicisPage() {
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg text-brand-dark">{a.name}</h3>
                   <Badge tone="info">
-                    {EXERCISE_CATEGORY_LABELS[a.category]}
+                    {a.categoryName}
                   </Badge>
                 </div>
                 {a.notes && (
@@ -126,7 +126,7 @@ export default async function ClientExercicisPage() {
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg text-brand-dark">{e.name}</h3>
                   <Badge tone="info">
-                    {EXERCISE_CATEGORY_LABELS[e.category]}
+                    {e.categoryName}
                   </Badge>
                 </div>
                 {e.description && (

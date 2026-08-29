@@ -6,7 +6,6 @@ import type {
   ReservationStatus,
   PaymentMethod,
   UserRole,
-  ExerciseCategory,
   Specialty,
   PreferredLanguage,
   Gender,
@@ -44,14 +43,6 @@ export const GENDER_LABELS: Record<Gender, string> = {
   dona: "Dona",
   altre: "Altre",
   ns_nc: "Prefereixo no dir-ho",
-};
-
-export const EXERCISE_CATEGORY_LABELS: Record<ExerciseCategory, string> = {
-  forca: "Força",
-  mobilitat: "Mobilitat",
-  cardio: "Cardio",
-  rehabilitacio: "Rehabilitació",
-  core: "Core",
 };
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {

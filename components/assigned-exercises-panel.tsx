@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { EXERCISE_CATEGORY_LABELS } from "@/lib/labels";
 import { ExerciseVideoPlayer } from "@/components/exercise-video-player";
 import type { AssignedExercise } from "@/lib/data/client-exercises";
 import type { Exercise } from "@/lib/data/exercises";
@@ -51,7 +50,7 @@ export function AssignedExercisesPanel({
                   videoFilePath={a.videoFilePath}
                 />
               </div>
-              <Badge tone="info">{EXERCISE_CATEGORY_LABELS[a.category]}</Badge>
+              <Badge tone="info">{a.categoryName}</Badge>
               {canManage && (
                 <form action={removeAction} className="ml-auto">
                   <input type="hidden" name="id" value={a.id} />

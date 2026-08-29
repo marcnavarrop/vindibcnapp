@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listExercises } from "@/lib/data/exercises";
+import { listExerciseCategories } from "@/lib/data/exercise-categories";
 import { deleteExerciseAction } from "@/lib/actions/exercise-actions";
 import { ExerciseLibrary } from "@/components/exercise-library";
 
@@ -7,8 +8,11 @@ export const dynamic = "force-dynamic";
 
 const BASE = "/admin/exercicis";
 
-export default async function ExercicisPage() {
-  const exercises = await listExercises();
+export default async function AdminExercicisPage() {
+  const [exercises, categories] = await Promise.all([
+    listExercises(),
+    listExerciseCategories(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -24,6 +28,7 @@ export default async function ExercicisPage() {
 
       <ExerciseLibrary
         exercises={exercises}
+        categories={categories}
         basePath={BASE}
         deleteAction={deleteExerciseAction.bind(null, BASE)}
       />
