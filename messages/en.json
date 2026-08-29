@@ -1,0 +1,107 @@
+{
+  "language": {
+    "label": "Language",
+    "aria": "Change language"
+  },
+  "legal": {
+    "privacy": "Privacy",
+    "notice": "Legal notice",
+    "cookies": "Cookies"
+  },
+  "login": {
+    "metaTitle": "Sign in · VindiBCN",
+    "metaDescription": "Access your personal VindiBCN space: bookings, packages and centre news.",
+    "title": "Welcome back",
+    "subtitle": "Sign in to access your personal space and keep looking after yourself.",
+    "email": "Email address",
+    "emailPlaceholder": "example@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "forgot": "Forgotten your password?",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "createAccount": "Create account",
+    "errorNoSession": "We couldn't sign you in. Please try again.",
+    "errorConnection": "There was a connection problem. Please try again.",
+    "demoTitle": "Sign in (demo mode)",
+    "demoSubtitle": "Simulation without Supabase. Choose which role to enter as; the data is sample data.",
+    "demoEnterAs": "Enter as {role}"
+  },
+  "register": {
+    "title": "Create account",
+    "createdTitle": "Account created",
+    "fullName": "Full name",
+    "email": "Email address",
+    "password": "Password",
+    "language": "Language",
+    "languageHint": "Which language you'd like the app in. You can change it any time.",
+    "referral": "Referral code (optional)",
+    "referralPlaceholder": "E.g. ANF-2K4M",
+    "acceptPre": "I have read and accept the",
+    "acceptMid": "and the",
+    "privacyPolicy": "Privacy Policy",
+    "legalNotice": "Legal Notice",
+    "submit": "Create account",
+    "submitting": "Creating…",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "createdBody": "Check your email if email confirmation is enabled. Then you can",
+    "createdSignIn": "sign in",
+    "errorPrivacy": "You must accept the Privacy Policy and the Legal Notice to continue.",
+    "errorGeneric": "We couldn't create the account. Please try again."
+  },
+  "home": {
+    "greeting": "Hi, {name}! 👋",
+    "welcome": "We're glad to have you here.",
+    "noClientRecord": "You don't have a client record yet. Talk to the centre to set one up.",
+    "kpi": {
+      "remainingSessions": "Sessions left",
+      "activeBonos": "Active packages",
+      "bonoInProgress": "package in progress",
+      "bonosInProgress": "packages in progress",
+      "upcoming": "Upcoming bookings",
+      "nextSevenDays": "the next 7 days",
+      "attendance": "Attendance",
+      "noClosedSessions": "no completed sessions",
+      "scheduled": "of {total} scheduled"
+    },
+    "actions": {
+      "book": "Book a session",
+      "buyBono": "Buy a package",
+      "myWorkouts": "My workouts"
+    },
+    "bonos": {
+      "title": "Active packages",
+      "seeAll": "See all packages →",
+      "empty": "You don't have any active packages yet.",
+      "emptyCta": "Buy one",
+      "emptyTail": "to start booking.",
+      "noExpiry": "No expiry date"
+    },
+    "upcoming": {
+      "title": "Upcoming bookings",
+      "seeAll": "See all →",
+      "none": "You have no upcoming bookings.",
+      "bookOne": "Book a session"
+    },
+    "community": "Community"
+  },
+  "brand": {
+    "headline": "Your centre, within reach",
+    "subtitle": "Manage your bookings, check your sessions and your active plans, all in one place.",
+    "features": {
+      "book": {
+        "title": "Book in 1 click",
+        "desc": "Book or cancel in seconds."
+      },
+      "bonos": {
+        "title": "Package tracking",
+        "desc": "Sessions and packages, always up to date."
+      },
+      "community": {
+        "title": "Community and news",
+        "desc": "News and updates from the centre."
+      }
+    }
+  }
+}

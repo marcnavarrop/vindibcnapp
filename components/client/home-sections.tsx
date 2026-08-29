@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
@@ -105,34 +106,35 @@ function IconBox({ name }: { name: IconName }) {
 
 // ─────────────────────────── KPIs ───────────────────────────
 
-export function KpiRow({ kpis }: { kpis: ClientKpis }) {
+export async function KpiRow({ kpis }: { kpis: ClientKpis }) {
+  const t = await getTranslations("home.kpi");
   const cards: { icon: IconName; label: string; value: string; hint: string }[] =
     [
       {
         icon: "calendar",
-        label: "Sessions restants",
+        label: t("remainingSessions"),
         value: String(kpis.remainingSessions),
-        hint: `de ${kpis.totalSessions} programades`,
+        hint: t("scheduled", { total: kpis.totalSessions }),
       },
       {
         icon: "ticket",
-        label: "Bons actius",
+        label: t("activeBonos"),
         value: String(kpis.activeBonos),
-        hint: kpis.activeBonos === 1 ? "bo en curs" : "bons en curs",
+        hint: kpis.activeBonos === 1 ? t("bonoInProgress") : t("bonosInProgress"),
       },
       {
         icon: "calendarPlus",
-        label: "Properes reserves",
+        label: t("upcoming"),
         value: String(kpis.upcomingWeek),
-        hint: "els pròxims 7 dies",
+        hint: t("nextSevenDays"),
       },
       {
         icon: "chart",
-        label: "Assistència",
+        label: t("attendance"),
         value: kpis.attendancePct === null ? "—" : `${kpis.attendancePct}%`,
         hint:
           kpis.attendancePct === null
-            ? "sense sessions tancades"
+            ? t("noClosedSessions")
             : `${kpis.attendanceDone} de ${kpis.attendanceTotal} aquest mes`,
       },
     ];
@@ -182,11 +184,12 @@ export function KpiRow({ kpis }: { kpis: ClientKpis }) {
  * Sense capçalera: uns botons grossos i amb icona ja diuen què són, i el títol
  * només afegia una línia de text entre el resum de dalt i l'acció.
  */
-export function QuickActions() {
+export async function QuickActions() {
+  const t = await getTranslations("home.actions");
   const actions: { icon: IconName; label: string; href: string }[] = [
-    { icon: "calendarPlus", label: "Reservar sessió", href: "/client/reservas" },
-    { icon: "ticket", label: "Comprar bo", href: "/client/bonos" },
-    { icon: "dumbbell", label: "Els meus entrenaments", href: "/client/exercicis" },
+    { icon: "calendarPlus", label: t("book"), href: "/client/reservas" },
+    { icon: "ticket", label: t("buyBono"), href: "/client/bonos" },
+    { icon: "dumbbell", label: t("myWorkouts"), href: "/client/exercicis" },
   ];
 
   return (
@@ -215,31 +218,32 @@ const BONO_TONE: Partial<Record<BonoStatus, "success" | "warn">> = {
   pending_payment: "warn",
 };
 
-export function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
+export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
+  const t = await getTranslations("home.bonos");
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-3">
         <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
-          Bons actius
+          {t("title")}
         </h2>
         <Link
           href="/client/bonos/meus"
           className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
         >
-          Veure tots els bons →
+          {t("seeAll")}
         </Link>
       </div>
 
       {bonos.length === 0 ? (
         <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
-          Encara no tens cap bo actiu.{" "}
+          {t("empty")}{" "}
           <Link
             href="/client/bonos"
             className="font-bold text-brand-purple hover:text-brand-orange"
           >
-            Compra&apos;n un
+            {t("emptyCta")}
           </Link>{" "}
-          per començar a reservar.
+          {t("emptyTail")}
         </p>
       ) : (
         <ul className="grid gap-3 lg:grid-cols-3">
@@ -286,7 +290,7 @@ export function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
                   <Icon name="calendar" size={13} />
                   {b.expiresAt
                     ? `Caduca el ${formatDate(b.expiresAt)}`
-                    : "Sense data de caducitat"}
+                    : t("noExpiry")}
                 </p>
               </li>
             );
@@ -302,7 +306,7 @@ export function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
 /** Nom de pila: a la seva agenda ja sap de qui parla. */
 const firstName = (name: string | null) => (name ?? "").split(" ")[0] || "—";
 
-export function UpcomingReservations({
+export async function UpcomingReservations({
   reservations,
   avatars,
   palette,
@@ -313,30 +317,31 @@ export function UpcomingReservations({
   palette: ColorPalette;
   minCancellationHours: number;
 }) {
+  const tu = await getTranslations("home.upcoming");
   const minMs = minCancellationHours * 60 * 60 * 1000;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-brand-border px-5 py-3">
         <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
-          Properes reserves
+          {tu("title")}
         </h2>
         <Link
           href="/client/reservas"
           className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
         >
-          Veure totes →
+          {tu("seeAll")}
         </Link>
       </div>
 
       {reservations.length === 0 ? (
         <p className="px-5 py-6 text-sm text-brand-muted">
-          No tens cap reserva propera.{" "}
+          {tu("none")}{" "}
           <Link
             href="/client/reservas"
             className="font-bold text-brand-purple hover:text-brand-orange"
           >
-            Reserva una sessió
+            {tu("bookOne")}
           </Link>
           .
         </p>

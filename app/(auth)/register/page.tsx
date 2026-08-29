@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK } from "@/lib/config";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
 import { PasswordField } from "@/components/ui/password-field";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { LOCALES, type Locale } from "@/lib/i18n/config";
 import {
   recordRegistrationConsentAction,
   notifyNewRegistrationAction,
@@ -20,6 +23,17 @@ import {
  * Los roles admin/trainer se asignan después manualmente.
  */
 export default function RegisterPage() {
+  const t = useTranslations("register");
+  const tl = useTranslations("legal");
+  /**
+   * L'idioma que ja s'està veient és el que s'enviarà amb l'alta.
+   *
+   * El selector de dalt canvia la pantalla A L'INSTANT (cookie) i, en registrar-se,
+   * aquest mateix valor viatja al metadata del signUp perquè el trigger de la
+   * 0058 el desi al perfil. Així el que tria abans d'apuntar-se és el que es
+   * troba en entrar, sense haver de tornar-ho a dir a Configuració.
+   */
+  const locale = useLocale() as Locale;
   // Només queda com a estat el que controla la UI (el gate del checkbox);
   // els camps de text es llegeixen del FormData, immunes a l'autocompletat.
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
@@ -30,9 +44,7 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!acceptPrivacy) {
-      setError(
-        "Has d'acceptar la Política de Privacitat i l'Avís Legal per continuar.",
-      );
+      setError(t("errorPrivacy"));
       return;
     }
 
@@ -61,7 +73,12 @@ export default function RegisterPage() {
         password,
         options: {
           // Estos datos los lee el trigger handle_new_user().
-          data: { full_name: fullName, role: "client" },
+          data: {
+            full_name: fullName,
+            role: "client",
+            // El llegeix el trigger handle_new_user() (migració 0058).
+            preferred_language: LOCALES.includes(locale) ? locale : "ca",
+          },
         },
       });
 
@@ -89,11 +106,7 @@ export default function RegisterPage() {
       // Según la config de Supabase, puede requerir confirmación por email.
       setDone(true);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "No s'ha pogut crear el compte. Torna-ho a provar.",
-      );
+      setError(err instanceof Error ? err.message : t("errorGeneric"));
     } finally {
       // Xarxa de seguretat: el botó mai es queda penjat.
       setLoading(false);
@@ -105,15 +118,14 @@ export default function RegisterPage() {
       <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
         <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
           <Wordmark height={34} className="mb-4" />
-          <h1 className="text-xl text-brand-dark">Compte creat</h1>
+          <h1 className="text-xl text-brand-dark">{t("createdTitle")}</h1>
           <p className="mt-3 text-sm text-brand-muted">
-            Revisa el teu correu si la confirmació per email està activada.
-            Després podràs{" "}
+            {t("createdBody")}{" "}
             <Link
               href="/login"
               className="font-bold text-brand-purple hover:text-brand-orange"
             >
-              iniciar sessió
+              {t("createdSignIn")}
             </Link>
             .
           </p>
@@ -127,13 +139,13 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
         <div className="mb-8 flex flex-col gap-1">
           <Wordmark height={30} />
-          <h1 className="text-xl text-brand-dark">Crear compte</h1>
+          <h1 className="text-xl text-brand-dark">{t("title")}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Camps no controlats: els valors surten del FormData al submit. */}
           <Field
-            label="Nom complet"
+            label={t("fullName")}
             name="fullName"
             type="text"
             required
@@ -141,7 +153,7 @@ export default function RegisterPage() {
           />
 
           <Field
-            label="Correu electrònic"
+            label={t("email")}
             name="email"
             type="email"
             required
@@ -149,22 +161,27 @@ export default function RegisterPage() {
           />
 
           <PasswordField
-            label="Contrasenya"
+            label={t("password")}
             name="password"
             required
             minLength={6}
             autoComplete="new-password"
           />
 
+          <div className="flex flex-col gap-1">
+            <LanguageSwitcher current={locale} label={t("language")} />
+            <p className="text-xs text-brand-muted">{t("languageHint")}</p>
+          </div>
+
           {/* `uppercase` només afecta com es veu; el valor es normalitza en
               llegir-lo, sense necessitat d'estat de React. */}
           <Field
-            label="Codi de referit (opcional)"
+            label={t("referral")}
             name="referralCode"
             type="text"
             autoComplete="off"
             className="uppercase"
-            placeholder="Ex: ANF-2K4M"
+            placeholder={t("referralPlaceholder")}
           />
 
           <label className="flex items-start gap-2 text-sm text-brand-charcoal">
@@ -175,21 +192,21 @@ export default function RegisterPage() {
               className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
             />
             <span>
-              He llegit i accepto la{" "}
+              {t("acceptPre")}{" "}
               <Link
                 href="/legal/privacitat"
                 target="_blank"
                 className="font-bold text-brand-purple hover:text-brand-orange"
               >
-                Política de Privacitat
+                {t("privacyPolicy")}
               </Link>{" "}
-              i l&apos;{" "}
+              {t("acceptMid")}{" "}
               <Link
                 href="/legal/avis-legal"
                 target="_blank"
                 className="font-bold text-brand-purple hover:text-brand-orange"
               >
-                Avís Legal
+                {t("legalNotice")}
               </Link>
               .
             </span>
@@ -198,17 +215,17 @@ export default function RegisterPage() {
           {error && <p className="text-sm text-error">{error}</p>}
 
           <Button type="submit" disabled={loading || !acceptPrivacy}>
-            {loading ? "Creant…" : "Crear compte"}
+            {loading ? t("submitting") : t("submit")}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-xs text-brand-muted">
           <Link href="/legal/privacitat" className="hover:text-brand-purple">
-            Privacitat
+            {tl("privacy")}
           </Link>{" "}
           ·{" "}
           <Link href="/legal/avis-legal" className="hover:text-brand-purple">
-            Avís legal
+            {tl("notice")}
           </Link>{" "}
           ·{" "}
           <Link href="/legal/cookies" className="hover:text-brand-purple">
@@ -217,12 +234,12 @@ export default function RegisterPage() {
         </p>
 
         <p className="mt-6 text-sm text-brand-muted">
-          Ja tens compte?{" "}
+          {t("haveAccount")}{" "}
           <Link
             href="/login"
             className="font-bold text-brand-purple hover:text-brand-orange"
           >
-            Iniciar sessió
+            {t("signIn")}
           </Link>
         </p>
       </div>

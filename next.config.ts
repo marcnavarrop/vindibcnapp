@@ -1,4 +1,13 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+/**
+ * next-intl en mode "sense enrutament d'idioma": l'idioma surt d'una cookie i
+ * del perfil, no de l'URL. No hi ha cap segment [locale] i l'arbre de rutes es
+ * queda igual, cosa que deixa el middleware —control d'accés dels tres rols i
+ * `redirectedFrom`— exactament com estava.
+ */
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -32,4 +41,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

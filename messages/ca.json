@@ -1,0 +1,107 @@
+{
+  "language": {
+    "label": "Idioma",
+    "aria": "Canviar d'idioma"
+  },
+  "legal": {
+    "privacy": "Privacitat",
+    "notice": "Avís legal",
+    "cookies": "Cookies"
+  },
+  "login": {
+    "metaTitle": "Entrar · VindiBCN",
+    "metaDescription": "Accedeix al teu espai personal de VindiBCN: reserves, bons i novetats del centre.",
+    "title": "Benvingut de nou",
+    "subtitle": "Inicia sessió per accedir al teu espai personal i continuar cuidant de tu.",
+    "email": "Correu electrònic",
+    "emailPlaceholder": "exemple@correu.cat",
+    "password": "Contrasenya",
+    "passwordPlaceholder": "Introdueix la teva contrasenya",
+    "forgot": "Has oblidat la contrasenya?",
+    "submit": "Iniciar sessió",
+    "submitting": "Entrant…",
+    "createAccount": "Crear compte",
+    "errorNoSession": "No s'ha pogut iniciar la sessió. Torna-ho a provar.",
+    "errorConnection": "Hi ha hagut un problema de connexió. Torna-ho a provar.",
+    "demoTitle": "Entrar (mode demo)",
+    "demoSubtitle": "Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són d'exemple.",
+    "demoEnterAs": "Entrar com a {role}"
+  },
+  "register": {
+    "title": "Crear compte",
+    "createdTitle": "Compte creat",
+    "fullName": "Nom complet",
+    "email": "Correu electrònic",
+    "password": "Contrasenya",
+    "language": "Idioma",
+    "languageHint": "En quin idioma vols veure l'app. Ho podràs canviar quan vulguis.",
+    "referral": "Codi de referit (opcional)",
+    "referralPlaceholder": "Ex: ANF-2K4M",
+    "acceptPre": "He llegit i accepto la",
+    "acceptMid": "i l'",
+    "privacyPolicy": "Política de Privacitat",
+    "legalNotice": "Avís Legal",
+    "submit": "Crear compte",
+    "submitting": "Creant…",
+    "haveAccount": "Ja tens compte?",
+    "signIn": "Iniciar sessió",
+    "createdBody": "Revisa el teu correu si la confirmació per email està activada. Després podràs",
+    "createdSignIn": "iniciar sessió",
+    "errorPrivacy": "Has d'acceptar la Política de Privacitat i l'Avís Legal per continuar.",
+    "errorGeneric": "No s'ha pogut crear el compte. Torna-ho a provar."
+  },
+  "home": {
+    "greeting": "Hola, {name}! 👋",
+    "welcome": "Estem encantats de tenir-te aquí.",
+    "noClientRecord": "Encara no tens fitxa de client. Parla amb el centre per activar-la.",
+    "kpi": {
+      "remainingSessions": "Sessions restants",
+      "activeBonos": "Bons actius",
+      "bonoInProgress": "bo en curs",
+      "bonosInProgress": "bons en curs",
+      "upcoming": "Properes reserves",
+      "nextSevenDays": "els pròxims 7 dies",
+      "attendance": "Assistència",
+      "noClosedSessions": "sense sessions tancades",
+      "scheduled": "de {total} programades"
+    },
+    "actions": {
+      "book": "Reservar sessió",
+      "buyBono": "Comprar bo",
+      "myWorkouts": "Els meus entrenaments"
+    },
+    "bonos": {
+      "title": "Bons actius",
+      "seeAll": "Veure tots els bons →",
+      "empty": "Encara no tens cap bo actiu.",
+      "emptyCta": "Compra'n un",
+      "emptyTail": "per començar a reservar.",
+      "noExpiry": "Sense data de caducitat"
+    },
+    "upcoming": {
+      "title": "Properes reserves",
+      "seeAll": "Veure totes →",
+      "none": "No tens cap reserva propera.",
+      "bookOne": "Reserva una sessió"
+    },
+    "community": "Comunitat"
+  },
+  "brand": {
+    "headline": "El teu centre, al teu abast",
+    "subtitle": "Gestiona les teves reserves, consulta les sessions i els teus plans actius, tot en un sol lloc.",
+    "features": {
+      "book": {
+        "title": "Reserves en 1 clic",
+        "desc": "Reserva o anul·la en segons."
+      },
+      "bonos": {
+        "title": "Seguiment de bons",
+        "desc": "Sessions i bons, sempre al dia."
+      },
+      "community": {
+        "title": "Comunitat i avisos",
+        "desc": "Novetats i avisos del centre."
+      }
+    }
+  }
+}

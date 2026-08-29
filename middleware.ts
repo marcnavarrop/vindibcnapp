@@ -7,6 +7,11 @@ import {
   encodeHeaderValue,
 } from "@/lib/auth-headers";
 import type { Database } from "@/types/database";
+import {
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_MAX_AGE,
+  toLocale,
+} from "@/lib/i18n/config";
 
 type Role = Database["public"]["Enums"]["user_role"];
 
@@ -77,7 +82,7 @@ export async function middleware(request: NextRequest) {
   //    completan lo que `getViewer()` necesita para no repetir la consulta.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, specialty")
+    .select("role, full_name, specialty, preferred_language")
     .eq("id", user.id)
     .single();
 
@@ -107,6 +112,27 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   for (const cookie of supabaseResponse.cookies.getAll())
     response.cookies.set(cookie);
+
+  // La cookie d'idioma es posa al dia amb el perfil.
+  //
+  // És aquí i no al login perquè el perfil JA s'ha llegit en aquesta mateixa
+  // consulta: no costa cap viatge extra. I com que passa a cada navegació
+  // protegida, s'arregla sola —qui entra des d'un altre dispositiu, o qui va
+  // canviar l'idioma abans que això existís, la té bé al primer clic.
+  //
+  // Només el CLIENT: l'admin i el professional treballen en català fix i no
+  // volem que la seva preferència personal decideixi l'idioma de les pàgines
+  // públiques que visitin després.
+  if (profile.role === "client") {
+    const preferred = toLocale(profile.preferred_language);
+    if (request.cookies.get(LOCALE_COOKIE)?.value !== preferred)
+      response.cookies.set(LOCALE_COOKIE, preferred, {
+        path: "/",
+        maxAge: LOCALE_COOKIE_MAX_AGE,
+        sameSite: "lax",
+      });
+  }
+
   return response;
 }
 

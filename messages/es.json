@@ -1,0 +1,107 @@
+{
+  "language": {
+    "label": "Idioma",
+    "aria": "Cambiar de idioma"
+  },
+  "legal": {
+    "privacy": "Privacidad",
+    "notice": "Aviso legal",
+    "cookies": "Cookies"
+  },
+  "login": {
+    "metaTitle": "Entrar · VindiBCN",
+    "metaDescription": "Accede a tu espacio personal de VindiBCN: reservas, bonos y novedades del centro.",
+    "title": "Bienvenido de nuevo",
+    "subtitle": "Inicia sesión para acceder a tu espacio personal y seguir cuidándote.",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "ejemplo@correo.com",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Introduce tu contraseña",
+    "forgot": "¿Has olvidado la contraseña?",
+    "submit": "Iniciar sesión",
+    "submitting": "Entrando…",
+    "createAccount": "Crear cuenta",
+    "errorNoSession": "No se ha podido iniciar la sesión. Inténtalo de nuevo.",
+    "errorConnection": "Ha habido un problema de conexión. Inténtalo de nuevo.",
+    "demoTitle": "Entrar (modo demo)",
+    "demoSubtitle": "Simulación sin Supabase. Elige con qué rol quieres entrar; los datos son de ejemplo.",
+    "demoEnterAs": "Entrar como {role}"
+  },
+  "register": {
+    "title": "Crear cuenta",
+    "createdTitle": "Cuenta creada",
+    "fullName": "Nombre completo",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "language": "Idioma",
+    "languageHint": "En qué idioma quieres ver la app. Podrás cambiarlo cuando quieras.",
+    "referral": "Código de referido (opcional)",
+    "referralPlaceholder": "Ej: ANF-2K4M",
+    "acceptPre": "He leído y acepto la",
+    "acceptMid": "y el",
+    "privacyPolicy": "Política de Privacidad",
+    "legalNotice": "Aviso Legal",
+    "submit": "Crear cuenta",
+    "submitting": "Creando…",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "signIn": "Iniciar sesión",
+    "createdBody": "Revisa tu correo si la confirmación por email está activada. Después podrás",
+    "createdSignIn": "iniciar sesión",
+    "errorPrivacy": "Debes aceptar la Política de Privacidad y el Aviso Legal para continuar.",
+    "errorGeneric": "No se ha podido crear la cuenta. Inténtalo de nuevo."
+  },
+  "home": {
+    "greeting": "¡Hola, {name}! 👋",
+    "welcome": "Nos alegra tenerte aquí.",
+    "noClientRecord": "Todavía no tienes ficha de cliente. Habla con el centro para activarla.",
+    "kpi": {
+      "remainingSessions": "Sesiones restantes",
+      "activeBonos": "Bonos activos",
+      "bonoInProgress": "bono en curso",
+      "bonosInProgress": "bonos en curso",
+      "upcoming": "Próximas reservas",
+      "nextSevenDays": "los próximos 7 días",
+      "attendance": "Asistencia",
+      "noClosedSessions": "sin sesiones cerradas",
+      "scheduled": "de {total} programadas"
+    },
+    "actions": {
+      "book": "Reservar sesión",
+      "buyBono": "Comprar bono",
+      "myWorkouts": "Mis entrenamientos"
+    },
+    "bonos": {
+      "title": "Bonos activos",
+      "seeAll": "Ver todos los bonos →",
+      "empty": "Todavía no tienes ningún bono activo.",
+      "emptyCta": "Compra uno",
+      "emptyTail": "para empezar a reservar.",
+      "noExpiry": "Sin fecha de caducidad"
+    },
+    "upcoming": {
+      "title": "Próximas reservas",
+      "seeAll": "Ver todas →",
+      "none": "No tienes ninguna reserva próxima.",
+      "bookOne": "Reserva una sesión"
+    },
+    "community": "Comunidad"
+  },
+  "brand": {
+    "headline": "Tu centro, a tu alcance",
+    "subtitle": "Gestiona tus reservas, consulta las sesiones y tus planes activos, todo en un solo sitio.",
+    "features": {
+      "book": {
+        "title": "Reservas en 1 clic",
+        "desc": "Reserva o anula en segundos."
+      },
+      "bonos": {
+        "title": "Seguimiento de bonos",
+        "desc": "Sesiones y bonos, siempre al día."
+      },
+      "community": {
+        "title": "Comunidad y avisos",
+        "desc": "Novedades y avisos del centro."
+      }
+    }
+  }
+}

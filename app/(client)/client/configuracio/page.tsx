@@ -5,6 +5,8 @@ import { getPreferences } from "@/lib/notifications/preferences";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getReferralStats } from "@/lib/data/referral";
 import { ProfileSettingsForm } from "@/components/forms/profile-settings-form";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { HealthConsentForm } from "@/components/forms/health-consent-form";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
 import { ChangePasswordForm } from "@/components/forms/change-password-form";
@@ -18,19 +20,37 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientConfigPage() {
   const viewer = await getViewer();
-  const [settings, consent, prefs, centerSettings, referralStats] = await Promise.all([
-    viewer ? getProfileSettings(viewer.id) : Promise.resolve(null),
-    viewer ? getConsentStatus(viewer.id) : Promise.resolve(null),
-    viewer ? getPreferences(viewer.id) : Promise.resolve(null),
-    getCenterSettings(),
-    viewer ? getReferralStats(viewer.id) : Promise.resolve(null),
-  ]);
+  const [settings, consent, prefs, centerSettings, referralStats, locale] =
+    await Promise.all([
+      viewer ? getProfileSettings(viewer.id) : Promise.resolve(null),
+      viewer ? getConsentStatus(viewer.id) : Promise.resolve(null),
+      viewer ? getPreferences(viewer.id) : Promise.resolve(null),
+      getCenterSettings(),
+      viewer ? getReferralStats(viewer.id) : Promise.resolve(null),
+      resolveLocale(),
+    ]);
 
   const tabs = [
     {
       label: "Dades personals",
       content: (
         <div className="flex flex-col gap-4">
+          {/*
+            L'idioma va FORA del formulari de dades personals: es desa sol en
+            triar-lo i té efecte immediat, mentre que la resta del formulari
+            espera el botó de desar. Dins hi semblava un camp més d'un
+            formulari que cal enviar, i a més el canvi es perdia.
+
+            El valor que ensenya és l'ACTIU (la cookie), no el del perfil: si
+            divergissin, el desplegable diria una cosa i la pantalla una altra.
+          */}
+          <section className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-6">
+            <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
+              Preferències
+            </h2>
+            <LanguageSwitcher current={locale} label="Idioma" />
+          </section>
+
           {settings ? (
             <ProfileSettingsForm settings={settings} />
           ) : (

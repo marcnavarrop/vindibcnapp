@@ -23,6 +23,7 @@ import {
 } from "@/components/client/home-sections";
 import { GiftCta, ReferralCta } from "@/components/client/growth-cards";
 import { formatLongDate } from "@/lib/labels";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export const dynamic = "force-dynamic";
 const MAX_UPCOMING = 3;
 
 export default async function ClientHome() {
+  const t = await getTranslations("home");
   const viewer = await getViewer();
 
   const [client, centerSettings, palette, trainers] = await Promise.all([
@@ -59,9 +61,9 @@ export default async function ClientHome() {
   if (!client) {
     return (
       <main className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
-        <Header name={firstName} />
+        <Header name={firstName} greeting={t("greeting", { name: firstName })} welcome={t("welcome")} />
         <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-          Encara no tens fitxa de client. Parla amb el centre per activar-la.
+          {t("noClientRecord")}
         </p>
       </main>
     );
@@ -105,7 +107,7 @@ export default async function ClientHome() {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 sm:p-6">
-      <Header name={firstName} />
+      <Header name={firstName} greeting={t("greeting", { name: firstName })} welcome={t("welcome")} />
 
       <KpiRow kpis={kpis} />
 
@@ -150,7 +152,7 @@ export default async function ClientHome() {
           {communityHasContent && (
             <section className="flex flex-col gap-4 lg:col-span-2">
               <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
-                Comunitat
+                {t("community")}
               </h2>
               {polls.map((p) => (
                 <PollCard key={p.id} poll={p} />
@@ -178,16 +180,24 @@ export default async function ClientHome() {
   );
 }
 
-function Header({ name }: { name: string }) {
+/**
+ * El text arriba ja traduït des de la pàgina i no es tradueix aquí: la
+ * capçalera és un component de servidor petit i passar-li dues cadenes surt
+ * més barat que fer-lo demanar el seu propi diccionari.
+ */
+function Header({
+  greeting,
+  welcome,
+}: {
+  name: string;
+  greeting: string;
+  welcome: string;
+}) {
   return (
     <div>
       <p className="text-sm text-brand-muted">{formatLongDate(new Date())}</p>
-      <h1 className="mt-0.5 text-2xl font-bold text-brand-dark">
-        Hola, {name}! 👋
-      </h1>
-      <p className="mt-1 text-sm text-brand-muted">
-        Estem encantats de tenir-te aquí.
-      </p>
+      <h1 className="mt-0.5 text-2xl font-bold text-brand-dark">{greeting}</h1>
+      <p className="mt-1 text-sm text-brand-muted">{welcome}</p>
     </div>
   );
 }

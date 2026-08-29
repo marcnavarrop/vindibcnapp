@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -31,6 +32,7 @@ function LockIcon() {
 
 /** Login simulado: elige un rol y entra sin contraseña (modo demo). */
 function MockLogin() {
+  const t = useTranslations("login");
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -47,12 +49,9 @@ function MockLogin() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="font-display text-2xl font-bold text-brand-dark sm:text-3xl">
-          Entrar (mode demo)
+          {t("demoTitle")}
         </h1>
-        <p className="text-sm text-brand-muted">
-          Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són
-          d&apos;exemple.
-        </p>
+        <p className="text-sm text-brand-muted">{t("demoSubtitle")}</p>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -62,7 +61,7 @@ function MockLogin() {
             variant={role === "admin" ? "primary" : "outline"}
             onClick={() => enter(role)}
           >
-            Entrar com a {ROLE_LABELS[role]}
+            {t("demoEnterAs", { role: ROLE_LABELS[role] })}
           </Button>
         ))}
       </div>
@@ -72,6 +71,7 @@ function MockLogin() {
 
 /** Login real contra Supabase. */
 function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
+  const t = useTranslations("login");
   const searchParams = useSearchParams();
   // Missatge d'error que pot arribar del callback (enllaç caducat, etc.).
   const [error, setError] = useState<string | null>(
@@ -107,7 +107,7 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
         return;
       }
       if (!data.user) {
-        setError("No s'ha pogut iniciar la sessió. Torna-ho a provar.");
+        setError(t("errorNoSession"));
         return;
       }
 
@@ -129,7 +129,7 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
       navigating = true;
       window.location.assign(dest);
     } catch {
-      setError("Hi ha hagut un problema de connexió. Torna-ho a provar.");
+      setError(t("errorConnection"));
     } finally {
       // Xarxa de seguretat: passi el que passi, el botó no es queda penjat.
       if (!navigating) setLoading(false);
@@ -140,11 +140,10 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="font-display text-2xl font-bold text-brand-dark sm:text-3xl">
-          Benvingut de nou
+          {t("title")}
         </h1>
         <p className="text-sm leading-relaxed text-brand-muted">
-          Inicia sessió per accedir al teu espai personal i continuar cuidant de
-          tu.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -153,7 +152,7 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
             amb l'autocompletat. Els valors es llegeixen del FormData al submit. */}
         <div className="flex flex-col gap-1.5 text-sm">
           <label htmlFor="email" className="font-medium text-brand-charcoal">
-            Correu electrònic
+            {t("email")}
           </label>
           <div className="relative">
             <span
@@ -168,18 +167,18 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
               type="email"
               required
               autoComplete="email"
-              placeholder="exemple@correu.cat"
+              placeholder={t("emailPlaceholder")}
               className="w-full rounded-xl border border-brand-border bg-white py-2.5 pr-3 pl-10 text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
             />
           </div>
         </div>
 
         <PasswordField
-          label="Contrasenya"
+          label={t("password")}
           name="password"
           required
           autoComplete="current-password"
-          placeholder="Introdueix la teva contrasenya"
+          placeholder={t("passwordPlaceholder")}
           icon={<LockIcon />}
         />
 
@@ -188,7 +187,7 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
             href="/forgot-password"
             className="text-sm font-medium text-brand-purple hover:text-brand-orange"
           >
-            Has oblidat la contrasenya?
+            {t("forgot")}
           </Link>
         </div>
 
@@ -199,14 +198,14 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
           disabled={loading}
           className="w-full rounded-xl bg-brand-orange px-4 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
         >
-          {loading ? "Entrant…" : "Iniciar sessió"}
+          {loading ? t("submitting") : t("submit")}
         </button>
 
         <Link
           href="/register"
           className="w-full rounded-xl border border-brand-orange px-4 py-3 text-center text-sm font-bold text-brand-orange transition-colors hover:bg-brand-orange/5"
         >
-          Crear compte
+          {t("createAccount")}
         </Link>
 
         {trialCta}

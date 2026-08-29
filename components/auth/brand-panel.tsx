@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { getTranslations } from "next-intl/server";
 import { Wordmark } from "@/components/wordmark";
 
 /**
@@ -16,8 +17,7 @@ import { Wordmark } from "@/components/wordmark";
 
 const FEATURES = [
   {
-    title: "Reserves en 1 clic",
-    desc: "Reserva o anul·la en segons.",
+    key: "book",
     icon: (
       <>
         <rect x="3" y="5" width="18" height="16" rx="3" />
@@ -26,8 +26,7 @@ const FEATURES = [
     ),
   },
   {
-    title: "Seguiment de bons",
-    desc: "Sessions i bons, sempre al dia.",
+    key: "bonos",
     icon: (
       <>
         <path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 000-4z" />
@@ -36,8 +35,7 @@ const FEATURES = [
     ),
   },
   {
-    title: "Comunitat i avisos",
-    desc: "Novetats i avisos del centre.",
+    key: "community",
     icon: (
       <>
         <path d="M18 8A6 6 0 006 8c0 7-3 8-3 8h18s-3-1-3-8z" />
@@ -47,7 +45,8 @@ const FEATURES = [
   },
 ];
 
-export function BrandPanel() {
+export async function BrandPanel() {
+  const t = await getTranslations("brand");
   return (
     <div className="relative flex flex-col gap-4 overflow-hidden bg-brand-purple px-6 py-7 text-white sm:gap-4 sm:p-8 lg:p-10">
       {/* Degradat i lluïssors de marca */}
@@ -75,11 +74,10 @@ export function BrandPanel() {
 
         <div className="flex flex-col gap-1.5">
           <h2 className="font-display text-2xl leading-tight font-bold text-balance sm:text-[1.75rem]">
-            El teu centre, al teu abast
+            {t("headline")}
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-white/70">
-            Gestiona les teves reserves, consulta les sessions i els teus plans
-            actius, tot en un sol lloc.
+            {t("subtitle")}
           </p>
         </div>
       </div>
@@ -116,7 +114,7 @@ export function BrandPanel() {
       <ul className="relative grid gap-2.5 sm:grid-cols-3">
         {FEATURES.map((f) => (
           <li
-            key={f.title}
+            key={f.key}
             className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.07] p-2.5 backdrop-blur-sm"
           >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
@@ -136,10 +134,10 @@ export function BrandPanel() {
             </span>
             <span className="min-w-0">
               <span className="block text-xs leading-tight font-bold text-balance text-white">
-                {f.title}
+                {t(`features.${f.key}.title`)}
               </span>
               <span className="mt-0.5 block text-[11px] leading-snug text-white/60">
-                {f.desc}
+                {t(`features.${f.key}.desc`)}
               </span>
             </span>
           </li>

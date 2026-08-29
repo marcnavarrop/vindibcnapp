@@ -2,14 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
-import { updateProfileSettings } from "@/lib/data/clients";
-import type { PreferredLanguage, Gender } from "@/types/database";
+import { updateProfileSettings, getProfileSettings } from "@/lib/data/clients";
+import type { Gender } from "@/types/database";
 
 export type FormState = { error?: string; ok?: boolean };
-
-function parseLanguage(v: string): PreferredLanguage {
-  return v === "es" || v === "en" ? v : "ca";
-}
 
 function parseGender(v: string): Gender | null {
   return v === "home" || v === "dona" || v === "altre" || v === "ns_nc"
@@ -38,9 +34,6 @@ export async function updateProfileAction(
 
   const fullName = String(formData.get("fullName") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
-  const preferredLanguage = parseLanguage(
-    String(formData.get("preferredLanguage") ?? "ca"),
-  );
   const birthDate = String(formData.get("birthDate") ?? "").trim() || null;
   const heightCm = parseNumber(String(formData.get("heightCm") ?? ""));
   const weightKg = parseNumber(String(formData.get("weightKg") ?? ""));
@@ -56,10 +49,16 @@ export async function updateProfileAction(
     return { error: "El pes ha d'estar entre 20 i 400 kg." };
 
   try {
+    // L'idioma NO surt d'aquest formulari: el canvia el seu propi selector, que
+    // escriu perfil i cookie alhora. Es torna a llegir i es reenvia tal com
+    // està perquè `updateProfileSettings` escriu la fila sencera: sense això,
+    // desar el nom o el telèfon tornaria l'idioma al català i desfaria la tria.
+    const current = await getProfileSettings(viewer.id);
+
     await updateProfileSettings(viewer.id, {
       fullName,
       phone: phone || null,
-      preferredLanguage,
+      preferredLanguage: current?.preferredLanguage ?? "ca",
       birthDate,
       heightCm,
       weightKg,
