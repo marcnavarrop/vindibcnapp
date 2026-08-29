@@ -11,8 +11,8 @@ import { SERVICE_LABELS, formatEur } from "@/lib/labels";
 export const dynamic = "force-dynamic";
 
 const BONO_TABS = [
-  { href: "/client/bonos", label: "Els meus bons" },
   { href: "/client/bonos/comprar", label: "Comprar bo nou", accent: true },
+  { href: "/client/bonos", label: "Els meus bons" },
 ];
 
 /**

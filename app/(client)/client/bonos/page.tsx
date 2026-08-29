@@ -14,8 +14,8 @@ import {
 } from "@/lib/labels";
 
 const BONO_TABS = [
-  { href: "/client/bonos", label: "Els meus bons" },
   { href: "/client/bonos/comprar", label: "Comprar bo nou", accent: true },
+  { href: "/client/bonos", label: "Els meus bons" },
 ];
 
 export const dynamic = "force-dynamic";

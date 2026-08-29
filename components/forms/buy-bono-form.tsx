@@ -19,6 +19,8 @@ import { ServiceTypeStep, PackageStep } from "@/components/forms/service-picker"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { PaymentMethodOption } from "@/components/forms/payment-method-option";
+import { Building2, CreditCard } from "lucide-react";
 
 // ─── Component principal ──────────────────────────────────────────────────────
 export function BuyBonoForm({
@@ -201,32 +203,30 @@ export function BuyBonoForm({
               Mètode de pagament
             </span>
 
-            <button
-              type="button"
+            <PaymentMethodOption
+              icon={<Building2 className="h-5 w-5" />}
+              title="Pagar al centre"
+              description={
+                <>
+                  Reserva el bo ara i paga&apos;l en efectiu al centre per
+                  activar-lo.
+                </>
+              }
               onClick={() => setConfirming("center")}
-              className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
-            >
-              <span className="font-bold text-brand-dark">Pagar al centre</span>
-              <span className="text-xs text-brand-muted">
-                Reserva el bo ara i paga&apos;l en efectiu al centre per
-                activar-lo.
-              </span>
-            </button>
+            />
 
             {stripeEnabled && (
-              <button
-                type="button"
+              <PaymentMethodOption
+                icon={<CreditCard className="h-5 w-5" />}
+                title="Pagar amb targeta"
+                description={
+                  <>
+                    Paga ara en línia i el bo queda actiu de seguida.
+                    T&apos;enviem a la pàgina segura de Stripe.
+                  </>
+                }
                 onClick={() => setConfirming("card")}
-                className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
-              >
-                <span className="font-bold text-brand-dark">
-                  Pagar amb targeta
-                </span>
-                <span className="text-xs text-brand-muted">
-                  Paga ara en línia i el bo queda actiu de seguida. T&apos;enviem
-                  a la pàgina segura de Stripe.
-                </span>
-              </button>
+              />
             )}
           </div>
 

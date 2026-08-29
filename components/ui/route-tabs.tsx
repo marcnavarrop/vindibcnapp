@@ -19,12 +19,26 @@ export type RouteTab = {
 export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
   const pathname = usePathname();
 
+  /**
+   * Activa NOMÉS la pestanya que casa millor, no totes les que casen.
+   *
+   * Amb una comprovació per pestanya, "/client/bonos" també és prefix de
+   * "/client/bonos/comprar" i les dues s'encenien alhora: dues pestanyes
+   * morades i cap manera de saber on ets. Guanya l'href més llarg que casa,
+   * que és sempre la pestanya més específica.
+   */
+  const activeHref = tabs
+    .filter((t) => pathname === t.href || pathname.startsWith(`${t.href}/`))
+    .reduce<string | null>(
+      (best, t) => (best === null || t.href.length > best.length ? t.href : best),
+      null,
+    );
+
   return (
     <div className="mb-6 border-b border-brand-border">
       <nav className="flex overflow-x-auto" aria-label="Navegació de secció">
         {tabs.map((tab) => {
-          const active =
-            pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+          const active = tab.href === activeHref;
           return (
             <Link
               key={tab.href}

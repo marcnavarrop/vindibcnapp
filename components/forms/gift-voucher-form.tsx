@@ -20,6 +20,8 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { PaymentMethodOption } from "@/components/forms/payment-method-option";
+import { Building2, CreditCard } from "lucide-react";
 
 /**
  * Compra d'un val de regal.
@@ -177,32 +179,31 @@ export function GiftVoucherForm({
               Mètode de pagament
             </span>
 
-            <button
-              type="button"
+            <PaymentMethodOption
+              icon={<Building2 className="h-5 w-5" />}
+              title="Pagar al centre"
+              description={
+                <>
+                  Reserva el val ara i paga&apos;l al centre. El podràs regalar
+                  de seguida; s&apos;activarà quan el centre confirmi el
+                  cobrament.
+                </>
+              }
               onClick={() => setConfirming("center")}
-              className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
-            >
-              <span className="font-bold text-brand-dark">Pagar al centre</span>
-              <span className="text-xs text-brand-muted">
-                Reserva el val ara i paga&apos;l al centre. El podràs regalar de
-                seguida; s&apos;activarà quan el centre confirmi el cobrament.
-              </span>
-            </button>
+            />
 
             {stripeEnabled && (
-              <button
-                type="button"
+              <PaymentMethodOption
+                icon={<CreditCard className="h-5 w-5" />}
+                title="Pagar amb targeta"
+                description={
+                  <>
+                    Paga ara en línia i el val queda bescanviable de seguida.
+                    T&apos;enviem a la pàgina segura de Stripe.
+                  </>
+                }
                 onClick={() => setConfirming("card")}
-                className="flex flex-col items-start rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
-              >
-                <span className="font-bold text-brand-dark">
-                  Pagar amb targeta
-                </span>
-                <span className="text-xs text-brand-muted">
-                  Paga ara en línia i el val queda bescanviable de seguida.
-                  T&apos;enviem a la pàgina segura de Stripe.
-                </span>
-              </button>
+              />
             )}
           </div>
 
@@ -395,6 +396,23 @@ export function VoucherReady({
         >
           Descarregar el val
         </a>
+
+        {/*
+          El codi no es perd si no el copies ara. Sense dir-ho, aquesta
+          pantalla sembla l'única oportunitat de guardar-lo i qui la tanca es
+          queda amb la sensació d'haver perdut el que acaba de pagar.
+        */}
+        <p className="mt-1 text-xs text-brand-muted">
+          Pots tornar a trobar aquest val, amb el seu codi, sempre que vulguis
+          a{" "}
+          <Link
+            href="/client/regals"
+            className="font-bold text-brand-purple underline hover:text-brand-orange"
+          >
+            Regala Vindi
+          </Link>
+          .
+        </p>
       </div>
 
       <section className="flex flex-col gap-3 rounded-2xl border border-brand-border bg-white p-5">

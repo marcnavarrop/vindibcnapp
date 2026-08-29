@@ -3,6 +3,9 @@ import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { getPendingReferralReward } from "@/lib/data/referral";
 import { getColorPalette } from "@/lib/data/colors";
+import { getCenterSettings } from "@/lib/data/center-settings";
+import Link from "next/link";
+import { Gift } from "lucide-react";
 import { stripeEnabled } from "@/lib/stripe";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
 import { RouteTabs } from "@/components/ui/route-tabs";
@@ -10,8 +13,8 @@ import { RouteTabs } from "@/components/ui/route-tabs";
 export const dynamic = "force-dynamic";
 
 const BONO_TABS = [
-  { href: "/client/bonos", label: "Els meus bons" },
   { href: "/client/bonos/comprar", label: "Comprar bo nou", accent: true },
+  { href: "/client/bonos", label: "Els meus bons" },
 ];
 
 export default async function ComprarBonoPage() {
@@ -26,11 +29,13 @@ export default async function ComprarBonoPage() {
     : Promise.resolve(null);
 
   const services = await servicesPromise;
-  const [effectivePricesMap, pendingReferralReward, palette] = await Promise.all([
-    getEffectivePrices(services),
-    rewardPromise,
-    getColorPalette(),
-  ]);
+  const [effectivePricesMap, pendingReferralReward, palette, settings] =
+    await Promise.all([
+      getEffectivePrices(services),
+      rewardPromise,
+      getColorPalette(),
+      getCenterSettings(),
+    ]);
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   return (
@@ -48,6 +53,41 @@ export default async function ComprarBonoPage() {
         pendingReferralReward={pendingReferralReward}
         stripeEnabled={stripeEnabled()}
       />
+
+      {/*
+        Fins ara a "Regala Vindi" només s'hi arribava des de l'Inici, i qui
+        entrava a comprar un bo ja no el tornava a veure —justament qui està
+        pensant en paquets de sessions—. Va aquí i no com a tercera pestanya
+        perquè no és una altra manera de mirar els teus bons: és una compra per
+        a algú altre.
+
+        Condicionat a l'interruptor del centre: /client/regals respon 404 amb el
+        mòdul apagat, i un enllaç que porta a un 404 és pitjor que cap enllaç.
+      */}
+      {settings.giftVouchersEnabled && (
+        <Link
+          href="/client/regals"
+          className="mt-8 flex items-center gap-4 rounded-2xl border border-brand-border bg-white p-4 transition-colors hover:border-brand-orange"
+        >
+          <span
+            aria-hidden
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange"
+          >
+            <Gift className="h-5 w-5" />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-sm font-bold text-brand-dark">
+              També pots regalar Vindi a algú
+            </span>
+            <span className="text-xs text-brand-muted">
+              El mateix paquet de sessions, amb un codi i la teva dedicatòria.
+            </span>
+          </span>
+          <span aria-hidden className="ml-auto text-brand-orange">
+            →
+          </span>
+        </Link>
+      )}
     </main>
   );
 }
