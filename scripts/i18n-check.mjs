@@ -52,14 +52,21 @@ for (const file of walk(".")) {
   }
   if (!binds.length) continue;
 
-  for (const call of src.matchAll(/\b(\w+)\(\s*"([^"]+)"/g)) {
+  // `t("x")` però també `t.rich("x")` i `t.raw("x")`: el grup opcional es prova
+  // abans que el nom nu, així que la crida amb punt no s'escapa com a "rich".
+  for (const call of src.matchAll(
+    /\b(\w+)(?:\.(?:rich|raw|markup))?\(\s*"([^"]+)"/g,
+  )) {
     const [, name, key] = call;
     // El binding vigent és l'últim declarat abans d'aquesta crida.
     const bind = binds.filter((b) => b.name === name && b.at < call.index).pop();
     if (!bind) continue;
     used++;
     const full = `${bind.ns}.${key}`;
-    if (typeof at(dicts.ca, full) !== "string")
+    const val = at(dicts.ca, full);
+    // Una llista val (els noms dels dies); un objecte no: seria un espai de
+    // noms sencer, i això vol dir que la clau apunta massa amunt.
+    if (typeof val !== "string" && !Array.isArray(val))
       missing.push(`${file}: ${name}("${key}") → ${full}`);
   }
 }

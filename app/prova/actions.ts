@@ -1,9 +1,20 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createTrialBooking } from "@/lib/data/trial-bookings";
+import { createTrialBooking, TrialError } from "@/lib/data/trial-bookings";
+import type { TrialErrorCode } from "@/lib/data/trial-bookings.constants";
 
-export type TrialFormState = { error?: string; ok?: boolean };
+export type { TrialErrorCode };
+
+/**
+ * El resultat porta un CODI, no una frase.
+ *
+ * Aquesta pantalla és pública i es veu en tres idiomes, i qui decideix el
+ * motiu del rebuig és el servidor —que no sap ni ha de saber quina cookie
+ * d'idioma porta el visitant—. La traducció la fa la pantalla, que sí que ho
+ * sap. Mateix criteri que a les reserves.
+ */
+export type TrialFormState = { errorCode?: TrialErrorCode; ok?: boolean };
 
 /** IP del sol·licitant a partir de les capçaleres del proxy (best-effort). */
 async function clientIp(): Promise<string | null> {
@@ -28,12 +39,11 @@ export async function requestTrialAction(
   const scheduledAt = String(formData.get("scheduledAt") ?? "");
   const consent = formData.get("consent") === "on";
 
-  if (!fullName) return { error: "Indica el teu nom." };
-  if (!/.+@.+\..+/.test(email)) return { error: "Indica un correu vàlid." };
-  if (phone.length < 6) return { error: "Indica un telèfon vàlid." };
-  if (!scheduledAt) return { error: "Tria una franja lliure." };
-  if (!consent)
-    return { error: "Cal acceptar la Política de Privacitat per continuar." };
+  if (!fullName) return { errorCode: "noName" };
+  if (!/.+@.+\..+/.test(email)) return { errorCode: "badEmail" };
+  if (phone.length < 6) return { errorCode: "badPhone" };
+  if (!scheduledAt) return { errorCode: "noSlot" };
+  if (!consent) return { errorCode: "noConsent" };
 
   try {
     await createTrialBooking({
@@ -44,9 +54,9 @@ export async function requestTrialAction(
       ip: await clientIp(),
     });
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut enviar la sol·licitud.",
-    };
+    // Un TrialError ja diu per què; qualsevol altra cosa és un problema nostre
+    // i el visitant no n'ha de llegir les interioritats.
+    return { errorCode: e instanceof TrialError ? e.code : "failed" };
   }
 
   return { ok: true };

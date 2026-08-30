@@ -236,7 +236,7 @@ export function WeeklyCalendar({
             ›
           </NavButton>
         </div>
-        <span className="text-sm font-bold text-brand-dark capitalize">
+        <span className="text-sm font-bold text-brand-dark first-letter:uppercase">
           {monthLabel}
         </span>
       </div>
@@ -512,7 +512,7 @@ function TrialModal({
           </span>
         </div>
         <h2 className="mt-2 text-lg font-bold text-brand-dark">{t.fullName}</h2>
-        <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
+        <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
         <dl className="mt-4 flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-brand-muted">Telèfon</dt>
@@ -791,7 +791,7 @@ function ReservationModal({
           style={{ backgroundColor: colorOfService(palette, r.serviceType) }}
         />
         <h2 className="text-lg font-bold text-brand-dark">{r.clientName}</h2>
-        <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
+        <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
         <dl className="mt-4 flex flex-col gap-2 text-sm">
           <Field label="Servei" value={SERVICE_LABELS[r.serviceType]} />
           <Field label="Estat" value={RESERVATION_STATUS_LABELS[r.status]} />

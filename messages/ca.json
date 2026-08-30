@@ -27,6 +27,55 @@
     "demoSubtitle": "Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són d'exemple.",
     "demoEnterAs": "Entrar com a {role}"
   },
+  "trial": {
+    "metaTitle": "Sessió de prova gratuïta · VindiBCN",
+    "metaDescription": "Demana una sessió de prova d'entrenament personal sense compromís.",
+    "haveAccount": "Ja tens compte? Entra",
+    "title": "Sessió de prova gratuïta",
+    "intro": "Prova un entrenament personal sense compromís. Tria una franja lliure i deixa'ns les teves dades: un professional confirmarà la teva sessió. No cal crear cap compte.",
+    "cta": "Sessió de prova gratuïta",
+    "day": "Dia",
+    "week": "Setmana",
+    "prev": "Anterior",
+    "next": "Següent",
+    "today": "Avui",
+    "free": "Lliure",
+    "legend": "Tria una franja lliure per demanar la teva sessió de prova gratuïta. Cal un mínim de {hours} h d'antelació. Rebràs la confirmació del professional.",
+    "days": [
+      "Dl",
+      "Dt",
+      "Dc",
+      "Dj",
+      "Dv",
+      "Ds",
+      "Dg"
+    ],
+    "okTitle": "Sol·licitud rebuda!",
+    "okBody": "La teva sessió de prova està <strong>pendent de confirmació</strong> per part del professional. T'avisarem per correu quan la confirmi. Gràcies!",
+    "close": "Tancar",
+    "form": {
+      "fullName": "Nom complet",
+      "email": "Correu",
+      "phone": "Telèfon",
+      "consent": "He llegit i accepto la <link>Política de Privacitat</link>.",
+      "submit": "Demanar sessió",
+      "cancel": "Cancel·lar"
+    },
+    "errors": {
+      "noName": "Indica el teu nom.",
+      "badEmail": "Indica un correu vàlid.",
+      "badPhone": "Indica un telèfon vàlid.",
+      "noSlot": "Tria una franja lliure.",
+      "noConsent": "Cal acceptar la Política de Privacitat per continuar.",
+      "badDate": "Data no vàlida.",
+      "tooSoon": "Cal demanar la prova amb un mínim de {hours} h d'antelació.",
+      "tooFar": "Només es poden demanar proves fins a {days} dies vista.",
+      "slotTaken": "Aquest horari ja no està disponible. Tria'n un altre.",
+      "duplicate": "Ja tens una sessió de prova sol·licitada amb aquestes dades.",
+      "rateLimited": "Has fet massa sol·licituds. Torna-ho a provar més tard.",
+      "failed": "No s'ha pogut enviar la sol·licitud."
+    }
+  },
   "register": {
     "title": "Crear compte",
     "createdTitle": "Compte creat",

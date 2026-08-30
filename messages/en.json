@@ -27,6 +27,55 @@
     "demoSubtitle": "Simulation without Supabase. Choose which role to enter as; the data is sample data.",
     "demoEnterAs": "Enter as {role}"
   },
+  "trial": {
+    "metaTitle": "Free trial session · VindiBCN",
+    "metaDescription": "Book a no-strings personal training trial session.",
+    "haveAccount": "Already have an account? Sign in",
+    "title": "Free trial session",
+    "intro": "Try personal training with no strings attached. Pick a free slot and leave us your details: a professional will confirm your session. No account needed.",
+    "cta": "Free trial session",
+    "day": "Day",
+    "week": "Week",
+    "prev": "Previous",
+    "next": "Next",
+    "today": "Today",
+    "free": "Free",
+    "legend": "Pick a free slot to book your free trial session. It needs at least {hours} hours' notice. The professional will send you the confirmation.",
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
+    "okTitle": "Request received!",
+    "okBody": "Your trial session is <strong>awaiting confirmation</strong> from the professional. We'll email you as soon as they confirm it. Thank you!",
+    "close": "Close",
+    "form": {
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "consent": "I have read and accept the <link>Privacy Policy</link>.",
+      "submit": "Request session",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "noName": "Tell us your name.",
+      "badEmail": "Enter a valid email address.",
+      "badPhone": "Enter a valid phone number.",
+      "noSlot": "Pick a free slot.",
+      "noConsent": "You need to accept the Privacy Policy to continue.",
+      "badDate": "That date isn't valid.",
+      "tooSoon": "Trial sessions need at least {hours} hours' notice.",
+      "tooFar": "Trial sessions can only be booked up to {days} days ahead.",
+      "slotTaken": "That slot is no longer available. Please pick another one.",
+      "duplicate": "You already have a trial session booked with these details.",
+      "rateLimited": "You've made too many requests. Please try again later.",
+      "failed": "We couldn't send your request."
+    }
+  },
   "register": {
     "title": "Create account",
     "createdTitle": "Account created",

@@ -7,20 +7,27 @@ import { assertModuleEnabled } from "@/lib/data/module-guard";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Sessió de prova gratuïta · VindiBCN",
-  description: "Demana una sessió de prova d'entrenament personal sense compromís.",
-};
+/**
+ * Títol i descripció també traduïts: és el que es llegeix a la pestanya i el
+ * que ensenya l'enllaç quan algú el comparteix. Mateix criteri que al login.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("trial");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 export default async function ProvaPage() {
   await assertModuleEnabled("sessionsProva");
-  const [data, centerSettings, locale] = await Promise.all([
+  const [data, centerSettings, locale, t] = await Promise.all([
     getPublicTrialData(),
     getCenterSettings(),
     resolveLocale(),
+    getTranslations("trial"),
   ]);
 
   return (
@@ -36,17 +43,13 @@ export default async function ProvaPage() {
             href="/login"
             className="text-sm font-bold text-brand-muted hover:text-brand-purple"
           >
-            Ja tens compte? Entra
+            {t("haveAccount")}
           </Link>
         </div>
       </div>
 
-      <h1 className="text-2xl text-brand-dark">Sessió de prova gratuïta</h1>
-      <p className="mt-2 mb-6 max-w-2xl text-sm text-brand-muted">
-        Prova un entrenament personal sense compromís. Tria una franja lliure i
-        deixa&apos;ns les teves dades: un professional confirmarà la teva sessió.
-        No cal crear cap compte.
-      </p>
+      <h1 className="text-2xl text-brand-dark">{t("title")}</h1>
+      <p className="mt-2 mb-6 max-w-2xl text-sm text-brand-muted">{t("intro")}</p>
 
       <TrialCalendar
         data={data}

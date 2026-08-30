@@ -161,7 +161,7 @@ function SeriesList({
                 : t("pendingMany", { count: s.upcoming })}
             </span>
             {s.nextAt && (
-              <span className="text-xs text-brand-muted capitalize">
+              <span className="text-xs text-brand-muted first-letter:uppercase">
                 {t("next", {
                   when: `${formatDayHeading(s.nextAt, locale)}, ${formatTime(s.nextAt, locale)}`,
                 })}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { getCenterSettings } from "@/lib/data/center-settings";
 
 function GiftIcon() {
@@ -24,7 +25,10 @@ function GiftIcon() {
  * segon lloc on es posi l'enllaç.
  */
 export async function TrialCta() {
-  const settings = await getCenterSettings();
+  const [settings, t] = await Promise.all([
+    getCenterSettings(),
+    getTranslations("trial"),
+  ]);
   if (!settings.modules.sessionsProva) return null;
 
   return (
@@ -33,7 +37,7 @@ export async function TrialCta() {
       className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-purple/8 px-4 py-3 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/15"
     >
       <GiftIcon />
-      Sessió de prova gratuïta
+      {t("cta")}
     </Link>
   );
 }

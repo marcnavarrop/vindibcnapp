@@ -20,6 +20,11 @@ import {
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
+import {
+  TRIAL_MIN_ADVANCE_HOURS,
+  TRIAL_MAX_ADVANCE_DAYS,
+  type TrialErrorCode,
+} from "@/lib/data/trial-bookings.constants";
 import { TRIAL_SERVICE, TRAINING_SERVICES } from "@/lib/data/trial-bookings.constants";
 import type { Database, ServiceType, TrialStatus } from "@/types/database";
 
@@ -77,8 +82,8 @@ async function notifyTrialRequested(input: {
       { ignorePreferences: true },
     );
 }
-const MIN_ADVANCE_MS = 24 * HOUR;
-const MAX_ADVANCE_MS = 30 * 24 * HOUR;
+const MIN_ADVANCE_MS = TRIAL_MIN_ADVANCE_HOURS * HOUR;
+const MAX_ADVANCE_MS = TRIAL_MAX_ADVANCE_DAYS * 24 * HOUR;
 const IP_MAX_PER_HOUR = 3;
 
 /**
@@ -300,6 +305,21 @@ function pickTrainer(
 }
 
 /**
+ * Un motiu de rebuig que la pantalla pública ha de poder traduir.
+ *
+ * Només el llança `createTrialBooking`, que és l'única porta que fa servir
+ * gent sense compte. La resta de funcions d'aquest fitxer les crida l'admin o
+ * el professional, que treballen en català fix, i segueixen amb `Error` de
+ * tota la vida.
+ */
+export class TrialError extends Error {
+  constructor(readonly code: TrialErrorCode) {
+    super(code);
+    this.name = "TrialError";
+  }
+}
+
+/**
  * Crea una sol·licitud de prova en estat 'pending'. Valida TOTA la lògica al
  * servidor (mai confiar en el client): finestra 24 h–30 dies, antiabús per
  * email/telèfon i IP, disponibilitat real i no-solapament. Assigna un
@@ -307,13 +327,13 @@ function pickTrainer(
  */
 export async function createTrialBooking(input: CreateTrialInput): Promise<void> {
   const when = datetimeLocalToInstant(input.scheduledAt);
-  if (!when) throw new Error("Data no vàlida.");
+  if (!when) throw new TrialError("badDate");
   const nowMs = Date.now();
   const delta = when.getTime() - nowMs;
   if (delta < MIN_ADVANCE_MS)
-    throw new Error("Cal demanar la prova amb un mínim de 24 h d'antelació.");
+    throw new TrialError("tooSoon");
   if (delta > MAX_ADVANCE_MS)
-    throw new Error("Només es poden demanar proves fins a 30 dies vista.");
+    throw new TrialError("tooFar");
 
   const email = input.email.trim().toLowerCase();
   const phone = input.phone.trim();
@@ -333,7 +353,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
       isTrainerFreeMock(store, tid, scheduledAt),
     );
     if (!trainerId)
-      throw new Error("Aquest horari ja no està disponible. Tria'n un altre.");
+      throw new TrialError("slotTaken");
     store.trial_bookings.push({
       id: crypto.randomUUID(),
       full_name: input.fullName.trim(),
@@ -374,9 +394,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
     (t) => t.status !== "pending" || t.expires_at >= nowISO,
   );
   if (alive.length > 0)
-    throw new Error(
-      "Ja tens una sessió de prova sol·licitada amb aquestes dades.",
-    );
+    throw new TrialError("duplicate");
 
   // Rate limit per IP: màxim 3 en l'última hora.
   if (input.ip) {
@@ -387,7 +405,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
       .eq("ip", input.ip)
       .gte("created_at", since);
     if ((count ?? 0) >= IP_MAX_PER_HOUR)
-      throw new Error("Has fet massa sol·licituds. Torna-ho a provar més tard.");
+      throw new TrialError("rateLimited");
   }
 
   const trainerId = pickTrainer(rules, allBlocks, when, () => true);
@@ -419,7 +437,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
     }
   }
   if (!chosen)
-    throw new Error("Aquest horari ja no està disponible. Tria'n un altre.");
+    throw new TrialError("slotTaken");
 
   const { error } = await admin.from("trial_bookings").insert({
     full_name: input.fullName.trim(),
@@ -453,7 +471,7 @@ function assertNoDuplicateMock(store: Store, email: string, phone: string): void
     return counts && (t.email === email || t.phone === phone);
   });
   if (alive.length > 0)
-    throw new Error("Ja tens una sessió de prova sol·licitada amb aquestes dades.");
+    throw new TrialError("duplicate");
 }
 
 function assertIpRateMock(store: Store, ip: string | null, nowMs: number): void {
@@ -463,7 +481,7 @@ function assertIpRateMock(store: Store, ip: string | null, nowMs: number): void 
     (t) => t.ip === ip && new Date(t.created_at).getTime() >= since,
   );
   if (recent.length >= IP_MAX_PER_HOUR)
-    throw new Error("Has fet massa sol·licituds. Torna-ho a provar més tard.");
+    throw new TrialError("rateLimited");
 }
 
 function isTrainerFreeMock(store: Store, trainerId: string, scheduledAt: string): boolean {

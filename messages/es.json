@@ -27,6 +27,55 @@
     "demoSubtitle": "Simulación sin Supabase. Elige con qué rol quieres entrar; los datos son de ejemplo.",
     "demoEnterAs": "Entrar como {role}"
   },
+  "trial": {
+    "metaTitle": "Sesión de prueba gratuita · VindiBCN",
+    "metaDescription": "Pide una sesión de prueba de entrenamiento personal sin compromiso.",
+    "haveAccount": "¿Ya tienes cuenta? Entra",
+    "title": "Sesión de prueba gratuita",
+    "intro": "Prueba un entrenamiento personal sin compromiso. Elige una franja libre y déjanos tus datos: un profesional confirmará tu sesión. No hace falta crear ninguna cuenta.",
+    "cta": "Sesión de prueba gratuita",
+    "day": "Día",
+    "week": "Semana",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "today": "Hoy",
+    "free": "Libre",
+    "legend": "Elige una franja libre para pedir tu sesión de prueba gratuita. Hace falta un mínimo de {hours} h de antelación. Recibirás la confirmación del profesional.",
+    "days": [
+      "Lu",
+      "Ma",
+      "Mi",
+      "Ju",
+      "Vi",
+      "Sá",
+      "Do"
+    ],
+    "okTitle": "¡Solicitud recibida!",
+    "okBody": "Tu sesión de prueba está <strong>pendiente de confirmación</strong> por parte del profesional. Te avisaremos por correo cuando la confirme. ¡Gracias!",
+    "close": "Cerrar",
+    "form": {
+      "fullName": "Nombre completo",
+      "email": "Correo",
+      "phone": "Teléfono",
+      "consent": "He leído y acepto la <link>Política de Privacidad</link>.",
+      "submit": "Pedir sesión",
+      "cancel": "Cancelar"
+    },
+    "errors": {
+      "noName": "Indica tu nombre.",
+      "badEmail": "Indica un correo válido.",
+      "badPhone": "Indica un teléfono válido.",
+      "noSlot": "Elige una franja libre.",
+      "noConsent": "Hay que aceptar la Política de Privacidad para continuar.",
+      "badDate": "Fecha no válida.",
+      "tooSoon": "Hay que pedir la prueba con un mínimo de {hours} h de antelación.",
+      "tooFar": "Solo se pueden pedir pruebas hasta {days} días vista.",
+      "slotTaken": "Este horario ya no está disponible. Elige otro.",
+      "duplicate": "Ya tienes una sesión de prueba solicitada con estos datos.",
+      "rateLimited": "Has hecho demasiadas solicitudes. Inténtalo más tarde.",
+      "failed": "No se ha podido enviar la solicitud."
+    }
+  },
   "register": {
     "title": "Crear cuenta",
     "createdTitle": "Cuenta creada",

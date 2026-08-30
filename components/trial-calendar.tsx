@@ -2,6 +2,8 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
+import { intlLocale, type Locale } from "@/lib/i18n/config";
 import { clsx } from "@/lib/utils";
 import {
   weekdayOf,
@@ -11,13 +13,16 @@ import {
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
-import { TRIAL_SERVICE } from "@/lib/data/trial-bookings.constants";
+import {
+  TRIAL_SERVICE,
+  TRIAL_MIN_ADVANCE_HOURS,
+  TRIAL_MAX_ADVANCE_DAYS,
+} from "@/lib/data/trial-bookings.constants";
 // (valor compartit sense `server-only`, segur en un client component)
 import type { PublicTrialData } from "@/lib/data/trial-bookings";
 import type { TrialFormState } from "@/app/prova/actions";
 
 const HOUR = 60 * 60 * 1000;
-const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
 
 type CreateAction = (
   prev: TrialFormState,
@@ -77,6 +82,9 @@ export function TrialCalendar({
   openingHour?: number;
   closingHour?: number;
 }) {
+  const t = useTranslations("trial");
+  const locale = useLocale() as Locale;
+  const dayNames = t.raw("days") as string[];
   const [view, setView] = useState<"day" | "week">("week");
   const [offset, setOffset] = useState(0);
   const [slot, setSlot] = useState<Date | null>(null);
@@ -110,16 +118,16 @@ export function TrialCalendar({
 
   const periodLabel = useMemo(() => {
     if (view === "week")
-      return new Intl.DateTimeFormat("ca-ES", {
+      return new Intl.DateTimeFormat(intlLocale(locale), {
         month: "long",
         year: "numeric",
       }).format(days[0]);
-    return new Intl.DateTimeFormat("ca-ES", {
+    return new Intl.DateTimeFormat(intlLocale(locale), {
       weekday: "long",
       day: "numeric",
       month: "long",
     }).format(days[0]);
-  }, [view, days]);
+  }, [view, days, locale]);
 
   return (
     <div>
@@ -140,12 +148,12 @@ export function TrialCalendar({
                   : "bg-white text-brand-muted hover:text-brand-dark",
               )}
             >
-              {v === "day" ? "Dia" : "Setmana"}
+              {v === "day" ? t("day") : t("week")}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <NavBtn label="Anterior" onClick={() => setOffset((o) => o - 1)}>
+          <NavBtn label={t("prev")} onClick={() => setOffset((o) => o - 1)}>
             ‹
           </NavBtn>
           <button
@@ -153,13 +161,13 @@ export function TrialCalendar({
             onClick={() => setOffset(0)}
             className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg"
           >
-            Avui
+            {t("today")}
           </button>
-          <NavBtn label="Següent" onClick={() => setOffset((o) => o + 1)}>
+          <NavBtn label={t("next")} onClick={() => setOffset((o) => o + 1)}>
             ›
           </NavBtn>
         </div>
-        <span className="text-sm font-bold text-brand-dark capitalize">
+        <span className="text-sm font-bold text-brand-dark first-letter:uppercase">
           {periodLabel}
         </span>
       </div>
@@ -182,7 +190,7 @@ export function TrialCalendar({
                   )}
                 >
                   <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-                    {DAY_NAMES[weekdayOf(d)]}
+                    {dayNames[weekdayOf(d)]}
                   </div>
                   <div className="text-sm font-bold text-brand-dark">
                     {d.getDate()}
@@ -204,10 +212,11 @@ export function TrialCalendar({
               {days.map((d, dayIdx) => {
                 const cellDate = new Date(d);
                 cellDate.setHours(h, 0, 0, 0);
-                const t = cellDate.getTime();
+                // `ms` i no `t`: aquí dins `t` és el traductor.
+                const ms = cellDate.getTime();
                 const bookable =
-                  t >= minMs &&
-                  t <= maxMs &&
+                  ms >= minMs &&
+                  ms <= maxMs &&
                   slotIsFree(rules, busy, blocks, cellDate, h);
                 return (
                   <div
@@ -220,7 +229,7 @@ export function TrialCalendar({
                         onClick={() => setSlot(cellDate)}
                         className="block h-full w-full rounded-md bg-brand-purple/10 px-1.5 py-1 text-[11px] font-bold text-brand-purple hover:bg-brand-purple/20"
                       >
-                        Lliure
+                        {t("free")}
                       </button>
                     )}
                   </div>
@@ -232,8 +241,10 @@ export function TrialCalendar({
       </div>
 
       <p className="mt-3 text-xs text-brand-muted">
-        Tria una franja lliure per demanar la teva sessió de prova gratuïta. Cal
-        un mínim de 24 h d&apos;antelació. Rebràs la confirmació del professional.
+        {t("legend", {
+          hours: TRIAL_MIN_ADVANCE_HOURS,
+          days: TRIAL_MAX_ADVANCE_DAYS,
+        })}
       </p>
 
       {slot && (
@@ -256,8 +267,11 @@ function RequestModal({
   action: CreateAction;
   onClose: () => void;
 }) {
+  const t = useTranslations("trial");
+  const te = useTranslations("trial.errors");
+  const locale = useLocale() as Locale;
   const [state, formAction] = useActionState(action, {} as TrialFormState);
-  const when = new Intl.DateTimeFormat("ca-ES", {
+  const when = new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -277,32 +291,37 @@ function RequestModal({
         {state.ok ? (
           <div className="flex flex-col gap-3 text-center">
             <h2 className="text-lg font-bold text-brand-dark">
-              Sol·licitud rebuda!
+              {t("okTitle")}
             </h2>
+            {/* Text ric: el "pendent de confirmació" va destacat i cada idioma
+                el col·loca on li toca, que no és el mateix lloc de la frase. */}
             <p className="text-sm text-brand-muted">
-              La teva sessió de prova està{" "}
-              <strong className="text-brand-dark">pendent de confirmació</strong>{" "}
-              per part del professional. T&apos;avisarem per correu quan la
-              confirmi. Gràcies!
+              {t.rich("okBody", {
+                strong: (chunks) => (
+                  <strong className="text-brand-dark">{chunks}</strong>
+                ),
+              })}
             </p>
             <button
               type="button"
               onClick={onClose}
               className="mt-2 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
             >
-              Tancar
+              {t("close")}
             </button>
           </div>
         ) : (
           <>
             <h2 className="text-lg font-bold text-brand-dark">
-              Sessió de prova gratuïta
+              {t("title")}
             </h2>
-            <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
+            <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
             <form action={formAction} className="mt-4 flex flex-col gap-3">
               <input type="hidden" name="scheduledAt" value={toLocalInput(slot)} />
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-bold text-brand-charcoal">Nom complet</span>
+                <span className="font-bold text-brand-charcoal">
+                  {t("form.fullName")}
+                </span>
                 <input
                   name="fullName"
                   required
@@ -311,7 +330,9 @@ function RequestModal({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-bold text-brand-charcoal">Correu</span>
+                <span className="font-bold text-brand-charcoal">
+                  {t("form.email")}
+                </span>
                 <input
                   name="email"
                   type="email"
@@ -321,7 +342,9 @@ function RequestModal({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-bold text-brand-charcoal">Telèfon</span>
+                <span className="font-bold text-brand-charcoal">
+                  {t("form.phone")}
+                </span>
                 <input
                   name="phone"
                   type="tel"
@@ -333,20 +356,27 @@ function RequestModal({
               <label className="flex items-start gap-2 text-sm text-brand-charcoal">
                 <input type="checkbox" name="consent" className="mt-1" />
                 <span>
-                  He llegit i accepto la{" "}
-                  <Link
-                    href="/legal/privacitat"
-                    target="_blank"
-                    className="font-bold text-brand-purple underline"
-                  >
-                    Política de Privacitat
-                  </Link>
-                  .
+                  {t.rich("form.consent", {
+                    link: (chunks) => (
+                      <Link
+                        href="/legal/privacitat"
+                        target="_blank"
+                        className="font-bold text-brand-purple underline"
+                      >
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
                 </span>
               </label>
 
-              {state.error && (
-                <p className="text-sm text-error">{state.error}</p>
+              {state.errorCode && (
+                <p className="text-sm text-error">
+                  {te(state.errorCode, {
+                    hours: TRIAL_MIN_ADVANCE_HOURS,
+                    days: TRIAL_MAX_ADVANCE_DAYS,
+                  })}
+                </p>
               )}
 
               <div className="mt-1 flex items-center gap-2">
@@ -354,14 +384,14 @@ function RequestModal({
                   type="submit"
                   className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
                 >
-                  Demanar sessió
+                  {t("form.submit")}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
                   className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
                 >
-                  Cancel·lar
+                  {t("form.cancel")}
                 </button>
               </div>
             </form>

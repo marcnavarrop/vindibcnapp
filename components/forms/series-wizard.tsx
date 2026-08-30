@@ -579,7 +579,7 @@ function OccurrenceList({
             <li key={o.requestedAt} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
               <span className="w-5 shrink-0 text-xs text-brand-muted">{i + 1}</span>
               <span className="min-w-0 flex-1">
-                <span className="block font-bold text-brand-dark capitalize">
+                <span className="block font-bold text-brand-dark first-letter:uppercase">
                   {formatDayHeading(o.requestedAt, locale)}
                 </span>
                 <span className="block text-xs text-brand-muted">
