@@ -662,7 +662,7 @@ async function notifyTrialStatus(id: string, status: "confirmed" | "rejected"): 
     type: "trial_status",
     recipient: { profileId: null, email: t.email, phone: t.phone, name: t.fullName },
     relatedId: t.id,
-    data: { name: t.fullName, when: fmtWhen(t.scheduledAt), status },
+    data: { name: t.fullName, whenIso: t.scheduledAt, status },
   });
 }
 

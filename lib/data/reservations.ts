@@ -13,7 +13,7 @@ import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
-import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
+import { GROUP_CAPACITY } from "@/lib/labels";
 import { getViewer } from "@/lib/auth";
 import type {
   Database,
@@ -60,16 +60,6 @@ async function assertWithinAvailability(
 type DB = SupabaseClient<Database>;
 
 // ─────────────── Notificacions (best-effort) ───────────────
-
-function fmtWhen(iso: string): string {
-  return new Intl.DateTimeFormat("ca-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
 
 type Contact = {
   profileId: string;
@@ -133,8 +123,8 @@ async function notifyReservation(
     relatedId: info.reservationId ?? null,
     data: {
       name: c.name ?? "",
-      when: fmtWhen(info.scheduledAt),
-      service: SERVICE_LABELS[info.serviceType],
+      whenIso: info.scheduledAt,
+      serviceType: info.serviceType,
       ...(info.trainerName ? { trainer: info.trainerName } : {}),
     },
   });
@@ -158,8 +148,8 @@ async function notifyTrainerBooking(
     data: {
       name: t.name ?? "",
       client: info.clientName ?? "Un client",
-      when: fmtWhen(info.scheduledAt),
-      service: SERVICE_LABELS[info.serviceType],
+      whenIso: info.scheduledAt,
+      serviceType: info.serviceType,
     },
   });
 }
@@ -183,7 +173,7 @@ async function notifyBonoLowIfNeeded(
   await notify({
     type: "bono_low",
     recipient: c,
-    data: { name: c.name ?? "", service: SERVICE_LABELS[serviceType] },
+    data: { name: c.name ?? "", serviceType },
   });
 }
 

@@ -9,7 +9,11 @@ import {
 } from "@/lib/notifications/preferences-defaults";
 import { writeLog, alreadySent } from "@/lib/notifications/log";
 import { sendViaEmail } from "@/lib/notifications/channels/email";
-import type { NotificationEvent } from "@/lib/notifications/types";
+import type {
+  NotificationEvent,
+  NotificationRecipient,
+} from "@/lib/notifications/types";
+import { toLocale } from "@/lib/i18n/config";
 
 export type { NotificationEvent } from "@/lib/notifications/types";
 export { alreadySent } from "@/lib/notifications/log";
@@ -76,19 +80,31 @@ export async function notifyOnce(event: NotificationEvent): Promise<boolean> {
   return true;
 }
 
-/** Dades de contacte d'un perfil (per construir el destinatari). */
+/**
+ * Dades de contacte d'un perfil (per construir el destinatari).
+ *
+ * L'idioma va dins de la MATEIXA consulta que ja hi havia: una columna més al
+ * `select` no costa cap viatge. Per això localitzar els correus no afegeix ni
+ * una consulta a cap flux.
+ */
 export async function getProfileContact(
   profileId: string,
-): Promise<{ profileId: string; email: string | null; phone: string | null; name: string | null } | null> {
+): Promise<NotificationRecipient | null> {
   if (USE_MOCK) {
     const p = getStore().profiles.find((x) => x.id === profileId);
     if (!p) return null;
-    return { profileId, email: p.email, phone: p.phone, name: p.full_name };
+    return {
+      profileId,
+      email: p.email,
+      phone: p.phone,
+      name: p.full_name,
+      locale: toLocale(p.preferred_language),
+    };
   }
   const admin = createAdminClient();
   const { data } = await admin
     .from("profiles")
-    .select("email, phone, full_name")
+    .select("email, phone, full_name, preferred_language")
     .eq("id", profileId)
     .maybeSingle();
   if (!data) return null;
@@ -97,5 +113,6 @@ export async function getProfileContact(
     email: data.email,
     phone: data.phone,
     name: data.full_name,
+    locale: toLocale(data.preferred_language),
   };
 }

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "i18n:check": "node scripts/i18n-check.mjs",
-    "i18n:inventory": "node scripts/i18n-inventory.mjs"
+    "i18n:inventory": "node scripts/i18n-inventory.mjs",
+    "emails:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/email-snapshot.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -30,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.19",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

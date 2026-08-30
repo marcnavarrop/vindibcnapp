@@ -1,4 +1,5 @@
 import ca from "@/messages/ca.json";
+import type { Locale } from "@/lib/i18n/config";
 
 /**
  * El text dels avisos que veu el CLIENT surt del diccionari.
@@ -63,6 +64,14 @@ export type NotificationRecipient = {
   email: string | null;
   phone: string | null;
   name: string | null;
+  /**
+   * Idioma en què se li escriu. Surt de `profiles.preferred_language`.
+   *
+   * Opcional, i sense res s'escriu en català. Això no és una comoditat: és el
+   * que fa que l'admin, el professional, el visitant de /prova i l'avís al
+   * desenvolupador segueixin exactament igual sense haver-los de tocar.
+   */
+  locale?: Locale | null;
 };
 
 /** Un esdeveniment a notificar. `data` és el context per a la plantilla. */

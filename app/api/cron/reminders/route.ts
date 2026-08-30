@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SERVICE_LABELS } from "@/lib/labels";
 import {
   listTomorrowReminderTargets,
   listTomorrowTrainerAgendas,
@@ -15,26 +14,6 @@ import { centerHour, centerToday } from "@/lib/center-time";
 
 export const dynamic = "force-dynamic";
 
-function fmtWhen(iso: string): string {
-  return new Intl.DateTimeFormat("ca-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Madrid",
-  }).format(new Date(iso));
-}
-
-/** Data curta en català a partir d'un dia YYYY-MM-DD. */
-function fmtDay(day: string): string {
-  return new Intl.DateTimeFormat("ca-ES", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Europe/Madrid",
-  }).format(new Date(`${day}T12:00:00Z`));
-}
 
 /**
  * Recordatoris de sessió del dia següent. Protegit amb CRON_SECRET: només
@@ -81,8 +60,8 @@ async function handle(req: NextRequest) {
       relatedId: t.relatedId,
       data: {
         name: t.recipient.name ?? "",
-        when: fmtWhen(t.scheduledAt),
-        service: SERVICE_LABELS[t.serviceType],
+        whenIso: t.scheduledAt,
+        serviceType: t.serviceType,
         ...(t.trainerName ? { trainer: t.trainerName } : {}),
       },
     });
@@ -123,10 +102,9 @@ async function handle(req: NextRequest) {
       relatedId: b.relatedId,
       data: {
         name: b.recipient.name ?? "",
-        service: SERVICE_LABELS[b.serviceType],
+        serviceType: b.serviceType,
         remaining: String(b.remainingSessions),
-        expiresAt: fmtDay(b.expiresAt),
-        when: `el ${fmtDay(b.expiresAt)}`,
+        expiresIso: b.expiresAt,
       },
     });
     if (did) expSent++;
@@ -146,7 +124,7 @@ async function handle(req: NextRequest) {
       relatedId: b.relatedId,
       data: {
         name: b.recipient.name ?? "",
-        service: SERVICE_LABELS[b.serviceType],
+        serviceType: b.serviceType,
         cancelled: String(b.cancelledCount),
       },
     });

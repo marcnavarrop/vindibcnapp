@@ -3,6 +3,8 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
 import { notify } from "@/lib/notifications";
+import { toLocale } from "@/lib/i18n/config";
+import type { NotificationRecipient } from "@/lib/notifications/types";
 
 /**
  * Notifica un anunci nou a qui tingui 'community_email' activat. Enviament en
@@ -35,7 +37,9 @@ export async function notifyCommunity(input: {
   }
 }
 
-type Rec = { profileId: string; email: string | null; phone: string | null; name: string | null };
+// El tipus del destinatari és el de sempre: així l'idioma no es pot
+// perdre pel camí sense que el compilador ho digui.
+type Rec = NotificationRecipient;
 
 async function optedInRecipients(): Promise<Rec[]> {
   if (USE_MOCK) {
@@ -47,16 +51,33 @@ async function optedInRecipients(): Promise<Rec[]> {
     );
     return store.profiles
       .filter((p) => ids.has(p.id) && p.role !== "admin")
-      .map((p) => ({ profileId: p.id, email: p.email, phone: p.phone, name: p.full_name }));
+      .map((p) => ({
+        profileId: p.id,
+        email: p.email,
+        phone: p.phone,
+        name: p.full_name,
+        // Aquest esdeveniment va a clients I a professionals dins del mateix
+        // bucle. Amb l'idioma al destinatari, cadascú el rep en el seu sense
+        // que el codi hagi de partir la llista en dues.
+        locale: p.role === "client" ? toLocale(p.preferred_language) : null,
+      }));
   }
   const admin = createAdminClient();
   const { data } = await admin
     .from("notification_preferences")
-    .select("profile_id, profile:profiles!notification_preferences_profile_id_fkey(email, phone, full_name, role)")
+    .select(
+      "profile_id, profile:profiles!notification_preferences_profile_id_fkey(email, phone, full_name, role, preferred_language)",
+    )
     .eq("community_email", true);
   type Row = {
     profile_id: string;
-    profile: { email: string | null; phone: string | null; full_name: string | null; role: string } | null;
+    profile: {
+      email: string | null;
+      phone: string | null;
+      full_name: string | null;
+      role: string;
+      preferred_language: string | null;
+    } | null;
   };
   return ((data as unknown as Row[]) ?? [])
     .filter((r) => r.profile && r.profile.role !== "admin")
@@ -65,5 +86,9 @@ async function optedInRecipients(): Promise<Rec[]> {
       email: r.profile!.email,
       phone: r.profile!.phone,
       name: r.profile!.full_name,
+      locale:
+        r.profile!.role === "client"
+          ? toLocale(r.profile!.preferred_language)
+          : null,
     }));
 }

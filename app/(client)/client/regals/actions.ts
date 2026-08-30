@@ -15,7 +15,7 @@ import {
 import { uploadGiftVoucherPdf } from "@/lib/data/gift-voucher-doc";
 import { getClientByProfile } from "@/lib/data/clients";
 import { notify } from "@/lib/notifications";
-import { formatDate, sessionsLabel } from "@/lib/labels";
+import { sessionsLabel } from "@/lib/labels";
 
 export type BuyState = {
   errorCode?: "unauthorized" | "errorOff" | "errorPackage" | "errorCreate";
@@ -151,7 +151,7 @@ export async function sendGiftVoucherAction(
         buyer: viewer.fullName ?? "",
         code: voucher.code,
         package: `${voucher.packageName} · ${sessionsLabel(voucher.totalSessions)}`,
-        expires: formatDate(voucher.expiresAt),
+        expiresIso: voucher.expiresAt,
         message: voucher.message ?? "",
       },
     },

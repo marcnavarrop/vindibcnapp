@@ -1,5 +1,7 @@
 import "server-only";
 import type { NotificationEvent } from "@/lib/notifications/types";
+import { emailI18n, type EmailI18n } from "@/lib/notifications/i18n";
+import type { Locale } from "@/lib/i18n/config";
 import {
   BRAND,
   CENTER_NAME,
@@ -60,6 +62,12 @@ function ctaButton(cta: Cta): string {
   </table>`;
 }
 
+/*
+ * `footer` i `plain` encara no reben l'idioma: el seu text és tot català
+ * cablejat i un paràmetre que no es fa servir és codi mort. El bloc 2, que és
+ * qui el traduirà, els el passarà. `layout` sí que el rep ja, perquè el
+ * `lang` de l'HTML depèn de l'idioma des d'avui.
+ */
 function footer(kind: FooterKind): string {
   const privacy = appLink("/legal/privacitat");
   let prefsLine = "";
@@ -107,7 +115,7 @@ function brandHeader(): string {
   return `<img src="${emailLogoUrl()}" width="${width}" height="${height}" alt="${CENTER_NAME}" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:${BRAND.white};">`;
 }
 
-function layout(block: Block): string {
+function layout(block: Block, i: EmailI18n): string {
   const bodyParts: string[] = [];
   bodyParts.push(
     `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:${BRAND.dark};font-weight:800;">${esc(block.heading)}</h1>`,
@@ -118,7 +126,7 @@ function layout(block: Block): string {
   for (const pgraph of block.outro ?? []) bodyParts.push(paragraph(pgraph, BRAND.muted));
 
   return `<!doctype html>
-<html lang="ca"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><style>:root{color-scheme:light only;supported-color-schemes:light only;}</style></head>
+<html lang="${i.locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><style>:root{color-scheme:light only;supported-color-schemes:light only;}</style></head>
 <body style="margin:0;padding:0;background:${BRAND.bg};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.bg};">
     <tr><td align="center" style="padding:24px 12px;">
@@ -167,7 +175,10 @@ export type RenderedEmail = { subject: string; html: string; text: string };
 export function renderInviteEmail(input: {
   name: string | null;
   url: string;
+  /** Idioma de qui el rep. Sense res, català. */
+  locale?: Locale | null;
 }): RenderedEmail {
+  const i = emailI18n(input.locale);
   const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
   const block: Block = {
     heading: "Benvingut/da a VindiBCN",
@@ -181,7 +192,7 @@ export function renderInviteEmail(input: {
   };
   return {
     subject: "Benvingut/da a VindiBCN — crea la teva contrasenya",
-    html: layout(block),
+    html: layout(block, i),
     text: plain(block),
   };
 }
@@ -190,7 +201,10 @@ export function renderInviteEmail(input: {
 export function renderRecoveryEmail(input: {
   name: string | null;
   url: string;
+  /** Idioma de qui el rep. Sense res, català. */
+  locale?: Locale | null;
 }): RenderedEmail {
+  const i = emailI18n(input.locale);
   const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
   const block: Block = {
     heading: "Restablir la contrasenya",
@@ -204,7 +218,7 @@ export function renderRecoveryEmail(input: {
   };
   return {
     subject: "Restablir la teva contrasenya — VindiBCN",
-    html: layout(block),
+    html: layout(block, i),
     text: plain(block),
   };
 }
@@ -213,7 +227,10 @@ export function renderRecoveryEmail(input: {
 export function renderWelcomeEmail(input: {
   name: string | null;
   url: string;
+  /** Idioma de qui el rep. Sense res, català. */
+  locale?: Locale | null;
 }): RenderedEmail {
+  const i = emailI18n(input.locale);
   const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
   const block: Block = {
     heading: "Benvingut/da a VindiBCN!",
@@ -227,15 +244,32 @@ export function renderWelcomeEmail(input: {
   };
   return {
     subject: "Benvingut/da a VindiBCN!",
-    html: layout(block),
+    html: layout(block, i),
     text: plain(block),
   };
 }
 
 export function renderEmail(event: NotificationEvent): RenderedEmail {
+  // L'idioma surt del DESTINATARI, no de qui envia. Un mateix esdeveniment
+  // —les novetats de la comunitat— arriba a clients i professionals dins del
+  // mateix bucle, i cadascú l'ha de rebre en el seu.
+  const i = emailI18n(event.recipient.locale);
   const d = event.data;
   const name = d.name?.trim() ? d.name.trim() : null;
   const hola = name ? `Hola ${name},` : "Hola,";
+
+  /*
+   * La data i el servei es formaten AQUÍ, no a qui crida `notify()`.
+   *
+   * Abans arribaven fets —sempre en català, perquè qui els construïa no sabia
+   * per a qui era el correu—. Amb les plantilles traduïdes això hauria donat
+   * "Date and time: dilluns, 16 de març": mitja frase en cada idioma. Ara el
+   * `data` porta l'ISO i l'enum, i el format es decideix quan ja se sap en
+   * quin idioma s'escriu.
+   */
+  const when = d.whenIso ? i.dateTime(d.whenIso) : undefined;
+  const service = d.serviceType ? i.service(d.serviceType) : undefined;
+  const expires = d.expiresIso ? i.date(d.expiresIso) : undefined;
 
   let subject = "";
   let block: Block;
@@ -247,8 +281,8 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         heading: "La teva reserva està confirmada",
         intro: [hola, "Hem registrat la teva sessió. Aquí tens els detalls:"],
         details: rows([
-          ["Data i hora", d.when],
-          ["Servei", d.service],
+          ["Data i hora", when],
+          ["Servei", service],
           ["Professional", d.trainer],
         ]),
         cta: { label: "Veure la meva reserva", url: appLink("/client/reservas") },
@@ -263,8 +297,8 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         heading: "S'ha cancel·lat una reserva",
         intro: [hola, "T'informem que aquesta sessió ha quedat anul·lada:"],
         details: rows([
-          ["Data i hora", d.when],
-          ["Servei", d.service],
+          ["Data i hora", when],
+          ["Servei", service],
         ]),
         cta: { label: "Reservar una altra sessió", url: appLink("/client/reservas") },
         outro: ["Si ha estat un error, contacta amb el centre o torna a reservar quan vulguis."],
@@ -278,8 +312,8 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         heading: "Tens una sessió demà",
         intro: [hola, "Et recordem la teva propera sessió:"],
         details: rows([
-          ["Data i hora", d.when],
-          ["Servei", d.service],
+          ["Data i hora", when],
+          ["Servei", service],
           ["Professional", d.trainer],
         ]),
         cta: { label: "Veure la meva reserva", url: appLink("/client/reservas") },
@@ -300,7 +334,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         ],
         details: rows([
           ["Nom", d.visitorName],
-          ["Data i hora", d.when],
+          ["Data i hora", when],
           ["Telèfon", d.phone],
           ["Correu", d.email],
         ]),
@@ -324,7 +358,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
               hola,
               "Bones notícies: hem confirmat la teva sessió de prova gratuïta.",
             ],
-            details: rows([["Data i hora", d.when]]),
+            details: rows([["Data i hora", when]]),
             outro: [
               "T'hi esperem! Arriba uns minuts abans amb roba còmoda. Si tens qualsevol dubte, respon a aquest correu.",
             ],
@@ -348,7 +382,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         heading: "El teu bo s'està acabant",
         intro: [
           hola,
-          `Et queda només 1 sessió al teu bo de ${d.service ?? ""}.`,
+          `Et queda només 1 sessió al teu bo de ${service ?? ""}.`,
         ],
         cta: { label: "Renovar el meu bo", url: appLink("/client/bonos") },
         outro: ["Renova'l quan vulguis per no quedar-te sense sessions."],
@@ -362,12 +396,12 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         heading: "El teu bo està a punt de caducar",
         intro: [
           hola,
-          `Encara et queden sessions per fer i el bo caduca ${d.when}. Si el vols aprofitar, reserva-les abans.`,
+          `Encara et queden sessions per fer i el bo caduca el ${expires ?? ""}. Si el vols aprofitar, reserva-les abans.`,
         ],
         details: rows([
-          ["Servei", d.service],
+          ["Servei", service],
           ["Sessions sense fer", d.remaining],
-          ["Caduca el", d.expiresAt],
+          ["Caduca el", expires],
         ]),
         cta: { label: "Reservar una sessió", url: appLink("/client/reservas") },
         outro: ["Si no hi arribes a temps, parla amb el centre i ho mirem."],
@@ -385,7 +419,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
           "Això vol dir que les sessions que hi tenies reservades s'han cancel·lat i les franges han tornat a quedar lliures.",
         ],
         details: rows([
-          ["Servei", d.service],
+          ["Servei", service],
           ["Sessions cancel·lades", d.cancelled],
         ]),
         cta: { label: "Tornar a comprar el bo", url: appLink("/client/bonos") },
@@ -413,8 +447,8 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         intro: [hola, "Tens una nova reserva a la teva agenda:"],
         details: rows([
           ["Client", d.client],
-          ["Data i hora", d.when],
-          ["Servei", d.service],
+          ["Data i hora", when],
+          ["Servei", service],
         ]),
         cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
         footer: "trainer",
@@ -428,8 +462,8 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         intro: [hola, "Un client ha cancel·lat aquesta sessió:"],
         details: rows([
           ["Client", d.client],
-          ["Data i hora", d.when],
-          ["Servei", d.service],
+          ["Data i hora", when],
+          ["Servei", service],
         ]),
         cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
         footer: "trainer",
@@ -524,7 +558,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
           ["Títol", d.title],
           ["Categoria", d.category],
           ["Qui ho reporta", d.reporter],
-          ["Data", d.when],
+          ["Data", when],
         ]),
         cta: { label: "Veure els tiquets", url: appLink("/admin/suport") },
         footer: "plain",
@@ -540,8 +574,8 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
           "Algú ha cancel·lat i t'hem confirmat la sessió automàticament. Ja la tens a la teva agenda:",
         ],
         details: rows([
-          ["Data i hora", d.when],
-          ["Servei", d.service],
+          ["Data i hora", when],
+          ["Servei", service],
           ["Professional", d.trainer],
         ]),
         cta: { label: "Veure la meva reserva", url: appLink("/client/reservas") },
@@ -565,7 +599,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         details: rows([
           ["Regal", d.package],
           ["Codi", d.code],
-          ["Data", d.when],
+          ["Data", when],
         ]),
         outro: ["Gràcies per regalar benestar. Ens veiem al centre!"],
         footer: "client",
@@ -589,7 +623,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
         details: rows([
           ["Codi", d.code],
           ["Regal", d.package],
-          ["Vàlid fins al", d.expires],
+          ["Vàlid fins al", expires],
         ]),
         cta: { label: "Bescanviar el regal", url: appLink("/client/bonos") },
         outro: [
@@ -599,9 +633,32 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    default: {
+      /*
+       * Un tipus nou sense cas.
+       *
+       * Fins ara el `switch` no en tenia, i `block` quedava sense assignar:
+       * afegir un esdeveniment i oblidar-se de la plantilla petava en enviar,
+       * dins del `try` de `notify()`, o sigui en silenci i sense correu.
+       *
+       * `never` fa que ara peti a la COMPILACIÓ, que és on s'ha de veure. I si
+       * tot i així n'arribés un (dades velles d'una cua, per exemple), surt un
+       * correu mínim però vàlid en comptes de cap.
+       */
+      const unknown: never = event.type;
+      subject = `VindiBCN`;
+      block = {
+        heading: "VindiBCN",
+        intro: [hola, "Tens un avís nou a la teva àrea."],
+        cta: { label: "Entrar", url: appLink("/") },
+        footer: "plain",
+      };
+      void unknown;
+      break;
+    }
   }
 
-  return { subject, html: layout(block), text: plain(block) };
+  return { subject, html: layout(block, i), text: plain(block) };
 }
 
 /** Construeix files de detall, ometent les que no tinguin valor. */

@@ -90,8 +90,8 @@ export async function notifyNextSessionAction(
       relatedId: next.id,
       data: {
         name: contact.name ?? "",
-        when,
-        service: next.serviceType,
+        whenIso: next.scheduledAt,
+        serviceType: next.serviceType,
         trainer: client.trainerName ?? "",
       },
     },

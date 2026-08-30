@@ -6,7 +6,6 @@ import { slotHasRoom } from "@/lib/data/reservations";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { SERVICE_LABELS, formatDayHeading, formatTime } from "@/lib/labels";
 import { centerDateStr, centerLocalToInstant } from "@/lib/center-time";
 import type { ServiceType, WaitlistStatus } from "@/types/database";
 
@@ -496,8 +495,8 @@ async function notifyPromotion(
     relatedId: reservationId,
     data: {
       name: contact.name ?? "",
-      when: `${formatDayHeading(freed.scheduledAt)}, ${formatTime(freed.scheduledAt)}`,
-      service: SERVICE_LABELS[freed.serviceType],
+      whenIso: freed.scheduledAt,
+      serviceType: freed.serviceType,
       trainer: trainer?.name ?? "",
     },
   });
