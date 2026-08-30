@@ -5,14 +5,17 @@ import en from "@/messages/en.json";
 import { DEFAULT_LOCALE, intlLocale, type Locale } from "@/lib/i18n/config";
 
 /**
- * L'idioma dels correus.
+ * Traduir fora del context d'una petició.
  *
- * Les pantalles el treuen del context de la petició (`getTranslations`), però
- * un correu no es renderitza dins de cap petició: el dispara un cron, o una
- * Server Action que ja ha acabat de pintar. `createTranslator` de next-intl és
- * una funció pura —li dónes locale i missatges i et torna el traductor— i va
- * igual de bé des d'on sigui. Els diccionaris s'importen estàticament, com ja
- * fan `lib/labels.ts` i `lib/notifications/types.ts`.
+ * Les pantalles treuen l'idioma del context de la petició (`getTranslations`),
+ * però hi ha coses que no es renderitzen dins de cap: un correu el dispara un
+ * cron o una Server Action que ja ha acabat de pintar, i el PDF d'un val el
+ * genera un webhook de Stripe on no hi ha ni sessió ni cookies.
+ *
+ * `createTranslator` de next-intl és una funció pura —li dónes locale i
+ * missatges i et torna el traductor— i va igual de bé des d'on sigui. Els
+ * diccionaris s'importen estàticament, com ja fan `lib/labels.ts` i
+ * `lib/notifications/types.ts`.
  *
  * Els tres van al bundle del servidor. Són els mateixos fitxers que ja carrega
  * l'app, i tenir-los tots tres a mà és el que permet que un mateix esdeveniment
@@ -21,9 +24,9 @@ import { DEFAULT_LOCALE, intlLocale, type Locale } from "@/lib/i18n/config";
  */
 const MESSAGES = { ca, es, en } as const;
 
-/** Sense idioma, català. És el que fa que admin, professional, el visitant de
- *  /prova i l'avís al desenvolupador segueixin igual sense tocar-los. */
-export function emailLocale(locale?: Locale | null): Locale {
+/** Sense idioma, català. És el que fa que admin, professional, el visitant
+ *  de /prova i l'avís al desenvolupador segueixin igual sense tocar-los. */
+export function resolvedLocale(locale?: Locale | null): Locale {
   return locale ?? DEFAULT_LOCALE;
 }
 
@@ -35,8 +38,8 @@ export function emailLocale(locale?: Locale | null): Locale {
  * Amb això, la plantilla anglesa deia "Date and time: dilluns, 15 de març".
  * Ara el format es decideix aquí, on ja se sap en quin idioma s'escriu.
  */
-export function emailI18n(locale?: Locale | null) {
-  const l = emailLocale(locale);
+export function staticI18n(locale?: Locale | null) {
+  const l = resolvedLocale(locale);
   const messages = MESSAGES[l];
   const intl = intlLocale(l);
 
@@ -52,12 +55,12 @@ export function emailI18n(locale?: Locale | null) {
      * Qui vigila de debò que les claus existeixin —i que hi siguin als tres
      * idiomes— és `npm run i18n:check`, que entén aquesta forma.
      */
-    ns: (namespace: string): EmailTranslator =>
+    ns: (namespace: string): StaticTranslator =>
       createTranslator({
         locale: l,
         messages,
         namespace: namespace as never,
-      }) as unknown as EmailTranslator,
+      }) as unknown as StaticTranslator,
 
     /** "dilluns, 15 de març, a les 10:00" — el format llarg dels correus. */
     dateTime: (iso: string) =>
@@ -102,17 +105,16 @@ export function emailI18n(locale?: Locale | null) {
   };
 }
 
-/** Un traductor de correu: clau i, si cal, els seus paràmetres. */
-export type EmailTranslator = (
+/** Un traductor: clau i, si cal, els seus paràmetres. */
+export type StaticTranslator = (
   key: string,
   values?: Record<string, string | number | Date>,
 ) => string;
 
-export type EmailI18n = ReturnType<typeof emailI18n>;
+export type StaticI18n = ReturnType<typeof staticI18n>;
 
 /**
- * Els correus parlen sempre en hora del centre, encara que qui els llegeixi
- * sigui a un altre fus: "tens sessió a les 10:00" vol dir les 10:00 de
- * Barcelona.
+ * Tot això parla sempre en hora del centre, encara que qui ho llegeixi sigui a
+ * un altre fus: "tens sessió a les 10:00" vol dir les 10:00 de Barcelona.
  */
 const CENTER_TZ = "Europe/Madrid";

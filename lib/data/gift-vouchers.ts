@@ -1,5 +1,6 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
+import { toLocale, type Locale } from "@/lib/i18n/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { getCenterSettings } from "@/lib/data/center-settings";
@@ -246,6 +247,34 @@ export async function getGiftVoucher(id: string): Promise<GiftVoucher | null> {
 }
 
 /** El client propietari d'un val (comprador), per comprovar qui el descarrega. */
+/**
+ * L'idioma en què s'ha d'escriure el document d'un val: el de qui el compra.
+ *
+ * Surt del PERFIL i no de la cookie, a diferència del correu del val. El PDF
+ * es genera també des del webhook de Stripe —on no hi ha ni sessió ni
+ * cookies— i es pot tornar a generar més tard, fins i tot quan el descarrega
+ * un admin. Havia de ser una font que doni el mateix des dels quatre camins.
+ */
+export async function giftVoucherBuyerLocale(
+  buyerClientId: string,
+): Promise<Locale | null> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.id === buyerClientId);
+    const profile = store.profiles.find((p) => p.id === client?.profile_id);
+    return profile ? toLocale(profile.preferred_language) : null;
+  }
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("clients")
+    .select("profile:profiles!clients_profile_id_fkey(preferred_language)")
+    .eq("id", buyerClientId)
+    .maybeSingle();
+  const pref = (data as { profile: { preferred_language: string | null } | null } | null)
+    ?.profile?.preferred_language;
+  return pref ? toLocale(pref) : null;
+}
+
 export async function giftVoucherBuyerId(id: string): Promise<string | null> {
   if (USE_MOCK)
     return getStore().gift_vouchers.find((x) => x.id === id)?.buyer_client_id ?? null;

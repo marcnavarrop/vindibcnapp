@@ -13,6 +13,7 @@ import {
   type GiftVoucherQuote,
 } from "@/lib/data/gift-vouchers";
 import { uploadGiftVoucherPdf } from "@/lib/data/gift-voucher-doc";
+import { giftVoucherBuyerLocale } from "@/lib/data/gift-vouchers";
 import { createSystemPayment } from "@/lib/data/payments";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { SERVICE_LABELS } from "@/lib/labels";
@@ -307,6 +308,7 @@ async function fulfillGiftVoucher(
         buyerClientId: m.clientId,
         voucherId: voucher.id,
         content: {
+          locale: await giftVoucherBuyerLocale(m.clientId),
           code: voucher.code,
           packageName: voucher.packageName,
           serviceType: voucher.serviceType,

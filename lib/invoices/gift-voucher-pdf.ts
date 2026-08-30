@@ -2,7 +2,9 @@ import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { embedBrandLogo, logoWidthFor } from "@/lib/invoices/brand-logo";
 import { BRAND, CENTER_NAME } from "@/lib/notifications/brand";
-import { SERVICE_LABELS, deOf, formatDate } from "@/lib/labels";
+import { staticI18n } from "@/lib/i18n/no-request";
+import { deOf, formatDate } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
 import type { ServiceType } from "@/types/database";
 
 /**
@@ -103,13 +105,26 @@ export type GiftVoucherPdfInput = {
   buyerName: string | null;
   recipientName: string | null;
   message: string | null;
+  /**
+   * Idioma del document: el de qui REGALA.
+   *
+   * Mateix criteri que el correu del val. Però aquí no surt de la cookie sinó
+   * del perfil de qui compra, i és a posta: el PDF es genera també des del
+   * webhook de Stripe, on no hi ha ni sessió ni cookies, i es pot tornar a
+   * generar més tard —fins i tot des de la descàrrega d'un admin—. Havia de
+   * ser una font que doni el mateix resultat des dels quatre camins.
+   */
+  locale?: Locale | null;
 };
 
 export async function renderGiftVoucherPdf(
   input: GiftVoucherPdfInput,
 ): Promise<Uint8Array> {
+  const i = staticI18n(input.locale);
+  const t = i.ns("voucherPdf");
+
   const doc = await PDFDocument.create();
-  doc.setTitle(`Val de regal ${input.code} · ${CENTER_NAME}`);
+  doc.setTitle(t("docTitle", { code: input.code, centre: CENTER_NAME }));
   doc.setProducer(CENTER_NAME);
   doc.setCreator(CENTER_NAME);
 
@@ -153,14 +168,15 @@ export async function renderGiftVoucherPdf(
       color: WHITE,
     });
   }
-  drawText(ctx, "Centre d'entrenament personal i fisioteràpia", {
+  drawText(ctx, t("tagline"), {
     x: MARGIN,
     y: PAGE.height - band + 22,
     size: 9,
     color: WHITE,
   });
-  drawText(ctx, "VAL DE REGAL", {
-    x: RIGHT - widthOf(ctx, "VAL DE REGAL", 15, true),
+  const banner = t("banner");
+  drawText(ctx, banner, {
+    x: RIGHT - widthOf(ctx, banner, 15, true),
     y: PAGE.height - band + 48,
     size: 15,
     bold: true,
@@ -170,7 +186,7 @@ export async function renderGiftVoucherPdf(
   let y = PAGE.height - band - 46;
 
   // ── Regal ─────────────────────────────────────────────────────────────────
-  drawCentered(ctx, "AIXÒ ÉS UN REGAL PER A TU", {
+  drawCentered(ctx, t("forYou"), {
     center,
     y,
     size: 9,
@@ -182,7 +198,19 @@ export async function renderGiftVoucherPdf(
   y -= 22;
   drawCentered(
     ctx,
-    `${input.totalSessions} ${input.totalSessions === 1 ? "sessió" : "sessions"} ${deOf(SERVICE_LABELS[input.serviceType])}`,
+    t("sessionsOf", {
+      count: input.totalSessions,
+      /*
+       * En català la preposició s'apostrofa segons la paraula que ve
+       * darrere: "d'EP Individual" però "de Grup reduït". Cap format ICU
+       * ho sap fer, així que el català es prepara aquí i les altres dues
+       * llengües porten la preposició al diccionari, on li toca.
+       */
+      service:
+        i.locale === "ca"
+          ? deOf(i.service(input.serviceType))
+          : i.service(input.serviceType),
+    }),
     { center, y, size: 13, color: CHARCOAL },
   );
   y -= 40;
@@ -201,14 +229,14 @@ export async function renderGiftVoucherPdf(
     borderColor: PURPLE,
     borderWidth: 2,
   });
-  drawCentered(ctx, "EL TEU CODI", { center, y: y + 2, size: 8, bold: true, color: MUTED });
+  drawCentered(ctx, t("yourCode"), { center, y: y + 2, size: 8, bold: true, color: MUTED });
   drawCentered(ctx, input.code, { center, y: y - 32, size: 27, bold: true, color: PURPLE });
   y -= boxH + 18;
 
   // ── De part de / Per a ────────────────────────────────────────────────────
   const parts: [string, string][] = [];
-  if (input.buyerName) parts.push(["DE PART DE", input.buyerName]);
-  if (input.recipientName) parts.push(["PER A", input.recipientName]);
+  if (input.buyerName) parts.push([t("from"), input.buyerName]);
+  if (input.recipientName) parts.push([t("to"), input.recipientName]);
   if (parts.length > 0) {
     const colW = (RIGHT - MARGIN) / parts.length;
     parts.forEach(([label, value], i) => {
@@ -238,25 +266,23 @@ export async function renderGiftVoucherPdf(
     color: BORDER,
   });
 
-  drawText(ctx, "COM EL FAIG SERVIR", {
+  drawText(ctx, t("howTo"), {
     x: MARGIN,
     y: footerTop - 20,
     size: 8,
     bold: true,
     color: MUTED,
   });
-  const steps = [
-    "1. Entra a la teva àrea de client (o registra-t'hi si encara no en tens).",
-    "2. Ves a Bons i escriu aquest codi a \"Tens un codi de regal?\".",
-    "3. Les sessions s'afegeixen al teu compte i ja pots reservar.",
-  ];
+  const steps = [t("step1"), t("step2"), t("step3")];
   let sy = footerTop - 36;
   for (const step of steps) {
     drawText(ctx, step, { x: MARGIN, y: sy, size: 9.5, color: CHARCOAL });
     sy -= 14;
   }
 
-  const validity = `Vàlid fins al ${formatDate(input.expiresAt)}`;
+  const validity = t("validUntil", {
+    date: formatDate(input.expiresAt, i.locale),
+  });
   drawText(ctx, validity, {
     x: RIGHT - widthOf(ctx, validity, 11, true),
     y: footerTop - 24,
@@ -274,7 +300,8 @@ export async function renderGiftVoucherPdf(
   return doc.save();
 }
 
-/** Nom del fitxer que veurà qui el descarrega. */
-export function giftVoucherFileName(code: string): string {
-  return `val-regal-${code.toLowerCase()}.pdf`;
+/** Nom del fitxer que veurà qui el descarrega, en el seu idioma. */
+export function giftVoucherFileName(code: string, locale?: Locale | null): string {
+  const t = staticI18n(locale).ns("voucherPdf");
+  return `${t("fileName")}-${code.toLowerCase()}.pdf`;
 }

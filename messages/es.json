@@ -870,5 +870,21 @@
       "outro": "Cualquier duda, responde a este correo o habla con el centro. ¡Nos vemos pronto!"
     },
     "sessions": "{count, plural, one {# sesión} other {# sesiones}}"
+  },
+  "voucherPdf": {
+    "docTitle": "Vale de regalo {code} · {centre}",
+    "tagline": "Centro de entrenamiento personal y fisioterapia",
+    "banner": "VALE DE REGALO",
+    "forYou": "ESTO ES UN REGALO PARA TI",
+    "sessionsOf": "{count, plural, one {# sesión} other {# sesiones}} de {service}",
+    "yourCode": "TU CÓDIGO",
+    "from": "DE PARTE DE",
+    "to": "PARA",
+    "howTo": "CÓMO LO USO",
+    "step1": "1. Entra en tu área de cliente (o regístrate si todavía no tienes).",
+    "step2": "2. Ve a Bonos y escribe este código en \"¿Tienes un código de regalo?\".",
+    "step3": "3. Las sesiones se añaden a tu cuenta y ya puedes reservar.",
+    "validUntil": "Válido hasta el {date}",
+    "fileName": "vale-regalo"
   }
 }

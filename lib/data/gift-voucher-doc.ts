@@ -73,7 +73,7 @@ export async function giftVoucherSignedUrl(
   const { data, error } = await admin.storage
     .from(BUCKET)
     .createSignedUrl(storagePath, SIGNED_URL_TTL, {
-      download: giftVoucherFileName(content.code),
+      download: giftVoucherFileName(content.code, content.locale),
     });
   if (error || !data?.signedUrl)
     throw new Error("No s'ha pogut generar l'enllaç de descàrrega.");

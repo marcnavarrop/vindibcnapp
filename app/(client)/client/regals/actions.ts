@@ -13,6 +13,7 @@ import {
   giftVoucherBuyerId,
 } from "@/lib/data/gift-vouchers";
 import { uploadGiftVoucherPdf } from "@/lib/data/gift-voucher-doc";
+import { giftVoucherBuyerLocale } from "@/lib/data/gift-vouchers";
 import { getClientByProfile } from "@/lib/data/clients";
 import { notify } from "@/lib/notifications";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -72,6 +73,7 @@ export async function buyGiftVoucherAction(
         buyerClientId: client.id,
         voucherId: voucher.id,
         content: {
+          locale: await giftVoucherBuyerLocale(client.id),
           code: voucher.code,
           packageName: voucher.packageName,
           serviceType: voucher.serviceType,

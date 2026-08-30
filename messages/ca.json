@@ -870,5 +870,21 @@
       "outro": "Qualsevol dubte, respon a aquest correu o parla amb el centre. Ens veiem aviat!"
     },
     "sessions": "{count, plural, one {# sessió} other {# sessions}}"
+  },
+  "voucherPdf": {
+    "docTitle": "Val de regal {code} · {centre}",
+    "tagline": "Centre d'entrenament personal i fisioteràpia",
+    "banner": "VAL DE REGAL",
+    "forYou": "AIXÒ ÉS UN REGAL PER A TU",
+    "sessionsOf": "{count, plural, one {# sessió} other {# sessions}} {service}",
+    "yourCode": "EL TEU CODI",
+    "from": "DE PART DE",
+    "to": "PER A",
+    "howTo": "COM EL FAIG SERVIR",
+    "step1": "1. Entra a la teva àrea de client (o registra-t'hi si encara no en tens).",
+    "step2": "2. Ves a Bons i escriu aquest codi a \"Tens un codi de regal?\".",
+    "step3": "3. Les sessions s'afegeixen al teu compte i ja pots reservar.",
+    "validUntil": "Vàlid fins al {date}",
+    "fileName": "val-regal"
   }
 }

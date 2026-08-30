@@ -1,6 +1,6 @@
 import "server-only";
 import type { NotificationEvent } from "@/lib/notifications/types";
-import { emailI18n, type EmailI18n } from "@/lib/notifications/i18n";
+import { staticI18n, type StaticI18n } from "@/lib/i18n/no-request";
 import type { Locale } from "@/lib/i18n/config";
 import {
   BRAND,
@@ -62,7 +62,7 @@ function ctaButton(cta: Cta): string {
   </table>`;
 }
 
-function footer(kind: FooterKind, i: EmailI18n): string {
+function footer(kind: FooterKind, i: StaticI18n): string {
   const f = i.ns("emails.footer");
   const privacy = appLink("/legal/privacitat");
   let prefsLine = "";
@@ -109,7 +109,7 @@ function brandHeader(): string {
   return `<img src="${emailLogoUrl()}" width="${width}" height="${height}" alt="${CENTER_NAME}" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:${BRAND.white};">`;
 }
 
-function layout(block: Block, i: EmailI18n): string {
+function layout(block: Block, i: StaticI18n): string {
   const bodyParts: string[] = [];
   bodyParts.push(
     `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:${BRAND.dark};font-weight:800;">${esc(block.heading)}</h1>`,
@@ -137,7 +137,7 @@ function layout(block: Block, i: EmailI18n): string {
 }
 
 /** Versió text pla a partir dels mateixos continguts (entregabilitat + fallback). */
-function plain(block: Block, i: EmailI18n): string {
+function plain(block: Block, i: StaticI18n): string {
   const lines: string[] = [block.heading, ""];
   lines.push(...block.intro);
   if (block.details && block.details.length) {
@@ -173,7 +173,7 @@ export function renderInviteEmail(input: {
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
 }): RenderedEmail {
-  const i = emailI18n(input.locale);
+  const i = staticI18n(input.locale);
   const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
   const block: Block = {
     heading: "Benvingut/da a VindiBCN",
@@ -199,7 +199,7 @@ export function renderRecoveryEmail(input: {
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
 }): RenderedEmail {
-  const i = emailI18n(input.locale);
+  const i = staticI18n(input.locale);
   const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
   const block: Block = {
     heading: "Restablir la contrasenya",
@@ -225,7 +225,7 @@ export function renderWelcomeEmail(input: {
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
 }): RenderedEmail {
-  const i = emailI18n(input.locale);
+  const i = staticI18n(input.locale);
   const te = i.ns("emails");
   const t = i.ns("emails.welcome");
   const hola = input.name?.trim()
@@ -249,7 +249,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
   // L'idioma surt del DESTINATARI, no de qui envia. Un mateix esdeveniment
   // —les novetats de la comunitat— arriba a clients i professionals dins del
   // mateix bucle, i cadascú l'ha de rebre en el seu.
-  const i = emailI18n(event.recipient.locale);
+  const i = staticI18n(event.recipient.locale);
   const d = event.data;
   const te = i.ns("emails");
   const tl = i.ns("emails.labels");

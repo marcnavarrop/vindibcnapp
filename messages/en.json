@@ -870,5 +870,21 @@
       "outro": "If you have any questions, reply to this email or talk to the centre. See you soon!"
     },
     "sessions": "{count, plural, one {# session} other {# sessions}}"
+  },
+  "voucherPdf": {
+    "docTitle": "Gift voucher {code} · {centre}",
+    "tagline": "Personal training and physiotherapy centre",
+    "banner": "GIFT VOUCHER",
+    "forYou": "THIS IS A GIFT FOR YOU",
+    "sessionsOf": "{count, plural, one {# session} other {# sessions}} of {service}",
+    "yourCode": "YOUR CODE",
+    "from": "FROM",
+    "to": "FOR",
+    "howTo": "HOW TO USE IT",
+    "step1": "1. Sign in to your client area (or create an account if you don't have one).",
+    "step2": "2. Go to Packages and enter this code under \"Got a gift code?\".",
+    "step3": "3. The sessions are added to your account and you can start booking.",
+    "validUntil": "Valid until {date}",
+    "fileName": "gift-voucher"
   }
 }

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
-import { getGiftVoucher, giftVoucherBuyerId } from "@/lib/data/gift-vouchers";
+import {
+  getGiftVoucher,
+  giftVoucherBuyerId,
+  giftVoucherBuyerLocale,
+} from "@/lib/data/gift-vouchers";
 import {
   giftVoucherSignedUrl,
   uploadGiftVoucherPdf,
@@ -30,16 +34,20 @@ export async function GET(
   const voucher = await getGiftVoucher(id);
   if (!voucher) return new NextResponse("No trobat", { status: 404 });
 
+  const buyerClientId = await giftVoucherBuyerId(id);
+
   // L'admin pot descarregar qualsevol val (li'l poden demanar per telèfon);
   // un client, només els que ha comprat ell.
   if (viewer.role !== "admin") {
     const client = await getClientByProfile(viewer.id);
-    const buyerId = await giftVoucherBuyerId(id);
-    if (!client || !buyerId || buyerId !== client.id)
+    if (!client || !buyerClientId || buyerClientId !== client.id)
       return new NextResponse("No autoritzat", { status: 403 });
   }
 
+  // L'idioma és el de qui va COMPRAR el val, encara que qui el descarregui
+  // ara sigui l'admin: el document és seu, no de qui el baixa.
   const content = {
+    locale: buyerClientId ? await giftVoucherBuyerLocale(buyerClientId) : null,
     code: voucher.code,
     packageName: voucher.packageName,
     serviceType: voucher.serviceType,
@@ -54,10 +62,9 @@ export async function GET(
   // aquí en comptes de deixar el botó mort.
   let path = voucher.pdfPath;
   if (!path) {
-    const buyerId = await giftVoucherBuyerId(id);
-    if (!buyerId) return new NextResponse("No trobat", { status: 404 });
+    if (!buyerClientId) return new NextResponse("No trobat", { status: 404 });
     path = await uploadGiftVoucherPdf({
-      buyerClientId: buyerId,
+      buyerClientId,
       voucherId: id,
       content,
     });
