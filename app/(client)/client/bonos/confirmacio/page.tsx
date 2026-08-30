@@ -7,7 +7,8 @@ import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { AwaitingPayment } from "@/components/ui/awaiting-payment";
 import { RouteTabs } from "@/components/ui/route-tabs";
 import { formatEur } from "@/lib/labels";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function BonoCheckoutConfirmationPage({
     getTranslations("bonos"),
     getTranslations("labels.service"),
   ]);
+  const locale = (await getLocale()) as Locale;
   const BONO_TABS = [
     { href: "/client/bonos", label: t("tabBuy"), accent: true },
     { href: "/client/bonos/meus", label: t("tabMine") },
@@ -66,7 +68,7 @@ export default async function BonoCheckoutConfirmationPage({
               {tl(bono.serviceType)}
             </p>
             <p className="mt-0.5 text-brand-muted">
-              {t("confirmed.sessionsPrice", { sessions: bono.totalSessions, price: formatEur(bono.price) })}
+              {t("confirmed.sessionsPrice", { sessions: bono.totalSessions, price: formatEur(bono.price, locale) })}
             </p>
           </div>
 

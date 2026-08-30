@@ -1,17 +1,16 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { CancelReservationButton } from "@/components/forms/cancel-reservation-button";
 import { colorOfPro, type ColorPalette } from "@/lib/colors";
 import {
-  SERVICE_LABELS,
-  BONO_STATUS_LABELS,
   formatDate,
   formatTime,
   formatMonthShort,
 } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
 import type { ClientBono, ClientReservation } from "@/lib/data/clients";
 import type { ClientKpis } from "@/lib/data/client-dashboard";
 import type { BonoStatus } from "@/types/database";
@@ -219,7 +218,12 @@ const BONO_TONE: Partial<Record<BonoStatus, "success" | "warn">> = {
 };
 
 export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
-  const t = await getTranslations("home.bonos");
+  const [t, tl, ts, locale] = await Promise.all([
+    getTranslations("home.bonos"),
+    getTranslations("labels.service"),
+    getTranslations("labels.bonoStatus"),
+    getLocale() as Promise<Locale>,
+  ]);
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-3">
@@ -261,7 +265,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
                     <IconBox name="ticket" />
                     <div className="min-w-0">
                       <p className="truncate font-bold text-brand-dark">
-                        {SERVICE_LABELS[b.serviceType]}
+                        {tl(b.serviceType)}
                       </p>
                       <p className="text-xs text-brand-muted">
                         {b.remainingSessions} / {b.totalSessions} sessions
@@ -269,7 +273,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
                     </div>
                   </div>
                   <Badge tone={BONO_TONE[b.status] ?? "neutral"}>
-                    {BONO_STATUS_LABELS[b.status]}
+                    {ts(b.status)}
                   </Badge>
                 </div>
 
@@ -289,7 +293,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
                 <p className="flex items-center gap-1.5 text-xs text-brand-muted">
                   <Icon name="calendar" size={13} />
                   {b.expiresAt
-                    ? `Caduca el ${formatDate(b.expiresAt)}`
+                    ? t("expiresOn", { date: formatDate(b.expiresAt, locale) })
                     : t("noExpiry")}
                 </p>
               </li>
@@ -317,7 +321,11 @@ export async function UpcomingReservations({
   palette: ColorPalette;
   minCancellationHours: number;
 }) {
-  const tu = await getTranslations("home.upcoming");
+  const [tu, tl, locale] = await Promise.all([
+    getTranslations("home.upcoming"),
+    getTranslations("labels.service"),
+    getLocale() as Promise<Locale>,
+  ]);
   const minMs = minCancellationHours * 60 * 60 * 1000;
 
   return (
@@ -360,16 +368,17 @@ export async function UpcomingReservations({
                     {d.getDate()}
                   </span>
                   <span className="text-[10px] font-bold tracking-wide text-brand-muted uppercase">
-                    {formatMonthShort(r.scheduledAt)}
+                    {formatMonthShort(r.scheduledAt, locale)}
                   </span>
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-brand-dark">
-                    {SERVICE_LABELS[r.serviceType]}
+                    {tl(r.serviceType)}
                   </p>
                   <p className="truncate text-xs text-brand-muted">
-                    {formatDate(r.scheduledAt)} · {formatTime(r.scheduledAt)}
+                    {formatDate(r.scheduledAt, locale)} ·{" "}
+                    {formatTime(r.scheduledAt, locale)}
                   </p>
                 </div>
 
@@ -409,7 +418,7 @@ export async function UpcomingReservations({
 
 // ─────────────────────── Pròxima sessió ───────────────────────
 
-export function NextSessionCard({
+export async function NextSessionCard({
   reservation,
   avatars,
   palette,
@@ -418,26 +427,32 @@ export function NextSessionCard({
   avatars: Map<string, string>;
   palette: ColorPalette;
 }) {
+  const [t, tl, locale] = await Promise.all([
+    getTranslations("home"),
+    getTranslations("labels.service"),
+    getLocale() as Promise<Locale>,
+  ]);
+
   return (
     <section className="rounded-2xl border border-brand-purple/20 bg-brand-purple/5 p-5">
       <h2 className="mb-3 text-xs font-bold tracking-widest text-brand-purple uppercase">
-        Pròxima sessió
+        {t("nextSession")}
       </h2>
 
       <div className="flex items-start gap-3">
         <IconBox name="calendarPlus" />
         <div className="min-w-0">
           <p className="font-bold text-brand-dark">
-            {SERVICE_LABELS[reservation.serviceType]}
+            {tl(reservation.serviceType)}
           </p>
           <p className="text-xs text-brand-muted">
-            {formatDate(reservation.scheduledAt)}
+            {formatDate(reservation.scheduledAt, locale)}
           </p>
         </div>
       </div>
 
       <p className="mt-3 text-2xl font-bold text-brand-dark">
-        {formatTime(reservation.scheduledAt)}
+        {formatTime(reservation.scheduledAt, locale)}
       </p>
 
       <div className="mt-2 flex items-center gap-2">

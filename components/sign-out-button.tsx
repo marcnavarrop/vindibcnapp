@@ -12,8 +12,11 @@ export function SignOutButton({
    * menú del client, sobre el lila.
    */
   variant = "compact",
+  label,
 }: {
   variant?: "compact" | "panel";
+  /** Text ja traduït. Sense res, es queda el català de sempre. */
+  label?: string;
 } = {}) {
   const router = useRouter();
 
@@ -46,7 +49,7 @@ export function SignOutButton({
           : "shrink-0 border border-brand-border bg-white px-2.5 py-1.5 text-brand-charcoal hover:bg-brand-bg",
       )}
     >
-      Tancar sessió
+      {label ?? "Tancar sessió"}
       {variant === "panel" && <LogOut size={15} aria-hidden />}
     </button>
   );

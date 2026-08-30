@@ -23,7 +23,8 @@ import {
 } from "@/components/client/home-sections";
 import { GiftCta, ReferralCta } from "@/components/client/growth-cards";
 import { formatLongDate } from "@/lib/labels";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,10 @@ export const dynamic = "force-dynamic";
 const MAX_UPCOMING = 3;
 
 export default async function ClientHome() {
-  const t = await getTranslations("home");
+  const [t, locale] = await Promise.all([
+    getTranslations("home"),
+    getLocale() as Promise<Locale>,
+  ]);
   const viewer = await getViewer();
 
   const [client, centerSettings, palette, trainers] = await Promise.all([
@@ -61,7 +65,11 @@ export default async function ClientHome() {
   if (!client) {
     return (
       <main className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
-        <Header name={firstName} greeting={t("greeting", { name: firstName })} welcome={t("welcome")} />
+        <Header
+          greeting={t("greeting", { name: firstName })}
+          welcome={t("welcome")}
+          today={formatLongDate(new Date(), locale)}
+        />
         <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
           {t("noClientRecord")}
         </p>
@@ -107,7 +115,11 @@ export default async function ClientHome() {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 sm:p-6">
-      <Header name={firstName} greeting={t("greeting", { name: firstName })} welcome={t("welcome")} />
+      <Header
+          greeting={t("greeting", { name: firstName })}
+          welcome={t("welcome")}
+          today={formatLongDate(new Date(), locale)}
+        />
 
       <KpiRow kpis={kpis} />
 
@@ -157,7 +169,7 @@ export default async function ClientHome() {
               {polls.map((p) => (
                 <PollCard key={p.id} poll={p} />
               ))}
-              <CommunityBoard announcements={announcements} />
+              <CommunityBoard announcements={announcements} locale={locale} />
             </section>
           )}
 
@@ -188,14 +200,15 @@ export default async function ClientHome() {
 function Header({
   greeting,
   welcome,
+  today,
 }: {
-  name: string;
   greeting: string;
   welcome: string;
+  today: string;
 }) {
   return (
     <div>
-      <p className="text-sm text-brand-muted">{formatLongDate(new Date())}</p>
+      <p className="text-sm text-brand-muted">{today}</p>
       <h1 className="mt-0.5 text-2xl font-bold text-brand-dark">{greeting}</h1>
       <p className="mt-1 text-sm text-brand-muted">{welcome}</p>
     </div>

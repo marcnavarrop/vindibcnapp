@@ -76,7 +76,8 @@
       "empty": "Todavía no tienes ningún bono activo.",
       "emptyCta": "Compra uno",
       "emptyTail": "para empezar a reservar.",
-      "noExpiry": "Sin fecha de caducidad"
+      "noExpiry": "Sin fecha de caducidad",
+      "expiresOn": "Caduca el {date}"
     },
     "upcoming": {
       "title": "Próximas reservas",
@@ -84,7 +85,8 @@
       "none": "No tienes ninguna reserva próxima.",
       "bookOne": "Reserva una sesión"
     },
-    "community": "Comunidad"
+    "community": "Comunidad",
+    "nextSession": "Próxima sesión"
   },
   "brand": {
     "headline": "Tu centro, a tu alcance",
@@ -277,5 +279,18 @@
     "redeemedOn": "Canjeado el {date}",
     "validThrough": "Válido hasta el {date}",
     "sendPlaceholder": "correo@ejemplo.com"
+  },
+  "nav": {
+    "home": "Inicio",
+    "bonos": "Bonos",
+    "reservas": "Reservas",
+    "exercicis": "Entrenamientos",
+    "documents": "Documentos",
+    "comunitat": "Comunidad",
+    "perfil": "Perfil",
+    "configuracio": "Configuración",
+    "signOut": "Cerrar sesión",
+    "viewProfile": "Ver mi perfil",
+    "openMenu": "Abrir menú"
   }
 }

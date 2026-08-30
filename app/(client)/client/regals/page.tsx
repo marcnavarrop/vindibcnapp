@@ -10,7 +10,8 @@ import { listGiftVouchersBought } from "@/lib/data/gift-vouchers";
 import { GiftVoucherForm } from "@/components/forms/gift-voucher-form";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatEur } from "@/lib/labels";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export default async function RegalsPage() {
     getTranslations("gifts"),
     getTranslations("labels.giftVoucherStatus"),
   ]);
+  const locale = (await getLocale()) as Locale;
   const viewer = await getViewer();
 
   // El toggle es comprova al servidor i respon 404, com els altres mòduls
@@ -68,7 +70,7 @@ export default async function RegalsPage() {
                   {v.code}
                 </span>
                 <span className="text-brand-dark">{v.packageName}</span>
-                <span className="text-brand-muted">{formatEur(v.price)}</span>
+                <span className="text-brand-muted">{formatEur(v.price, locale)}</span>
                 <Badge
                   tone={
                     v.status === "active"
@@ -82,8 +84,8 @@ export default async function RegalsPage() {
                 </Badge>
                 <span className="text-xs text-brand-muted">
                   {v.status === "redeemed" && v.redeemedAt
-                    ? t("redeemedOn", { date: formatDate(v.redeemedAt) })
-                    : t("validThrough", { date: formatDate(v.expiresAt) })}
+                    ? t("redeemedOn", { date: formatDate(v.redeemedAt, locale) })
+                    : t("validThrough", { date: formatDate(v.expiresAt, locale) })}
                 </span>
                 {v.pdfPath && (
                   <a

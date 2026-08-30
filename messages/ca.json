@@ -76,7 +76,8 @@
       "empty": "Encara no tens cap bo actiu.",
       "emptyCta": "Compra'n un",
       "emptyTail": "per començar a reservar.",
-      "noExpiry": "Sense data de caducitat"
+      "noExpiry": "Sense data de caducitat",
+      "expiresOn": "Caduca el {date}"
     },
     "upcoming": {
       "title": "Properes reserves",
@@ -84,7 +85,8 @@
       "none": "No tens cap reserva propera.",
       "bookOne": "Reserva una sessió"
     },
-    "community": "Comunitat"
+    "community": "Comunitat",
+    "nextSession": "Pròxima sessió"
   },
   "brand": {
     "headline": "El teu centre, al teu abast",
@@ -277,5 +279,18 @@
     "redeemedOn": "Bescanviat el {date}",
     "validThrough": "Vàlid fins al {date}",
     "sendPlaceholder": "correu@exemple.com"
+  },
+  "nav": {
+    "home": "Inici",
+    "bonos": "Bons",
+    "reservas": "Reserves",
+    "exercicis": "Entrenaments",
+    "documents": "Documents",
+    "comunitat": "Comunitat",
+    "perfil": "Perfil",
+    "configuracio": "Configuració",
+    "signOut": "Tancar sessió",
+    "viewProfile": "Veure el meu perfil",
+    "openMenu": "Obrir menú"
   }
 }

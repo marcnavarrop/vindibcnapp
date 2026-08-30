@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import type { Locale } from "@/lib/i18n/config";
 import Link from "next/link";
 import { formatDate } from "@/lib/labels";
 import type { ColorPalette } from "@/lib/colors";
@@ -341,6 +342,7 @@ export function VoucherReady({
   alreadyPaid?: boolean;
 }) {
   const t = useTranslations("gifts");
+  const locale = useLocale() as Locale;
   const [sendState, sendAction] = useActionState(
     sendGiftVoucherAction,
     {} as SendState,
@@ -386,7 +388,7 @@ export function VoucherReady({
             </button>
           </div>
           <span className="text-xs text-brand-muted">
-            {t("validUntil", { package: voucher.packageName, date: formatDate(voucher.expiresAt) })}
+            {t("validUntil", { package: voucher.packageName, date: formatDate(voucher.expiresAt, locale) })}
           </span>
         </div>
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   House,
   Ticket,
@@ -109,14 +110,22 @@ export function AppSidebar({
       {/* ── Barra superior (móvil) ── */}
       <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 bg-brand-purple px-4 py-3 text-white lg:hidden">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            aria-label="Obrir menú"
-            className="rounded-md p-1.5 hover:bg-white/10"
-          >
-            <MenuIcon />
-          </button>
+          {/* L'etiqueta la sent un lector de pantalla: ha d'anar en l'idioma
+              de qui llegeix. Va en un component a part perquè `aria-label`
+              necessita una cadena i el hook de traducció no es pot cridar
+              condicionalment. */}
+          {role === "client" ? (
+            <TranslatedMenuButton onClick={() => setOpen(true)} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              aria-label="Obrir menú"
+              className="rounded-md p-1.5 hover:bg-white/10"
+            >
+              <MenuIcon />
+            </button>
+          )}
           <Link href={HOME_PATH[role]}>
             <Wordmark height={26} />
           </Link>
@@ -174,6 +183,8 @@ function SidebarContent({
   fullName: string;
   email: string;
   avatarUrl: string | null;
+  /** Només l'àrea de client té diccionari: la resta es queda en català. */
+  translated?: boolean;
   pathname: string;
   modules: ModuleFlags;
 }) {
@@ -217,7 +228,15 @@ function SidebarContent({
               <li key={entry.label}>
                 <NavLink
                   href={entry.href}
-                  label={entry.label}
+                  /* Amb clau, el text surt del diccionari; sense, es queda el
+                     català. Així l'admin i el professional no s'assabenten. */
+                  label={
+                    entry.labelKey ? (
+                      <NavLabel k={entry.labelKey} />
+                    ) : (
+                      entry.label
+                    )
+                  }
                   icon={entry.icon}
                   active={active}
                 />
@@ -235,19 +254,20 @@ function SidebarContent({
         // Configuració. Admin i professional no tenen cap pàgina de perfil, i
         // un enllaç que no porta enlloc és pitjor que cap enllaç.
         profileHref={role === "client" ? CLIENT_PROFILE_PATH : null}
+        translated={role === "client"}
       />
 
       <div className="flex flex-wrap gap-x-2 gap-y-1 px-1 text-[10px] text-white/40">
         <Link href="/legal/privacitat" className="hover:text-white/70">
-          Privacitat
+          {role === "client" ? <LegalLabel k="privacy" /> : "Privacitat"}
         </Link>
         <span>·</span>
         <Link href="/legal/avis-legal" className="hover:text-white/70">
-          Avís legal
+          {role === "client" ? <LegalLabel k="notice" /> : "Avís legal"}
         </Link>
         <span>·</span>
         <Link href="/legal/cookies" className="hover:text-white/70">
-          Cookies
+          {role === "client" ? <LegalLabel k="cookies" /> : "Cookies"}
         </Link>
       </div>
     </div>
@@ -265,7 +285,7 @@ function NavLink({
   active,
 }: {
   href: string;
-  label: string;
+  label: React.ReactNode;
   icon?: NavIcon;
   active: boolean;
 }) {
@@ -307,11 +327,14 @@ function SidebarFooter({
   email,
   avatarUrl,
   profileHref,
+  translated,
 }: {
   fullName: string;
   email: string;
   avatarUrl: string | null;
   profileHref: string | null;
+  /** Només l'àrea de client té diccionari: la resta es queda en català. */
+  translated?: boolean;
 }) {
   const identity = (
     <>
@@ -329,7 +352,7 @@ function SidebarFooter({
         </span>
         {profileHref && (
           <span className="block truncate text-xs text-white/60">
-            Veure el meu perfil
+            {translated ? <NavLabel k="viewProfile" /> : "Veure el meu perfil"}
           </span>
         )}
       </span>
@@ -352,7 +375,11 @@ function SidebarFooter({
         <div className="flex items-center gap-3 px-1 py-1.5">{identity}</div>
       )}
 
-      <SignOutButton variant="panel" />
+      {translated ? (
+        <TranslatedSignOut />
+      ) : (
+        <SignOutButton variant="panel" />
+      )}
     </div>
   );
 }
@@ -389,5 +416,45 @@ function CloseIcon() {
       <line x1="6" y1="6" x2="18" y2="18" />
       <line x1="18" y1="6" x2="6" y2="18" />
     </svg>
+  );
+}
+
+/**
+ * El text d'una entrada del menú, tret del diccionari.
+ *
+ * Viu en un component propi i NO dins de `NavLink` a posta: `useTranslations`
+ * necessita el proveïdor, que només embolcalla l'àrea de client. Com que
+ * aquest component només es renderitza per a les entrades que porten clau
+ * —totes del client—, l'admin i el professional no arriben a muntar-lo.
+ */
+function NavLabel({ k }: { k: string }) {
+  const t = useTranslations("nav");
+  return <>{t(k)}</>;
+}
+
+/** Els enllaços legals del peu, per a l'àrea de client. */
+function LegalLabel({ k }: { k: string }) {
+  const t = useTranslations("legal");
+  return <>{t(k)}</>;
+}
+
+/** El botó de tancar sessió del client, amb el text del diccionari. */
+function TranslatedSignOut() {
+  const t = useTranslations("nav");
+  return <SignOutButton variant="panel" label={t("signOut")} />;
+}
+
+/** El botó del menú de mòbil amb l'etiqueta traduïda (àrea de client). */
+function TranslatedMenuButton({ onClick }: { onClick: () => void }) {
+  const t = useTranslations("nav");
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={t("openMenu")}
+      className="rounded-md p-1.5 hover:bg-white/10"
+    >
+      <MenuIcon />
+    </button>
   );
 }

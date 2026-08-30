@@ -24,7 +24,13 @@ export type NavIcon =
 
 export type NavItem = {
   href: string;
+  /** Text en català. És el que veuen l'admin i el professional. */
   label: string;
+  /**
+   * Clau al diccionari (`nav.*`) per a les entrades de l'àrea de CLIENT, que
+   * és l'única traduïda. Sense clau, es pinta el `label`.
+   */
+  labelKey?: string;
   exact?: boolean;
   icon?: NavIcon;
   /**
@@ -149,21 +155,26 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
   // El client és l'única àrea amb icones de moment: el seu menú es va
   // redissenyar abans que el d'admin i professional, que segueixen amb la
   // llista de text de sempre fins que els toqui.
+  // El `labelKey` només el porten les entrades del CLIENT: és l'única àrea
+  // traduïda. El `label` es queda com a text en català —el fan servir la clau
+  // de React i qualsevol lectura que no passi pel diccionari— i és el que es
+  // veurà si algun dia falta la traducció.
   client: [
-    { href: "/client", label: "Inici", exact: true, icon: "home" },
-    { href: "/client/bonos", label: "Bons", icon: "ticket" },
-    { href: "/client/reservas", label: "Reserves", icon: "calendar" },
+    { href: "/client", label: "Inici", labelKey: "home", exact: true, icon: "home" },
+    { href: "/client/bonos", label: "Bons", labelKey: "bonos", icon: "ticket" },
+    { href: "/client/reservas", label: "Reserves", labelKey: "reservas", icon: "calendar" },
     // La ruta segueix sent /client/exercicis: només canvia com se'n diu.
-    { href: "/client/exercicis", label: "Entrenaments", icon: "dumbbell" },
-    { href: "/client/documents", label: "Documents", icon: "document" },
-    { href: "/client/comunitat", label: "Comunitat", icon: "community" },
+    { href: "/client/exercicis", label: "Entrenaments", labelKey: "exercicis", icon: "dumbbell" },
+    { href: "/client/documents", label: "Documents", labelKey: "documents", icon: "document" },
+    { href: "/client/comunitat", label: "Comunitat", labelKey: "comunitat", icon: "community" },
     {
       href: CLIENT_PROFILE_PATH,
       label: "Perfil",
+      labelKey: "perfil",
       icon: "profile",
       shortcut: true,
     },
-    { href: "/client/configuracio", label: "Configuració", icon: "settings" },
+    { href: "/client/configuracio", label: "Configuració", labelKey: "configuracio", icon: "settings" },
   ],
 };
 

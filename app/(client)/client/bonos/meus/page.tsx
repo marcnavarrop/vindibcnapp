@@ -3,7 +3,8 @@ import { getClientByProfile } from "@/lib/data/clients";
 import { Badge } from "@/components/ui/badge";
 import { RouteTabs } from "@/components/ui/route-tabs";
 import { formatEur, formatDate } from "@/lib/labels";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function ClientBonosPage() {
     getTranslations("picker"),
     getViewer(),
   ]);
+  const locale = (await getLocale()) as Locale;
   const client = viewer ? await getClientByProfile(viewer.id) : null;
   const BONO_TABS = [
     { href: "/client/bonos", label: t("tabBuy"), accent: true },
@@ -45,7 +47,7 @@ export default async function ClientBonosPage() {
                   <span className="text-brand-muted">
                     {t("mine.sessionsOf", { remaining: b.remainingSessions, total: b.totalSessions })}
                   </span>
-                  <span>{formatEur(b.price)}</span>
+                  <span>{formatEur(b.price, locale)}</span>
                   <Badge
                     tone={
                       b.status === "active"
@@ -69,9 +71,9 @@ export default async function ClientBonosPage() {
               client.payments.map((p) => (
                 <Row key={p.id}>
                   <span className="font-bold text-brand-dark">
-                    {formatDate(p.paidAt)}
+                    {formatDate(p.paidAt, locale)}
                   </span>
-                  <span className="font-bold">{formatEur(p.amount)}</span>
+                  <span className="font-bold">{formatEur(p.amount, locale)}</span>
                   <Badge tone={p.method === "card" ? "info" : "warn"}>
                     {tpm(p.method)}
                   </Badge>

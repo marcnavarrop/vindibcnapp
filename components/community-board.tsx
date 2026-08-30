@@ -1,4 +1,5 @@
 import { formatDate } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
 import type { Announcement } from "@/lib/data/announcements";
 
 /** Inicial del autor para el avatar (o "E" de Equip si no hay nombre). */
@@ -35,8 +36,14 @@ function Avatar({
  */
 export function CommunityBoard({
   announcements,
+  locale,
 }: {
   announcements: Announcement[];
+  /**
+   * Idioma per a les dates. Sense res, català: el mur també el veu el
+   * professional des de la seva àrea, que no es tradueix.
+   */
+  locale?: Locale;
 }) {
   if (announcements.length === 0) {
     return (
@@ -57,7 +64,7 @@ export function CommunityBoard({
             Novetat
           </span>
           <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-            {formatDate(featured.createdAt)}
+            {formatDate(featured.createdAt, locale)}
           </span>
         </div>
         <h2 className="mt-3 text-2xl text-brand-dark">{featured.title}</h2>
@@ -89,7 +96,7 @@ export function CommunityBoard({
                       {a.authorName ?? "Equip"}
                     </div>
                     <div className="text-xs text-brand-muted">
-                      {formatDate(a.createdAt)}
+                      {formatDate(a.createdAt, locale)}
                     </div>
                   </div>
                 </div>

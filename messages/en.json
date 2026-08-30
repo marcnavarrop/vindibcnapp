@@ -76,7 +76,8 @@
       "empty": "You don't have any active packages yet.",
       "emptyCta": "Buy one",
       "emptyTail": "to start booking.",
-      "noExpiry": "No expiry date"
+      "noExpiry": "No expiry date",
+      "expiresOn": "Expires {date}"
     },
     "upcoming": {
       "title": "Upcoming bookings",
@@ -84,7 +85,8 @@
       "none": "You have no upcoming bookings.",
       "bookOne": "Book a session"
     },
-    "community": "Community"
+    "community": "Community",
+    "nextSession": "Next session"
   },
   "brand": {
     "headline": "Your centre, within reach",
@@ -277,5 +279,18 @@
     "redeemedOn": "Redeemed on {date}",
     "validThrough": "Valid until {date}",
     "sendPlaceholder": "email@example.com"
+  },
+  "nav": {
+    "home": "Home",
+    "bonos": "Packages",
+    "reservas": "Bookings",
+    "exercicis": "Workouts",
+    "documents": "Documents",
+    "comunitat": "Community",
+    "perfil": "Profile",
+    "configuracio": "Settings",
+    "signOut": "Sign out",
+    "viewProfile": "View my profile",
+    "openMenu": "Open menu"
   }
 }
