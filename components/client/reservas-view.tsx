@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { ClientCenterCalendar } from "@/components/client-center-calendar";
@@ -15,12 +16,8 @@ import {
   cancelSeriesAction,
   type CancelSeriesState,
 } from "@/app/(client)/client/reservas/series-actions";
-import {
-  SERVICE_LABELS,
-  FREQUENCY_LABELS,
-  formatDayHeading,
-  formatTime,
-} from "@/lib/labels";
+import { formatDayHeading, formatTime } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { SeriesSummary } from "@/lib/data/booking-series";
 import type { ColorPalette } from "@/lib/colors";
@@ -136,10 +133,15 @@ function SeriesList({
   series: SeriesSummary[];
   onCancel: (id: string, count: number) => void;
 }) {
+  const t = useTranslations("reservas.series");
+  const tl = useTranslations("labels.service");
+  const tf = useTranslations("wizard.frequency");
+  const locale = useLocale() as Locale;
+
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
       <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
-        Les meves sèries
+        {t("title")}
       </h2>
       <div className="divide-y divide-brand-border">
         {series.map((s) => (
@@ -148,17 +150,21 @@ function SeriesList({
             className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-sm"
           >
             <span className="font-bold text-brand-dark">
-              {SERVICE_LABELS[s.serviceType]}
+              {tl(s.serviceType)}
             </span>
             <span className="text-brand-muted">
-              cada {FREQUENCY_LABELS[s.frequency].toLowerCase()}
+              {t("every", { frequency: tf(s.frequency).toLowerCase() })}
             </span>
             <span className="text-brand-muted">
-              {s.upcoming} {s.upcoming === 1 ? "sessió pendent" : "sessions pendents"}
+              {s.upcoming === 1
+                ? t("pendingOne", { count: s.upcoming })
+                : t("pendingMany", { count: s.upcoming })}
             </span>
             {s.nextAt && (
               <span className="text-xs text-brand-muted capitalize">
-                pròxima: {formatDayHeading(s.nextAt)}, {formatTime(s.nextAt)}
+                {t("next", {
+                  when: `${formatDayHeading(s.nextAt, locale)}, ${formatTime(s.nextAt, locale)}`,
+                })}
               </span>
             )}
             <button
@@ -166,7 +172,7 @@ function SeriesList({
               onClick={() => onCancel(s.id, s.upcoming)}
               className="ml-auto rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error"
             >
-              Cancel·lar la sèrie
+              {t("cancel")}
             </button>
           </div>
         ))}
@@ -197,6 +203,8 @@ function CancelSeriesDialog({
   count: number;
   onClose: () => void;
 }) {
+  const t = useTranslations("reservas.series");
+  const te = useTranslations("reservas.errors");
   const [state, action] = useActionState(
     cancelSeriesAction,
     {} as CancelSeriesState,
@@ -208,29 +216,28 @@ function CancelSeriesDialog({
         <ConfirmDialog
           open
           onClose={onClose}
-          title="Sèrie cancel·lada"
+          title={t("cancelledTitle")}
           actions={
             <button
               type="button"
               onClick={onClose}
               className="rounded-lg bg-error/10 px-4 py-2 text-sm font-bold text-error hover:bg-error/20"
             >
-              Tancar
+              {t("close")}
             </button>
           }
         >
           <div className="flex flex-col items-center gap-3 py-2 text-center">
             <AnimatedFeedback type="cancel" />
             <p className="text-sm font-bold text-brand-dark">
-              {state.cancelled}{" "}
-              {state.cancelled === 1
-                ? "sessió cancel·lada"
-                : "sessions cancel·lades"}
+              {t("cancelledCount", { count: state.cancelled ?? 0 })}
             </p>
             <p className="text-sm text-brand-muted">
               {state.kept
-                ? `${state.kept === 1 ? "Una sessió s'ha quedat" : `${state.kept} sessions s'han quedat`} perquè ja eren massa a prop per cancel·lar-les.`
-                : "Les sessions han tornat al teu bo."}
+                ? state.kept === 1
+                  ? t("keptOne")
+                  : t("keptMany", { count: state.kept })
+                : t("allReturned")}
             </p>
           </div>
         </ConfirmDialog>
@@ -238,7 +245,7 @@ function CancelSeriesDialog({
         <ConfirmDialog
           open
           onClose={onClose}
-          title="Cancel·lar tota la sèrie?"
+          title={t("cancelTitle")}
           actions={
             <>
               <button
@@ -246,24 +253,22 @@ function CancelSeriesDialog({
                 onClick={onClose}
                 className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
               >
-                Deixar-ho estar
+                {t("keepIt")}
               </button>
               <form action={action}>
                 <input type="hidden" name="seriesId" value={seriesId} />
-                <SubmitButton pendingLabel="Cancel·lant…">
-                  Cancel·lar-les totes
+                <SubmitButton pendingLabel={t("cancelling")}>
+                  {t("cancelAll")}
                 </SubmitButton>
               </form>
             </>
           }
         >
           <p className="text-sm text-brand-charcoal">
-            S&apos;anul·laran les {count} sessions futures d&apos;aquesta sèrie i
-            les sessions tornaran al teu bo. Les que ja estiguin massa a prop per
-            cancel·lar-se es quedaran, i t&apos;ho direm.
+            {t("cancelBody", { count })}
           </p>
-          {state.error && (
-            <p className="mt-3 text-xs text-error">{state.error}</p>
+          {state.errorCode && (
+            <p className="mt-3 text-xs text-error">{te(state.errorCode)}</p>
           )}
         </ConfirmDialog>
       )}

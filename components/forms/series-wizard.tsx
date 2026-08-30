@@ -1,18 +1,25 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
-import {
-  SERVICE_LABELS,
-  FREQUENCY_LABELS,
-  OCCURRENCE_LABELS,
-  formatDayHeading,
-  formatTime,
-  sessionsLabel,
-  deOf,
-} from "@/lib/labels";
+import { formatDayHeading, formatTime } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
+import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
+
+/**
+ * El to visual de cada estat. El TEXT viu al diccionari (`wizard.status`); això
+ * només diu de quin color es pinta, que no depèn de l'idioma.
+ */
+const OCCURRENCE_TONE: Record<string, "success" | "warn" | "info" | "danger"> = {
+  confirmada: "success",
+  ja_reservada: "success",
+  alternativa_proposada: "warn",
+  llista_espera: "info",
+  sense_places: "danger",
+};
 import { summarize, type ResolvedOccurrence } from "@/lib/booking-series-core";
 import {
   calculateSeriesAction,
@@ -84,6 +91,10 @@ export function RecurrenceFields({
   /** El botó de tancar del diàleg amfitrió, al costat del primari. */
   secondaryAction?: React.ReactNode;
 }) {
+  const t = useTranslations("wizard");
+  const tf = useTranslations("wizard.frequency");
+  const te = useTranslations("reservas.errors");
+  const [calcError, setCalcError] = useState<ReservaErrorCode | null>(null);
   const [frequency, setFrequency] = useState<BookingFrequency>("weekly");
   const [endDate, setEndDate] = useState("");
   const [count, setCount] = useState("");
@@ -91,7 +102,6 @@ export function RecurrenceFields({
   const [alternatives, setAlternatives] = useState(true);
   const [waitlist, setWaitlist] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const input: SeriesFormInput = {
@@ -107,11 +117,11 @@ export function RecurrenceFields({
   };
 
   function calculate() {
-    setError(null);
+    setCalcError(null);
     startTransition(async () => {
       const res = await calculateSeriesAction(input);
-      if (res.error) {
-        setError(res.error);
+      if (res.errorCode) {
+        setCalcError(res.errorCode);
         return;
       }
       onReady({
@@ -127,7 +137,7 @@ export function RecurrenceFields({
   return (
     <div className="mt-4 flex flex-col gap-3 rounded-xl border border-brand-border bg-brand-bg p-3">
       <div>
-        <Label>Repeteix cada</Label>
+        <Label>{t("repeatEvery")}</Label>
         <div className="mt-1.5 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5">
           {FREQUENCIES.map((f) => (
             <button
@@ -141,7 +151,7 @@ export function RecurrenceFields({
                   : "text-brand-muted hover:text-brand-dark",
               )}
             >
-              {FREQUENCY_LABELS[f]}
+              {tf(f)}
             </button>
           ))}
         </div>
@@ -149,7 +159,7 @@ export function RecurrenceFields({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <Label htmlFor="endDate">Fins quan?</Label>
+          <Label htmlFor="endDate">{t("untilWhen")}</Label>
           <input
             id="endDate"
             type="date"
@@ -159,7 +169,7 @@ export function RecurrenceFields({
           />
         </div>
         <div>
-          <Label htmlFor="count">O quantes sessions</Label>
+          <Label htmlFor="count">{t("orHowMany")}</Label>
           <input
             id="count"
             type="number"
@@ -167,14 +177,13 @@ export function RecurrenceFields({
             max={52}
             value={count}
             onChange={(e) => setCount(e.target.value)}
-            placeholder="Ex.: 10"
+            placeholder={t("countPlaceholder")}
             className={INPUT}
           />
         </div>
       </div>
       <p className="-mt-1 text-xs text-brand-muted">
-        Pots omplir-ne un o tots dos. Amb tots dos, la sèrie s&apos;atura amb el
-        primer que arribi.
+        {t("limitsHint")}
       </p>
 
       {/* El sostre de la sèrie, dit abans de demanar-la. */}
@@ -186,8 +195,8 @@ export function RecurrenceFields({
           )}
         >
           {remainingSessions === 0
-            ? `No et queden sessions al bo ${deOf(SERVICE_LABELS[seed.serviceType])}.`
-            : `Et ${remainingSessions === 1 ? "queda" : "queden"} ${sessionsLabel(remainingSessions)} al teu bo ${deOf(SERVICE_LABELS[seed.serviceType])}.`}
+            ? t("noneLeft")
+            : t("left", { count: remainingSessions })}
         </p>
       )}
 
@@ -201,7 +210,7 @@ export function RecurrenceFields({
           aria-expanded={showOptions}
           className="flex w-full items-center justify-between text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark"
         >
-          Si no hi ha plaça…
+          {t("ifNoSpace")}
           <span aria-hidden>{showOptions ? "−" : "+"}</span>
         </button>
         {showOptions && (
@@ -209,30 +218,30 @@ export function RecurrenceFields({
             <Check
               checked={onlyAvailable}
               onChange={setOnlyAvailable}
-              title="Reservar només les disponibles"
-              desc="Només es confirmaran les sessions amb plaça. Té prioritat sobre les altres dues."
+              title={t("onlyAvailable")}
+              desc={t("onlyAvailableDesc")}
             />
             <Check
               checked={alternatives}
               disabled={onlyAvailable}
               onChange={setAlternatives}
-              title="Proposar alternatives automàtiques"
-              desc="Et suggerim la millor alternativa possible i tu decideixes si l'acceptes."
+              title={t("proposeAlt")}
+              desc={t("proposeAltDesc")}
             />
             {waitlistEnabled && (
               <Check
                 checked={waitlist}
                 disabled={onlyAvailable}
                 onChange={setWaitlist}
-                title="Afegir a la llista d'espera si no hi ha plaça"
-                desc="T'apuntem a la cua i, si algú cancel·la, la plaça és teva."
+                title={t("addWaitlist")}
+                desc={t("addWaitlistDesc")}
               />
             )}
           </div>
         )}
       </div>
 
-      {error && <p className="text-sm text-error">{error}</p>}
+      {calcError && <p className="text-sm text-error">{te(calcError)}</p>}
 
       <div className="flex items-center gap-2">
         <button
@@ -241,7 +250,7 @@ export function RecurrenceFields({
           disabled={pending}
           className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
         >
-          {pending ? "Calculant…" : "Veure les sessions"}
+          {pending ? t("calculating") : t("seeSessions")}
         </button>
         {secondaryAction}
       </div>
@@ -268,8 +277,14 @@ export function SeriesReview({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const t = useTranslations("wizard");
+  const tf = useTranslations("wizard.frequency");
+  const te = useTranslations("reservas.errors");
+  const tr = useTranslations("reservas");
+  const tl = useTranslations("labels.service");
+  const locale = useLocale() as Locale;
   const [occurrences, setOccurrences] = useState(review.occurrences);
-  const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<ReservaErrorCode | null>(null);
   const [done, setDone] = useState<{
     created: number;
     adopted: number;
@@ -288,11 +303,11 @@ export function SeriesReview({
   }
 
   function confirm() {
-    setError(null);
+    setErrorCode(null);
     startTransition(async () => {
       const res = await confirmSeriesAction(review.input, occurrences);
-      if (res.error) {
-        setError(res.error);
+      if (res.errorCode) {
+        setErrorCode(res.errorCode);
         return;
       }
       setDone({
@@ -308,41 +323,45 @@ export function SeriesReview({
 
   if (done)
     return (
-      <Sheet onClose={onDone} title="Sèrie creada">
+      <Sheet onClose={onDone} title={t("createdTitle")} ariaClose={t("closeAria")}>
         <div className="flex flex-col items-center gap-3 py-4 text-center">
           <AnimatedFeedback type="success" />
-          <p className="text-lg font-bold text-success">Ja ho tens tot reservat</p>
+          <p className="text-lg font-bold text-success">{t("allBooked")}</p>
           <p className="text-sm text-brand-muted">
-            {sessionsLabel(done.created)} confirmades
+            {t("createdCount", { count: done.created })}
             {done.adopted > 0 &&
-              ` · ${done.adopted === 1 ? "la que ja tenies" : `${done.adopted} que ja tenies`} afegida${done.adopted === 1 ? "" : "es"} a la sèrie`}
-            {done.waitlisted > 0 && ` · ${done.waitlisted} a la llista d'espera`}
-            {done.failed > 0 && ` · ${done.failed} que no s'han pogut crear`}
+              ` · ${
+                done.adopted === 1
+                  ? t("adoptedOne")
+                  : t("adoptedMany", { count: done.adopted })
+              }`}
+            {done.waitlisted > 0 &&
+              ` · ${t("waitlistedCount", { count: done.waitlisted })}`}
+            {done.failed > 0 && ` · ${t("failedCount", { count: done.failed })}`}
           </p>
           <button
             type="button"
             onClick={onDone}
             className="mt-2 rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
           >
-            Veure les meves reserves
+            {t("seeMyBookings")}
           </button>
         </div>
       </Sheet>
     );
 
   return (
-    <Sheet onClose={onClose} title="Revisa la sèrie">
+    <Sheet onClose={onClose} title={t("reviewTitle")} ariaClose={t("closeAria")}>
       <div className="rounded-xl border border-brand-border bg-brand-bg p-3 text-sm">
         <p className="font-bold text-brand-dark">
-          {SERVICE_LABELS[review.seed.serviceType]} amb {review.seed.trainerName}
+          {tl(review.seed.serviceType)} {t("with")} {review.seed.trainerName}
         </p>
-        <p className="text-brand-muted">
-          Cada {FREQUENCY_LABELS[review.input.frequency].toLowerCase()}, a partir
-          del{" "}
-          <span className="capitalize">
-            {formatDayHeading(review.seed.scheduledAt)}
-          </span>{" "}
-          a les {formatTime(review.seed.scheduledAt)}
+        <p className="text-brand-muted first-letter:capitalize">
+          {t("everyFromFull", {
+            frequency: tf(review.input.frequency).toLowerCase(),
+            day: formatDayHeading(review.seed.scheduledAt, locale),
+            time: formatTime(review.seed.scheduledAt, locale),
+          })}
         </p>
       </div>
 
@@ -350,41 +369,43 @@ export function SeriesReview({
 
       <div>
         <div className="grid grid-cols-2 gap-3 rounded-xl border border-brand-border bg-brand-bg p-4 text-center sm:grid-cols-4">
-          <Stat n={stats.total} label="sessions totals" />
-          <Stat n={stats.confirmed} label="confirmades" tone="text-success" />
+          <Stat n={stats.total} label={t("statTotal")} />
+          <Stat n={stats.confirmed} label={t("statConfirmed")} tone="text-success" />
           <Stat
             n={stats.alternatives}
-            label="alternatives"
+            label={t("statAlternatives")}
             tone="text-brand-orange"
           />
-          <Stat n={stats.waitlisted} label="en espera" tone="text-brand-purple" />
+          <Stat n={stats.waitlisted} label={t("statWaitlisted")} tone="text-brand-purple" />
         </div>
         {stats.alreadyBooked > 0 && (
           <p className="mt-2 text-xs text-success">
             {stats.alreadyBooked === 1
-              ? "1 ja la tenies reservada: s'afegirà a la sèrie i es cancel·larà amb ella."
-              : `${stats.alreadyBooked} ja les tenies reservades: s'afegiran a la sèrie i es cancel·laran amb ella.`}
+              ? t("alreadyOne")
+              : t("alreadyMany", { count: stats.alreadyBooked })}
           </p>
         )}
         {stats.unavailable > 0 && (
           <p className="mt-2 text-xs text-brand-muted">
-            {stats.unavailable} sense plaça: aquestes no es reservaran.
+            {t("unavailable", { count: stats.unavailable })}
           </p>
         )}
         {review.skippedForBono > 0 && (
           <p className="mt-2 text-xs font-bold text-brand-orange">
-            El teu bo només tenia {sessionsLabel(review.bonoRemaining)}: no
-            s&apos;han pogut generar {review.skippedForBono}{" "}
-            {review.skippedForBono === 1 ? "ocurrència més" : "ocurrències més"}.
+            {t("bonoLimit", {
+              remaining: review.bonoRemaining,
+              skipped: review.skippedForBono,
+            })}
           </p>
         )}
         {stats.alternatives > 0 && (
           <p className="mt-2 text-xs text-brand-orange">
-            Tens {stats.alternatives} alternatives sense acceptar: si no les
-            acceptes, aquelles sessions no es reservaran.
+            {t("pendingAlternatives", { count: stats.alternatives })}
           </p>
         )}
-        {error && <p className="mt-2 text-sm text-error">{error}</p>}
+        {errorCode && (
+          <p className="mt-2 text-sm text-error">{te(errorCode)}</p>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-3">
           <button
@@ -396,14 +417,14 @@ export function SeriesReview({
             }
             className="rounded-lg bg-brand-purple px-5 py-2.5 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light disabled:opacity-60"
           >
-            {pending ? "Creant la sèrie…" : "Confirmar sèrie"}
+            {pending ? t("creating") : t("confirmSeries")}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark"
           >
-            Cancel·lar
+            {tr("cancel")}
           </button>
         </div>
       </div>
@@ -440,10 +461,13 @@ function Sheet({
   title,
   children,
   onClose,
+  ariaClose,
 }: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  /** Etiqueta del botó de tancar, ja traduïda. */
+  ariaClose?: string;
 }) {
   // Un tic perquè el navegador pinti la posició inicial abans d'animar: sense
   // això la fulla ja hi és quan es pinta i no s'entén d'on ha sortit.
@@ -470,7 +494,7 @@ function Sheet({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Tancar"
+          aria-label={ariaClose ?? "Tancar"}
           className="rounded-md p-1 text-brand-muted hover:bg-brand-bg hover:text-brand-dark"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
@@ -532,41 +556,42 @@ function OccurrenceList({
   occurrences: ResolvedOccurrence[];
   onAccept: (index: number) => void;
 }) {
+  const t = useTranslations("wizard");
+  const ts = useTranslations("wizard.status");
+  const locale = useLocale() as Locale;
+
   if (occurrences.length === 0)
     return (
       <p className="rounded-xl border border-brand-border p-4 text-sm text-brand-muted">
-        Amb aquests límits no surt cap sessió. Revisa la data o el nombre de
-        repeticions.
+        {t("noOccurrences")}
       </p>
     );
 
   return (
     <div>
       <p className="mb-1.5 text-xs font-bold tracking-wide text-brand-muted uppercase">
-        Comprovació de disponibilitat
+        {t("availabilityCheck")}
       </p>
       <ul className="divide-y divide-brand-border rounded-xl border border-brand-border">
         {occurrences.map((o, i) => {
-          const meta = OCCURRENCE_LABELS[o.status];
+          const tone = OCCURRENCE_TONE[o.status] ?? "info";
           return (
             <li key={o.requestedAt} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
               <span className="w-5 shrink-0 text-xs text-brand-muted">{i + 1}</span>
               <span className="min-w-0 flex-1">
                 <span className="block font-bold text-brand-dark capitalize">
-                  {formatDayHeading(o.requestedAt)}
+                  {formatDayHeading(o.requestedAt, locale)}
                 </span>
                 <span className="block text-xs text-brand-muted">
-                  {formatTime(o.requestedAt)}
+                  {formatTime(o.requestedAt, locale)}
                   {o.note ? ` · ${o.note}` : ""}
                 </span>
               </span>
-              <Badge tone={meta.tone === "info" ? "info" : meta.tone}>
-                {meta.label}
-              </Badge>
+              <Badge tone={tone}>{ts(o.status)}</Badge>
               {o.alternative && o.status === "alternativa_proposada" && (
                 <span className="flex items-center gap-2">
                   <span className="text-xs text-brand-muted">
-                    {formatTime(o.alternative.scheduledAt)} amb{" "}
+                    {formatTime(o.alternative.scheduledAt, locale)} {t("with")}{" "}
                     {o.alternative.trainerName}
                   </span>
                   <button
@@ -574,7 +599,7 @@ function OccurrenceList({
                     onClick={() => onAccept(i)}
                     className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-purple hover:border-brand-purple"
                   >
-                    Accepta
+                    {t("accept")}
                   </button>
                 </span>
               )}

@@ -1,4 +1,5 @@
 import { getViewer } from "@/lib/auth";
+import { getTranslations } from "next-intl/server";
 import { getClientCenterData } from "@/lib/data/client-calendar";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
@@ -13,6 +14,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function ClientReservasPage() {
+  const t = await getTranslations("reservas");
   const viewer = await getViewer();
   const [data, centerSettings, palette] = await Promise.all([
     viewer
@@ -42,11 +44,9 @@ export default async function ClientReservasPage() {
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-1 text-2xl text-brand-dark">Reserves</h1>
+      <h1 className="mb-1 text-2xl text-brand-dark">{t("title")}</h1>
       <p className="mb-6 text-sm text-brand-muted">
-        Reserva en qualsevol franja lliure del centre. Veus les disponibilitats
-        de tots els professionals segons els serveis dels teus bons. Des del
-        diàleg de reserva pots repetir-la en bucle.
+        {t("intro")}
       </p>
 
       <ClientReservasView

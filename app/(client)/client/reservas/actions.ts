@@ -1,5 +1,7 @@
 "use server";
 
+import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
+
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import {
@@ -15,7 +17,7 @@ const SERVICE_TYPES: ServiceType[] = [
   "fisioterapia",
 ];
 
-export type FormState = { error?: string; ok?: boolean };
+export type FormState = { errorCode?: ReservaErrorCode; ok?: boolean };
 
 /**
  * Crea una reserva del propio cliente. El slot elegido determina el profesional
@@ -29,15 +31,15 @@ export async function createOwnReservationAction(
 ): Promise<FormState> {
   const viewer = await getViewer();
   if (!viewer || viewer.role !== "client")
-    return { error: "No autoritzat." };
+    return { errorCode: "unauthorized" };
 
   const trainerId = String(formData.get("trainerId") ?? "");
   const serviceType = String(formData.get("serviceType") ?? "") as ServiceType;
   const scheduledAt = String(formData.get("scheduledAt") ?? "");
-  if (!trainerId) return { error: "Tria un professional." };
+  if (!trainerId) return { errorCode: "noTrainer" };
   if (!SERVICE_TYPES.includes(serviceType))
-    return { error: "Servei no vàlid." };
-  if (!scheduledAt) return { error: "Indica la data i hora." };
+    return { errorCode: "badService" };
+  if (!scheduledAt) return { errorCode: "noDate" };
 
   try {
     await createClientReservation({
@@ -47,9 +49,8 @@ export async function createOwnReservationAction(
       scheduledAt,
     });
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut crear la reserva.",
-    };
+    console.error("[reserves]", e);
+    return { errorCode: "failed" };
   }
 
   revalidatePath("/client/reservas");
@@ -63,18 +64,14 @@ export async function cancelOwnReservationAction(
   formData: FormData,
 ): Promise<FormState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
   const id = String(formData.get("id") ?? "");
-  if (!id) return { error: "Reserva no especificada." };
+  if (!id) return { errorCode: "noReservation" };
   try {
     await cancelClientReservation(viewer.id, id);
   } catch (e) {
-    return {
-      error:
-        e instanceof Error
-          ? e.message
-          : "No s'ha pogut cancel·lar la reserva.",
-    };
+    console.error("[reserves]", e);
+    return { errorCode: "failed" };
   }
   revalidatePath("/client/reservas");
   revalidatePath("/client");

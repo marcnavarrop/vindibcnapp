@@ -2,12 +2,10 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { clsx } from "@/lib/utils";
-import {
-  SERVICE_LABELS,
-  SERVICE_TYPES,
-  GROUP_CAPACITY,
-} from "@/lib/labels";
+import { SERVICE_TYPES, GROUP_CAPACITY } from "@/lib/labels";
+import { intlLocale, type Locale } from "@/lib/i18n/config";
 import {
   weekdayOf,
   localDateStr,
@@ -33,15 +31,8 @@ import {
 } from "@/app/(client)/client/reservas/waitlist-actions";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
 
-const DAY_NAMES = ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"];
-
-/** Abreviatura visual del tipo de sesión (indicador rápido). */
-const SERVICE_BADGE: Record<ServiceType, string> = {
-  ep_individual: "Individual",
-  ep_parejas: "Parella",
-  grupo_reducido: "Grup",
-  fisioterapia: "Fisioteràpia",
-};
+/* Els noms dels dies i les abreviatures de servei viuen al diccionari
+   (`reservas.days` i `reservas.serviceBadge`). */
 
 /** Icones de servei (SVG inline, ~10 px). */
 const SVC_ICON: Record<ServiceType, React.ReactNode> = {
@@ -189,6 +180,10 @@ export function ClientCenterCalendar({
   const { bonoTypes, trainers, rules, blocks, reservations, assignedTrainerId } =
     data;
 
+  const t = useTranslations("reservas");
+  const tl = useTranslations("labels.service");
+  const tb = useTranslations("reservas.serviceBadge");
+  const locale = useLocale() as Locale;
   const [view, setView] = useState<"day" | "week">("week");
   const [offset, setOffset] = useState(0); // en días (día) o semanas (semana)
   const [serviceFilter, setServiceFilter] = useState<ServiceType | "all">(
@@ -246,7 +241,7 @@ export function ClientCenterCalendar({
   }, []);
 
   const trainerName = (id: string | null) =>
-    trainers.find((t) => t.id === id)?.name ?? "Professional";
+    trainers.find((x) => x.id === id)?.name ?? t("professional");
 
   // Índice de reservas por trainer|fecha|hora.
   const resIndex = useMemo(() => {
@@ -395,12 +390,12 @@ export function ClientCenterCalendar({
 
   const periodLabel = useMemo(() => {
     if (view === "week") {
-      return new Intl.DateTimeFormat("ca-ES", {
+      return new Intl.DateTimeFormat(intlLocale(locale), {
         month: "long",
         year: "numeric",
       }).format(days[0]);
     }
-    return new Intl.DateTimeFormat("ca-ES", {
+    return new Intl.DateTimeFormat(intlLocale(locale), {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -457,14 +452,14 @@ export function ClientCenterCalendar({
                   : "bg-white text-brand-muted hover:text-brand-dark",
               )}
             >
-              {v === "day" ? "Dia" : "Setmana"}
+              {v === "day" ? t("day") : t("week")}
             </button>
           ))}
         </div>
 
         <label className="flex flex-col gap-1 text-xs">
           <span className="font-bold tracking-wide text-brand-muted uppercase">
-            Servei
+            {t("service")}
           </span>
           <select
             value={serviceFilter}
@@ -473,10 +468,10 @@ export function ClientCenterCalendar({
             }
             className="rounded-lg border border-brand-border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-brand-purple"
           >
-            <option value="all">Tots</option>
+            <option value="all">{t("all")}</option>
             {SERVICE_TYPES.filter((s) => bonoTypes.includes(s)).map((s) => (
               <option key={s} value={s}>
-                {SERVICE_LABELS[s]}
+                {tl(s)}
               </option>
             ))}
           </select>
@@ -484,14 +479,14 @@ export function ClientCenterCalendar({
 
         <label className="flex flex-col gap-1 text-xs">
           <span className="font-bold tracking-wide text-brand-muted uppercase">
-            Professional
+            {t("professional")}
           </span>
           <select
             value={trainerFilter}
             onChange={(e) => setTrainerFilter(e.target.value)}
             className="rounded-lg border border-brand-border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-brand-purple"
           >
-            <option value="all">Tots</option>
+            <option value="all">{t("all")}</option>
             {trainers.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -527,7 +522,7 @@ export function ClientCenterCalendar({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <NavBtn
-            label="Anterior"
+            label={t("prev")}
             onClick={() => setOffset((o) => o - 1)}
           >
             ‹
@@ -537,9 +532,9 @@ export function ClientCenterCalendar({
             onClick={() => setOffset(0)}
             className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg"
           >
-            Avui
+            {t("today")}
           </button>
-          <NavBtn label="Següent" onClick={() => setOffset((o) => o + 1)}>
+          <NavBtn label={t("next")} onClick={() => setOffset((o) => o + 1)}>
             ›
           </NavBtn>
         </div>
@@ -568,7 +563,7 @@ export function ClientCenterCalendar({
                   )}
                 >
                   <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-                    {DAY_NAMES[weekdayOf(d)]}
+                    {t(`days.${weekdayOf(d)}`)}
                   </div>
                   <div
                     className={clsx(
@@ -622,7 +617,7 @@ export function ClientCenterCalendar({
                               <span className="flex min-w-0 items-center gap-0.5 font-bold" style={{ color: ownBorder }}>
                                 <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0"><polyline points="1.5 5 4 7.5 8.5 2" /></svg>
                                 <span className="shrink-0">{SVC_ICON[it.service]}</span>
-                                <span className="truncate">{SERVICE_BADGE[it.service]}{it.groupCount != null ? ` · ${it.groupCount}/${GROUP_CAPACITY}` : ""}</span>
+                                <span className="truncate">{tb(it.service)}{it.groupCount != null ? ` · ${it.groupCount}/${GROUP_CAPACITY}` : ""}</span>
                               </span>
                               <span className="block truncate text-brand-muted">
                                 {firstName(trainerName(it.trainerId))}
@@ -637,7 +632,7 @@ export function ClientCenterCalendar({
                               className="flex items-center gap-0.5 rounded-md bg-brand-border/50 px-1.5 py-1 text-[11px] leading-tight text-brand-muted"
                             >
                               <span className="shrink-0 opacity-60">{SVC_ICON[it.service]}</span>
-                              Ocupat
+                              {t("occupied")}
                             </span>
                           );
                         }
@@ -690,14 +685,14 @@ export function ClientCenterCalendar({
                                 style={{ color: oc.text }}
                               >
                                 {waiting
-                                  ? "Ets a la llista"
+                                  ? t("group.onList")
                                   : status === "full"
                                     ? canWait
-                                      ? "Complet · fer cua"
-                                      : "Complet"
+                                      ? t("group.fullQueue")
+                                      : t("group.full")
                                     : status === "almost_full"
-                                      ? "Gairebé ple"
-                                      : "Plaça lliure"}
+                                      ? t("group.almostFull")
+                                      : t("group.free")}
                               </span>
                             </button>
                           );
@@ -725,7 +720,7 @@ export function ClientCenterCalendar({
                               style={{ color }}
                             >
                               <span className="shrink-0">{SVC_ICON[it.service]}</span>
-                              {SERVICE_BADGE[it.service]}
+                              {tb(it.service)}
                             </span>
                             <span className="block truncate text-brand-muted">
                               {firstName(trainerName(it.trainerId))}
@@ -743,10 +738,7 @@ export function ClientCenterCalendar({
       </div>
 
       <p className="mt-3 text-xs text-brand-muted">
-        Es mostren totes les franjas lliures del centre que pots reservar segons
-        els teus bons, amb el color de cada professional. Les sessions d&apos;altres
-        persones apareixen com a «Ocupat»; als grups amb plaça pots apuntar-t&apos;hi,
-        i en obrir-los veus qui ja hi és.
+        {t("legend")}
       </p>
 
       {book && (
@@ -858,7 +850,11 @@ function WaitlistModal({
   const [joinState, join] = useActionState(joinWaitlistAction, {} as WaitlistState);
   const [leaveState, leave] = useActionState(leaveWaitlistAction, {} as WaitlistState);
 
-  const when = new Intl.DateTimeFormat("ca-ES", {
+  const t = useTranslations("reservas");
+  const tl = useTranslations("labels.service");
+  const te = useTranslations("reservas.errors");
+  const locale = useLocale() as Locale;
+  const when = new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -872,11 +868,10 @@ function WaitlistModal({
         <div className="flex flex-col items-center gap-3 py-2 text-center">
           <AnimatedFeedback type="success" />
           <h2 className="text-xl font-bold text-brand-dark">
-            T&apos;hem apuntat a la llista d&apos;espera
+            {t("waitlist.joinedTitle")}
           </h2>
           <p className="text-sm text-brand-muted">
-            Et notificarem si s&apos;allibera una plaça. Si arriba, la reserva es
-            fa sola i et descomptem la sessió del bo.
+            {t("waitlist.joinedBody")}
           </p>
           <p className="text-sm font-bold text-brand-dark capitalize">{when}</p>
         </div>
@@ -896,7 +891,7 @@ function WaitlistModal({
         <div className="flex flex-col items-center gap-3 py-2 text-center">
           <AnimatedFeedback type="cancel" />
           <h2 className="text-xl font-bold text-brand-dark">
-            Ja no ets a la llista
+            {t("waitlist.leftTitle")}
           </h2>
           <p className="text-sm text-brand-muted">
             No t&apos;avisarem si s&apos;allibera una plaça d&apos;aquesta sessió.
@@ -915,51 +910,49 @@ function WaitlistModal({
   return (
     <Overlay onClose={onClose}>
       <h2 className="text-lg font-bold text-brand-dark">
-        {entryId ? "Ets a la llista d'espera" : "Sessió completa"}
+        {entryId ? t("waitlist.onListTitle") : t("waitlist.fullTitle")}
       </h2>
       <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
-        <Field label="Servei" value={SERVICE_LABELS.grupo_reducido} />
-        <Field label="Professional" value={firstName(trainerNameFull)} />
+        <Field label={t("service")} value={tl("grupo_reducido")} />
+        <Field label={t("professional")} value={firstName(trainerNameFull)} />
       </dl>
 
       {entryId ? (
         <>
           <p className="mt-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-charcoal">
-            Si algú cancel·la, la plaça passa a ser teva automàticament i
-            t&apos;avisem. No cal que estiguis pendent.
+            {t("waitlist.onListBody")}
           </p>
           <form action={leave} className="mt-5">
             <input type="hidden" name="entryId" value={entryId} />
-            {leaveState.error && (
-              <p className="mb-3 text-sm text-error">{leaveState.error}</p>
+            {leaveState.errorCode && (
+              <p className="mb-3 text-sm text-error">{te(leaveState.errorCode)}</p>
             )}
             <PendingSubmit
-              pendingLabel="Donant de baixa…"
+              pendingLabel={t("waitlist.leaving")}
               className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 disabled:opacity-60"
             >
-              Donar-me de baixa de la llista
+              {t("waitlist.leave")}
             </PendingSubmit>
           </form>
         </>
       ) : (
         <>
           <p className="mt-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-charcoal">
-            Aquesta sessió no té places lliures. Pots apuntar-te a la llista
-            d&apos;espera: si algú cancel·la, la plaça és teva i t&apos;avisem.
+            {t("waitlist.fullBody")}
           </p>
           <form action={join} className="mt-5">
             <input type="hidden" name="trainerId" value={trainerId} />
             <input type="hidden" name="serviceType" value="grupo_reducido" />
             <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
-            {joinState.error && (
-              <p className="mb-3 text-sm text-error">{joinState.error}</p>
+            {joinState.errorCode && (
+              <p className="mb-3 text-sm text-error">{te(joinState.errorCode)}</p>
             )}
             <PendingSubmit
-              pendingLabel="Apuntant-te…"
+              pendingLabel={t("waitlist.joining")}
               className="w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
             >
-              Apuntar-me a la llista d&apos;espera
+              {t("waitlist.join")}
             </PendingSubmit>
           </form>
         </>
@@ -1032,7 +1025,11 @@ function CreateModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const when = new Intl.DateTimeFormat("ca-ES", {
+  const t = useTranslations("reservas");
+  const tl = useTranslations("labels.service");
+  const te = useTranslations("reservas.errors");
+  const locale = useLocale() as Locale;
+  const when = new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -1046,14 +1043,14 @@ function CreateModal({
         <div className="flex flex-col items-center gap-3 py-2 text-center">
           <AnimatedFeedback type="success" />
           <h2 className="text-xl font-bold text-brand-dark">
-            Reserva confirmada!
+            {t("book.confirmed")}
           </h2>
           <p className="text-sm text-brand-muted capitalize">{when}</p>
         </div>
         <dl className="mt-4 flex flex-col gap-2 text-sm">
-          <Field label="Servei" value={SERVICE_LABELS[service]} />
-          <Field label="Professional" value={trainerName} />
-          <GroupMates mates={mates} label="Amb" />
+          <Field label={t("service")} value={tl(service)} />
+          <Field label={t("professional")} value={trainerName} />
+          <GroupMates mates={mates} label={t("book.with")} />
         </dl>
         <div className="mt-5 flex flex-col items-center gap-3">
           <AddToCalendarButton
@@ -1075,12 +1072,12 @@ function CreateModal({
 
   return (
     <Overlay onClose={onClose}>
-      <h2 className="text-lg font-bold text-brand-dark">Confirmar reserva</h2>
+      <h2 className="text-lg font-bold text-brand-dark">{t("book.confirmTitle")}</h2>
       <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
-        <Field label="Servei" value={SERVICE_LABELS[service]} />
-        <Field label="Professional" value={trainerName} />
-        <GroupMates mates={mates} label="Ja s'hi han apuntat" />
+        <Field label={t("service")} value={tl(service)} />
+        <Field label={t("professional")} value={trainerName} />
+        <GroupMates mates={mates} label={t("book.alreadyJoined")} />
       </dl>
       {/* Repetir-la és la mateixa decisió que fer-la, i per això es plega
           aquí sota en comptes d'obrir una altra superfície. */}
@@ -1093,7 +1090,7 @@ function CreateModal({
             className="h-4 w-4 shrink-0 accent-brand-purple"
           />
           <span className="text-sm font-bold text-brand-charcoal">
-            Fer-ho recurrent
+            {t("book.makeRecurrent")}
           </span>
         </label>
       )}
@@ -1112,7 +1109,7 @@ function CreateModal({
               onClick={onClose}
               className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
             >
-              Cancel·lar
+              {t("cancel")}
             </button>
           }
         />
@@ -1121,25 +1118,25 @@ function CreateModal({
           <input type="hidden" name="trainerId" value={trainerId} />
           <input type="hidden" name="serviceType" value={service} />
           <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
-          {state.error && (
-            <p className="mb-3 text-sm text-error">{state.error}</p>
+          {state.errorCode && (
+            <p className="mb-3 text-sm text-error">{te(state.errorCode)}</p>
           )}
           <div className="flex items-center gap-2">
             {/* Mentre la reserva viatja al servidor hi havia uns segons sense
                 cap senyal, i convidaven a tornar a clicar. Ara el botó ho diu i
                 es bloqueja, que és el que evita la reserva doble. */}
             <PendingSubmit
-              pendingLabel="Reservant…"
+              pendingLabel={t("book.submitting")}
               className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
             >
-              Reservar
+              {t("book.submit")}
             </PendingSubmit>
             <button
               type="button"
               onClick={onClose}
               className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
             >
-              Cancel·lar
+              {t("cancel")}
             </button>
           </div>
         </form>
@@ -1177,6 +1174,9 @@ function OwnModal({
   onSeriesReady?: (review: SeriesReviewState) => void;
   onClose: () => void;
 }) {
+  const t = useTranslations("reservas");
+  const tl = useTranslations("labels.service");
+  const te = useTranslations("reservas.errors");
   const router = useRouter();
   const [state, action] = useActionState(cancelAction, {});
   const [confirming, setConfirming] = useState(false);
@@ -1197,8 +1197,8 @@ function OwnModal({
       <Overlay onClose={close}>
         <div className="flex flex-col items-center gap-3 py-2 text-center">
           <AnimatedFeedback type="cancel" />
-          <h2 className="text-xl font-bold text-brand-dark">Reserva cancel·lada</h2>
-          <p className="text-sm text-brand-muted">La sessió ha estat eliminada correctament.</p>
+          <h2 className="text-xl font-bold text-brand-dark">{t("own.cancelledTitle")}</h2>
+          <p className="text-sm text-brand-muted">{t("own.cancelledBody")}</p>
         </div>
         <button
           type="button"
@@ -1215,11 +1215,11 @@ function OwnModal({
 
   return (
     <Overlay onClose={onClose}>
-      <h2 className="text-lg font-bold text-brand-dark">La meva sessió</h2>
+      <h2 className="text-lg font-bold text-brand-dark">{t("own.mySession")}</h2>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
-        <Field label="Servei" value={SERVICE_LABELS[service]} />
-        <Field label="Professional" value={trainerName} />
-        <GroupMates mates={mates} label="Amb tu hi ha" />
+        <Field label={t("service")} value={tl(service)} />
+        <Field label={t("professional")} value={trainerName} />
+        <GroupMates mates={mates} label={t("own.withYou")} />
       </dl>
       <div className="mt-4">
         <AddToCalendarButton
@@ -1240,7 +1240,7 @@ function OwnModal({
           onClick={() => setRecurrent(true)}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-purple px-4 py-2.5 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/5"
         >
-          Repetir en bucle a partir d&apos;aquesta
+          {t("own.repeat")}
         </button>
       )}
       {/* Mentre s'està configurant la repetició, la cancel·lació desapareix:
@@ -1258,7 +1258,7 @@ function OwnModal({
               onClick={() => setRecurrent(false)}
               className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
             >
-              Enrere
+              {t("back")}
             </button>
           }
         />
@@ -1268,7 +1268,7 @@ function OwnModal({
           confirming ? (
             <>
               <p className="mt-5 text-sm font-bold text-brand-dark">
-                Segur que vols cancel·lar aquesta reserva?
+                {t("own.confirmCancel")}
               </p>
               <div className="mt-3 flex gap-2">
                 <form action={action} className="flex-1">
@@ -1298,14 +1298,12 @@ function OwnModal({
               onClick={() => setConfirming(true)}
               className="mt-5 w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
             >
-              Cancel·lar reserva
+              {t("own.cancelBooking")}
             </button>
           )
         ) : (
           <p className="mt-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
-            Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys{" "}
-            {minCancellationHours} h d&apos;antelació). Contacta amb el centre si
-            tens una urgència.
+            {t("own.tooLate", { hours: minCancellationHours })}
           </p>
         ))}
       <button

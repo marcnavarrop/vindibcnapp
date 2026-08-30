@@ -32,3 +32,24 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   es: "Castellano",
   en: "English",
 };
+
+/**
+ * L'etiqueta d'`Intl` per a cada idioma.
+ *
+ * L'anglès va a `en-GB` i no a `en-US`: el centre és a Barcelona i la resta de
+ * l'app dona les hores en format de 24 h i les dates amb el dia al davant. Amb
+ * `en-US` una mateixa pantalla barrejaria "30 August" amb "8/30" i les hores
+ * passarien a AM/PM només per a qui llegeix en anglès.
+ *
+ * Viu aquí i no a `labels.ts` perquè també el necessiten els calendaris, que
+ * formaten dates amb `Intl` directament.
+ */
+const INTL_LOCALE: Record<Locale, string> = {
+  ca: "ca-ES",
+  es: "es-ES",
+  en: "en-GB",
+};
+
+export function intlLocale(locale: Locale = DEFAULT_LOCALE): string {
+  return INTL_LOCALE[locale] ?? INTL_LOCALE[DEFAULT_LOCALE];
+}

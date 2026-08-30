@@ -14,19 +14,26 @@ import type { ServiceType } from "@/types/database";
  * t'hi apuntis dues vegades— viuen a `joinWaitlist`, que és l'única porta.
  */
 
-export type WaitlistState = { error?: string; ok?: boolean };
+/**
+ * Els errors viatgen com a CODI: aquesta acció corre al servidor i no sap en
+ * quin idioma llegeix el client. El text el posa la pantalla.
+ */
+export type ReservaErrorCode =
+  | "unauthorized" | "noTrainer" | "badService" | "noDate" | "noReservation" | "noSession" | "noEntry" | "noClient" | "noSeries" | "noLimit" | "nothingToConfirm" | "failed";
+
+export type WaitlistState = { errorCode?: ReservaErrorCode; ok?: boolean };
 
 export async function joinWaitlistAction(
   _prev: WaitlistState,
   formData: FormData,
 ): Promise<WaitlistState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   const trainerId = String(formData.get("trainerId") ?? "");
   const serviceType = String(formData.get("serviceType") ?? "") as ServiceType;
   const scheduledAt = String(formData.get("scheduledAt") ?? "");
-  if (!trainerId || !scheduledAt) return { error: "Sessió no indicada." };
+  if (!trainerId || !scheduledAt) return { errorCode: "noSession" };
 
   try {
     await joinWaitlist({
@@ -36,12 +43,8 @@ export async function joinWaitlistAction(
       scheduledAt,
     });
   } catch (e) {
-    return {
-      error:
-        e instanceof Error
-          ? e.message
-          : "No s'ha pogut apuntar a la llista d'espera.",
-    };
+    console.error("[llista d'espera]", e);
+    return { errorCode: "failed" };
   }
 
   revalidatePath("/client/reservas");
@@ -55,20 +58,19 @@ export async function leaveWaitlistAction(
   formData: FormData,
 ): Promise<WaitlistState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   const entryId = String(formData.get("entryId") ?? "");
-  if (!entryId) return { error: "Espera no indicada." };
+  if (!entryId) return { errorCode: "noEntry" };
 
   const client = await getClientByProfile(viewer.id);
-  if (!client) return { error: "No tens fitxa de client." };
+  if (!client) return { errorCode: "noClient" };
 
   try {
     await cancelWaitlistEntry(client.id, entryId);
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut fer la baixa.",
-    };
+    console.error("[llista d'espera]", e);
+    return { errorCode: "failed" };
   }
 
   revalidatePath("/client/reservas");

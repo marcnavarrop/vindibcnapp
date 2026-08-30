@@ -1,6 +1,6 @@
 import { CENTER_TZ } from "@/lib/config";
 import ca from "@/messages/ca.json";
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
+import { intlLocale, type Locale } from "@/lib/i18n/config";
 import { centerDateStr } from "@/lib/center-time";
 import type {
   ServiceType,
@@ -185,35 +185,14 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 /**
- * L'etiqueta d'`Intl` per a cada idioma.
- *
- * L'anglès va a `en-GB` i no a `en-US`: el centre és a Barcelona i la resta de
- * l'app dona les hores en format de 24 h i les dates amb el dia al davant.
- * Amb `en-US` una mateixa pantalla barrejaria "30 August" amb "8/30" i les
- * hores passarien a AM/PM només per a qui llegeix en anglès.
- */
-const INTL_LOCALE: Record<Locale, string> = {
-  ca: "ca-ES",
-  es: "es-ES",
-  en: "en-GB",
-};
-
-/**
  * Totes les funcions de format porten l'idioma com a paràmetre OPCIONAL, amb
- * el català per defecte.
- *
- * Així les crides de l'admin i del professional —que es queden en català— no
- * canvien ni una línia, i les pantalles del client hi passen el seu idioma
- * real. Mateix criteri que amb les etiquetes compartides: una sola font, i qui
- * necessita una altra cosa la demana.
+ * el català per defecte: així les crides de l'admin i del professional no
+ * canvien ni una línia, i les pantalles del client hi passen el seu.
  */
-function intl(locale: Locale = DEFAULT_LOCALE): string {
-  return INTL_LOCALE[locale] ?? INTL_LOCALE[DEFAULT_LOCALE];
-}
 
 /** Formatea un importe en euros. */
 export function formatEur(amount: number, locale?: Locale): string {
-  return new Intl.NumberFormat(intl(locale), {
+  return new Intl.NumberFormat(intlLocale(locale), {
     style: "currency",
     currency: "eur",
   }).format(amount);
@@ -239,7 +218,7 @@ const CENTER_DATE_PARTS = { timeZone: CENTER_TZ } as const;
 
 /** Formatea una fecha ISO en formato corto. */
 export function formatDate(iso: string, locale?: Locale): string {
-  return new Intl.DateTimeFormat(intl(locale), {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -249,7 +228,7 @@ export function formatDate(iso: string, locale?: Locale): string {
 
 /** Hora (HH:mm) de una fecha ISO. */
 export function formatTime(iso: string, locale?: Locale): string {
-  return new Intl.DateTimeFormat(intl(locale), {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     hour: "2-digit",
     minute: "2-digit",
     ...CENTER_DATE_PARTS,
@@ -258,7 +237,7 @@ export function formatTime(iso: string, locale?: Locale): string {
 
 /** Mes abreujat ("ag.", "set."), per als calendaris compactes. */
 export function formatMonthShort(iso: string, locale?: Locale): string {
-  return new Intl.DateTimeFormat(intl(locale), {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     month: "short",
     ...CENTER_DATE_PARTS,
   }).format(new Date(iso));
@@ -266,7 +245,7 @@ export function formatMonthShort(iso: string, locale?: Locale): string {
 
 /** Cabecera de día: "dilluns, 22 de juny". */
 export function formatDayHeading(iso: string, locale?: Locale): string {
-  return new Intl.DateTimeFormat(intl(locale), {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -294,7 +273,7 @@ export function dayKey(iso: string): string {
  * la tarjeta contaba las sesiones de hoy.
  */
 export function formatLongDate(date: Date, locale?: Locale): string {
-  const s = new Intl.DateTimeFormat(intl(locale), {
+  const s = new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",

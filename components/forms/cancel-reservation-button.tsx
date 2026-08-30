@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cancelOwnReservationAction } from "@/app/(client)/client/reservas/actions";
 
 export function CancelReservationButton({
@@ -16,6 +17,8 @@ export function CancelReservationButton({
   minMs: number;
   className?: string;
 }) {
+  const t = useTranslations("reservas");
+  const te = useTranslations("reservas.errors");
   const [state, action] = useActionState(cancelOwnReservationAction, {});
   const [confirming, setConfirming] = useState(false);
 
@@ -34,14 +37,14 @@ export function CancelReservationButton({
   if (confirming) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <span className="text-xs text-brand-muted">Segur?</span>
+        <span className="text-xs text-brand-muted">{t("own.sure")}</span>
         <form action={action}>
           <input type="hidden" name="id" value={id} />
           <button
             type="submit"
             className="rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80"
           >
-            Sí
+            {t("own.yes")}
           </button>
         </form>
         <button
@@ -49,10 +52,10 @@ export function CancelReservationButton({
           onClick={() => setConfirming(false)}
           className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark"
         >
-          No
+          {t("own.no")}
         </button>
-        {state.error && (
-          <p className="text-xs text-error">{state.error}</p>
+        {state.errorCode && (
+          <p className="text-xs text-error">{te(state.errorCode)}</p>
         )}
       </div>
     );
@@ -65,10 +68,12 @@ export function CancelReservationButton({
         onClick={() => setConfirming(true)}
         className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10"
       >
-        Cancel·lar
+        {t("cancel")}
       </button>
-      {state.error && (
-        <p className="mt-1 max-w-[16rem] text-xs text-error">{state.error}</p>
+      {state.errorCode && (
+        <p className="mt-1 max-w-[16rem] text-xs text-error">
+          {te(state.errorCode)}
+        </p>
       )}
     </div>
   );

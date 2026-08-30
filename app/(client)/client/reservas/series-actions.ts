@@ -1,5 +1,7 @@
 "use server";
 
+import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
+
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
@@ -35,7 +37,7 @@ export type SeriesFormInput = {
 };
 
 export type CalculateState = {
-  error?: string;
+  errorCode?: ReservaErrorCode;
   occurrences?: ResolvedOccurrence[];
   bonoRemaining?: number;
   /** Ocurrències que no s'han pogut generar perquè el bo s'havia acabat. */
@@ -68,15 +70,18 @@ export async function calculateSeriesAction(
   input: SeriesFormInput,
 ): Promise<CalculateState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   // Una sèrie sense final seria infinita: es demana com a mínim un dels dos
   // límits, igual que ho exigeix la base de dades.
   if (!input.endDate && !input.occurrenceCount)
-    return { error: "Digues fins quan es repeteix o quantes sessions vols." };
+    return { errorCode: "noLimit" };
 
   const plan = await resolveSeries(await toRequest(viewer.id, input));
-  if (plan.error) return { error: plan.error };
+  if (plan.error) {
+    console.error("[sèries]", plan.error);
+    return { errorCode: "failed" };
+  }
   return {
     occurrences: plan.occurrences,
     bonoRemaining: plan.bonoRemaining,
@@ -85,7 +90,7 @@ export async function calculateSeriesAction(
 }
 
 export type ConfirmState = {
-  error?: string;
+  errorCode?: ReservaErrorCode;
   ok?: boolean;
   created?: number;
   /** Reserves que ja existien i s'han incorporat a la sèrie. */
@@ -99,8 +104,8 @@ export async function confirmSeriesAction(
   decided: ResolvedOccurrence[],
 ): Promise<ConfirmState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
-  if (decided.length === 0) return { error: "No hi ha res a confirmar." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
+  if (decided.length === 0) return { errorCode: "nothingToConfirm" };
 
   try {
     const res = await commitSeries(await toRequest(viewer.id, input), decided);
@@ -114,14 +119,13 @@ export async function confirmSeriesAction(
       failed: res.failed,
     };
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut crear la sèrie.",
-    };
+    console.error("[sèries]", e);
+    return { errorCode: "failed" };
   }
 }
 
 export type CancelSeriesState = {
-  error?: string;
+  errorCode?: ReservaErrorCode;
   ok?: boolean;
   cancelled?: number;
   kept?: number;
@@ -133,17 +137,17 @@ export async function cancelSeriesAction(
   formData: FormData,
 ): Promise<CancelSeriesState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   const seriesId = String(formData.get("seriesId") ?? "");
-  if (!seriesId) return { error: "Sèrie no indicada." };
+  if (!seriesId) return { errorCode: "noSeries" };
 
   // La sèrie ha de ser d'aquest client: `cancelSeries` itera amb la
   // cancel·lació individual, que ja ho comprova reserva per reserva, però
   // val més no ni començar amb una sèrie d'algú altre. El client també fa
   // d'acotació en marcar la sèrie com a cancel·lada.
   const client = await getClientByProfile(viewer.id);
-  if (!client) return { error: "No tens fitxa de client." };
+  if (!client) return { errorCode: "noClient" };
 
   try {
     const res = await cancelSeries(viewer.id, seriesId, client.id);
@@ -151,8 +155,7 @@ export async function cancelSeriesAction(
     revalidatePath("/client");
     return { ok: true, cancelled: res.cancelled, kept: res.kept };
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut cancel·lar la sèrie.",
-    };
+    console.error("[sèries]", e);
+    return { errorCode: "failed" };
   }
 }
