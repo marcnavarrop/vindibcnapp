@@ -257,7 +257,8 @@
       "errorCreate": "We couldn't create the package.",
       "errorStripe": "We couldn't start the payment.",
       "errorStripeOff": "Card payment isn't available right now.",
-      "unauthorized": "Not authorised."
+      "unauthorized": "Not authorised.",
+      "close": "Close"
     },
     "mine": {
       "title": "My packages",
@@ -327,7 +328,8 @@
     "unauthorized": "Not authorised.",
     "redeemedOn": "Redeemed on {date}",
     "validThrough": "Valid until {date}",
-    "sendPlaceholder": "email@example.com"
+    "sendPlaceholder": "email@example.com",
+    "close": "Close"
   },
   "nav": {
     "home": "Home",
@@ -508,5 +510,55 @@
     "everyFromFull": "Every {frequency}, starting {day} at {time}",
     "limitsHint": "Fill in one or both. With both, the series stops at whichever comes first.",
     "ifNoSpace": "If there's no space…"
+  },
+  "comunitat": {
+    "title": "Community",
+    "intro": "Announcements, news and polls from the centre.",
+    "board": {
+      "empty": "No posts yet.",
+      "latest": "New",
+      "team": "Team",
+      "teamFull": "The VindiBCN team"
+    },
+    "poll": {
+      "badge": "Poll",
+      "closed": "Closed",
+      "until": "Until {date}",
+      "multipleHint": "You can pick more than one option.",
+      "submit": "Send answer",
+      "sending": "Sending…",
+      "answered": "You've answered · your vote can't be changed.",
+      "answeredWithCount": "{count, plural, one {# answer} other {# answers}} · your vote can't be changed.",
+      "noLongerOpen": "This poll is no longer accepting answers.",
+      "errors": {
+        "closed": "This poll is no longer accepting answers.",
+        "alreadyVoted": "You've already answered this poll.",
+        "singleOnly": "This poll only allows one option.",
+        "noOption": "Pick at least one option.",
+        "failed": "We couldn't save your vote. Please try again."
+      }
+    }
+  },
+  "growth": {
+    "gift": {
+      "title": "Gift Vindi",
+      "body": "A package of sessions for whoever you like, with its own code and your message.",
+      "action": "Gift sessions"
+    },
+    "referral": {
+      "title": "Bring a friend and you both win!",
+      "body": "Find out about our referral programme.",
+      "action": "My code",
+      "dialogTitle": "Your referral code",
+      "close": "Close",
+      "card": {
+        "title": "Your referral code",
+        "hint": "Share it with friends. When they sign up with your code and pay for their first package, you both get {percent}% off your next purchase.",
+        "copy": "Copy",
+        "copied": "Copied!",
+        "unavailable": "Code unavailable.",
+        "referredCount": "{count, plural, =0 {You haven't referred anyone yet.} one {You've referred # friend.} other {You've referred # friends.}}"
+      }
+    }
   }
 }

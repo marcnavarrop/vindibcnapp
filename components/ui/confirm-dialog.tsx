@@ -20,6 +20,7 @@ export function ConfirmDialog({
   description,
   children,
   actions,
+  ariaClose,
 }: {
   open: boolean;
   onClose: () => void;
@@ -27,6 +28,13 @@ export function ConfirmDialog({
   description?: string;
   children?: React.ReactNode;
   actions: React.ReactNode;
+  /**
+   * Etiqueta del fons clicable per a qui fa servir un lector de pantalla.
+   * Opcional i amb el català per defecte: aquest diàleg també surt a l'àrea
+   * d'admin, que no es tradueix. Les pantalles de client SÍ que l'han de
+   * passar —una etiqueta invisible també s'ha de poder llegir.
+   */
+  ariaClose?: string;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +61,7 @@ export function ConfirmDialog({
       {/* Clic al fons = cancel·lar. */}
       <button
         type="button"
-        aria-label="Tancar"
+        aria-label={ariaClose ?? "Tancar"}
         onClick={onClose}
         className="absolute inset-0 h-full w-full cursor-default"
       />

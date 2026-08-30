@@ -214,6 +214,7 @@ function CancelSeriesDialog({
     <>
       {state.ok ? (
         <ConfirmDialog
+        ariaClose={t("close")}
           open
           onClose={onClose}
           title={t("cancelledTitle")}
@@ -243,6 +244,7 @@ function CancelSeriesDialog({
         </ConfirmDialog>
       ) : (
         <ConfirmDialog
+        ariaClose={t("close")}
           open
           onClose={onClose}
           title={t("cancelTitle")}

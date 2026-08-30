@@ -257,7 +257,8 @@
       "errorCreate": "No s'ha pogut crear el bo.",
       "errorStripe": "No s'ha pogut iniciar el pagament.",
       "errorStripeOff": "El pagament amb targeta no està disponible ara mateix.",
-      "unauthorized": "No autoritzat."
+      "unauthorized": "No autoritzat.",
+      "close": "Tancar"
     },
     "mine": {
       "title": "Els meus bons",
@@ -327,7 +328,8 @@
     "unauthorized": "No autoritzat.",
     "redeemedOn": "Bescanviat el {date}",
     "validThrough": "Vàlid fins al {date}",
-    "sendPlaceholder": "correu@exemple.com"
+    "sendPlaceholder": "correu@exemple.com",
+    "close": "Tancar"
   },
   "nav": {
     "home": "Inici",
@@ -508,5 +510,55 @@
     "everyFromFull": "Cada {frequency}, a partir del {day} a les {time}",
     "limitsHint": "Pots omplir-ne un o tots dos. Amb tots dos, la sèrie s'atura amb el primer que arribi.",
     "ifNoSpace": "Si no hi ha plaça…"
+  },
+  "comunitat": {
+    "title": "Comunitat",
+    "intro": "Anuncis, novetats i enquestes del centre.",
+    "board": {
+      "empty": "Encara no hi ha publicacions.",
+      "latest": "Novetat",
+      "team": "Equip",
+      "teamFull": "Equip VindiBCN"
+    },
+    "poll": {
+      "badge": "Enquesta",
+      "closed": "Tancada",
+      "until": "Fins al {date}",
+      "multipleHint": "Pots triar més d'una opció.",
+      "submit": "Enviar resposta",
+      "sending": "Enviant…",
+      "answered": "Ja has respost · no es pot canviar el vot.",
+      "answeredWithCount": "{count, plural, one {# resposta} other {# respostes}} · no es pot canviar el vot.",
+      "noLongerOpen": "Aquesta enquesta ja no accepta respostes.",
+      "errors": {
+        "closed": "Aquesta enquesta ja no accepta respostes.",
+        "alreadyVoted": "Ja has respost aquesta enquesta.",
+        "singleOnly": "Aquesta enquesta només permet una opció.",
+        "noOption": "Has de seleccionar almenys una opció.",
+        "failed": "No s'ha pogut desar el vot. Torna-ho a provar."
+      }
+    }
+  },
+  "growth": {
+    "gift": {
+      "title": "Regala Vindi",
+      "body": "Un paquet de sessions per a qui tu vulguis, amb el seu codi i la teva dedicatòria.",
+      "action": "Regalar sessions"
+    },
+    "referral": {
+      "title": "Porta un amic i guanyeu tots dos!",
+      "body": "Descobreix el nostre programa de recomanacions.",
+      "action": "El meu codi",
+      "dialogTitle": "El teu codi de referit",
+      "close": "Tancar",
+      "card": {
+        "title": "El teu codi de referit",
+        "hint": "Comparteix-lo amb amics. Quan es registrin amb el teu codi i paguin el seu primer bo, tots dos rebreu un {percent}% de descompte en la propera compra.",
+        "copy": "Copiar",
+        "copied": "Copiat!",
+        "unavailable": "Codi no disponible.",
+        "referredCount": "{count, plural, =0 {Encara no has referit cap amic.} one {Has referit # amic.} other {Has referit # amics.}}"
+      }
+    }
   }
 }

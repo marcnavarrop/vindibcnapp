@@ -13,6 +13,9 @@ import {
   seedExercises,
   seedExerciseProgress,
   seedAnnouncements,
+  seedPolls,
+  seedPollOptions,
+  seedPollResponses,
   seedClientExercises,
   seedAvailabilityRules,
   seedConsents,
@@ -59,6 +62,9 @@ export type Store = {
   bonus_payouts: Tables["bonus_payouts"]["Row"][];
   settlements: Tables["settlements"]["Row"][];
   support_tickets: Tables["support_tickets"]["Row"][];
+  polls: Tables["polls"]["Row"][];
+  poll_options: Tables["poll_options"]["Row"][];
+  poll_responses: Tables["poll_responses"]["Row"][];
   gift_vouchers: Tables["gift_vouchers"]["Row"][];
   booking_series: Tables["booking_series"]["Row"][];
   waitlist_entries: Tables["waitlist_entries"]["Row"][];
@@ -114,6 +120,9 @@ function fromSeed(): Store {
     bonus_payouts: [],
     settlements: [],
     support_tickets: [],
+    polls: structuredClone(seedPolls),
+    poll_options: structuredClone(seedPollOptions),
+    poll_responses: structuredClone(seedPollResponses),
     professional_colors: [],
     // Mateixa llavor que la migració 0046: els colors que ja feia servir el codi.
     service_type_colors: [

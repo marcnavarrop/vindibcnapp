@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ReferralCodeCard } from "@/components/referral-code-card";
 
@@ -46,21 +47,19 @@ function GiftIcon({ size = 15 }: { size?: number }) {
 
 /** Regala Vindi. Taronja: és una compra, no una recomanació. */
 export function GiftCta() {
+  const t = useTranslations("growth.gift");
   return (
     <section className={CARD}>
       <Glow className="inset-0 bg-[linear-gradient(150deg,#c24d0d_0%,#ff6d17_60%,#ff8f4d_100%)]" />
       <Glow className="-top-12 -right-10 h-40 w-40 rounded-full bg-[radial-gradient(circle,#ffffff_0%,transparent_65%)] opacity-30" />
       <div className="relative">
         <p className="text-base leading-tight font-bold text-balance">
-          Regala Vindi
+          {t("title")}
         </p>
-        <p className="mt-1.5 text-sm text-white/80">
-          Un paquet de sessions per a qui tu vulguis, amb el seu codi i la teva
-          dedicatòria.
-        </p>
+        <p className="mt-1.5 text-sm text-white/80">{t("body")}</p>
         <Link href="/client/regals" className={ACTION}>
           <GiftIcon />
-          Regalar sessions
+          {t("action")}
         </Link>
       </div>
     </section>
@@ -77,6 +76,7 @@ export function ReferralCta({
   referredCount: number;
   discountPercent: number;
 }) {
+  const t = useTranslations("growth.referral");
   const [open, setOpen] = useState(false);
 
   return (
@@ -86,29 +86,28 @@ export function ReferralCta({
         <Glow className="-right-10 -bottom-12 h-40 w-40 rounded-full bg-[radial-gradient(circle,var(--color-brand-orange)_0%,transparent_65%)] opacity-50" />
         <div className="relative">
           <p className="text-base leading-tight font-bold text-balance">
-            Porta un amic i guanyeu tots dos!
+            {t("title")}
           </p>
-          <p className="mt-1.5 text-sm text-white/70">
-            Descobreix el nostre programa de recomanacions.
-          </p>
+          <p className="mt-1.5 text-sm text-white/70">{t("body")}</p>
           <button type="button" onClick={() => setOpen(true)} className={ACTION}>
             <GiftIcon />
-            El meu codi
+            {t("action")}
           </button>
         </div>
       </section>
 
       <ConfirmDialog
+        ariaClose={t("close")}
         open={open}
         onClose={() => setOpen(false)}
-        title="El teu codi de referit"
+        title={t("dialogTitle")}
         actions={
           <button
             type="button"
             onClick={() => setOpen(false)}
             className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
           >
-            Tancar
+            {t("close")}
           </button>
         }
       >

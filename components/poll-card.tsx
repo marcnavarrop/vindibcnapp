@@ -1,33 +1,53 @@
 "use client";
 
-import { useRef } from "react";
+import { useActionState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { submitPollResponseAction } from "@/app/(client)/client/comunitat/actions";
+import type { PollFormState } from "@/app/(client)/client/comunitat/actions";
 import type { PollForClient } from "@/lib/data/polls";
 import { formatDate } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
+import { PendingSubmit } from "@/components/ui/pending-submit";
+
+/** Percentatge sencer, i 0 quan encara no hi ha cap vot. */
+function pct(votes: number, total: number): number {
+  return total > 0 ? Math.round((votes / total) * 100) : 0;
+}
 
 export function PollCard({ poll }: { poll: PollForClient }) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const t = useTranslations("comunitat.poll");
+  const te = useTranslations("comunitat.poll.errors");
+  const locale = useLocale() as Locale;
+  const [state, formAction] = useActionState(
+    submitPollResponseAction,
+    {} as PollFormState,
+  );
+
   const hasVoted = poll.myOptionIds.length > 0;
   // El servidor ja ho ha decidit en hora del centre: aquí no es recalcula.
   const isClosed = poll.closed;
 
-  const totalVotes = poll.options.reduce((s, _o) => s, 0); // computed below per option
-  // We don't have vote counts on the client view — just show "ja has votat"
+  // Els percentatges només surten quan hi ha alguna cosa a repartir. Si la
+  // migració 0059 encara no s'ha aplicat, el recompte arriba a zero i la
+  // targeta es queda com estava: es veu el teu vot i prou.
+  const showResults = poll.totalVotes > 0;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-brand-purple/30 bg-white p-5">
       <div className="flex items-center gap-2">
         <span className="rounded-full bg-brand-purple px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
-          Enquesta
+          {t("badge")}
         </span>
         {isClosed && (
           <span className="rounded-full bg-brand-bg px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-brand-muted uppercase">
-            Tancada
+            {t("closed")}
           </span>
         )}
         <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-          {formatDate(poll.createdAt)}
-          {poll.closesAt && !isClosed && ` · Fins al ${formatDate(poll.closesAt)}`}
+          {formatDate(poll.createdAt, locale)}
+          {poll.closesAt &&
+            !isClosed &&
+            ` · ${t("until", { date: formatDate(poll.closesAt, locale) })}`}
         </span>
       </div>
 
@@ -37,44 +57,66 @@ export function PollCard({ poll }: { poll: PollForClient }) {
         <div className="mt-3 flex flex-col gap-2">
           {poll.options.map((opt) => {
             const isMyVote = poll.myOptionIds.includes(opt.id);
+            const share = pct(opt.voteCount, poll.totalVotes);
             return (
               <div
                 key={opt.id}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
+                className={`relative overflow-hidden rounded-lg px-3 py-2 text-sm ${
                   isMyVote
                     ? "bg-brand-purple/10 font-bold text-brand-purple"
-                    : "text-brand-muted"
+                    : "bg-brand-bg text-brand-muted"
                 }`}
               >
-                <span
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                    isMyVote ? "border-brand-purple bg-brand-purple" : "border-brand-border"
-                  }`}
-                >
-                  {isMyVote && (
-                    <svg width="8" height="8" viewBox="0 0 8 8" fill="white">
-                      <path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                {/* La barra va al fons, no al costat: així el text sempre es
+                    llegeix sencer encara que el percentatge sigui petit. */}
+                {showResults && (
+                  <div
+                    aria-hidden
+                    className={`absolute inset-y-0 left-0 ${
+                      isMyVote ? "bg-brand-purple/20" : "bg-brand-border/50"
+                    }`}
+                    style={{ width: `${share}%` }}
+                  />
+                )}
+                <div className="relative flex items-center gap-3">
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                      isMyVote
+                        ? "border-brand-purple bg-brand-purple"
+                        : "border-brand-border"
+                    }`}
+                  >
+                    {isMyVote && (
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="white">
+                        <path
+                          d="M1 4l2 2 4-4"
+                          stroke="white"
+                          strokeWidth="1.5"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">{opt.label}</span>
+                  {showResults && (
+                    <span className="shrink-0 tabular-nums">{share}%</span>
                   )}
-                </span>
-                {opt.label}
+                </div>
               </div>
             );
           })}
           <p className="mt-1 text-xs text-brand-muted">
-            Ja has respost · no es pot canviar el vot.
+            {showResults
+              ? t("answeredWithCount", { count: poll.totalVotes })
+              : t("answered")}
           </p>
         </div>
       ) : isClosed ? (
-        <p className="mt-3 text-sm text-brand-muted">
-          Aquesta enquesta ja no accepta respostes.
-        </p>
+        <p className="mt-3 text-sm text-brand-muted">{t("noLongerOpen")}</p>
       ) : (
-        <form
-          ref={formRef}
-          action={submitPollResponseAction}
-          className="mt-3 flex flex-col gap-2"
-        >
+        <form action={formAction} className="mt-3 flex flex-col gap-2">
           <input type="hidden" name="poll_id" value={poll.id} />
           {poll.options.map((opt) => (
             <label
@@ -91,12 +133,18 @@ export function PollCard({ poll }: { poll: PollForClient }) {
               {opt.label}
             </label>
           ))}
-          <button
-            type="submit"
-            className="mt-1 self-start rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
+          {poll.allowMultiple && (
+            <p className="text-xs text-brand-muted">{t("multipleHint")}</p>
+          )}
+          {state.errorCode && (
+            <p className="text-sm text-error">{te(state.errorCode)}</p>
+          )}
+          <PendingSubmit
+            pendingLabel={t("sending")}
+            className="mt-1 self-start rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
           >
-            Enviar resposta
-          </button>
+            {t("submit")}
+          </PendingSubmit>
         </form>
       )}
     </article>

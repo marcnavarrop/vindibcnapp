@@ -1,6 +1,27 @@
 import "server-only";
 import { centerToday } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
+import { USE_MOCK } from "@/lib/config";
+import { getStore, saveStore } from "@/lib/mock/store";
+
+/**
+ * Per què no es pot votar. Codis i no frases: la comunitat es veu en tres
+ * idiomes i qui decideix el motiu és el servidor. Mateix criteri que a les
+ * reserves i a la sessió de prova.
+ */
+export type PollErrorCode =
+  | "closed"
+  | "alreadyVoted"
+  | "singleOnly"
+  | "noOption"
+  | "failed";
+
+export class PollError extends Error {
+  constructor(readonly code: PollErrorCode) {
+    super(code);
+    this.name = "PollError";
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -9,6 +30,9 @@ export type PollOption = {
   label: string;
   sortOrder: number;
 };
+
+/** Una opció tal com la veu qui vota: amb quants vots té, sense qui els ha fet. */
+export type PollOptionForClient = PollOption & { voteCount: number };
 
 export type PollListItem = {
   id: string;
@@ -43,8 +67,10 @@ export type PollForClient = {
   active: boolean;
   closesAt: string | null;
   createdAt: string;
-  options: PollOption[];
+  options: PollOptionForClient[];
   myOptionIds: string[]; // empty = not voted yet
+  /** Total de vots emesos a l'enquesta, per calcular els percentatges. */
+  totalVotes: number;
   /**
    * Si l'enquesta ja no accepta respostes, decidit AL SERVIDOR.
    *
@@ -206,6 +232,7 @@ export async function deletePoll(id: string): Promise<void> {
 export async function listPollsForClient(
   clientId: string,
 ): Promise<PollForClient[]> {
+  if (USE_MOCK) return listPollsForClientMock(clientId);
   const supabase = await createClient();
 
   const { data: polls, error: pErr } = await supabase
@@ -225,6 +252,8 @@ export async function listPollsForClient(
     .eq("client_id", clientId)
     .in("poll_id", pollIds);
   if (rErr) throw rErr;
+
+  const countByOption = await voteCounts(supabase, pollIds);
 
   const myMap = new Map<string, string[]>();
   for (const r of myResponses ?? []) {
@@ -253,10 +282,80 @@ export async function listPollsForClient(
     options: (p.poll_options ?? [])
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
-      .map((o) => ({ id: o.id, label: o.label, sortOrder: o.sort_order })),
+      .map((o) => ({
+        id: o.id,
+        label: o.label,
+        sortOrder: o.sort_order,
+        voteCount: countByOption.get(o.id) ?? 0,
+      })),
     myOptionIds: myMap.get(p.id) ?? [],
+    totalVotes: (p.poll_options ?? []).reduce(
+      (n, o) => n + (countByOption.get(o.id) ?? 0),
+      0,
+    ),
     closed: !p.active || (p.closes_at != null && p.closes_at < centerToday()),
   }));
+}
+
+/**
+ * Quants vots té cada opció.
+ *
+ * Va per RPC i no per consulta directa perquè la RLS de `poll_responses` només
+ * deixa veure les teves: qui vota no ha de poder llegir qui ha votat què. La
+ * funció és SECURITY DEFINER i torna NOMÉS el recompte —cap `client_id` surt
+ * d'allà dins—. Vegeu la migració 0059.
+ *
+ * Si la funció encara no hi és (migració sense aplicar), es torna un mapa buit
+ * en comptes de petar: la comunitat s'ha de poder llegir igualment, i la
+ * pantalla amaga els percentatges quan no hi ha cap vot.
+ */
+async function voteCounts(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  pollIds: string[],
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const { data, error } = await supabase.rpc("poll_option_counts", {
+    p_poll_ids: pollIds,
+  });
+  if (error) return out;
+  for (const row of (data ?? []) as { option_id: string; votes: number }[])
+    out.set(row.option_id, Number(row.votes));
+  return out;
+}
+
+/** La mateixa forma, sobre el magatzem de simulació. */
+function listPollsForClientMock(clientId: string): PollForClient[] {
+  const store = getStore();
+  const today = centerToday();
+  return store.polls
+    .slice()
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+    .map((p) => {
+      const options = store.poll_options
+        .filter((o) => o.poll_id === p.id)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((o) => ({
+          id: o.id,
+          label: o.label,
+          sortOrder: o.sort_order,
+          voteCount: store.poll_responses.filter((r) => r.option_id === o.id)
+            .length,
+        }));
+      return {
+        id: p.id,
+        question: p.question,
+        allowMultiple: p.allow_multiple,
+        active: p.active,
+        closesAt: p.closes_at ?? null,
+        createdAt: p.created_at,
+        options,
+        myOptionIds: store.poll_responses
+          .filter((r) => r.poll_id === p.id && r.client_id === clientId)
+          .map((r) => r.option_id),
+        totalVotes: options.reduce((n, o) => n + o.voteCount, 0),
+        closed: !p.active || (p.closes_at != null && p.closes_at < today),
+      };
+    });
 }
 
 export async function submitPollResponse(
@@ -264,6 +363,7 @@ export async function submitPollResponse(
   optionIds: string[],
   clientId: string,
 ): Promise<void> {
+  if (USE_MOCK) return submitPollResponseMock(pollId, optionIds, clientId);
   const supabase = await createClient();
 
   // Verify poll is still active and not expired
@@ -276,7 +376,7 @@ export async function submitPollResponse(
 
   const today = centerToday();
   if (!poll.active || (poll.closes_at && poll.closes_at < today)) {
-    throw new Error("Aquesta enquesta ja no accepta respostes.");
+    throw new PollError("closed");
   }
 
   // Check not already voted
@@ -287,15 +387,15 @@ export async function submitPollResponse(
     .eq("client_id", clientId)
     .limit(1);
   if ((existing ?? []).length > 0) {
-    throw new Error("Ja has respost aquesta enquesta.");
+    throw new PollError("alreadyVoted");
   }
 
   // Validate single-choice constraint
   if (!poll.allow_multiple && optionIds.length !== 1) {
-    throw new Error("Aquesta enquesta només permet una opció.");
+    throw new PollError("singleOnly");
   }
   if (optionIds.length === 0) {
-    throw new Error("Has de seleccionar almenys una opció.");
+    throw new PollError("noOption");
   }
 
   const { error: iErr } = await supabase.from("poll_responses").insert(
@@ -306,4 +406,36 @@ export async function submitPollResponse(
     })),
   );
   if (iErr) throw iErr;
+}
+
+/** El mateix vot, i les mateixes negatives, sobre el magatzem de simulació. */
+function submitPollResponseMock(
+  pollId: string,
+  optionIds: string[],
+  clientId: string,
+): void {
+  const store = getStore();
+  const poll = store.polls.find((p) => p.id === pollId);
+  if (!poll) throw new PollError("failed");
+
+  const today = centerToday();
+  if (!poll.active || (poll.closes_at && poll.closes_at < today))
+    throw new PollError("closed");
+
+  if (store.poll_responses.some((r) => r.poll_id === pollId && r.client_id === clientId))
+    throw new PollError("alreadyVoted");
+
+  if (!poll.allow_multiple && optionIds.length !== 1)
+    throw new PollError("singleOnly");
+  if (optionIds.length === 0) throw new PollError("noOption");
+
+  for (const option_id of optionIds)
+    store.poll_responses.push({
+      id: crypto.randomUUID(),
+      poll_id: pollId,
+      option_id,
+      client_id: clientId,
+      responded_at: new Date().toISOString(),
+    });
+  saveStore(store);
 }

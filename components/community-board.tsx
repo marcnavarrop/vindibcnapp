@@ -1,11 +1,12 @@
+import { getTranslations } from "next-intl/server";
 import { formatDate } from "@/lib/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { Announcement } from "@/lib/data/announcements";
 
-/** Inicial del autor para el avatar (o "E" de Equip si no hay nombre). */
-function authorInitial(name: string | null): string {
-  const t = (name ?? "").trim();
-  return t ? t[0].toUpperCase() : "E";
+/** Inicial de l'autor per a l'avatar; sense nom, la del mot "equip" traduït. */
+function authorInitial(name: string | null, fallback: string): string {
+  const n = (name ?? "").trim();
+  return (n ? n[0] : (fallback[0] ?? "E")).toUpperCase();
 }
 
 function Avatar({
@@ -34,7 +35,7 @@ function Avatar({
  * més recent destacada i la resta en targetes amb accent de marca i avatar
  * de l'autor.
  */
-export function CommunityBoard({
+export async function CommunityBoard({
   announcements,
   locale,
 }: {
@@ -45,10 +46,18 @@ export function CommunityBoard({
    */
   locale?: Locale;
 }) {
+  // El diccionari es demana amb l'idioma REBUT, no amb el de la petició: aquest
+  // mur també el mira el professional des de la seva àrea, que va en català
+  // fix. Mateix patró que les dates d'aquí sota.
+  const t = await getTranslations({
+    locale: locale ?? "ca",
+    namespace: "comunitat.board",
+  });
+
   if (announcements.length === 0) {
     return (
       <p className="rounded-2xl border border-brand-border bg-white px-5 py-8 text-center text-sm text-brand-muted">
-        Encara no hi ha publicacions.
+        {t("empty")}
       </p>
     );
   }
@@ -61,7 +70,7 @@ export function CommunityBoard({
       <article className="overflow-hidden rounded-2xl border border-brand-purple/30 bg-gradient-to-br from-brand-purple/10 to-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-brand-orange px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
-            Novetat
+            {t("latest")}
           </span>
           <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
             {formatDate(featured.createdAt, locale)}
@@ -72,9 +81,9 @@ export function CommunityBoard({
           {featured.body}
         </p>
         <div className="mt-4 flex items-center gap-2.5 border-t border-brand-purple/15 pt-4">
-          <Avatar initial={authorInitial(featured.authorName)} size="lg" />
+          <Avatar initial={authorInitial(featured.authorName, t("team"))} size="lg" />
           <span className="text-sm font-bold text-brand-dark">
-            {featured.authorName ?? "Equip VindiBCN"}
+            {featured.authorName ?? t("teamFull")}
           </span>
         </div>
       </article>
@@ -90,10 +99,10 @@ export function CommunityBoard({
               <div className="w-1 shrink-0 self-stretch rounded-full bg-brand-orange" />
               <div className="flex flex-1 flex-col">
                 <div className="flex items-center gap-2.5">
-                  <Avatar initial={authorInitial(a.authorName)} />
+                  <Avatar initial={authorInitial(a.authorName, t("team"))} />
                   <div className="leading-tight">
                     <div className="text-sm font-bold text-brand-dark">
-                      {a.authorName ?? "Equip"}
+                      {a.authorName ?? t("team")}
                     </div>
                     <div className="text-xs text-brand-muted">
                       {formatDate(a.createdAt, locale)}

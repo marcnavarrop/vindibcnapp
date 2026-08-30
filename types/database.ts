@@ -1444,6 +1444,15 @@ export interface Database {
         };
         Returns: GroupBookingResult;
       };
+      /**
+       * Recompte de vots per opció d'enquesta. SECURITY DEFINER: la RLS de
+       * `poll_responses` no deixa veure les respostes d'altri, i aquesta
+       * funció només retorna el nombre —mai qui ha votat—. Migració 0059.
+       */
+      poll_option_counts: {
+        Args: { p_poll_ids: string[] };
+        Returns: { option_id: string; votes: number }[];
+      };
     };
     Enums: {
       user_role: UserRole;

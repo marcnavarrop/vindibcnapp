@@ -219,6 +219,7 @@ export function GiftVoucherForm({
 
           {selected && (
             <ConfirmDialog
+        ariaClose={t("close")}
               open={confirming !== null}
               onClose={() => setConfirming(null)}
               title={t("confirmTitle")}

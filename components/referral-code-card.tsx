@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export function ReferralCodeCard({
   code,
@@ -17,6 +18,7 @@ export function ReferralCodeCard({
    */
   bare?: boolean;
 }) {
+  const t = useTranslations("growth.referral.card");
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -30,13 +32,11 @@ export function ReferralCodeCard({
     <div className={bare ? "" : "rounded-2xl border border-brand-border bg-white p-6"}>
       {!bare && (
         <p className="mb-1 text-sm font-bold text-brand-dark">
-          El teu codi de referit
+          {t("title")}
         </p>
       )}
       <p className="mb-4 text-xs text-brand-muted">
-        Comparteix-lo amb amics. Quan es registrin amb el teu codi i paguin el
-        seu primer bo, tots dos rebreu un {discountPercent}% de descompte en la
-        propera compra.
+        {t("hint", { percent: discountPercent })}
       </p>
 
       {code ? (
@@ -49,19 +49,17 @@ export function ReferralCodeCard({
             onClick={handleCopy}
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-xs font-bold text-brand-dark transition-colors hover:border-brand-purple hover:text-brand-purple"
           >
-            {copied ? "Copiat!" : "Copiar"}
+            {copied ? t("copied") : t("copy")}
           </button>
         </div>
       ) : (
-        <p className="text-sm text-brand-muted">Codi no disponible.</p>
+        <p className="text-sm text-brand-muted">{t("unavailable")}</p>
       )}
 
       <p className="mt-4 text-xs text-brand-muted">
-        {referredCount === 0
-          ? "Encara no has referit cap amic."
-          : referredCount === 1
-            ? "Has referit 1 amic."
-            : `Has referit ${referredCount} amics.`}
+        {/* Plural ICU: el "1 amics" del `if` de tota la vida no passa a
+            l'anglès, i cada idioma compta a la seva manera. */}
+        {t("referredCount", { count: referredCount })}
       </p>
     </div>
   );

@@ -7,6 +7,8 @@
  */
 import type { Database } from "@/types/database";
 
+type Tables = Database["public"]["Tables"];
+
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Client = Database["public"]["Tables"]["clients"]["Row"];
 type ClientDocument = Database["public"]["Tables"]["client_documents"]["Row"];
@@ -160,6 +162,28 @@ export const seedClientExercises: ClientExercise[] = [
 export const seedExerciseProgress: ExerciseProgress[] = [
   { id: "ep-1", client_exercise_id: "ce-1", recorded_at: "2026-05-01", weight_kg: 40, reps: 12, notes: "Primera sessió.", recorded_by: "u-trainer-laia", created_at: now },
   { id: "ep-2", client_exercise_id: "ce-1", recorded_at: "2026-06-01", weight_kg: 45, reps: 12, notes: "Bona progressió.", recorded_by: "u-trainer-laia", created_at: now },
+];
+
+/**
+ * Una enquesta oberta perquè la pantalla de comunitat es pugui provar sencera
+ * en simulació: votar, veure el resultat i els percentatges. Amb tres vots ja
+ * posats d'altres persones, perquè les barres no surtin totes a zero.
+ */
+export const seedPolls: Tables["polls"]["Row"][] = [
+  { id: "poll-1", question: "Quin horari prefereixes per al grup de mobilitat?", allow_multiple: false, active: true, created_by: "u-admin", created_at: now, closes_at: null },
+];
+
+export const seedPollOptions: Tables["poll_options"]["Row"][] = [
+  { id: "po-1", poll_id: "poll-1", label: "Dimarts a les 18 h", sort_order: 0 },
+  { id: "po-2", poll_id: "poll-1", label: "Dijous a les 10 h", sort_order: 1 },
+  { id: "po-3", poll_id: "poll-1", label: "Dissabte al matí", sort_order: 2 },
+];
+
+/** Vots ja emesos, perquè els percentatges no surtin tots a zero. */
+export const seedPollResponses: Tables["poll_responses"]["Row"][] = [
+  { id: "pr-1", poll_id: "poll-1", option_id: "po-1", client_id: "c-pau",   responded_at: now },
+  { id: "pr-2", poll_id: "poll-1", option_id: "po-1", client_id: "c-marta", responded_at: now },
+  { id: "pr-3", poll_id: "poll-1", option_id: "po-2", client_id: "c-oriol", responded_at: now },
 ];
 
 export const seedAnnouncements: Announcement[] = [

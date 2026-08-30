@@ -132,7 +132,7 @@ export function AppSidebar({
         </div>
         <div className="flex items-center gap-2">
           <Avatar name={fullName} email={email} url={avatarUrl} />
-          <SignOutButton />
+          {role === "client" ? <TranslatedSignOut compact /> : <SignOutButton />}
         </div>
       </header>
 
@@ -438,10 +438,21 @@ function LegalLabel({ k }: { k: string }) {
   return <>{t(k)}</>;
 }
 
-/** El botó de tancar sessió del client, amb el text del diccionari. */
-function TranslatedSignOut() {
+/**
+ * El botó de tancar sessió del client, amb el text del diccionari.
+ *
+ * `compact` és el de la barra superior de mòbil, que no porta la caixa del
+ * panell. Va pel mateix camí a propòsit: si no, un dels dos torna a quedar-se
+ * en català sense que ningú se n'adoni —que és exactament el que va passar.
+ */
+function TranslatedSignOut({ compact = false }: { compact?: boolean }) {
   const t = useTranslations("nav");
-  return <SignOutButton variant="panel" label={t("signOut")} />;
+  return (
+    <SignOutButton
+      variant={compact ? "compact" : "panel"}
+      label={t("signOut")}
+    />
+  );
 }
 
 /** El botó del menú de mòbil amb l'etiqueta traduïda (àrea de client). */

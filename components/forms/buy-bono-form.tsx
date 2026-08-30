@@ -241,6 +241,7 @@ export function BuyBonoForm({
 
           {selected && (
             <ConfirmDialog
+        ariaClose={t("close")}
               open={confirming !== null}
               onClose={() => setConfirming(null)}
               title={
