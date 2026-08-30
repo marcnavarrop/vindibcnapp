@@ -10,24 +10,35 @@ import {
 } from "@/lib/data/client-documents";
 import { redirect } from "next/navigation";
 
-export type DocFormState = { error?: string; ok?: boolean };
+/** Codi, no frase: la pantalla de documents es veu en tres idiomes. */
+export type DocErrorCode =
+  | "unauthenticated"
+  | "noClient"
+  | "noFile"
+  | "tooBig"
+  | "badFormat"
+  | "badId"
+  | "uploadFailed"
+  | "deleteFailed";
+
+export type DocFormState = { errorCode?: DocErrorCode; ok?: boolean };
 
 export async function uploadDocumentAction(
   _prev: DocFormState,
   formData: FormData,
 ): Promise<DocFormState> {
   const viewer = await getViewer();
-  if (!viewer) return { error: "No autenticat." };
+  if (!viewer) return { errorCode: "unauthenticated" };
 
   const client = await getClientByProfile(viewer.id);
-  if (!client) return { error: "No tens fitxa de client." };
+  if (!client) return { errorCode: "noClient" };
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0)
-    return { error: "Selecciona un fitxer." };
+    return { errorCode: "noFile" };
 
   const validation = validateDocumentFile(file);
-  if (!validation.ok) return { error: validation.error };
+  if (!validation.ok) return { errorCode: validation.code };
 
   const description = (formData.get("description") as string | null)?.trim() || undefined;
 
@@ -38,8 +49,8 @@ export async function uploadDocumentAction(
       file,
       description,
     });
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error en pujar el fitxer." };
+  } catch {
+    return { errorCode: "uploadFailed" };
   }
 
   return { ok: true };
@@ -50,18 +61,18 @@ export async function deleteDocumentAction(
   formData: FormData,
 ): Promise<DocFormState> {
   const viewer = await getViewer();
-  if (!viewer) return { error: "No autenticat." };
+  if (!viewer) return { errorCode: "unauthenticated" };
 
   const client = await getClientByProfile(viewer.id);
-  if (!client) return { error: "No tens fitxa de client." };
+  if (!client) return { errorCode: "noClient" };
 
   const documentId = formData.get("documentId") as string | null;
-  if (!documentId) return { error: "ID de document invàlid." };
+  if (!documentId) return { errorCode: "badId" };
 
   try {
     await deleteClientDocument(documentId, client.id);
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "Error en eliminar el document." };
+  } catch {
+    return { errorCode: "deleteFailed" };
   }
 
   return { ok: true };

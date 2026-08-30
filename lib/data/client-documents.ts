@@ -29,13 +29,18 @@ export type ClientDocument = {
   uploadedAt: string;
 };
 
+/**
+ * Per què no s'accepta un fitxer. Codi i no frase: qui puja documents és el
+ * client, i la seva pantalla va en tres idiomes. Mateix criteri que a la
+ * resta de l'àrea.
+ */
+export type DocumentRejection = "tooBig" | "badFormat";
+
 export function validateDocumentFile(
   file: File,
-): { ok: true } | { ok: false; error: string } {
-  if (file.size > MAX_SIZE)
-    return { ok: false, error: `El fitxer supera el límit de 15 MB (${(file.size / 1024 / 1024).toFixed(1)} MB).` };
-  if (!ALLOWED_MIME.has(file.type))
-    return { ok: false, error: "Format no acceptat. Usa PDF, imatge (JPG/PNG/HEIC) o Word." };
+): { ok: true } | { ok: false; code: DocumentRejection } {
+  if (file.size > MAX_SIZE) return { ok: false, code: "tooBig" };
+  if (!ALLOWED_MIME.has(file.type)) return { ok: false, code: "badFormat" };
   return { ok: true };
 }
 
@@ -74,7 +79,7 @@ export async function uploadClientDocument(opts: {
   const { clientId, uploadedBy, file, description } = opts;
 
   const validation = validateDocumentFile(file);
-  if (!validation.ok) throw new Error(validation.error);
+  if (!validation.ok) throw new Error(validation.code);
 
   const ext = file.name.split(".").pop() ?? "bin";
   const uuid = crypto.randomUUID();

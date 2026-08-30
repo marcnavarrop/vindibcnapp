@@ -709,5 +709,54 @@
         "failed": "No s'ha pogut canviar la contrasenya."
       }
     }
+  },
+  "documents": {
+    "title": "Documents",
+    "intro": "Puja informes mèdics, radiografies o qualsevol document relacionat amb el teu seguiment. Només tu i el teu professional els podeu consultar.",
+    "noClientRecord": "Encara no tens fitxa de client.",
+    "mine": "Els meus documents",
+    "add": "+ Pujar document",
+    "empty": "Encara no has pujat cap document.",
+    "newTitle": "Pujar document nou",
+    "file": "Fitxer",
+    "fileHint": "PDF, imatge (JPG/PNG/HEIC) o Word. Màxim {max} MB.",
+    "description": "Descripció (opcional)",
+    "descriptionPlaceholder": "Ex: Informe de la ressonància del genoll",
+    "upload": "Pujar",
+    "uploading": "Pujant…",
+    "cancel": "Cancel·lar",
+    "download": "Descarregar",
+    "delete": "Eliminar",
+    "sure": "Segur?",
+    "yes": "Sí",
+    "no": "No",
+    "downloadFailed": "No s'ha pogut descarregar el document.",
+    "errors": {
+      "unauthenticated": "No autenticat.",
+      "noClient": "No tens fitxa de client.",
+      "noFile": "Selecciona un fitxer.",
+      "tooBig": "El fitxer supera el límit de {max} MB.",
+      "badFormat": "Format no acceptat. Usa PDF, imatge (JPG/PNG/HEIC) o Word.",
+      "badId": "Document no vàlid.",
+      "uploadFailed": "No s'ha pogut pujar el fitxer.",
+      "deleteFailed": "No s'ha pogut eliminar el document."
+    }
+  },
+  "workouts": {
+    "title": "Entrenaments",
+    "intro": "Els exercicis que t'ha assignat el teu professional i la biblioteca del centre.",
+    "yours": "Els teus exercicis",
+    "noneAssigned": "Encara no tens cap exercici assignat.",
+    "progress": "El teu progrés",
+    "reps": "{count} reps",
+    "library": "Biblioteca completa",
+    "libraryEmpty": "No hi ha més exercicis a la biblioteca.",
+    "video": {
+      "watch": "▶ Veure vídeo",
+      "loading": "Carregant…",
+      "error": "No s'ha pogut carregar el vídeo. Torna-ho a provar.",
+      "play": "Reproduir el vídeo",
+      "retry": "Reintentar carregar el vídeo"
+    }
   }
 }

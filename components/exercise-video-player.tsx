@@ -26,12 +26,38 @@ const POSTER =
 /** Mateixa caixa per al placeholder i per al vídeo: evita salts de maquetació. */
 const BOX = "mt-1 w-full max-w-sm rounded-lg";
 
+/**
+ * Els textos, opcionals i amb el català per defecte.
+ *
+ * Aquest reproductor surt a la fitxa de client de l'admin i del professional,
+ * que van en català fix, i també a l'àrea de client, que es tradueix. Les
+ * cadenes arriben com a dades des de qui el fa servir: així cada banda mana
+ * sobre el seu idioma sense que el component hagi de saber on és.
+ */
+export type VideoTexts = {
+  watch: string;
+  loading: string;
+  error: string;
+  play: string;
+  retry: string;
+};
+
+const CA: VideoTexts = {
+  watch: "▶ Veure vídeo",
+  loading: "Carregant…",
+  error: "No s'ha pogut carregar el vídeo. Torna-ho a provar.",
+  play: "Reproduir el vídeo",
+  retry: "Reintentar carregar el vídeo",
+};
+
 export function ExerciseVideoPlayer({
   videoUrl,
   videoFilePath,
+  texts = CA,
 }: {
   videoUrl?: string | null;
   videoFilePath?: string | null;
+  texts?: VideoTexts;
 }) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,7 +89,7 @@ export function ExerciseVideoPlayer({
         rel="noopener noreferrer"
         className="text-sm font-bold text-brand-purple hover:text-brand-orange"
       >
-        ▶ Veure vídeo
+        {texts.watch}
       </a>
     );
   }
@@ -92,12 +118,12 @@ export function ExerciseVideoPlayer({
         type="button"
         onClick={loadVideo}
         disabled={loading}
-        aria-label={error ? "Reintentar carregar el vídeo" : "Reproduir el vídeo"}
+        aria-label={error ? texts.retry : texts.play}
         className="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg bg-brand-purple transition-opacity hover:opacity-95 disabled:cursor-wait"
       >
         <span className="absolute inset-0 flex items-center justify-center">
           {loading ? (
-            <span className="text-xs font-bold text-white/90">Carregant…</span>
+            <span className="text-xs font-bold text-white/90">{texts.loading}</span>
           ) : (
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 transition-transform group-hover:scale-110">
               <svg
@@ -114,7 +140,7 @@ export function ExerciseVideoPlayer({
       </button>
       {error && (
         <p className="mt-1 text-xs text-error">
-          No s&apos;ha pogut carregar el vídeo. Torna-ho a provar.
+          {texts.error}
         </p>
       )}
     </div>

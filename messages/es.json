@@ -709,5 +709,54 @@
         "failed": "No se ha podido cambiar la contraseña."
       }
     }
+  },
+  "documents": {
+    "title": "Documentos",
+    "intro": "Sube informes médicos, radiografías o cualquier documento relacionado con tu seguimiento. Solo tú y tu profesional podéis consultarlos.",
+    "noClientRecord": "Todavía no tienes ficha de cliente.",
+    "mine": "Mis documentos",
+    "add": "+ Subir documento",
+    "empty": "Todavía no has subido ningún documento.",
+    "newTitle": "Subir documento nuevo",
+    "file": "Archivo",
+    "fileHint": "PDF, imagen (JPG/PNG/HEIC) o Word. Máximo {max} MB.",
+    "description": "Descripción (opcional)",
+    "descriptionPlaceholder": "Ej.: Informe de la resonancia de la rodilla",
+    "upload": "Subir",
+    "uploading": "Subiendo…",
+    "cancel": "Cancelar",
+    "download": "Descargar",
+    "delete": "Eliminar",
+    "sure": "¿Seguro?",
+    "yes": "Sí",
+    "no": "No",
+    "downloadFailed": "No se ha podido descargar el documento.",
+    "errors": {
+      "unauthenticated": "No autenticado.",
+      "noClient": "No tienes ficha de cliente.",
+      "noFile": "Selecciona un archivo.",
+      "tooBig": "El archivo supera el límite de {max} MB.",
+      "badFormat": "Formato no aceptado. Usa PDF, imagen (JPG/PNG/HEIC) o Word.",
+      "badId": "Documento no válido.",
+      "uploadFailed": "No se ha podido subir el archivo.",
+      "deleteFailed": "No se ha podido eliminar el documento."
+    }
+  },
+  "workouts": {
+    "title": "Entrenamientos",
+    "intro": "Los ejercicios que te ha asignado tu profesional y la biblioteca del centro.",
+    "yours": "Tus ejercicios",
+    "noneAssigned": "Todavía no tienes ningún ejercicio asignado.",
+    "progress": "Tu progreso",
+    "reps": "{count} reps",
+    "library": "Biblioteca completa",
+    "libraryEmpty": "No hay más ejercicios en la biblioteca.",
+    "video": {
+      "watch": "▶ Ver vídeo",
+      "loading": "Cargando…",
+      "error": "No se ha podido cargar el vídeo. Inténtalo de nuevo.",
+      "play": "Reproducir el vídeo",
+      "retry": "Reintentar cargar el vídeo"
+    }
   }
 }

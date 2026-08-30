@@ -709,5 +709,54 @@
         "failed": "We couldn't change your password."
       }
     }
+  },
+  "documents": {
+    "title": "Documents",
+    "intro": "Upload medical reports, scans or anything else related to your progress. Only you and your professional can see them.",
+    "noClientRecord": "You don't have a client record yet.",
+    "mine": "My documents",
+    "add": "+ Upload document",
+    "empty": "You haven't uploaded anything yet.",
+    "newTitle": "Upload a new document",
+    "file": "File",
+    "fileHint": "PDF, image (JPG/PNG/HEIC) or Word. {max} MB max.",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "E.g. Knee MRI report",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "cancel": "Cancel",
+    "download": "Download",
+    "delete": "Delete",
+    "sure": "Sure?",
+    "yes": "Yes",
+    "no": "No",
+    "downloadFailed": "We couldn't download the document.",
+    "errors": {
+      "unauthenticated": "Not signed in.",
+      "noClient": "You don't have a client record.",
+      "noFile": "Pick a file.",
+      "tooBig": "The file is over the {max} MB limit.",
+      "badFormat": "That format isn't accepted. Use PDF, an image (JPG/PNG/HEIC) or Word.",
+      "badId": "That document isn't valid.",
+      "uploadFailed": "We couldn't upload the file.",
+      "deleteFailed": "We couldn't delete the document."
+    }
+  },
+  "workouts": {
+    "title": "Workouts",
+    "intro": "The exercises your professional has assigned you, plus the centre's library.",
+    "yours": "Your exercises",
+    "noneAssigned": "You don't have any exercises assigned yet.",
+    "progress": "Your progress",
+    "reps": "{count} reps",
+    "library": "Full library",
+    "libraryEmpty": "There are no other exercises in the library.",
+    "video": {
+      "watch": "▶ Watch video",
+      "loading": "Loading…",
+      "error": "We couldn't load the video. Please try again.",
+      "play": "Play the video",
+      "retry": "Try loading the video again"
+    }
   }
 }

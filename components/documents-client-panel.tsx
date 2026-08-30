@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState, useState, useRef, useTransition } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { formatDate } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
 import type { ClientDocument } from "@/lib/data/client-documents";
 import type { DocFormState } from "@/app/(client)/client/documents/actions";
 
@@ -41,8 +43,14 @@ export function DocumentsClientPanel({
   uploadAction: (prev: DocFormState, formData: FormData) => Promise<DocFormState>;
   deleteAction: (prev: DocFormState, formData: FormData) => Promise<DocFormState>;
 }) {
+  const t = useTranslations("documents");
+  const te = useTranslations("documents.errors");
   const [showForm, setShowForm] = useState(documents.length === 0);
-  const [clientError, setClientError] = useState<string | null>(null);
+  // El codi, no la frase: així el missatge es tradueix on es pinta i no cal
+  // recalcular-lo si algú canvia d'idioma amb el formulari obert.
+  const [clientError, setClientError] = useState<
+    "tooBig" | "badFormat" | null
+  >(null);
   const [uploadState, uploadFormAction, uploading] = useActionState(
     async (prev: DocFormState, formData: FormData) => {
       const result = await uploadAction(prev, formData);
@@ -61,12 +69,12 @@ export function DocumentsClientPanel({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_MB * 1024 * 1024) {
-      setClientError(`El fitxer supera el límit de ${MAX_MB} MB.`);
+      setClientError("tooBig");
       e.target.value = "";
       return;
     }
     if (!ALLOWED_MIME.has(file.type)) {
-      setClientError(`Format no acceptat. Usa: ${ALLOWED_EXT.join(", ")}.`);
+      setClientError("badFormat");
       e.target.value = "";
       return;
     }
@@ -79,7 +87,7 @@ export function DocumentsClientPanel({
       <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
         <div className="flex items-center justify-between border-b border-brand-border bg-brand-bg px-5 py-3">
           <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Els meus documents
+            {t("mine")}
           </h2>
           {!showForm && (
             <button
@@ -87,14 +95,14 @@ export function DocumentsClientPanel({
               onClick={() => setShowForm(true)}
               className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
             >
-              + Pujar document
+              {t("add")}
             </button>
           )}
         </div>
 
         {documents.length === 0 && !showForm ? (
           <p className="px-5 py-4 text-sm text-brand-muted">
-            Encara no has pujat cap document.
+            {t("empty")}
           </p>
         ) : (
           <div className="divide-y divide-brand-border">
@@ -113,42 +121,49 @@ export function DocumentsClientPanel({
       {showForm && (
         <section className="rounded-2xl border border-brand-border bg-white p-5">
           <h2 className="mb-4 text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Pujar document nou
+            {t("newTitle")}
           </h2>
           <form ref={formRef} action={uploadFormAction} className="flex flex-col gap-3">
             <div>
               <label className="mb-1 block text-xs font-bold tracking-wide text-brand-muted uppercase">
-                Fitxer <span className="text-error">*</span>
+                {t("file")} <span className="text-error">*</span>
               </label>
               <input
                 type="file"
                 name="file"
                 required
-                accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.doc,.docx"
+                // La llista d'extensions ja existia a `ALLOWED_EXT`: fins ara
+                // es tornava a escriure aquí i podien acabar dient coses
+                // diferents.
+                accept={ALLOWED_EXT.map((e) => `.${e}`).join(",")}
                 onChange={handleFileChange}
                 className="block w-full text-sm text-brand-charcoal file:mr-3 file:rounded-lg file:border file:border-brand-border file:bg-brand-bg file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-brand-charcoal hover:file:bg-white"
               />
               <p className="mt-1 text-xs text-brand-muted">
-                PDF, imatge (JPG/PNG/HEIC) o Word. Màxim {MAX_MB} MB.
+                {t("fileHint", { max: MAX_MB })}
               </p>
               {clientError && (
-                <p className="mt-1 text-xs text-error">{clientError}</p>
+                <p className="mt-1 text-xs text-error">
+                  {te(clientError, { max: MAX_MB })}
+                </p>
               )}
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold tracking-wide text-brand-muted uppercase">
-                Descripció (opcional)
+                {t("description")}
               </label>
               <input
                 type="text"
                 name="description"
-                placeholder="Ex: Informe de la ressonància del genoll"
+                placeholder={t("descriptionPlaceholder")}
                 maxLength={200}
                 className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm outline-none focus:border-brand-purple"
               />
             </div>
-            {uploadState.error && (
-              <p className="text-sm text-error">{uploadState.error}</p>
+            {uploadState.errorCode && (
+              <p className="text-sm text-error">
+                {te(uploadState.errorCode, { max: MAX_MB })}
+              </p>
             )}
             <div className="flex gap-2">
               <button
@@ -156,7 +171,7 @@ export function DocumentsClientPanel({
                 disabled={uploading || !!clientError}
                 className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-50"
               >
-                {uploading ? "Pujant…" : "Pujar"}
+                {uploading ? t("uploading") : t("upload")}
               </button>
               <button
                 type="button"
@@ -166,7 +181,7 @@ export function DocumentsClientPanel({
                 }}
                 className="rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
               >
-                Cancel·lar
+                {t("cancel")}
               </button>
             </div>
           </form>
@@ -183,6 +198,9 @@ function DocumentRow({
   doc: ClientDocument;
   deleteAction: (prev: DocFormState, formData: FormData) => Promise<DocFormState>;
 }) {
+  const t = useTranslations("documents");
+  const te = useTranslations("documents.errors");
+  const locale = useLocale() as Locale;
   const [confirming, setConfirming] = useState(false);
   const [deleteState, deleteFormAction, deleting] = useActionState(
     async (prev: DocFormState, formData: FormData) => {
@@ -198,7 +216,7 @@ function DocumentRow({
     startTransition(async () => {
       try {
         const res = await fetch(`/api/client-documents/signed-url?id=${doc.id}`);
-        if (!res.ok) throw new Error("Error en generar l'enllaç.");
+        if (!res.ok) throw new Error("signed-url");
         const { url } = await res.json() as { url: string };
         const a = document.createElement("a");
         a.href = url;
@@ -206,7 +224,7 @@ function DocumentRow({
         a.target = "_blank";
         a.click();
       } catch {
-        alert("No s'ha pogut descarregar el document.");
+        alert(t("downloadFailed"));
       }
     });
   }
@@ -220,14 +238,14 @@ function DocumentRow({
           <span className="block text-xs text-brand-muted">{doc.description}</span>
         )}
         <span className="block text-xs text-brand-muted">
-          {formatDate(doc.uploadedAt)}
+          {formatDate(doc.uploadedAt, locale)}
           {doc.fileSize ? ` · ${formatBytes(doc.fileSize)}` : ""}
         </span>
       </div>
 
       {confirming ? (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-brand-muted">Segur?</span>
+          <span className="text-xs text-brand-muted">{t("sure")}</span>
           <form action={deleteFormAction}>
             <input type="hidden" name="documentId" value={doc.id} />
             <button
@@ -235,7 +253,7 @@ function DocumentRow({
               disabled={deleting}
               className="rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80 disabled:opacity-50"
             >
-              Sí
+              {t("yes")}
             </button>
           </form>
           <button
@@ -243,10 +261,12 @@ function DocumentRow({
             onClick={() => setConfirming(false)}
             className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark"
           >
-            No
+            {t("no")}
           </button>
-          {deleteState.error && (
-            <span className="text-xs text-error">{deleteState.error}</span>
+          {deleteState.errorCode && (
+            <span className="text-xs text-error">
+              {te(deleteState.errorCode!)}
+            </span>
           )}
         </div>
       ) : (
@@ -257,14 +277,14 @@ function DocumentRow({
             disabled={isPending}
             className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50"
           >
-            {isPending ? "…" : "Descarregar"}
+            {isPending ? "…" : t("download")}
           </button>
           <button
             type="button"
             onClick={() => setConfirming(true)}
             className="text-xs font-bold tracking-wide text-error uppercase hover:opacity-70"
           >
-            Eliminar
+            {t("delete")}
           </button>
         </div>
       )}
