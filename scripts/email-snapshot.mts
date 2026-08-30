@@ -50,7 +50,28 @@ const rec = { profileId: "p-1", email: "algu@example.com", phone: null, name: "A
  * mateix que un en català; i als blocs 2 i 3, que ja no.
  */
 const LOCALE = process.argv[3] as "ca" | "es" | "en" | undefined;
-if (LOCALE) (rec as { locale?: string }).locale = LOCALE;
+
+/**
+ * Els correus que van a l'admin, al professional, a un visitant sense compte
+ * o al desenvolupador NO porten idioma al destinatari: `getProfileContact`
+ * només el retorna per als clients. Aquí es reprodueix aquesta regla, perquè
+ * si no el fixture els donaria un idioma que a la realitat no tenen mai.
+ */
+const INTERN = new Set<NotificationEventType>([
+  "trial_request",
+  "trial_status",
+  "trainer_booking_received",
+  "trainer_booking_cancelled",
+  "trainer_daily_agenda",
+  "new_client_registered",
+  "invoice_generated",
+  "support_ticket_created",
+]);
+
+const recFor = (type: NotificationEventType) => ({
+  ...rec,
+  locale: INTERN.has(type) ? null : (LOCALE ?? null),
+});
 
 /** Un `data` per tipus, amb totes les claus que la plantilla pugui llegir. */
 const DATA: Record<NotificationEventType, Record<string, string>> = {
@@ -70,8 +91,8 @@ const DATA: Record<NotificationEventType, Record<string, string>> = {
   new_exercises_assigned: { name: "Ana Ferrer" },
   invoice_generated: { name: "Laia Puig", period: "Març 2026", total: "1.240,00 €" },
   waitlist_fulfilled: { name: "Ana Ferrer", ...WHENS, ...GRUP, trainer: "Laia Puig" },
-  gift_voucher_redeemed: { name: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "5 sessions", buyer: "Pau Riera" },
-  gift_voucher_gifted: { name: "Laura", recipient: "Laura", buyer: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "EP Individual · 5 sessions", expires: EXPIRES, expiresIso: EXPIRES_ISO, message: "Per molts anys!" },
+  gift_voucher_redeemed: { name: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "EP Individual · 5 sessions", packageName: "EP Individual", sessions: "5", buyer: "Pau Riera" },
+  gift_voucher_gifted: { name: "Laura", recipient: "Laura", buyer: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "EP Individual · 5 sessions", packageName: "EP Individual", sessions: "5", expires: EXPIRES, expiresIso: EXPIRES_ISO, message: "Per molts anys!" },
   support_ticket_created: { reporter: "Laia Puig", area: "trainer", title: "El calendari no carrega", category: "bug", description: "En obrir Reserves surt en blanc.", ...WHENS },
 };
 
@@ -84,16 +105,20 @@ function save(nom: string, e: { subject: string; html: string; text: string }) {
 }
 
 for (const type of TYPES) {
-  const event: NotificationEvent = { type, recipient: rec, data: DATA[type] };
+  const event: NotificationEvent = {
+    type,
+    recipient: recFor(type),
+    data: DATA[type],
+  };
   save(type, renderEmail(event));
 }
 // `trial_status` té dues cares; la de rebuig també s'ha de vigilar.
-save("trial_status__rejected", renderEmail({ type: "trial_status", recipient: rec, data: { ...DATA.trial_status, status: "rejected" } }));
+save("trial_status__rejected", renderEmail({ type: "trial_status", recipient: recFor("trial_status"), data: { ...DATA.trial_status, status: "rejected" } }));
 // I l'agenda buida, que canvia el text d'entrada.
-save("trainer_daily_agenda__buida", renderEmail({ type: "trainer_daily_agenda", recipient: rec, data: { name: "Laia Puig", sessions: "[]" } }));
+save("trainer_daily_agenda__buida", renderEmail({ type: "trainer_daily_agenda", recipient: recFor("trainer_daily_agenda"), data: { name: "Laia Puig", sessions: "[]" } }));
 
 save("auth_invite", renderInviteEmail({ name: "Ana Ferrer", url: "https://exemple/auth/update-password?token_hash=x&type=invite" }));
 save("auth_recovery", renderRecoveryEmail({ name: "Ana Ferrer", url: "https://exemple/auth/update-password?token_hash=x&type=recovery" }));
-save("auth_welcome", renderWelcomeEmail({ name: "Ana Ferrer", url: "https://exemple/client" }));
+save("auth_welcome", renderWelcomeEmail({ name: "Ana Ferrer", url: "https://exemple/client", locale: LOCALE ?? null }));
 
 console.log(`${TYPES.length + 5} correus escrits a ${out}`);

@@ -768,7 +768,11 @@
       "trainer": "Profesional",
       "remaining": "Sesiones sin hacer",
       "expiresOn": "Caduca el",
-      "cancelled": "Sesiones canceladas"
+      "cancelled": "Sesiones canceladas",
+      "gift": "Regalo",
+      "code": "Código",
+      "date": "Fecha",
+      "validUntil": "Válido hasta el"
     },
     "footer": {
       "tagline": "Centro de entrenamiento personal y fisioterapia",
@@ -827,6 +831,44 @@
       "intro": "Alguien ha cancelado y te hemos confirmado la sesión automáticamente. Ya la tienes en tu agenda:",
       "cta": "Ver mi reserva",
       "outro": "Si al final no puedes ir, cancélala cuanto antes para que otra persona la pueda aprovechar."
-    }
+    },
+    "newExercisesAssigned": {
+      "subject": "Nuevos ejercicios asignados · VindiBCN",
+      "heading": "¡Tienes ejercicios nuevos asignados!",
+      "intro": "Tu profesional te ha añadido ejercicios nuevos. Consúltalos en tu área para ver las instrucciones y los vídeos.",
+      "cta": "Ver mis ejercicios"
+    },
+    "giftRedeemed": {
+      "subject": "Ya han usado tu regalo · VindiBCN",
+      "heading": "Tu regalo ha llegado",
+      "introNamed": "{name} ha canjeado el vale de regalo que le compraste.",
+      "introAnon": "Alguien ha canjeado el vale de regalo que compraste.",
+      "outro": "Gracias por regalar bienestar. ¡Nos vemos en el centro!"
+    },
+    "giftGifted": {
+      "subjectFrom": "Tienes un regalo de {buyer} · VindiBCN",
+      "headingNamed": "¡{name}, tienes un regalo!",
+      "heading": "¡Tienes un regalo!",
+      "introFrom": "{buyer} te ha regalado sesiones en VindiBCN.",
+      "introAnon": "Te han regalado sesiones en VindiBCN.",
+      "keep": "Este es tu código. Guárdalo: es el que tendrás que escribir para activarlo.",
+      "cta": "Canjear el regalo",
+      "outro": "Entra en tu área de cliente (o regístrate si todavía no tienes), ve a Bonos y escribe el código. Las sesiones se añadirán a tu cuenta.",
+      "anon": "alguien"
+    },
+    "community": {
+      "subject": "Novedades de VindiBCN",
+      "heading": "Novedades del centro",
+      "fallback": "Tenemos novedades que compartir contigo.",
+      "cta": "Verlo en la comunidad"
+    },
+    "welcome": {
+      "subject": "¡Bienvenido/a a VindiBCN!",
+      "heading": "¡Bienvenido/a a VindiBCN!",
+      "intro": "Nos alegra mucho tenerte con nosotros. Desde tu área podrás reservar sesiones, comprar bonos y consultar tus ejercicios.",
+      "cta": "Entra en tu área",
+      "outro": "Cualquier duda, responde a este correo o habla con el centro. ¡Nos vemos pronto!"
+    },
+    "sessions": "{count, plural, one {# sesión} other {# sesiones}}"
   }
 }

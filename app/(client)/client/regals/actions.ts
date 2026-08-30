@@ -15,7 +15,7 @@ import {
 import { uploadGiftVoucherPdf } from "@/lib/data/gift-voucher-doc";
 import { getClientByProfile } from "@/lib/data/clients";
 import { notify } from "@/lib/notifications";
-import { sessionsLabel } from "@/lib/labels";
+import { resolveLocale } from "@/lib/i18n/resolve";
 
 export type BuyState = {
   errorCode?: "unauthorized" | "errorOff" | "errorPackage" | "errorCreate";
@@ -143,6 +143,10 @@ export async function sendGiftVoucherAction(
         email,
         phone: null,
         name: voucher.recipientName,
+        // L'idioma de qui REGALA, no de qui rep. De qui rep no en sabem res
+        // —sovint ni tan sols és client—; de qui compra sí, perquè està
+        // fent-ho ara mateix i la cookie ja ho diu. Sense consulta.
+        locale: await resolveLocale(),
       },
       relatedId: voucher.id,
       data: {
@@ -150,7 +154,8 @@ export async function sendGiftVoucherAction(
         recipient: voucher.recipientName ?? "",
         buyer: viewer.fullName ?? "",
         code: voucher.code,
-        package: `${voucher.packageName} · ${sessionsLabel(voucher.totalSessions)}`,
+        packageName: voucher.packageName,
+        sessions: String(voucher.totalSessions),
         expiresIso: voucher.expiresAt,
         message: voucher.message ?? "",
       },

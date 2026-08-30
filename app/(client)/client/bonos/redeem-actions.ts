@@ -7,7 +7,6 @@ import {
   giftVoucherBuyerContact,
 } from "@/lib/data/gift-vouchers";
 import { notify, getProfileContact } from "@/lib/notifications";
-import { sessionsLabel } from "@/lib/labels";
 import type { RedeemErrorCode } from "@/lib/data/gift-vouchers";
 import type { ServiceType } from "@/types/database";
 
@@ -60,7 +59,8 @@ export async function redeemGiftVoucherAction(
         data: {
           name: contact.name ?? "",
           recipient: buyer.recipientName ?? "",
-          package: `${buyer.packageName} · ${sessionsLabel(result.sessions)}`,
+          packageName: buyer.packageName,
+          sessions: String(result.sessions),
           code: code.trim().toUpperCase(),
           whenIso: new Date().toISOString(),
         },

@@ -83,9 +83,14 @@ export async function notifyOnce(event: NotificationEvent): Promise<boolean> {
 /**
  * Dades de contacte d'un perfil (per construir el destinatari).
  *
- * L'idioma va dins de la MATEIXA consulta que ja hi havia: una columna més al
- * `select` no costa cap viatge. Per això localitzar els correus no afegeix ni
- * una consulta a cap flux.
+ * L'idioma va dins de la MATEIXA consulta que ja hi havia: dues columnes més
+ * al `select` no costen cap viatge. Per això localitzar els correus no
+ * afegeix ni una consulta a cap flux.
+ *
+ * NOMÉS el client en té. L'admin i el professional treballen en català fix a
+ * tota l'app i els seus correus han d'anar igual, encara que ells s'hagin
+ * triat un altre idioma per a la seva pantalla. La regla viu aquí, a l'origen,
+ * i no a cada plantilla: així no se'n pot escapar cap.
  */
 export async function getProfileContact(
   profileId: string,
@@ -98,13 +103,13 @@ export async function getProfileContact(
       email: p.email,
       phone: p.phone,
       name: p.full_name,
-      locale: toLocale(p.preferred_language),
+      locale: p.role === "client" ? toLocale(p.preferred_language) : null,
     };
   }
   const admin = createAdminClient();
   const { data } = await admin
     .from("profiles")
-    .select("email, phone, full_name, preferred_language")
+    .select("email, phone, full_name, role, preferred_language")
     .eq("id", profileId)
     .maybeSingle();
   if (!data) return null;
@@ -113,6 +118,6 @@ export async function getProfileContact(
     email: data.email,
     phone: data.phone,
     name: data.full_name,
-    locale: toLocale(data.preferred_language),
+    locale: data.role === "client" ? toLocale(data.preferred_language) : null,
   };
 }

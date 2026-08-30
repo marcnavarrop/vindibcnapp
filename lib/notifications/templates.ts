@@ -1,8 +1,5 @@
 import "server-only";
-import type {
-  NotificationEvent,
-  NotificationEventType,
-} from "@/lib/notifications/types";
+import type { NotificationEvent } from "@/lib/notifications/types";
 import { emailI18n, type EmailI18n } from "@/lib/notifications/i18n";
 import type { Locale } from "@/lib/i18n/config";
 import {
@@ -229,53 +226,30 @@ export function renderWelcomeEmail(input: {
   locale?: Locale | null;
 }): RenderedEmail {
   const i = emailI18n(input.locale);
-  const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
+  const te = i.ns("emails");
+  const t = i.ns("emails.welcome");
+  const hola = input.name?.trim()
+    ? te("greeting", { name: input.name.trim() })
+    : te("greetingPlain");
   const block: Block = {
-    heading: "Benvingut/da a VindiBCN!",
-    intro: [
-      hola,
-      "Ens alegra molt tenir-te amb nosaltres. Des de la teva àrea podràs reservar sessions, comprar bons i consultar els teus exercicis.",
-    ],
-    cta: { label: "Entra a la teva àrea", url: input.url },
-    outro: ["Qualsevol dubte, respon a aquest correu o parla amb el centre. Ens veiem aviat!"],
+    heading: t("heading"),
+    intro: [hola, t("intro")],
+    cta: { label: t("cta"), url: input.url },
+    outro: [t("outro")],
     footer: "client",
   };
   return {
-    subject: "Benvingut/da a VindiBCN!",
+    subject: t("subject"),
     html: layout(block, i),
     text: plain(block, i),
   };
 }
 
-/**
- * Les plantilles que ja estan traduïdes.
- *
- * Substitueix l'interruptor global del bloc 1, que era una mentida còmoda:
- * deia "cap correu està traduït" quan la veritat és per plantilla. Les que no
- * hi són s'escriuen en CATALÀ encara que qui les rebi tingui un altre idioma
- * triat —i, sobretot, també les seves dates—, perquè un correu amb el text en
- * català i les dates en castellà és pitjor que un correu tot en català.
- *
- * El bloc 3 hi afegeix les que falten i llavors aquesta llista sobra: si hi
- * són totes, es pot esborrar i passar l'idioma sempre.
- */
-const TRANSLATED: ReadonlySet<NotificationEventType> = new Set([
-  "reservation_confirmed",
-  "reservation_cancelled",
-  "session_reminder",
-  "bono_low",
-  "bono_expiring_soon",
-  "bono_unpaid_cancelled",
-  "waitlist_fulfilled",
-]);
-
 export function renderEmail(event: NotificationEvent): RenderedEmail {
   // L'idioma surt del DESTINATARI, no de qui envia. Un mateix esdeveniment
   // —les novetats de la comunitat— arriba a clients i professionals dins del
   // mateix bucle, i cadascú l'ha de rebre en el seu.
-  const i = emailI18n(
-    TRANSLATED.has(event.type) ? event.recipient.locale : null,
-  );
+  const i = emailI18n(event.recipient.locale);
   const d = event.data;
   const te = i.ns("emails");
   const tl = i.ns("emails.labels");
@@ -294,6 +268,16 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
   const when = d.whenIso ? i.dateTime(d.whenIso) : undefined;
   const service = d.serviceType ? i.service(d.serviceType) : undefined;
   const expires = d.expiresIso ? i.date(d.expiresIso) : undefined;
+  /*
+   * El nom del paquet és una columna GUARDADA (`gift_vouchers.package_name`):
+   * és el registre del que es va comprar i es queda tal com es va escriure,
+   * com els preus. El recompte de sessions, en canvi, es genera en enviar, i
+   * per tant sí que va en l'idioma de qui llegeix.
+   */
+  const pkg =
+    d.packageName && d.sessions
+      ? `${d.packageName} · ${te("sessions", { count: Number(d.sessions) })}`
+      : d.package;
 
   let subject = "";
   let block: Block;
@@ -447,11 +431,12 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       break;
     }
     case "community": {
-      subject = `${d.title ? esc(d.title) + " · " : ""}Novetats de VindiBCN`;
+      const t = i.ns("emails.community");
+      subject = `${d.title ? esc(d.title) + " · " : ""}${t("subject")}`;
       block = {
-        heading: d.title?.trim() ? d.title.trim() : "Novetats del centre",
-        intro: [hola, (d.body ?? "").trim() || "Tenim novetats per compartir amb tu."],
-        cta: { label: "Veure-ho a la comunitat", url: appLink("/client/comunitat") },
+        heading: d.title?.trim() ? d.title.trim() : t("heading"),
+        intro: [hola, (d.body ?? "").trim() || t("fallback")],
+        cta: { label: t("cta"), url: appLink("/client/comunitat") },
         footer: "client",
       };
       break;
@@ -501,14 +486,12 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       break;
     }
     case "new_exercises_assigned": {
-      subject = "Nous exercicis assignats · VindiBCN";
+      const t = i.ns("emails.newExercisesAssigned");
+      subject = t("subject");
       block = {
-        heading: "Tens exercicis nous assignats!",
-        intro: [
-          hola,
-          "El teu professional t'ha afegit exercicis nous. Consulta'ls a la teva àrea per veure les instruccions i els vídeos.",
-        ],
-        cta: { label: "Veure els meus exercicis", url: appLink("/client/exercicis") },
+        heading: t("heading"),
+        intro: [hola, t("intro")],
+        cta: { label: t("cta"), url: appLink("/client/exercicis") },
         footer: "client",
       };
       break;
@@ -599,48 +582,53 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       break;
     }
     case "gift_voucher_redeemed": {
-      subject = "Ja han fet servir el teu regal · VindiBCN";
+      const t = i.ns("emails.giftRedeemed");
+      subject = t("subject");
       block = {
-        heading: "El teu regal ha arribat",
+        heading: t("heading"),
         intro: [
           hola,
           d.recipient
-            ? `${d.recipient} ha bescanviat el val de regal que li vas comprar.`
-            : "Algú ha bescanviat el val de regal que vas comprar.",
+            ? t("introNamed", { name: d.recipient })
+            : t("introAnon"),
         ],
         details: rows([
-          ["Regal", d.package],
-          ["Codi", d.code],
-          ["Data", when],
+          [tl("gift"), pkg],
+          [tl("code"), d.code],
+          [tl("date"), when],
         ]),
-        outro: ["Gràcies per regalar benestar. Ens veiem al centre!"],
+        outro: [t("outro")],
         footer: "client",
       };
       break;
     }
     case "gift_voucher_gifted": {
-      // Va a qui rep el regal, que pot no tenir compte al centre: el correu ha
-      // de bastar-se sol. Porta el codi al cos i no com a adjunt, perquè un
-      // adjunt es perd i un codi es pot escriure des del mòbil.
-      subject = `Tens un regal de ${d.buyer || "algú"} · VindiBCN`;
+      /*
+       * Va a qui rep el regal, que pot no tenir compte al centre: el correu
+       * ha de bastar-se sol. Porta el codi al cos i no com a adjunt.
+       *
+       * L'idioma és el de qui REGALA, no el de qui rep: de qui rep no en
+       * sabem res —sovint ni tan sols és client—, i qui compra sí que ha
+       * triat en quina llengua vol que arribi el seu regal.
+       */
+      const t = i.ns("emails.giftGifted");
+      subject = t("subjectFrom", { buyer: d.buyer || t("anon") });
       block = {
-        heading: d.recipient ? `${d.recipient}, tens un regal!` : "Tens un regal!",
+        heading: d.recipient
+          ? t("headingNamed", { name: d.recipient })
+          : t("heading"),
         intro: [
-          d.buyer
-            ? `${d.buyer} t'ha regalat sessions a VindiBCN.`
-            : "T'han regalat sessions a VindiBCN.",
+          d.buyer ? t("introFrom", { buyer: d.buyer }) : t("introAnon"),
           ...(d.message ? [`"${d.message}"`] : []),
-          "Aquest és el teu codi. Guarda'l: és el que hauràs d'escriure per activar-lo.",
+          t("keep"),
         ],
         details: rows([
-          ["Codi", d.code],
-          ["Regal", d.package],
-          ["Vàlid fins al", expires],
+          [tl("code"), d.code],
+          [tl("gift"), pkg],
+          [tl("validUntil"), expires],
         ]),
-        cta: { label: "Bescanviar el regal", url: appLink("/client/bonos") },
-        outro: [
-          "Entra a la teva àrea de client (o registra-t'hi si encara no en tens), ves a Bons i escriu el codi. Les sessions s'afegiran al teu compte.",
-        ],
+        cta: { label: t("cta"), url: appLink("/client/bonos") },
+        outro: [t("outro")],
         footer: "plain",
       };
       break;

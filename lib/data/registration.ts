@@ -7,6 +7,7 @@ import { renderWelcomeEmail } from "@/lib/notifications/templates";
 import { appLink } from "@/lib/notifications/brand";
 import { writeLog } from "@/lib/notifications/log";
 import { notify } from "@/lib/notifications";
+import { toLocale } from "@/lib/i18n/config";
 
 /**
  * Post-registre d'un client que s'ha donat d'alta pel seu compte (/register):
@@ -31,7 +32,7 @@ export async function onNewClientRegistered(
     const admin = createAdminClient();
     const { data: profile } = await admin
       .from("profiles")
-      .select("email, full_name, role")
+      .select("email, full_name, role, preferred_language")
       .eq("id", profileId)
       .maybeSingle();
     if (!profile || profile.role !== "client") return;
@@ -65,7 +66,12 @@ export async function onNewClientRegistered(
       .single();
     const clientId = created?.id ?? null;
 
-    await sendWelcome(profileId, profile.email, profile.full_name);
+    await sendWelcome(
+      profileId,
+      profile.email,
+      profile.full_name,
+      profile.preferred_language,
+    );
     await notifyAdmins(profile.full_name, profile.email, clientId);
   } catch {
     // best-effort: el registre no s'ha de trencar mai per aquests avisos.
@@ -76,11 +82,14 @@ async function sendWelcome(
   profileId: string,
   email: string | null,
   name: string | null,
+  /** El que va triar al formulari d'alta; el guarda el trigger de la 0058. */
+  locale?: string | null,
 ): Promise<void> {
   if (!email) return;
   const { subject, html, text } = renderWelcomeEmail({
     name,
     url: appLink("/client"),
+    locale: toLocale(locale),
   });
   const res = await sendEmail({ to: email, subject, html, text });
   await writeLog({
@@ -165,7 +174,12 @@ async function mockFlow(profileId: string, referralCode?: string): Promise<void>
       created_at: new Date().toISOString(),
     });
     saveStore(store);
-    await sendWelcome(profileId, profile.email, profile.full_name);
+    await sendWelcome(
+      profileId,
+      profile.email,
+      profile.full_name,
+      profile.preferred_language,
+    );
     await notifyAdmins(profile.full_name, profile.email, clientId);
     return;
   }
@@ -184,6 +198,11 @@ async function mockFlow(profileId: string, referralCode?: string): Promise<void>
     created_at: new Date().toISOString(),
   });
   saveStore(store);
-  await sendWelcome(profileId, profile.email, profile.full_name);
+  await sendWelcome(
+      profileId,
+      profile.email,
+      profile.full_name,
+      profile.preferred_language,
+    );
   await notifyAdmins(profile.full_name, profile.email, clientId);
 }

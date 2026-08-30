@@ -768,7 +768,11 @@
       "trainer": "Professional",
       "remaining": "Sessions sense fer",
       "expiresOn": "Caduca el",
-      "cancelled": "Sessions cancel·lades"
+      "cancelled": "Sessions cancel·lades",
+      "gift": "Regal",
+      "code": "Codi",
+      "date": "Data",
+      "validUntil": "Vàlid fins al"
     },
     "footer": {
       "tagline": "Centre d'entrenament personal i fisioteràpia",
@@ -827,6 +831,44 @@
       "intro": "Algú ha cancel·lat i t'hem confirmat la sessió automàticament. Ja la tens a la teva agenda:",
       "cta": "Veure la meva reserva",
       "outro": "Si al final no hi pots anar, cancel·la-la com abans millor perquè una altra persona la pugui aprofitar."
-    }
+    },
+    "newExercisesAssigned": {
+      "subject": "Nous exercicis assignats · VindiBCN",
+      "heading": "Tens exercicis nous assignats!",
+      "intro": "El teu professional t'ha afegit exercicis nous. Consulta'ls a la teva àrea per veure les instruccions i els vídeos.",
+      "cta": "Veure els meus exercicis"
+    },
+    "giftRedeemed": {
+      "subject": "Ja han fet servir el teu regal · VindiBCN",
+      "heading": "El teu regal ha arribat",
+      "introNamed": "{name} ha bescanviat el val de regal que li vas comprar.",
+      "introAnon": "Algú ha bescanviat el val de regal que vas comprar.",
+      "outro": "Gràcies per regalar benestar. Ens veiem al centre!"
+    },
+    "giftGifted": {
+      "subjectFrom": "Tens un regal de {buyer} · VindiBCN",
+      "headingNamed": "{name}, tens un regal!",
+      "heading": "Tens un regal!",
+      "introFrom": "{buyer} t'ha regalat sessions a VindiBCN.",
+      "introAnon": "T'han regalat sessions a VindiBCN.",
+      "keep": "Aquest és el teu codi. Guarda'l: és el que hauràs d'escriure per activar-lo.",
+      "cta": "Bescanviar el regal",
+      "outro": "Entra a la teva àrea de client (o registra-t'hi si encara no en tens), ves a Bons i escriu el codi. Les sessions s'afegiran al teu compte.",
+      "anon": "algú"
+    },
+    "community": {
+      "subject": "Novetats de VindiBCN",
+      "heading": "Novetats del centre",
+      "fallback": "Tenim novetats per compartir amb tu.",
+      "cta": "Veure-ho a la comunitat"
+    },
+    "welcome": {
+      "subject": "Benvingut/da a VindiBCN!",
+      "heading": "Benvingut/da a VindiBCN!",
+      "intro": "Ens alegra molt tenir-te amb nosaltres. Des de la teva àrea podràs reservar sessions, comprar bons i consultar els teus exercicis.",
+      "cta": "Entra a la teva àrea",
+      "outro": "Qualsevol dubte, respon a aquest correu o parla amb el centre. Ens veiem aviat!"
+    },
+    "sessions": "{count, plural, one {# sessió} other {# sessions}}"
   }
 }

@@ -12,8 +12,20 @@ const names = readdirSync(CA).filter((f) => f.endsWith(".html")).map((f) => base
 const read = (d, n, ext) => { try { return readFileSync(join(d, `${n}.${ext}`), "utf8"); } catch { return ""; } };
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// Quines ja estan traduïdes: les altres han de sortir iguals a les tres columnes.
-const TRANSLATED = new Set(["reservation_confirmed","reservation_cancelled","session_reminder","bono_low","bono_expiring_soon","bono_unpaid_cancelled","waitlist_fulfilled"]);
+/**
+ * Els que van a l'admin, al professional, a un visitant o al desenvolupador
+ * es queden en català a posta, i els dos correus de compte també (encara no
+ * hi ha idioma triat). Han de sortir IGUALS a les tres columnes: si no, és
+ * que se n'ha escapat un.
+ */
+const CATALAN_ON_PURPOSE = new Set([
+  "trial_request","trial_status","trial_status__rejected",
+  "trainer_booking_received","trainer_booking_cancelled",
+  "trainer_daily_agenda","trainer_daily_agenda__buida",
+  "new_client_registered","invoice_generated","support_ticket_created",
+  "auth_invite","auth_recovery",
+]);
+const TRANSLATED = { has: (n) => !CATALAN_ON_PURPOSE.has(n) };
 
 const cards = names.map((n) => {
   const cols = [["Català", CA], ["Castellano", ES], ["English", EN]].map(([label, dir]) => {
@@ -27,7 +39,7 @@ const cards = names.map((n) => {
   }).join("");
   const done = TRANSLATED.has(n);
   return `<section id="${n}">
-    <h2>${n} <span class="tag ${done ? "ok" : "pend"}">${done ? "traduït" : "encara en català"}</span></h2>
+    <h2>${n} <span class="tag ${done ? "ok" : "pend"}">${done ? "traduït" : "català a posta"}</span></h2>
     <div class="cols">${cols}</div>
   </section>`;
 }).join("");
@@ -54,7 +66,7 @@ h2{margin:0 0 12px;font-size:14px;font-family:ui-monospace,Menlo,monospace;color
 iframe{width:100%;height:600px;border:0;background:#fff}
 </style></head><body>
 <header><h1>Correus de VindiBCN · els tres idiomes de costat</h1>
-<p>${names.length} plantilles. Les marcades «encara en català» són les del bloc 3: han de sortir IGUALS a les tres columnes.</p></header>
+<p>${names.length} plantilles. Les marcades «català a posta» van a l&rsquo;equip, a un visitant o al desenvolupador: han de sortir IGUALS a les tres columnes.</p></header>
 <nav>${names.map((n) => `<a href="#${n}" class="${TRANSLATED.has(n) ? "" : "pend"}">${n}</a>`).join("")}</nav>
 ${cards}</body></html>`);
 console.log(`${names.length} plantilles × 3 idiomes → ${OUT}`);
