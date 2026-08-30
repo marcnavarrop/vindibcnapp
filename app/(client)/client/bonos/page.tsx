@@ -7,17 +7,13 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import Link from "next/link";
 import { Gift } from "lucide-react";
 import { stripeEnabled } from "@/lib/stripe";
+import { getTranslations } from "next-intl/server";
 import { hasOutstandingGiftVouchers } from "@/lib/data/gift-vouchers";
 import { RedeemGiftVoucher } from "@/components/forms/redeem-gift-voucher";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
 import { RouteTabs } from "@/components/ui/route-tabs";
 
 export const dynamic = "force-dynamic";
-
-const BONO_TABS = [
-  { href: "/client/bonos", label: "Comprar bo nou", accent: true },
-  { href: "/client/bonos/meus", label: "Els meus bons" },
-];
 
 export default async function ComprarBonoPage() {
   const viewer = await getViewer();
@@ -43,16 +39,22 @@ export default async function ComprarBonoPage() {
   // sense bescanviar. Apagar la venda no pot deixar sense sortida algú que ja
   // ha pagat un regal; i un centre que no els ha fet servir mai no ha de
   // carregar amb un camp que no li diu res.
+  const t = await getTranslations("bonos");
+  const BONO_TABS = [
+    { href: "/client/bonos", label: t("tabBuy"), accent: true },
+    { href: "/client/bonos/meus", label: t("tabMine") },
+  ];
+
   const showRedeem =
     settings.giftVouchersEnabled || (await hasOutstandingGiftVouchers());
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl text-brand-dark">Bons</h1>
+      <h1 className="mb-4 text-2xl text-brand-dark">{t("title")}</h1>
       <RouteTabs tabs={BONO_TABS} />
       <p className="mb-6 text-sm text-brand-muted">
-        Tria un servei i com vols pagar-lo.
+        {t("buy.intro")}
       </p>
 
       {/*
@@ -100,10 +102,10 @@ export default async function ComprarBonoPage() {
           </span>
           <span className="flex min-w-0 flex-col">
             <span className="text-sm font-bold text-brand-dark">
-              També pots regalar Vindi a algú
+              {t("buy.giftCtaTitle")}
             </span>
             <span className="text-xs text-brand-muted">
-              El mateix paquet de sessions, amb un codi i la teva dedicatòria.
+              {t("buy.giftCtaDesc")}
             </span>
           </span>
           <span aria-hidden className="ml-auto text-brand-orange">

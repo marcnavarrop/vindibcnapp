@@ -1,4 +1,5 @@
 import { CENTER_TZ } from "@/lib/config";
+import ca from "@/messages/ca.json";
 import { centerDateStr } from "@/lib/center-time";
 import type {
   ServiceType,
@@ -45,12 +46,16 @@ export const GENDER_LABELS: Record<Gender, string> = {
   ns_nc: "Prefereixo no dir-ho",
 };
 
-export const SERVICE_LABELS: Record<ServiceType, string> = {
-  ep_individual: "EP Individual",
-  ep_parejas: "EP Parelles",
-  grupo_reducido: "Grup reduït",
-  fisioterapia: "Fisioteràpia",
-};
+/**
+ * Etiquetes en CATALÀ, derivades de `messages/ca.json`.
+ *
+ * Les fan servir l'admin i el professional, que es queden en català fix,
+ * mentre que l'àrea de client llegeix la seva versió amb `useTranslations`.
+ * El text viu en un sol lloc —el diccionari— i aquí només es re-exposa amb la
+ * forma d'objecte que ja esperaven totes les crides: si es copiés a mà,
+ * traduir-ne una i oblidar l'altra seria qüestió de temps.
+ */
+export const SERVICE_LABELS: Record<ServiceType, string> = ca.labels.service;
 
 /**
  * Color base por tipo de servicio para la vista de calendario.
@@ -97,14 +102,7 @@ export function parseServiceTypes(values: (string | File)[]): ServiceType[] {
 /** Capacidad por defecto de una sesión de grupo reducido (para el "N/4"). */
 export const GROUP_CAPACITY = 4;
 
-export const BONO_STATUS_LABELS: Record<BonoStatus, string> = {
-  active: "Actiu",
-  completed: "Completat",
-  cancelled: "Cancel·lat",
-  pending_payment: "Pendent de pagament",
-  expired: "Caducat",
-  unpaid: "Anul·lat per impagament",
-};
+export const BONO_STATUS_LABELS: Record<BonoStatus, string> = ca.labels.bonoStatus;
 
 /**
  * "de" o "d'" segons com comenci la paraula següent.
@@ -146,13 +144,8 @@ export const OCCURRENCE_LABELS: Record<
   sense_places: { label: "Sense places", tone: "danger" },
 };
 
-export const GIFT_VOUCHER_STATUS_LABELS: Record<GiftVoucherStatus, string> = {
-  pending_payment: "Pendent de pagament",
-  active: "Actiu",
-  redeemed: "Bescanviat",
-  expired: "Caducat",
-  cancelled: "Anul·lat",
-};
+export const GIFT_VOUCHER_STATUS_LABELS: Record<GiftVoucherStatus, string> =
+  ca.labels.giftVoucherStatus;
 
 export const SUPPORT_CATEGORY_LABELS: Record<SupportCategory, string> = {
   bug: "Error",
@@ -178,16 +171,11 @@ export const SUPPORT_STATUSES: SupportStatus[] = [
   "resolved",
 ];
 
-export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
-  booked: "Reservada",
-  completed: "Realitzada",
-  cancelled: "Cancel·lada",
-};
+export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> =
+  ca.labels.reservationStatus;
 
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  card: "Targeta",
-  cash: "Efectiu",
-};
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> =
+  ca.labels.paymentMethod;
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Administració",

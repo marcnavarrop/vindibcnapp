@@ -7,7 +7,15 @@ import { startBonoCheckout } from "@/lib/data/stripe-checkout";
 import { stripeEnabled } from "@/lib/stripe";
 import { redirect } from "next/navigation";
 
-export type FormState = { error?: string; ok?: boolean };
+/**
+ * Els errors viatgen com a CODI, no com a frase: aquesta acció corre al
+ * servidor i no sap en quin idioma llegeix el client. El text el posa el
+ * formulari, que sí que ho sap.
+ */
+export type FormState = {
+  errorCode?: "unauthorized" | "errorService" | "errorCreate";
+  ok?: boolean;
+};
 
 /**
  * El cliente "compra" un bono para pagar en el centro: se crea en
@@ -19,24 +27,25 @@ export async function createPendingBonoAction(
   formData: FormData,
 ): Promise<FormState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   const serviceId = String(formData.get("serviceId") ?? "");
-  if (!serviceId) return { error: "Tria un servei." };
+  if (!serviceId) return { errorCode: "errorService" };
 
   try {
     await createPendingBono({ profileId: viewer.id, serviceId });
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut crear el bo.",
-    };
+    console.error("[bonos] no s'ha pogut crear el bo:", e);
+    return { errorCode: "errorCreate" };
   }
 
   revalidatePath("/client/bonos/meus");
   return { ok: true };
 }
 
-export type CheckoutState = { error?: string };
+export type CheckoutState = {
+  errorCode?: "unauthorized" | "errorStripeOff" | "errorService" | "errorStripe";
+};
 
 /**
  * Pagar el bo amb targeta: obre la sessió de Stripe i hi envia el client.
@@ -54,15 +63,15 @@ export async function startBonoCheckoutAction(
   formData: FormData,
 ): Promise<CheckoutState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   // Es torna a comprovar al servidor: que el botó no es vegi no impedeix cridar
   // l'acció directament.
   if (!stripeEnabled())
-    return { error: "El pagament amb targeta no està disponible ara mateix." };
+    return { errorCode: "errorStripeOff" };
 
   const serviceId = String(formData.get("serviceId") ?? "");
-  if (!serviceId) return { error: "Tria un servei." };
+  if (!serviceId) return { errorCode: "errorService" };
 
   let result;
   try {
@@ -72,11 +81,10 @@ export async function startBonoCheckoutAction(
       email: viewer.email || null,
     });
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut iniciar el pagament.",
-    };
+    console.error("[bonos] no s'ha pogut obrir el pagament:", e);
+    return { errorCode: "errorStripe" };
   }
 
-  if ("error" in result) return { error: result.error };
+  if ("error" in result) return { errorCode: "errorStripe" };
   redirect(result.url);
 }

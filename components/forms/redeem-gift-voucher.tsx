@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import {
   redeemGiftVoucherAction,
   type RedeemState,
@@ -17,6 +18,9 @@ import { SubmitButton } from "@/components/ui/submit-button";
  * vàlid" que el deixi pensant que s'ha equivocat en teclejar.
  */
 export function RedeemGiftVoucher() {
+  const t = useTranslations("redeem");
+  const tp = useTranslations("picker");
+  const tl = useTranslations("labels.service");
   const [state, action] = useActionState(
     redeemGiftVoucherAction,
     {} as RedeemState,
@@ -26,18 +30,22 @@ export function RedeemGiftVoucher() {
     return (
       <section className="flex flex-col items-center gap-2 rounded-2xl border border-success/30 bg-success/5 p-6 text-center">
         <AnimatedFeedback type="success" />
-        <p className="font-bold text-success">Regal activat!</p>
+        <p className="font-bold text-success">{t("okTitle")}</p>
         <p className="text-sm text-brand-charcoal">
-          {state.detail} ja són al teu compte.
+          {t("okBody", {
+            detail: `${tp("sessions", { count: state.sessions ?? 0 })} · ${
+              state.serviceType ? tl(state.serviceType) : ""
+            }`,
+          })}
         </p>
       </section>
     );
 
   return (
     <section className="rounded-2xl border border-brand-border bg-white p-5">
-      <h2 className="text-sm font-bold text-brand-dark">Tens un codi de regal?</h2>
+      <h2 className="text-sm font-bold text-brand-dark">{t("title")}</h2>
       <p className="mt-0.5 mb-3 text-xs text-brand-muted">
-        Escriu-lo aquí i les sessions s&apos;afegiran al teu compte.
+        {t("hint")}
       </p>
 
       <form action={action} className="flex flex-col gap-3 sm:flex-row">
@@ -51,10 +59,12 @@ export function RedeemGiftVoucher() {
           placeholder="VINDI-XXXX-XXXX"
           className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 font-mono text-sm tracking-widest text-brand-dark uppercase placeholder:tracking-normal placeholder:normal-case focus:border-brand-purple focus:outline-none sm:flex-1"
         />
-        <SubmitButton pendingLabel="Comprovant…">Bescanviar</SubmitButton>
+        <SubmitButton pendingLabel={t("checking")}>{t("submit")}</SubmitButton>
       </form>
 
-      {state.error && <p className="mt-3 text-sm text-error">{state.error}</p>}
+      {state.errorCode && (
+        <p className="mt-3 text-sm text-error">{t(`errors.${state.errorCode}`)}</p>
+      )}
     </section>
   );
 }

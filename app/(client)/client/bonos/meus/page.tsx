@@ -2,47 +2,48 @@ import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { Badge } from "@/components/ui/badge";
 import { RouteTabs } from "@/components/ui/route-tabs";
-import {
-  SERVICE_LABELS,
-  BONO_STATUS_LABELS,
-  PAYMENT_METHOD_LABELS,
-  formatEur,
-  formatDate,
-} from "@/lib/labels";
-
-const BONO_TABS = [
-  { href: "/client/bonos", label: "Comprar bo nou", accent: true },
-  { href: "/client/bonos/meus", label: "Els meus bons" },
-];
+import { formatEur, formatDate } from "@/lib/labels";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientBonosPage() {
-  const viewer = await getViewer();
+  const [t, tl, tb, tpm, tp, viewer] = await Promise.all([
+    getTranslations("bonos"),
+    getTranslations("labels.service"),
+    getTranslations("labels.bonoStatus"),
+    getTranslations("labels.paymentMethod"),
+    getTranslations("picker"),
+    getViewer(),
+  ]);
   const client = viewer ? await getClientByProfile(viewer.id) : null;
+  const BONO_TABS = [
+    { href: "/client/bonos", label: t("tabBuy"), accent: true },
+    { href: "/client/bonos/meus", label: t("tabMine") },
+  ];
 
   return (
     <main className="mx-auto max-w-5xl p-6">
-      <h1 className="mb-4 text-2xl text-brand-dark">Bons</h1>
+      <h1 className="mb-4 text-2xl text-brand-dark">{t("title")}</h1>
       <RouteTabs tabs={BONO_TABS} />
 
       {!client ? (
         <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-          Encara no tens fitxa de client.
+          {t("mine.noClientRecord")}
         </p>
       ) : (
         <div className="flex flex-col gap-6">
-          <Panel title="Els meus bons">
+          <Panel title={t("mine.title")}>
             {client.bonos.length === 0 ? (
-              <Empty>Encara no tens cap bo.</Empty>
+              <Empty>{t("mine.empty")}</Empty>
             ) : (
               client.bonos.map((b) => (
                 <Row key={b.id}>
                   <span className="font-bold text-brand-dark">
-                    {SERVICE_LABELS[b.serviceType]}
+                    {tl(b.serviceType)}
                   </span>
                   <span className="text-brand-muted">
-                    {b.remainingSessions} / {b.totalSessions} sessions
+                    {t("mine.sessionsOf", { remaining: b.remainingSessions, total: b.totalSessions })}
                   </span>
                   <span>{formatEur(b.price)}</span>
                   <Badge
@@ -54,16 +55,16 @@ export default async function ClientBonosPage() {
                           : "neutral"
                     }
                   >
-                    {BONO_STATUS_LABELS[b.status]}
+                    {tb(b.status)}
                   </Badge>
                 </Row>
               ))
             )}
           </Panel>
 
-          <Panel title="Historial de pagaments">
+          <Panel title={t("mine.payments")}>
             {client.payments.length === 0 ? (
-              <Empty>Encara no hi ha pagaments.</Empty>
+              <Empty>{t("mine.noPayments")}</Empty>
             ) : (
               client.payments.map((p) => (
                 <Row key={p.id}>
@@ -72,7 +73,7 @@ export default async function ClientBonosPage() {
                   </span>
                   <span className="font-bold">{formatEur(p.amount)}</span>
                   <Badge tone={p.method === "card" ? "info" : "warn"}>
-                    {PAYMENT_METHOD_LABELS[p.method]}
+                    {tpm(p.method)}
                   </Badge>
                 </Row>
               ))

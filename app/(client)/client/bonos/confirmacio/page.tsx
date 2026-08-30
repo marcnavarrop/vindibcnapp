@@ -6,14 +6,10 @@ import { getBonoByStripeSession } from "@/lib/data/bonos";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { AwaitingPayment } from "@/components/ui/awaiting-payment";
 import { RouteTabs } from "@/components/ui/route-tabs";
-import { SERVICE_LABELS, formatEur } from "@/lib/labels";
+import { formatEur } from "@/lib/labels";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
-
-const BONO_TABS = [
-  { href: "/client/bonos", label: "Comprar bo nou", accent: true },
-  { href: "/client/bonos/meus", label: "Els meus bons" },
-];
 
 /**
  * Tornada del pagament amb targeta.
@@ -30,6 +26,15 @@ export default async function BonoCheckoutConfirmationPage({
   const { session_id: sessionId } = await searchParams;
   if (!sessionId) redirect("/client/bonos/meus");
 
+  const [t, tl] = await Promise.all([
+    getTranslations("bonos"),
+    getTranslations("labels.service"),
+  ]);
+  const BONO_TABS = [
+    { href: "/client/bonos", label: t("tabBuy"), accent: true },
+    { href: "/client/bonos/meus", label: t("tabMine") },
+  ];
+
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
   const bono = await getBonoByStripeSession(sessionId);
@@ -40,29 +45,28 @@ export default async function BonoCheckoutConfirmationPage({
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl text-brand-dark">Bons</h1>
+      <h1 className="mb-4 text-2xl text-brand-dark">{t("title")}</h1>
       <RouteTabs tabs={BONO_TABS} />
 
       {!mine ? (
         <AwaitingPayment
           fallbackHref="/client/bonos/meus"
-          fallbackLabel="Veure els meus bons"
+          fallbackLabel={t("confirmed.seeMine")}
         />
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
           <AnimatedFeedback type="success" />
-          <p className="text-xl font-bold text-success">Pagament confirmat</p>
+          <p className="text-xl font-bold text-success">{t("confirmed.title")}</p>
           <p className="max-w-sm text-sm text-brand-muted">
-            El bo ja és teu i el pots fer servir per reservar ara mateix. No has
-            de pagar res al centre.
+            {t("confirmed.body")}
           </p>
 
           <div className="mt-2 rounded-xl bg-brand-bg px-4 py-3 text-sm">
             <p className="font-bold text-brand-dark">
-              {SERVICE_LABELS[bono.serviceType]}
+              {tl(bono.serviceType)}
             </p>
             <p className="mt-0.5 text-brand-muted">
-              {bono.totalSessions} sessions · {formatEur(bono.price)}
+              {t("confirmed.sessionsPrice", { sessions: bono.totalSessions, price: formatEur(bono.price) })}
             </p>
           </div>
 
@@ -71,13 +75,13 @@ export default async function BonoCheckoutConfirmationPage({
               href="/client/reservas"
               className="inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
             >
-              Reservar una sessió
+              {t("confirmed.book")}
             </Link>
             <Link
               href="/client/bonos/meus"
               className="inline-flex rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-dark hover:border-brand-purple hover:text-brand-purple"
             >
-              Veure els meus bons
+              {t("confirmed.seeMine")}
             </Link>
           </div>
         </div>

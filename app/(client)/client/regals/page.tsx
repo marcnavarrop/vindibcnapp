@@ -9,11 +9,16 @@ import { getClientByProfile } from "@/lib/data/clients";
 import { listGiftVouchersBought } from "@/lib/data/gift-vouchers";
 import { GiftVoucherForm } from "@/components/forms/gift-voucher-form";
 import { Badge } from "@/components/ui/badge";
-import { GIFT_VOUCHER_STATUS_LABELS, formatDate, formatEur } from "@/lib/labels";
+import { formatDate, formatEur } from "@/lib/labels";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function RegalsPage() {
+  const [t, tg] = await Promise.all([
+    getTranslations("gifts"),
+    getTranslations("labels.giftVoucherStatus"),
+  ]);
   const viewer = await getViewer();
 
   // El toggle es comprova al servidor i respon 404, com els altres mòduls
@@ -36,10 +41,9 @@ export default async function RegalsPage() {
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-1 text-2xl text-brand-dark">Regala Vindi</h1>
+      <h1 className="mb-1 text-2xl text-brand-dark">{t("title")}</h1>
       <p className="mb-6 text-sm text-brand-muted">
-        Tria un paquet de sessions, escriu-hi una dedicatòria si vols i el
-        regales. Qui el rebi l&apos;activarà amb el codi.
+        {t("intro")}
       </p>
 
       <GiftVoucherForm
@@ -52,7 +56,7 @@ export default async function RegalsPage() {
       {bought.length > 0 && (
         <section className="mt-10 overflow-hidden rounded-2xl border border-brand-border bg-white">
           <h2 className="border-b border-brand-border bg-brand-bg px-5 py-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
-            Vals que has regalat
+            {t("historyTitle")}
           </h2>
           <div className="divide-y divide-brand-border">
             {bought.map((v) => (
@@ -74,19 +78,19 @@ export default async function RegalsPage() {
                         : "neutral"
                   }
                 >
-                  {GIFT_VOUCHER_STATUS_LABELS[v.status]}
+                  {tg(v.status)}
                 </Badge>
                 <span className="text-xs text-brand-muted">
                   {v.status === "redeemed" && v.redeemedAt
-                    ? `Bescanviat el ${formatDate(v.redeemedAt)}`
-                    : `Vàlid fins al ${formatDate(v.expiresAt)}`}
+                    ? t("redeemedOn", { date: formatDate(v.redeemedAt) })
+                    : t("validThrough", { date: formatDate(v.expiresAt) })}
                 </span>
                 {v.pdfPath && (
                   <a
                     href={`/client/regals/${v.id}/pdf`}
                     className="ml-auto text-xs font-bold text-brand-purple hover:text-brand-orange"
                   >
-                    Descarregar
+                    {t("historyDownload")}
                   </a>
                 )}
               </div>

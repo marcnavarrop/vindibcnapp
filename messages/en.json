@@ -103,5 +103,179 @@
         "desc": "News and updates from the centre."
       }
     }
+  },
+  "labels": {
+    "service": {
+      "ep_individual": "1-to-1 PT",
+      "ep_parejas": "PT for pairs",
+      "grupo_reducido": "Small group",
+      "fisioterapia": "Physiotherapy"
+    },
+    "bonoStatus": {
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "pending_payment": "Awaiting payment",
+      "expired": "Expired",
+      "unpaid": "Cancelled — unpaid"
+    },
+    "giftVoucherStatus": {
+      "pending_payment": "Awaiting payment",
+      "active": "Active",
+      "redeemed": "Redeemed",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    },
+    "reservationStatus": {
+      "booked": "Booked",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "paymentMethod": {
+      "card": "Card",
+      "cash": "Cash"
+    }
+  },
+  "picker": {
+    "introBono": "Choose the type of service you want to buy a package for.",
+    "introGift": "Choose the type of service you want to gift.",
+    "changeService": "Change service",
+    "from": "From",
+    "bestPrice": "Best price",
+    "sessions": "{count, plural, one {# session} other {# sessions}}"
+  },
+  "awaiting": {
+    "title": "We're confirming your payment",
+    "hint": "One moment: the bank is confirming it. There's nothing you need to do.",
+    "slowTitle": "The payment is taking a while to confirm",
+    "slowBody": "If the bank has charged you, it will show up on its own shortly. If an hour goes by and it still isn't here, let the centre know and we'll look into it: there's no need to pay again."
+  },
+  "redeem": {
+    "title": "Have a gift code?",
+    "hint": "Enter it here and the sessions will be added to your account.",
+    "submit": "Redeem",
+    "checking": "Checking…",
+    "okTitle": "Gift activated!",
+    "okBody": "{detail} are now in your account.",
+    "errors": {
+      "empty": "Enter the voucher code.",
+      "not_found": "That code doesn't exist. Check it and try again.",
+      "already_redeemed": "This voucher has already been redeemed.",
+      "cancelled": "This voucher has been cancelled. Please contact the centre.",
+      "expired": "This voucher has expired. Please contact the centre.",
+      "pending_payment": "This voucher hasn't been confirmed as paid yet. Please contact the centre.",
+      "no_client": "You don't have a client record.",
+      "failed": "We couldn't create the package. Please try again.",
+      "unauthorized": "Not authorised."
+    }
+  },
+  "bonos": {
+    "title": "Packages",
+    "tabBuy": "Buy a package",
+    "tabMine": "My packages",
+    "buy": {
+      "intro": "Choose a service and how you'd like to pay.",
+      "stepService": "1. Service",
+      "stepPackage": "2. Package",
+      "stepPayment": "3. Payment",
+      "paymentMethod": "Payment method",
+      "payCentre": "Pay at the centre",
+      "payCentreDesc": "Reserve the package now and pay in cash at the centre to activate it.",
+      "payCard": "Pay by card",
+      "payCardDesc": "Pay online now and the package is active straight away. We'll take you to Stripe's secure page.",
+      "confirmCentreTitle": "Confirm the package reservation?",
+      "confirmCardTitle": "Confirm the package purchase?",
+      "confirmCentreBody": "Once confirmed, you can use this package to book. You pay at the centre whenever you like.",
+      "confirmCardBody": "We'll take you to Stripe's payment page. The package is created once the payment is confirmed; if you don't complete it, nothing is created.",
+      "accept": "I accept the",
+      "acceptLink": "terms of purchase",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "buying": "Buying…",
+      "goingToStripe": "Going to Stripe…",
+      "noServices": "There are no services available to buy right now.",
+      "okTitle": "Purchase completed",
+      "okBody": "Pay at the centre whenever you like. You can already use the sessions to book while it's awaiting payment.",
+      "okCta": "See my packages",
+      "referralOn": "Referral discount: {percent}% off",
+      "referralApplied": "Applied automatically to this purchase (best available discount).",
+      "referralBetter": "The catalogue offer ({percent}%) is better — your referral discount will be saved for next time.",
+      "giftCtaTitle": "You can also gift Vindi to someone",
+      "giftCtaDesc": "The same package of sessions, with a code and your message.",
+      "errorService": "Choose a service.",
+      "errorCreate": "We couldn't create the package.",
+      "errorStripe": "We couldn't start the payment.",
+      "errorStripeOff": "Card payment isn't available right now.",
+      "unauthorized": "Not authorised."
+    },
+    "mine": {
+      "title": "My packages",
+      "empty": "You don't have any packages yet.",
+      "payments": "Payment history",
+      "noPayments": "No payments yet.",
+      "noClientRecord": "You don't have a client record yet.",
+      "sessionsOf": "{remaining} / {total} sessions"
+    },
+    "confirmed": {
+      "title": "Payment confirmed",
+      "body": "The package is yours and you can use it to book right now. There's nothing to pay at the centre.",
+      "sessionsPrice": "{sessions} sessions · {price}",
+      "book": "Book a session",
+      "seeMine": "See my packages"
+    }
+  },
+  "gifts": {
+    "title": "Gift Vindi",
+    "intro": "Choose a package of sessions, add a message if you like, and give it away. Whoever receives it activates it with the code.",
+    "stepService": "1. Service",
+    "stepPackage": "2. Package",
+    "stepDedication": "3. Message",
+    "forWho": "Who is it for?",
+    "optional": "(optional)",
+    "forWhoHint": "It's printed on the voucher. It doesn't restrict who can redeem it: anyone with the code can use it.",
+    "recipientName": "Recipient's name",
+    "recipientNamePlaceholder": "E.g. Laura",
+    "recipientEmail": "Their email",
+    "message": "Message",
+    "messagePlaceholder": "Happy birthday! Enjoy it.",
+    "payCentreDesc": "Reserve the voucher now and pay at the centre. You can give it straight away; it activates once the centre confirms payment.",
+    "payCardDesc": "Pay online now and the voucher is redeemable straight away. We'll take you to Stripe's secure page.",
+    "confirmTitle": "Confirm the voucher purchase?",
+    "confirmCentreBody": "On confirming, the voucher is created with its code and you can download it. It won't be redeemable until you pay at the centre and payment is confirmed.",
+    "confirmCardBody": "We'll take you to Stripe's payment page. The voucher is created once payment is confirmed and is redeemable from the start; if you don't complete it, nothing is created.",
+    "creating": "Creating the voucher…",
+    "noPackages": "There are no packages available to gift right now.",
+    "readyTitle": "The voucher is yours",
+    "readyTitlePaid": "Payment confirmed",
+    "readyForName": "You can give it to {name} now.",
+    "readyGeneric": "You can give it away now.",
+    "readyPending": "Remember it activates once you pay at the centre.",
+    "readyPaid": "It's paid and redeemable from now on.",
+    "code": "Voucher code",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "validUntil": "{package} · valid until {date}",
+    "download": "Download the voucher",
+    "findAgainPre": "You can find this voucher, with its code, any time under",
+    "sendTitle": "Send it by email",
+    "sendHint": "They'll get the code and how to use it. If you'd rather hand it over in person, download the voucher and print it.",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Email sent.",
+    "backToBonos": "← Back to my packages",
+    "backToGifts": "Back to gifts",
+    "confirmIntro": "All done. Here's the gift code.",
+    "confirmIntroWait": "We've just received your payment.",
+    "historyTitle": "Vouchers you've given",
+    "historyDownload": "Download",
+    "errorPackage": "Choose a package.",
+    "errorEmail": "Enter a valid email address.",
+    "errorCreate": "We couldn't create the voucher.",
+    "errorOff": "Gift vouchers aren't available right now.",
+    "recipientEmailPlaceholder": "laura@example.com",
+    "unauthorized": "Not authorised.",
+    "redeemedOn": "Redeemed on {date}",
+    "validThrough": "Valid until {date}",
+    "sendPlaceholder": "email@example.com"
   }
 }

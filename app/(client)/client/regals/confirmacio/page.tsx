@@ -7,6 +7,7 @@ import {
 } from "@/lib/data/gift-vouchers";
 import { VoucherReady } from "@/components/forms/gift-voucher-form";
 import { AwaitingPayment } from "@/components/ui/awaiting-payment";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function GiftVoucherConfirmationPage({
   const { session_id: sessionId } = await searchParams;
   if (!sessionId) redirect("/client/regals");
 
+  const t = await getTranslations("gifts");
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
   const voucher = await getGiftVoucherByStripeSession(sessionId);
@@ -37,17 +39,17 @@ export default async function GiftVoucherConfirmationPage({
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-1 text-2xl text-brand-dark">Regala Vindi</h1>
+      <h1 className="mb-1 text-2xl text-brand-dark">{t("title")}</h1>
       <p className="mb-6 text-sm text-brand-muted">
         {mine
-          ? "Ja està. Aquí tens el codi del regal."
-          : "Acabem de rebre el teu pagament."}
+          ? t("confirmIntro")
+          : t("confirmIntroWait")}
       </p>
 
       {!mine ? (
         <AwaitingPayment
           fallbackHref="/client/regals"
-          fallbackLabel="Tornar als regals"
+          fallbackLabel={t("backToGifts")}
         />
       ) : (
         <VoucherReady

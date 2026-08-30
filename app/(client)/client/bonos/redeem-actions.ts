@@ -7,13 +7,23 @@ import {
   giftVoucherBuyerContact,
 } from "@/lib/data/gift-vouchers";
 import { notify, getProfileContact } from "@/lib/notifications";
-import { SERVICE_LABELS, deOf, sessionsLabel, formatDate, formatTime } from "@/lib/labels";
+import { sessionsLabel, formatDate, formatTime } from "@/lib/labels";
+import type { RedeemErrorCode } from "@/lib/data/gift-vouchers";
+import type { ServiceType } from "@/types/database";
 
+/**
+ * L'estat torna CODIS, no frases.
+ *
+ * Qui pinta la pantalla sap en quin idioma llegeix el client; aquesta acció,
+ * no. Per això el missatge d'error i el detall de l'èxit —"8 sessions ·
+ * Fisioteràpia"— es componen allà amb el diccionari.
+ */
 export type RedeemState = {
-  error?: string;
+  errorCode?: RedeemErrorCode | "empty" | "unauthorized";
   ok?: boolean;
-  /** Text de l'èxit ("8 sessions d'EP Individual"). */
-  detail?: string;
+  /** Dades de l'èxit, per compondre el text a la pantalla. */
+  sessions?: number;
+  serviceType?: ServiceType;
 };
 
 /**
@@ -28,13 +38,14 @@ export async function redeemGiftVoucherAction(
   formData: FormData,
 ): Promise<RedeemState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client")
+    return { errorCode: "unauthorized" };
 
   const code = String(formData.get("code") ?? "");
-  if (!code.trim()) return { error: "Escriu el codi del val." };
+  if (!code.trim()) return { errorCode: "empty" };
 
   const result = await redeemGiftVoucher({ code, profileId: viewer.id });
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) return { errorCode: result.code };
 
   // Avís al comprador: ha pagat un regal i vol saber que ha arribat. Respecta
   // les seves preferències i mai tomba el canvi si falla.
@@ -58,8 +69,5 @@ export async function redeemGiftVoucherAction(
 
   revalidatePath("/client/bonos/meus");
   revalidatePath("/client");
-  return {
-    ok: true,
-    detail: `${sessionsLabel(result.sessions)} ${deOf(SERVICE_LABELS[result.serviceType])}`,
-  };
+  return { ok: true, sessions: result.sessions, serviceType: result.serviceType };
 }

@@ -626,6 +626,23 @@ export async function cancelGiftVoucher(id: string): Promise<void> {
 
 // ─── Canvi ──────────────────────────────────────────────────────────────────
 
+/**
+ * Per què no s'ha pogut bescanviar.
+ *
+ * Es torna un CODI i no un text: aquesta capa corre al servidor, sense saber en
+ * quin idioma llegeix qui ho ha demanat. El text el posa la pantalla, que sí
+ * que ho sap. Abans les frases vivien aquí i sortien sempre en català encara
+ * que l'app estigués en anglès.
+ */
+export type RedeemErrorCode =
+  | "not_found"
+  | "already_redeemed"
+  | "cancelled"
+  | "expired"
+  | "pending_payment"
+  | "no_client"
+  | "failed";
+
 export type RedeemResult =
   | {
       ok: true;
@@ -634,7 +651,7 @@ export type RedeemResult =
       serviceType: ServiceType;
       packageName: string;
     }
-  | { ok: false; error: string };
+  | { ok: false; code: RedeemErrorCode };
 
 /**
  * Bescanvia un val per un bo a nom de qui el presenta.
@@ -652,18 +669,18 @@ export async function redeemGiftVoucher(input: {
   profileId: string;
 }): Promise<RedeemResult> {
   const code = normalizeVoucherCode(input.code);
-  if (!code) return { ok: false, error: "Escriu el codi del val." };
+  if (!code) return { ok: false, code: "not_found" };
 
   const today = centerToday();
 
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === input.profileId);
-    if (!client) return { ok: false, error: "No tens fitxa de client." };
+    if (!client) return { ok: false, code: "no_client" };
     const v = store.gift_vouchers.find((x) => x.code === code);
-    if (!v) return { ok: false, error: NOT_FOUND };
+    if (!v) return { ok: false, code: "not_found" };
     const invalid = reject(v.status, v.expires_at, today);
-    if (invalid) return { ok: false, error: invalid };
+    if (invalid) return { ok: false, code: invalid };
 
     const bonoId = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -702,17 +719,17 @@ export async function redeemGiftVoucher(input: {
     .select("id")
     .eq("profile_id", input.profileId)
     .maybeSingle();
-  if (!client) return { ok: false, error: "No tens fitxa de client." };
+  if (!client) return { ok: false, code: "no_client" };
 
   const { data: v } = await admin
     .from("gift_vouchers")
     .select("id, status, expires_at, service_type, total_sessions, price, package_name, buyer_client_id")
     .eq("code", code)
     .maybeSingle();
-  if (!v) return { ok: false, error: NOT_FOUND };
+  if (!v) return { ok: false, code: "not_found" };
 
   const invalid = reject(v.status, v.expires_at, today);
-  if (invalid) return { ok: false, error: invalid };
+  if (invalid) return { ok: false, code: invalid };
 
   // El bo neix amb la caducitat pròpia dels bons? No: un val ja té la seva
   // data i qui el bescanvia ho fa el dia que vol. A partir d'aquí les sessions
@@ -731,8 +748,7 @@ export async function redeemGiftVoucher(input: {
     })
     .select("id")
     .single();
-  if (bErr || !bono)
-    return { ok: false, error: "No s'ha pogut crear el bo. Torna-ho a provar." };
+  if (bErr || !bono) return { ok: false, code: "failed" };
 
   // El `eq("status", "active")` és el que impedeix el doble canvi: si dues
   // peticions arriben alhora, només una troba el val encara actiu.
@@ -752,7 +768,7 @@ export async function redeemGiftVoucher(input: {
     // Ha guanyat l'altra petició: es desfà el bo que acabem de crear perquè no
     // quedin dos bons per un sol val.
     await admin.from("bonos").delete().eq("id", bono.id);
-    return { ok: false, error: ALREADY_REDEEMED };
+    return { ok: false, code: "already_redeemed" };
   }
 
   return {
@@ -764,22 +780,16 @@ export async function redeemGiftVoucher(input: {
   };
 }
 
-const NOT_FOUND = "Aquest codi no existeix. Comprova'l i torna-ho a provar.";
-const ALREADY_REDEEMED = "Aquest val ja s'ha bescanviat.";
-
 /** Motiu pel qual un val NO es pot bescanviar, o null si sí que es pot. */
 function reject(
   status: GiftVoucherStatus,
   expiresAt: string,
   today: string,
-): string | null {
-  if (status === "redeemed") return ALREADY_REDEEMED;
-  if (status === "cancelled")
-    return "Aquest val s'ha anul·lat. Contacta amb el centre.";
-  if (status === "expired" || expiresAt < today)
-    return "Aquest val ha caducat. Contacta amb el centre.";
-  if (status === "pending_payment")
-    return "Aquest val encara no s'ha confirmat com a pagat. Contacta amb el centre.";
+): RedeemErrorCode | null {
+  if (status === "redeemed") return "already_redeemed";
+  if (status === "cancelled") return "cancelled";
+  if (status === "expired" || expiresAt < today) return "expired";
+  if (status === "pending_payment") return "pending_payment";
   return null;
 }
 

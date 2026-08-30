@@ -103,5 +103,179 @@
         "desc": "Novetats i avisos del centre."
       }
     }
+  },
+  "labels": {
+    "service": {
+      "ep_individual": "EP Individual",
+      "ep_parejas": "EP Parelles",
+      "grupo_reducido": "Grup reduït",
+      "fisioterapia": "Fisioteràpia"
+    },
+    "bonoStatus": {
+      "active": "Actiu",
+      "completed": "Completat",
+      "cancelled": "Cancel·lat",
+      "pending_payment": "Pendent de pagament",
+      "expired": "Caducat",
+      "unpaid": "Anul·lat per impagament"
+    },
+    "giftVoucherStatus": {
+      "pending_payment": "Pendent de pagament",
+      "active": "Actiu",
+      "redeemed": "Bescanviat",
+      "expired": "Caducat",
+      "cancelled": "Anul·lat"
+    },
+    "reservationStatus": {
+      "booked": "Reservada",
+      "completed": "Realitzada",
+      "cancelled": "Cancel·lada"
+    },
+    "paymentMethod": {
+      "card": "Targeta",
+      "cash": "Efectiu"
+    }
+  },
+  "picker": {
+    "introBono": "Tria el tipus de servei per al qual vols comprar un bo.",
+    "introGift": "Tria el tipus de servei que vols regalar.",
+    "changeService": "Canviar servei",
+    "from": "Des de",
+    "bestPrice": "Millor preu",
+    "sessions": "{count, plural, one {# sessió} other {# sessions}}"
+  },
+  "awaiting": {
+    "title": "Estem confirmant el pagament",
+    "hint": "Un moment: el banc ens ho està confirmant. No cal que facis res.",
+    "slowTitle": "El pagament està trigant a confirmar-se",
+    "slowBody": "Si el banc t'ha cobrat, ho veuràs aparèixer sol en poca estona. Si passa una hora i segueix sense sortir-hi, avisa el centre i ho mirem: no cal que tornis a pagar."
+  },
+  "redeem": {
+    "title": "Tens un codi de regal?",
+    "hint": "Escriu-lo aquí i les sessions s'afegiran al teu compte.",
+    "submit": "Bescanviar",
+    "checking": "Comprovant…",
+    "okTitle": "Regal activat!",
+    "okBody": "{detail} ja són al teu compte.",
+    "errors": {
+      "empty": "Escriu el codi del val.",
+      "not_found": "Aquest codi no existeix. Comprova'l i torna-ho a provar.",
+      "already_redeemed": "Aquest val ja s'ha bescanviat.",
+      "cancelled": "Aquest val s'ha anul·lat. Contacta amb el centre.",
+      "expired": "Aquest val ha caducat. Contacta amb el centre.",
+      "pending_payment": "Aquest val encara no s'ha confirmat com a pagat. Contacta amb el centre.",
+      "no_client": "No tens fitxa de client.",
+      "failed": "No s'ha pogut crear el bo. Torna-ho a provar.",
+      "unauthorized": "No autoritzat."
+    }
+  },
+  "bonos": {
+    "title": "Bons",
+    "tabBuy": "Comprar bo nou",
+    "tabMine": "Els meus bons",
+    "buy": {
+      "intro": "Tria un servei i com vols pagar-lo.",
+      "stepService": "1. Servei",
+      "stepPackage": "2. Paquet",
+      "stepPayment": "3. Pagament",
+      "paymentMethod": "Mètode de pagament",
+      "payCentre": "Pagar al centre",
+      "payCentreDesc": "Reserva el bo ara i paga'l en efectiu al centre per activar-lo.",
+      "payCard": "Pagar amb targeta",
+      "payCardDesc": "Paga ara en línia i el bo queda actiu de seguida. T'enviem a la pàgina segura de Stripe.",
+      "confirmCentreTitle": "Confirmes la reserva del bo?",
+      "confirmCardTitle": "Confirmes la compra del bo?",
+      "confirmCentreBody": "En confirmar, aquest bo ja es podrà fer servir per reservar. El pagues al centre quan vulguis.",
+      "confirmCardBody": "Et portem a la pàgina de pagament de Stripe. El bo es crea quan el pagament es confirmi; si no acabes de pagar, no es crea res.",
+      "accept": "Accepto les",
+      "acceptLink": "condicions de compra",
+      "cancel": "Cancel·lar",
+      "confirm": "Confirmar",
+      "buying": "Comprant…",
+      "goingToStripe": "Anant a Stripe…",
+      "noServices": "Ara mateix no hi ha cap servei disponible per comprar.",
+      "okTitle": "Compra realitzada correctament",
+      "okBody": "Paga'l al centre quan vulguis. Ja pots fer servir les sessions per reservar mentre estigui pendent de pagament.",
+      "okCta": "Veure els meus bonos",
+      "referralOn": "Descompte de referit: {percent}% off",
+      "referralApplied": "S'aplica automàticament a aquesta compra (millor descompte disponible).",
+      "referralBetter": "L'oferta del catàleg ({percent}%) és millor — el descompte de referit es guardarà per a la propera compra.",
+      "giftCtaTitle": "També pots regalar Vindi a algú",
+      "giftCtaDesc": "El mateix paquet de sessions, amb un codi i la teva dedicatòria.",
+      "errorService": "Tria un servei.",
+      "errorCreate": "No s'ha pogut crear el bo.",
+      "errorStripe": "No s'ha pogut iniciar el pagament.",
+      "errorStripeOff": "El pagament amb targeta no està disponible ara mateix.",
+      "unauthorized": "No autoritzat."
+    },
+    "mine": {
+      "title": "Els meus bons",
+      "empty": "Encara no tens cap bo.",
+      "payments": "Historial de pagaments",
+      "noPayments": "Encara no hi ha pagaments.",
+      "noClientRecord": "Encara no tens fitxa de client.",
+      "sessionsOf": "{remaining} / {total} sessions"
+    },
+    "confirmed": {
+      "title": "Pagament confirmat",
+      "body": "El bo ja és teu i el pots fer servir per reservar ara mateix. No has de pagar res al centre.",
+      "sessionsPrice": "{sessions} sessions · {price}",
+      "book": "Reservar una sessió",
+      "seeMine": "Veure els meus bons"
+    }
+  },
+  "gifts": {
+    "title": "Regala Vindi",
+    "intro": "Tria un paquet de sessions, escriu-hi una dedicatòria si vols i el regales. Qui el rebi l'activarà amb el codi.",
+    "stepService": "1. Servei",
+    "stepPackage": "2. Paquet",
+    "stepDedication": "3. Dedicatòria",
+    "forWho": "Per a qui és?",
+    "optional": "(opcional)",
+    "forWhoHint": "Surt imprès al val. No limita qui el pot bescanviar: qui tingui el codi el podrà fer servir.",
+    "recipientName": "Nom de qui el rep",
+    "recipientNamePlaceholder": "Ex.: Laura",
+    "recipientEmail": "El seu correu",
+    "message": "Missatge",
+    "messagePlaceholder": "Per molts anys! Gaudeix-ho.",
+    "payCentreDesc": "Reserva el val ara i paga'l al centre. El podràs regalar de seguida; s'activarà quan el centre confirmi el cobrament.",
+    "payCardDesc": "Paga ara en línia i el val queda bescanviable de seguida. T'enviem a la pàgina segura de Stripe.",
+    "confirmTitle": "Confirmes la compra del val?",
+    "confirmCentreBody": "En confirmar es genera el val amb el seu codi i el podràs descarregar. No serà bescanviable fins que paguis al centre i s'hi confirmi el cobrament.",
+    "confirmCardBody": "Et portem a la pàgina de pagament de Stripe. El val es genera quan el pagament es confirmi i ja neix bescanviable; si no acabes de pagar, no es crea res.",
+    "creating": "Creant el val…",
+    "noPackages": "Ara mateix no hi ha cap paquet disponible per regalar.",
+    "readyTitle": "El val ja és teu",
+    "readyTitlePaid": "Pagament confirmat",
+    "readyForName": "Ja pots donar-li a {name}.",
+    "readyGeneric": "Ja el pots regalar.",
+    "readyPending": "Recorda que s'activarà quan paguis al centre.",
+    "readyPaid": "Ja està pagat i és bescanviable des d'ara.",
+    "code": "Codi del val",
+    "copy": "Copiar",
+    "copied": "Copiat!",
+    "validUntil": "{package} · vàlid fins al {date}",
+    "download": "Descarregar el val",
+    "findAgainPre": "Pots tornar a trobar aquest val, amb el seu codi, sempre que vulguis a",
+    "sendTitle": "Enviar-lo per correu",
+    "sendHint": "Li arribarà el codi i com fer-lo servir. Si prefereixes donar-l'hi en persona, descarrega el val i imprimeix-lo.",
+    "send": "Enviar",
+    "sending": "Enviant…",
+    "sent": "Correu enviat.",
+    "backToBonos": "← Tornar als meus bons",
+    "backToGifts": "Tornar als regals",
+    "confirmIntro": "Ja està. Aquí tens el codi del regal.",
+    "confirmIntroWait": "Acabem de rebre el teu pagament.",
+    "historyTitle": "Vals que has regalat",
+    "historyDownload": "Descarregar",
+    "errorPackage": "Tria un paquet.",
+    "errorEmail": "Escriu una adreça de correu vàlida.",
+    "errorCreate": "No s'ha pogut crear el val.",
+    "errorOff": "Els vals de regal no estan disponibles ara mateix.",
+    "recipientEmailPlaceholder": "laura@exemple.com",
+    "unauthorized": "No autoritzat.",
+    "redeemedOn": "Bescanviat el {date}",
+    "validThrough": "Vàlid fins al {date}",
+    "sendPlaceholder": "correu@exemple.com"
   }
 }

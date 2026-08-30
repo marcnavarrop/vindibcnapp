@@ -18,7 +18,7 @@ import { notify } from "@/lib/notifications";
 import { formatDate, sessionsLabel } from "@/lib/labels";
 
 export type BuyState = {
-  error?: string;
+  errorCode?: "unauthorized" | "errorOff" | "errorPackage" | "errorCreate";
   ok?: boolean;
   /** Dades per a la pantalla d'èxit. */
   voucher?: { id: string; code: string; expiresAt: string; packageName: string };
@@ -36,14 +36,14 @@ export async function buyGiftVoucherAction(
   formData: FormData,
 ): Promise<BuyState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   const { giftVouchersEnabled } = await getCenterSettings();
   if (!giftVouchersEnabled)
-    return { error: "Els vals de regal no estan disponibles ara mateix." };
+    return { errorCode: "errorOff" };
 
   const serviceId = String(formData.get("serviceId") ?? "");
-  if (!serviceId) return { error: "Tria un paquet." };
+  if (!serviceId) return { errorCode: "errorPackage" };
 
   let created: { id: string; code: string };
   try {
@@ -55,13 +55,12 @@ export async function buyGiftVoucherAction(
       message: String(formData.get("message") ?? ""),
     });
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut crear el val.",
-    };
+    console.error("[regals] no s'ha pogut crear el val:", e);
+    return { errorCode: "errorCreate" };
   }
 
   const voucher = await getGiftVoucher(created.id);
-  if (!voucher) return { error: "No s'ha pogut llegir el val creat." };
+  if (!voucher) return { errorCode: "errorCreate" };
 
   // El PDF es genera de seguida: qui acaba de comprar vol imprimir-lo ara, no
   // esperar que algú el prepari. Si fallés, el val existeix igualment i es
@@ -102,7 +101,10 @@ export async function buyGiftVoucherAction(
   };
 }
 
-export type SendState = { error?: string; ok?: boolean };
+export type SendState = {
+  errorCode?: "unauthorized" | "errorEmail" | "errorCreate";
+  ok?: boolean;
+};
 
 /**
  * Envia el codi per correu a qui rep el regal.
@@ -116,22 +118,22 @@ export async function sendGiftVoucherAction(
   formData: FormData,
 ): Promise<SendState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   const voucherId = String(formData.get("voucherId") ?? "");
   const email = String(formData.get("email") ?? "").trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    return { error: "Escriu una adreça de correu vàlida." };
+    return { errorCode: "errorEmail" };
 
   // Només el comprador pot enviar el seu val: sense això, qualsevol client
   // podria repartir per correu un val que no és seu si n'endevinés l'id.
   const client = await getClientByProfile(viewer.id);
   const buyerId = await giftVoucherBuyerId(voucherId);
   if (!client || !buyerId || buyerId !== client.id)
-    return { error: "No autoritzat." };
+    return { errorCode: "unauthorized" };
 
   const voucher = await getGiftVoucher(voucherId);
-  if (!voucher) return { error: "Val no trobat." };
+  if (!voucher) return { errorCode: "errorCreate" };
 
   await notify(
     {
@@ -159,7 +161,9 @@ export async function sendGiftVoucherAction(
   return { ok: true };
 }
 
-export type CheckoutState = { error?: string };
+export type CheckoutState = {
+  errorCode?: "unauthorized" | "errorOff" | "errorStripeOff" | "errorPackage" | "errorStripe";
+};
 
 /**
  * Pagar el val amb targeta: obre la sessió de Stripe i hi envia el client.
@@ -174,19 +178,17 @@ export async function startGiftVoucherCheckoutAction(
   formData: FormData,
 ): Promise<CheckoutState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
 
   // Mateixa comprovació que a la compra al centre, i pel mateix motiu: amagar
   // el botó no impedeix cridar l'acció.
   const { giftVouchersEnabled } = await getCenterSettings();
-  if (!giftVouchersEnabled)
-    return { error: "Els vals de regal no estan disponibles ara mateix." };
+  if (!giftVouchersEnabled) return { errorCode: "errorOff" };
 
-  if (!stripeEnabled())
-    return { error: "El pagament amb targeta no està disponible ara mateix." };
+  if (!stripeEnabled()) return { errorCode: "errorStripeOff" };
 
   const serviceId = String(formData.get("serviceId") ?? "");
-  if (!serviceId) return { error: "Tria un paquet." };
+  if (!serviceId) return { errorCode: "errorPackage" };
 
   let result;
   try {
@@ -199,11 +201,10 @@ export async function startGiftVoucherCheckoutAction(
       message: String(formData.get("message") ?? "") || null,
     });
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'ha pogut iniciar el pagament.",
-    };
+    console.error("[regals] no s'ha pogut obrir el pagament:", e);
+    return { errorCode: "errorStripe" };
   }
 
-  if ("error" in result) return { error: result.error };
+  if ("error" in result) return { errorCode: "errorStripe" };
   redirect(result.url);
 }

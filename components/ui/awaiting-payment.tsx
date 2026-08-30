@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/spinner";
@@ -19,17 +20,14 @@ import { Spinner } from "@/components/ui/spinner";
  * bo. Val més la pena l'espera de dos segons.
  */
 export function AwaitingPayment({
-  title = "Estem confirmant el pagament",
-  hint = "Un moment: el banc ens ho està confirmant. No cal que facis res.",
   /** On tornar si passa massa estona. */
   fallbackHref,
   fallbackLabel,
 }: {
-  title?: string;
-  hint?: string;
   fallbackHref: string;
   fallbackLabel: string;
 }) {
+  const t = useTranslations("awaiting");
   const router = useRouter();
   const [tries, setTries] = useState(0);
 
@@ -49,14 +47,8 @@ export function AwaitingPayment({
   if (gaveUp)
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
-        <p className="text-lg font-bold text-brand-dark">
-          El pagament està trigant a confirmar-se
-        </p>
-        <p className="max-w-sm text-sm text-brand-muted">
-          Si el banc t&apos;ha cobrat, ho veuràs aparèixer sol en poca estona.
-          Si passa una hora i segueix sense sortir-hi, avisa el centre i ho
-          mirem: no cal que tornis a pagar.
-        </p>
+        <p className="text-lg font-bold text-brand-dark">{t("slowTitle")}</p>
+        <p className="max-w-sm text-sm text-brand-muted">{t("slowBody")}</p>
         <Link
           href={fallbackHref}
           className="mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
@@ -73,8 +65,8 @@ export function AwaitingPayment({
       aria-busy
     >
       <Spinner size={28} />
-      <p className="text-lg font-bold text-brand-dark">{title}</p>
-      <p className="max-w-sm text-sm text-brand-muted">{hint}</p>
+      <p className="text-lg font-bold text-brand-dark">{t("title")}</p>
+      <p className="max-w-sm text-sm text-brand-muted">{t("hint")}</p>
     </div>
   );
 }

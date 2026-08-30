@@ -103,5 +103,179 @@
         "desc": "Novedades y avisos del centro."
       }
     }
+  },
+  "labels": {
+    "service": {
+      "ep_individual": "EP Individual",
+      "ep_parejas": "EP Parejas",
+      "grupo_reducido": "Grupo reducido",
+      "fisioterapia": "Fisioterapia"
+    },
+    "bonoStatus": {
+      "active": "Activo",
+      "completed": "Completado",
+      "cancelled": "Cancelado",
+      "pending_payment": "Pendiente de pago",
+      "expired": "Caducado",
+      "unpaid": "Anulado por impago"
+    },
+    "giftVoucherStatus": {
+      "pending_payment": "Pendiente de pago",
+      "active": "Activo",
+      "redeemed": "Canjeado",
+      "expired": "Caducado",
+      "cancelled": "Anulado"
+    },
+    "reservationStatus": {
+      "booked": "Reservada",
+      "completed": "Realizada",
+      "cancelled": "Cancelada"
+    },
+    "paymentMethod": {
+      "card": "Tarjeta",
+      "cash": "Efectivo"
+    }
+  },
+  "picker": {
+    "introBono": "Elige el tipo de servicio para el que quieres comprar un bono.",
+    "introGift": "Elige el tipo de servicio que quieres regalar.",
+    "changeService": "Cambiar servicio",
+    "from": "Desde",
+    "bestPrice": "Mejor precio",
+    "sessions": "{count, plural, one {# sesión} other {# sesiones}}"
+  },
+  "awaiting": {
+    "title": "Estamos confirmando el pago",
+    "hint": "Un momento: el banco nos lo está confirmando. No hace falta que hagas nada.",
+    "slowTitle": "El pago está tardando en confirmarse",
+    "slowBody": "Si el banco te ha cobrado, lo verás aparecer solo en poco rato. Si pasa una hora y sigue sin salir, avisa al centro y lo miramos: no hace falta que vuelvas a pagar."
+  },
+  "redeem": {
+    "title": "¿Tienes un código de regalo?",
+    "hint": "Escríbelo aquí y las sesiones se añadirán a tu cuenta.",
+    "submit": "Canjear",
+    "checking": "Comprobando…",
+    "okTitle": "¡Regalo activado!",
+    "okBody": "{detail} ya están en tu cuenta.",
+    "errors": {
+      "empty": "Escribe el código del vale.",
+      "not_found": "Este código no existe. Compruébalo e inténtalo de nuevo.",
+      "already_redeemed": "Este vale ya se ha canjeado.",
+      "cancelled": "Este vale se ha anulado. Contacta con el centro.",
+      "expired": "Este vale ha caducado. Contacta con el centro.",
+      "pending_payment": "Este vale todavía no se ha confirmado como pagado. Contacta con el centro.",
+      "no_client": "No tienes ficha de cliente.",
+      "failed": "No se ha podido crear el bono. Inténtalo de nuevo.",
+      "unauthorized": "No autorizado."
+    }
+  },
+  "bonos": {
+    "title": "Bonos",
+    "tabBuy": "Comprar bono nuevo",
+    "tabMine": "Mis bonos",
+    "buy": {
+      "intro": "Elige un servicio y cómo quieres pagarlo.",
+      "stepService": "1. Servicio",
+      "stepPackage": "2. Paquete",
+      "stepPayment": "3. Pago",
+      "paymentMethod": "Método de pago",
+      "payCentre": "Pagar en el centro",
+      "payCentreDesc": "Reserva el bono ahora y págalo en efectivo en el centro para activarlo.",
+      "payCard": "Pagar con tarjeta",
+      "payCardDesc": "Paga ahora en línea y el bono queda activo enseguida. Te llevamos a la página segura de Stripe.",
+      "confirmCentreTitle": "¿Confirmas la reserva del bono?",
+      "confirmCardTitle": "¿Confirmas la compra del bono?",
+      "confirmCentreBody": "Al confirmar, este bono ya se podrá usar para reservar. Lo pagas en el centro cuando quieras.",
+      "confirmCardBody": "Te llevamos a la página de pago de Stripe. El bono se crea cuando el pago se confirme; si no acabas de pagar, no se crea nada.",
+      "accept": "Acepto las",
+      "acceptLink": "condiciones de compra",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "buying": "Comprando…",
+      "goingToStripe": "Yendo a Stripe…",
+      "noServices": "Ahora mismo no hay ningún servicio disponible para comprar.",
+      "okTitle": "Compra realizada correctamente",
+      "okBody": "Págalo en el centro cuando quieras. Ya puedes usar las sesiones para reservar mientras esté pendiente de pago.",
+      "okCta": "Ver mis bonos",
+      "referralOn": "Descuento de referido: {percent}% off",
+      "referralApplied": "Se aplica automáticamente a esta compra (mejor descuento disponible).",
+      "referralBetter": "La oferta del catálogo ({percent}%) es mejor — el descuento de referido se guardará para la próxima compra.",
+      "giftCtaTitle": "También puedes regalar Vindi a alguien",
+      "giftCtaDesc": "El mismo paquete de sesiones, con un código y tu dedicatoria.",
+      "errorService": "Elige un servicio.",
+      "errorCreate": "No se ha podido crear el bono.",
+      "errorStripe": "No se ha podido iniciar el pago.",
+      "errorStripeOff": "El pago con tarjeta no está disponible ahora mismo.",
+      "unauthorized": "No autorizado."
+    },
+    "mine": {
+      "title": "Mis bonos",
+      "empty": "Todavía no tienes ningún bono.",
+      "payments": "Historial de pagos",
+      "noPayments": "Todavía no hay pagos.",
+      "noClientRecord": "Todavía no tienes ficha de cliente.",
+      "sessionsOf": "{remaining} / {total} sesiones"
+    },
+    "confirmed": {
+      "title": "Pago confirmado",
+      "body": "El bono ya es tuyo y lo puedes usar para reservar ahora mismo. No tienes que pagar nada en el centro.",
+      "sessionsPrice": "{sessions} sesiones · {price}",
+      "book": "Reservar una sesión",
+      "seeMine": "Ver mis bonos"
+    }
+  },
+  "gifts": {
+    "title": "Regala Vindi",
+    "intro": "Elige un paquete de sesiones, escribe una dedicatoria si quieres y regálalo. Quien lo reciba lo activará con el código.",
+    "stepService": "1. Servicio",
+    "stepPackage": "2. Paquete",
+    "stepDedication": "3. Dedicatoria",
+    "forWho": "¿Para quién es?",
+    "optional": "(opcional)",
+    "forWhoHint": "Sale impreso en el vale. No limita quién lo puede canjear: quien tenga el código podrá usarlo.",
+    "recipientName": "Nombre de quien lo recibe",
+    "recipientNamePlaceholder": "Ej.: Laura",
+    "recipientEmail": "Su correo",
+    "message": "Mensaje",
+    "messagePlaceholder": "¡Felicidades! Disfrútalo.",
+    "payCentreDesc": "Reserva el vale ahora y págalo en el centro. Lo podrás regalar enseguida; se activará cuando el centro confirme el cobro.",
+    "payCardDesc": "Paga ahora en línea y el vale queda canjeable enseguida. Te llevamos a la página segura de Stripe.",
+    "confirmTitle": "¿Confirmas la compra del vale?",
+    "confirmCentreBody": "Al confirmar se genera el vale con su código y lo podrás descargar. No será canjeable hasta que pagues en el centro y se confirme el cobro.",
+    "confirmCardBody": "Te llevamos a la página de pago de Stripe. El vale se genera cuando el pago se confirme y ya nace canjeable; si no acabas de pagar, no se crea nada.",
+    "creating": "Creando el vale…",
+    "noPackages": "Ahora mismo no hay ningún paquete disponible para regalar.",
+    "readyTitle": "El vale ya es tuyo",
+    "readyTitlePaid": "Pago confirmado",
+    "readyForName": "Ya se lo puedes dar a {name}.",
+    "readyGeneric": "Ya lo puedes regalar.",
+    "readyPending": "Recuerda que se activará cuando pagues en el centro.",
+    "readyPaid": "Ya está pagado y es canjeable desde ahora.",
+    "code": "Código del vale",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "validUntil": "{package} · válido hasta el {date}",
+    "download": "Descargar el vale",
+    "findAgainPre": "Puedes volver a encontrar este vale, con su código, siempre que quieras en",
+    "sendTitle": "Enviarlo por correo",
+    "sendHint": "Le llegará el código y cómo usarlo. Si prefieres dárselo en persona, descarga el vale e imprímelo.",
+    "send": "Enviar",
+    "sending": "Enviando…",
+    "sent": "Correo enviado.",
+    "backToBonos": "← Volver a mis bonos",
+    "backToGifts": "Volver a los regalos",
+    "confirmIntro": "Ya está. Aquí tienes el código del regalo.",
+    "confirmIntroWait": "Acabamos de recibir tu pago.",
+    "historyTitle": "Vales que has regalado",
+    "historyDownload": "Descargar",
+    "errorPackage": "Elige un paquete.",
+    "errorEmail": "Escribe una dirección de correo válida.",
+    "errorCreate": "No se ha podido crear el vale.",
+    "errorOff": "Los vales de regalo no están disponibles ahora mismo.",
+    "recipientEmailPlaceholder": "laura@ejemplo.com",
+    "unauthorized": "No autorizado.",
+    "redeemedOn": "Canjeado el {date}",
+    "validThrough": "Válido hasta el {date}",
+    "sendPlaceholder": "correo@ejemplo.com"
   }
 }

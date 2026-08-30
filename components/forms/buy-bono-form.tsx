@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { SERVICE_LABELS } from "@/lib/labels";
+
 import type { ColorPalette } from "@/lib/colors";
 import {
   createPendingBonoAction,
@@ -38,6 +39,9 @@ export function BuyBonoForm({
   /** Es pot pagar amb targeta? Ho decideix el servidor, no el navegador. */
   stripeEnabled?: boolean;
 }) {
+  const t = useTranslations("bonos.buy");
+  const tp = useTranslations("picker");
+  const tl = useTranslations("labels.service");
   const [state, formAction] = useActionState(
     createPendingBonoAction,
     {} as FormState,
@@ -79,17 +83,16 @@ export function BuyBonoForm({
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
         <AnimatedFeedback type="success" />
         <p className="text-xl font-bold text-success">
-          Compra realitzada correctament
+          {t("okTitle")}
         </p>
         <p className="max-w-sm text-sm text-brand-muted">
-          Paga&apos;l al centre quan vulguis. Ja pots fer servir les sessions
-          per reservar mentre estigui pendent de pagament.
+          {t("okBody")}
         </p>
         <Link
           href="/client/bonos/meus"
           className="mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
         >
-          Veure els meus bonos
+          {t("okCta")}
         </Link>
       </div>
     );
@@ -99,7 +102,7 @@ export function BuyBonoForm({
   if (services.length === 0) {
     return (
       <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-        Ara mateix no hi ha cap servei disponible per comprar.
+        {t("noServices")}
       </p>
     );
   }
@@ -109,14 +112,14 @@ export function BuyBonoForm({
       {/* ── Indicador de passos ── */}
       <div className="flex items-center gap-2 text-xs font-bold tracking-wide text-brand-muted uppercase">
         <span className={step === 1 ? "text-brand-purple" : ""}>
-          1. Servei
+          {t("stepService")}
         </span>
         <span className="text-brand-border">›</span>
         <span className={step === 2 ? "text-brand-purple" : ""}>
-          2. Paquet
+          {t("stepPackage")}
         </span>
         <span className="text-brand-border">›</span>
-        <span>3. Pagament</span>
+        <span>{t("stepPayment")}</span>
       </div>
 
       {/* ── Pas 1 ── */}
@@ -125,6 +128,7 @@ export function BuyBonoForm({
           services={services}
           palette={palette}
           effectivePrices={effectivePrices}
+          intro={tp("introBono")}
           onSelect={(type) => {
             setServiceType(type);
             // Preselecciona el primer paquet d'aquest tipus
@@ -170,8 +174,8 @@ export function BuyBonoForm({
                 />
               </div>
               <p className="mt-0.5 text-brand-muted">
-                {SERVICE_LABELS[selected.serviceType]} ·{" "}
-                {selected.defaultSessions} sessions
+                {tl(selected.serviceType)} ·{" "}
+                {tp("sessions", { count: selected.defaultSessions })}
               </p>
             </div>
           )}
@@ -186,12 +190,12 @@ export function BuyBonoForm({
             return (
               <div className={`rounded-xl border px-4 py-3 text-sm ${useReferral ? "border-brand-purple/30 bg-brand-purple/5" : "border-brand-border bg-brand-bg"}`}>
                 <p className={`font-bold ${useReferral ? "text-brand-purple" : "text-brand-muted"}`}>
-                  {useReferral ? "✓" : "·"} Descompte de referit: {pendingReferralReward.discountPercent}% off
+                  {useReferral ? "✓" : "·"} {t("referralOn", { percent: pendingReferralReward.discountPercent })}
                 </p>
                 <p className="mt-0.5 text-xs text-brand-muted">
                   {useReferral
-                    ? `S'aplica automàticament a aquesta compra (millor descompte disponible).`
-                    : `L'oferta del catàleg (${promoDiscountPct.toFixed(0)}%) és millor — el descompte de referit es guardarà per a la propera compra.`}
+                    ? t("referralApplied")
+                    : t("referralBetter", { percent: promoDiscountPct.toFixed(0) })}
                 </p>
               </div>
             );
@@ -200,16 +204,15 @@ export function BuyBonoForm({
           {/* Mètode de pagament */}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-              Mètode de pagament
+              {t("paymentMethod")}
             </span>
 
             <PaymentMethodOption
               icon={<Building2 className="h-5 w-5" />}
-              title="Pagar al centre"
+              title={t("payCentre")}
               description={
                 <>
-                  Reserva el bo ara i paga&apos;l en efectiu al centre per
-                  activar-lo.
+                  {t("payCentreDesc")}
                 </>
               }
               onClick={() => setConfirming("center")}
@@ -218,11 +221,10 @@ export function BuyBonoForm({
             {stripeEnabled && (
               <PaymentMethodOption
                 icon={<CreditCard className="h-5 w-5" />}
-                title="Pagar amb targeta"
+                title={t("payCard")}
                 description={
                   <>
-                    Paga ara en línia i el bo queda actiu de seguida.
-                    T&apos;enviem a la pàgina segura de Stripe.
+                    {t("payCardDesc")}
                   </>
                 }
                 onClick={() => setConfirming("card")}
@@ -230,11 +232,11 @@ export function BuyBonoForm({
             )}
           </div>
 
-          {state.error && (
-            <p className="text-sm text-error">{state.error}</p>
+          {state.errorCode && (
+            <p className="text-sm text-error">{t(state.errorCode)}</p>
           )}
-          {checkoutState.error && (
-            <p className="text-sm text-error">{checkoutState.error}</p>
+          {checkoutState.errorCode && (
+            <p className="text-sm text-error">{t(checkoutState.errorCode)}</p>
           )}
 
           {selected && (
@@ -243,8 +245,8 @@ export function BuyBonoForm({
               onClose={() => setConfirming(null)}
               title={
                 confirming === "card"
-                  ? "Confirmes la compra del bo?"
-                  : "Confirmes la reserva del bo?"
+                  ? t("confirmCardTitle")
+                  : t("confirmCentreTitle")
               }
               actions={
                 <>
@@ -253,22 +255,22 @@ export function BuyBonoForm({
                     onClick={() => setConfirming(null)}
                     className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
                   >
-                    Cancel·lar
+                    {t("cancel")}
                   </button>
                   {confirming === "card" ? (
                     <SubmitButton
                       formAction={checkoutAction}
-                      pendingLabel="Anant a Stripe…"
+                      pendingLabel={t("goingToStripe")}
                       disabled={!acceptsTerms}
                     >
-                      Pagar amb targeta
+                      {t("payCard")}
                     </SubmitButton>
                   ) : (
                     <SubmitButton
-                      pendingLabel="Comprant…"
+                      pendingLabel={t("buying")}
                       disabled={!acceptsTerms}
                     >
-                      Confirmar
+                      {t("confirm")}
                     </SubmitButton>
                   )}
                 </>
@@ -293,14 +295,14 @@ export function BuyBonoForm({
                     />
                   </div>
                   <p className="mt-0.5 text-brand-muted">
-                    {SERVICE_LABELS[selected.serviceType]} ·{" "}
-                    {selected.defaultSessions} sessions
+                    {tl(selected.serviceType)} ·{" "}
+                    {tp("sessions", { count: selected.defaultSessions })}
                   </p>
                 </div>
                 <p className="text-brand-charcoal">
                   {confirming === "card"
-                    ? "Et portem a la pàgina de pagament de Stripe. El bo es crea quan el pagament es confirmi; si no acabes de pagar, no es crea res."
-                    : "En confirmar, aquest bo ja es podrà fer servir per reservar. El pagues al centre quan vulguis."}
+                    ? t("confirmCardBody")
+                    : t("confirmCentreBody")}
                 </p>
 
                 <label className="flex cursor-pointer items-start gap-2.5 text-brand-charcoal">
@@ -311,13 +313,13 @@ export function BuyBonoForm({
                     className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
                   />
                   <span>
-                    Accepto les{" "}
+                    {t("accept")}{" "}
                     <Link
                       href="/legal/avis-legal"
                       target="_blank"
                       className="font-bold text-brand-purple underline hover:text-brand-orange"
                     >
-                      condicions de compra
+                      {t("acceptLink")}
                     </Link>
                     .
                   </span>

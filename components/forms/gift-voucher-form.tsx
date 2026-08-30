@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { SERVICE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import type { ColorPalette } from "@/lib/colors";
 import {
   buyGiftVoucherAction,
@@ -43,6 +44,10 @@ export function GiftVoucherForm({
   /** Es pot pagar amb targeta? Ho decideix el servidor, no el navegador. */
   stripeEnabled?: boolean;
 }) {
+  const t = useTranslations("gifts");
+  const tb = useTranslations("bonos.buy");
+  const tp = useTranslations("picker");
+  const tl = useTranslations("labels.service");
   const [state, formAction] = useActionState(buyGiftVoucherAction, {} as BuyState);
   // Segona sortida del mateix formulari, com a la compra d'un bo: el botó de
   // targeta hi entra amb `formAction` i comparteix els camps ocults, inclosa
@@ -78,18 +83,18 @@ export function GiftVoucherForm({
   if (services.length === 0)
     return (
       <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-        Ara mateix no hi ha cap paquet disponible per regalar.
+        {t("noPackages")}
       </p>
     );
 
   return (
     <div className="flex max-w-xl flex-col gap-6">
       <div className="flex items-center gap-2 text-xs font-bold tracking-wide text-brand-muted uppercase">
-        <span className={step === 1 ? "text-brand-purple" : ""}>1. Servei</span>
+        <span className={step === 1 ? "text-brand-purple" : ""}>{t("stepService")}</span>
         <span className="text-brand-border">›</span>
-        <span className={step === 2 ? "text-brand-purple" : ""}>2. Paquet</span>
+        <span className={step === 2 ? "text-brand-purple" : ""}>{t("stepPackage")}</span>
         <span className="text-brand-border">›</span>
-        <span>3. Dedicatòria</span>
+        <span>{t("stepDedication")}</span>
       </div>
 
       {step === 1 && (
@@ -97,7 +102,7 @@ export function GiftVoucherForm({
           services={services}
           palette={palette}
           effectivePrices={effectivePrices}
-          intro="Tria el tipus de servei que vols regalar."
+          intro={tp("introGift")}
           onSelect={(type) => {
             setServiceType(type);
             const first = services.find((s) => s.serviceType === type);
@@ -130,44 +135,44 @@ export function GiftVoucherForm({
           <section className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-5">
             <div>
               <h2 className="text-sm font-bold text-brand-dark">
-                Per a qui és? <span className="font-normal text-brand-muted">(opcional)</span>
+                {t("forWho")}{" "}
+                <span className="font-normal text-brand-muted">{t("optional")}</span>
               </h2>
               <p className="mt-0.5 text-xs text-brand-muted">
-                Surt imprès al val. No limita qui el pot bescanviar: qui tingui
-                el codi el podrà fer servir.
+                {t("forWhoHint")}
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nom de qui el rep">
+              <Field label={t("recipientName")}>
                 <input
                   type="text"
                   maxLength={120}
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
-                  placeholder="Ex.: Laura"
+                  placeholder={t("recipientNamePlaceholder")}
                   className={INPUT}
                 />
               </Field>
-              <Field label="El seu correu">
+              <Field label={t("recipientEmail")}>
                 <input
                   type="email"
                   maxLength={160}
                   value={recipientEmail}
                   onChange={(e) => setRecipientEmail(e.target.value)}
-                  placeholder="laura@exemple.com"
+                  placeholder={t("recipientEmailPlaceholder")}
                   className={INPUT}
                 />
               </Field>
             </div>
 
-            <Field label="Missatge">
+            <Field label={t("message")}>
               <textarea
                 rows={3}
                 maxLength={500}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Per molts anys! Gaudeix-ho."
+                placeholder={t("messagePlaceholder")}
                 className={`${INPUT} resize-y`}
               />
             </Field>
@@ -176,17 +181,15 @@ export function GiftVoucherForm({
           {/* ── Pagament ── */}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-              Mètode de pagament
+              {tb("paymentMethod")}
             </span>
 
             <PaymentMethodOption
               icon={<Building2 className="h-5 w-5" />}
-              title="Pagar al centre"
+              title={tb("payCentre")}
               description={
                 <>
-                  Reserva el val ara i paga&apos;l al centre. El podràs regalar
-                  de seguida; s&apos;activarà quan el centre confirmi el
-                  cobrament.
+                  {t("payCentreDesc")}
                 </>
               }
               onClick={() => setConfirming("center")}
@@ -195,11 +198,10 @@ export function GiftVoucherForm({
             {stripeEnabled && (
               <PaymentMethodOption
                 icon={<CreditCard className="h-5 w-5" />}
-                title="Pagar amb targeta"
+                title={tb("payCard")}
                 description={
                   <>
-                    Paga ara en línia i el val queda bescanviable de seguida.
-                    T&apos;enviem a la pàgina segura de Stripe.
+                    {t("payCardDesc")}
                   </>
                 }
                 onClick={() => setConfirming("card")}
@@ -207,16 +209,18 @@ export function GiftVoucherForm({
             )}
           </div>
 
-          {state.error && <p className="text-sm text-error">{state.error}</p>}
-          {checkoutState.error && (
-            <p className="text-sm text-error">{checkoutState.error}</p>
+          {state.errorCode && (
+            <p className="text-sm text-error">{t(state.errorCode)}</p>
+          )}
+          {checkoutState.errorCode && (
+            <p className="text-sm text-error">{t(checkoutState.errorCode)}</p>
           )}
 
           {selected && (
             <ConfirmDialog
               open={confirming !== null}
               onClose={() => setConfirming(null)}
-              title="Confirmes la compra del val?"
+              title={t("confirmTitle")}
               actions={
                 <>
                   <button
@@ -224,19 +228,19 @@ export function GiftVoucherForm({
                     onClick={() => setConfirming(null)}
                     className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
                   >
-                    Cancel·lar
+                    {tb("cancel")}
                   </button>
                   {confirming === "card" ? (
                     <SubmitButton
                       formAction={checkoutAction}
-                      pendingLabel="Anant a Stripe…"
+                      pendingLabel={tb("goingToStripe")}
                       disabled={!acceptsTerms}
                     >
-                      Pagar amb targeta
+                      {tb("payCard")}
                     </SubmitButton>
                   ) : (
-                    <SubmitButton pendingLabel="Creant el val…" disabled={!acceptsTerms}>
-                      Confirmar
+                    <SubmitButton pendingLabel={t("creating")} disabled={!acceptsTerms}>
+                      {tb("confirm")}
                     </SubmitButton>
                   )}
                 </>
@@ -259,24 +263,19 @@ export function GiftVoucherForm({
                     />
                   </div>
                   <p className="mt-0.5 text-brand-muted">
-                    {SERVICE_LABELS[selected.serviceType]} ·{" "}
-                    {selected.defaultSessions} sessions
+                    {tl(selected.serviceType)} ·{" "}
+                    {tp("sessions", { count: selected.defaultSessions })}
                     {recipientName ? ` · per a ${recipientName}` : ""}
                   </p>
                 </div>
                 <p className="text-brand-charcoal">
                   {confirming === "card" ? (
                     <>
-                      Et portem a la pàgina de pagament de Stripe. El val es
-                      genera quan el pagament es confirmi i ja neix{" "}
-                      <strong>bescanviable</strong>; si no acabes de pagar, no es
-                      crea res.
+                      {t("confirmCardBody")}
                     </>
                   ) : (
                     <>
-                      En confirmar es genera el val amb el seu codi i el podràs
-                      descarregar. <strong>No serà bescanviable</strong> fins que
-                      paguis al centre i s&apos;hi confirmi el cobrament.
+                      {t("confirmCentreBody")}
                     </>
                   )}
                 </p>
@@ -289,13 +288,13 @@ export function GiftVoucherForm({
                     className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
                   />
                   <span>
-                    Accepto les{" "}
+                    {tb("accept")}{" "}
                     <Link
                       href="/legal/avis-legal"
                       target="_blank"
                       className="font-bold text-brand-purple underline hover:text-brand-orange"
                     >
-                      condicions de compra
+                      {tb("acceptLink")}
                     </Link>
                     .
                   </span>
@@ -341,6 +340,7 @@ export function VoucherReady({
   recipientName: string;
   alreadyPaid?: boolean;
 }) {
+  const t = useTranslations("gifts");
   const [sendState, sendAction] = useActionState(
     sendGiftVoucherAction,
     {} as SendState,
@@ -358,20 +358,20 @@ export function VoucherReady({
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
         <AnimatedFeedback type="success" />
         <p className="text-xl font-bold text-success">
-          {alreadyPaid ? "Pagament confirmat" : "El val ja és teu"}
+          {alreadyPaid ? t("readyTitlePaid") : t("readyTitle")}
         </p>
         <p className="max-w-sm text-sm text-brand-muted">
           {recipientName
-            ? `Ja pots donar-li a ${recipientName}.`
-            : "Ja el pots regalar."}{" "}
+            ? t("readyForName", { name: recipientName })
+            : t("readyGeneric")}{" "}
           {alreadyPaid
-            ? "Ja està pagat i és bescanviable des d'ara."
-            : "Recorda que s'activarà quan paguis al centre."}
+            ? t("readyPaid")
+            : t("readyPending")}
         </p>
 
         <div className="mt-2 flex flex-col items-center gap-2">
           <span className="text-xs font-bold tracking-widest text-brand-muted uppercase">
-            Codi del val
+            {t("code")}
           </span>
           <div className="flex items-center gap-3">
             <span className="rounded-lg border-2 border-dashed border-brand-purple/40 bg-brand-purple/5 px-4 py-2 font-mono text-lg font-bold tracking-widest text-brand-purple">
@@ -382,11 +382,11 @@ export function VoucherReady({
               onClick={copy}
               className="rounded-lg border border-brand-border bg-white px-3 py-2 text-xs font-bold text-brand-dark transition-colors hover:border-brand-purple hover:text-brand-purple"
             >
-              {copied ? "Copiat!" : "Copiar"}
+              {copied ? t("copied") : t("copy")}
             </button>
           </div>
           <span className="text-xs text-brand-muted">
-            {voucher.packageName} · vàlid fins al {formatDate(voucher.expiresAt)}
+            {t("validUntil", { package: voucher.packageName, date: formatDate(voucher.expiresAt) })}
           </span>
         </div>
 
@@ -394,7 +394,7 @@ export function VoucherReady({
           href={`/client/regals/${voucher.id}/pdf`}
           className="mt-3 inline-flex items-center gap-2 rounded-lg bg-brand-purple px-4 py-2.5 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
         >
-          Descarregar el val
+          {t("download")}
         </a>
 
         {/*
@@ -403,13 +403,12 @@ export function VoucherReady({
           queda amb la sensació d'haver perdut el que acaba de pagar.
         */}
         <p className="mt-1 text-xs text-brand-muted">
-          Pots tornar a trobar aquest val, amb el seu codi, sempre que vulguis
-          a{" "}
+          {t("findAgainPre")}{" "}
           <Link
             href="/client/regals"
             className="font-bold text-brand-purple underline hover:text-brand-orange"
           >
-            Regala Vindi
+            {t("title")}
           </Link>
           .
         </p>
@@ -417,16 +416,15 @@ export function VoucherReady({
 
       <section className="flex flex-col gap-3 rounded-2xl border border-brand-border bg-white p-5">
         <div>
-          <h2 className="text-sm font-bold text-brand-dark">Enviar-lo per correu</h2>
+          <h2 className="text-sm font-bold text-brand-dark">{t("sendTitle")}</h2>
           <p className="mt-0.5 text-xs text-brand-muted">
-            Li arribarà el codi i com fer-lo servir. Si prefereixes donar-l&apos;hi
-            en persona, descarrega el val i imprimeix-lo.
+            {t("sendHint")}
           </p>
         </div>
 
         {sendState.ok ? (
           <p className="rounded-xl bg-success/10 px-4 py-3 text-sm font-bold text-success">
-            Correu enviat.
+            {t("sent")}
           </p>
         ) : (
           <form action={sendAction} className="flex flex-col gap-3 sm:flex-row">
@@ -436,15 +434,15 @@ export function VoucherReady({
               name="email"
               required
               defaultValue={defaultEmail}
-              placeholder="correu@exemple.com"
+              placeholder={t("sendPlaceholder")}
               className={`${INPUT} sm:flex-1`}
             />
-            <SubmitButton pendingLabel="Enviant…">Enviar</SubmitButton>
+            <SubmitButton pendingLabel={t("sending")}>{t("send")}</SubmitButton>
           </form>
         )}
 
-        {sendState.error && (
-          <p className="text-sm text-error">{sendState.error}</p>
+        {sendState.errorCode && (
+          <p className="text-sm text-error">{t(sendState.errorCode)}</p>
         )}
       </section>
 
@@ -452,7 +450,7 @@ export function VoucherReady({
         href="/client/bonos/meus"
         className="self-start text-sm font-bold text-brand-purple hover:text-brand-orange"
       >
-        ← Tornar als meus bons
+        {t("backToBonos")}
       </Link>
     </div>
   );

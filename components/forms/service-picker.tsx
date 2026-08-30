@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { formatEur, SERVICE_LABELS } from "@/lib/labels";
+import { useTranslations } from "next-intl";
+import { formatEur } from "@/lib/labels";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import { PriceDisplay } from "@/components/ui/price-display";
 import type { Service } from "@/lib/data/services";
@@ -125,7 +126,7 @@ export function ServiceTypeStep({
   effectivePrices,
   onSelect,
   palette,
-  intro = "Tria el tipus de servei per al qual vols comprar un bo.",
+  intro,
 }: {
   services: Service[];
   effectivePrices: Record<string, EffectivePrice>;
@@ -148,6 +149,9 @@ export function ServiceTypeStep({
       hasDiscount: pkgs.some((p) => effectivePrices[p.id]?.hasDiscount),
     }));
   }, [services, effectivePrices]);
+
+  const t = useTranslations("picker");
+  const tl = useTranslations("labels.service");
 
   return (
     <div className="flex flex-col gap-4">
@@ -191,10 +195,10 @@ export function ServiceTypeStep({
                   className="font-bold leading-tight"
                   style={{ color }}
                 >
-                  {SERVICE_LABELS[type]}
+                  {tl(type)}
                 </p>
                 <p className="mt-0.5 text-xs text-brand-muted">
-                  Des de{" "}
+                  {t("from")}{" "}
                   <span className={hasDiscount ? "font-bold text-brand-orange" : ""}>
                     {formatEur(minPrice)}
                   </span>
@@ -254,6 +258,8 @@ export function PackageStep({
     }).id;
   }, [pkgs, effectivePrices]);
 
+  const t = useTranslations("picker");
+  const tl = useTranslations("labels.service");
   const color = colorOfService(palette, serviceType);
 
   return (
@@ -270,7 +276,7 @@ export function PackageStep({
             clipRule="evenodd"
           />
         </svg>
-        Canviar servei
+        {t("changeService")}
       </button>
 
       <div className="flex items-center gap-2">
@@ -281,7 +287,7 @@ export function PackageStep({
           {SERVICE_ICONS[serviceType]?.(color)}
         </div>
         <h2 className="font-bold" style={{ color }}>
-          {SERVICE_LABELS[serviceType]}
+          {tl(serviceType)}
         </h2>
       </div>
 
@@ -313,15 +319,14 @@ export function PackageStep({
                   className="absolute -top-2.5 right-3 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase"
                   style={{ backgroundColor: color }}
                 >
-                  Millor preu
+                  {t("bestPrice")}
                 </span>
               )}
 
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-brand-dark">{pkg.name}</p>
                 <p className="mt-0.5 text-xs text-brand-muted">
-                  {pkg.defaultSessions} session
-                  {pkg.defaultSessions !== 1 ? "s" : ""}
+                  {t("sessions", { count: pkg.defaultSessions })}
                 </p>
               </div>
 
