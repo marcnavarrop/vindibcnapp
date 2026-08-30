@@ -21,24 +21,9 @@ import { DEFAULT_LOCALE, intlLocale, type Locale } from "@/lib/i18n/config";
  */
 const MESSAGES = { ca, es, en } as const;
 
-/**
- * Mentre les plantilles segueixin escrites en català, TOTS els correus surten
- * en català.
- *
- * La fontaneria ja sap l'idioma de cada destinatari, però el text encara no
- * està traduït. Sense aquest interruptor, un client amb el castellà triat
- * rebria avui un correu en català amb les dates en castellà: pitjor que ara.
- *
- * El bloc 2 esborra aquesta constant i la línia que la mira. Fins llavors,
- * aquest fitxer no canvia ni un correu —que és justament el que s'havia de
- * poder demostrar—.
- */
-const TEMPLATES_TRANSLATED = false;
-
 /** Sense idioma, català. És el que fa que admin, professional, el visitant de
  *  /prova i l'avís al desenvolupador segueixin igual sense tocar-los. */
 export function emailLocale(locale?: Locale | null): Locale {
-  if (!TEMPLATES_TRANSLATED) return DEFAULT_LOCALE;
   return locale ?? DEFAULT_LOCALE;
 }
 
@@ -62,12 +47,17 @@ export function emailI18n(locale?: Locale | null) {
     /**
      * Traductor d'un espai de noms concret.
      *
-     * El `as never` és perquè next-intl tipa el nom de l'espai contra l'arbre
-     * del diccionari i aquí arriba com a cadena. Les claus es comproven igual
-     * amb `npm run i18n:check`, que és qui de debò les vigila.
+     * El tipus és a posta més ample que el de next-intl: allà l'espai de noms
+     * es comprova contra l'arbre del diccionari, i aquí arriba com a cadena.
+     * Qui vigila de debò que les claus existeixin —i que hi siguin als tres
+     * idiomes— és `npm run i18n:check`, que entén aquesta forma.
      */
-    ns: (namespace: string) =>
-      createTranslator({ locale: l, messages, namespace: namespace as never }),
+    ns: (namespace: string): EmailTranslator =>
+      createTranslator({
+        locale: l,
+        messages,
+        namespace: namespace as never,
+      }) as unknown as EmailTranslator,
 
     /** "dilluns, 15 de març, a les 10:00" — el format llarg dels correus. */
     dateTime: (iso: string) =>
@@ -111,6 +101,12 @@ export function emailI18n(locale?: Locale | null) {
       ),
   };
 }
+
+/** Un traductor de correu: clau i, si cal, els seus paràmetres. */
+export type EmailTranslator = (
+  key: string,
+  values?: Record<string, string | number | Date>,
+) => string;
 
 export type EmailI18n = ReturnType<typeof emailI18n>;
 

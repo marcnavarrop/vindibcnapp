@@ -1,5 +1,8 @@
 import "server-only";
-import type { NotificationEvent } from "@/lib/notifications/types";
+import type {
+  NotificationEvent,
+  NotificationEventType,
+} from "@/lib/notifications/types";
 import { emailI18n, type EmailI18n } from "@/lib/notifications/i18n";
 import type { Locale } from "@/lib/i18n/config";
 import {
@@ -62,20 +65,14 @@ function ctaButton(cta: Cta): string {
   </table>`;
 }
 
-/*
- * `footer` i `plain` encara no reben l'idioma: el seu text és tot català
- * cablejat i un paràmetre que no es fa servir és codi mort. El bloc 2, que és
- * qui el traduirà, els el passarà. `layout` sí que el rep ja, perquè el
- * `lang` de l'HTML depèn de l'idioma des d'avui.
- */
-function footer(kind: FooterKind): string {
+function footer(kind: FooterKind, i: EmailI18n): string {
+  const f = i.ns("emails.footer");
   const privacy = appLink("/legal/privacitat");
   let prefsLine = "";
-  if (kind === "client")
-    prefsLine = `Pots gestionar els teus avisos des de la teva àrea de client, a <a href="${appLink(
-      "/client/configuracio",
-    )}" style="color:${BRAND.purple};text-decoration:underline;">Configuració</a>.`;
-  else if (kind === "trainer")
+  if (kind === "client") {
+    const link = `<a href="${appLink("/client/configuracio")}" style="color:${BRAND.purple};text-decoration:underline;">${f("settings")}</a>`;
+    prefsLine = f("clientPrefs", { link });
+  } else if (kind === "trainer")
     prefsLine = `Pots gestionar els teus avisos des de la teva àrea, a <a href="${appLink(
       "/trainer/configuracio",
     )}" style="color:${BRAND.purple};text-decoration:underline;">Configuració</a>.`;
@@ -89,10 +86,10 @@ function footer(kind: FooterKind): string {
 
   return `<tr><td style="padding:20px 32px 28px;border-top:1px solid ${BRAND.border};">
     <p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:${BRAND.muted};">
-      <strong style="color:${BRAND.charcoal};">${CENTER_NAME}</strong> · Centre d'entrenament personal i fisioteràpia
+      <strong style="color:${BRAND.charcoal};">${CENTER_NAME}</strong> · ${f("tagline")}
     </p>
     <p style="margin:0;font-size:12px;line-height:1.5;color:${BRAND.muted};">
-      ${prefsLine ? `${prefsLine}&nbsp;·&nbsp;` : ""}<a href="${privacy}" style="color:${BRAND.muted};text-decoration:underline;">Política de Privacitat</a>
+      ${prefsLine ? `${prefsLine}&nbsp;·&nbsp;` : ""}<a href="${privacy}" style="color:${BRAND.muted};text-decoration:underline;">${f("privacy")}</a>
     </p>
   </td></tr>`;
 }
@@ -135,7 +132,7 @@ function layout(block: Block, i: EmailI18n): string {
           ${brandHeader()}
         </td></tr>
         <tr><td style="padding:30px 32px 8px;">${bodyParts.join("")}</td></tr>
-        ${footer(block.footer)}
+        ${footer(block.footer, i)}
       </table>
     </td></tr>
   </table>
@@ -143,7 +140,7 @@ function layout(block: Block, i: EmailI18n): string {
 }
 
 /** Versió text pla a partir dels mateixos continguts (entregabilitat + fallback). */
-function plain(block: Block): string {
+function plain(block: Block, i: EmailI18n): string {
   const lines: string[] = [block.heading, ""];
   lines.push(...block.intro);
   if (block.details && block.details.length) {
@@ -158,12 +155,13 @@ function plain(block: Block): string {
     lines.push("");
     lines.push(...block.outro);
   }
-  lines.push("", "—", `${CENTER_NAME} · Centre d'entrenament personal i fisioteràpia`);
+  const f = i.ns("emails.footer");
+  lines.push("", "—", `${CENTER_NAME} · ${f("tagline")}`);
   if (block.footer === "client")
-    lines.push(`Gestiona els teus avisos: ${appLink("/client/configuracio")}`);
+    lines.push(f("managePlain", { url: appLink("/client/configuracio") }));
   else if (block.footer === "trainer")
     lines.push(`Gestiona els teus avisos: ${appLink("/trainer/configuracio")}`);
-  lines.push(`Política de Privacitat: ${appLink("/legal/privacitat")}`);
+  lines.push(f("privacyPlain", { url: appLink("/legal/privacitat") }));
   return lines.join("\n");
 }
 
@@ -193,7 +191,7 @@ export function renderInviteEmail(input: {
   return {
     subject: "Benvingut/da a VindiBCN — crea la teva contrasenya",
     html: layout(block, i),
-    text: plain(block),
+    text: plain(block, i),
   };
 }
 
@@ -219,7 +217,7 @@ export function renderRecoveryEmail(input: {
   return {
     subject: "Restablir la teva contrasenya — VindiBCN",
     html: layout(block, i),
-    text: plain(block),
+    text: plain(block, i),
   };
 }
 
@@ -245,18 +243,44 @@ export function renderWelcomeEmail(input: {
   return {
     subject: "Benvingut/da a VindiBCN!",
     html: layout(block, i),
-    text: plain(block),
+    text: plain(block, i),
   };
 }
+
+/**
+ * Les plantilles que ja estan traduïdes.
+ *
+ * Substitueix l'interruptor global del bloc 1, que era una mentida còmoda:
+ * deia "cap correu està traduït" quan la veritat és per plantilla. Les que no
+ * hi són s'escriuen en CATALÀ encara que qui les rebi tingui un altre idioma
+ * triat —i, sobretot, també les seves dates—, perquè un correu amb el text en
+ * català i les dates en castellà és pitjor que un correu tot en català.
+ *
+ * El bloc 3 hi afegeix les que falten i llavors aquesta llista sobra: si hi
+ * són totes, es pot esborrar i passar l'idioma sempre.
+ */
+const TRANSLATED: ReadonlySet<NotificationEventType> = new Set([
+  "reservation_confirmed",
+  "reservation_cancelled",
+  "session_reminder",
+  "bono_low",
+  "bono_expiring_soon",
+  "bono_unpaid_cancelled",
+  "waitlist_fulfilled",
+]);
 
 export function renderEmail(event: NotificationEvent): RenderedEmail {
   // L'idioma surt del DESTINATARI, no de qui envia. Un mateix esdeveniment
   // —les novetats de la comunitat— arriba a clients i professionals dins del
   // mateix bucle, i cadascú l'ha de rebre en el seu.
-  const i = emailI18n(event.recipient.locale);
+  const i = emailI18n(
+    TRANSLATED.has(event.type) ? event.recipient.locale : null,
+  );
   const d = event.data;
+  const te = i.ns("emails");
+  const tl = i.ns("emails.labels");
   const name = d.name?.trim() ? d.name.trim() : null;
-  const hola = name ? `Hola ${name},` : "Hola,";
+  const hola = name ? te("greeting", { name }) : te("greetingPlain");
 
   /*
    * La data i el servei es formaten AQUÍ, no a qui crida `notify()`.
@@ -276,50 +300,51 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
 
   switch (event.type) {
     case "reservation_confirmed": {
-      subject = "Reserva confirmada · VindiBCN";
+      const t = i.ns("emails.reservationConfirmed");
+      subject = t("subject");
       block = {
-        heading: "La teva reserva està confirmada",
-        intro: [hola, "Hem registrat la teva sessió. Aquí tens els detalls:"],
+        heading: t("heading"),
+        intro: [hola, t("intro")],
         details: rows([
-          ["Data i hora", when],
-          ["Servei", service],
-          ["Professional", d.trainer],
+          [tl("when"), when],
+          [tl("service"), service],
+          [tl("trainer"), d.trainer],
         ]),
-        cta: { label: "Veure la meva reserva", url: appLink("/client/reservas") },
-        outro: ["Ens veiem aviat! Si necessites canviar-la, pots fer-ho des de la teva àrea."],
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
         footer: "client",
       };
       break;
     }
     case "reservation_cancelled": {
-      subject = "Reserva cancel·lada · VindiBCN";
+      const t = i.ns("emails.reservationCancelled");
+      subject = t("subject");
       block = {
-        heading: "S'ha cancel·lat una reserva",
-        intro: [hola, "T'informem que aquesta sessió ha quedat anul·lada:"],
+        heading: t("heading"),
+        intro: [hola, t("intro")],
         details: rows([
-          ["Data i hora", when],
-          ["Servei", service],
+          [tl("when"), when],
+          [tl("service"), service],
         ]),
-        cta: { label: "Reservar una altra sessió", url: appLink("/client/reservas") },
-        outro: ["Si ha estat un error, contacta amb el centre o torna a reservar quan vulguis."],
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
         footer: "client",
       };
       break;
     }
     case "session_reminder": {
-      subject = "Recordatori: tens sessió demà · VindiBCN";
+      const t = i.ns("emails.sessionReminder");
+      subject = t("subject");
       block = {
-        heading: "Tens una sessió demà",
-        intro: [hola, "Et recordem la teva propera sessió:"],
+        heading: t("heading"),
+        intro: [hola, t("intro")],
         details: rows([
-          ["Data i hora", when],
-          ["Servei", service],
-          ["Professional", d.trainer],
+          [tl("when"), when],
+          [tl("service"), service],
+          [tl("trainer"), d.trainer],
         ]),
-        cta: { label: "Veure la meva reserva", url: appLink("/client/reservas") },
-        outro: [
-          "Si no hi pots assistir, cancel·la-la com abans millor des de la teva àrea perquè una altra persona la pugui aprofitar.",
-        ],
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
         footer: "client",
       };
       break;
@@ -377,55 +402,46 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       break;
     }
     case "bono_low": {
-      subject = "Et queda 1 sessió al bo · VindiBCN";
+      const t = i.ns("emails.bonoLow");
+      subject = t("subject");
       block = {
-        heading: "El teu bo s'està acabant",
-        intro: [
-          hola,
-          `Et queda només 1 sessió al teu bo de ${service ?? ""}.`,
-        ],
-        cta: { label: "Renovar el meu bo", url: appLink("/client/bonos") },
-        outro: ["Renova'l quan vulguis per no quedar-te sense sessions."],
+        heading: t("heading"),
+        intro: [hola, t("intro", { service: service ?? "" })],
+        cta: { label: t("cta"), url: appLink("/client/bonos") },
+        outro: [t("outro")],
         footer: "client",
       };
       break;
     }
     case "bono_expiring_soon": {
-      subject = "El teu bo caduca aviat · VindiBCN";
+      const t = i.ns("emails.bonoExpiringSoon");
+      subject = t("subject");
       block = {
-        heading: "El teu bo està a punt de caducar",
-        intro: [
-          hola,
-          `Encara et queden sessions per fer i el bo caduca el ${expires ?? ""}. Si el vols aprofitar, reserva-les abans.`,
-        ],
+        heading: t("heading"),
+        intro: [hola, t("intro", { date: expires ?? "" })],
         details: rows([
-          ["Servei", service],
-          ["Sessions sense fer", d.remaining],
-          ["Caduca el", expires],
+          [tl("service"), service],
+          [tl("remaining"), d.remaining],
+          [tl("expiresOn"), expires],
         ]),
-        cta: { label: "Reservar una sessió", url: appLink("/client/reservas") },
-        outro: ["Si no hi arribes a temps, parla amb el centre i ho mirem."],
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
         footer: "client",
       };
       break;
     }
     case "bono_unpaid_cancelled": {
-      subject = "El teu bo ha quedat anul·lat · VindiBCN";
+      const t = i.ns("emails.bonoUnpaidCancelled");
+      subject = t("subject");
       block = {
-        heading: "No hem pogut confirmar el pagament del teu bo",
-        intro: [
-          hola,
-          "El teu bo estava pendent de pagar al centre i no ens consta que s'hagi cobrat dins del termini, així que ha quedat anul·lat.",
-          "Això vol dir que les sessions que hi tenies reservades s'han cancel·lat i les franges han tornat a quedar lliures.",
-        ],
+        heading: t("heading"),
+        intro: [hola, t("intro1"), t("intro2")],
         details: rows([
-          ["Servei", service],
-          ["Sessions cancel·lades", d.cancelled],
+          [tl("service"), service],
+          [tl("cancelled"), d.cancelled],
         ]),
-        cta: { label: "Tornar a comprar el bo", url: appLink("/client/bonos") },
-        outro: [
-          "Si ja l'havies pagat o creus que hi ha hagut un error, parla amb el centre i ho arreglem de seguida: no cal que tornis a pagar res.",
-        ],
+        cta: { label: t("cta"), url: appLink("/client/bonos") },
+        outro: [t("outro")],
         footer: "client",
       };
       break;
@@ -566,22 +582,18 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       break;
     }
     case "waitlist_fulfilled": {
-      subject = "Tens plaça! · VindiBCN";
+      const t = i.ns("emails.waitlistFulfilled");
+      subject = t("subject");
       block = {
-        heading: "S'ha alliberat la plaça que esperaves",
-        intro: [
-          hola,
-          "Algú ha cancel·lat i t'hem confirmat la sessió automàticament. Ja la tens a la teva agenda:",
-        ],
+        heading: t("heading"),
+        intro: [hola, t("intro")],
         details: rows([
-          ["Data i hora", when],
-          ["Servei", service],
-          ["Professional", d.trainer],
+          [tl("when"), when],
+          [tl("service"), service],
+          [tl("trainer"), d.trainer],
         ]),
-        cta: { label: "Veure la meva reserva", url: appLink("/client/reservas") },
-        outro: [
-          "Si al final no hi pots anar, cancel·la-la com abans millor perquè una altra persona la pugui aprofitar.",
-        ],
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
         footer: "client",
       };
       break;
@@ -658,7 +670,7 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
     }
   }
 
-  return { subject, html: layout(block, i), text: plain(block) };
+  return { subject, html: layout(block, i), text: plain(block, i) };
 }
 
 /** Construeix files de detall, ometent les que no tinguin valor. */

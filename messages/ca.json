@@ -758,5 +758,75 @@
       "play": "Reproduir el vídeo",
       "retry": "Reintentar carregar el vídeo"
     }
+  },
+  "emails": {
+    "greeting": "Hola {name},",
+    "greetingPlain": "Hola,",
+    "labels": {
+      "when": "Data i hora",
+      "service": "Servei",
+      "trainer": "Professional",
+      "remaining": "Sessions sense fer",
+      "expiresOn": "Caduca el",
+      "cancelled": "Sessions cancel·lades"
+    },
+    "footer": {
+      "tagline": "Centre d'entrenament personal i fisioteràpia",
+      "clientPrefs": "Pots gestionar els teus avisos des de la teva àrea de client, a {link}.",
+      "settings": "Configuració",
+      "privacy": "Política de Privacitat",
+      "managePlain": "Gestiona els teus avisos: {url}",
+      "privacyPlain": "Política de Privacitat: {url}"
+    },
+    "reservationConfirmed": {
+      "subject": "Reserva confirmada · VindiBCN",
+      "heading": "La teva reserva està confirmada",
+      "intro": "Hem registrat la teva sessió. Aquí tens els detalls:",
+      "cta": "Veure la meva reserva",
+      "outro": "Ens veiem aviat! Si necessites canviar-la, pots fer-ho des de la teva àrea."
+    },
+    "reservationCancelled": {
+      "subject": "Reserva cancel·lada · VindiBCN",
+      "heading": "S'ha cancel·lat una reserva",
+      "intro": "T'informem que aquesta sessió ha quedat anul·lada:",
+      "cta": "Reservar una altra sessió",
+      "outro": "Si ha estat un error, contacta amb el centre o torna a reservar quan vulguis."
+    },
+    "sessionReminder": {
+      "subject": "Recordatori: tens sessió demà · VindiBCN",
+      "heading": "Tens una sessió demà",
+      "intro": "Et recordem la teva propera sessió:",
+      "cta": "Veure la meva reserva",
+      "outro": "Si no hi pots assistir, cancel·la-la com abans millor des de la teva àrea perquè una altra persona la pugui aprofitar."
+    },
+    "bonoLow": {
+      "subject": "Et queda 1 sessió al bo · VindiBCN",
+      "heading": "El teu bo s'està acabant",
+      "intro": "Et queda només 1 sessió al teu bo de {service}.",
+      "cta": "Renovar el meu bo",
+      "outro": "Renova'l quan vulguis per no quedar-te sense sessions."
+    },
+    "bonoExpiringSoon": {
+      "subject": "El teu bo caduca aviat · VindiBCN",
+      "heading": "El teu bo està a punt de caducar",
+      "intro": "Encara et queden sessions per fer i el bo caduca el {date}. Si el vols aprofitar, reserva-les abans.",
+      "cta": "Reservar una sessió",
+      "outro": "Si no hi arribes a temps, parla amb el centre i ho mirem."
+    },
+    "bonoUnpaidCancelled": {
+      "subject": "El teu bo ha quedat anul·lat · VindiBCN",
+      "heading": "No hem pogut confirmar el pagament del teu bo",
+      "intro1": "El teu bo estava pendent de pagar al centre i no ens consta que s'hagi cobrat dins del termini, així que ha quedat anul·lat.",
+      "intro2": "Això vol dir que les sessions que hi tenies reservades s'han cancel·lat i les franges han tornat a quedar lliures.",
+      "cta": "Tornar a comprar el bo",
+      "outro": "Si ja l'havies pagat o creus que hi ha hagut un error, parla amb el centre i ho arreglem de seguida: no cal que tornis a pagar res."
+    },
+    "waitlistFulfilled": {
+      "subject": "Tens plaça! · VindiBCN",
+      "heading": "S'ha alliberat la plaça que esperaves",
+      "intro": "Algú ha cancel·lat i t'hem confirmat la sessió automàticament. Ja la tens a la teva agenda:",
+      "cta": "Veure la meva reserva",
+      "outro": "Si al final no hi pots anar, cancel·la-la com abans millor perquè una altra persona la pugui aprofitar."
+    }
   }
 }

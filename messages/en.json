@@ -758,5 +758,75 @@
       "play": "Play the video",
       "retry": "Try loading the video again"
     }
+  },
+  "emails": {
+    "greeting": "Hi {name},",
+    "greetingPlain": "Hi,",
+    "labels": {
+      "when": "Date and time",
+      "service": "Service",
+      "trainer": "Professional",
+      "remaining": "Unused sessions",
+      "expiresOn": "Expires on",
+      "cancelled": "Cancelled sessions"
+    },
+    "footer": {
+      "tagline": "Personal training and physiotherapy centre",
+      "clientPrefs": "You can manage your alerts from your client area, under {link}.",
+      "settings": "Settings",
+      "privacy": "Privacy Policy",
+      "managePlain": "Manage your alerts: {url}",
+      "privacyPlain": "Privacy Policy: {url}"
+    },
+    "reservationConfirmed": {
+      "subject": "Booking confirmed · VindiBCN",
+      "heading": "Your booking is confirmed",
+      "intro": "We've saved your session. Here are the details:",
+      "cta": "View my booking",
+      "outro": "See you soon! If you need to change it, you can do so from your area."
+    },
+    "reservationCancelled": {
+      "subject": "Booking cancelled · VindiBCN",
+      "heading": "A booking has been cancelled",
+      "intro": "We're letting you know this session has been cancelled:",
+      "cta": "Book another session",
+      "outro": "If this was a mistake, get in touch with the centre or book again whenever you like."
+    },
+    "sessionReminder": {
+      "subject": "Reminder: you have a session tomorrow · VindiBCN",
+      "heading": "You have a session tomorrow",
+      "intro": "Here's a reminder of your next session:",
+      "cta": "View my booking",
+      "outro": "If you can't make it, cancel as early as you can from your area so someone else can take the slot."
+    },
+    "bonoLow": {
+      "subject": "1 session left on your package · VindiBCN",
+      "heading": "Your package is running out",
+      "intro": "You have just 1 session left on your {service} package.",
+      "cta": "Renew my package",
+      "outro": "Renew it whenever you like so you don't run out of sessions."
+    },
+    "bonoExpiringSoon": {
+      "subject": "Your package expires soon · VindiBCN",
+      "heading": "Your package is about to expire",
+      "intro": "You still have sessions to use and the package expires on {date}. If you want to use them, book them before then.",
+      "cta": "Book a session",
+      "outro": "If you can't make it in time, talk to the centre and we'll sort it out."
+    },
+    "bonoUnpaidCancelled": {
+      "subject": "Your package has been cancelled · VindiBCN",
+      "heading": "We couldn't confirm payment for your package",
+      "intro1": "Your package was awaiting payment at the centre and we have no record of it being paid within the deadline, so it has been cancelled.",
+      "intro2": "That means the sessions you had booked with it have been cancelled and those slots are free again.",
+      "cta": "Buy the package again",
+      "outro": "If you had already paid or you think there's been a mistake, talk to the centre and we'll fix it straight away: you won't have to pay again."
+    },
+    "waitlistFulfilled": {
+      "subject": "You have a place! · VindiBCN",
+      "heading": "The place you were waiting for is yours",
+      "intro": "Someone cancelled and we've confirmed the session for you automatically. It's already in your schedule:",
+      "cta": "View my booking",
+      "outro": "If you can't make it after all, cancel it as early as you can so someone else can take the slot."
+    }
   }
 }

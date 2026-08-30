@@ -32,6 +32,13 @@ function walk(dir, out = []) {
 const BIND =
   /(?:const|let)\s+(?:(\w+)|\[([^\]]+)\])\s*=\s*(?:await\s+)?(?:Promise\.all\(\[([\s\S]*?)\]\)|(?:use|get)Translations\(\s*"([^"]+)"\s*\))/g;
 
+/**
+ * Els correus no fan servir `useTranslations`: no es renderitzen dins de cap
+ * petició. Van per `i.ns("emails.…")`, de lib/notifications/i18n.ts. Sense
+ * aquesta segona forma, les claus dels correus no les comprovaria ningú.
+ */
+const BIND_NS = /(?:const|let)\s+(\w+)\s*=\s*\w+\.ns\(\s*"([^"]+)"\s*\)/g;
+
 const missing = [];
 let used = 0;
 
@@ -50,6 +57,9 @@ for (const file of walk(".")) {
       names.forEach((n, i) => nss[i] && binds.push({ name: n, ns: nss[i], at: m.index }));
     }
   }
+  for (const m of src.matchAll(BIND_NS))
+    binds.push({ name: m[1], ns: m[2], at: m.index });
+
   if (!binds.length) continue;
 
   // `t("x")` però també `t.rich("x")` i `t.raw("x")`: el grup opcional es prova

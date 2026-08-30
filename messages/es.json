@@ -758,5 +758,75 @@
       "play": "Reproducir el vídeo",
       "retry": "Reintentar cargar el vídeo"
     }
+  },
+  "emails": {
+    "greeting": "Hola {name},",
+    "greetingPlain": "Hola,",
+    "labels": {
+      "when": "Fecha y hora",
+      "service": "Servicio",
+      "trainer": "Profesional",
+      "remaining": "Sesiones sin hacer",
+      "expiresOn": "Caduca el",
+      "cancelled": "Sesiones canceladas"
+    },
+    "footer": {
+      "tagline": "Centro de entrenamiento personal y fisioterapia",
+      "clientPrefs": "Puedes gestionar tus avisos desde tu área de cliente, en {link}.",
+      "settings": "Configuración",
+      "privacy": "Política de Privacidad",
+      "managePlain": "Gestiona tus avisos: {url}",
+      "privacyPlain": "Política de Privacidad: {url}"
+    },
+    "reservationConfirmed": {
+      "subject": "Reserva confirmada · VindiBCN",
+      "heading": "Tu reserva está confirmada",
+      "intro": "Hemos registrado tu sesión. Aquí tienes los detalles:",
+      "cta": "Ver mi reserva",
+      "outro": "¡Nos vemos pronto! Si necesitas cambiarla, puedes hacerlo desde tu área."
+    },
+    "reservationCancelled": {
+      "subject": "Reserva cancelada · VindiBCN",
+      "heading": "Se ha cancelado una reserva",
+      "intro": "Te informamos de que esta sesión ha quedado anulada:",
+      "cta": "Reservar otra sesión",
+      "outro": "Si ha sido un error, contacta con el centro o vuelve a reservar cuando quieras."
+    },
+    "sessionReminder": {
+      "subject": "Recordatorio: tienes sesión mañana · VindiBCN",
+      "heading": "Tienes una sesión mañana",
+      "intro": "Te recordamos tu próxima sesión:",
+      "cta": "Ver mi reserva",
+      "outro": "Si no puedes asistir, cancélala cuanto antes desde tu área para que otra persona la pueda aprovechar."
+    },
+    "bonoLow": {
+      "subject": "Te queda 1 sesión en el bono · VindiBCN",
+      "heading": "Tu bono se está acabando",
+      "intro": "Te queda solo 1 sesión en tu bono de {service}.",
+      "cta": "Renovar mi bono",
+      "outro": "Renuévalo cuando quieras para no quedarte sin sesiones."
+    },
+    "bonoExpiringSoon": {
+      "subject": "Tu bono caduca pronto · VindiBCN",
+      "heading": "Tu bono está a punto de caducar",
+      "intro": "Todavía te quedan sesiones por hacer y el bono caduca el {date}. Si lo quieres aprovechar, resérvalas antes.",
+      "cta": "Reservar una sesión",
+      "outro": "Si no llegas a tiempo, habla con el centro y lo miramos."
+    },
+    "bonoUnpaidCancelled": {
+      "subject": "Tu bono ha quedado anulado · VindiBCN",
+      "heading": "No hemos podido confirmar el pago de tu bono",
+      "intro1": "Tu bono estaba pendiente de pagar en el centro y no nos consta que se haya cobrado dentro del plazo, así que ha quedado anulado.",
+      "intro2": "Esto significa que las sesiones que tenías reservadas se han cancelado y las franjas han vuelto a quedar libres.",
+      "cta": "Volver a comprar el bono",
+      "outro": "Si ya lo habías pagado o crees que ha habido un error, habla con el centro y lo arreglamos enseguida: no hace falta que vuelvas a pagar nada."
+    },
+    "waitlistFulfilled": {
+      "subject": "¡Tienes plaza! · VindiBCN",
+      "heading": "Se ha liberado la plaza que esperabas",
+      "intro": "Alguien ha cancelado y te hemos confirmado la sesión automáticamente. Ya la tienes en tu agenda:",
+      "cta": "Ver mi reserva",
+      "outro": "Si al final no puedes ir, cancélala cuanto antes para que otra persona la pueda aprovechar."
+    }
   }
 }
