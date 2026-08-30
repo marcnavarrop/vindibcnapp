@@ -538,7 +538,7 @@ export function ClientCenterCalendar({
             ›
           </NavBtn>
         </div>
-        <span className="text-sm font-bold text-brand-dark capitalize">
+        <span className="text-sm font-bold text-brand-dark first-letter:uppercase">
           {periodLabel}
         </span>
       </div>
@@ -678,7 +678,8 @@ export function ClientCenterCalendar({
                               )}
                             >
                               <span className="block" style={{ color: oc.text }}>
-                                Grup · {it.count}/{GROUP_CAPACITY}
+                                {tb("grupo_reducido")} · {it.count}/
+                                {GROUP_CAPACITY}
                               </span>
                               <span
                                 className="block font-normal"
@@ -873,14 +874,14 @@ function WaitlistModal({
           <p className="text-sm text-brand-muted">
             {t("waitlist.joinedBody")}
           </p>
-          <p className="text-sm font-bold text-brand-dark capitalize">{when}</p>
+          <p className="text-sm font-bold text-brand-dark first-letter:uppercase">{when}</p>
         </div>
         <button
           type="button"
           onClick={onDone}
           className="mt-5 w-full rounded-lg bg-brand-purple px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light"
         >
-          Tancar
+          {t("close")}
         </button>
       </Overlay>
     );
@@ -894,7 +895,7 @@ function WaitlistModal({
             {t("waitlist.leftTitle")}
           </h2>
           <p className="text-sm text-brand-muted">
-            No t&apos;avisarem si s&apos;allibera una plaça d&apos;aquesta sessió.
+            {t("waitlist.leftBody")}
           </p>
         </div>
         <button
@@ -902,7 +903,7 @@ function WaitlistModal({
           onClick={onDone}
           className="mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20"
         >
-          Tancar
+          {t("close")}
         </button>
       </Overlay>
     );
@@ -912,7 +913,7 @@ function WaitlistModal({
       <h2 className="text-lg font-bold text-brand-dark">
         {entryId ? t("waitlist.onListTitle") : t("waitlist.fullTitle")}
       </h2>
-      <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
+      <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
         <Field label={t("service")} value={tl("grupo_reducido")} />
         <Field label={t("professional")} value={firstName(trainerNameFull)} />
@@ -963,7 +964,7 @@ function WaitlistModal({
         onClick={onClose}
         className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
       >
-        Tancar
+        {t("close")}
       </button>
     </Overlay>
   );
@@ -1045,7 +1046,7 @@ function CreateModal({
           <h2 className="text-xl font-bold text-brand-dark">
             {t("book.confirmed")}
           </h2>
-          <p className="text-sm text-brand-muted capitalize">{when}</p>
+          <p className="text-sm text-brand-muted first-letter:uppercase">{when}</p>
         </div>
         <dl className="mt-4 flex flex-col gap-2 text-sm">
           <Field label={t("service")} value={tl(service)} />
@@ -1063,7 +1064,7 @@ function CreateModal({
             onClick={onDone}
             className="text-sm font-bold text-brand-muted hover:text-brand-dark"
           >
-            Tancar
+            {t("close")}
           </button>
         </div>
       </Overlay>
@@ -1073,7 +1074,7 @@ function CreateModal({
   return (
     <Overlay onClose={onClose}>
       <h2 className="text-lg font-bold text-brand-dark">{t("book.confirmTitle")}</h2>
-      <p className="mt-1 text-sm text-brand-muted capitalize">{when}</p>
+      <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
         <Field label={t("service")} value={tl(service)} />
         <Field label={t("professional")} value={trainerName} />
@@ -1205,7 +1206,7 @@ function OwnModal({
           onClick={close}
           className="mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20"
         >
-          Tancar
+          {t("close")}
         </button>
       </Overlay>
     );
@@ -1311,7 +1312,7 @@ function OwnModal({
         onClick={onClose}
         className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
       >
-        Tancar
+        {t("close")}
       </button>
     </Overlay>
   );

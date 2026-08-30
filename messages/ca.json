@@ -343,6 +343,7 @@
       "joinedTitle": "T'hem apuntat a la llista d'espera",
       "joinedBody": "Et notificarem si s'allibera una plaça. Si arriba, la reserva es fa sola i et descomptem la sessió del bo.",
       "leftTitle": "Ja no ets a la llista",
+      "leftBody": "No t'avisarem si s'allibera una plaça d'aquesta sessió.",
       "onListTitle": "Ets a la llista d'espera",
       "fullTitle": "Sessió completa",
       "onListBody": "Si algú cancel·la, la plaça passa a ser teva automàticament i t'avisem. No cal que estiguis pendent.",
