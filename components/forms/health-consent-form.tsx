@@ -2,12 +2,16 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { PendingSubmit } from "@/components/ui/pending-submit";
 import {
   grantHealthConsentAction,
   type FormState,
 } from "@/app/(client)/client/configuracio/consent-actions";
 
 export function HealthConsentForm() {
+  const t = useTranslations("config.privacy");
+  const te = useTranslations("config.privacy.errors");
   const [state, formAction] = useActionState(
     grantHealthConsentAction,
     {} as FormState,
@@ -16,7 +20,7 @@ export function HealthConsentForm() {
   if (state.ok) {
     return (
       <p className="text-sm font-bold text-success">
-        Consentiment de dades de salut registrat. Gràcies.
+        {t("ok")}
       </p>
     );
   }
@@ -30,26 +34,29 @@ export function HealthConsentForm() {
           className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
         />
         <span>
-          Accepto el tractament de les meves dades de salut per al seguiment de
-          fisioteràpia, d&apos;acord amb la{" "}
-          <Link
-            href="/legal/privacitat"
-            target="_blank"
-            className="font-bold text-brand-purple hover:text-brand-orange"
-          >
-            Política de Privacitat
-          </Link>
-          .
+          {t.rich("consent", {
+            link: (chunks) => (
+              <Link
+                href="/legal/privacitat"
+                target="_blank"
+                className="font-bold text-brand-purple hover:text-brand-orange"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
         </span>
       </label>
-      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      {state.errorCode && (
+        <p className="text-sm text-error">{te(state.errorCode)}</p>
+      )}
       <div>
-        <button
-          type="submit"
-          className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+        <PendingSubmit
+          pendingLabel={t("accepting")}
+          className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light disabled:opacity-60"
         >
-          Acceptar
-        </button>
+          {t("accept")}
+        </PendingSubmit>
       </div>
     </form>
   );

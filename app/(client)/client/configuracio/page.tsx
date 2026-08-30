@@ -14,7 +14,9 @@ import { ReferralCodeCard } from "@/components/referral-code-card";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { USE_MOCK } from "@/lib/config";
 import { formatDate } from "@/lib/labels";
+import { getTranslations } from "next-intl/server";
 import type { ConsentStatus } from "@/lib/data/consents";
+import type { Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +31,11 @@ export default async function ClientConfigPage() {
       viewer ? getReferralStats(viewer.id) : Promise.resolve(null),
       resolveLocale(),
     ]);
+  const t = await getTranslations("config");
 
   const tabs = [
     {
-      label: "Dades personals",
+      label: t("tabs.personal"),
       content: (
         <div className="flex flex-col gap-4">
           {/*
@@ -46,16 +49,16 @@ export default async function ClientConfigPage() {
           */}
           <section className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-6">
             <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-              Preferències
+              {t("prefs.title")}
             </h2>
-            <LanguageSwitcher current={locale} label="Idioma" />
+            <LanguageSwitcher current={locale} label={t("prefs.language")} />
           </section>
 
           {settings ? (
             <ProfileSettingsForm settings={settings} />
           ) : (
             <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-              No s&apos;ha pogut carregar el teu perfil.
+              {t("profileUnavailable")}
             </p>
           )}
           {centerSettings.referralProgramActive && referralStats && (
@@ -69,63 +72,74 @@ export default async function ClientConfigPage() {
       ),
     },
     {
-      label: "Privacitat",
+      label: t("tabs.privacy"),
       content: consent ? (
-        <PrivacySection consent={consent} />
+        <PrivacySection consent={consent} locale={locale} />
       ) : (
-        <p className="text-sm text-brand-muted">No disponible.</p>
+        <p className="text-sm text-brand-muted">{t("unavailable")}</p>
       ),
     },
     {
-      label: "Notificacions",
+      label: t("tabs.notifications"),
       content: prefs ? (
         <NotificationPreferencesForm prefs={prefs} role="client" />
       ) : (
-        <p className="text-sm text-brand-muted">No disponible.</p>
+        <p className="text-sm text-brand-muted">{t("unavailable")}</p>
       ),
     },
     ...(!USE_MOCK
-      ? [{ label: "Contrasenya", content: <ChangePasswordForm /> }]
+      ? [{ label: t("tabs.password"), content: <ChangePasswordForm translated /> }]
       : []),
   ];
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-1 text-2xl text-brand-dark">Configuració</h1>
-      <p className="mb-6 text-sm text-brand-muted">
-        Gestiona les teves dades i preferències.
-      </p>
-      <InPageTabs tabs={tabs} />
+      <h1 className="mb-1 text-2xl text-brand-dark">{t("title")}</h1>
+      <p className="mb-6 text-sm text-brand-muted">{t("intro")}</p>
+      <InPageTabs tabs={tabs} ariaLabel={t("sections")} />
     </main>
   );
 }
 
-function PrivacySection({ consent }: { consent: ConsentStatus }) {
+async function PrivacySection({
+  consent,
+  locale,
+}: {
+  consent: ConsentStatus;
+  locale: Locale;
+}) {
+  const t = await getTranslations("config.privacy");
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-6">
       <div className="flex flex-col gap-1 text-sm">
         <span className="font-bold text-brand-dark">
-          Política de Privacitat i Avís Legal
+          {t("legalTitle")}
         </span>
         <span className="text-brand-muted">
           {consent.privacyAt
-            ? `Acceptats el ${formatDate(consent.privacyAt)} (versió ${consent.privacyVersion}).`
-            : "Encara no consta cap acceptació registrada."}
+            ? t("accepted", {
+                date: formatDate(consent.privacyAt, locale),
+                // Sense versió la frase deia "(versió null)". No hauria de
+                // passar —la data i la versió venen de la mateixa fila— però
+                // val més un guionet que ensenyar un null.
+                version: consent.privacyVersion ?? "—",
+              })
+            : t("none")}
         </span>
       </div>
 
       <div className="flex flex-col gap-2 border-t border-brand-border pt-4 text-sm">
-        <span className="font-bold text-brand-dark">Dades de salut</span>
+        <span className="font-bold text-brand-dark">{t("healthTitle")}</span>
         {consent.healthDataAt ? (
           <span className="text-brand-muted">
-            Consentiment donat el {formatDate(consent.healthDataAt)}. Pots
-            revocar-lo escrivint al centre.
+            {t("healthGiven", {
+              date: formatDate(consent.healthDataAt, locale),
+            })}
           </span>
         ) : (
           <>
             <span className="text-brand-muted">
-              Si reps fisioteràpia, necessitem el teu consentiment per tractar
-              les teves dades de salut.
+              {t("healthAsk")}
             </span>
             <HealthConsentForm />
           </>

@@ -1,11 +1,11 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
 import { TextAreaField } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { GENDER_LABELS } from "@/lib/labels";
 import {
   updateProfileAction,
   type FormState,
@@ -13,12 +13,13 @@ import {
 import type { ProfileSettings } from "@/lib/data/clients";
 import type { Gender } from "@/types/database";
 
-const GENDER_OPTIONS = (Object.keys(GENDER_LABELS) as Gender[]).map((g) => ({
-  value: g,
-  label: GENDER_LABELS[g],
-}));
+const GENDERS: Gender[] = ["home", "dona", "altre", "ns_nc"];
 
 export function ProfileSettingsForm({ settings }: { settings: ProfileSettings }) {
+  const t = useTranslations("config.profile");
+  const te = useTranslations("config.profile.errors");
+  const tg = useTranslations("labels.gender");
+  const genderOptions = GENDERS.map((g) => ({ value: g, label: tg(g) }));
   const [state, formAction] = useActionState(
     updateProfileAction,
     {} as FormState,
@@ -29,17 +30,17 @@ export function ProfileSettingsForm({ settings }: { settings: ProfileSettings })
       {/* a) Dades personals */}
       <section className="flex flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6">
         <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
-          Dades personals
+          {t("title")}
         </h2>
         <Field
-          label="Nom complet"
+          label={t("fullName")}
           name="fullName"
           required
           defaultValue={settings.fullName}
         />
         <div>
           <Field
-            label="Correu electrònic"
+            label={t("email")}
             name="email"
             type="email"
             defaultValue={settings.email}
@@ -47,24 +48,24 @@ export function ProfileSettingsForm({ settings }: { settings: ProfileSettings })
             readOnly
           />
           <p className="mt-1 text-xs text-brand-muted">
-            El correu és el teu usuari d&apos;accés i no es pot canviar aquí.
+            {t("emailHint")}
           </p>
         </div>
         <Field
-          label="Telèfon"
+          label={t("phone")}
           name="phone"
           type="tel"
           defaultValue={settings.phone}
         />
         <Field
-          label="Data de naixement"
+          label={t("birthDate")}
           name="birthDate"
           type="date"
           defaultValue={settings.birthDate}
         />
         <div className="grid gap-5 sm:grid-cols-2">
           <Field
-            label="Alçada (cm)"
+            label={t("height")}
             name="heightCm"
             type="number"
             min={50}
@@ -72,7 +73,7 @@ export function ProfileSettingsForm({ settings }: { settings: ProfileSettings })
             defaultValue={settings.heightCm}
           />
           <Field
-            label="Pes (kg)"
+            label={t("weight")}
             name="weightKg"
             type="number"
             min={20}
@@ -82,33 +83,35 @@ export function ProfileSettingsForm({ settings }: { settings: ProfileSettings })
           />
         </div>
         <SelectField
-          label="Gènere"
+          label={t("gender")}
           name="gender"
-          placeholder="Prefereixo no dir-ho"
+          placeholder={tg("ns_nc")}
           defaultValue={settings.gender}
-          options={GENDER_OPTIONS}
+          options={genderOptions}
         />
         <Field
-          label="Contacte d'emergència"
+          label={t("emergency")}
           name="emergencyContact"
-          placeholder="Nom i telèfon"
+          placeholder={t("emergencyPlaceholder")}
           defaultValue={settings.emergencyContact}
         />
         <TextAreaField
-          label="Objectiu"
+          label={t("objective")}
           name="objective"
-          placeholder="Què vols aconseguir? (perdre pes, rehabilitació, força...)"
+          placeholder={t("objectivePlaceholder")}
           defaultValue={settings.objective}
         />
       </section>
 
-      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      {state.errorCode && (
+        <p className="text-sm text-error">{te(state.errorCode)}</p>
+      )}
       {state.ok && (
-        <p className="text-sm font-bold text-success">Canvis desats.</p>
+        <p className="text-sm font-bold text-success">{t("saved")}</p>
       )}
 
       <div>
-        <SubmitButton>Desar canvis</SubmitButton>
+        <SubmitButton pendingLabel={t("saving")}>{t("save")}</SubmitButton>
       </div>
     </form>
   );

@@ -185,6 +185,12 @@
     "paymentMethod": {
       "card": "Card",
       "cash": "Cash"
+    },
+    "gender": {
+      "home": "Man",
+      "dona": "Woman",
+      "altre": "Other",
+      "ns_nc": "Prefer not to say"
     }
   },
   "picker": {
@@ -342,7 +348,9 @@
     "configuracio": "Settings",
     "signOut": "Sign out",
     "viewProfile": "View my profile",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "sectionTabs": "Section navigation",
+    "closeMenu": "Close menu"
   },
   "reservas": {
     "title": "Bookings",
@@ -388,7 +396,10 @@
       "mySession": "My session",
       "sure": "Sure?",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "tooLateShort": "Too late to cancel",
+      "yesCancel": "Yes, cancel it",
+      "noBack": "No, go back"
     },
     "waitlist": {
       "joinedTitle": "You're on the waiting list",
@@ -452,7 +463,9 @@
       "grupo_reducido": "Group",
       "fisioterapia": "Physio"
     },
-    "today": "Today"
+    "today": "Today",
+    "noServicesHere": "This professional doesn't offer any of the services your packages cover.",
+    "showAllTrainers": "Show all professionals"
   },
   "wizard": {
     "repeatEvery": "Repeat every",
@@ -558,6 +571,142 @@
         "copied": "Copied!",
         "unavailable": "Code unavailable.",
         "referredCount": "{count, plural, =0 {You haven't referred anyone yet.} one {You've referred # friend.} other {You've referred # friends.}}"
+      }
+    }
+  },
+  "config": {
+    "title": "Settings",
+    "intro": "Manage your details and preferences.",
+    "tabs": {
+      "personal": "Your details",
+      "privacy": "Privacy",
+      "notifications": "Notifications",
+      "password": "Password"
+    },
+    "sections": "Sections",
+    "prefs": {
+      "title": "Preferences",
+      "language": "Language"
+    },
+    "profileUnavailable": "We couldn't load your profile.",
+    "unavailable": "Not available.",
+    "profile": {
+      "title": "Your details",
+      "fullName": "Full name",
+      "email": "Email address",
+      "emailHint": "Your email is your sign-in name and can't be changed here.",
+      "phone": "Phone",
+      "birthDate": "Date of birth",
+      "height": "Height (cm)",
+      "weight": "Weight (kg)",
+      "gender": "Gender",
+      "emergency": "Emergency contact",
+      "emergencyPlaceholder": "Name and phone",
+      "objective": "Goal",
+      "objectivePlaceholder": "What are you aiming for? (lose weight, rehab, strength...)",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Changes saved.",
+      "errors": {
+        "unauthorized": "Not authorised.",
+        "noName": "Your name is required.",
+        "badHeight": "Height must be between 50 and 260 cm.",
+        "badWeight": "Weight must be between 20 and 400 kg.",
+        "failed": "We couldn't save your changes."
+      }
+    },
+    "privacy": {
+      "legalTitle": "Privacy Policy and Legal Notice",
+      "accepted": "Accepted on {date} (version {version}).",
+      "none": "No acceptance on record yet.",
+      "healthTitle": "Health data",
+      "healthGiven": "Consent given on {date}. You can withdraw it by writing to the centre.",
+      "healthAsk": "If you have physiotherapy, we need your consent to handle your health data.",
+      "consent": "I agree to my health data being handled for physiotherapy follow-up, in line with the <link>Privacy Policy</link>.",
+      "accept": "Accept",
+      "accepting": "Saving…",
+      "ok": "Health data consent recorded. Thank you.",
+      "errors": {
+        "unauthorized": "Not authorised.",
+        "mustAccept": "Tick the box to accept.",
+        "failed": "We couldn't save your consent."
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "hint": "Choose which alerts you want an email for.",
+      "colAlert": "Alert",
+      "colEmail": "Email",
+      "byEmail": "{label} by email",
+      "groups": {
+        "general": "Alerts",
+        "agenda": "My schedule"
+      },
+      "save": "Save preferences",
+      "saving": "Saving…",
+      "saved": "Preferences saved.",
+      "failed": "We couldn't save your preferences.",
+      "events": {
+        "reservation_confirmed": {
+          "label": "Booking confirmed",
+          "description": "When a booking is made in your name."
+        },
+        "reservation_cancelled": {
+          "label": "Booking cancelled",
+          "description": "When one of your bookings is cancelled."
+        },
+        "session_reminder": {
+          "label": "Session reminder",
+          "description": "A reminder the day before each session."
+        },
+        "trial_status": {
+          "label": "Your trial session",
+          "description": "When your trial session is accepted or turned down."
+        },
+        "bono_low": {
+          "label": "Package nearly used up",
+          "description": "When you have 1 session left on a package."
+        },
+        "bono_expiring_soon": {
+          "label": "Package expiring soon",
+          "description": "A few days before a package with unused sessions expires."
+        },
+        "bono_unpaid_cancelled": {
+          "label": "Package cancelled for non-payment",
+          "description": "If an unpaid package lapses and its booked sessions are cancelled."
+        },
+        "community": {
+          "label": "Community news",
+          "description": "New announcements from the centre."
+        },
+        "waitlist_fulfilled": {
+          "label": "Waiting-list space",
+          "description": "When a space you were waiting for frees up and we confirm it."
+        },
+        "gift_voucher_redeemed": {
+          "label": "Your gift was redeemed",
+          "description": "When someone uses a gift voucher you bought."
+        }
+      }
+    },
+    "password": {
+      "title": "Password",
+      "hint": "Change your account password.",
+      "current": "Current password",
+      "new": "New password",
+      "repeat": "Repeat the new password",
+      "submit": "Change password",
+      "saving": "Saving…",
+      "ok": "Password updated.",
+      "show": "Show password",
+      "hide": "Hide password",
+      "errors": {
+        "tooShort": "The new password must be at least 8 characters.",
+        "mismatch": "The new passwords don't match.",
+        "same": "The new password must be different from the current one.",
+        "noAccount": "We couldn't identify your account.",
+        "wrongCurrent": "That current password isn't right.",
+        "failed": "We couldn't change your password."
       }
     }
   }

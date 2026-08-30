@@ -423,13 +423,13 @@ export function ClientCenterCalendar({
 
       {filteredTrainerOffersNothing && (
         <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Aquest professional no ofereix cap dels serveis dels teus bons.{" "}
+          {t("noServicesHere")}{" "}
           <button
             type="button"
             onClick={() => setTrainerFilter("all")}
             className="font-bold underline hover:no-underline"
           >
-            Mostra tots els professionals
+            {t("showAllTrainers")}
           </button>
         </p>
       )}
@@ -1278,7 +1278,7 @@ function OwnModal({
                     type="submit"
                     className="w-full rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-80"
                   >
-                    Sí, cancel·la
+                    {t("own.yesCancel")}
                   </button>
                 </form>
                 <button
@@ -1286,7 +1286,7 @@ function OwnModal({
                   onClick={() => setConfirming(false)}
                   className="flex-1 rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
                 >
-                  No, torna
+                  {t("own.noBack")}
                 </button>
               </div>
               {state.error && (

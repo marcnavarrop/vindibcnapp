@@ -5,7 +5,18 @@ import { getViewer } from "@/lib/auth";
 import { updateProfileSettings, getProfileSettings } from "@/lib/data/clients";
 import type { Gender } from "@/types/database";
 
-export type FormState = { error?: string; ok?: boolean };
+/**
+ * Codi, no frase: Configuració es veu en tres idiomes i qui decideix el motiu
+ * és el servidor. Mateix criteri que a les reserves, /prova i la comunitat.
+ */
+export type ProfileErrorCode =
+  | "unauthorized"
+  | "noName"
+  | "badHeight"
+  | "badWeight"
+  | "failed";
+
+export type FormState = { errorCode?: ProfileErrorCode; ok?: boolean };
 
 function parseGender(v: string): Gender | null {
   return v === "home" || v === "dona" || v === "altre" || v === "ns_nc"
@@ -30,7 +41,7 @@ export async function updateProfileAction(
   formData: FormData,
 ): Promise<FormState> {
   const viewer = await getViewer();
-  if (!viewer) return { error: "No autoritzat." };
+  if (!viewer) return { errorCode: "unauthorized" };
 
   const fullName = String(formData.get("fullName") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
@@ -42,11 +53,11 @@ export async function updateProfileAction(
     String(formData.get("emergencyContact") ?? "").trim() || null;
   const objective = String(formData.get("objective") ?? "").trim() || null;
 
-  if (!fullName) return { error: "El nom és obligatori." };
+  if (!fullName) return { errorCode: "noName" };
   if (heightCm !== null && (heightCm < 50 || heightCm > 260))
-    return { error: "L'alçada ha d'estar entre 50 i 260 cm." };
+    return { errorCode: "badHeight" };
   if (weightKg !== null && (weightKg < 20 || weightKg > 400))
-    return { error: "El pes ha d'estar entre 20 i 400 kg." };
+    return { errorCode: "badWeight" };
 
   try {
     // L'idioma NO surt d'aquest formulari: el canvia el seu propi selector, que
@@ -66,10 +77,9 @@ export async function updateProfileAction(
       emergencyContact,
       objective,
     });
-  } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "No s'han pogut desar els canvis.",
-    };
+  } catch {
+    // El missatge de la base no és per a qui mira la pantalla.
+    return { errorCode: "failed" };
   }
 
   revalidatePath("/client/configuracio");

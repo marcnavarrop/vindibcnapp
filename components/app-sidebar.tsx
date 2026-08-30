@@ -145,14 +145,18 @@ export function AppSidebar({
             aria-hidden
           />
           <div className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85%] flex-col bg-brand-purple text-white shadow-xl">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Tancar menú"
-              className="absolute top-3 right-3 rounded-md p-1.5 hover:bg-white/10"
-            >
-              <CloseIcon />
-            </button>
+            {role === "client" ? (
+              <TranslatedCloseButton onClick={() => setOpen(false)} />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Tancar menú"
+                className="absolute top-3 right-3 rounded-md p-1.5 hover:bg-white/10"
+              >
+                <CloseIcon />
+              </button>
+            )}
             <SidebarContent
           role={role}
           specialty={specialty}
@@ -452,6 +456,21 @@ function TranslatedSignOut({ compact = false }: { compact?: boolean }) {
       variant={compact ? "compact" : "panel"}
       label={t("signOut")}
     />
+  );
+}
+
+/** El botó de tancar el panell lliscant, amb l'etiqueta traduïda. */
+function TranslatedCloseButton({ onClick }: { onClick: () => void }) {
+  const t = useTranslations("nav");
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={t("closeMenu")}
+      className="absolute top-3 right-3 rounded-md p-1.5 hover:bg-white/10"
+    >
+      <CloseIcon />
+    </button>
   );
 }
 

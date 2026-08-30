@@ -40,12 +40,7 @@ export const WEEKDAY_LONG = [
   "Diumenge",
 ];
 
-export const GENDER_LABELS: Record<Gender, string> = {
-  home: "Home",
-  dona: "Dona",
-  altre: "Altre",
-  ns_nc: "Prefereixo no dir-ho",
-};
+export const GENDER_LABELS: Record<Gender, string> = ca.labels.gender;
 
 /**
  * Etiquetes en CATALÀ, derivades de `messages/ca.json`.

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { clsx } from "@/lib/utils";
 
 export type RouteTab = {
@@ -17,6 +18,9 @@ export type RouteTab = {
  * ressaltada en taronja quan no és la pestanya activa.
  */
 export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
+  // Aquest component només surt a l'àrea de client, que va dins del proveïdor
+  // d'idioma: aquí sí que es pot cridar el hook directament.
+  const t = useTranslations("nav");
   const pathname = usePathname();
 
   /**
@@ -36,7 +40,7 @@ export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
 
   return (
     <div className="mb-6 border-b border-brand-border">
-      <nav className="flex overflow-x-auto" aria-label="Navegació de secció">
+      <nav className="flex overflow-x-auto" aria-label={t("sectionTabs")}>
         {tabs.map((tab) => {
           const active = tab.href === activeHref;
           return (

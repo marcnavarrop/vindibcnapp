@@ -185,6 +185,12 @@
     "paymentMethod": {
       "card": "Tarjeta",
       "cash": "Efectivo"
+    },
+    "gender": {
+      "home": "Hombre",
+      "dona": "Mujer",
+      "altre": "Otro",
+      "ns_nc": "Prefiero no decirlo"
     }
   },
   "picker": {
@@ -342,7 +348,9 @@
     "configuracio": "Configuración",
     "signOut": "Cerrar sesión",
     "viewProfile": "Ver mi perfil",
-    "openMenu": "Abrir menú"
+    "openMenu": "Abrir menú",
+    "sectionTabs": "Navegación de sección",
+    "closeMenu": "Cerrar menú"
   },
   "reservas": {
     "title": "Reservas",
@@ -388,7 +396,10 @@
       "mySession": "Mi sesión",
       "sure": "¿Seguro?",
       "yes": "Sí",
-      "no": "No"
+      "no": "No",
+      "tooLateShort": "Ya no se puede cancelar",
+      "yesCancel": "Sí, cancelar",
+      "noBack": "No, volver"
     },
     "waitlist": {
       "joinedTitle": "Te hemos apuntado a la lista de espera",
@@ -452,7 +463,9 @@
       "grupo_reducido": "Grupo",
       "fisioterapia": "Fisioterapia"
     },
-    "today": "Hoy"
+    "today": "Hoy",
+    "noServicesHere": "Este profesional no ofrece ninguno de los servicios de tus bonos.",
+    "showAllTrainers": "Mostrar todos los profesionales"
   },
   "wizard": {
     "repeatEvery": "Repite cada",
@@ -558,6 +571,142 @@
         "copied": "¡Copiado!",
         "unavailable": "Código no disponible.",
         "referredCount": "{count, plural, =0 {Todavía no has referido a ningún amigo.} one {Has referido a # amigo.} other {Has referido a # amigos.}}"
+      }
+    }
+  },
+  "config": {
+    "title": "Configuración",
+    "intro": "Gestiona tus datos y preferencias.",
+    "tabs": {
+      "personal": "Datos personales",
+      "privacy": "Privacidad",
+      "notifications": "Notificaciones",
+      "password": "Contraseña"
+    },
+    "sections": "Secciones",
+    "prefs": {
+      "title": "Preferencias",
+      "language": "Idioma"
+    },
+    "profileUnavailable": "No se ha podido cargar tu perfil.",
+    "unavailable": "No disponible.",
+    "profile": {
+      "title": "Datos personales",
+      "fullName": "Nombre completo",
+      "email": "Correo electrónico",
+      "emailHint": "El correo es tu usuario de acceso y no se puede cambiar aquí.",
+      "phone": "Teléfono",
+      "birthDate": "Fecha de nacimiento",
+      "height": "Altura (cm)",
+      "weight": "Peso (kg)",
+      "gender": "Género",
+      "emergency": "Contacto de emergencia",
+      "emergencyPlaceholder": "Nombre y teléfono",
+      "objective": "Objetivo",
+      "objectivePlaceholder": "¿Qué quieres conseguir? (perder peso, rehabilitación, fuerza...)",
+      "save": "Guardar cambios",
+      "saving": "Guardando…",
+      "saved": "Cambios guardados.",
+      "errors": {
+        "unauthorized": "No autorizado.",
+        "noName": "El nombre es obligatorio.",
+        "badHeight": "La altura tiene que estar entre 50 y 260 cm.",
+        "badWeight": "El peso tiene que estar entre 20 y 400 kg.",
+        "failed": "No se han podido guardar los cambios."
+      }
+    },
+    "privacy": {
+      "legalTitle": "Política de Privacidad y Aviso Legal",
+      "accepted": "Aceptados el {date} (versión {version}).",
+      "none": "Todavía no consta ninguna aceptación registrada.",
+      "healthTitle": "Datos de salud",
+      "healthGiven": "Consentimiento dado el {date}. Puedes revocarlo escribiendo al centro.",
+      "healthAsk": "Si recibes fisioterapia, necesitamos tu consentimiento para tratar tus datos de salud.",
+      "consent": "Acepto el tratamiento de mis datos de salud para el seguimiento de fisioterapia, de acuerdo con la <link>Política de Privacidad</link>.",
+      "accept": "Aceptar",
+      "accepting": "Guardando…",
+      "ok": "Consentimiento de datos de salud registrado. Gracias.",
+      "errors": {
+        "unauthorized": "No autorizado.",
+        "mustAccept": "Tienes que marcar la casilla para aceptar.",
+        "failed": "No se ha podido guardar el consentimiento."
+      }
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "hint": "Elige de qué avisos quieres recibir un correo.",
+      "colAlert": "Aviso",
+      "colEmail": "Email",
+      "byEmail": "{label} por email",
+      "groups": {
+        "general": "Avisos",
+        "agenda": "Mi agenda"
+      },
+      "save": "Guardar preferencias",
+      "saving": "Guardando…",
+      "saved": "Preferencias guardadas.",
+      "failed": "No se han podido guardar las preferencias.",
+      "events": {
+        "reservation_confirmed": {
+          "label": "Reserva confirmada",
+          "description": "Cuando se crea una reserva a tu nombre."
+        },
+        "reservation_cancelled": {
+          "label": "Reserva cancelada",
+          "description": "Cuando se anula una reserva tuya."
+        },
+        "session_reminder": {
+          "label": "Recordatorio de sesión",
+          "description": "Un aviso el día antes de cada sesión."
+        },
+        "trial_status": {
+          "label": "Estado de tu prueba",
+          "description": "Cuando tu sesión de prueba se acepta o se rechaza."
+        },
+        "bono_low": {
+          "label": "Bono a punto de agotarse",
+          "description": "Cuando te queda 1 sesión en el bono."
+        },
+        "bono_expiring_soon": {
+          "label": "Bono a punto de caducar",
+          "description": "Unos días antes de que caduque un bono con sesiones sin hacer."
+        },
+        "bono_unpaid_cancelled": {
+          "label": "Bono anulado por impago",
+          "description": "Si un bono pendiente de pago decae y se cancelan las sesiones reservadas."
+        },
+        "community": {
+          "label": "Novedades de la comunidad",
+          "description": "Nuevos anuncios del centro."
+        },
+        "waitlist_fulfilled": {
+          "label": "Plaza de la lista de espera",
+          "description": "Cuando se libera una plaza que esperabas y te la confirmamos."
+        },
+        "gift_voucher_redeemed": {
+          "label": "Te han canjeado un regalo",
+          "description": "Cuando alguien usa un vale de regalo que has comprado."
+        }
+      }
+    },
+    "password": {
+      "title": "Contraseña",
+      "hint": "Cambia la contraseña de tu cuenta.",
+      "current": "Contraseña actual",
+      "new": "Nueva contraseña",
+      "repeat": "Repite la nueva contraseña",
+      "submit": "Cambiar contraseña",
+      "saving": "Guardando…",
+      "ok": "Contraseña actualizada.",
+      "show": "Mostrar la contraseña",
+      "hide": "Ocultar la contraseña",
+      "errors": {
+        "tooShort": "La nueva contraseña tiene que tener como mínimo 8 caracteres.",
+        "mismatch": "Las contraseñas nuevas no coinciden.",
+        "same": "La nueva contraseña tiene que ser distinta de la actual.",
+        "noAccount": "No se ha podido identificar tu cuenta.",
+        "wrongCurrent": "La contraseña actual no es correcta.",
+        "failed": "No se ha podido cambiar la contraseña."
       }
     }
   }

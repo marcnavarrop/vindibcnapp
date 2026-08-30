@@ -185,6 +185,12 @@
     "paymentMethod": {
       "card": "Targeta",
       "cash": "Efectiu"
+    },
+    "gender": {
+      "home": "Home",
+      "dona": "Dona",
+      "altre": "Altre",
+      "ns_nc": "Prefereixo no dir-ho"
     }
   },
   "picker": {
@@ -342,7 +348,9 @@
     "configuracio": "Configuració",
     "signOut": "Tancar sessió",
     "viewProfile": "Veure el meu perfil",
-    "openMenu": "Obrir menú"
+    "openMenu": "Obrir menú",
+    "sectionTabs": "Navegació de secció",
+    "closeMenu": "Tancar menú"
   },
   "reservas": {
     "title": "Reserves",
@@ -388,7 +396,10 @@
       "mySession": "La meva sessió",
       "sure": "Segur?",
       "yes": "Sí",
-      "no": "No"
+      "no": "No",
+      "tooLateShort": "Ja no es pot cancel·lar",
+      "yesCancel": "Sí, cancel·la",
+      "noBack": "No, torna"
     },
     "waitlist": {
       "joinedTitle": "T'hem apuntat a la llista d'espera",
@@ -452,7 +463,9 @@
       "grupo_reducido": "Grup",
       "fisioterapia": "Fisioteràpia"
     },
-    "today": "Avui"
+    "today": "Avui",
+    "noServicesHere": "Aquest professional no ofereix cap dels serveis dels teus bons.",
+    "showAllTrainers": "Mostra tots els professionals"
   },
   "wizard": {
     "repeatEvery": "Repeteix cada",
@@ -558,6 +571,142 @@
         "copied": "Copiat!",
         "unavailable": "Codi no disponible.",
         "referredCount": "{count, plural, =0 {Encara no has referit cap amic.} one {Has referit # amic.} other {Has referit # amics.}}"
+      }
+    }
+  },
+  "config": {
+    "title": "Configuració",
+    "intro": "Gestiona les teves dades i preferències.",
+    "tabs": {
+      "personal": "Dades personals",
+      "privacy": "Privacitat",
+      "notifications": "Notificacions",
+      "password": "Contrasenya"
+    },
+    "sections": "Seccions",
+    "prefs": {
+      "title": "Preferències",
+      "language": "Idioma"
+    },
+    "profileUnavailable": "No s'ha pogut carregar el teu perfil.",
+    "unavailable": "No disponible.",
+    "profile": {
+      "title": "Dades personals",
+      "fullName": "Nom complet",
+      "email": "Correu electrònic",
+      "emailHint": "El correu és el teu usuari d'accés i no es pot canviar aquí.",
+      "phone": "Telèfon",
+      "birthDate": "Data de naixement",
+      "height": "Alçada (cm)",
+      "weight": "Pes (kg)",
+      "gender": "Gènere",
+      "emergency": "Contacte d'emergència",
+      "emergencyPlaceholder": "Nom i telèfon",
+      "objective": "Objectiu",
+      "objectivePlaceholder": "Què vols aconseguir? (perdre pes, rehabilitació, força...)",
+      "save": "Desar canvis",
+      "saving": "Desant…",
+      "saved": "Canvis desats.",
+      "errors": {
+        "unauthorized": "No autoritzat.",
+        "noName": "El nom és obligatori.",
+        "badHeight": "L'alçada ha d'estar entre 50 i 260 cm.",
+        "badWeight": "El pes ha d'estar entre 20 i 400 kg.",
+        "failed": "No s'han pogut desar els canvis."
+      }
+    },
+    "privacy": {
+      "legalTitle": "Política de Privacitat i Avís Legal",
+      "accepted": "Acceptats el {date} (versió {version}).",
+      "none": "Encara no consta cap acceptació registrada.",
+      "healthTitle": "Dades de salut",
+      "healthGiven": "Consentiment donat el {date}. Pots revocar-lo escrivint al centre.",
+      "healthAsk": "Si reps fisioteràpia, necessitem el teu consentiment per tractar les teves dades de salut.",
+      "consent": "Accepto el tractament de les meves dades de salut per al seguiment de fisioteràpia, d'acord amb la <link>Política de Privacitat</link>.",
+      "accept": "Acceptar",
+      "accepting": "Desant…",
+      "ok": "Consentiment de dades de salut registrat. Gràcies.",
+      "errors": {
+        "unauthorized": "No autoritzat.",
+        "mustAccept": "Has de marcar la casella per acceptar.",
+        "failed": "No s'ha pogut desar el consentiment."
+      }
+    },
+    "notifications": {
+      "title": "Notificacions",
+      "hint": "Tria de quins avisos vols rebre un correu.",
+      "colAlert": "Avís",
+      "colEmail": "Email",
+      "byEmail": "{label} per email",
+      "groups": {
+        "general": "Avisos",
+        "agenda": "La meva agenda"
+      },
+      "save": "Desar preferències",
+      "saving": "Desant…",
+      "saved": "Preferències desades.",
+      "failed": "No s'han pogut desar les preferències.",
+      "events": {
+        "reservation_confirmed": {
+          "label": "Reserva confirmada",
+          "description": "Quan es crea una reserva a nom teu."
+        },
+        "reservation_cancelled": {
+          "label": "Reserva cancel·lada",
+          "description": "Quan s'anul·la una reserva teva."
+        },
+        "session_reminder": {
+          "label": "Recordatori de sessió",
+          "description": "Un avís el dia abans de cada sessió."
+        },
+        "trial_status": {
+          "label": "Estat de la teva prova",
+          "description": "Quan la teva sessió de prova s'accepta o es rebutja."
+        },
+        "bono_low": {
+          "label": "Bo a punt d'esgotar-se",
+          "description": "Quan et queda 1 sessió al bo."
+        },
+        "bono_expiring_soon": {
+          "label": "Bo a punt de caducar",
+          "description": "Uns dies abans que caduqui un bo amb sessions sense fer."
+        },
+        "bono_unpaid_cancelled": {
+          "label": "Bo anul·lat per impagament",
+          "description": "Si un bo pendent de pagament decau i es cancel·len les sessions reservades."
+        },
+        "community": {
+          "label": "Novetats de la comunitat",
+          "description": "Nous anuncis del centre."
+        },
+        "waitlist_fulfilled": {
+          "label": "Plaça de la llista d'espera",
+          "description": "Quan s'allibera una plaça que esperaves i te la confirmem."
+        },
+        "gift_voucher_redeemed": {
+          "label": "T'han bescanviat un regal",
+          "description": "Quan algú fa servir un val de regal que has comprat."
+        }
+      }
+    },
+    "password": {
+      "title": "Contrasenya",
+      "hint": "Canvia la contrasenya del teu compte.",
+      "current": "Contrasenya actual",
+      "new": "Nova contrasenya",
+      "repeat": "Repeteix la nova contrasenya",
+      "submit": "Canviar contrasenya",
+      "saving": "Desant…",
+      "ok": "Contrasenya actualitzada.",
+      "show": "Mostrar la contrasenya",
+      "hide": "Amagar la contrasenya",
+      "errors": {
+        "tooShort": "La nova contrasenya ha de tenir com a mínim 8 caràcters.",
+        "mismatch": "Les contrasenyes noves no coincideixen.",
+        "same": "La nova contrasenya ha de ser diferent de l'actual.",
+        "noAccount": "No s'ha pogut identificar el teu compte.",
+        "wrongCurrent": "La contrasenya actual no és correcta.",
+        "failed": "No s'ha pogut canviar la contrasenya."
       }
     }
   }

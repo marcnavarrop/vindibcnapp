@@ -29,7 +29,7 @@ export function CancelReservationButton({
   if (!canCancel) {
     return (
       <span className={`text-xs text-brand-muted italic ${className}`}>
-        Ja no es pot cancel·lar
+        {t("own.tooLateShort")}
       </span>
     );
   }

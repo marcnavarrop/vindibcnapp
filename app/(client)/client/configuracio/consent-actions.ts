@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { recordConsent } from "@/lib/data/consents";
 
-export type FormState = { error?: string; ok?: boolean };
+export type ConsentErrorCode = "unauthorized" | "mustAccept" | "failed";
+
+export type FormState = { errorCode?: ConsentErrorCode; ok?: boolean };
 
 /**
  * El client accepta el tractament de dades de salut des de la seva àrea.
@@ -15,17 +17,14 @@ export async function grantHealthConsentAction(
   formData: FormData,
 ): Promise<FormState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "client") return { error: "No autoritzat." };
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
   if (formData.get("accept") !== "on")
-    return { error: "Has de marcar la casella per acceptar." };
+    return { errorCode: "mustAccept" };
 
   try {
     await recordConsent(viewer.id, "health_data");
-  } catch (e) {
-    return {
-      error:
-        e instanceof Error ? e.message : "No s'ha pogut desar el consentiment.",
-    };
+  } catch {
+    return { errorCode: "failed" };
   }
 
   revalidatePath("/client/configuracio");

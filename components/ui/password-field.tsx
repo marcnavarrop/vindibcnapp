@@ -38,11 +38,21 @@ export function PasswordField({
   label,
   className,
   icon,
+  showLabel,
+  hideLabel,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   /** Icona decorativa a l'esquerra (opcional). */
   icon?: React.ReactNode;
+  /**
+   * Etiquetes del botó d'ull per a qui fa servir un lector de pantalla.
+   * Opcionals i amb el català per defecte: aquest camp també surt a l'àrea
+   * d'admin i de professional, que no es tradueixen. Una etiqueta que no es
+   * veu també s'ha de poder llegir en l'idioma de qui hi és.
+   */
+  showLabel?: string;
+  hideLabel?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const auto = useId();
@@ -79,7 +89,9 @@ export function PasswordField({
           tabIndex={-1}
           onClick={() => setVisible((v) => !v)}
           aria-label={
-            visible ? "Amagar la contrasenya" : "Mostrar la contrasenya"
+            visible
+              ? (hideLabel ?? "Amagar la contrasenya")
+              : (showLabel ?? "Mostrar la contrasenya")
           }
           aria-pressed={visible}
           className="absolute top-1/2 right-3 -translate-y-1/2 rounded-md p-0.5 text-brand-muted transition-colors hover:text-brand-purple"

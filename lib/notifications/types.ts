@@ -1,3 +1,15 @@
+import ca from "@/messages/ca.json";
+
+/**
+ * El text dels avisos que veu el CLIENT surt del diccionari.
+ *
+ * Aquests deu es pinten en tres idiomes a Configuració → Notificacions, i el
+ * català no es pot escriure dues vegades: aquí i a `messages/ca.json`. Un dia
+ * se'n canviaria un i l'altre no. Els altres nou només els veuen l'admin i el
+ * professional, que treballen en català fix, i es queden escrits a sota.
+ */
+const CLIENT_EVENT_TEXT = ca.config.notifications.events;
+
 /**
  * Tipus del sistema de notificacions. El codi dispara "esdeveniments" i el
  * sistema (notify) decideix per quins canals enviar-los segons les preferències
@@ -66,10 +78,8 @@ export type NotificationAudience = "client" | "trainer" | "admin";
 /** Agrupació a la UI de preferències. */
 export type NotificationGroup = "general" | "agenda";
 
-export const GROUP_LABELS: Record<NotificationGroup, string> = {
-  general: "Avisos",
-  agenda: "La meva agenda",
-};
+export const GROUP_LABELS: Record<NotificationGroup, string> =
+  ca.config.notifications.groups;
 
 /** Metadades de cada tipus d'esdeveniment per a la UI de preferències. */
 export const EVENT_META: Record<
@@ -82,20 +92,17 @@ export const EVENT_META: Record<
   }
 > = {
   reservation_confirmed: {
-    label: "Reserva confirmada",
-    description: "Quan es crea una reserva a nom teu.",
+    ...CLIENT_EVENT_TEXT.reservation_confirmed,
     audience: ["client"],
     group: "general",
   },
   reservation_cancelled: {
-    label: "Reserva cancel·lada",
-    description: "Quan s'anul·la una reserva teva.",
+    ...CLIENT_EVENT_TEXT.reservation_cancelled,
     audience: ["client"],
     group: "general",
   },
   session_reminder: {
-    label: "Recordatori de sessió",
-    description: "Un avís el dia abans de cada sessió.",
+    ...CLIENT_EVENT_TEXT.session_reminder,
     audience: ["client"],
     group: "general",
   },
@@ -106,32 +113,27 @@ export const EVENT_META: Record<
     group: "general",
   },
   trial_status: {
-    label: "Estat de la teva prova",
-    description: "Quan la teva sessió de prova s'accepta o es rebutja.",
+    ...CLIENT_EVENT_TEXT.trial_status,
     audience: ["client"],
     group: "general",
   },
   bono_low: {
-    label: "Bo a punt d'esgotar-se",
-    description: "Quan et queda 1 sessió al bo.",
+    ...CLIENT_EVENT_TEXT.bono_low,
     audience: ["client"],
     group: "general",
   },
   bono_expiring_soon: {
-    label: "Bo a punt de caducar",
-    description: "Uns dies abans que caduqui un bo amb sessions sense fer.",
+    ...CLIENT_EVENT_TEXT.bono_expiring_soon,
     audience: ["client"],
     group: "general",
   },
   bono_unpaid_cancelled: {
-    label: "Bo anul·lat per impagament",
-    description: "Si un bo pendent de pagament decau i es cancel·len les sessions reservades.",
+    ...CLIENT_EVENT_TEXT.bono_unpaid_cancelled,
     audience: ["client"],
     group: "general",
   },
   community: {
-    label: "Novetats de la comunitat",
-    description: "Nous anuncis del centre.",
+    ...CLIENT_EVENT_TEXT.community,
     audience: ["client", "trainer"],
     group: "general",
   },
@@ -175,14 +177,12 @@ export const EVENT_META: Record<
     group: "general",
   },
   waitlist_fulfilled: {
-    label: "Plaça de la llista d'espera",
-    description: "Quan s'allibera una plaça que esperaves i te la confirmem.",
+    ...CLIENT_EVENT_TEXT.waitlist_fulfilled,
     audience: ["client"],
     group: "general",
   },
   gift_voucher_redeemed: {
-    label: "T'han bescanviat un regal",
-    description: "Quan algú fa servir un val de regal que has comprat.",
+    ...CLIENT_EVENT_TEXT.gift_voucher_redeemed,
     audience: ["client"],
     group: "general",
   },
