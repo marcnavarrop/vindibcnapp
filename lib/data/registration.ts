@@ -98,6 +98,7 @@ async function sendWelcome(
     eventType: "auth_welcome",
     channel: "email",
     status: res.ok ? "sent" : "failed",
+    providerId: res.id ?? null,
     error: res.error ?? null,
   });
 }

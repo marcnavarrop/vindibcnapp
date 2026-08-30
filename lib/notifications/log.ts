@@ -17,6 +17,8 @@ export type LogEntry = {
   status: NotificationLogStatus;
   error?: string | null;
   relatedId?: string | null;
+  /** Id del proveïdor de correu, per consultar-hi l'estat real d'entrega. */
+  providerId?: string | null;
 };
 
 /** Registra un enviament (best-effort: si falla el log, no trenca res). */
@@ -33,6 +35,7 @@ export async function writeLog(entry: LogEntry): Promise<void> {
         status: entry.status,
         error: entry.error ?? null,
         related_id: entry.relatedId ?? null,
+        provider_id: entry.providerId ?? null,
         sent_at: new Date().toISOString(),
       });
       saveStore(store);
@@ -47,6 +50,7 @@ export async function writeLog(entry: LogEntry): Promise<void> {
       status: entry.status,
       error: entry.error ?? null,
       related_id: entry.relatedId ?? null,
+      provider_id: entry.providerId ?? null,
     });
   } catch {
     // El log és secundari; mai ha de tombar el flux.

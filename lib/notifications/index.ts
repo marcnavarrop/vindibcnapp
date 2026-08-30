@@ -60,6 +60,7 @@ export async function notify(
       status: result.status,
       error: result.error ?? null,
       relatedId: event.relatedId ?? null,
+      providerId: result.providerId ?? null,
     });
   } catch {
     // Best-effort absolut: mai tombar el flux de negoci per una notificació.

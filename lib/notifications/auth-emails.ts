@@ -42,6 +42,7 @@ async function sendInvite(
     eventType: "auth_invite",
     channel: "email",
     status: res.ok ? "sent" : "failed",
+    providerId: res.id ?? null,
     error: res.error ?? null,
   });
   return res;
@@ -126,6 +127,7 @@ export async function sendPasswordRecovery(email: string): Promise<void> {
     eventType: "auth_recovery",
     channel: "email",
     status: res.ok ? "sent" : "failed",
+    providerId: res.id ?? null,
     error: res.error ?? null,
   });
 }

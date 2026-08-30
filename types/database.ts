@@ -832,6 +832,7 @@ export interface Database {
           status: string;
           error: string | null;
           related_id: string | null;
+          provider_id: string | null;
           sent_at: string;
         };
         Insert: {
@@ -843,6 +844,7 @@ export interface Database {
           status: string;
           error?: string | null;
           related_id?: string | null;
+          provider_id?: string | null;
           sent_at?: string;
         };
         Update: {
@@ -854,6 +856,7 @@ export interface Database {
           status?: string;
           error?: string | null;
           related_id?: string | null;
+          provider_id?: string | null;
           sent_at?: string;
         };
         Relationships: [];
