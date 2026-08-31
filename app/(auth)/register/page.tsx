@@ -72,10 +72,14 @@ export default function RegisterPage() {
         email,
         password,
         options: {
-          // Estos datos los lee el trigger handle_new_user().
+          // Aquestes dades les llegeix el trigger handle_new_user().
+          //
+          // Aquí NO hi va el rol. Hi anava, i no servia de res: el metadata
+          // l'escriu qui fa la petició, així que era una declaració d'intencions
+          // que qualsevol podia contradir des de l'endpoint públic. Des de la
+          // 0064 el trigger crea sempre un 'client' i ignora el que se li digui.
           data: {
             full_name: fullName,
-            role: "client",
             // El llegeix el trigger handle_new_user() (migració 0058).
             preferred_language: LOCALES.includes(locale) ? locale : "ca",
           },
