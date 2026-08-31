@@ -344,10 +344,8 @@
     "exercicis": "Workouts",
     "documents": "Documents",
     "comunitat": "Community",
-    "perfil": "Profile",
     "configuracio": "Settings",
     "signOut": "Sign out",
-    "viewProfile": "View my profile",
     "openMenu": "Open menu",
     "sectionTabs": "Section navigation",
     "closeMenu": "Close menu"
@@ -750,13 +748,30 @@
     "progress": "Your progress",
     "reps": "{count} reps",
     "library": "Full library",
-    "libraryEmpty": "There are no other exercises in the library.",
     "video": {
       "watch": "▶ Watch video",
       "loading": "Loading…",
       "error": "We couldn't load the video. Please try again.",
       "play": "Play the video",
       "retry": "Try loading the video again"
+    },
+    "lib": {
+      "search": "Search by name or description…",
+      "searchAria": "Search exercises",
+      "all": "All",
+      "countFiltered": "{shown} of {total} exercises",
+      "countTotal": "{count, plural, one {# exercise} other {# exercises}}",
+      "empty": "There are no other exercises in the library.",
+      "noMatch": "No exercise matches your search.",
+      "seeAll": "See them all",
+      "noVideo": "No video",
+      "watch": "Watch the video",
+      "watchYoutube": "Watch the YouTube video",
+      "openExternal": "Open the video (external link)",
+      "openExternalAria": "Open the video in a new tab",
+      "close": "Close",
+      "loading": "Loading…",
+      "videoError": "We couldn't load the video. Please try again."
     }
   },
   "emails": {

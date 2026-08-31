@@ -354,9 +354,19 @@ function SidebarFooter({
             </span>
           )}
         </span>
+        {/*
+          Diu on va, no què hi ha.
+
+          Abans deia "Veure el meu perfil" perquè al menú hi havia una entrada
+          "Perfil" que apuntava al mateix lloc. Tretes les dues entrades
+          bessones, prometia una pàgina que no existeix: les dades personals
+          són la primera pestanya de Configuració. Tocar el teu nom per anar-hi
+          és un gest que val la pena conservar —sobretot en mòbil—, però
+          l'etiqueta ha de dir la veritat.
+        */}
         {profileHref && (
           <span className="block truncate text-xs text-white/60">
-            {translated ? <NavLabel k="viewProfile" /> : "Veure el meu perfil"}
+            {translated ? <NavLabel k="configuracio" /> : "Configuració"}
           </span>
         )}
       </span>

@@ -6,6 +6,8 @@ import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/labels";
 import { ExerciseVideoPlayer } from "@/components/exercise-video-player";
+import { ClientExerciseLibrary } from "@/components/exercise-library";
+import { listExerciseCategories } from "@/lib/data/exercise-categories";
 import { getTranslations, getLocale } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -17,10 +19,11 @@ export default async function ClientExercicisPage() {
   const locale = (await getLocale()) as Locale;
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
-  const [assigned, library, allProgress] = await Promise.all([
+  const [assigned, library, allProgress, categories] = await Promise.all([
     client ? listClientExercises(client.id) : Promise.resolve([]),
     listExercises(),
     client ? listAllProgressForClient(client.id) : Promise.resolve([]),
+    listExerciseCategories(),
   ]);
 
   const progressByAssignment = new Map(
@@ -30,7 +33,14 @@ export default async function ClientExercicisPage() {
     ]),
   );
 
-  // El reproductor és compartit amb l'àrea d'admin: rep el text ja traduït.
+  /*
+   * La biblioteca és la mateixa peça que fan servir l'admin i el professional,
+   * en mode LECTURA: sense `basePath` ni `deleteAction` no surten ni l'editar,
+   * ni l'esborrar, ni l'enllaç a les categories. El client no en gestiona cap.
+   */
+
+  // El reproductor de la secció d'assignats és compartit amb l'àrea d'admin:
+  // rep el text ja traduït.
   const videoTexts = {
     watch: tv("watch"),
     loading: tv("loading"),
@@ -124,35 +134,7 @@ export default async function ClientExercicisPage() {
         <h2 className="mb-3 text-sm font-bold tracking-widest text-brand-muted uppercase">
           {t("library")}
         </h2>
-        {rest.length === 0 ? (
-          <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
-            {t("libraryEmpty")}
-          </p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {rest.map((e) => (
-              <div
-                key={e.id}
-                className="flex flex-col gap-2 rounded-2xl border border-brand-border bg-white p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-lg text-brand-dark">{e.name}</h3>
-                  <Badge tone="info">
-                    {e.categoryName}
-                  </Badge>
-                </div>
-                {e.description && (
-                  <p className="text-sm text-brand-muted">{e.description}</p>
-                )}
-                <ExerciseVideoPlayer
-                  videoUrl={e.videoUrl}
-                  videoFilePath={e.videoFilePath}
-                  texts={videoTexts}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        <ClientExerciseLibrary exercises={rest} categories={categories} />
       </section>
     </main>
   );

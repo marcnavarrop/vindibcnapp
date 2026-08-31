@@ -34,9 +34,13 @@ export type NavItem = {
   exact?: boolean;
   icon?: NavIcon;
   /**
-   * Drecera cap a un tros d'una altra pàgina (p. ex. "Perfil", que és la
-   * primera pestanya de Configuració). No s'il·lumina mai encara que la ruta
-   * coincideixi: qui mana sobre l'estat actiu és l'entrada de la pàgina.
+   * Drecera cap a un tros d'una altra pàgina. No s'il·lumina mai encara que la
+   * ruta coincideixi: qui mana sobre l'estat actiu és l'entrada de la pàgina.
+   *
+   * Ara mateix no la fa servir ningú —l'única que hi havia era "Perfil", al
+   * menú del client, que apuntava a Configuració i s'ha tret—. Es manté perquè
+   * el sidebar ja la sap tractar i el dia que torni a caldre una drecera no
+   * s'ha de tornar a pensar.
    */
   shortcut?: boolean;
 };
@@ -63,11 +67,13 @@ export const HOME_PATH: Record<Role, string> = {
 };
 
 /**
- * On viu el perfil del client: la primera pestanya de Configuració.
+ * On porta el bloc del compte, al peu del sidebar.
  *
- * No hi ha cap pàgina `/client/perfil`, i les dues entrades del menú que hi
- * porten ("Perfil" i el bloc del peu del sidebar) surten d'aquí per no
- * repetir la ruta a tres llocs.
+ * No hi ha cap pàgina `/client/perfil`: les dades personals són la primera
+ * pestanya de Configuració. Hi havia també una entrada "Perfil" al menú que hi
+ * apuntava, i s'ha tret —dues entrades del menú a la mateixa pàgina obliguen a
+ * endevinar en què es diferencien—. Queda la constant perquè el peu del
+ * sidebar hi segueix anant.
  */
 export const CLIENT_PROFILE_PATH = "/client/configuracio";
 
@@ -167,13 +173,6 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/client/exercicis", label: "Entrenaments", labelKey: "exercicis", icon: "dumbbell" },
     { href: "/client/documents", label: "Documents", labelKey: "documents", icon: "document" },
     { href: "/client/comunitat", label: "Comunitat", labelKey: "comunitat", icon: "community" },
-    {
-      href: CLIENT_PROFILE_PATH,
-      label: "Perfil",
-      labelKey: "perfil",
-      icon: "profile",
-      shortcut: true,
-    },
     { href: "/client/configuracio", label: "Configuració", labelKey: "configuracio", icon: "settings" },
   ],
 };

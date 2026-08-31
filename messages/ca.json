@@ -344,10 +344,8 @@
     "exercicis": "Entrenaments",
     "documents": "Documents",
     "comunitat": "Comunitat",
-    "perfil": "Perfil",
     "configuracio": "Configuració",
     "signOut": "Tancar sessió",
-    "viewProfile": "Veure el meu perfil",
     "openMenu": "Obrir menú",
     "sectionTabs": "Navegació de secció",
     "closeMenu": "Tancar menú"
@@ -750,13 +748,30 @@
     "progress": "El teu progrés",
     "reps": "{count} reps",
     "library": "Biblioteca completa",
-    "libraryEmpty": "No hi ha més exercicis a la biblioteca.",
     "video": {
       "watch": "▶ Veure vídeo",
       "loading": "Carregant…",
       "error": "No s'ha pogut carregar el vídeo. Torna-ho a provar.",
       "play": "Reproduir el vídeo",
       "retry": "Reintentar carregar el vídeo"
+    },
+    "lib": {
+      "search": "Cerca per nom o descripció…",
+      "searchAria": "Cercar exercicis",
+      "all": "Totes",
+      "countFiltered": "{shown} de {total} exercicis",
+      "countTotal": "{count, plural, one {# exercici} other {# exercicis}}",
+      "empty": "No hi ha més exercicis a la biblioteca.",
+      "noMatch": "Cap exercici coincideix amb la cerca.",
+      "seeAll": "Veure'ls tots",
+      "noVideo": "Sense vídeo",
+      "watch": "Veure el vídeo",
+      "watchYoutube": "Veure el vídeo de YouTube",
+      "openExternal": "Obrir el vídeo (enllaç extern)",
+      "openExternalAria": "Obrir el vídeo en una pestanya nova",
+      "close": "Tancar",
+      "loading": "Carregant…",
+      "videoError": "No s'ha pogut carregar el vídeo. Torna-ho a provar."
     }
   },
   "emails": {

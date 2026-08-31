@@ -344,10 +344,8 @@
     "exercicis": "Entrenamientos",
     "documents": "Documentos",
     "comunitat": "Comunidad",
-    "perfil": "Perfil",
     "configuracio": "Configuración",
     "signOut": "Cerrar sesión",
-    "viewProfile": "Ver mi perfil",
     "openMenu": "Abrir menú",
     "sectionTabs": "Navegación de sección",
     "closeMenu": "Cerrar menú"
@@ -750,13 +748,30 @@
     "progress": "Tu progreso",
     "reps": "{count} reps",
     "library": "Biblioteca completa",
-    "libraryEmpty": "No hay más ejercicios en la biblioteca.",
     "video": {
       "watch": "▶ Ver vídeo",
       "loading": "Cargando…",
       "error": "No se ha podido cargar el vídeo. Inténtalo de nuevo.",
       "play": "Reproducir el vídeo",
       "retry": "Reintentar cargar el vídeo"
+    },
+    "lib": {
+      "search": "Busca por nombre o descripción…",
+      "searchAria": "Buscar ejercicios",
+      "all": "Todas",
+      "countFiltered": "{shown} de {total} ejercicios",
+      "countTotal": "{count, plural, one {# ejercicio} other {# ejercicios}}",
+      "empty": "No hay más ejercicios en la biblioteca.",
+      "noMatch": "Ningún ejercicio coincide con la búsqueda.",
+      "seeAll": "Verlos todos",
+      "noVideo": "Sin vídeo",
+      "watch": "Ver el vídeo",
+      "watchYoutube": "Ver el vídeo de YouTube",
+      "openExternal": "Abrir el vídeo (enlace externo)",
+      "openExternalAria": "Abrir el vídeo en una pestaña nueva",
+      "close": "Cerrar",
+      "loading": "Cargando…",
+      "videoError": "No se ha podido cargar el vídeo. Inténtalo de nuevo."
     }
   },
   "emails": {

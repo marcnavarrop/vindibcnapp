@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Film, ExternalLink, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,96 @@ function YouTubeMark({ className = "h-5 w-5" }: { className?: string }) {
   );
 }
 
+/**
+ * Els textos, ja resolts.
+ *
+ * La biblioteca la miren tres àrees: l'admin i el professional (que la
+ * gestionen i van en català fix) i el client (que només la mira i sí que es
+ * tradueix). Van com a dades i no com a crides a `useTranslations` perquè
+ * només l'àrea de client té `NextIntlClientProvider` a sobre. Mateix
+ * arranjament que al canvi de contrasenya i a les preferències d'avisos.
+ */
+export type LibraryTexts = {
+  search: string;
+  searchAria: string;
+  all: string;
+  countFiltered: (shown: number, total: number) => string;
+  countTotal: (n: number) => string;
+  empty: string;
+  noMatch: string;
+  seeAll: string;
+  noVideo: string;
+  watch: string;
+  watchYoutube: string;
+  openExternal: string;
+  openExternalAria: string;
+  close: string;
+  loading: string;
+  videoError: string;
+};
+
+const CA: LibraryTexts = {
+  search: "Cerca per nom o descripció…",
+  searchAria: "Cercar exercicis",
+  all: "Totes",
+  countFiltered: (shown, total) => `${shown} de ${total} exercicis`,
+  countTotal: (n) => `${n} ${n === 1 ? "exercici" : "exercicis"}`,
+  empty: "Encara no hi ha exercicis.",
+  noMatch: "Cap exercici coincideix amb la cerca.",
+  seeAll: "Veure'ls tots",
+  noVideo: "Sense vídeo",
+  watch: "Veure el vídeo",
+  watchYoutube: "Veure el vídeo de YouTube",
+  openExternal: "Obrir el vídeo (enllaç extern)",
+  openExternalAria: "Obrir el vídeo en una pestanya nova",
+  close: "Tancar",
+  loading: "Carregant…",
+  videoError: "No s'ha pogut carregar el vídeo. Torna-ho a provar.",
+};
+
+/**
+ * La biblioteca de l'àrea de CLIENT: només lectura i traduïda.
+ *
+ * És un embolcall i no un `texts` que arribi des de la pàgina perquè els
+ * comptadors porten plural ("1 exercici" / "5 exercicis") i això és una funció
+ * del nombre, no una cadena; i una funció no es pot passar d'un component de
+ * servidor a un de client. Aquí, que ja som al client i dins del proveïdor
+ * d'idioma, es pot cridar el hook i construir-la.
+ */
+export function ClientExerciseLibrary({
+  exercises,
+  categories,
+}: {
+  exercises: Exercise[];
+  categories: ExerciseCategoryItem[];
+}) {
+  const t = useTranslations("workouts.lib");
+  return (
+    <ExerciseLibrary
+      exercises={exercises}
+      categories={categories}
+      texts={{
+        search: t("search"),
+        searchAria: t("searchAria"),
+        all: t("all"),
+        countFiltered: (shown, total) => t("countFiltered", { shown, total }),
+        countTotal: (count) => t("countTotal", { count }),
+        empty: t("empty"),
+        noMatch: t("noMatch"),
+        seeAll: t("seeAll"),
+        noVideo: t("noVideo"),
+        watch: t("watch"),
+        watchYoutube: t("watchYoutube"),
+        openExternal: t("openExternal"),
+        openExternalAria: t("openExternalAria"),
+        close: t("close"),
+        loading: t("loading"),
+        videoError: t("videoError"),
+      }}
+    />
+  );
+}
+
 // ─── Component principal ─────────────────────────────────────────────────────
 
 export function ExerciseLibrary({
@@ -61,13 +152,21 @@ export function ExerciseLibrary({
   categories,
   basePath,
   deleteAction,
+  texts = CA,
 }: {
   exercises: Exercise[];
   categories: ExerciseCategoryItem[];
-  /** "/admin/exercicis" o "/trainer/exercicis". */
-  basePath: string;
-  deleteAction: (formData: FormData) => void | Promise<void>;
+  /**
+   * "/admin/exercicis" o "/trainer/exercicis". Sense `basePath` la biblioteca
+   * entra en mode LECTURA: sense editar, sense esborrar i sense l'enllaç a
+   * les categories. És el que veu el client, que no en gestiona cap.
+   */
+  basePath?: string;
+  deleteAction?: (formData: FormData) => void | Promise<void>;
+  /** Sense res, català: l'admin i el professional no es tradueixen. */
+  texts?: LibraryTexts;
 }) {
+  const manage = Boolean(basePath && deleteAction);
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string | "all">("all");
   const [playing, setPlaying] = useState<Exercise | null>(null);
@@ -91,6 +190,19 @@ export function ExerciseLibrary({
     });
   }, [ordered, query, categoryId]);
 
+  /*
+   * El recompte de cada xip surt dels exercicis que ES VEUEN, no del que diu
+   * `exerciseCount`. A l'admin donen el mateix —hi són tots—, però el client
+   * només veu els que no té assignats, i el número que ve de la base diria una
+   * xifra que no correspon a res del que hi ha a la pantalla.
+   */
+  const countByCategory = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of ordered)
+      m.set(e.categoryId, (m.get(e.categoryId) ?? 0) + 1);
+    return m;
+  }, [ordered]);
+
   const filtering = query.trim() !== "" || categoryId !== "all";
 
   return (
@@ -101,8 +213,8 @@ export function ExerciseLibrary({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca per nom o descripció…"
-          aria-label="Cercar exercicis"
+          placeholder={texts.search}
+          aria-label={texts.searchAria}
           className="w-full max-w-sm rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none"
         />
 
@@ -110,41 +222,54 @@ export function ExerciseLibrary({
           <Chip
             active={categoryId === "all"}
             onClick={() => setCategoryId("all")}
-            label="Totes"
+            label={texts.all}
             count={ordered.length}
           />
-          {categories.map((c) => (
-            <Chip
-              key={c.id}
-              active={categoryId === c.id}
-              onClick={() => setCategoryId(c.id)}
-              label={c.name}
-              count={c.exerciseCount}
-            />
-          ))}
+          {categories
+            .filter(
+              // Un xip a zero no porta enlloc. A qui gestiona la biblioteca sí
+              // que li diu alguna cosa —la categoria existeix i està buida—,
+              // però a qui només la mira és un carreró sense sortida.
+              (c) => manage || (countByCategory.get(c.id) ?? 0) > 0,
+            )
+            .map((c) => (
+              <Chip
+                key={c.id}
+                active={categoryId === c.id}
+                onClick={() => setCategoryId(c.id)}
+                label={c.name}
+                count={countByCategory.get(c.id) ?? 0}
+              />
+            ))}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-brand-muted" aria-live="polite">
           {filtering
-            ? `${filtered.length} de ${ordered.length} exercicis`
-            : `${ordered.length} ${ordered.length === 1 ? "exercici" : "exercicis"}`}
+            ? texts.countFiltered(filtered.length, ordered.length)
+            : texts.countTotal(ordered.length)}
         </p>
-        <Link
-          href={`${basePath}/categories`}
-          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
-        >
-          Gestionar categories →
-        </Link>
+        {/* Gestionar categories és cosa de qui les manté, no de qui les mira. */}
+        {manage && (
+          <Link
+            href={`${basePath}/categories`}
+            className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+          >
+            Gestionar categories →
+          </Link>
+        )}
       </div>
 
       {/* ── Resultats ── */}
       {ordered.length === 0 ? (
-        <Empty>Encara no hi ha exercicis. Crea&apos;n el primer.</Empty>
+        <Empty>
+          {texts.empty}
+          {manage ? " Crea\u0027n el primer." : ""}
+        </Empty>
       ) : filtered.length === 0 ? (
         <Empty>
-          Cap exercici coincideix amb la cerca.{" "}
+          {texts.noMatch}{" "}
           <button
             type="button"
             onClick={() => {
@@ -153,7 +278,7 @@ export function ExerciseLibrary({
             }}
             className="font-bold text-brand-purple underline hover:text-brand-orange"
           >
-            Veure&apos;ls tots
+            {texts.seeAll}
           </button>
         </Empty>
       ) : (
@@ -162,8 +287,9 @@ export function ExerciseLibrary({
             <ExerciseCard
               key={e.id}
               exercise={e}
-              basePath={basePath}
-              deleteAction={deleteAction}
+              basePath={manage ? basePath : undefined}
+              deleteAction={manage ? deleteAction : undefined}
+              texts={texts}
               onPlay={() => setPlaying(e)}
             />
           ))}
@@ -171,7 +297,11 @@ export function ExerciseLibrary({
       )}
 
       {playing && (
-        <VideoDialog exercise={playing} onClose={() => setPlaying(null)} />
+        <VideoDialog
+          exercise={playing}
+          texts={texts}
+          onClose={() => setPlaying(null)}
+        />
       )}
     </div>
   );
@@ -183,11 +313,13 @@ function ExerciseCard({
   exercise: e,
   basePath,
   deleteAction,
+  texts,
   onPlay,
 }: {
   exercise: Exercise;
-  basePath: string;
-  deleteAction: (formData: FormData) => void | Promise<void>;
+  basePath?: string;
+  deleteAction?: (formData: FormData) => void | Promise<void>;
+  texts: LibraryTexts;
   onPlay: () => void;
 }) {
   const kind = videoKind(e);
@@ -208,25 +340,33 @@ function ExerciseCard({
       )}
 
       <div className="mt-auto flex items-center gap-3 pt-2">
-        <VideoIndicator kind={kind} url={e.videoUrl} onPlay={onPlay} />
+        <VideoIndicator
+          kind={kind}
+          url={e.videoUrl}
+          texts={texts}
+          onPlay={onPlay}
+        />
 
-        <div className="ml-auto flex items-center gap-3">
-          <Link
-            href={`${basePath}/${e.id}/edit`}
-            className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
-          >
-            Editar
-          </Link>
-          <form action={deleteAction}>
-            <input type="hidden" name="id" value={e.id} />
-            <button
-              type="submit"
-              className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+        {/* Editar i esborrar només hi són per a qui manté la biblioteca. */}
+        {basePath && deleteAction && (
+          <div className="ml-auto flex items-center gap-3">
+            <Link
+              href={`${basePath}/${e.id}/edit`}
+              className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
             >
-              Eliminar
-            </button>
-          </form>
-        </div>
+              Editar
+            </Link>
+            <form action={deleteAction}>
+              <input type="hidden" name="id" value={e.id} />
+              <button
+                type="submit"
+                className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+              >
+                Eliminar
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -235,17 +375,19 @@ function ExerciseCard({
 function VideoIndicator({
   kind,
   url,
+  texts,
   onPlay,
 }: {
   kind: VideoKind;
   url: string | null;
+  texts: LibraryTexts;
   onPlay: () => void;
 }) {
   const box =
     "flex h-8 w-8 items-center justify-center rounded-lg transition-colors";
 
   if (kind === "none")
-    return <span className="text-xs text-brand-muted">Sense vídeo</span>;
+    return <span className="text-xs text-brand-muted">{texts.noVideo}</span>;
 
   // Un enllaç que no és de YouTube no es pot encastar amb garanties: s'obre a
   // fora, que és el que ja feia abans.
@@ -255,8 +397,8 @@ function VideoIndicator({
         href={url ?? "#"}
         target="_blank"
         rel="noopener noreferrer"
-        title="Obrir el vídeo (enllaç extern)"
-        aria-label="Obrir el vídeo en una pestanya nova"
+        title={texts.openExternal}
+        aria-label={texts.openExternalAria}
         className={`${box} bg-brand-bg text-brand-muted hover:bg-brand-purple/10 hover:text-brand-purple`}
       >
         <ExternalLink className="h-4 w-4" aria-hidden />
@@ -267,8 +409,8 @@ function VideoIndicator({
     <button
       type="button"
       onClick={onPlay}
-      title={kind === "youtube" ? "Veure el vídeo de YouTube" : "Veure el vídeo"}
-      aria-label="Veure el vídeo"
+      title={kind === "youtube" ? texts.watchYoutube : texts.watch}
+      aria-label={texts.watch}
       className={`${box} ${
         kind === "youtube"
           ? "bg-white hover:bg-brand-bg"
@@ -288,9 +430,11 @@ function VideoIndicator({
 
 function VideoDialog({
   exercise: e,
+  texts,
   onClose,
 }: {
   exercise: Exercise;
+  texts: LibraryTexts;
   onClose: () => void;
 }) {
   const kind = videoKind(e);
@@ -341,7 +485,7 @@ function VideoDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/70 p-4">
       <button
         type="button"
-        aria-label="Tancar"
+        aria-label={texts.close}
         onClick={onClose}
         className="absolute inset-0 h-full w-full cursor-default"
       />
@@ -356,7 +500,7 @@ function VideoDialog({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Tancar"
+            aria-label={texts.close}
             className="rounded-lg p-1 text-brand-muted hover:bg-brand-bg hover:text-brand-dark"
           >
             <X className="h-5 w-5" aria-hidden />
@@ -381,11 +525,11 @@ function VideoDialog({
           />
         ) : error ? (
           <p className="rounded-lg bg-brand-bg px-4 py-8 text-center text-sm text-error">
-            No s&apos;ha pogut carregar el vídeo. Torna-ho a provar.
+            {texts.videoError}
           </p>
         ) : (
           <p className="rounded-lg bg-brand-bg px-4 py-8 text-center text-sm text-brand-muted">
-            Carregant…
+            {texts.loading}
           </p>
         )}
 
@@ -423,7 +567,12 @@ function Chip({
       )}
     >
       {label}
-      <span className={clsx("ml-1.5", active ? "text-white/70" : "text-brand-border")}>
+      <span
+        className={clsx(
+          "ml-1.5",
+          active ? "text-white/70" : "text-brand-border",
+        )}
+      >
         {count}
       </span>
     </button>
