@@ -49,10 +49,22 @@ async function sendInvite(
 }
 
 /**
- * Crea un usuari (rol als metadates, el trigger crea el perfil) i li envia la
- * invitació de marca. La CREACIÓ de l'usuari és obligatòria (si falla, llança);
- * l'EMAIL és best-effort (si Resend falla, l'usuari existeix igualment i l'admin
- * pot reenviar la invitació). Retorna l'id del nou usuari.
+ * Crea un usuari i li envia la invitació de marca. La CREACIÓ de l'usuari és
+ * obligatòria (si falla, llança); l'EMAIL és best-effort (si Resend falla,
+ * l'usuari existeix igualment i l'admin pot reenviar la invitació). Retorna
+ * l'id del nou usuari.
+ *
+ * EL ROL EL FIXA AQUESTA FUNCIÓ, NO EL METADATA
+ *
+ * Abans el rol viatjava dins de `options.data` i el posava el trigger d'alta.
+ * Això volia dir que el rol el decidia el metadata, i el metadata l'escriu qui
+ * fa la petició: pel mateix camí, qualsevol es donava d'alta com a admin des de
+ * l'endpoint públic amb la clau anon. Des de la 0064 el trigger crea SEMPRE un
+ * 'client' i ignora el que digui el metadata.
+ *
+ * Els professionals (i qualsevol rol que no sigui client) es pugen aquí, amb un
+ * UPDATE explícit i la clau de servei. Passa el guardià de la 0063 precisament
+ * perquè la clau de servei no té `auth.uid()`: és el camí que ha de poder.
  */
 export async function createUserWithInvite(input: {
   email: string;
@@ -63,10 +75,25 @@ export async function createUserWithInvite(input: {
   const { data, error } = await admin.auth.admin.generateLink({
     type: "invite",
     email: input.email,
-    options: { data: { full_name: input.fullName, role: input.role } },
+    options: { data: { full_name: input.fullName } },
   });
   if (error || !data?.user || !data.properties?.hashed_token) {
     throw new Error(error?.message ?? "No s'ha pogut crear l'usuari.");
+  }
+
+  // El trigger ja ha creat el perfil com a 'client'. Si tocava un altre rol, es
+  // fixa ara. Si això falla, l'alta NO pot continuar: un professional que es
+  // quedés com a client entraria a l'àrea equivocada i, pitjor, l'admin creuria
+  // que l'ha donat d'alta bé.
+  if (input.role !== "client") {
+    const { error: roleErr } = await admin
+      .from("profiles")
+      .update({ role: input.role })
+      .eq("id", data.user.id);
+    if (roleErr)
+      throw new Error(
+        `Usuari creat, però no s'ha pogut assignar el rol: ${roleErr.message}`,
+      );
   }
   // Email best-effort: no ha de tombar l'alta.
   await sendInvite(
