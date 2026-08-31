@@ -3,6 +3,8 @@ import { centerToday } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Service } from "@/lib/data/services";
+import { formatEur } from "@/lib/labels";
+import type { Locale } from "@/lib/i18n/config";
 import type { DiscountType, PromotionScope, ServiceType } from "@/types/database";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -66,9 +68,27 @@ function rowToPromotion(r: {
 
 // ─── Càlcul de preu efectiu (funció pura, sense IO) ─────────────────────────
 
+/**
+ * Preu efectiu d'un paquet un cop aplicada la millor oferta.
+ *
+ * `locale` és opcional i cau al català, com totes les funcions de format de
+ * `lib/labels.ts`: així les crides de l'admin no canvien ni una línia i les
+ * pantalles del client hi passen el seu.
+ *
+ * L'import del descompte es formata amb `formatEur` i no a mà. Abans es
+ * construïa amb `-${valor}€`, i això donava "-10€" a tothom: sense decimals,
+ * amb el símbol enganxat i sempre a la dreta. En anglès l'euro va davant
+ * (-€10.00), de manera que el client anglès veia una etiqueta amb el format
+ * català al costat d'un preu amb el format anglès. La mateixa oferta es llegia
+ * "-10€" al client i "-10,00 €" a l'admin, que sí que feia servir `formatEur`.
+ *
+ * Es passa el valor en NEGATIU perquè el signe el col·loqui `Intl` i no
+ * nosaltres: on va el menys respecte del símbol també depèn de l'idioma.
+ */
 export function computeEffectivePrice(
   service: Service,
   promotions: Promotion[],
+  locale?: Locale,
 ): EffectivePrice {
   const applicable = promotions.filter(
     (p) =>
@@ -103,7 +123,7 @@ export function computeEffectivePrice(
   const discountLabel =
     bestPromo.discountType === "percentage"
       ? `-${bestPromo.discountValue}%`
-      : `-${bestPromo.discountValue}€`;
+      : formatEur(-bestPromo.discountValue, locale);
 
   return {
     originalPrice: service.price,
@@ -301,6 +321,7 @@ export async function deletePromotion(id: string): Promise<void> {
 export async function getEffectivePrices(
   services: Service[],
   today?: string,
+  locale?: Locale,
 ): Promise<Map<string, EffectivePrice>> {
   // Dia del centre: una oferta que comença avui ha de valer des de la
   // mitjanit d'aquí, no des de les 02:00 (que és quan el dia canvia en UTC).
@@ -308,7 +329,7 @@ export async function getEffectivePrices(
   const promotions = await listActivePromotions(todayStr);
   const result = new Map<string, EffectivePrice>();
   for (const s of services) {
-    result.set(s.id, computeEffectivePrice(s, promotions));
+    result.set(s.id, computeEffectivePrice(s, promotions, locale));
   }
   return result;
 }
@@ -316,8 +337,9 @@ export async function getEffectivePrices(
 export async function getEffectivePrice(
   service: Service,
   today?: string,
+  locale?: Locale,
 ): Promise<EffectivePrice> {
-  const map = await getEffectivePrices([service], today);
+  const map = await getEffectivePrices([service], today, locale);
   return map.get(service.id)!;
 }
 

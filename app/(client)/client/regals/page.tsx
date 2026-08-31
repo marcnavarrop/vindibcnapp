@@ -35,7 +35,8 @@ export default async function RegalsPage() {
 
   const services = await servicesPromise;
   const [effectivePricesMap, palette, client] = await Promise.all([
-    getEffectivePrices(services),
+    // L'idioma va fins al càlcul: l'etiqueta del descompte es formata allà.
+    getEffectivePrices(services, undefined, locale),
     getColorPalette(),
     clientPromise,
   ]);

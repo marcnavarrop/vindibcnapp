@@ -45,6 +45,7 @@ export function GiftVoucherForm({
   /** Es pot pagar amb targeta? Ho decideix el servidor, no el navegador. */
   stripeEnabled?: boolean;
 }) {
+  const locale = useLocale() as Locale;
   const t = useTranslations("gifts");
   const tb = useTranslations("bonos.buy");
   const tp = useTranslations("picker");
@@ -253,6 +254,7 @@ export function GiftVoucherForm({
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-bold text-brand-dark">{selected.name}</span>
                     <PriceDisplay
+                      locale={locale}
                       ep={
                         effectivePrices[selected.id] ?? {
                           originalPrice: selected.price,

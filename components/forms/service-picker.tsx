@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { formatEur } from "@/lib/labels";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import { PriceDisplay } from "@/components/ui/price-display";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
 import type { ServiceType } from "@/types/database";
+import type { Locale } from "@/lib/i18n/config";
 
 /**
  * Els dos passos de "tria un paquet": primer el tipus de servei, després el
@@ -152,6 +153,7 @@ export function ServiceTypeStep({
 
   const t = useTranslations("picker");
   const tl = useTranslations("labels.service");
+  const locale = useLocale() as Locale;
 
   return (
     <div className="flex flex-col gap-4">
@@ -200,7 +202,7 @@ export function ServiceTypeStep({
                 <p className="mt-0.5 text-xs text-brand-muted">
                   {t("from")}{" "}
                   <span className={hasDiscount ? "font-bold text-brand-orange" : ""}>
-                    {formatEur(minPrice)}
+                    {formatEur(minPrice, locale)}
                   </span>
                 </p>
               </div>
@@ -260,6 +262,7 @@ export function PackageStep({
 
   const t = useTranslations("picker");
   const tl = useTranslations("labels.service");
+  const locale = useLocale() as Locale;
   const color = colorOfService(palette, serviceType);
 
   return (
@@ -333,6 +336,7 @@ export function PackageStep({
               <div className="flex flex-shrink-0 flex-col items-end gap-0.5">
                 <PriceDisplay
                   ep={ep}
+                  locale={locale}
                   showPerSession={pkg.defaultSessions > 1 ? pkg.defaultSessions : undefined}
                 />
               </div>

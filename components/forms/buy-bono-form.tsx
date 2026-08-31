@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 
 import type { ColorPalette } from "@/lib/colors";
@@ -15,6 +15,7 @@ import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
 import type { PendingReward } from "@/lib/data/referral";
 import type { ServiceType } from "@/types/database";
+import type { Locale } from "@/lib/i18n/config";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { ServiceTypeStep, PackageStep } from "@/components/forms/service-picker";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -39,6 +40,7 @@ export function BuyBonoForm({
   /** Es pot pagar amb targeta? Ho decideix el servidor, no el navegador. */
   stripeEnabled?: boolean;
 }) {
+  const locale = useLocale() as Locale;
   const t = useTranslations("bonos.buy");
   const tp = useTranslations("picker");
   const tl = useTranslations("labels.service");
@@ -164,6 +166,7 @@ export function BuyBonoForm({
                   {selected.name}
                 </span>
                 <PriceDisplay
+                  locale={locale}
                   ep={effectivePrices[selected.id] ?? {
                     originalPrice: selected.price,
                     finalPrice: selected.price,
@@ -284,6 +287,7 @@ export function BuyBonoForm({
                       {selected.name}
                     </span>
                     <PriceDisplay
+                      locale={locale}
                       ep={
                         effectivePrices[selected.id] ?? {
                           originalPrice: selected.price,

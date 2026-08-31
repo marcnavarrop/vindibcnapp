@@ -7,7 +7,8 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import Link from "next/link";
 import { Gift } from "lucide-react";
 import { stripeEnabled } from "@/lib/stripe";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Locale } from "@/lib/i18n/config";
 import { hasOutstandingGiftVouchers } from "@/lib/data/gift-vouchers";
 import { RedeemGiftVoucher } from "@/components/forms/redeem-gift-voucher";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
@@ -27,9 +28,11 @@ export default async function ComprarBonoPage() {
     : Promise.resolve(null);
 
   const services = await servicesPromise;
+  const locale = (await getLocale()) as Locale;
   const [effectivePricesMap, pendingReferralReward, palette, settings] =
     await Promise.all([
-      getEffectivePrices(services),
+      // L'idioma va fins al càlcul: l'etiqueta del descompte es formata allà.
+      getEffectivePrices(services, undefined, locale),
       rewardPromise,
       getColorPalette(),
       getCenterSettings(),
