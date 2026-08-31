@@ -1,11 +1,13 @@
 import { getViewer } from "@/lib/auth";
 import { getAdminDashboard } from "@/lib/data/dashboard";
 import { listReservations } from "@/lib/data/reservations";
+import { getAdminAttention } from "@/lib/data/admin-attention";
 import { LowBonosCard } from "@/components/low-bonos-card";
 import {
   Header,
   KpiRow,
   QuickActions,
+  Attention,
   TodayAtCentre,
   OccupancyByTrainer,
 } from "@/components/admin/home-sections";
@@ -15,10 +17,11 @@ import { centerDateStr, centerToday } from "@/lib/center-time";
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
-  const [viewer, d, allReservations] = await Promise.all([
+  const [viewer, d, allReservations, attention] = await Promise.all([
     getViewer(),
     getAdminDashboard(),
     listReservations(),
+    getAdminAttention(),
   ]);
 
   /*
@@ -43,6 +46,11 @@ export default async function AdminHome() {
       <KpiRow d={d} />
 
       <QuickActions />
+
+      {/* Va per damunt de l'agenda del dia: si hi ha alguna cosa que caduca,
+          es veu abans de posar-se a mirar les sessions. Si no hi ha res, no
+          es pinta i la pantalla no en queda cap rastre. */}
+      <Attention a={attention} />
 
       <TodayAtCentre reservations={todaySessions} />
 
