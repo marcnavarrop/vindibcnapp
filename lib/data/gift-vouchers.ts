@@ -183,6 +183,50 @@ function mockName(clientId: string | null): string | null {
   return store.profiles.find((p) => p.id === c?.profile_id)?.full_name ?? null;
 }
 
+/**
+ * Els vals pendents de cobrament. LECTURA PURA: no escombra res.
+ *
+ * `listGiftVouchersAdmin` fa l'escombrada peresosa —marca com a caducats els
+ * que ja ho estan— i això està bé a la seva pàgina, on l'admin hi va a
+ * gestionar-los. Però l'inici la cridava per pintar "Atenció immediata", i
+ * llavors obrir la pantalla d'entrada ESCRIVIA a la base. Una pantalla que es
+ * mira desenes de cops al dia no ha de tenir efectes secundaris.
+ *
+ * Sense escombrada, l'estat desat pot anar endarrerit: un val caducat encara
+ * pot constar com a 'pending_payment'. Per això aquí no s'hi confia i es
+ * comprova també la data, la mateixa que mira `isExpired`. Un val que ja ha
+ * caducat no s'ha de cobrar, i no ha de sortir demanant-ho.
+ *
+ * De passada, en real ja no es porten tots els vals per filtrar-los a la
+ * memòria: ho fa la consulta.
+ */
+export async function listVouchersPendingPayment(): Promise<GiftVoucher[]> {
+  const today = centerToday();
+
+  if (USE_MOCK) {
+    return getStore()
+      .gift_vouchers.filter(
+        (v) => v.status === "pending_payment" && v.expires_at >= today,
+      )
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .map((v) => ({
+        ...toVoucher(v as unknown as Row),
+        buyerName: mockName(v.buyer_client_id) ?? "—",
+        redeemedByName: mockName(v.redeemed_by_client_id),
+      }));
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("gift_vouchers")
+    .select(SELECT)
+    .eq("status", "pending_payment")
+    .gte("expires_at", today)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as unknown as Row[]).map(toVoucher);
+}
+
 export async function listGiftVouchersAdmin(): Promise<GiftVoucher[]> {
   await sweepExpiredGiftVouchers();
 

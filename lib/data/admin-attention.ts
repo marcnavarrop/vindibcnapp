@@ -1,6 +1,6 @@
 import "server-only";
-import { listTrialBookings } from "@/lib/data/trial-bookings";
-import { listGiftVouchersAdmin } from "@/lib/data/gift-vouchers";
+import { listPendingTrialRequests } from "@/lib/data/trial-bookings";
+import { listVouchersPendingPayment } from "@/lib/data/gift-vouchers";
 import { listReferralRewardsAdmin } from "@/lib/data/referral";
 import { getCenterSettings } from "@/lib/data/center-settings";
 
@@ -16,6 +16,12 @@ import { getCenterSettings } from "@/lib/data/center-settings";
  * cap a qui desenvolupa— i els bons pendents de cobrament, que ja són una de
  * les sis mètriques i tenen la seva pròpia acció ràpida. Repetir-los aquí els
  * convertiria en soroll.
+ *
+ * Les tres lectures són PURES. Les llistes generals de proves i de vals fan
+ * una escombrada peresosa —marquen com a caducat el que ja ho està— i això
+ * està bé a les seves pàgines, però aquí feia que obrir l'inici escrivís a la
+ * base. Una pantalla que es mira desenes de cops al dia no ha de tenir
+ * efectes secundaris.
  */
 export type AdminAttention = {
   trials: {
@@ -38,8 +44,8 @@ export async function getAdminAttention(): Promise<AdminAttention> {
   // Les recompenses només es demanen si el programa està engegat: amb el
   // programa apagat, una llista de descomptes pendents no vol dir res.
   const [trialsRaw, vouchersRaw, rewardsRaw] = await Promise.all([
-    listTrialBookings(),
-    listGiftVouchersAdmin(),
+    listPendingTrialRequests(),
+    listVouchersPendingPayment(),
     settings.referralProgramActive
       ? listReferralRewardsAdmin()
       : Promise.resolve([]),
@@ -47,36 +53,25 @@ export async function getAdminAttention(): Promise<AdminAttention> {
 
   const now = Date.now();
 
-  /*
-   * Les proves caducades no hi surten.
-   *
-   * `listTrialBookings` ja escombra les que han passat de termini, però entre
-   * l'escombrada i aquesta lectura pot haver-n'hi alguna: es filtra igualment
-   * per no demanar acció sobre una franja que ja s'ha alliberat sola.
-   */
-  const trials = trialsRaw
-    .filter((t) => t.status === "pending" && new Date(t.expiresAt).getTime() > now)
-    .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt))
-    .map((t) => ({
-      id: t.id,
-      name: t.fullName,
-      scheduledAt: t.scheduledAt,
-      trainerName: t.trainerName,
-      hoursLeft: Math.max(
-        0,
-        Math.floor((new Date(t.expiresAt).getTime() - now) / 3_600_000),
-      ),
-    }));
+  // Les dues lectures ja arriben filtrades i ordenades: aquí només es dona
+  // forma al que necessita la pantalla.
+  const trials = trialsRaw.map((t) => ({
+    id: t.id,
+    name: t.fullName,
+    scheduledAt: t.scheduledAt,
+    trainerName: t.trainerName,
+    hoursLeft: Math.max(
+      0,
+      Math.floor((new Date(t.expiresAt).getTime() - now) / 3_600_000),
+    ),
+  }));
 
-  const vouchers = vouchersRaw
-    .filter((v) => v.status === "pending_payment")
-    .sort((a, b) => a.purchasedAt.localeCompare(b.purchasedAt))
-    .map((v) => ({
-      id: v.id,
-      code: v.code,
-      buyerName: v.buyerName,
-      price: v.price,
-    }));
+  const vouchers = vouchersRaw.map((v) => ({
+    id: v.id,
+    code: v.code,
+    buyerName: v.buyerName,
+    price: v.price,
+  }));
 
   const referrals = rewardsRaw.filter((r) => r.status === "pending").length;
 

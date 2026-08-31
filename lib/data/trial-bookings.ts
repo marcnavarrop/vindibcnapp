@@ -533,6 +533,70 @@ export type TrialBookingItem = {
 };
 
 /** Llista de proves (opcionalment només d'un entrenador). Aplica caducitat. */
+/**
+ * Les sol·licituds de prova que esperen resposta. LECTURA PURA: no escombra.
+ *
+ * Mateix motiu que als vals de regal: `listTrialBookings` marca com a
+ * caducades les que ja ho estan, i l'inici la cridava per pintar "Atenció
+ * immediata". Obrir la pantalla d'entrada escrivia a la base.
+ *
+ * Sense escombrada l'estat desat pot anar endarrerit, així que aquí no s'hi
+ * confia: es comprova la data igualment. Una prova ja caducada ha alliberat
+ * la franja tota sola i no demana res a ningú.
+ */
+export async function listPendingTrialRequests(): Promise<TrialBookingItem[]> {
+  const nowISO = new Date().toISOString();
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const nameOf = (id: string | null) =>
+      id ? (store.profiles.find((p) => p.id === id)?.full_name ?? null) : null;
+    return store.trial_bookings
+      .filter((t) => t.status === "pending" && t.expires_at > nowISO)
+      .sort((a, b) => a.expires_at.localeCompare(b.expires_at))
+      .map((t) => ({
+        id: t.id,
+        fullName: t.full_name,
+        email: t.email,
+        phone: t.phone,
+        trainerId: t.trainer_id,
+        trainerName: nameOf(t.trainer_id),
+        scheduledAt: t.scheduled_at,
+        serviceType: t.service_type,
+        status: t.status,
+        expiresAt: t.expires_at,
+        convertedClientId: t.converted_client_id,
+        createdAt: t.created_at,
+      }));
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("trial_bookings")
+    .select(
+      "id, full_name, email, phone, trainer_id, scheduled_at, service_type, status, expires_at, converted_client_id, created_at, trainer:profiles!trial_bookings_trainer_id_fkey(full_name)",
+    )
+    .eq("status", "pending")
+    .gt("expires_at", nowISO)
+    .order("expires_at", { ascending: true });
+  if (error) throw error;
+  type Row = TrialRow & { trainer: { full_name: string | null } | null };
+  return (data as unknown as Row[]).map((t) => ({
+    id: t.id,
+    fullName: t.full_name,
+    email: t.email,
+    phone: t.phone,
+    trainerId: t.trainer_id,
+    trainerName: t.trainer?.full_name ?? null,
+    scheduledAt: t.scheduled_at,
+    serviceType: t.service_type,
+    status: t.status,
+    expiresAt: t.expires_at,
+    convertedClientId: t.converted_client_id,
+    createdAt: t.created_at,
+  }));
+}
+
 export async function listTrialBookings(
   trainerId?: string,
 ): Promise<TrialBookingItem[]> {
