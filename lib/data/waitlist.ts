@@ -4,10 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { slotHasRoom } from "@/lib/data/reservations";
 import { isBonoExpired } from "@/lib/data/bonos";
+import { GROUP_CAPACITY } from "@/lib/labels";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerDateStr, centerLocalToInstant } from "@/lib/center-time";
-import type { ServiceType, WaitlistStatus } from "@/types/database";
+import type { BonoStatus, ServiceType, WaitlistStatus } from "@/types/database";
 
 /**
  * Llista d'espera: qui es queda fora d'una franja plena i què passa quan
@@ -247,6 +248,24 @@ export type PromotionResult =
   | { promoted: true; clientId: string; reservationId: string };
 
 /**
+ * Torna el bo com estava quan la promoció no acaba d'entrar.
+ *
+ * Es restaura l'estat LLEGIT, no "active": un bo pendent de pagament que
+ * tornés actiu quedaria com a cobrat sense que ningú hagi pagat res.
+ */
+async function restoreBono(
+  admin: ReturnType<typeof createAdminClient>,
+  bonoId: string,
+  remaining: number,
+  status: BonoStatus,
+): Promise<void> {
+  await admin
+    .from("bonos")
+    .update({ remaining_sessions: remaining, status })
+    .eq("id", bonoId);
+}
+
+/**
  * S'ha alliberat una franja: entra el primer de la cua, si n'hi ha.
  *
  * MAI llança. Una cancel·lació no pot fallar perquè la promoció hagi anat
@@ -256,6 +275,9 @@ export type PromotionResult =
  * Es prova amb els candidats en ordre d'antiguitat i s'atura al primer que
  * entra de debò: si el més antic ja no té sessions al bo o ja té una altra
  * reserva a aquella hora, no bloqueja la cua per als altres.
+ *
+ * L'aforament dels grups NO es decideix aquí: el compta i el reclama
+ * `book_group_slot` (0053), dins d'un advisory lock per franja.
  */
 export async function promoteFromWaitlist(freed: {
   trainerId: string | null;
@@ -286,12 +308,22 @@ export async function promoteFromWaitlist(freed: {
     if (!candidates || candidates.length === 0)
       return { promoted: false, reason: "Ningú a la cua." };
 
+    // Sense professional no hi ha franja: l'aforament es compta per
+    // (professional, hora), i és la clau amb què `book_group_slot` agafa el
+    // seu torn. Abans s'hi passava `?? ""`, que a una columna uuid no és cap
+    // filtre sinó un error de Postgres: la consulta no tornava res i el codi
+    // en deduïa que la franja estava buida.
+    const trainerId = freed.trainerId;
+    if (!trainerId)
+      return { promoted: false, reason: "La franja no té professional." };
+
     // La franja ha de seguir tenint lloc: en un grup, alliberar-ne una plaça no
-    // vol dir que el grup s'hagi buidat.
+    // vol dir que el grup s'hagi buidat. Als grups això és només un descart
+    // ràpid — qui mana és `book_group_slot`, que compta dins del lock.
     const { data: existing } = await admin
       .from("reservations")
       .select("service_type, client_id")
-      .eq("trainer_id", freed.trainerId ?? "")
+      .eq("trainer_id", trainerId)
       .eq("scheduled_at", freed.scheduledAt)
       .eq("status", "booked");
     const occupied = (existing ?? []) as { service_type: ServiceType; client_id: string }[];
@@ -327,44 +359,78 @@ export async function promoteFromWaitlist(freed: {
         .maybeSingle();
       if (clash) continue;
 
-      // Reclam atòmic de la sessió, com a la reserva normal.
-      const next = bono.remaining_sessions - 1;
-      const { data: claimed } = await admin
-        .from("bonos")
-        .update({
-          remaining_sessions: next,
-          ...(next === 0 && bono.status === "active"
-            ? { status: "completed" as const }
-            : {}),
-          ...(bono.first_reservation_at
-            ? {}
-            : { first_reservation_at: new Date().toISOString() }),
-        })
-        .eq("id", bono.id)
-        .eq("remaining_sessions", bono.remaining_sessions)
-        .select("id")
-        .single();
-      if (!claimed) continue;
+      // Reclam de la plaça i de la sessió.
+      //
+      // Als grups ho fa `book_group_slot` (0053) i no un SELECT + INSERT
+      // d'aquí. Comptar les places en aquest fitxer i inserir després és
+      // exactament la cursa que la migració va tancar per a la reserva
+      // normal, i aquest camí se la va deixar oberta: dues cancel·lacions
+      // simultànies de la mateixa franja veien totes dues la plaça lliure i
+      // promocionaven totes dues, i el grup acabava amb cinc. La funció
+      // serialitza per franja amb un advisory lock, compta també les sessions
+      // de prova i reclama la sessió del bo dins de la mateixa transacció.
+      let createdId: string;
 
-      const { data: created, error: rErr } = await admin
-        .from("reservations")
-        .insert({
-          client_id: c.client_id,
-          bono_id: bono.id,
-          trainer_id: freed.trainerId,
-          scheduled_at: freed.scheduledAt,
-          service_type: c.service_type,
-          status: "booked",
-        })
-        .select("id")
-        .single();
-      if (rErr || !created) {
-        // Torna la sessió: la plaça se l'ha endut algú altre pel mig.
-        await admin
+      if (c.service_type === "grupo_reducido") {
+        const { data: res, error: gErr } = await admin.rpc("book_group_slot", {
+          p_client_id: c.client_id,
+          p_bono_id: bono.id,
+          p_expected_remaining: bono.remaining_sessions,
+          p_trainer_id: trainerId,
+          p_scheduled_at: freed.scheduledAt,
+          p_capacity: GROUP_CAPACITY,
+        });
+        if (gErr) return { promoted: false, reason: "Error en la promoció." };
+        if (!res || !res.ok) {
+          // 'no_sessions' és cosa d'AQUEST candidat (el bo li ha canviat sota
+          // els peus): el següent de la cua encara pot entrar-hi. 'taken' i
+          // 'full' són de la FRANJA: si ja no hi cap ningú, no cal seguir
+          // provant candidats.
+          if (res?.reason === "no_sessions") continue;
+          return { promoted: false, reason: "La franja segueix plena." };
+        }
+        createdId = res.id;
+      } else {
+        // Serveis individuals: la garantia real és l'índex únic de la 0007,
+        // igual que a `createClientReservation`. Reclam optimista i INSERT.
+        const next = bono.remaining_sessions - 1;
+        const { data: claimed } = await admin
           .from("bonos")
-          .update({ remaining_sessions: bono.remaining_sessions, status: "active" })
-          .eq("id", bono.id);
-        continue;
+          .update({
+            remaining_sessions: next,
+            ...(next === 0 && bono.status === "active"
+              ? { status: "completed" as const }
+              : {}),
+            ...(bono.first_reservation_at
+              ? {}
+              : { first_reservation_at: new Date().toISOString() }),
+          })
+          .eq("id", bono.id)
+          .eq("remaining_sessions", bono.remaining_sessions)
+          .select("id")
+          .single();
+        if (!claimed) continue;
+
+        const { data: created, error: rErr } = await admin
+          .from("reservations")
+          .insert({
+            client_id: c.client_id,
+            bono_id: bono.id,
+            trainer_id: trainerId,
+            scheduled_at: freed.scheduledAt,
+            service_type: c.service_type,
+            status: "booked",
+          })
+          .select("id")
+          .single();
+        if (rErr || !created) {
+          // Torna la sessió: la plaça se l'ha endut algú altre pel mig.
+          // `bono.status` i no "active": el bo podia ser 'pending_payment' i
+          // donar-lo per actiu el cobraria per la cara.
+          await restoreBono(admin, bono.id, bono.remaining_sessions, bono.status);
+          continue;
+        }
+        createdId = created.id;
       }
 
       // `eq("status","waiting")` tanca la cursa: si dues cancel·lacions
@@ -374,23 +440,20 @@ export async function promoteFromWaitlist(freed: {
         .update({
           status: "fulfilled" as WaitlistStatus,
           fulfilled_at: new Date().toISOString(),
-          fulfilled_reservation_id: created.id,
+          fulfilled_reservation_id: createdId,
         })
         .eq("id", c.id)
         .eq("status", "waiting")
         .select("id");
       if (!marked || marked.length === 0) {
         // Ha guanyat l'altra: es desfà la reserva que acabem de crear.
-        await admin.from("reservations").delete().eq("id", created.id);
-        await admin
-          .from("bonos")
-          .update({ remaining_sessions: bono.remaining_sessions })
-          .eq("id", bono.id);
+        await admin.from("reservations").delete().eq("id", createdId);
+        await restoreBono(admin, bono.id, bono.remaining_sessions, bono.status);
         continue;
       }
 
-      await notifyPromotion(c.client_id, freed, created.id);
-      return { promoted: true, clientId: c.client_id, reservationId: created.id };
+      await notifyPromotion(c.client_id, freed, createdId);
+      return { promoted: true, clientId: c.client_id, reservationId: createdId };
     }
 
     return { promoted: false, reason: "Cap candidat podia agafar-la." };
