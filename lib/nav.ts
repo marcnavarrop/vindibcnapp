@@ -169,8 +169,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/client", label: "Inici", labelKey: "home", exact: true, icon: "home" },
     { href: "/client/bonos", label: "Bons", labelKey: "bonos", icon: "ticket" },
     { href: "/client/reservas", label: "Reserves", labelKey: "reservas", icon: "calendar" },
-    // La ruta segueix sent /client/exercicis: només canvia com se'n diu.
-    { href: "/client/exercicis", label: "Entrenaments", labelKey: "exercicis", icon: "dumbbell" },
+    { href: "/client/exercicis", label: "Exercicis", labelKey: "exercicis", icon: "dumbbell" },
     { href: "/client/documents", label: "Documents", labelKey: "documents", icon: "document" },
     { href: "/client/comunitat", label: "Comunitat", labelKey: "comunitat", icon: "community" },
     { href: "/client/configuracio", label: "Configuració", labelKey: "configuracio", icon: "settings" },

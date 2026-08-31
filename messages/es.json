@@ -341,7 +341,7 @@
     "home": "Inicio",
     "bonos": "Bonos",
     "reservas": "Reservas",
-    "exercicis": "Entrenamientos",
+    "exercicis": "Ejercicios",
     "documents": "Documentos",
     "comunitat": "Comunidad",
     "configuracio": "Configuración",
@@ -741,20 +741,13 @@
     }
   },
   "workouts": {
-    "title": "Entrenamientos",
+    "title": "Ejercicios",
     "intro": "Los ejercicios que te ha asignado tu profesional y la biblioteca del centro.",
     "yours": "Tus ejercicios",
     "noneAssigned": "Todavía no tienes ningún ejercicio asignado.",
     "progress": "Tu progreso",
     "reps": "{count} reps",
     "library": "Biblioteca completa",
-    "video": {
-      "watch": "▶ Ver vídeo",
-      "loading": "Cargando…",
-      "error": "No se ha podido cargar el vídeo. Inténtalo de nuevo.",
-      "play": "Reproducir el vídeo",
-      "retry": "Reintentar cargar el vídeo"
-    },
     "lib": {
       "search": "Busca por nombre o descripción…",
       "searchAria": "Buscar ejercicios",

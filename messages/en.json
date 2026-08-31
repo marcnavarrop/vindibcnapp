@@ -341,7 +341,7 @@
     "home": "Home",
     "bonos": "Packages",
     "reservas": "Bookings",
-    "exercicis": "Workouts",
+    "exercicis": "Exercises",
     "documents": "Documents",
     "comunitat": "Community",
     "configuracio": "Settings",
@@ -741,20 +741,13 @@
     }
   },
   "workouts": {
-    "title": "Workouts",
+    "title": "Exercises",
     "intro": "The exercises your professional has assigned you, plus the centre's library.",
     "yours": "Your exercises",
     "noneAssigned": "You don't have any exercises assigned yet.",
     "progress": "Your progress",
     "reps": "{count} reps",
     "library": "Full library",
-    "video": {
-      "watch": "▶ Watch video",
-      "loading": "Loading…",
-      "error": "We couldn't load the video. Please try again.",
-      "play": "Play the video",
-      "retry": "Try loading the video again"
-    },
     "lib": {
       "search": "Search by name or description…",
       "searchAria": "Search exercises",

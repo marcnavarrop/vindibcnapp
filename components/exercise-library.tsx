@@ -23,6 +23,22 @@ import type { ExerciseCategoryItem } from "@/lib/data/exercise-categories";
 
 type VideoKind = "file" | "youtube" | "external" | "none";
 
+/**
+ * El mínim que necessiten l'indicador i el diàleg de vídeo.
+ *
+ * No demanen un `Exercise` sencer perquè els exercicis ASSIGNATS a un client
+ * són un altre tipus —porten les notes del professional i l'id de
+ * l'assignació— i han de poder ensenyar el vídeo igual. Amb aquesta forma
+ * mínima, les dues seccions de la pantalla del client comparteixen la mateixa
+ * icona i el mateix diàleg en comptes de tenir-ne cadascuna el seu.
+ */
+export type PlayableExercise = {
+  name: string;
+  description: string | null;
+  videoUrl: string | null;
+  videoFilePath: string | null;
+};
+
 function youtubeId(url: string): string | null {
   try {
     const u = new URL(url);
@@ -36,7 +52,7 @@ function youtubeId(url: string): string | null {
   }
 }
 
-function videoKind(e: Exercise): VideoKind {
+export function videoKind(e: PlayableExercise): VideoKind {
   if (e.videoFilePath) return "file";
   if (e.videoUrl) return youtubeId(e.videoUrl) ? "youtube" : "external";
   return "none";
@@ -372,7 +388,7 @@ function ExerciseCard({
   );
 }
 
-function VideoIndicator({
+export function VideoIndicator({
   kind,
   url,
   texts,
@@ -428,12 +444,12 @@ function VideoIndicator({
 
 // ─── Diàleg del vídeo ────────────────────────────────────────────────────────
 
-function VideoDialog({
+export function VideoDialog({
   exercise: e,
   texts,
   onClose,
 }: {
-  exercise: Exercise;
+  exercise: PlayableExercise;
   texts: LibraryTexts;
   onClose: () => void;
 }) {
