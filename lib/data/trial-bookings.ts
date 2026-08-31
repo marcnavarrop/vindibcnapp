@@ -544,7 +544,10 @@ export type TrialBookingItem = {
  * confia: es comprova la data igualment. Una prova ja caducada ha alliberat
  * la franja tota sola i no demana res a ningú.
  */
-export async function listPendingTrialRequests(): Promise<TrialBookingItem[]> {
+export async function listPendingTrialRequests(
+  /** Només les d'aquest professional; sense res, les de tot el centre. */
+  trainerId?: string,
+): Promise<TrialBookingItem[]> {
   const nowISO = new Date().toISOString();
 
   if (USE_MOCK) {
@@ -552,7 +555,12 @@ export async function listPendingTrialRequests(): Promise<TrialBookingItem[]> {
     const nameOf = (id: string | null) =>
       id ? (store.profiles.find((p) => p.id === id)?.full_name ?? null) : null;
     return store.trial_bookings
-      .filter((t) => t.status === "pending" && t.expires_at > nowISO)
+      .filter(
+        (t) =>
+          t.status === "pending" &&
+          t.expires_at > nowISO &&
+          (!trainerId || t.trainer_id === trainerId),
+      )
       .sort((a, b) => a.expires_at.localeCompare(b.expires_at))
       .map((t) => ({
         id: t.id,
@@ -571,7 +579,7 @@ export async function listPendingTrialRequests(): Promise<TrialBookingItem[]> {
   }
 
   const admin = createAdminClient();
-  const { data, error } = await admin
+  let query = admin
     .from("trial_bookings")
     .select(
       "id, full_name, email, phone, trainer_id, scheduled_at, service_type, status, expires_at, converted_client_id, created_at, trainer:profiles!trial_bookings_trainer_id_fkey(full_name)",
@@ -579,6 +587,8 @@ export async function listPendingTrialRequests(): Promise<TrialBookingItem[]> {
     .eq("status", "pending")
     .gt("expires_at", nowISO)
     .order("expires_at", { ascending: true });
+  if (trainerId) query = query.eq("trainer_id", trainerId);
+  const { data, error } = await query;
   if (error) throw error;
   type Row = TrialRow & { trainer: { full_name: string | null } | null };
   return (data as unknown as Row[]).map((t) => ({

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
+import { AttentionPanel, AttentionRow } from "@/components/ui/attention";
+import { countdownLabel } from "@/lib/data/trial-attention";
 import { pct1 } from "@/components/ui/kpi";
 import {
   SERVICE_LABELS,
@@ -43,7 +45,14 @@ export function Header({ name, today }: { name: string; today: string }) {
  * en tres —dues files a l'escriptori, dues columnes al mòbil—.
  */
 export function KpiRow({ d }: { d: AdminDashboard }) {
-  const { revenue, pendingBonos, lowBonos, sessions, occupancy, trialConversion } = d;
+  const {
+    revenue,
+    pendingBonos,
+    lowBonos,
+    sessions,
+    occupancy,
+    trialConversion,
+  } = d;
 
   const cards: {
     icon: IconName;
@@ -333,34 +342,6 @@ export function OccupancyByTrainer({ d }: { d: AdminDashboard }) {
 
 // ─────────────────── Atenció immediata ───────────────────
 
-/** Una fila de la secció: què passa, quantes n'hi ha i on es resol. */
-function AttentionRow({
-  title,
-  detail,
-  href,
-  cta,
-}: {
-  title: string;
-  detail: React.ReactNode;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 sm:px-5">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-brand-dark">{title}</p>
-        <p className="text-xs text-brand-muted">{detail}</p>
-      </div>
-      <Link
-        href={href}
-        className="shrink-0 text-xs font-bold tracking-wide text-brand-orange uppercase hover:text-brand-dark"
-      >
-        {cta} →
-      </Link>
-    </li>
-  );
-}
-
 /**
  * El que espera resposta avui.
  *
@@ -372,76 +353,61 @@ export function Attention({ a }: { a: AdminAttention }) {
   if (a.empty) return null;
 
   return (
-    <section className="overflow-hidden rounded-2xl border-2 border-brand-orange/40 bg-brand-orange/5">
-      <div className="flex items-center gap-2.5 border-b border-brand-orange/25 px-5 py-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-orange/15 text-brand-orange">
-          <Icon name="alert" size={16} />
-        </span>
-        <h2 className="text-xs font-bold tracking-widest text-brand-orange uppercase">
-          Atenció immediata
-        </h2>
-      </div>
-
-      <ul className="divide-y divide-brand-orange/20">
-        {a.trials.length > 0 && (
-          <AttentionRow
-            title={
-              a.trials.length === 1
-                ? "1 sol·licitud de prova pendent"
-                : `${a.trials.length} sol·licituds de prova pendents`
-            }
-            detail={
-              <>
-                {/* El compte enrere és el que la fa urgent: mentre no es
+    <AttentionPanel>
+      {a.trials.length > 0 && (
+        <AttentionRow
+          title={
+            a.trials.length === 1
+              ? "1 sol·licitud de prova pendent"
+              : `${a.trials.length} sol·licituds de prova pendents`
+          }
+          detail={
+            <>
+              {/* El compte enrere és el que la fa urgent: mentre no es
                     respon, la franja segueix bloquejada per a tothom. */}
-                {a.trials[0].name} · {formatDate(a.trials[0].scheduledAt)}
-                {" · "}
-                {a.trials[0].hoursLeft === 0
-                  ? "caduca en menys d'una hora"
-                  : a.trials[0].hoursLeft === 1
-                    ? "caduca en 1 h"
-                    : `caduca en ${a.trials[0].hoursLeft} h`}
-                {a.trials.length > 1 && ` · i ${a.trials.length - 1} més`}
-              </>
-            }
-            href="/admin/prova"
-            cta="Revisar"
-          />
-        )}
+              {a.trials[0].name} · {formatDate(a.trials[0].scheduledAt)}
+              {" · "}
+              {countdownLabel(a.trials[0].hoursLeft)}
+              {a.trials.length > 1 && ` · i ${a.trials.length - 1} més`}
+            </>
+          }
+          href="/admin/prova"
+          cta="Revisar"
+        />
+      )}
 
-        {a.vouchers.length > 0 && (
-          <AttentionRow
-            title={
-              a.vouchers.length === 1
-                ? "1 val de regal pendent de cobrament"
-                : `${a.vouchers.length} vals de regal pendents de cobrament`
-            }
-            detail={
-              <>
-                {a.vouchers[0].code} · {a.vouchers[0].buyerName} ·{" "}
-                {formatEur(a.vouchers[0].price)}
-                {a.vouchers.length > 1 && ` · i ${a.vouchers.length - 1} més`}
-                {" · no es pot bescanviar fins que es cobri"}
-              </>
-            }
-            href="/admin/vals-regal"
-            cta="Veure"
-          />
-        )}
+      {a.vouchers.length > 0 && (
+        <AttentionRow
+          title={
+            a.vouchers.length === 1
+              ? "1 val de regal pendent de cobrament"
+              : `${a.vouchers.length} vals de regal pendents de cobrament`
+          }
+          detail={
+            <>
+              {a.vouchers[0].code} · {a.vouchers[0].buyerName} ·{" "}
+              {formatEur(a.vouchers[0].price)}
+              {a.vouchers.length > 1 && ` · i ${a.vouchers.length - 1} més`}
+              {" · no es pot bescanviar fins que es cobri"}
+            </>
+          }
+          href="/admin/vals-regal"
+          cta="Veure"
+        />
+      )}
 
-        {a.referrals > 0 && (
-          <AttentionRow
-            title={
-              a.referrals === 1
-                ? "1 recompensa de referit per aplicar"
-                : `${a.referrals} recompenses de referit per aplicar`
-            }
-            detail="Descomptes guanyats que esperen la propera compra."
-            href="/admin/referits"
-            cta="Veure"
-          />
-        )}
-      </ul>
-    </section>
+      {a.referrals > 0 && (
+        <AttentionRow
+          title={
+            a.referrals === 1
+              ? "1 recompensa de referit per aplicar"
+              : `${a.referrals} recompenses de referit per aplicar`
+          }
+          detail="Descomptes guanyats que esperen la propera compra."
+          href="/admin/referits"
+          cta="Veure"
+        />
+      )}
+    </AttentionPanel>
   );
 }

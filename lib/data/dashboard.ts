@@ -12,7 +12,6 @@ import {
   listBlocksLite,
 } from "@/lib/data/availability-blocks";
 import { isBonoExpired } from "@/lib/data/bonos";
-import { listTrialBookings } from "@/lib/data/trial-bookings";
 import {
   availableHoursOn,
   weekdayOfDay,
@@ -416,7 +415,6 @@ export type TrainerDashboard = {
   clients: number;
   /** Bons dels SEUS clients assignats per sota del llindar del centre. */
   lowBonos: LowBono[];
-  pendingTrials: number;
   occupancy: { slots: number; booked: number; pct: number };
 };
 
@@ -544,15 +542,19 @@ export async function getTrainerDashboard(
       sessions: { today: 0, week: 0 },
       clients: 0,
       lowBonos: [],
-      pendingTrials: 0,
       occupancy: { slots: 0, booked: 0, pct: 0 },
     };
 
-  // Dades, configuració i proves són independents: van alhora.
-  const [raw, settings, trials] = await Promise.all([
+  /*
+   * Les proves pendents ja no es demanen aquí.
+   *
+   * Eren una de les targetes, i sortien de `listTrialBookings`, que fa
+   * l'escombrada peresosa de caducitats: obrir l'inici escrivia a la base.
+   * Ara viuen a "Atenció immediata", que les llegeix amb una consulta pura.
+   */
+  const [raw, settings] = await Promise.all([
     gatherTrainer(trainerId),
     getCenterSettings(),
-    listTrialBookings(trainerId),
   ]);
   const now = new Date();
 
@@ -596,11 +598,6 @@ export async function getTrainerDashboard(
         a.remaining - b.remaining || a.clientName.localeCompare(b.clientName),
     );
 
-  // ── Sol·licituds de prova pendents ──
-  // listTrialBookings ja hi ha passat l'escombrat de caducitat, així que una
-  // sol·licitud vençuda no s'hi compta encara que ningú l'hagi tocada.
-  const pendingTrials = trials.filter((t) => t.status === "pending").length;
-
   // ── Ocupació de la seva disponibilitat aquesta setmana ──
   const occupancy = occupancyOf(raw.rules, raw.blocks, weekDays, (day, h) =>
     bookedKeys.has(`${day}|${h}`),
@@ -610,7 +607,6 @@ export async function getTrainerDashboard(
     sessions: { today, week },
     clients: raw.clientCount,
     lowBonos,
-    pendingTrials,
     occupancy,
   };
 }

@@ -1,5 +1,8 @@
 import "server-only";
-import { listPendingTrialRequests } from "@/lib/data/trial-bookings";
+import {
+  pendingTrialAttention,
+  type TrialAttentionItem,
+} from "@/lib/data/trial-attention";
 import { listVouchersPendingPayment } from "@/lib/data/gift-vouchers";
 import { listReferralRewardsAdmin } from "@/lib/data/referral";
 import { getCenterSettings } from "@/lib/data/center-settings";
@@ -24,14 +27,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
  * efectes secundaris.
  */
 export type AdminAttention = {
-  trials: {
-    id: string;
-    name: string;
-    scheduledAt: string;
-    trainerName: string | null;
-    /** Hores que falten perquè la sol·licitud caduqui (mai negatiu). */
-    hoursLeft: number;
-  }[];
+  trials: TrialAttentionItem[];
   vouchers: { id: string; code: string; buyerName: string; price: number }[];
   referrals: number;
   /** Cap de les tres coses té res: qui ho pinta pot amagar la secció sencera. */
@@ -44,27 +40,15 @@ export async function getAdminAttention(): Promise<AdminAttention> {
   // Les recompenses només es demanen si el programa està engegat: amb el
   // programa apagat, una llista de descomptes pendents no vol dir res.
   const [trialsRaw, vouchersRaw, rewardsRaw] = await Promise.all([
-    listPendingTrialRequests(),
+    pendingTrialAttention(),
     listVouchersPendingPayment(),
     settings.referralProgramActive
       ? listReferralRewardsAdmin()
       : Promise.resolve([]),
   ]);
 
-  const now = Date.now();
-
-  // Les dues lectures ja arriben filtrades i ordenades: aquí només es dona
-  // forma al que necessita la pantalla.
-  const trials = trialsRaw.map((t) => ({
-    id: t.id,
-    name: t.fullName,
-    scheduledAt: t.scheduledAt,
-    trainerName: t.trainerName,
-    hoursLeft: Math.max(
-      0,
-      Math.floor((new Date(t.expiresAt).getTime() - now) / 3_600_000),
-    ),
-  }));
+  // Les proves ja arriben preparades; els vals, filtrats i ordenats.
+  const trials = trialsRaw;
 
   const vouchers = vouchersRaw.map((v) => ({
     id: v.id,
