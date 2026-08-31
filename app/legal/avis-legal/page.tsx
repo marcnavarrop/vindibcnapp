@@ -1,66 +1,50 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { H, RICH, Prevalence } from "@/components/legal/legal-text";
+import { LegalDraftBanner } from "@/components/legal-draft-banner";
+
 /**
  * ⚠️ BORRADOR LEGAL — TEXT DE PARTIDA, NO DEFINITIU.
  * Pendent de revisió per un assessor legal. Ompliu els [CLAUDÀTORS].
+ *
+ * El text viu a `messages/*.json`, sota `legalPages.avisLegal`. El català és
+ * l'original i les altres dues llengües en són traduccions: així ho diu la
+ * clàusula de prevalença que porta cada pàgina.
  */
-export const metadata = { title: "Avís Legal · VindiBCN" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("legalPages.avisLegal");
+  return { title: t("metaTitle") };
+}
 
-export default function AvisLegalPage() {
+export default async function AvisLegalPage() {
+  const t = await getTranslations("legalPages.avisLegal");
+  const g = await getTranslations("legalPages");
+
   return (
     <>
-      <h1 className="text-2xl text-brand-dark">Avís Legal</h1>
-      <p className="text-xs text-brand-muted">Versió 2026-06 (esborrany)</p>
+      <LegalDraftBanner doc="avisLegal" />
+      <h1 className="text-2xl text-brand-dark">{t("title")}</h1>
+      <p className="text-xs text-brand-muted">{g("draftVersion")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        1. Titular
-      </h2>
-      <p>
-        Aquest lloc web és titularitat de [NOM_RESPONSABLE], amb NIF [NIF] i
-        domicili a [ADREÇA]. Contacte: [EMAIL_CONTACTE].
-      </p>
+      <H>{t("h1")}</H>
+      <p>{t("p1")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        2. Objecte
-      </h2>
-      <p>
-        Aquest lloc ofereix la gestió de serveis d&apos;entrenament personal i
-        fisioteràpia (reserves, bons i seguiment) per als clients del centre.
-      </p>
+      <H>{t("h2")}</H>
+      <p>{t("p2")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        3. Condicions d&apos;ús
-      </h2>
-      <p>
-        L&apos;usuari es compromet a fer un ús adequat dels continguts i
-        serveis, a no emprar-los per a activitats il·lícites i a mantenir la
-        confidencialitat de les seves credencials d&apos;accés.
-      </p>
+      <H>{t("h3")}</H>
+      <p>{t("p3")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        4. Propietat intel·lectual
-      </h2>
-      <p>
-        Els continguts, marques i elements del lloc pertanyen al titular o a
-        tercers que n&apos;han autoritzat l&apos;ús, i estan protegits per la
-        normativa de propietat intel·lectual i industrial.
-      </p>
+      <H>{t("h4")}</H>
+      <p>{t("p4")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        5. Responsabilitat
-      </h2>
-      <p>
-        El titular no es fa responsable dels danys derivats d&apos;un ús
-        indegut del lloc ni de les interrupcions per causes tècniques alienes al
-        seu control. [A concretar amb l&apos;assessor.]
-      </p>
+      <H>{t("h5")}</H>
+      <p>{t("p5")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        6. Legislació aplicable
-      </h2>
-      <p>
-        Aquestes condicions es regeixen per la legislació espanyola. Per a
-        qualsevol controvèrsia, les parts se sotmeten als jutjats i tribunals de
-        [Barcelona], llevat que la normativa de consum estableixi un altre fur.
-      </p>
+      <H>{t("h6")}</H>
+      <p>{t.rich("p6", RICH)}</p>
+
+      <Prevalence text={g("prevalence")} />
     </>
   );
 }

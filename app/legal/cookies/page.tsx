@@ -1,52 +1,43 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { H, RICH, Prevalence } from "@/components/legal/legal-text";
+import { LegalDraftBanner } from "@/components/legal-draft-banner";
+
 /**
  * ⚠️ BORRADOR LEGAL — TEXT DE PARTIDA, NO DEFINITIU.
  * Pendent de revisió per un assessor legal. Cal confirmar l'inventari real de
  * cookies (només tècniques d'autenticació avui) abans de publicar.
+ *
+ * El text viu a `messages/*.json`, sota `legalPages.cookies`.
  */
-export const metadata = { title: "Política de Cookies · VindiBCN" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("legalPages.cookies");
+  return { title: t("metaTitle") };
+}
 
-export default function CookiesPage() {
+export default async function CookiesPage() {
+  const t = await getTranslations("legalPages.cookies");
+  const g = await getTranslations("legalPages");
+
   return (
     <>
-      <h1 className="text-2xl text-brand-dark">Política de Cookies</h1>
-      <p className="text-xs text-brand-muted">Versió 2026-06 (esborrany)</p>
+      <LegalDraftBanner doc="cookies" />
+      <h1 className="text-2xl text-brand-dark">{t("title")}</h1>
+      <p className="text-xs text-brand-muted">{g("draftVersion")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        1. Què són les cookies
-      </h2>
-      <p>
-        Les cookies són petits fitxers que el navegador emmagatzema per fer
-        funcionar un lloc web i recordar informació de la sessió.
-      </p>
+      <H>{t("h1")}</H>
+      <p>{t("p1")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        2. Quines fem servir
-      </h2>
-      <p>
-        Actualment només fem servir <strong>cookies tècniques i necessàries</strong>{" "}
-        per mantenir la sessió iniciada (autenticació de Supabase). No fem servir
-        cookies de publicitat ni d&apos;analítica ni de tercers per a seguiment.
-        [Confirmar l&apos;inventari real amb l&apos;assessor abans de publicar.]
-      </p>
+      <H>{t("h2")}</H>
+      <p>{t.rich("p2", RICH)}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        3. Base legal
-      </h2>
-      <p>
-        Les cookies tècniques necessàries per prestar el servei no requereixen
-        consentiment previ. Si en el futur s&apos;afegeixen cookies
-        d&apos;analítica o màrqueting, es demanarà el consentiment mitjançant un
-        bàner de cookies.
-      </p>
+      <H>{t("h3")}</H>
+      <p>{t("p3")}</p>
 
-      <h2 className="mt-4 text-lg font-bold text-brand-dark">
-        4. Com gestionar-les
-      </h2>
-      <p>
-        Pots configurar o eliminar les cookies des de les opcions del teu
-        navegador. Tingues en compte que desactivar les cookies tècniques pot
-        impedir iniciar sessió.
-      </p>
+      <H>{t("h4")}</H>
+      <p>{t("p4")}</p>
+
+      <Prevalence text={g("prevalence")} />
     </>
   );
 }

@@ -886,5 +886,71 @@
     "step3": "3. The sessions are added to your account and you can start booking.",
     "validUntil": "Valid until {date}",
     "fileName": "gift-voucher"
+  },
+  "legalPages": {
+    "prevalence": "This document is also available in other languages for your convenience. In the event of any discrepancy between versions, the Catalan version shall always prevail.",
+    "draftVersion": "Version 2026-06 (draft)",
+    "nav": {
+      "privacy": "Privacy",
+      "notice": "Legal notice",
+      "cookies": "Cookies"
+    },
+    "avisLegal": {
+      "metaTitle": "Legal Notice · VindiBCN",
+      "title": "Legal Notice",
+      "h1": "1. Owner",
+      "p1": "This website is owned by [NOM_RESPONSABLE], with tax identification number (NIF) [NIF] and registered address at [ADREÇA]. Contact: [EMAIL_CONTACTE].",
+      "h2": "2. Purpose",
+      "p2": "This site provides the management of personal training and physiotherapy services (bookings, session packages and progress tracking) for the centre's clients.",
+      "h3": "3. Terms of use",
+      "p3": "The user undertakes to make appropriate use of the contents and services, not to use them for unlawful activities and to keep their access credentials confidential.",
+      "h4": "4. Intellectual property",
+      "p4": "The contents, trade marks and elements of the site belong to the owner or to third parties who have authorised their use, and are protected by intellectual and industrial property law.",
+      "h5": "5. Liability",
+      "p5": "The owner accepts no liability for damages arising from improper use of the site, nor for interruptions caused by technical circumstances beyond its control. [To be settled with the legal adviser.]",
+      "h6": "6. Applicable law",
+      "p6": "These terms are governed by Spanish law. For any dispute, the parties submit to the courts and tribunals of [Barcelona], unless consumer protection legislation establishes a different forum."
+    },
+    "privacitat": {
+      "metaTitle": "Privacy Policy · VindiBCN",
+      "title": "Privacy Policy",
+      "h1": "1. Data controller",
+      "p1": "[NOM_RESPONSABLE], with tax identification number (NIF) [NIF] and registered address at [ADREÇA]. Contact email: [EMAIL_CONTACTE].",
+      "h2": "2. What data we process",
+      "p2": "Identification and contact data (name, email address, telephone), date of birth, gender and physical data (height, weight) and goals. In the case of clients receiving physiotherapy, health data linked to therapeutic follow-up. Also data relating to the service relationship: session packages, bookings and payments.",
+      "h3": "3. Purposes",
+      "p3": "Management of client registrations, bookings and session packages; training follow-up and, where applicable, physiotherapy treatment; invoicing and payment collection; and communications relating to the service and the centre.",
+      "h4": "4. Legal basis",
+      "p4": "Performance of the service contract; your explicit <b>consent</b> for the processing of health data and for non-essential communications; and compliance with legal obligations (e.g. invoicing). [To be validated by the legal adviser.]",
+      "h5": "5. Recipients and processors",
+      "p5": "We do not disclose your data to third parties, except where required by law. To provide the service we use suppliers acting as processors:",
+      "item1": "<b>Supabase</b> — database hosting and authentication.",
+      "item2": "<b>Vercel</b> — web application hosting.",
+      "item3": "<b>Resend</b> — sending of transactional emails.",
+      "p5b": "The location of the servers and the safeguards for international transfers are to be detailed and validated [to be reviewed by the legal adviser].",
+      "h6": "6. Retention",
+      "p6": "We keep the data for as long as the relationship lasts and, thereafter, for the applicable statutory periods (e.g. tax and healthcare obligations). [Periods to be settled with the legal adviser.]",
+      "h7": "7. Your rights",
+      "p7": "You may exercise the rights of <b>access</b>, <b>rectification</b>, <b>erasure</b>, <b>objection</b>, <b>portability</b> and <b>restriction</b> of processing, as well as <b>withdrawing your consent</b> at any time. You may also lodge a complaint with the Spanish Data Protection Agency (Agencia Española de Protección de Datos, AEPD).",
+      "h8": "8. How to exercise them",
+      "p8": "Write to [EMAIL_CONTACTE] stating the right you wish to exercise and attaching a copy of an identity document."
+    },
+    "cookies": {
+      "metaTitle": "Cookie Policy · VindiBCN",
+      "title": "Cookie Policy",
+      "h1": "1. What cookies are",
+      "p1": "Cookies are small files that the browser stores in order to make a website work and to remember session information.",
+      "h2": "2. Which ones we use",
+      "p2": "At present we only use <b>strictly necessary technical cookies</b> to keep your session signed in (Supabase authentication). We do not use advertising, analytics or third-party tracking cookies. [Actual inventory to be confirmed with the legal adviser before publication.]",
+      "h3": "3. Legal basis",
+      "p3": "Technical cookies necessary to provide the service do not require prior consent. If analytics or marketing cookies are added in the future, consent will be requested by means of a cookie banner.",
+      "h4": "4. How to manage them",
+      "p4": "You can configure or delete cookies from your browser settings. Please note that disabling technical cookies may prevent you from signing in."
+    },
+    "draftBanner": {
+      "title": "Provisional document.",
+      "body": "This text is still pending legal review and may change. If you have any questions about your data or your rights, write to the centre and we'll answer them.",
+      "devNote": "[Development only] A legal adviser must review it and fill in the bracketed fields before it can be considered final."
+    }
   }
 }

@@ -886,5 +886,71 @@
     "step3": "3. Las sesiones se añaden a tu cuenta y ya puedes reservar.",
     "validUntil": "Válido hasta el {date}",
     "fileName": "vale-regalo"
+  },
+  "legalPages": {
+    "prevalence": "Este documento también está disponible en otros idiomas para tu comodidad. En caso de discrepancia entre versiones, prevalece siempre la versión en catalán.",
+    "draftVersion": "Versión 2026-06 (borrador)",
+    "nav": {
+      "privacy": "Privacidad",
+      "notice": "Aviso legal",
+      "cookies": "Cookies"
+    },
+    "avisLegal": {
+      "metaTitle": "Aviso Legal · VindiBCN",
+      "title": "Aviso Legal",
+      "h1": "1. Titular",
+      "p1": "Este sitio web es titularidad de [NOM_RESPONSABLE], con NIF [NIF] y domicilio en [ADREÇA]. Contacto: [EMAIL_CONTACTE].",
+      "h2": "2. Objeto",
+      "p2": "Este sitio ofrece la gestión de servicios de entrenamiento personal y fisioterapia (reservas, bonos y seguimiento) para los clientes del centro.",
+      "h3": "3. Condiciones de uso",
+      "p3": "El usuario se compromete a hacer un uso adecuado de los contenidos y servicios, a no emplearlos para actividades ilícitas y a mantener la confidencialidad de sus credenciales de acceso.",
+      "h4": "4. Propiedad intelectual",
+      "p4": "Los contenidos, marcas y elementos del sitio pertenecen al titular o a terceros que han autorizado su uso, y están protegidos por la normativa de propiedad intelectual e industrial.",
+      "h5": "5. Responsabilidad",
+      "p5": "El titular no se hace responsable de los daños derivados de un uso indebido del sitio ni de las interrupciones por causas técnicas ajenas a su control. [A concretar con el asesor.]",
+      "h6": "6. Legislación aplicable",
+      "p6": "Estas condiciones se rigen por la legislación española. Para cualquier controversia, las partes se someten a los juzgados y tribunales de [Barcelona], salvo que la normativa de consumo establezca otro fuero."
+    },
+    "privacitat": {
+      "metaTitle": "Política de Privacidad · VindiBCN",
+      "title": "Política de Privacidad",
+      "h1": "1. Responsable del tratamiento",
+      "p1": "[NOM_RESPONSABLE], con NIF [NIF] y domicilio en [ADREÇA]. Correo de contacto: [EMAIL_CONTACTE].",
+      "h2": "2. Qué datos tratamos",
+      "p2": "Datos identificativos y de contacto (nombre, correo electrónico, teléfono), fecha de nacimiento, género y datos físicos (altura, peso) y objetivos. En el caso de clientes que reciben fisioterapia, datos de salud vinculados al seguimiento terapéutico. También datos de la relación de servicio: bonos, reservas y pagos.",
+      "h3": "3. Finalidades",
+      "p3": "Gestión de altas de cliente, reservas y bonos; seguimiento del entrenamiento y, en su caso, del tratamiento de fisioterapia; facturación y cobros; y comunicaciones relativas al servicio y al centro.",
+      "h4": "4. Base legal",
+      "p4": "Ejecución del contrato de prestación de servicios; tu <b>consentimiento</b> expreso para el tratamiento de datos de salud y para comunicaciones no esenciales; y el cumplimiento de obligaciones legales (p. ej. facturación). [A validar por el asesor.]",
+      "h5": "5. Destinatarios y encargados del tratamiento",
+      "p5": "No cedemos tus datos a terceros, salvo obligación legal. Para prestar el servicio utilizamos proveedores que actúan como encargados del tratamiento:",
+      "item1": "<b>Supabase</b> — alojamiento de base de datos y autenticación.",
+      "item2": "<b>Vercel</b> — alojamiento de la aplicación web.",
+      "item3": "<b>Resend</b> — envío de correos electrónicos transaccionales.",
+      "p5b": "La ubicación de los servidores y las garantías de transferencias internacionales se deben detallar y validar [a revisar por el asesor].",
+      "h6": "6. Conservación",
+      "p6": "Conservamos los datos mientras dure la relación y, después, durante los plazos legales aplicables (p. ej. obligaciones fiscales y sanitarias). [Concretar plazos con el asesor.]",
+      "h7": "7. Tus derechos",
+      "p7": "Puedes ejercer los derechos de <b>acceso</b>, <b>rectificación</b>, <b>supresión</b>, <b>oposición</b>, <b>portabilidad</b> y <b>limitación</b> del tratamiento, así como <b>retirar el consentimiento</b> en cualquier momento. También puedes presentar una reclamación ante la Agencia Española de Protección de Datos (AEPD).",
+      "h8": "8. Cómo ejercerlos",
+      "p8": "Escribe a [EMAIL_CONTACTE] indicando el derecho que quieres ejercer y adjuntando una copia de un documento identificativo."
+    },
+    "cookies": {
+      "metaTitle": "Política de Cookies · VindiBCN",
+      "title": "Política de Cookies",
+      "h1": "1. Qué son las cookies",
+      "p1": "Las cookies son pequeños archivos que el navegador almacena para hacer funcionar un sitio web y recordar información de la sesión.",
+      "h2": "2. Cuáles utilizamos",
+      "p2": "Actualmente solo utilizamos <b>cookies técnicas y necesarias</b> para mantener la sesión iniciada (autenticación de Supabase). No utilizamos cookies de publicidad ni de analítica ni de terceros para seguimiento. [Confirmar el inventario real con el asesor antes de publicar.]",
+      "h3": "3. Base legal",
+      "p3": "Las cookies técnicas necesarias para prestar el servicio no requieren consentimiento previo. Si en el futuro se añaden cookies de analítica o marketing, se pedirá el consentimiento mediante un banner de cookies.",
+      "h4": "4. Cómo gestionarlas",
+      "p4": "Puedes configurar o eliminar las cookies desde las opciones de tu navegador. Ten en cuenta que desactivar las cookies técnicas puede impedir iniciar sesión."
+    },
+    "draftBanner": {
+      "title": "Documento provisional.",
+      "body": "Este texto todavía está pendiente de revisión legal y puede cambiar. Si tienes cualquier duda sobre tus datos o tus derechos, escribe al centro y te la resolvemos.",
+      "devNote": "[Solo en desarrollo] Un asesor debe revisarlo y rellenar los campos entre corchetes antes de darlo por bueno."
+    }
   }
 }

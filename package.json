@@ -11,6 +11,7 @@
     "i18n:inventory": "node scripts/i18n-inventory.mjs",
     "emails:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/email-snapshot.mts",
     "emails:review": "node scripts/email-review.mjs",
+    "legal:snapshot": "node scripts/legal-snapshot.mjs",
     "voucher:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/voucher-snapshot.mts"
   },
   "dependencies": {

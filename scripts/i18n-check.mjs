@@ -81,6 +81,28 @@ for (const file of walk(".")) {
   }
 }
 
+/*
+ * Apòstrofe just abans d'una etiqueta.
+ *
+ * A l'ICU MessageFormat l'apòstrofe és un caràcter d'escapament: "d'<b>text</b>"
+ * obre una cita literal i es menja l'apòstrofe I l'etiqueta, en silenci, fins
+ * a la següent apòstrofe. Va passar de debò al text legal —"els drets d'accés"
+ * va sortir com "els drets daccés"—, i en un document amb valor jurídic això
+ * no es pot detectar només mirant. Doblada ('') es dibuixa bé.
+ */
+const icuTraps = [];
+for (const l of ["ca", "es", "en"]) {
+  const walk = (o, path = "") => {
+    for (const [k, v] of Object.entries(o)) {
+      const at = path ? `${path}.${k}` : k;
+      if (v && typeof v === "object") walk(v, at);
+      else if (typeof v === "string" && /(^|[^'])'</.test(v))
+        icuTraps.push(`${l}: ${at} — apòstrofe sense doblar just abans d'una etiqueta`);
+    }
+  };
+  walk(dicts[l]);
+}
+
 // Paritat: mateix arbre de claus als tres.
 const keysOf = (o, p = "", acc = []) => {
   for (const [k, v] of Object.entries(o)) {
@@ -101,8 +123,11 @@ for (const l of ["es", "en"]) {
 console.log(`${used} claus usades · ${base.size} al diccionari`);
 for (const m of missing) console.log("  ✗ " + m);
 for (const p of parity) console.log("  ✗ " + p);
-if (missing.length || parity.length) {
-  console.log(`\n${missing.length} sense resoldre · ${parity.length} de paritat`);
+for (const t of icuTraps) console.log("  ✗ " + t);
+if (missing.length || parity.length || icuTraps.length) {
+  console.log(
+    `\n${missing.length} sense resoldre · ${parity.length} de paritat · ${icuTraps.length} trampes d'ICU`,
+  );
   process.exit(1);
 }
 console.log("Tot resol i els tres diccionaris són bessons.");
