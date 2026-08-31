@@ -35,17 +35,6 @@ export { TRIAL_SERVICE, TRAINING_SERVICES };
 
 const HOUR = 60 * 60 * 1000;
 
-/** Format llegible d'una data/hora en català. */
-function fmtWhen(iso: string): string {
-  return new Intl.DateTimeFormat("ca-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
-
 /** Avisa el professional del forat i el correu del centre (esdeveniment trial_request). */
 async function notifyTrialRequested(input: {
   trainerId: string | null;
@@ -54,10 +43,19 @@ async function notifyTrialRequested(input: {
   phone: string;
   scheduledAt: string;
 }): Promise<void> {
-  const when = fmtWhen(input.scheduledAt);
+  /*
+    * L'ISO, no una cadena ja formatada.
+    *
+    * Les plantilles formaten la data ELLES, quan ja saben en quin idioma
+    * escriuen i amb la zona del centre. Aquesta crida es va quedar amb el
+    * contracte vell (`when`, un text fet aquí) i la plantilla llegeix
+    * `whenIso`: com que `rows()` descarta els valors buits, la fila "Data i
+    * hora" no sortia desplaçada sinó que no sortia. El professional rebia
+    * "confirma aquesta prova" sense saber per a quan era.
+    */
   const data = {
     visitorName: input.fullName,
-    when,
+    whenIso: input.scheduledAt,
     phone: input.phone,
     email: input.email,
   };

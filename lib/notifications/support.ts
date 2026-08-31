@@ -1,6 +1,6 @@
 import "server-only";
 import { notify } from "@/lib/notifications/index";
-import { SUPPORT_CATEGORY_LABELS, formatDate, formatTime } from "@/lib/labels";
+import { SUPPORT_CATEGORY_LABELS } from "@/lib/labels";
 import type { SupportTicket } from "@/lib/data/support";
 
 /**
@@ -47,7 +47,9 @@ export async function notifySupportTicket(
         reporter: ticket.authorName,
         area,
         description: ticket.description,
-        when: `${formatDate(ticket.createdAt)}, ${formatTime(ticket.createdAt)}`,
+        // L'ISO: la plantilla el formata amb la zona del centre i en
+        // l'idioma que toqui. Amb `when` ja fet, la fila "Data" es perdia.
+        whenIso: ticket.createdAt,
       },
     },
     { ignorePreferences: true },

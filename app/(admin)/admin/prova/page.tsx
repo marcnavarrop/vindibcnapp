@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin/prova", label: "Sessions de prova" },
 ];
 import { SERVICE_LABELS } from "@/lib/labels";
+import { CENTER_TZ } from "@/lib/config";
 import {
   acceptTrialAdminAction,
   rejectTrialAdminAction,
@@ -38,12 +39,20 @@ const STATUS_STYLE: Record<TrialStatus, string> = {
   cancelled: "bg-brand-border/60 text-brand-muted",
 };
 
+/**
+ * Hora del CENTRE, no la del procés.
+ *
+ * Aquesta pàgina es pinta al servidor, i a Vercel el servidor va en UTC: sense
+ * `timeZone` cada prova sortia una o dues hores abans, i les de matinada amb el
+ * dia anterior. És la pantalla des d'on s'accepten o es rebutgen.
+ */
 function fmt(iso: string): string {
   return new Intl.DateTimeFormat("ca-ES", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: CENTER_TZ,
   }).format(new Date(iso));
 }
 

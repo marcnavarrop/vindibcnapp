@@ -5,7 +5,7 @@ import { resendInvite } from "@/lib/notifications/auth-emails";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { appLink } from "@/lib/notifications/brand";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { USE_MOCK } from "@/lib/config";
+import { USE_MOCK, CENTER_TZ } from "@/lib/config";
 import { getStore } from "@/lib/mock/store";
 
 export type NotificationActionResult = { ok: boolean; message: string };
@@ -75,12 +75,15 @@ export async function notifyNextSessionAction(
   const contact = await getProfileContact(client.profileId);
   if (!contact) return { ok: false, message: "No s'ha pogut obtenir el contacte." };
 
+  // Hora del CENTRE: aquest text és el que veu qui prem el botó, i ha de dir
+  // el mateix que el correu que acaba de sortir (que sí que la duia).
   const when = new Date(next.scheduledAt).toLocaleString("ca-ES", {
     weekday: "long",
     day: "numeric",
     month: "long",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: CENTER_TZ,
   });
 
   await notify(
