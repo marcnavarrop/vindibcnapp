@@ -169,7 +169,7 @@ function buildDetail(clientId: string): ClientDetail | null {
     profileId: client.profile_id,
     assignedTrainerId: client.assigned_trainer_id,
     clinicalNotes: client.clinical_notes ?? null,
-    generalNotes: client.general_notes ?? client.notes ?? null,
+    generalNotes: client.general_notes ?? null,
     bonos: store.bonos
       .filter((b) => b.client_id === clientId)
       .map((b) => ({
@@ -214,7 +214,6 @@ type DetailRow = {
   id: string;
   profile_id: string;
   assigned_trainer_id: string | null;
-  notes: string | null;
   clinical_notes: string | null;
   general_notes: string | null;
   profile: {
@@ -256,7 +255,7 @@ async function fetchClientDetail(
   const { data, error } = await supabase
     .from("clients")
     .select(
-      `id, profile_id, assigned_trainer_id, notes, clinical_notes, general_notes,
+      `id, profile_id, assigned_trainer_id, clinical_notes, general_notes,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at),
@@ -281,8 +280,7 @@ async function fetchClientDetail(
     profileId: row.profile_id,
     assignedTrainerId: row.assigned_trainer_id,
     clinicalNotes: row.clinical_notes,
-    // Fallback a la columna antiga per si la migració encara no s'ha aplicat.
-    generalNotes: row.general_notes ?? row.notes,
+    generalNotes: row.general_notes,
     bonos: row.bonos.map((b) => ({
       id: b.id,
       serviceType: b.service_type,
@@ -374,7 +372,6 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
       id: clientId,
       profile_id: profileId,
       assigned_trainer_id: input.assignedTrainerId,
-      notes: null,
       clinical_notes: input.clinicalNotes,
       general_notes: input.generalNotes,
       referral_code: null,

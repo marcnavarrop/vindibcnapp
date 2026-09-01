@@ -1,0 +1,21 @@
+-- ============================================================================
+-- VindiBCN · 0066 — Fora `professional_rates`
+--
+-- La 0038 la va substituir per `service_rates` i li va deixar el comentari
+-- "Pendent d'eliminar", però la va mantenir "per no destruir dades" i va
+-- escriure el `drop` comentat, esperant el dia que es pogués fer.
+--
+-- Aquest dia és avui, i sense res a destruir: la taula té ZERO files a
+-- producció. Comprovat abans d'escriure això, no suposat.
+--
+-- Tampoc la fa servir ningú. L'única cosa que en quedava al codi eren els
+-- tipus i un camp mort a l'store simulat, que se'n van amb aquest canvi.
+--
+-- Se'n van amb ella, per dependència, el seu índex, les seves quatre polítiques
+-- de RLS i els seus comentaris: `drop table` s'ho emporta tot. No cal
+-- `cascade` —cap altra taula hi apunta— i no s'hi posa a posta: si algun dia
+-- aparegués una dependència inesperada, val més que això falli i es vegi que
+-- no que se l'endugui per davant en silenci.
+-- ============================================================================
+
+drop table if exists public.professional_rates;

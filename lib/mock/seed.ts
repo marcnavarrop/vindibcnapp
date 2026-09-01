@@ -36,10 +36,10 @@ export const seedProfiles: Profile[] = [
 ];
 
 export const seedClients: Client[] = [
-  { id: "c-ana",   profile_id: "u-client-ana",   assigned_trainer_id: "u-trainer-laia",  notes: null, clinical_notes: "Lesió prèvia de genoll. Treballar mobilitat.", general_notes: null, referral_code: "ANF-2K4M", referred_by_client_id: null,    created_at: now },
-  { id: "c-pau",   profile_id: "u-client-pau",   assigned_trainer_id: "u-trainer-laia",  notes: null, clinical_notes: null, general_notes: null,                                           referral_code: "PAU-7V3S", referred_by_client_id: null,    created_at: now },
-  { id: "c-marta", profile_id: "u-client-marta", assigned_trainer_id: "u-trainer-jordi", notes: null, clinical_notes: null, general_notes: "Prefereix horari de matí.",                     referral_code: "MAR-9B5W", referred_by_client_id: "c-ana", created_at: now },
-  { id: "c-oriol", profile_id: "u-client-oriol", assigned_trainer_id: null,              notes: null, clinical_notes: null, general_notes: "Pendent d'assignar professional.",               referral_code: "RCA-4J8P", referred_by_client_id: null,    created_at: now },
+  { id: "c-ana",   profile_id: "u-client-ana",   assigned_trainer_id: "u-trainer-laia",  clinical_notes: "Lesió prèvia de genoll. Treballar mobilitat.", general_notes: null, referral_code: "ANF-2K4M", referred_by_client_id: null,    created_at: now },
+  { id: "c-pau",   profile_id: "u-client-pau",   assigned_trainer_id: "u-trainer-laia",  clinical_notes: null, general_notes: null,                                           referral_code: "PAU-7V3S", referred_by_client_id: null,    created_at: now },
+  { id: "c-marta", profile_id: "u-client-marta", assigned_trainer_id: "u-trainer-jordi", clinical_notes: null, general_notes: "Prefereix horari de matí.",                     referral_code: "MAR-9B5W", referred_by_client_id: "c-ana", created_at: now },
+  { id: "c-oriol", profile_id: "u-client-oriol", assigned_trainer_id: null,              clinical_notes: null, general_notes: "Pendent d'assignar professional.",               referral_code: "RCA-4J8P", referred_by_client_id: null,    created_at: now },
 ];
 
 export const seedBonos: Bono[] = [

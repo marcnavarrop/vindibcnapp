@@ -53,8 +53,6 @@ export type Store = {
   promotions: Tables["promotions"]["Row"][];
   client_documents: Tables["client_documents"]["Row"][];
   referral_rewards: Tables["referral_rewards"]["Row"][];
-  /** OBSOLETA (0038): substituïda per service_rates. */
-  professional_rates: Tables["professional_rates"]["Row"][];
   service_rates: Tables["service_rates"]["Row"][];
   bonus_service_weights: Tables["bonus_service_weights"]["Row"][];
   bonus_tiers: Tables["bonus_tiers"]["Row"][];
@@ -112,7 +110,6 @@ function fromSeed(): Store {
     gift_vouchers: [],
     booking_series: [],
     waitlist_entries: [],
-    professional_rates: [],
     service_rates: [],
     bonus_service_weights: [],
     bonus_tiers: [],

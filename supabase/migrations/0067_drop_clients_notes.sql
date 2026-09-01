@@ -1,0 +1,36 @@
+-- ============================================================================
+-- VindiBCN · 0067 — Fora `clients.notes`
+--
+-- La 0035 la va partir en `clinical_notes` (dades de salut, que demanen
+-- consentiment propi) i `general_notes` (la resta), i li va deixar el
+-- comentari "OBSOLETA … Pendent d'eliminar". Des d'aleshores no la mostra cap
+-- pantalla.
+--
+-- QUÈ HI HAVIA A DINS
+--
+-- De 5 files a producció, UNA tenia contingut: "Compte de demostració." — i
+-- exactament el mateix text ja era a `general_notes` d'aquella mateixa fila.
+-- Les altres quatre, NULL. O sigui que no es perd res: el que hi havia ja
+-- estava migrat. Comprovat fila a fila abans d'escriure aquesta migració.
+--
+-- PER QUÈ CORRIA PRESSA
+--
+-- No la llegia ningú, però seguia sent escrivible: era als tipus `Insert` i
+-- `Update` sense més marca que un `@deprecated` al `Row`. Un `insert` futur hi
+-- podia deixar notes clíniques que cap pantalla ensenyaria mai —dades de salut
+-- invisibles, i fora del consentiment que la 0035 va muntar precisament per
+-- separar-les—. Una columna que no es llegeix però s'escriu és pitjor que una
+-- que no hi és.
+--
+-- ORDRE D'APLICACIÓ (important)
+--
+-- El codi la demanava al SELECT de la fitxa de client
+-- (`lib/data/clients.ts`), com a coixí per si la 0035 encara no s'havia
+-- aplicat. Aquell coixí ja no té sentit i s'ha tret.
+--
+-- Aquesta migració s'ha d'aplicar DESPRÉS que el desplegament amb aquell canvi
+-- sigui a producció. Al revés, la versió antiga seguiria demanant una columna
+-- que ja no existeix i la fitxa de client petaria.
+-- ============================================================================
+
+alter table public.clients drop column if exists notes;

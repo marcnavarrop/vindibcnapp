@@ -175,8 +175,6 @@ export interface Database {
           id: string;
           profile_id: string;
           assigned_trainer_id: string | null;
-          /** @deprecated substituïda per clinical_notes + general_notes (0035). */
-          notes: string | null;
           clinical_notes: string | null;
           general_notes: string | null;
           referral_code: string | null;
@@ -187,7 +185,6 @@ export interface Database {
           id?: string;
           profile_id: string;
           assigned_trainer_id?: string | null;
-          notes?: string | null;
           clinical_notes?: string | null;
           general_notes?: string | null;
           referral_code?: string | null;
@@ -198,7 +195,6 @@ export interface Database {
           id?: string;
           profile_id?: string;
           assigned_trainer_id?: string | null;
-          notes?: string | null;
           clinical_notes?: string | null;
           general_notes?: string | null;
           referral_code?: string | null;
@@ -1178,32 +1174,6 @@ export interface Database {
         Update: {
           status?: ReferralRewardStatus;
           used_in_bono_id?: string | null;
-        };
-        Relationships: [];
-      };
-      professional_rates: {
-        Row: {
-          id: string;
-          trainer_id: string;
-          service_type: ServiceType;
-          rate_amount: number;
-          effective_from: string;
-          effective_until: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          trainer_id: string;
-          service_type: ServiceType;
-          rate_amount: number;
-          effective_from?: string;
-          effective_until?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          rate_amount?: number;
-          effective_from?: string;
-          effective_until?: string | null;
         };
         Relationships: [];
       };
