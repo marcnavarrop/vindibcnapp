@@ -97,7 +97,18 @@
     "createdBody": "Check your email if email confirmation is enabled. Then you can",
     "createdSignIn": "sign in",
     "errorPrivacy": "You must accept the Privacy Policy and the Legal Notice to continue.",
-    "errorGeneric": "We couldn't create the account. Please try again."
+    "errorGeneric": "We couldn't create the account. Please try again.",
+    "passwordConfirm": "Repeat your password",
+    "optionalTitle": "Optional details",
+    "requiredNote": "Required field",
+    "errorPasswordMismatch": "The passwords don't match.",
+    "errors": {
+      "noName": "Enter your full name.",
+      "badEmail": "That email doesn't look valid.",
+      "noPhone": "A contact phone number is required.",
+      "shortPassword": "The password must be at least 6 characters.",
+      "passwordMismatch": "The passwords don't match."
+    }
   },
   "home": {
     "greeting": "Hi, {name}! 👋",
@@ -612,7 +623,8 @@
         "badHeight": "Height must be between 50 and 260 cm.",
         "badWeight": "Weight must be between 20 and 400 kg.",
         "failed": "We couldn't save your changes."
-      }
+      },
+      "requiredNote": "Required field"
     },
     "privacy": {
       "legalTitle": "Privacy Policy and Legal Notice",

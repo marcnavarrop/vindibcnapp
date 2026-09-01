@@ -97,7 +97,18 @@
     "createdBody": "Revisa tu correo si la confirmación por email está activada. Después podrás",
     "createdSignIn": "iniciar sesión",
     "errorPrivacy": "Debes aceptar la Política de Privacidad y el Aviso Legal para continuar.",
-    "errorGeneric": "No se ha podido crear la cuenta. Inténtalo de nuevo."
+    "errorGeneric": "No se ha podido crear la cuenta. Inténtalo de nuevo.",
+    "passwordConfirm": "Repite la contraseña",
+    "optionalTitle": "Datos opcionales",
+    "requiredNote": "Campo obligatorio",
+    "errorPasswordMismatch": "Las contraseñas no coinciden.",
+    "errors": {
+      "noName": "Escribe tu nombre y apellidos.",
+      "badEmail": "Este correo no parece válido.",
+      "noPhone": "Hace falta un teléfono de contacto.",
+      "shortPassword": "La contraseña debe tener al menos 6 caracteres.",
+      "passwordMismatch": "Las contraseñas no coinciden."
+    }
   },
   "home": {
     "greeting": "¡Hola, {name}! 👋",
@@ -612,7 +623,8 @@
         "badHeight": "La altura tiene que estar entre 50 y 260 cm.",
         "badWeight": "El peso tiene que estar entre 20 y 400 kg.",
         "failed": "No se han podido guardar los cambios."
-      }
+      },
+      "requiredNote": "Campo obligatorio"
     },
     "privacy": {
       "legalTitle": "Política de Privacidad y Aviso Legal",

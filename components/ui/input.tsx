@@ -1,4 +1,5 @@
 import { clsx } from "@/lib/utils";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -13,6 +14,7 @@ export function Field({ label, className, id, ...props }: FieldProps) {
     <label htmlFor={inputId} className="flex flex-col gap-1.5 text-sm">
       <span className="font-bold tracking-wide text-brand-charcoal uppercase">
         {label}
+        {props.required && <RequiredMark />}
       </span>
       <input
         id={inputId}

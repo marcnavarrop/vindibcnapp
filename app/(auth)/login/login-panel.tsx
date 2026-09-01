@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { ROLE_LABELS } from "@/lib/labels";
 import { safeRedirect } from "@/lib/auth-redirect";
 import type { UserRole } from "@/types/database";
@@ -153,6 +154,7 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
         <div className="flex flex-col gap-1.5 text-sm">
           <label htmlFor="email" className="font-medium text-brand-charcoal">
             {t("email")}
+            <RequiredMark />
           </label>
           <div className="relative">
             <span

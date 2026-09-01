@@ -1,4 +1,5 @@
 import { clsx } from "@/lib/utils";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
@@ -17,6 +18,7 @@ export function TextAreaField({
     <label htmlFor={areaId} className="flex flex-col gap-1.5 text-sm">
       <span className="font-bold tracking-wide text-brand-charcoal uppercase">
         {label}
+        {props.required && <RequiredMark />}
       </span>
       <textarea
         id={areaId}

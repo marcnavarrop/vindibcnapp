@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { clsx } from "@/lib/utils";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 function EyeIcon({ off }: { off: boolean }) {
   return (
@@ -62,6 +63,7 @@ export function PasswordField({
     <div className="flex flex-col gap-1.5 text-sm">
       <label htmlFor={inputId} className="font-medium text-brand-charcoal">
         {label}
+        {props.required && <RequiredMark />}
       </label>
       <div className="relative">
         {icon && (

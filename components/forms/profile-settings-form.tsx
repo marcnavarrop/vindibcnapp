@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
 import { TextAreaField } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { RequiredNote } from "@/components/ui/required-mark";
 import {
   updateProfileAction,
   type FormState,
@@ -102,6 +103,8 @@ export function ProfileSettingsForm({ settings }: { settings: ProfileSettings })
           defaultValue={settings.objective}
         />
       </section>
+
+      <RequiredNote>{t("requiredNote")}</RequiredNote>
 
       {state.errorCode && (
         <p className="text-sm text-error">{te(state.errorCode)}</p>

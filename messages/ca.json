@@ -97,7 +97,18 @@
     "createdBody": "Revisa el teu correu si la confirmació per email està activada. Després podràs",
     "createdSignIn": "iniciar sessió",
     "errorPrivacy": "Has d'acceptar la Política de Privacitat i l'Avís Legal per continuar.",
-    "errorGeneric": "No s'ha pogut crear el compte. Torna-ho a provar."
+    "errorGeneric": "No s'ha pogut crear el compte. Torna-ho a provar.",
+    "passwordConfirm": "Repeteix la contrasenya",
+    "optionalTitle": "Dades opcionals",
+    "requiredNote": "Camp obligatori",
+    "errorPasswordMismatch": "Les contrasenyes no coincideixen.",
+    "errors": {
+      "noName": "Escriu el teu nom i cognoms.",
+      "badEmail": "Aquest correu no sembla vàlid.",
+      "noPhone": "Cal un telèfon de contacte.",
+      "shortPassword": "La contrasenya ha de tenir com a mínim 6 caràcters.",
+      "passwordMismatch": "Les contrasenyes no coincideixen."
+    }
   },
   "home": {
     "greeting": "Hola, {name}! 👋",
@@ -612,7 +623,8 @@
         "badHeight": "L'alçada ha d'estar entre 50 i 260 cm.",
         "badWeight": "El pes ha d'estar entre 20 i 400 kg.",
         "failed": "No s'han pogut desar els canvis."
-      }
+      },
+      "requiredNote": "Camp obligatori"
     },
     "privacy": {
       "legalTitle": "Política de Privacitat i Avís Legal",

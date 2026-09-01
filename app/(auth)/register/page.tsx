@@ -8,14 +8,21 @@ import { USE_MOCK } from "@/lib/config";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
+import { SelectField } from "@/components/ui/select";
 import { PasswordField } from "@/components/ui/password-field";
+import { RequiredNote } from "@/components/ui/required-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LOCALES, type Locale } from "@/lib/i18n/config";
 import {
   recordRegistrationConsentAction,
   notifyNewRegistrationAction,
+  completeRegistrationProfileAction,
+  validateRegistrationAction,
   mockRegisterAction,
 } from "@/app/(auth)/register/actions";
+import type { Gender } from "@/types/database";
+
+const GENDERS: Gender[] = ["home", "dona", "altre", "ns_nc"];
 
 /**
  * Alta de cuenta. Al registrarse, el trigger `on_auth_user_created` crea
@@ -25,6 +32,15 @@ import {
 export default function RegisterPage() {
   const t = useTranslations("register");
   const tl = useTranslations("legal");
+  /*
+   * Les etiquetes dels camps nous surten de `config.profile`, que és on ja
+   * vivien: són EL MATEIX dada, només canvia quan es demana. Duplicar-les
+   * voldria dir que un dia "Contacte d'emergència" es digués diferent segons
+   * la pantalla.
+   */
+  const tp = useTranslations("config.profile");
+  const tg = useTranslations("labels.gender");
+  const genderOptions = GENDERS.map((g) => ({ value: g, label: tg(g) }));
   /**
    * L'idioma que ja s'està veient és el que s'enviarà amb l'alta.
    *
@@ -50,11 +66,28 @@ export default function RegisterPage() {
 
     // Abans de qualsevol await: després, currentTarget ja és null.
     const fd = new FormData(e.currentTarget);
-    const fullName = String(fd.get("fullName") ?? "").trim();
-    const email = String(fd.get("email") ?? "").trim();
+    const get = (k: string) => String(fd.get(k) ?? "").trim();
+    const fullName = get("fullName");
+    const email = get("email");
+    const phone = get("phone");
     const password = String(fd.get("password") ?? "");
-    const referralCode =
-      String(fd.get("referralCode") ?? "").trim().toUpperCase() || undefined;
+    const passwordConfirm = String(fd.get("passwordConfirm") ?? "");
+    const referralCode = get("referralCode").toUpperCase() || undefined;
+    const perfil = {
+      phone,
+      birthDate: get("birthDate"),
+      heightCm: get("heightCm"),
+      weightKg: get("weightKg"),
+      gender: get("gender"),
+      emergencyContact: get("emergencyContact"),
+    };
+
+    // Talla aquí, sense enviar res: qui s'equivoca repetint la contrasenya ha
+    // de veure-ho a l'instant i no després d'un viatge al servidor.
+    if (password !== passwordConfirm) {
+      setError(t("errorPasswordMismatch"));
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -64,6 +97,24 @@ export default function RegisterPage() {
       if (USE_MOCK) {
         await mockRegisterAction({ fullName, email, referralCode });
         setDone(true);
+        return;
+      }
+
+      /*
+       * El servidor valida ABANS de crear res. Els `required` de l'HTML es
+       * desactiven des de la consola del navegador en dues línies; això no.
+       * I va abans del `signUp` a posta: si fallés després, quedaria un compte
+       * creat a Auth que ningú ha arribat a completar.
+       */
+      const check = await validateRegistrationAction({
+        fullName,
+        email,
+        phone,
+        password,
+        passwordConfirm,
+      });
+      if (check.errorCode) {
+        setError(t(`errors.${check.errorCode}`));
         return;
       }
 
@@ -98,6 +149,13 @@ export default function RegisterPage() {
         } catch {
           // No bloquegem l'alta si el registre del consentiment falla; queda
           // marcada pendent i es pot tornar a demanar des de Configuració.
+        }
+        // Telèfon i la resta de dades del perfil. Van abans dels avisos
+        // perquè el correu de benvinguda ja trobi la fitxa completa.
+        try {
+          await completeRegistrationProfileAction(perfil);
+        } catch {
+          // No bloqueja l'alta: es poden completar a Configuració.
         }
         // Email de benvinguda + avís de nou client (best-effort, no bloqueja).
         try {
@@ -140,7 +198,7 @@ export default function RegisterPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
+      <div className="w-full max-w-md rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
         <div className="mb-8 flex flex-col gap-1">
           <Wordmark height={30} />
           <h1 className="text-xl text-brand-dark">{t("title")}</h1>
@@ -164,6 +222,14 @@ export default function RegisterPage() {
             autoComplete="email"
           />
 
+          <Field
+            label={tp("phone")}
+            name="phone"
+            type="tel"
+            required
+            autoComplete="tel"
+          />
+
           <PasswordField
             label={t("password")}
             name="password"
@@ -171,6 +237,56 @@ export default function RegisterPage() {
             minLength={6}
             autoComplete="new-password"
           />
+
+          <PasswordField
+            label={t("passwordConfirm")}
+            name="passwordConfirm"
+            required
+            minLength={6}
+            autoComplete="new-password"
+          />
+
+          {/* Dades opcionals. Mateixos camps i mateixos límits que a
+              Configuració → Dades personals: és el mateix formulari, només
+              canvia quan es demana. Qui no les vulgui donar ara, les té allà. */}
+          <fieldset className="flex flex-col gap-5 rounded-xl border border-brand-border p-4">
+            <legend className="px-1 text-xs font-bold tracking-wide text-brand-muted uppercase">
+              {t("optionalTitle")}
+            </legend>
+
+            <Field label={tp("birthDate")} name="birthDate" type="date" />
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field
+                label={tp("height")}
+                name="heightCm"
+                type="number"
+                min={50}
+                max={260}
+              />
+              <Field
+                label={tp("weight")}
+                name="weightKg"
+                type="number"
+                min={20}
+                max={400}
+                step="0.1"
+              />
+            </div>
+
+            <SelectField
+              label={tp("gender")}
+              name="gender"
+              placeholder={tg("ns_nc")}
+              options={genderOptions}
+            />
+
+            <Field
+              label={tp("emergency")}
+              name="emergencyContact"
+              placeholder={tp("emergencyPlaceholder")}
+            />
+          </fieldset>
 
           <div className="flex flex-col gap-1">
             <LanguageSwitcher current={locale} label={t("language")} />
@@ -215,6 +331,8 @@ export default function RegisterPage() {
               .
             </span>
           </label>
+
+          <RequiredNote>{t("requiredNote")}</RequiredNote>
 
           {error && <p className="text-sm text-error">{error}</p>}
 

@@ -1,4 +1,5 @@
 import { clsx } from "@/lib/utils";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 type SelectFieldProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
@@ -21,6 +22,7 @@ export function SelectField({
     <label htmlFor={selectId} className="flex flex-col gap-1.5 text-sm">
       <span className="font-bold tracking-wide text-brand-charcoal uppercase">
         {label}
+        {props.required && <RequiredMark />}
       </span>
       <select
         id={selectId}
