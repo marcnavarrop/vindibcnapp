@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { getTranslations } from "next-intl/server";
 import { Wordmark } from "@/components/wordmark";
 
@@ -10,9 +9,9 @@ import { Wordmark } from "@/components/wordmark";
  * prou feina amb el formulari, i perquè si algun dia el registre estrena la
  * mateixa composició, el panell ja és aquí.
  *
- * S'usa <img> i no next/image a propòsit: són dos fitxers locals que es pinten
- * a mida coneguda, i next/image només hi afegiria configuració per no guanyar
- * res mesurable.
+ * La il·lustració va com a fons CSS i no com a <img>: mira el comentari d'on
+ * es declara, més avall. next/image tampoc hi entra —és un fitxer local, a
+ * mida coneguda i decoratiu— i només hi afegiria configuració.
  */
 
 const FEATURES = [
@@ -97,16 +96,23 @@ export async function BrandPanel() {
           radial o `mix-blend-screen` només movia el problema de lloc. Els
           traços s'han separat del fons per contrast local, així que ara la
           il·lustració seu sobre el degradat sense cap vora. */}
-      <div className="relative -mx-5 hidden min-h-0 flex-1 items-center justify-center sm:-mx-7 sm:flex lg:-mx-9">
-        <img
-          src="/images/hero-entrenament.webp"
-          alt=""
-          aria-hidden
-          width={1285}
-          height={986}
-          className="h-full w-full object-contain"
-        />
-      </div>
+      {/* La il·lustració va com a FONS d'aquest bloc i no com a <img>.
+          Amb una etiqueta, el navegador la baixava igualment per sota de `sm:`
+          —on el bloc és `hidden` i no es veu mai—: el preload scanner la demana
+          abans d'aplicar el CSS. Són 149 kB, gairebé un terç del pes de la
+          pàgina, en un mòbil que no l'ensenya.
+
+          Un fons dins d'un element `display:none` NO es descarrega, i la classe
+          només existeix a partir de `sm:`, així que per sota ni tan sols hi ha
+          la declaració. Es va provar `loading="lazy"` primer i no serveix aquí:
+          dins d'un flex `min-h-0` l'element fa zero d'alt quan es calcula la
+          intersecció, i la imatge no arribava a carregar-se tampoc a
+          l'escriptori. És decorativa (`aria-hidden`), així que com a fons no es
+          perd res. */}
+      <div
+        aria-hidden
+        className="relative -mx-5 hidden min-h-0 flex-1 bg-[url('/images/hero-entrenament.webp')] bg-contain bg-center bg-no-repeat sm:-mx-7 sm:block lg:-mx-9"
+      />
 
       {/* Sempre en fila: icona en un quadrat a l'esquerra i, a la dreta,
           títol i descripció. Apilades (icona a dalt, text a sota) feien la

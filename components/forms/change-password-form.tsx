@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { createClient } from "@/lib/supabase/client";
 import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
 
@@ -113,6 +112,12 @@ function Body({ texts }: { texts: Texts }) {
     if (password === current) return setError(texts.errors.same);
 
     setLoading(true);
+    // Import dinàmic, com al botó de tancar sessió: amb l'estàtic, tot
+    // @supabase/supabase-js (~51 kB gzip, amb realtime que no fem servir)
+    // entrava al bundle inicial de les DUES pantalles de Configuració, que
+    // pesaven 192 i 186 kB quan la resta es mou entre 103 i 132 kB. Aquí només
+    // baixa quan algú canvia la contrasenya de veritat.
+    const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     const email = data.user?.email;
