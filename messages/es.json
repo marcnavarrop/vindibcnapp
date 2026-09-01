@@ -444,7 +444,8 @@
       "noSeries": "Serie no indicada.",
       "noLimit": "Di hasta cuándo se repite o cuántas sesiones quieres.",
       "nothingToConfirm": "No hay nada que confirmar.",
-      "failed": "No se ha podido completar la operación. Inténtalo de nuevo."
+      "failed": "No se ha podido completar la operación. Inténtalo de nuevo.",
+      "tooLate": "Ya no se puede cancelar esta reserva (hay que hacerlo con al menos {hours} h de antelación). Contacta con el centro si tienes una urgencia."
     },
     "days": [
       "Lu",

@@ -21,6 +21,7 @@ import type {
   ReservationStatus,
   BonoStatus,
 } from "@/types/database";
+import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 
 /** Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio. */
 async function assertWithinAvailability(
@@ -1030,11 +1031,8 @@ export async function cancelClientReservation(
       throw new Error("No pots cancel·lar una sessió passada.");
     const { getCenterSettings } = await import("@/lib/data/center-settings");
     const settings = await getCenterSettings();
-    const minMs = settings.minCancellationHours * 60 * 60 * 1000;
-    if (new Date(r.scheduled_at).getTime() - Date.now() < minMs)
-      throw new Error(
-        `Aquesta reserva ja no es pot cancel·lar (cal fer-ho amb almenys ${settings.minCancellationHours} hores d'antelació). Contacta amb el centre si tens una urgència.`,
-      );
+    if (!canCancelAt(r.scheduled_at, settings.minCancellationHours))
+      throw new TooLateToCancelError(settings.minCancellationHours);
     r.status = "cancelled";
     if (r.bono_id) {
       const bono = store.bonos.find((b) => b.id === r.bono_id);
@@ -1084,11 +1082,8 @@ export async function cancelClientReservation(
     throw new Error("No pots cancel·lar una sessió passada.");
   const { getCenterSettings } = await import("@/lib/data/center-settings");
   const settings = await getCenterSettings();
-  const minMs = settings.minCancellationHours * 60 * 60 * 1000;
-  if (new Date(r.scheduled_at).getTime() - Date.now() < minMs)
-    throw new Error(
-      `Aquesta reserva ja no es pot cancel·lar (cal fer-ho amb almenys ${settings.minCancellationHours} hores d'antelació). Contacta amb el centre si tens una urgència.`,
-    );
+  if (!canCancelAt(r.scheduled_at, settings.minCancellationHours))
+    throw new TooLateToCancelError(settings.minCancellationHours);
 
   const { error: uErr } = await admin
     .from("reservations")
@@ -1126,105 +1121,3 @@ export type ClientReservationData = {
   bonos: { id: string; serviceType: ServiceType; remaining: number }[];
   reservations: ClientCalendarReservation[];
 };
-
-/**
- * Datos para la página de reservas del cliente: sus bonos activos y la agenda
- * de su entrenador asignado. Las reservas de otros clientes llegan SIN nombre
- * (la anonimización se hace aquí, en el servidor, vía service_role).
- */
-export async function getClientReservationData(
-  profileId: string,
-): Promise<ClientReservationData> {
-  if (USE_MOCK) {
-    const store = getStore();
-    const client = store.clients.find((c) => c.profile_id === profileId);
-    if (!client)
-      return {
-        clientId: null,
-        trainerId: null,
-        trainerName: null,
-        bonos: [],
-        reservations: [],
-      };
-    const trainerId = client.assigned_trainer_id;
-    const trainerName = trainerId
-      ? (store.profiles.find((p) => p.id === trainerId)?.full_name ?? null)
-      : null;
-    const bonos = store.bonos
-      .filter(
-        (b) =>
-          b.client_id === client.id &&
-          b.status === "active" &&
-          b.remaining_sessions > 0,
-      )
-      .map((b) => ({
-        id: b.id,
-        serviceType: b.service_type,
-        remaining: b.remaining_sessions,
-      }));
-    const reservations = store.reservations
-      .filter((r) => r.trainer_id === trainerId && r.status !== "cancelled")
-      .map((r) => ({
-        id: r.id,
-        scheduledAt: r.scheduled_at,
-        serviceType: r.service_type,
-        status: r.status,
-        isOwn: r.client_id === client.id,
-      }));
-    return { clientId: client.id, trainerId, trainerName, bonos, reservations };
-  }
-
-  const admin = createAdminClient();
-  const { data: client } = await admin
-    .from("clients")
-    .select("id, assigned_trainer_id")
-    .eq("profile_id", profileId)
-    .single();
-  if (!client)
-    return {
-      clientId: null,
-      trainerId: null,
-      trainerName: null,
-      bonos: [],
-      reservations: [],
-    };
-
-  const trainerId = client.assigned_trainer_id;
-  const { data: bonoRows } = await admin
-    .from("bonos")
-    .select("id, service_type, remaining_sessions, status")
-    .eq("client_id", client.id);
-  const bonos = (bonoRows ?? [])
-    .filter((b) => (b.status === "active" || b.status === "pending_payment") && b.remaining_sessions > 0)
-    .map((b) => ({
-      id: b.id,
-      serviceType: b.service_type,
-      remaining: b.remaining_sessions,
-    }));
-
-  let trainerName: string | null = null;
-  let reservations: ClientCalendarReservation[] = [];
-  if (trainerId) {
-    const { data: tp } = await admin
-      .from("profiles")
-      .select("full_name")
-      .eq("id", trainerId)
-      .single();
-    trainerName = tp?.full_name ?? null;
-
-    const { data: res } = await admin
-      .from("reservations")
-      .select("id, client_id, scheduled_at, service_type, status")
-      .eq("trainer_id", trainerId)
-      .neq("status", "cancelled");
-    reservations = (res ?? []).map((r) => ({
-      id: r.id,
-      scheduledAt: r.scheduled_at,
-      serviceType: r.service_type,
-      status: r.status,
-      isOwn: r.client_id === client.id,
-    }));
-  }
-
-  return { clientId: client.id, trainerId, trainerName, bonos, reservations };
-}

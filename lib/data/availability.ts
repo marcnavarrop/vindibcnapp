@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import {
-  availableHoursForDate,
   localDateStr,
   type AvailabilityRuleLite,
   type TrainerRuleLite,
@@ -238,18 +237,6 @@ export async function deleteAvailabilityRule(id: string): Promise<void> {
     .delete()
     .eq("id", id);
   if (error) throw error;
-}
-
-/**
- * Franjas horarias (horas enteras) en las que el entrenador tiene
- * disponibilidad activa en una fecha concreta.
- */
-export async function getAvailableSlots(
-  trainerId: string,
-  date: Date,
-): Promise<number[]> {
-  const rules = await listAvailabilityLite(trainerId);
-  return availableHoursForDate(rules, date);
 }
 
 /** Helper de fecha local reexportado por comodidad. */

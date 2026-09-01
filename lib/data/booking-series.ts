@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { slotHasRoom, createClientReservation, cancelClientReservation } from "@/lib/data/reservations";
+import { fetchAllActiveHolds } from "@/lib/data/trial-bookings";
 import { addToWaitlist, slotKeyOf } from "@/lib/data/waitlist";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
@@ -451,13 +452,28 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       bonoId: bono.id,
       bonoRemaining: bono.remaining_sessions,
       clientId: client.id,
-      slots: store.reservations
-        .filter((r) => r.status === "booked")
-        .map((r) => ({
-          trainer_id: r.trainer_id,
-          scheduled_at: r.scheduled_at,
-          service_type: r.service_type,
-        })),
+      // Reserves + proves actives, com a la branca real: si en simulació el
+      // planificador comptés diferent, provar-ho en local no voldria dir res.
+      slots: [
+        ...store.reservations
+          .filter((r) => r.status === "booked")
+          .map((r) => ({
+            trainer_id: r.trainer_id,
+            scheduled_at: r.scheduled_at,
+            service_type: r.service_type,
+          })),
+        ...store.trial_bookings
+          .filter(
+            (t) =>
+              t.status === "confirmed" ||
+              (t.status === "pending" && t.expires_at >= new Date().toISOString()),
+          )
+          .map((t) => ({
+            trainer_id: t.trainer_id,
+            scheduled_at: t.scheduled_at,
+            service_type: t.service_type,
+          })),
+      ],
       rules,
       blocks,
       trainers: [...names.keys()],
@@ -489,7 +505,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     .maybeSingle();
   if (!client) return { ...empty, error: "Client no trobat." };
 
-  const [{ data: bonos }, { data: res }, { data: pros }, rules, blocks] =
+  const [{ data: bonos }, { data: res }, holds, { data: pros }, rules, blocks] =
     await Promise.all([
       admin
         .from("bonos")
@@ -503,6 +519,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
         .from("reservations")
         .select("trainer_id, scheduled_at, service_type, client_id, series_id")
         .eq("status", "booked"),
+      fetchAllActiveHolds(admin),
       admin.from("profiles").select("id, full_name").eq("role", "trainer"),
       listAllTrainerRulesLite(),
       listAllBlocksLite(),
@@ -519,7 +536,19 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     bonoId: bono.id,
     bonoRemaining: bono.remaining_sessions,
     clientId: client.id,
-    slots: (res ?? []) as SlotRow[],
+    /*
+     * Les reserves I les sessions de prova.
+     *
+     * Una prova 'pending' o 'confirmed' bloqueja el forat igual que una
+     * reserva —és el que fa la reserva normal amb `fetchActiveHoldsAt`, i el
+     * que compta `book_group_slot` dins del seu pany—, però aquí no hi
+     * entraven: el planificador només mirava `reservations`. L'assistent podia
+     * dir "confirmada" una ocurrència que el commit rebutjaria després.
+     *
+     * Van a `slots` i NO a `ownAt`: `ownAt` és "què tinc jo reservat", i una
+     * prova no és de qui està muntant la sèrie.
+     */
+    slots: [...((res ?? []) as SlotRow[]), ...holds],
     rules,
     blocks,
     trainers: [...names.keys()],

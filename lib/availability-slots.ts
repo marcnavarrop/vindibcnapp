@@ -1,6 +1,6 @@
 /**
  * Lógica pura de disponibilidad (sin acceso a BD), compartida entre el servidor
- * (getAvailableSlots) y el calendario del cliente (que navega por semanas en el
+ * (el servidor) y el calendario del cliente (que navega por semanas en el
  * navegador). Las sesiones son de 1 hora, alineadas con el calendario actual.
  */
 

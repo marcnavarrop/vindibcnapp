@@ -6,7 +6,6 @@ import {
   DEFAULT_PREFERENCES,
   PREFERENCE_KEYS,
   type NotificationPreferences,
-  type PreferenceKey,
   type PersistedPreferenceKey,
 } from "@/lib/notifications/preferences-defaults";
 
@@ -95,12 +94,4 @@ export async function updatePreferences(
       { profile_id: profileId, ...clean },
       { onConflict: "profile_id" },
     );
-}
-
-/** Comprova si un canal concret està habilitat per a un esdeveniment. */
-export function isChannelEnabled(
-  prefs: NotificationPreferences,
-  key: PreferenceKey,
-): boolean {
-  return prefs[key] === true;
 }

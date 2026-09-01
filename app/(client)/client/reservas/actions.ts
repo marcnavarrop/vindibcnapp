@@ -9,15 +9,20 @@ import {
   cancelClientReservation,
 } from "@/lib/data/reservations";
 import type { ServiceType } from "@/types/database";
+import { SERVICE_TYPES } from "@/lib/labels";
+import { TooLateToCancelError } from "@/lib/cancellation";
 
-const SERVICE_TYPES: ServiceType[] = [
-  "ep_individual",
-  "ep_parejas",
-  "grupo_reducido",
-  "fisioterapia",
-];
 
-export type FormState = { errorCode?: ReservaErrorCode; ok?: boolean };
+/**
+ * `errorHours` acompanya el codi `tooLate`: el text diu "cal fer-ho amb almenys
+ * {hours} h d'antelació", i aquest número surt de la configuració del centre,
+ * que només coneix el servidor.
+ */
+export type FormState = {
+  errorCode?: ReservaErrorCode;
+  errorHours?: number;
+  ok?: boolean;
+};
 
 /**
  * Crea una reserva del propio cliente. El slot elegido determina el profesional
@@ -70,6 +75,11 @@ export async function cancelOwnReservationAction(
   try {
     await cancelClientReservation(viewer.id, id);
   } catch (e) {
+    // Arribar tard NO és un error inesperat: és una regla del centre, i qui
+    // la topa mereix que se li digui. Abans es tragava aquí i tornava un
+    // "failed" genèric, així que el client es quedava sense saber per què.
+    if (e instanceof TooLateToCancelError)
+      return { errorCode: "tooLate", errorHours: e.minCancellationHours };
     console.error("[reserves]", e);
     return { errorCode: "failed" };
   }

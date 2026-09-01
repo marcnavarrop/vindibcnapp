@@ -4,13 +4,6 @@ import type { TrainingServiceType } from "@/types/database";
  *  client/servidor (sense `server-only`). */
 export const TRIAL_SERVICE: TrainingServiceType = "ep_individual";
 
-/** Serveis d'entrenament (mai fisioteràpia). */
-export const TRAINING_SERVICES: TrainingServiceType[] = [
-  "ep_individual",
-  "ep_parejas",
-  "grupo_reducido",
-];
-
 /**
  * La finestra en què es pot demanar una prova. Viu aquí, i no dins de
  * `trial-bookings.ts`, perquè el calendari públic també l'ha de dir en veu

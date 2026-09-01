@@ -1,16 +1,10 @@
-import { SERVICE_LABELS } from "@/lib/labels";
+import { SERVICE_LABELS, TRAINING_SERVICES } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
 
 export const SESSION_DURATION_MINUTES = 60;
 
 const CENTER_LOCATION =
   "Vindi BCN, Carrer de la Mare de Déu dels Desemparats, 14-16, Gràcia, 08012 Barcelona";
-
-const TRAINING_SERVICES: ServiceType[] = [
-  "ep_individual",
-  "ep_parejas",
-  "grupo_reducido",
-];
 
 export type CalendarEvent = {
   title: string;
@@ -31,7 +25,7 @@ export function buildCalendarEvent({
 }): CalendarEvent {
   const start = new Date(scheduledAt);
   const serviceLabel = SERVICE_LABELS[serviceType];
-  const isTraining = TRAINING_SERVICES.includes(serviceType);
+  const isTraining = (TRAINING_SERVICES as ServiceType[]).includes(serviceType);
   const prefix = isTraining ? "💪 " : "";
   const title = otherPartyName
     ? `${prefix}${serviceLabel} amb ${otherPartyName} · VindiBCN`

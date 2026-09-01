@@ -1,7 +1,6 @@
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 
 export type ExerciseProgressEntry = {
@@ -46,26 +45,6 @@ function toEntry(r: Row): ExerciseProgressEntry {
     recordedBy: r.recorded_by,
     createdAt: r.created_at,
   };
-}
-
-/** Tots els registres de progrés d'una assignació concreta, de més recent a més antic. */
-export async function listExerciseProgress(
-  clientExerciseId: string,
-): Promise<ExerciseProgressEntry[]> {
-  if (USE_MOCK) {
-    return (getStore().exercise_progress ?? [])
-      .filter((r) => r.client_exercise_id === clientExerciseId)
-      .sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))
-      .map(toEntry);
-  }
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("exercise_progress")
-    .select("*")
-    .eq("client_exercise_id", clientExerciseId)
-    .order("recorded_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(toEntry);
 }
 
 /** Progrés de tots els exercicis assignats a un client (per a la vista completa). */
@@ -135,34 +114,4 @@ export async function deleteExerciseProgress(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("exercise_progress").delete().eq("id", id);
   if (error) throw error;
-}
-
-/** Elimina tot el progrés d'un client (GDPR). */
-export async function deleteAllProgressForClient(clientId: string): Promise<void> {
-  if (USE_MOCK) {
-    const store = getStore();
-    const ceIds = new Set(
-      store.client_exercises
-        .filter((ce) => ce.client_id === clientId)
-        .map((ce) => ce.id),
-    );
-    store.exercise_progress = (store.exercise_progress ?? []).filter(
-      (r) => !ceIds.has(r.client_exercise_id),
-    );
-    saveStore(store);
-    return;
-  }
-  const admin = createAdminClient();
-  // El cascade de client_exercises → exercise_progress ho gestiona a BD,
-  // però si es crida explícitament per GDPR ho fem igualment per simetria.
-  const { data: ces } = await admin
-    .from("client_exercises")
-    .select("id")
-    .eq("client_id", clientId);
-  if (ces && ces.length > 0) {
-    await admin
-      .from("exercise_progress")
-      .delete()
-      .in("client_exercise_id", ces.map((c) => c.id));
-  }
 }

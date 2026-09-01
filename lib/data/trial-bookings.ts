@@ -25,7 +25,8 @@ import {
   TRIAL_MAX_ADVANCE_DAYS,
   type TrialErrorCode,
 } from "@/lib/data/trial-bookings.constants";
-import { TRIAL_SERVICE, TRAINING_SERVICES } from "@/lib/data/trial-bookings.constants";
+import { TRIAL_SERVICE } from "@/lib/data/trial-bookings.constants";
+import { TRAINING_SERVICES } from "@/lib/labels";
 import type { Database, ServiceType, TrialStatus } from "@/types/database";
 
 type DB = SupabaseClient<Database>;
@@ -161,6 +162,36 @@ export async function fetchActiveHoldsAt(
   return (data ?? [])
     .filter((t) => t.status === "confirmed" || t.expires_at >= now)
     .map((t) => ({ service_type: t.service_type }));
+}
+
+/**
+ * TOTES les proves que ocupen un forat ara mateix, de tots els professionals.
+ *
+ * `fetchActiveHoldsAt` respon per una franja concreta i li va bé a la reserva
+ * normal, que ja sap quin professional i quina hora mira. El planificador de
+ * sèries no: carrega l'ocupació sencera d'una tirada i després la filtra en
+ * memòria, i a més busca alternatives amb ALTRES professionals. Demanar-li una
+ * consulta per ocurrència i per professional seria absurd.
+ *
+ * El criteri d'"ocupa" és EXACTAMENT el mateix que a la versió per franja:
+ * 'confirmed' sempre, i 'pending' mentre no hagi caducat. Si un dia canvia,
+ * ha de canviar a totes dues.
+ */
+export async function fetchAllActiveHolds(
+  admin: DB,
+): Promise<{ trainer_id: string | null; scheduled_at: string; service_type: ServiceType }[]> {
+  const now = new Date().toISOString();
+  const { data } = await admin
+    .from("trial_bookings")
+    .select("trainer_id, scheduled_at, service_type, status, expires_at")
+    .in("status", ["pending", "confirmed"]);
+  return (data ?? [])
+    .filter((t) => t.status === "confirmed" || t.expires_at >= now)
+    .map((t) => ({
+      trainer_id: t.trainer_id,
+      scheduled_at: t.scheduled_at,
+      service_type: t.service_type,
+    }));
 }
 
 // ─────────────── Dades públiques per a /prova ───────────────

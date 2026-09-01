@@ -4,28 +4,20 @@ import { intlLocale, type Locale } from "@/lib/i18n/config";
 import { centerDateStr } from "@/lib/center-time";
 import type {
   ServiceType,
+  TrainingServiceType,
   BonoStatus,
   ReservationStatus,
   PaymentMethod,
   UserRole,
   Specialty,
-  PreferredLanguage,
-  Gender,
   SupportCategory,
   SupportStatus,
   GiftVoucherStatus,
-  BookingFrequency,
 } from "@/types/database";
 
 export const SPECIALTY_LABELS: Record<Specialty, string> = {
   entrenador: "Entrenador/a",
   fisioterapeuta: "Fisioterapeuta",
-};
-
-export const LANGUAGE_LABELS: Record<PreferredLanguage, string> = {
-  ca: "Català",
-  es: "Castellà",
-  en: "English",
 };
 
 /** Días de la semana (lunes = 0), forma corta y larga. */
@@ -39,8 +31,6 @@ export const WEEKDAY_LONG = [
   "Dissabte",
   "Diumenge",
 ];
-
-export const GENDER_LABELS: Record<Gender, string> = ca.labels.gender;
 
 /**
  * Etiquetes en CATALÀ, derivades de `messages/ca.json`.
@@ -74,6 +64,21 @@ export const SERVICE_TYPES: ServiceType[] = [
 ];
 
 /**
+ * Els serveis d'entrenament: tot menys fisioteràpia.
+ *
+ * Tipat `TrainingServiceType[]`, que és `Exclude<ServiceType, "fisioterapia">`.
+ * El tipus no és decoració: aquesta llista estava escrita a TRES llocs i un
+ * d'ells la tenia com a `ServiceType[]`, o sigui que hi cabia fisioteràpia
+ * sense que ningú es queixés. El dia que s'afegeixi un servei d'entrenament
+ * nou, ara peta la compilació en comptes de perdre's en silenci.
+ */
+export const TRAINING_SERVICES: TrainingServiceType[] = [
+  "ep_individual",
+  "ep_parejas",
+  "grupo_reducido",
+];
+
+/**
  * Servicios que ofrece por defecto una franja según la especialidad del
  * profesional (editable en la UI): el fisio ofrece fisioterapia; el entrenador
  * (o sin especialidad) ofrece los tres servicios de entrenamiento.
@@ -81,9 +86,7 @@ export const SERVICE_TYPES: ServiceType[] = [
 export function defaultServiceTypesFor(
   specialty: Specialty | null,
 ): ServiceType[] {
-  return specialty === "fisioterapeuta"
-    ? ["fisioterapia"]
-    : ["ep_individual", "ep_parejas", "grupo_reducido"];
+  return specialty === "fisioterapeuta" ? ["fisioterapia"] : [...TRAINING_SERVICES];
 }
 
 /** Filtra una lista de strings dejando solo tipos de servicio válidos. */
@@ -117,28 +120,6 @@ export function deOf(word: string): string {
 export function sessionsLabel(n: number): string {
   return `${n} ${n === 1 ? "sessió" : "sessions"}`;
 }
-
-export const FREQUENCY_LABELS: Record<BookingFrequency, string> = {
-  weekly: "Setmana",
-  biweekly: "2 setmanes",
-  monthly: "Mes",
-};
-
-/** Com es diu i com es pinta cada resultat d'una ocurrència de la sèrie. */
-export const OCCURRENCE_LABELS: Record<
-  | "confirmada"
-  | "ja_reservada"
-  | "alternativa_proposada"
-  | "llista_espera"
-  | "sense_places",
-  { label: string; tone: "success" | "warn" | "info" | "danger" }
-> = {
-  confirmada: { label: "Confirmada", tone: "success" },
-  ja_reservada: { label: "Ja reservada", tone: "success" },
-  alternativa_proposada: { label: "Alternativa proposada", tone: "warn" },
-  llista_espera: { label: "Llista d'espera", tone: "info" },
-  sense_places: { label: "Sense places", tone: "danger" },
-};
 
 export const GIFT_VOUCHER_STATUS_LABELS: Record<GiftVoucherStatus, string> =
   ca.labels.giftVoucherStatus;

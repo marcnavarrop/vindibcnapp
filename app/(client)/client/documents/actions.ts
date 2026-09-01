@@ -5,10 +5,8 @@ import { getClientByProfile } from "@/lib/data/clients";
 import {
   uploadClientDocument,
   deleteClientDocument,
-  getDocumentSignedUrl,
   validateDocumentFile,
 } from "@/lib/data/client-documents";
-import { redirect } from "next/navigation";
 
 /** Codi, no frase: la pantalla de documents es veu en tres idiomes. */
 export type DocErrorCode =
@@ -76,20 +74,4 @@ export async function deleteDocumentAction(
   }
 
   return { ok: true };
-}
-
-export async function downloadDocumentAction(
-  formData: FormData,
-): Promise<void> {
-  const viewer = await getViewer();
-  if (!viewer) redirect("/login");
-
-  const client = await getClientByProfile(viewer.id);
-  if (!client) redirect("/client");
-
-  const documentId = formData.get("documentId") as string | null;
-  if (!documentId) redirect("/client/documents");
-
-  const url = await getDocumentSignedUrl(documentId, client.id);
-  redirect(url);
 }

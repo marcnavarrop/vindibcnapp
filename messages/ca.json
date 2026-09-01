@@ -444,7 +444,8 @@
       "noSeries": "Sèrie no indicada.",
       "noLimit": "Digues fins quan es repeteix o quantes sessions vols.",
       "nothingToConfirm": "No hi ha res a confirmar.",
-      "failed": "No s'ha pogut completar l'operació. Torna-ho a provar."
+      "failed": "No s'ha pogut completar l'operació. Torna-ho a provar.",
+      "tooLate": "Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys {hours} h d'antelació). Contacta amb el centre si tens una urgència."
     },
     "days": [
       "Dl",

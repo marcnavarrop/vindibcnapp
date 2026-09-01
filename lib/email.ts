@@ -29,10 +29,6 @@ function fromAddress(): string {
 /** Adreça del centre per als avisos interns (opcional). */
 export const CENTER_EMAIL = process.env.CENTER_EMAIL ?? null;
 
-export function isEmailConfigured(): boolean {
-  return !!process.env.RESEND_API_KEY;
-}
-
 export type SendResult = { ok: boolean; error?: string; id?: string };
 
 /** Envia un correu. Mai llança: retorna {ok:false, error} si falla. */

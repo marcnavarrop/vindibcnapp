@@ -79,10 +79,3 @@ export async function giftVoucherSignedUrl(
     throw new Error("No s'ha pogut generar l'enllaç de descàrrega.");
   return data.signedUrl;
 }
-
-/** Esborra el fitxer (neteja de proves o d'una generació fallida). */
-export async function deleteGiftVoucherPdf(storagePath: string): Promise<void> {
-  if (USE_MOCK) return;
-  const admin = createAdminClient();
-  await admin.storage.from(BUCKET).remove([storagePath]);
-}

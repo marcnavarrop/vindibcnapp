@@ -5,7 +5,7 @@ import type { LowBono } from "@/lib/data/dashboard";
 /**
  * Targeta "Bons a punt d'esgotar-se" amb la llista clicable.
  *
- * No és una `<Kpi>` perquè no és un número i prou: la llista pot créixer i cada
+ * No és una targeta de KPI perquè no és un número i prou: la llista pot créixer i cada
  * línia porta a una fitxa diferent. La comparteixen l'admin i el professional,
  * que veuen el mateix criteri sobre conjunts de bons diferents; l'únic que
  * canvia és a quina àrea porta l'enllaç, i per això va per paràmetre.

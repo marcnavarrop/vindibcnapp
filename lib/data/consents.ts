@@ -101,9 +101,3 @@ export async function getConsentStatus(
   }
   return status;
 }
-
-/** ¿El usuario ha consentido el tratamiento de datos de salud? */
-export async function hasHealthConsent(userId: string): Promise<boolean> {
-  const s = await getConsentStatus(userId);
-  return s.healthDataAt !== null;
-}

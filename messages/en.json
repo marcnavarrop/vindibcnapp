@@ -444,7 +444,8 @@
       "noSeries": "No series specified.",
       "noLimit": "Tell us until when it repeats, or how many sessions you want.",
       "nothingToConfirm": "There's nothing to confirm.",
-      "failed": "We couldn't complete that. Please try again."
+      "failed": "We couldn't complete that. Please try again.",
+      "tooLate": "This booking can no longer be cancelled (it needs at least {hours} h notice). Contact the centre if it's urgent."
     },
     "days": [
       "Mon",

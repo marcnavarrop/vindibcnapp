@@ -247,7 +247,6 @@ export async function UpcomingReservations({
     getTranslations("labels.service"),
     getLocale() as Promise<Locale>,
   ]);
-  const minMs = minCancellationHours * 60 * 60 * 1000;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
@@ -325,7 +324,6 @@ export async function UpcomingReservations({
                     id={r.id}
                     scheduledAt={r.scheduledAt}
                     minCancellationHours={minCancellationHours}
-                    minMs={minMs}
                   />
                 </div>
               </li>

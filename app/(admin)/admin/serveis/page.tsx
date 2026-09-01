@@ -10,17 +10,11 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { listServices, type Service } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { toggleServiceAction } from "@/app/(admin)/admin/serveis/actions";
-import { SERVICE_LABELS } from "@/lib/labels";
+import { SERVICE_LABELS, SERVICE_TYPES } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
-const SERVICE_ORDER: ServiceType[] = [
-  "ep_individual",
-  "ep_parejas",
-  "grupo_reducido",
-  "fisioterapia",
-];
 
 export default async function ServeisPage() {
   const services = await listServices();
@@ -33,8 +27,8 @@ export default async function ServeisPage() {
     byType.set(s.serviceType, list);
   }
   const types = [
-    ...SERVICE_ORDER.filter((t) => byType.has(t)),
-    ...[...byType.keys()].filter((t) => !SERVICE_ORDER.includes(t)),
+    ...SERVICE_TYPES.filter((t) => byType.has(t)),
+    ...[...byType.keys()].filter((t) => !SERVICE_TYPES.includes(t)),
   ];
 
   return (

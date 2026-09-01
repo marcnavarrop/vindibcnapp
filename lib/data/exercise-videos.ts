@@ -6,9 +6,6 @@ import { checkExerciseVideo } from "@/lib/exercise-video.constants";
 const BUCKET = "exercise-videos";
 const SIGNED_URL_TTL = 3600; // 1 hora
 
-/** Reexportat perquè qui ja l'importava d'aquí no s'hagi d'assabentar. */
-export { MAX_VIDEO_MB } from "@/lib/exercise-video.constants";
-
 export function validateExerciseVideo(
   file: File,
 ): { ok: true } | { ok: false; error: string } {

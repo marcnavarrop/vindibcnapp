@@ -15,6 +15,7 @@ import type { ClientCenterData } from "@/lib/data/client-calendar";
 import { colorOfPro, type ColorPalette } from "@/lib/colors";
 import { Avatar } from "@/components/ui/avatar";
 import type { ServiceType } from "@/types/database";
+import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
@@ -30,6 +31,7 @@ import {
   type WaitlistState,
 } from "@/app/(client)/client/reservas/waitlist-actions";
 import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
+import { canCancelAt } from "@/lib/cancellation";
 
 /* Els noms dels dies i les abreviatures de servei viuen al diccionari
    (`reservas.days` i `reservas.serviceBadge`). */
@@ -74,10 +76,24 @@ export type CreateAction = (
   prev: FormState,
   formData: FormData,
 ) => Promise<FormState>;
+/**
+ * L'acció de cancel·lar, tal com la torna de veritat.
+ *
+ * Deia `{ error?: string }` mentre que l'acció torna `{ errorCode }`. Com que
+ * totes dues tenen les propietats opcionals, TypeScript ho donava per bo i el
+ * diàleg llegia un `state.error` que no existia mai: cap error d'aquesta
+ * pantalla s'ha arribat a veure. Ara el tipus diu el que passa.
+ */
+export type CancelState = {
+  errorCode?: ReservaErrorCode;
+  errorHours?: number;
+  ok?: boolean;
+};
+
 export type CancelAction = (
-  prev: { error?: string; ok?: boolean },
+  prev: CancelState,
   formData: FormData,
-) => Promise<{ error?: string; ok?: boolean }>;
+) => Promise<CancelState>;
 
 function startOfWeek(ref: Date): Date {
   const d = new Date(ref);
@@ -1120,7 +1136,7 @@ function CreateModal({
           <input type="hidden" name="serviceType" value={service} />
           <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
           {state.errorCode && (
-            <p className="mb-3 text-sm text-error">{te(state.errorCode)}</p>
+            <p className="mb-3 text-sm text-error">{te(state.errorCode, { hours: state.errorHours ?? 0 })}</p>
           )}
           <div className="flex items-center gap-2">
             {/* Mentre la reserva viatja al servidor hi havia uns segons sense
@@ -1187,10 +1203,7 @@ function OwnModal({
     if (state.ok) setCancelled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
-  const canCancel =
-    minCancellationHours === 0 ||
-    new Date(scheduledAt).getTime() - Date.now() >=
-      minCancellationHours * 60 * 60 * 1000;
+  const canCancel = canCancelAt(scheduledAt, minCancellationHours);
 
   if (cancelled) {
     const close = () => { router.refresh(); onClose(); };
@@ -1289,8 +1302,10 @@ function OwnModal({
                   {t("own.noBack")}
                 </button>
               </div>
-              {state.error && (
-                <p className="mt-2 text-xs text-error">{state.error}</p>
+              {state.errorCode && (
+                <p className="mt-2 text-xs text-error">
+                  {te(state.errorCode, { hours: state.errorHours ?? 0 })}
+                </p>
               )}
             </>
           ) : (

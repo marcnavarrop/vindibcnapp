@@ -3,18 +3,17 @@
 import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { cancelOwnReservationAction } from "@/app/(client)/client/reservas/actions";
+import { canCancelAt } from "@/lib/cancellation";
 
 export function CancelReservationButton({
   id,
   scheduledAt,
   minCancellationHours,
-  minMs,
   className = "",
 }: {
   id: string;
   scheduledAt: string;
   minCancellationHours: number;
-  minMs: number;
   className?: string;
 }) {
   const t = useTranslations("reservas");
@@ -22,9 +21,7 @@ export function CancelReservationButton({
   const [state, action] = useActionState(cancelOwnReservationAction, {});
   const [confirming, setConfirming] = useState(false);
 
-  const canCancel =
-    minCancellationHours === 0 ||
-    new Date(scheduledAt).getTime() - Date.now() >= minMs;
+  const canCancel = canCancelAt(scheduledAt, minCancellationHours);
 
   if (!canCancel) {
     return (
@@ -55,7 +52,7 @@ export function CancelReservationButton({
           {t("own.no")}
         </button>
         {state.errorCode && (
-          <p className="text-xs text-error">{te(state.errorCode)}</p>
+          <p className="text-xs text-error">{te(state.errorCode, { hours: state.errorHours ?? 0 })}</p>
         )}
       </div>
     );
@@ -72,7 +69,7 @@ export function CancelReservationButton({
       </button>
       {state.errorCode && (
         <p className="mt-1 max-w-[16rem] text-xs text-error">
-          {te(state.errorCode)}
+          {te(state.errorCode, { hours: state.errorHours ?? 0 })}
         </p>
       )}
     </div>

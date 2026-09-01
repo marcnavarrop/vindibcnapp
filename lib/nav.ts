@@ -176,21 +176,6 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
   ],
 };
 
-/** Retorna les pestanyes del grup al qual pertany el pathname donat, o null. */
-export function getGroupTabs(role: Role, pathname: string): NavItem[] | null {
-  for (const entry of NAV_GROUPS[role]) {
-    if (
-      isNavGroup(entry) &&
-      entry.children.some(
-        (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
-      )
-    ) {
-      return entry.children;
-    }
-  }
-  return null;
-}
-
 // ─────────────────────── Mòduls opcionals ───────────────────────
 
 /** Mòduls que l'admin pot desactivar des de Configuració → Centre. */
