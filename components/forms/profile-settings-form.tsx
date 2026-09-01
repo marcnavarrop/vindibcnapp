@@ -52,10 +52,15 @@ export function ProfileSettingsForm({ settings }: { settings: ProfileSettings })
             {t("emailHint")}
           </p>
         </div>
+        {/* Obligatori també aquí, com a l'alta: el centre ha de poder trucar
+            si una sessió es mou o hi ha una urgència. Els comptes creats abans
+            que ho fos el tenen buit; el formulari els el demanarà el primer
+            cop que hi entrin a desar res. L'asterisc surt sol del component. */}
         <Field
           label={t("phone")}
           name="phone"
           type="tel"
+          required
           defaultValue={settings.phone}
         />
         <Field

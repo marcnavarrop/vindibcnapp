@@ -12,6 +12,7 @@ import type { Gender } from "@/types/database";
 export type ProfileErrorCode =
   | "unauthorized"
   | "noName"
+  | "noPhone"
   | "badHeight"
   | "badWeight"
   | "failed";
@@ -54,6 +55,8 @@ export async function updateProfileAction(
   const objective = String(formData.get("objective") ?? "").trim() || null;
 
   if (!fullName) return { errorCode: "noName" };
+  // El `required` de l'HTML no és el control: es treu des de la consola.
+  if (!phone) return { errorCode: "noPhone" };
   if (heightCm !== null && (heightCm < 50 || heightCm > 260))
     return { errorCode: "badHeight" };
   if (weightKg !== null && (weightKg < 20 || weightKg > 400))

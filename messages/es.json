@@ -622,7 +622,8 @@
         "noName": "El nombre es obligatorio.",
         "badHeight": "La altura tiene que estar entre 50 y 260 cm.",
         "badWeight": "El peso tiene que estar entre 20 y 400 kg.",
-        "failed": "No se han podido guardar los cambios."
+        "failed": "No se han podido guardar los cambios.",
+        "noPhone": "Hace falta un teléfono de contacto."
       },
       "requiredNote": "Campo obligatorio"
     },

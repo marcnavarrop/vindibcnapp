@@ -622,7 +622,8 @@
         "noName": "El nom és obligatori.",
         "badHeight": "L'alçada ha d'estar entre 50 i 260 cm.",
         "badWeight": "El pes ha d'estar entre 20 i 400 kg.",
-        "failed": "No s'han pogut desar els canvis."
+        "failed": "No s'han pogut desar els canvis.",
+        "noPhone": "Cal un telèfon de contacte."
       },
       "requiredNote": "Camp obligatori"
     },

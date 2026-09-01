@@ -622,7 +622,8 @@
         "noName": "Your name is required.",
         "badHeight": "Height must be between 50 and 260 cm.",
         "badWeight": "Weight must be between 20 and 400 kg.",
-        "failed": "We couldn't save your changes."
+        "failed": "We couldn't save your changes.",
+        "noPhone": "A contact phone number is required."
       },
       "requiredNote": "Required field"
     },
