@@ -29,9 +29,14 @@ export async function ExercisesLibraryScreen({ base }: { base: string }) {
     <main className="mx-auto max-w-5xl p-6">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl text-brand-dark">Biblioteca d&apos;exercicis</h1>
+        {/* `whitespace-nowrap` + `shrink-0`: a 375 px el text no hi cabia en
+            una línia i es partia en dues, i com que l'alineació del text és a
+            l'esquerra la línia curta ("+ NOU") deixava un buit a la dreta. El
+            botó ha de mesurar el que mesura el seu text; qui s'ajusta és el
+            títol del costat, que ja anava a dues línies. */}
         <Link
           href={`${base}/new`}
-          className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase transition-[background-color,transform] duration-100 hover:bg-brand-purple-light active:scale-95 active:bg-brand-purple-dark [-webkit-tap-highlight-color:transparent] touch-manipulation"
         >
           + Nou exercici
         </Link>

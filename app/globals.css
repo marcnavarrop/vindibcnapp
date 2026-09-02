@@ -12,7 +12,12 @@
   /* ─── Identidad VindiBCN ─── */
   --color-brand-purple: #642263; /* primario */
   --color-brand-purple-light: #965495;
+  /* Un punto más oscuro que el primario: es el color del botón MIENTRAS se
+     mantiene pulsado (`active:`). En móvil no hay hover, así que este es el
+     único aviso visual de que el toque se ha registrado. */
+  --color-brand-purple-dark: #4a1749;
   --color-brand-orange: #ff6d17; /* acento */
+  --color-brand-orange-dark: #d95410; /* mismo papel, para la variante acento */
   --color-brand-dark: #1b1d1f;
   --color-brand-charcoal: #303133;
   --color-brand-muted: #777777;
