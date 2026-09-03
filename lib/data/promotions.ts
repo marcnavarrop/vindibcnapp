@@ -566,27 +566,33 @@ export async function getEffectivePrice(
  *
  * ATENCIÓ, que això és una HEURÍSTICA i no una veritat lògica. Estrictament,
  * dos segments qualssevol poden caure sobre la mateixa persona: un client pot
- * portar l'etiqueta VIP i l'etiqueta Empresa alhora, o portar la VIP i a més
- * tenir un bo actiu de fisioteràpia. Si l'avís volgués ser exacte, saltaria
- * SEMPRE.
+ * portar l'etiqueta VIP i l'etiqueta Empresa alhora, i una oferta oberta a
+ * tothom arriba també als VIP. Si l'avís volgués ser exacte, saltaria SEMPRE.
  *
  * I saltar sempre és el que el fa inútil. L'avís existeix per enxampar
- * despistes —dues ofertes generals sobre el mateix servei, que gairebé sempre
- * vol dir que algú n'ha creat una segona sense recordar la primera—, no per
- * informar que la segmentació funciona. Una oferta VIP al costat de la general
- * és el cas NORMAL, i avisar-ne cada vegada ensenyaria l'admin a ignorar
- * l'avís, que és pitjor que no tenir-lo.
+ * DESPISTES —dues ofertes sobre el mateix servei i el mateix públic, que
+ * gairebé sempre vol dir que algú n'ha creat una segona sense recordar la
+ * primera—, no per informar que la segmentació funciona.
  *
- * Quan dos segments diferents sí que cauen sobre la mateixa persona, no passa
+ * Per això "general + VIP" NO avisa, tot i que la general també abasta els VIP.
+ * Un preu base per a tothom i un de millor per a un segment és el patró normal
+ * de la segmentació, no un error; si avisés cada vegada, l'admin aprendria a
+ * ignorar l'avís, que és pitjor que no tenir-lo.
+ *
+ * Quan dos públics diferents sí que cauen sobre la mateixa persona, no passa
  * res: la regla de "guanya la millor oferta" ho resol sola i de manera
  * determinista. No és un conflicte, és el disseny.
+ *
+ * El que NO detecta, i abans tampoc: una oferta redundant per valor (una VIP
+ * del −10% sota una general del −30%). L'avís mai ha mirat imports, només
+ * coincidències.
  */
 function audiencesLookLikeAClash(
   a: { audience: PromotionAudience; audienceTagId: string | null; audienceServiceType: ServiceType | null },
   b: Promotion,
 ): boolean {
-  if (a.audience === "all" || b.audience === "all") return true;
   if (a.audience !== b.audience) return false;
+  if (a.audience === "all") return true;
   if (a.audience === "tag") return a.audienceTagId === b.audienceTagId;
   return a.audienceServiceType === b.audienceServiceType;
 }
