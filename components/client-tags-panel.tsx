@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { TAP } from "@/lib/utils";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { TagToggleButton } from "@/components/forms/tag-toggle-button";
 import type { ClientTag } from "@/lib/data/client-tags";
 
 /**
@@ -71,29 +72,7 @@ export function ClientTagsPanel({
                 {/* El valor que s'envia és el CONTRARI del que es veu: el botó
                     demana el canvi, no l'estat actual. */}
                 <input type="hidden" name="checked" value={String(!checked)} />
-                <button
-                  type="submit"
-                  disabled={!canAssign}
-                  className={`flex flex-1 items-center gap-3 text-left disabled:cursor-default ${
-                    canAssign ? TAP : ""
-                  }`}
-                >
-                  <span
-                    aria-hidden
-                    className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border text-[10px] font-bold text-white ${
-                      checked
-                        ? "border-brand-purple bg-brand-purple"
-                        : "border-brand-border bg-white"
-                    }`}
-                  >
-                    {checked ? "✓" : ""}
-                  </span>
-                  <span
-                    className={checked ? "font-bold text-brand-dark" : "text-brand-muted"}
-                  >
-                    {t.name}
-                  </span>
-                </button>
+                <TagToggleButton name={t.name} checked={checked} canAssign={canAssign} />
                 {checked && <Badge tone="info">Assignada</Badge>}
               </form>
             );
@@ -118,12 +97,9 @@ export function ClientTagsPanel({
               className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark"
             />
           </label>
-          <button
-            type="submit"
-            className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
-          >
-            Crear i assignar
-          </button>
+          {/* Mateix motiu que la casella: crear una etiqueta també va al servidor
+              i tornava sense dir res mentrestant. */}
+          <SubmitButton pendingLabel="Creant…">Crear i assignar</SubmitButton>
         </form>
       )}
     </section>
