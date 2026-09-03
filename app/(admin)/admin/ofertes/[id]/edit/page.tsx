@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PromotionForm } from "@/components/forms/promotion-form";
 import { getPromotion } from "@/lib/data/promotions";
 import { listActiveServices } from "@/lib/data/services";
+import { listClientTags } from "@/lib/data/client-tags";
 import { updateOfertaAction } from "@/app/(admin)/admin/ofertes/actions";
 
 export const dynamic = "force-dynamic";
@@ -13,9 +14,10 @@ export default async function EditOfertaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [promotion, services] = await Promise.all([
+  const [promotion, services, tags] = await Promise.all([
     getPromotion(id),
     listActiveServices(),
+    listClientTags(),
   ]);
   if (!promotion) notFound();
 
@@ -32,6 +34,7 @@ export default async function EditOfertaPage({
         action={updateOfertaAction.bind(null, id)}
         cancelHref="/admin/ofertes"
         services={services}
+        tags={tags}
         initial={promotion}
       />
     </main>

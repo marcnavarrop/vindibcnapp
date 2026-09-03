@@ -26,6 +26,8 @@ import {
   seedPromotions,
   seedClientDocuments,
   seedReferralRewards,
+  seedClientTags,
+  seedClientTagAssignments,
 } from "./seed";
 import type { Database } from "@/types/database";
 
@@ -51,6 +53,8 @@ export type Store = {
   notification_preferences: Tables["notification_preferences"]["Row"][];
   notification_log: Tables["notification_log"]["Row"][];
   promotions: Tables["promotions"]["Row"][];
+  client_tags: Tables["client_tags"]["Row"][];
+  client_tag_assignments: Tables["client_tag_assignments"]["Row"][];
   client_documents: Tables["client_documents"]["Row"][];
   referral_rewards: Tables["referral_rewards"]["Row"][];
   service_rates: Tables["service_rates"]["Row"][];
@@ -105,6 +109,8 @@ function fromSeed(): Store {
     notification_preferences: structuredClone(seedNotificationPreferences),
     notification_log: structuredClone(seedNotificationLog),
     promotions: structuredClone(seedPromotions),
+    client_tags: structuredClone(seedClientTags),
+    client_tag_assignments: structuredClone(seedClientTagAssignments),
     client_documents: structuredClone(seedClientDocuments),
     referral_rewards: structuredClone(seedReferralRewards),
     gift_vouchers: [],

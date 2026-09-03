@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
+import { ClientTagsPanel } from "@/components/client-tags-panel";
 import { getClient } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
+import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
 import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
 import { listClientDocuments } from "@/lib/data/client-documents";
@@ -21,6 +23,10 @@ import {
   removeExerciseAction,
 } from "@/app/(admin)/admin/clients/exercises-actions";
 import {
+  toggleClientTagAction,
+  createAndAssignTagAction,
+} from "@/app/(admin)/admin/etiquetes/actions";
+import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
   RESERVATION_STATUS_LABELS,
@@ -35,12 +41,22 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, assignedExercises, library, documents, allProgress] = await Promise.all([
+  const [
+    client,
+    assignedExercises,
+    library,
+    documents,
+    allProgress,
+    allTags,
+    clientTags,
+  ] = await Promise.all([
     getClient(id),
     listClientExercises(id),
     listExercises(),
     listClientDocuments(id),
     listAllProgressForClient(id),
+    listClientTags(),
+    listTagsOfClient(id),
   ]);
   if (!client) notFound();
 
@@ -51,6 +67,7 @@ export default async function ClientDetailPage({
   const needsHealthConsent = receivesFisio && !consent.healthDataAt;
 
   const redirectPath = `/admin/clients/${id}`;
+  const assignedTagIds = new Set(clientTags.map((t) => t.id));
 
   const tabs = [
     {
@@ -192,6 +209,19 @@ export default async function ClientDetailPage({
       content: <DocumentsReadonlyPanel documents={documents} clientId={id} />,
     },
     {
+      label: "Etiquetes",
+      content: (
+        <ClientTagsPanel
+          allTags={allTags}
+          assignedIds={assignedTagIds}
+          toggleAction={toggleClientTagAction.bind(null, id, redirectPath)}
+          createAction={createAndAssignTagAction.bind(null, id, redirectPath)}
+          canAssign
+          canCreate
+        />
+      ),
+    },
+    {
       label: "Notes",
       content: (
         <ClientNotesPanel
@@ -229,6 +259,20 @@ export default async function ClientDetailPage({
             {client.email}
             {client.phone ? ` · ${client.phone}` : ""}
           </p>
+          {/*
+            Les etiquetes van aquí i no només a la seva pestanya: dirigeixen
+            ofertes, o sigui que canvien el preu que veu aquesta persona. Amagades
+            sota una pestanya, ningú les recordaria en obrir la fitxa.
+          */}
+          {clientTags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {clientTags.map((t) => (
+                <Badge key={t.id} tone="info">
+                  {t.name}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <a

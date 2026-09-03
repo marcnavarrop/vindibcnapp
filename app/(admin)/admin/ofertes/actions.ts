@@ -10,7 +10,14 @@ import {
   type PromotionInput,
 } from "@/lib/data/promotions";
 import { listActiveServices } from "@/lib/data/services";
-import type { DiscountType, PromotionScope, ServiceType } from "@/types/database";
+import { listClientTags } from "@/lib/data/client-tags";
+import { SERVICE_TYPES } from "@/lib/labels";
+import type {
+  DiscountType,
+  PromotionAudience,
+  PromotionScope,
+  ServiceType,
+} from "@/types/database";
 
 export type OfertaFormState = { error?: string };
 
@@ -36,6 +43,13 @@ async function parseInput(fd: FormData): Promise<ParseResult> {
   const serviceTypes = fd.getAll("serviceType").filter(Boolean) as ServiceType[];
   const serviceIds   = fd.getAll("serviceId").filter(Boolean) as string[];
 
+  // Segmentació (0069). Sense el camp al formulari cau a 'all', que és el
+  // comportament de sempre: cap oferta ja creada canvia de públic per descuit.
+  const audience = ((fd.get("audience") as PromotionAudience) || "all");
+  const audienceTagId = ((fd.get("audienceTagId") as string) || "").trim() || null;
+  const audienceServiceType =
+    ((fd.get("audienceServiceType") as string) || "").trim() || null;
+
   if (!name)
     return { ok: false, error: "El nom és obligatori." };
   if (!discountType || !["percentage", "fixed_amount"].includes(discountType))
@@ -55,6 +69,26 @@ async function parseInput(fd: FormData): Promise<ParseResult> {
   if (scope === "package" && serviceIds.length === 0)
     return { ok: false, error: "Tria almenys un paquet." };
 
+  if (!["all", "tag", "active_bono"].includes(audience))
+    return { ok: false, error: "Públic de l'oferta invàlid." };
+  if (audience === "tag" && !audienceTagId)
+    return { ok: false, error: "Tria l'etiqueta a qui va dirigida l'oferta." };
+  if (audience === "active_bono" && !audienceServiceType)
+    return { ok: false, error: "Tria el tipus de servei del bo actiu." };
+  if (
+    audience === "active_bono" &&
+    !(SERVICE_TYPES as string[]).includes(audienceServiceType!)
+  )
+    return { ok: false, error: "Tipus de servei invàlid." };
+
+  // L'etiqueta és una FK de veritat (a diferència de service_ids), però es valida
+  // igualment aquí: així l'admin veu un missatge en comptes d'un 23503 cru.
+  if (audience === "tag" && audienceTagId) {
+    const tags = await listClientTags();
+    if (!tags.some((t) => t.id === audienceTagId))
+      return { ok: false, error: "L'etiqueta triada ja no existeix." };
+  }
+
   // Validació d'integritat de service_ids (substitueix FK nativa no suportada en arrays)
   if (scope === "package" && serviceIds.length > 0) {
     const allServices = await listActiveServices();
@@ -73,6 +107,10 @@ async function parseInput(fd: FormData): Promise<ParseResult> {
       scope,
       serviceTypes: scope === "service" ? serviceTypes : [],
       serviceIds:   scope === "package" ? serviceIds : [],
+      audience,
+      audienceTagId: audience === "tag" ? audienceTagId : null,
+      audienceServiceType:
+        audience === "active_bono" ? (audienceServiceType as ServiceType) : null,
       startsAt,
       endsAt,
       active,
@@ -95,6 +133,9 @@ export async function createOfertaAction(
         scope: input.scope,
         serviceTypes: input.serviceTypes,
         serviceIds: input.serviceIds,
+        audience: input.audience,
+        audienceTagId: input.audienceTagId,
+        audienceServiceType: input.audienceServiceType,
         startsAt: input.startsAt,
         endsAt: input.endsAt,
       });
@@ -140,6 +181,9 @@ export async function updateOfertaAction(
         scope: input.scope,
         serviceTypes: input.serviceTypes,
         serviceIds: input.serviceIds,
+        audience: input.audience,
+        audienceTagId: input.audienceTagId,
+        audienceServiceType: input.audienceServiceType,
         startsAt: input.startsAt,
         endsAt: input.endsAt,
         excludeId: id,

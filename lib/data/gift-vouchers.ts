@@ -421,6 +421,21 @@ export async function quoteGiftVoucher(input: {
     s = row;
   }
 
+  // SENSE clientId, i és una decisió de disseny, no un oblit.
+  //
+  // Un val de regal es paga a preu normal encara que qui el compri tingui un
+  // descompte personal (una etiqueta, o un bo actiu que obri una oferta). El
+  // descompte és d'ELL, i el val no és per a ell: canvia de mans. Si el segment
+  // del comprador hi arribés, una etiqueta VIP passaria a ser una via per
+  // comprar sessions barates per a tercers, tantes com vals es vulguin.
+  //
+  // Conseqüència acceptada: un client amb descompte veu un preu a /client/bonos
+  // i un altre, més alt, per al mateix paquet a /client/regals. Són dues coses
+  // diferents —sessions per a mi, sessions per a algú altre— i el text de la
+  // pantalla ho diu.
+  //
+  // Les ofertes obertes a tothom sí que s'hi apliquen, com sempre: `audience`
+  // 'all' no depèn de qui pregunta.
   const ep = await getEffectivePrice({
     id: s.id,
     serviceType: s.service_type,

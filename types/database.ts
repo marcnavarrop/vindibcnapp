@@ -112,6 +112,14 @@ export type BonusTierLine = {
 export type PaymentMethod = "card" | "cash";
 export type DiscountType = "percentage" | "fixed_amount";
 export type PromotionScope = "service" | "package";
+/**
+ * A qui arriba una oferta.
+ *
+ * 'all' és el comportament de sempre. 'tag' i 'active_bono' són segments: la
+ * decisió de si una oferta hi arriba viu en un sol lloc (`reachesAudience`, a
+ * lib/data/promotions.ts) i no s'ha de repetir enlloc més.
+ */
+export type PromotionAudience = "all" | "tag" | "active_bono";
 
 export interface Database {
   public: {
@@ -914,6 +922,9 @@ export interface Database {
           scope: PromotionScope;
           service_types: ServiceType[] | null;
           service_ids: string[] | null;
+          audience: PromotionAudience;
+          audience_tag_id: string | null;
+          audience_service_type: ServiceType | null;
           starts_at: string;
           ends_at: string;
           active: boolean;
@@ -927,6 +938,9 @@ export interface Database {
           scope: PromotionScope;
           service_types?: ServiceType[] | null;
           service_ids?: string[] | null;
+          audience?: PromotionAudience;
+          audience_tag_id?: string | null;
+          audience_service_type?: ServiceType | null;
           starts_at: string;
           ends_at: string;
           active?: boolean;
@@ -940,10 +954,52 @@ export interface Database {
           scope?: PromotionScope;
           service_types?: ServiceType[] | null;
           service_ids?: string[] | null;
+          audience?: PromotionAudience;
+          audience_tag_id?: string | null;
+          audience_service_type?: ServiceType | null;
           starts_at?: string;
           ends_at?: string;
           active?: boolean;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      client_tags: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      client_tag_assignments: {
+        Row: {
+          client_id: string;
+          tag_id: string;
+          assigned_by: string | null;
+          assigned_at: string;
+        };
+        Insert: {
+          client_id: string;
+          tag_id: string;
+          assigned_by?: string | null;
+          assigned_at?: string;
+        };
+        Update: {
+          client_id?: string;
+          tag_id?: string;
+          assigned_by?: string | null;
+          assigned_at?: string;
         };
         Relationships: [];
       };

@@ -29,7 +29,8 @@ export default async function NewTrainerBonoPage({
     redirect(`/trainer/clients/${clientId}`);
   }
 
-  const effectivePricesMap = await getEffectivePrices(services);
+  // Amb clientId, igual que a l'àrea d'admin: el bo és per a aquest client.
+  const effectivePricesMap = await getEffectivePrices(services, { clientId });
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   return (

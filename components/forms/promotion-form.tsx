@@ -7,19 +7,23 @@ import { SelectField } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SERVICE_LABELS, SERVICE_TYPES } from "@/lib/labels";
 import type { Promotion } from "@/lib/data/promotions";
+import type { ClientTag } from "@/lib/data/client-tags";
 import type { Service } from "@/lib/data/services";
-import type { ServiceType } from "@/types/database";
+import type { PromotionAudience, ServiceType } from "@/types/database";
 import type { OfertaFormState } from "@/app/(admin)/admin/ofertes/actions";
 
 export function PromotionForm({
   action,
   cancelHref,
   services,
+  tags,
   initial,
 }: {
   action: (prev: OfertaFormState, fd: FormData) => Promise<OfertaFormState>;
   cancelHref: string;
   services: Service[];
+  /** Catàleg d'etiquetes, per al públic "clients amb una etiqueta". */
+  tags: ClientTag[];
   initial?: Promotion;
 }) {
   const [state, formAction] = useActionState(action, {});
@@ -38,6 +42,24 @@ export function PromotionForm({
   const [checkedIds, setCheckedIds] = useState<Set<string>>(
     () => new Set(initial?.serviceIds ?? []),
   );
+
+  // Públic de l'oferta (0069). Mateix patró que `scope`: un select que decideix
+  // quin camp secundari apareix, i en canviar-lo es neteja el de l'altra branca.
+  const [audience, setAudience] = useState<PromotionAudience>(
+    initial?.audience ?? "all",
+  );
+  const [audienceTagId, setAudienceTagId] = useState<string>(
+    initial?.audienceTagId ?? "",
+  );
+  const [audienceServiceType, setAudienceServiceType] = useState<string>(
+    initial?.audienceServiceType ?? "",
+  );
+
+  function handleAudienceChange(v: PromotionAudience) {
+    setAudience(v);
+    if (v !== "tag") setAudienceTagId("");
+    if (v !== "active_bono") setAudienceServiceType("");
+  }
 
   const [showOverlap, setShowOverlap] = useState(false);
   useEffect(() => {
@@ -199,6 +221,71 @@ export function PromotionForm({
           )}
         </fieldset>
       )}
+
+      {/*
+        Segon eix de l'oferta: l'àmbit de dalt diu QUÈ rebaixa, això diu A QUI.
+        Per defecte, a tothom —que és com es comportaven totes les ofertes abans
+        de la 0069 i com segueixen comportant-se les que ja hi havia.
+      */}
+      <div className="flex flex-col gap-4 rounded-xl border border-brand-border bg-brand-bg p-4">
+        <SelectField
+          label="Per a qui"
+          name="audience"
+          value={audience}
+          onChange={(e) => handleAudienceChange(e.target.value as PromotionAudience)}
+          options={[
+            { value: "all", label: "Tothom" },
+            { value: "tag", label: "Clients amb una etiqueta" },
+            { value: "active_bono", label: "Clients amb un bo actiu" },
+          ]}
+        />
+
+        {audience === "tag" &&
+          (tags.length === 0 ? (
+            <p className="text-xs text-brand-orange">
+              Encara no hi ha cap etiqueta. Crea&apos;n una a{" "}
+              <Link href="/admin/etiquetes" className="font-bold underline">
+                Etiquetes de client
+              </Link>{" "}
+              i torna aquí.
+            </p>
+          ) : (
+            <SelectField
+              label="Etiqueta"
+              name="audienceTagId"
+              value={audienceTagId}
+              onChange={(e) => setAudienceTagId(e.target.value)}
+              options={[
+                { value: "", label: "— Tria una etiqueta —" },
+                ...tags.map((t) => ({ value: t.id, label: t.name })),
+              ]}
+            />
+          ))}
+
+        {audience === "active_bono" && (
+          <>
+            <SelectField
+              label="Amb un bo actiu de"
+              name="audienceServiceType"
+              value={audienceServiceType}
+              onChange={(e) => setAudienceServiceType(e.target.value)}
+              options={[
+                { value: "", label: "— Tria un tipus de servei —" },
+                ...SERVICE_TYPES.map((t) => ({ value: t, label: SERVICE_LABELS[t] })),
+              ]}
+            />
+            {/*
+              "Tipus de servei" i no "paquet" perquè un bo guarda el tipus i no
+              de quin paquet del catàleg va sortir. Dir-ho aquí evita que algú
+              busqui una llista de paquets que no pot existir.
+            */}
+            <p className="text-xs text-brand-muted">
+              Un bo compta si està actiu i no ha caducat. Els bons pendents de
+              pagament no obren l&apos;oferta.
+            </p>
+          </>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Field

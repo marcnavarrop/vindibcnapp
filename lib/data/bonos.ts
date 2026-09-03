@@ -309,7 +309,13 @@ export async function quoteBonoPurchase(input: {
 
   // El millor descompte, i només un: l'oferta pública del catàleg o la
   // recompensa personal de referit. No es combinen.
-  const ep = await getEffectivePrice(service);
+  //
+  // Amb clientId: aquest preu és el que pagarà aquest client —el veu a la
+  // pantalla, i és el que Stripe cobrarà—, així que les ofertes segmentades que
+  // l'abastin hi han d'entrar. És la mateixa crida que fa /client/bonos, i per
+  // això dona el mateix número: si divergissin, el client veuria un preu a la
+  // pantalla i un altre a la targeta.
+  const ep = await getEffectivePrice(service, { clientId });
   const promoDiscountPct =
     service.price > 0 ? ((service.price - ep.finalPrice) / service.price) * 100 : 0;
 

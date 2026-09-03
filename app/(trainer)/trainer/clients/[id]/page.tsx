@@ -7,6 +7,8 @@ import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { getClient, listTrainers } from "@/lib/data/clients";
 import { AssignTrainerForm } from "@/components/forms/assign-trainer-form";
 import { listClientExercises } from "@/lib/data/client-exercises";
+import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
+import { ClientTagsPanel } from "@/components/client-tags-panel";
 import { listExercises } from "@/lib/data/exercises";
 import { listClientDocuments } from "@/lib/data/client-documents";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
@@ -21,6 +23,7 @@ import {
   removeExerciseTrainerAction,
 } from "@/app/(trainer)/trainer/clients/exercises-actions";
 import { markTrainerBonoPaidAction } from "@/app/(trainer)/trainer/bonos/actions";
+import { toggleClientTagAction } from "@/app/(admin)/admin/etiquetes/actions";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -38,16 +41,27 @@ export default async function TrainerClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [viewer, client, assignedExercises, library, documents, allProgress, trainers] =
-    await Promise.all([
-      getViewer(),
-      getClient(id),
-      listClientExercises(id),
-      listExercises(),
-      listClientDocuments(id),
-      listAllProgressForClient(id),
-      listTrainers(),
-    ]);
+  const [
+    viewer,
+    client,
+    assignedExercises,
+    library,
+    documents,
+    allProgress,
+    trainers,
+    allTags,
+    clientTags,
+  ] = await Promise.all([
+    getViewer(),
+    getClient(id),
+    listClientExercises(id),
+    listExercises(),
+    listClientDocuments(id),
+    listAllProgressForClient(id),
+    listTrainers(),
+    listClientTags(),
+    listTagsOfClient(id),
+  ]);
   if (!client) notFound();
 
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
@@ -59,6 +73,7 @@ export default async function TrainerClientDetailPage({
   const needsHealthConsent = receivesFisio && !consent.healthDataAt;
 
   const redirectPath = `/trainer/clients/${id}`;
+  const assignedTagIds = new Set(clientTags.map((t) => t.id));
 
   const tabs = [
     {
@@ -216,6 +231,20 @@ export default async function TrainerClientDetailPage({
       content: <DocumentsReadonlyPanel documents={documents} clientId={id} />,
     },
     {
+      label: "Etiquetes",
+      content: (
+        <ClientTagsPanel
+          allTags={allTags}
+          assignedIds={assignedTagIds}
+          toggleAction={toggleClientTagAction.bind(null, id, redirectPath)}
+          // Assignar sí, crear no: el catàleg és de l'admin (RLS de la 0068).
+          // I només si el client és seu, com la resta de la fitxa.
+          canAssign={canManage}
+          canCreate={false}
+        />
+      ),
+    },
+    {
       label: "Notes",
       content: (
         <ClientNotesPanel
@@ -252,6 +281,15 @@ export default async function TrainerClientDetailPage({
             {client.email}
             {client.phone ? ` · ${client.phone}` : ""}
           </p>
+          {clientTags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {clientTags.map((t) => (
+                <Badge key={t.id} tone="info">
+                  {t.name}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         {!canManage && (
           <span className="rounded-full bg-brand-muted/10 px-3 py-1 text-xs font-bold tracking-wide text-brand-muted uppercase">

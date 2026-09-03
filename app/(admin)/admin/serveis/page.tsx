@@ -5,6 +5,7 @@ import { GroupTabs } from "@/components/ui/group-tabs";
 const TABS = [
   { href: "/admin/serveis", label: "Serveis" },
   { href: "/admin/ofertes", label: "Ofertes" },
+  { href: "/admin/etiquetes", label: "Etiquetes" },
 ];
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/ui/price-display";
@@ -19,6 +20,9 @@ export const dynamic = "force-dynamic";
 
 export default async function ServeisPage() {
   const services = await listServices();
+  // Sense clientId a posta: aquest és el catàleg del centre, no el preu d'algú.
+  // Les ofertes segmentades no hi surten —una oferta per als VIP no és el preu
+  // del paquet—. Qui les vulgui veure les té a /admin/ofertes, amb el seu públic.
   const effectivePrices = await getEffectivePrices(services);
 
   const byType = new Map<ServiceType, Service[]>();

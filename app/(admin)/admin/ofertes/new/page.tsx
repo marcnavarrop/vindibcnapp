@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { PromotionForm } from "@/components/forms/promotion-form";
 import { listActiveServices } from "@/lib/data/services";
+import { listClientTags } from "@/lib/data/client-tags";
 import { createOfertaAction } from "@/app/(admin)/admin/ofertes/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewOfertaPage() {
-  const services = await listActiveServices();
+  const [services, tags] = await Promise.all([
+    listActiveServices(),
+    listClientTags(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -21,6 +25,7 @@ export default async function NewOfertaPage() {
         action={createOfertaAction}
         cancelHref="/admin/ofertes"
         services={services}
+        tags={tags}
       />
     </main>
   );

@@ -148,12 +148,24 @@ export const seedPromotions: Promotion[] = [
     scope: "service",
     service_types: ["fisioterapia"],
     service_ids: null,
+    audience: "all",
+    audience_tag_id: null,
+    audience_service_type: null,
     starts_at: "2026-07-01",
     ends_at: "2026-08-31",
     active: true,
     created_at: now,
   },
 ];
+
+type ClientTag = Database["public"]["Tables"]["client_tags"]["Row"];
+export const seedClientTags: ClientTag[] = [
+  { id: "tag-vip", name: "VIP", created_at: now },
+];
+
+type ClientTagAssignment =
+  Database["public"]["Tables"]["client_tag_assignments"]["Row"];
+export const seedClientTagAssignments: ClientTagAssignment[] = [];
 
 export const seedClientExercises: ClientExercise[] = [
   { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },

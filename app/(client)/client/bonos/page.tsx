@@ -3,6 +3,7 @@ import { getViewer } from "@/lib/auth";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { getPendingReferralReward } from "@/lib/data/referral";
+import { getClientByProfile } from "@/lib/data/clients";
 import { getColorPalette } from "@/lib/data/colors";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import Link from "next/link";
@@ -27,13 +28,22 @@ export default async function ComprarBonoPage() {
   const rewardPromise = viewer
     ? getPendingReferralReward(viewer.id)
     : Promise.resolve(null);
+  // La fitxa de client fa falta pel seu `id`: `getEffectivePrices` segmenta per
+  // client_id, i el que tenim aquí és el profile_id de la sessió. Va en paral·lel
+  // amb la resta, que no en depèn.
+  const clientPromise = viewer
+    ? getClientByProfile(viewer.id)
+    : Promise.resolve(null);
 
   const services = await servicesPromise;
   const locale = (await getLocale()) as Locale;
+  const client = await clientPromise;
   const [effectivePricesMap, pendingReferralReward, palette, settings] =
     await Promise.all([
       // L'idioma va fins al càlcul: l'etiqueta del descompte es formata allà.
-      getEffectivePrices(services, undefined, locale),
+      // I el clientId també: aquí qui mira és qui comprarà, així que les ofertes
+      // segmentades que l'abastin li han de sortir.
+      getEffectivePrices(services, { locale, clientId: client?.id }),
       rewardPromise,
       getColorPalette(),
       getCenterSettings(),

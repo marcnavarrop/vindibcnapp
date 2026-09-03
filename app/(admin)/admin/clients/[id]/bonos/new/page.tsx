@@ -20,7 +20,9 @@ export default async function NewBonoPage({
   ]);
   if (!client) notFound();
 
-  const effectivePricesMap = await getEffectivePrices(services);
+  // Amb clientId: l'admin dona d'alta un bo PER a aquest client, així que el
+  // preu que ha de veure és el d'ell, segmentació inclosa.
+  const effectivePricesMap = await getEffectivePrices(services, { clientId: id });
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   return (

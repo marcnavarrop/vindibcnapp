@@ -36,7 +36,13 @@ export default async function RegalsPage() {
   const services = await servicesPromise;
   const [effectivePricesMap, palette, client] = await Promise.all([
     // L'idioma va fins al càlcul: l'etiqueta del descompte es formata allà.
-    getEffectivePrices(services, undefined, locale),
+    //
+    // SENSE clientId, i és una decisió, no un descuit: un val de regal es paga
+    // a preu normal encara que qui el compri tingui un descompte personal. El
+    // descompte és seu, i un val no és per a ell —canvia de mans—. Amb
+    // segmentació aquí, una etiqueta VIP es convertiria en una manera de
+    // comprar sessions barates per a tercers.
+    getEffectivePrices(services, { locale }),
     getColorPalette(),
     clientPromise,
   ]);
