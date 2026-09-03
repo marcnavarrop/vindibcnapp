@@ -345,6 +345,64 @@ export async function listTrainers(): Promise<{ id: string; name: string }[]> {
   return (data ?? []).map((p) => ({ id: p.id, name: p.full_name ?? "—" }));
 }
 
+/**
+ * Canvia NOMÉS l'entrenador assignat d'un client. Cap altre camp de la fila.
+ *
+ * Va per `service_role` a posta, i no per la sessió de qui crida. La política
+ * `clients_trainer_update` (migració 0005) està acotada a `is_trainer_of(id)`
+ * —els clients propis— i eixamplar-la per encabir això obriria de passada
+ * l'edició de les NOTES CLÍNIQUES de qualsevol client, que és justament el que
+ * no ha de canviar. Així que l'autorització viu al codi que crida (rol admin o
+ * professional) i aquesta funció només sap escriure aquest camp.
+ *
+ * Qui la cridi ha de comprovar el rol ABANS: aquí no es comprova.
+ *
+ * Sí que es comprova que el destí sigui un professional de veritat, i no és
+ * una floritura: `clients.assigned_trainer_id` només és una clau forana cap a
+ * `profiles`, sense cap restricció de rol, i `is_trainer_of()` reparteix permís
+ * mirant només `assigned_trainer_id = auth.uid()`. Assignar un client al perfil
+ * d'un altre CLIENT li donaria, a l'instant, accés de professional a la seva
+ * fitxa: bons, reserves, documents i notes. Mentre això era cosa només de
+ * l'administració el risc era petit; obrint-ho a tots els professionals, no.
+ */
+export async function reassignClientTrainer(
+  clientId: string,
+  trainerId: string | null,
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.id === clientId);
+    if (!client) throw new Error("Client no trobat");
+    if (trainerId) {
+      const target = store.profiles.find((p) => p.id === trainerId);
+      if (target?.role !== "trainer")
+        throw new Error("El professional indicat no existeix.");
+    }
+    client.assigned_trainer_id = trainerId;
+    saveStore(store);
+    return;
+  }
+
+  const admin = createAdminClient();
+
+  if (trainerId) {
+    const { data: target, error: tErr } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", trainerId)
+      .maybeSingle();
+    if (tErr) throw tErr;
+    if (target?.role !== "trainer")
+      throw new Error("El professional indicat no existeix.");
+  }
+
+  const { error } = await admin
+    .from("clients")
+    .update({ assigned_trainer_id: trainerId })
+    .eq("id", clientId);
+  if (error) throw error;
+}
+
 /** Crea un cliente (y su perfil). Devuelve el id del nuevo cliente. */
 export async function createClientRecord(input: ClientInput): Promise<string> {
   if (USE_MOCK) {

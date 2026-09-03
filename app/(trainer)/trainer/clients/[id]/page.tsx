@@ -4,7 +4,8 @@ import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { getViewer } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
-import { getClient } from "@/lib/data/clients";
+import { getClient, listTrainers } from "@/lib/data/clients";
+import { AssignTrainerForm } from "@/components/forms/assign-trainer-form";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { listClientDocuments } from "@/lib/data/client-documents";
@@ -37,14 +38,16 @@ export default async function TrainerClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [viewer, client, assignedExercises, library, documents, allProgress] = await Promise.all([
-    getViewer(),
-    getClient(id),
-    listClientExercises(id),
-    listExercises(),
-    listClientDocuments(id),
-    listAllProgressForClient(id),
-  ]);
+  const [viewer, client, assignedExercises, library, documents, allProgress, trainers] =
+    await Promise.all([
+      getViewer(),
+      getClient(id),
+      listClientExercises(id),
+      listExercises(),
+      listClientDocuments(id),
+      listAllProgressForClient(id),
+      listTrainers(),
+    ]);
   if (!client) notFound();
 
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
@@ -63,7 +66,19 @@ export default async function TrainerClientDetailPage({
       content: (
         <div className="flex flex-col gap-6">
           <section className="grid gap-4 sm:grid-cols-3">
-            <Info label="Professional" value={client.trainerName ?? "Sense assignar"} />
+            {/*
+              Reassignar no va lligat a `canManage`: qualsevol professional pot
+              moure qualsevol client, també un que ara mateix no és seu. És el
+              cas per al qual es va fer —cobrir una baixa, repartir-se l'agenda—
+              i qui mana de veritat és la comprovació de rol de l'acció.
+            */}
+            <div className="rounded-2xl border border-brand-border bg-white p-5">
+              <AssignTrainerForm
+                clientId={client.id}
+                trainers={trainers}
+                currentTrainerId={client.assignedTrainerId}
+              />
+            </div>
             <Info label="Bons actius" value={String(client.activeBonos)} />
             <Info label="Sessions restants" value={String(client.remainingSessions)} />
           </section>
