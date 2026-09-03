@@ -1,4 +1,4 @@
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 
 type Variant = "primary" | "accent" | "outline";
 
@@ -32,15 +32,10 @@ export function Button({
   return (
     <button
       className={clsx(
-        // 100 ms: prou per no ser un salt sec i prou poc per sentir-se
-        // immediat. Amb la durada per defecte (150 ms) el rebot arriba tard.
-        // `active:scale-95` s'aplica també quan el botó està desactivat, i
-        // allà no ha de passar res: `disabled:active:scale-100` ho atura.
         "inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold tracking-wide uppercase",
-        "transition-[background-color,border-color,opacity,transform] duration-100",
-        "active:scale-95 disabled:active:scale-100",
-        // Sense el destacat blau de toc d'iOS/Android: ja tenim el nostre.
-        "[-webkit-tap-highlight-color:transparent] touch-manipulation",
+        // El tacte surt de la constant compartida: els botons escrits a mà de
+        // login i registre i les capçaleres de llistat fan servir la mateixa.
+        TAP,
         VARIANTS[variant],
         className,
       )}

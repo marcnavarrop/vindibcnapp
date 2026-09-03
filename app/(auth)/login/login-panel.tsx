@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { TAP } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -198,14 +199,14 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-brand-orange px-4 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+          className={`w-full rounded-xl bg-brand-orange px-4 py-3 text-sm font-bold text-white hover:opacity-90 active:bg-brand-orange-dark disabled:opacity-60 ${TAP}`}
         >
           {loading ? t("submitting") : t("submit")}
         </button>
 
         <Link
           href="/register"
-          className="w-full rounded-xl border border-brand-orange px-4 py-3 text-center text-sm font-bold text-brand-orange transition-colors hover:bg-brand-orange/5"
+          className={`w-full rounded-xl border border-brand-orange px-4 py-3 text-center text-sm font-bold text-brand-orange hover:bg-brand-orange/5 active:bg-brand-orange/15 ${TAP}`}
         >
           {t("createAccount")}
         </Link>

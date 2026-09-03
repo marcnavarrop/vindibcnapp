@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TAP } from "@/lib/utils";
 import { listAnnouncements } from "@/lib/data/announcements";
 import { listPolls } from "@/lib/data/polls";
 import { deleteAnnouncementAction } from "@/app/(admin)/admin/community/actions";
@@ -27,14 +28,14 @@ export default async function CommunityPage({
         {activeTab === "announcements" ? (
           <Link
             href="/admin/community/new"
-            className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+            className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
           >
             + Nova publicació
           </Link>
         ) : (
           <Link
             href="/admin/community/polls/new"
-            className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+            className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
           >
             + Nova enquesta
           </Link>

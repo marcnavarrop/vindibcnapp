@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TAP } from "@/lib/utils";
 import { getTranslations } from "next-intl/server";
 import { getCenterSettings } from "@/lib/data/center-settings";
 
@@ -34,7 +35,7 @@ export async function TrialCta() {
   return (
     <Link
       href="/prova"
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-purple/8 px-4 py-3 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/15"
+      className={`flex w-full items-center justify-center gap-2 rounded-xl bg-brand-purple/8 px-4 py-3 text-sm font-bold text-brand-purple hover:bg-brand-purple/15 active:bg-brand-purple/20 ${TAP}`}
     >
       <GiftIcon />
       {t("cta")}

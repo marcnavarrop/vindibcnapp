@@ -23,3 +23,25 @@ export function normalizeForSearch(value: string | null | undefined): string {
 export function digitsOnly(value: string | null | undefined): string {
   return (value ?? "").replace(/\D/g, "");
 }
+
+/**
+ * Les classes que fan que un botó es NOTI en tocar-lo.
+ *
+ * Al mòbil no hi ha `hover:`, i entre el toc i la resposta de la pantalla no
+ * passava res. `active:` sí que s'activa amb el dit.
+ *
+ * Viu aquí i no només dins de `<Button>` perquè el component base només
+ * l'importen 7 fitxers: a l'app hi ha més de cent botons i enllaços escrits a
+ * mà amb les seves pròpies classes, i havien de poder tenir el mateix tacte
+ * sense reescriure'ls sencers. `<Button>` també la fa servir, així que no hi
+ * ha dues versions d'això.
+ *
+ * NO porta el color: cada botó té el seu fons i s'enfosqueix amb el to que li
+ * toca (`active:bg-brand-purple-dark`, `active:bg-brand-orange-dark`…). Aquí hi
+ * ha el que és igual per a tots: l'encongiment, la durada i treure el destacat
+ * blau que iOS i Android pinten pel seu compte.
+ */
+export const TAP =
+  "transition-[background-color,border-color,opacity,transform] duration-100 " +
+  "active:scale-95 disabled:active:scale-100 " +
+  "[-webkit-tap-highlight-color:transparent] touch-manipulation";

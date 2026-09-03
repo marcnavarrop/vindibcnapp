@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TAP } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { listPayments } from "@/lib/data/payments";
 import { PAYMENT_METHOD_LABELS, formatEur, formatDate } from "@/lib/labels";
@@ -31,7 +32,7 @@ export default async function PagosPage() {
             </span>
             <Link
               href="/admin/pagos/new"
-              className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+              className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
             >
               + Nou pagament
             </Link>

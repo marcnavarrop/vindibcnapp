@@ -1,4 +1,5 @@
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { TAP } from "@/lib/utils";
 import { centerToday } from "@/lib/center-time";
 import { FACTURACIO_TABS } from "@/app/(admin)/admin/facturacio/tabs";
 import { FacturacioNotice } from "@/components/facturacio-notice";
@@ -134,7 +135,7 @@ export default async function LiquidacionsPage({
 
           <button
             type="submit"
-            className="mt-4 inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+            className={`mt-4 inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
           >
             Calcular
           </button>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TAP } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
@@ -232,13 +233,13 @@ export default async function ClientDetailPage({
         <div className="flex items-center gap-2">
           <a
             href={`/admin/clients/${client.id}/export`}
-            className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
+            className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-brand-charcoal uppercase hover:bg-white/60 active:bg-brand-border ${TAP}`}
           >
             Exportar dades
           </a>
           <Link
             href={`/admin/clients/${client.id}/edit`}
-            className="inline-flex items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide text-brand-charcoal uppercase transition-colors hover:bg-white/60"
+            className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-brand-charcoal uppercase hover:bg-white/60 active:bg-brand-border ${TAP}`}
           >
             Editar
           </Link>

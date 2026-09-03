@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TAP } from "@/lib/utils";
 import { GroupTabs } from "@/components/ui/group-tabs";
 import { centerToday } from "@/lib/center-time";
 
@@ -68,7 +69,7 @@ export default async function OfertesPage({
         <h1 className="text-2xl text-brand-dark">Ofertes i descomptes</h1>
         <Link
           href="/admin/ofertes/new"
-          className="inline-flex items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase transition-colors hover:bg-brand-purple-light"
+          className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
         >
           + Nova oferta
         </Link>
