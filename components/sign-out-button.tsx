@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 
 export function SignOutButton({
   /**
@@ -43,10 +43,13 @@ export function SignOutButton({
       type="button"
       onClick={handleSignOut}
       className={clsx(
-        "rounded-lg text-xs font-bold tracking-wide uppercase transition-colors",
+        "rounded-lg text-xs font-bold tracking-wide uppercase",
+        TAP,
         variant === "panel"
-          ? "flex w-full items-center justify-center gap-2 border border-white/25 px-3 py-2.5 text-white hover:bg-white/10"
-          : "shrink-0 border border-brand-border bg-white px-2.5 py-1.5 text-brand-charcoal hover:bg-brand-bg",
+          // Buidat sobre el lila: veladura blanca, com les entrades del menú.
+          ? "flex w-full items-center justify-center gap-2 border border-white/25 px-3 py-2.5 text-white hover:bg-white/10 active:bg-white/20"
+          // Blanc sobre la barra fosca: aquí sí que va el gris de la marca.
+          : "shrink-0 border border-brand-border bg-white px-2.5 py-1.5 text-brand-charcoal hover:bg-brand-bg active:bg-brand-border",
       )}
     >
       {label ?? "Tancar sessió"}

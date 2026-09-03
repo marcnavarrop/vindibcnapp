@@ -19,7 +19,7 @@ import {
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Wordmark } from "@/components/wordmark";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -299,10 +299,15 @@ function NavLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={clsx(
-        "flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold transition-colors",
+        "flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold",
+        // Sobre el lila del menú els tons `brand-*-dark` no es veurien: aquí
+        // el llenguatge és la veladura blanca, que és la que ja fa servir el
+        // `hover`. La entrada activa parteix d'un blanc més alt, així que en
+        // prémer-la puja més per notar-se igual.
+        TAP,
         active
-          ? "border-brand-orange bg-white/15 text-white"
-          : "border-transparent text-white/80 hover:bg-white/10 hover:text-white",
+          ? "border-brand-orange bg-white/15 text-white active:bg-white/25"
+          : "border-transparent text-white/80 hover:bg-white/10 hover:text-white active:bg-white/20",
       )}
     >
       {Icon && (
@@ -381,7 +386,10 @@ function SidebarFooter({
       {profileHref ? (
         <Link
           href={profileHref}
-          className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-white/10"
+          className={clsx(
+            "flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-white/10 active:bg-white/20",
+            TAP,
+          )}
         >
           {identity}
         </Link>
