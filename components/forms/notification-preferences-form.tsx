@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { updateNotificationPreferencesAction } from "@/lib/actions/notification-preferences";
@@ -151,7 +152,7 @@ function Body({
       <div>
         <button
           type="submit"
-          className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+          className={`rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
         >
           {texts.save}
         </button>

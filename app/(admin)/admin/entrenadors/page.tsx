@@ -1,5 +1,5 @@
 import { Avatar } from "@/components/ui/avatar";
-import { TAP } from "@/lib/utils";
+import { TAP, TAP_SURFACE } from "@/lib/utils";
 import { avatarUrls } from "@/lib/data/avatars";
 import { getColorPalette } from "@/lib/data/colors";
 import { colorOfPro } from "@/lib/colors";
@@ -62,10 +62,10 @@ export default async function EntrenadorsPage() {
               {trainers.map((t) => (
                 <tr
                   key={t.id}
-                  className="border-b border-brand-border last:border-0 hover:bg-brand-bg/50"
+                  className={`border-b border-brand-border last:border-0 hover:bg-brand-bg/50 active:bg-brand-bg ${TAP_SURFACE}`}
                 >
-                  <td className="px-4 py-3 font-bold text-brand-dark">
-                    <span className="flex items-center gap-2.5">
+                  <CellLink href={`/admin/entrenadors/${t.id}/edit`} first>
+                    <span className="flex items-center gap-2.5 font-bold text-brand-dark">
                       <Avatar
                         name={t.fullName}
                         email={t.email}
@@ -75,9 +75,11 @@ export default async function EntrenadorsPage() {
                       />
                       {t.fullName}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-brand-muted">{t.email}</td>
-                  <td className="px-4 py-3">
+                  </CellLink>
+                  <CellLink href={`/admin/entrenadors/${t.id}/edit`}>
+                    <span className="text-brand-muted">{t.email}</span>
+                  </CellLink>
+                  <CellLink href={`/admin/entrenadors/${t.id}/edit`}>
                     {t.specialty ? (
                       <Badge
                         tone={
@@ -91,7 +93,10 @@ export default async function EntrenadorsPage() {
                         Sense especialitat
                       </span>
                     )}
-                  </td>
+                  </CellLink>
+                  {/* Aquestes dues queden fora de l'enllaç de la fila: el
+                      recompte porta als seus clients i l'última té botons
+                      propis. A dins, tocar-los obriria la fitxa i prou. */}
                   <td className="px-4 py-3">
                     {t.clientCount > 0 ? (
                       <Link
@@ -133,5 +138,28 @@ export default async function EntrenadorsPage() {
         </div>
       </main>
     </>
+  );
+}
+
+/** Vegeu `CellLink` a `components/clients-table.tsx`: mateixa raó, mateixa forma. */
+function CellLink({
+  href,
+  first,
+  children,
+}: {
+  href: string;
+  first?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <td className="p-0">
+      <Link
+        href={href}
+        tabIndex={first ? undefined : -1}
+        className="block px-4 py-3"
+      >
+        {children}
+      </Link>
+    </td>
   );
 }

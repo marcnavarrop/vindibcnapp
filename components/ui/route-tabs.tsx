@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 
 export type RouteTab = {
   href: string;
@@ -48,12 +48,13 @@ export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
               key={tab.href}
               href={tab.href}
               className={clsx(
-                "shrink-0 border-b-2 px-4 py-3 text-sm font-bold whitespace-nowrap transition-colors",
+                "shrink-0 border-b-2 px-4 py-3 text-sm font-bold whitespace-nowrap",
+                TAP,
                 active
-                  ? "border-brand-purple text-brand-purple"
+                  ? "border-brand-purple text-brand-purple active:bg-brand-purple/10"
                   : tab.accent
-                    ? "border-transparent text-brand-orange hover:opacity-80"
-                    : "border-transparent text-brand-muted hover:text-brand-dark",
+                    ? "border-transparent text-brand-orange hover:opacity-80 active:bg-brand-orange/10"
+                    : "border-transparent text-brand-muted hover:text-brand-dark active:bg-brand-bg",
               )}
               aria-current={active ? "page" : undefined}
             >

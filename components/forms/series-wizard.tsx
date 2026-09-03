@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { formatDayHeading, formatTime } from "@/lib/labels";
@@ -146,9 +146,10 @@ export function RecurrenceFields({
               onClick={() => setFrequency(f)}
               className={clsx(
                 "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
+                TAP,
                 frequency === f
-                  ? "bg-brand-purple text-white"
-                  : "text-brand-muted hover:text-brand-dark",
+                  ? "bg-brand-purple text-white active:bg-brand-purple-dark"
+                  : "text-brand-muted hover:text-brand-dark active:bg-brand-bg",
               )}
             >
               {tf(f)}
@@ -208,7 +209,7 @@ export function RecurrenceFields({
           type="button"
           onClick={() => setShowOptions((v) => !v)}
           aria-expanded={showOptions}
-          className="flex w-full items-center justify-between text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark"
+          className={`flex w-full items-center justify-between text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark active:opacity-70 ${TAP}`}
         >
           {t("ifNoSpace")}
           <span aria-hidden>{showOptions ? "−" : "+"}</span>
@@ -248,7 +249,7 @@ export function RecurrenceFields({
           type="button"
           onClick={calculate}
           disabled={pending}
-          className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
+          className={`flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60 active:bg-brand-purple-dark ${TAP}`}
         >
           {pending ? t("calculating") : t("seeSessions")}
         </button>
@@ -342,7 +343,7 @@ export function SeriesReview({
           <button
             type="button"
             onClick={onDone}
-            className="mt-2 rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+            className={`mt-2 rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
           >
             {t("seeMyBookings")}
           </button>
@@ -415,14 +416,14 @@ export function SeriesReview({
               pending ||
               stats.confirmed + stats.waitlisted + stats.alreadyBooked === 0
             }
-            className="rounded-lg bg-brand-purple px-5 py-2.5 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light disabled:opacity-60"
+            className={`rounded-lg bg-brand-purple px-5 py-2.5 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light disabled:opacity-60 active:bg-brand-purple-dark ${TAP}`}
           >
             {pending ? t("creating") : t("confirmSeries")}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark"
+            className={`rounded-lg px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
           >
             {tr("cancel")}
           </button>
@@ -495,7 +496,7 @@ function Sheet({
           type="button"
           onClick={onClose}
           aria-label={ariaClose ?? "Tancar"}
-          className="rounded-md p-1 text-brand-muted hover:bg-brand-bg hover:text-brand-dark"
+          className={`rounded-md p-1 text-brand-muted hover:bg-brand-bg hover:text-brand-dark active:bg-brand-border ${TAP}`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
         </button>
@@ -597,7 +598,7 @@ function OccurrenceList({
                   <button
                     type="button"
                     onClick={() => onAccept(i)}
-                    className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-purple hover:border-brand-purple"
+                    className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-purple hover:border-brand-purple active:bg-brand-bg ${TAP}`}
                   >
                     {t("accept")}
                   </button>

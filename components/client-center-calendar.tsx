@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 import { SERVICE_TYPES, GROUP_CAPACITY } from "@/lib/labels";
 import { intlLocale, type Locale } from "@/lib/i18n/config";
 import {
@@ -443,7 +443,7 @@ export function ClientCenterCalendar({
           <button
             type="button"
             onClick={() => setTrainerFilter("all")}
-            className="font-bold underline hover:no-underline"
+            className={`font-bold underline hover:no-underline active:opacity-70 ${TAP}`}
           >
             {t("showAllTrainers")}
           </button>
@@ -463,9 +463,10 @@ export function ClientCenterCalendar({
               }}
               className={clsx(
                 "px-3 py-1.5 text-sm font-bold",
+                TAP,
                 view === v
-                  ? "bg-brand-purple text-white"
-                  : "bg-white text-brand-muted hover:text-brand-dark",
+                  ? "bg-brand-purple text-white active:bg-brand-purple-dark"
+                  : "bg-white text-brand-muted hover:text-brand-dark active:bg-brand-bg",
               )}
             >
               {v === "day" ? t("day") : t("week")}
@@ -546,7 +547,7 @@ export function ClientCenterCalendar({
           <button
             type="button"
             onClick={() => setOffset(0)}
-            className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg"
+            className={`rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             {t("today")}
           </button>
@@ -628,7 +629,7 @@ export function ClientCenterCalendar({
                                 backgroundColor: ownBg,
                                 border: `2px solid ${ownBorder}`,
                               }}
-                              className="block w-full min-w-0 overflow-hidden rounded-md px-1.5 py-1 text-left text-[11px] leading-tight"
+                              className={`block w-full min-w-0 overflow-hidden rounded-md px-1.5 py-1 text-left text-[11px] leading-tight active:bg-brand-bg ${TAP}`}
                             >
                               <span className="flex min-w-0 items-center gap-0.5 font-bold" style={{ color: ownBorder }}>
                                 <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0"><polyline points="1.5 5 4 7.5 8.5 2" /></svg>
@@ -689,7 +690,7 @@ export function ClientCenterCalendar({
                               className={clsx(
                                 "block w-full rounded-md px-1.5 py-1 text-left text-[11px] font-bold leading-tight",
                                 it.joinable || canWait
-                                  ? "cursor-pointer hover:brightness-95"
+                                  ? `cursor-pointer hover:brightness-95 active:brightness-90 ${TAP}`
                                   : "cursor-not-allowed opacity-80",
                               )}
                             >
@@ -730,7 +731,7 @@ export function ClientCenterCalendar({
                               backgroundColor: `${color}12`,
                               borderLeft: `3px solid ${color}`,
                             }}
-                            className="block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight hover:brightness-95"
+                            className={`block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight hover:brightness-95 active:brightness-90 ${TAP}`}
                           >
                             <span
                               className="flex items-center gap-0.5 font-bold"
@@ -895,7 +896,7 @@ function WaitlistModal({
         <button
           type="button"
           onClick={onDone}
-          className="mt-5 w-full rounded-lg bg-brand-purple px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light"
+          className={`mt-5 w-full rounded-lg bg-brand-purple px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
         >
           {t("close")}
         </button>
@@ -917,7 +918,7 @@ function WaitlistModal({
         <button
           type="button"
           onClick={onDone}
-          className="mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20"
+          className={`mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20 active:bg-error/30 ${TAP}`}
         >
           {t("close")}
         </button>
@@ -947,7 +948,7 @@ function WaitlistModal({
             )}
             <PendingSubmit
               pendingLabel={t("waitlist.leaving")}
-              className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 disabled:opacity-60"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 active:bg-error/20 disabled:opacity-60"
             >
               {t("waitlist.leave")}
             </PendingSubmit>
@@ -967,7 +968,7 @@ function WaitlistModal({
             )}
             <PendingSubmit
               pendingLabel={t("waitlist.joining")}
-              className="w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
+              className="w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light active:bg-brand-purple-dark disabled:opacity-60"
             >
               {t("waitlist.join")}
             </PendingSubmit>
@@ -978,7 +979,7 @@ function WaitlistModal({
       <button
         type="button"
         onClick={onClose}
-        className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+        className={`mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
       >
         {t("close")}
       </button>
@@ -1078,7 +1079,7 @@ function CreateModal({
           <button
             type="button"
             onClick={onDone}
-            className="text-sm font-bold text-brand-muted hover:text-brand-dark"
+            className={`text-sm font-bold text-brand-muted hover:text-brand-dark active:opacity-70 ${TAP}`}
           >
             {t("close")}
           </button>
@@ -1124,7 +1125,7 @@ function CreateModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+              className={`rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
             >
               {t("cancel")}
             </button>
@@ -1144,14 +1145,14 @@ function CreateModal({
                 es bloqueja, que és el que evita la reserva doble. */}
             <PendingSubmit
               pendingLabel={t("book.submitting")}
-              className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60"
+              className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light active:bg-brand-purple-dark disabled:opacity-60"
             >
               {t("book.submit")}
             </PendingSubmit>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+              className={`rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
             >
               {t("cancel")}
             </button>
@@ -1217,7 +1218,7 @@ function OwnModal({
         <button
           type="button"
           onClick={close}
-          className="mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20"
+          className={`mt-5 w-full rounded-lg bg-error/10 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/20 active:bg-error/30 ${TAP}`}
         >
           {t("close")}
         </button>
@@ -1252,7 +1253,7 @@ function OwnModal({
         <button
           type="button"
           onClick={() => setRecurrent(true)}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-purple px-4 py-2.5 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/5"
+          className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-purple px-4 py-2.5 text-sm font-bold text-brand-purple transition-colors hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
         >
           {t("own.repeat")}
         </button>
@@ -1270,7 +1271,7 @@ function OwnModal({
             <button
               type="button"
               onClick={() => setRecurrent(false)}
-              className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+              className={`rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
             >
               {t("back")}
             </button>
@@ -1289,7 +1290,7 @@ function OwnModal({
                   <input type="hidden" name="id" value={id} />
                   <button
                     type="submit"
-                    className="w-full rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-80"
+                    className={`w-full rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-80 active:opacity-70 ${TAP}`}
                   >
                     {t("own.yesCancel")}
                   </button>
@@ -1297,7 +1298,7 @@ function OwnModal({
                 <button
                   type="button"
                   onClick={() => setConfirming(false)}
-                  className="flex-1 rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                  className={`flex-1 rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
                 >
                   {t("own.noBack")}
                 </button>
@@ -1312,7 +1313,7 @@ function OwnModal({
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="mt-5 w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
+              className={`mt-5 w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 active:bg-error/20 ${TAP}`}
             >
               {t("own.cancelBooking")}
             </button>
@@ -1325,7 +1326,7 @@ function OwnModal({
       <button
         type="button"
         onClick={onClose}
-        className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+        className={`mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
       >
         {t("close")}
       </button>
@@ -1380,7 +1381,7 @@ function NavBtn({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg"
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg active:opacity-70 ${TAP}`}
     >
       {children}
     </button>

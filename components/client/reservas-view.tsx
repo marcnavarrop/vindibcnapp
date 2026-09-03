@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -170,7 +171,7 @@ function SeriesList({
             <button
               type="button"
               onClick={() => onCancel(s.id, s.upcoming)}
-              className="ml-auto rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error"
+              className={`ml-auto rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error active:bg-brand-bg ${TAP}`}
             >
               {t("cancel")}
             </button>
@@ -222,7 +223,7 @@ function CancelSeriesDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-error/10 px-4 py-2 text-sm font-bold text-error hover:bg-error/20"
+              className={`rounded-lg bg-error/10 px-4 py-2 text-sm font-bold text-error hover:bg-error/20 active:bg-error/30 ${TAP}`}
             >
               {t("close")}
             </button>
@@ -253,7 +254,7 @@ function CancelSeriesDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
               >
                 {t("keepIt")}
               </button>

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Film, ExternalLink, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { normalizeForSearch, clsx } from "@/lib/utils";
+import { normalizeForSearch, clsx, TAP } from "@/lib/utils";
 import type { Exercise } from "@/lib/data/exercises";
 import type { ExerciseCategoryItem } from "@/lib/data/exercise-categories";
 
@@ -292,7 +292,7 @@ export function ExerciseLibrary({
               setQuery("");
               setCategoryId("all");
             }}
-            className="font-bold text-brand-purple underline hover:text-brand-orange"
+            className={`font-bold text-brand-purple underline hover:text-brand-orange active:opacity-70 ${TAP}`}
           >
             {texts.seeAll}
           </button>
@@ -376,7 +376,7 @@ function ExerciseCard({
               <input type="hidden" name="id" value={e.id} />
               <button
                 type="submit"
-                className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error active:opacity-70 ${TAP}`}
               >
                 Eliminar
               </button>
@@ -415,7 +415,7 @@ export function VideoIndicator({
         rel="noopener noreferrer"
         title={texts.openExternal}
         aria-label={texts.openExternalAria}
-        className={`${box} bg-brand-bg text-brand-muted hover:bg-brand-purple/10 hover:text-brand-purple`}
+        className={`${box} ${TAP} bg-brand-bg text-brand-muted hover:bg-brand-purple/10 hover:text-brand-purple active:bg-brand-purple/20`}
       >
         <ExternalLink className="h-4 w-4" aria-hidden />
       </a>
@@ -427,10 +427,10 @@ export function VideoIndicator({
       onClick={onPlay}
       title={kind === "youtube" ? texts.watchYoutube : texts.watch}
       aria-label={texts.watch}
-      className={`${box} ${
+      className={`${box} ${TAP} ${
         kind === "youtube"
-          ? "bg-white hover:bg-brand-bg"
-          : "bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20"
+          ? "bg-white hover:bg-brand-bg active:bg-brand-border"
+          : "bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20 active:bg-brand-purple/30"
       }`}
     >
       {kind === "youtube" ? (
@@ -517,7 +517,7 @@ export function VideoDialog({
             type="button"
             onClick={onClose}
             aria-label={texts.close}
-            className="rounded-lg p-1 text-brand-muted hover:bg-brand-bg hover:text-brand-dark"
+            className={`rounded-lg p-1 text-brand-muted hover:bg-brand-bg hover:text-brand-dark active:bg-brand-border ${TAP}`}
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
@@ -577,9 +577,10 @@ function Chip({
       aria-pressed={active}
       className={clsx(
         "rounded-full border px-3 py-1 text-xs font-bold transition-colors",
+        TAP,
         active
-          ? "border-brand-purple bg-brand-purple text-white"
-          : "border-brand-border bg-white text-brand-muted hover:border-brand-purple hover:text-brand-purple",
+          ? "border-brand-purple bg-brand-purple text-white active:bg-brand-purple-dark"
+          : "border-brand-border bg-white text-brand-muted hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg",
       )}
     >
       {label}

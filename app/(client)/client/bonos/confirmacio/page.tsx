@@ -1,3 +1,4 @@
+import { TAP } from "@/lib/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
@@ -75,13 +76,13 @@ export default async function BonoCheckoutConfirmationPage({
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
             <Link
               href="/client/reservas"
-              className="inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+              className={`inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
             >
               {t("confirmed.book")}
             </Link>
             <Link
               href="/client/bonos/meus"
-              className="inline-flex rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-dark hover:border-brand-purple hover:text-brand-purple"
+              className={`inline-flex rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-dark hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg ${TAP}`}
             >
               {t("confirmed.seeMine")}
             </Link>

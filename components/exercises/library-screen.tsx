@@ -1,3 +1,4 @@
+import { TAP } from "@/lib/utils";
 /**
  * Pantalles d'exercicis compartides per l'admin i el professional.
  *
@@ -36,7 +37,7 @@ export async function ExercisesLibraryScreen({ base }: { base: string }) {
             títol del costat, que ja anava a dues línies. */}
         <Link
           href={`${base}/new`}
-          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase transition-[background-color,transform] duration-100 hover:bg-brand-purple-light active:scale-95 active:bg-brand-purple-dark [-webkit-tap-highlight-color:transparent] touch-manipulation"
+          className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
         >
           + Nou exercici
         </Link>

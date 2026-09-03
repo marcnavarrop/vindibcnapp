@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ClientListItem } from "@/lib/data/clients";
 import { ResendInviteButton } from "@/components/resend-invite-button";
-import { normalizeForSearch, digitsOnly } from "@/lib/utils";
+import { normalizeForSearch, digitsOnly, TAP_SURFACE } from "@/lib/utils";
 
 export function ClientsTable({
   clients,
@@ -108,33 +108,34 @@ export function ClientsTable({
             {filtered.map((c) => (
               <tr
                 key={c.id}
-                className="border-b border-brand-border last:border-0 hover:bg-brand-bg/50"
+                className={`border-b border-brand-border last:border-0 hover:bg-brand-bg/50 active:bg-brand-bg ${TAP_SURFACE}`}
               >
-                <td className="px-4 py-3 font-bold text-brand-dark">
-                  <Link
-                    href={`/admin/clients/${c.id}`}
-                    className="hover:text-brand-purple hover:underline"
-                  >
-                    {c.fullName}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-brand-muted">
-                  <div>{c.email}</div>
-                  {c.phone && <div className="text-xs">{c.phone}</div>}
-                </td>
-                <td className="px-4 py-3">
+                <CellLink href={`/admin/clients/${c.id}`} first>
+                  <span className="font-bold text-brand-dark">{c.fullName}</span>
+                </CellLink>
+                <CellLink href={`/admin/clients/${c.id}`}>
+                  <span className="text-brand-muted">
+                    <span className="block">{c.email}</span>
+                    {c.phone && <span className="block text-xs">{c.phone}</span>}
+                  </span>
+                </CellLink>
+                <CellLink href={`/admin/clients/${c.id}`}>
                   {c.trainerName ?? (
                     <span className="text-brand-muted italic">
                       Sense assignar
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-3">{c.activeBonos}</td>
-                <td className="px-4 py-3">
+                </CellLink>
+                <CellLink href={`/admin/clients/${c.id}`}>
+                  {c.activeBonos}
+                </CellLink>
+                <CellLink href={`/admin/clients/${c.id}`}>
                   <span className="font-bold text-brand-purple">
                     {c.remainingSessions}
                   </span>
-                </td>
+                </CellLink>
+                {/* Fora de l'enllaç a posta: si el botó de reenviar la
+                    invitació hi anés a dins, tocar-lo obriria la fitxa. */}
                 <td className="px-4 py-3 text-right">
                   <ResendInviteButton profileId={c.profileId} />
                 </td>
@@ -158,5 +159,40 @@ export function ClientsTable({
         </table>
       </div>
     </div>
+  );
+}
+
+/**
+ * Una cel·la que és, sencera, un enllaç a la fitxa.
+ *
+ * Va cel·la a cel·la perquè una `<tr>` no es pot embolicar amb un `<Link>`:
+ * l'HTML només admet `<td>` com a filla d'una fila, i qualsevol altra cosa el
+ * navegador la treu de la taula en carregar. L'encoixinat viatja a dins de
+ * l'enllaç perquè el que respon al dit sigui la cel·la sencera i no només el
+ * text que hi ha al mig.
+ *
+ * Només el primer rep el focus del tabulador. Amb cinc enllaços iguals per
+ * fila, recórrer la taula amb el teclat repetiria cinc vegades el mateix destí
+ * abans de passar a la fila següent; així es tabula com abans, un per client.
+ */
+function CellLink({
+  href,
+  first,
+  children,
+}: {
+  href: string;
+  first?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <td className="p-0">
+      <Link
+        href={href}
+        tabIndex={first ? undefined : -1}
+        className="block px-4 py-3"
+      >
+        {children}
+      </Link>
+    </td>
   );
 }

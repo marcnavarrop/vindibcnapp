@@ -53,7 +53,7 @@ export function HealthConsentForm() {
       <div>
         <PendingSubmit
           pendingLabel={t("accepting")}
-          className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light disabled:opacity-60"
+          className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark disabled:opacity-60"
         >
           {t("accept")}
         </PendingSubmit>

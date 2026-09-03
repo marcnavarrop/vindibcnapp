@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -151,7 +152,7 @@ export function SupportFab({ basePath }: { basePath: string }) {
         }}
         aria-expanded={open}
         aria-label={open ? "Tancar el suport" : "Obrir el suport"}
-        className="fixed right-4 bottom-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand-purple text-white shadow-lg transition-colors hover:bg-brand-purple-light focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 sm:right-6 sm:bottom-6"
+        className={`fixed right-4 bottom-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand-purple text-white shadow-lg transition-colors hover:bg-brand-purple-light focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 sm:right-6 sm:bottom-6 active:opacity-70 ${TAP}`}
       >
         {open ? <CloseIcon /> : <LifebuoyIcon />}
       </button>
@@ -186,7 +187,7 @@ export function SupportFab({ basePath }: { basePath: string }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Tancar"
-                className="rounded-lg p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                className={`rounded-lg p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white active:bg-white/20 ${TAP}`}
               >
                 <CloseIcon />
               </button>

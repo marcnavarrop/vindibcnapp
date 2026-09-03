@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -51,7 +52,7 @@ export function AwaitingPayment({
         <p className="max-w-sm text-sm text-brand-muted">{t("slowBody")}</p>
         <Link
           href={fallbackHref}
-          className="mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+          className={`mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
         >
           {fallbackLabel}
         </Link>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP_SURFACE } from "@/lib/utils";
 import {
   SERVICE_LABELS,
   RESERVATION_STATUS_LABELS,
@@ -327,7 +327,8 @@ export function WeeklyCalendar({
                         goNew();
                     }}
                     className={clsx(
-                      "relative cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60",
+                      "relative cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60 active:bg-brand-bg",
+                      TAP_SURFACE,
                       // La fila només creix quan hi ha disponibilitat a pintar:
                       // qui no fa servir la capa no paga l'alçada extra.
                       freeHere.length > 0 ? "min-h-[4.75rem]" : "min-h-[3.25rem]",

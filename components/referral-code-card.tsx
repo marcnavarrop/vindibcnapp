@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -47,7 +48,7 @@ export function ReferralCodeCard({
           <button
             type="button"
             onClick={handleCopy}
-            className="rounded-lg border border-brand-border bg-white px-3 py-2 text-xs font-bold text-brand-dark transition-colors hover:border-brand-purple hover:text-brand-purple"
+            className={`rounded-lg border border-brand-border bg-white px-3 py-2 text-xs font-bold text-brand-dark transition-colors hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg ${TAP}`}
           >
             {copied ? t("copied") : t("copy")}
           </button>

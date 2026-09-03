@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { cancelOwnReservationAction } from "@/app/(client)/client/reservas/actions";
@@ -39,7 +40,7 @@ export function CancelReservationButton({
           <input type="hidden" name="id" value={id} />
           <button
             type="submit"
-            className="rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80"
+            className={`rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80 active:opacity-70 ${TAP}`}
           >
             {t("own.yes")}
           </button>
@@ -47,7 +48,7 @@ export function CancelReservationButton({
         <button
           type="button"
           onClick={() => setConfirming(false)}
-          className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark"
+          className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
         >
           {t("own.no")}
         </button>
@@ -63,7 +64,7 @@ export function CancelReservationButton({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10"
+        className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10 active:bg-error/20 ${TAP}`}
       >
         {t("cancel")}
       </button>

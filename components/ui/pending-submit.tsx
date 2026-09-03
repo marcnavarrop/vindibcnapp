@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP, clsx } from "@/lib/utils";
 import { useFormStatus } from "react-dom";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -31,7 +32,7 @@ export function PendingSubmit({
       type="submit"
       disabled={pending || disabled}
       aria-busy={pending}
-      className={className}
+      className={clsx(className, TAP)}
     >
       {pending ? (
         <span className="inline-flex items-center justify-center gap-2">

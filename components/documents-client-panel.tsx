@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useActionState, useState, useRef, useTransition } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatDate } from "@/lib/labels";
@@ -93,7 +94,7 @@ export function DocumentsClientPanel({
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+              className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange active:opacity-70 ${TAP}`}
             >
               {t("add")}
             </button>
@@ -169,7 +170,7 @@ export function DocumentsClientPanel({
               <button
                 type="submit"
                 disabled={uploading || !!clientError}
-                className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-50"
+                className={`rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-50 active:bg-brand-purple-dark ${TAP}`}
               >
                 {uploading ? t("uploading") : t("upload")}
               </button>
@@ -179,7 +180,7 @@ export function DocumentsClientPanel({
                   setShowForm(false);
                   setClientError(null);
                 }}
-                className="rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                className={`rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
               >
                 {t("cancel")}
               </button>
@@ -251,7 +252,7 @@ function DocumentRow({
             <button
               type="submit"
               disabled={deleting}
-              className="rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80 disabled:opacity-50"
+              className={`rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80 disabled:opacity-50 active:opacity-70 ${TAP}`}
             >
               {t("yes")}
             </button>
@@ -259,7 +260,7 @@ function DocumentRow({
           <button
             type="button"
             onClick={() => setConfirming(false)}
-            className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark"
+            className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
           >
             {t("no")}
           </button>
@@ -275,14 +276,14 @@ function DocumentRow({
             type="button"
             onClick={handleDownload}
             disabled={isPending}
-            className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50"
+            className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50 active:opacity-70 ${TAP}`}
           >
             {isPending ? "…" : t("download")}
           </button>
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="text-xs font-bold tracking-wide text-error uppercase hover:opacity-70"
+            className={`text-xs font-bold tracking-wide text-error uppercase hover:opacity-70 active:opacity-50 ${TAP}`}
           >
             {t("delete")}
           </button>

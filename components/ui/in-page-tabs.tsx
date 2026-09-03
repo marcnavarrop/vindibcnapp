@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 
 export type InPageTab = {
   label: string;
@@ -35,10 +35,11 @@ export function InPageTabs({
               aria-selected={active === i}
               onClick={() => setActive(i)}
               className={clsx(
-                "shrink-0 border-b-2 px-4 py-3 text-sm font-bold whitespace-nowrap transition-colors",
+                "shrink-0 border-b-2 px-4 py-3 text-sm font-bold whitespace-nowrap",
+                TAP,
                 active === i
-                  ? "border-brand-purple text-brand-purple"
-                  : "border-transparent text-brand-muted hover:text-brand-dark",
+                  ? "border-brand-purple text-brand-purple active:bg-brand-purple/10"
+                  : "border-transparent text-brand-muted hover:text-brand-dark active:bg-brand-bg",
               )}
             >
               {tab.label}

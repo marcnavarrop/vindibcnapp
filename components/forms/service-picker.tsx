@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatEur } from "@/lib/labels";
@@ -168,7 +169,7 @@ export function ServiceTypeStep({
               key={type}
               type="button"
               onClick={() => onSelect(type)}
-              className="group flex items-center gap-4 rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md"
+              className={`group flex items-center gap-4 rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md active:bg-brand-bg ${TAP}`}
               style={{
                 borderColor,
                 backgroundColor: bgColor,
@@ -270,7 +271,7 @@ export function PackageStep({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-brand-muted transition-colors hover:text-brand-dark"
+        className={`flex items-center gap-1.5 text-sm text-brand-muted transition-colors hover:text-brand-dark active:opacity-70 ${TAP}`}
       >
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
           <path
@@ -311,7 +312,7 @@ export function PackageStep({
               key={pkg.id}
               type="button"
               onClick={() => onSelect(pkg.id)}
-              className="relative flex items-center gap-4 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-sm"
+              className={`relative flex items-center gap-4 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-sm active:bg-brand-bg ${TAP}`}
               style={{
                 borderColor: isSelected ? color : "#e5e7eb",
                 backgroundColor: isSelected ? `${color}08` : "white",

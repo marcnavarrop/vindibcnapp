@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import {
   buildCalendarEvent,
@@ -60,7 +61,7 @@ export function AddToCalendarButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple hover:text-brand-purple"
+        className={`flex items-center gap-1.5 rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg ${TAP}`}
       >
         <CalendarIcon />
         Afegir al calendari
@@ -71,7 +72,7 @@ export function AddToCalendarButton({
           <button
             type="button"
             onClick={openGoogle}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg"
+            className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             <GoogleIcon />
             Google Calendar
@@ -79,7 +80,7 @@ export function AddToCalendarButton({
           <button
             type="button"
             onClick={downloadIcs}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg"
+            className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             <AppleIcon />
             Apple Calendar
@@ -87,7 +88,7 @@ export function AddToCalendarButton({
           <button
             type="button"
             onClick={downloadIcs}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg"
+            className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             <OutlookIcon />
             Outlook / altres (.ics)

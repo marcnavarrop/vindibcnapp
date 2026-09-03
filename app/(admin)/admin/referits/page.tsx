@@ -92,8 +92,14 @@ export default async function AdminReferitsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
+                {/* Sense `hover:`: aquestes files no porten enlloc.
+                    El fons que s'encenia en passar-hi per sobre prometia una
+                    fitxa que no existeix —de recompenses només n'hi ha la
+                    llista— i la consulta duu noms escrits, no els
+                    identificadors de les persones. Millor no convidar a un
+                    clic que no farà res. */}
                 {rewards.map((r) => (
-                  <tr key={r.id} className="hover:bg-brand-bg/50">
+                  <tr key={r.id}>
                     <td className="px-4 py-3 font-medium text-brand-dark">
                       {r.referrerName}
                     </td>

@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 /**
  * Una opció de mètode de pagament: icona, títol i una línia del que passarà.
  *
@@ -26,7 +27,7 @@ export function PaymentMethodOption({
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-4 rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5"
+      className={`flex items-center gap-4 rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
     >
       <span
         aria-hidden

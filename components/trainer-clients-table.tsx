@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP_SURFACE } from "@/lib/utils";
 import type { ClientListItem } from "@/lib/data/clients";
 
 /**
@@ -80,29 +80,26 @@ export function TrainerClientsTable({
             {filtered.map((c) => (
               <tr
                 key={c.id}
-                className="border-b border-brand-border last:border-0 hover:bg-brand-bg/50"
+                className={`border-b border-brand-border last:border-0 hover:bg-brand-bg/50 active:bg-brand-bg ${TAP_SURFACE}`}
               >
-                <td className="px-4 py-3 font-bold text-brand-dark">
-                  <Link
-                    href={`/trainer/clients/${c.id}`}
-                    className="hover:text-brand-purple hover:underline"
-                  >
-                    {c.fullName}
-                  </Link>
-                </td>
-                <td className="px-4 py-3">
+                <CellLink href={`/trainer/clients/${c.id}`} first>
+                  <span className="font-bold text-brand-dark">{c.fullName}</span>
+                </CellLink>
+                <CellLink href={`/trainer/clients/${c.id}`}>
                   {c.trainerName ?? (
                     <span className="text-brand-muted italic">
                       Sense assignar
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-3">{c.activeBonos}</td>
-                <td className="px-4 py-3">
+                </CellLink>
+                <CellLink href={`/trainer/clients/${c.id}`}>
+                  {c.activeBonos}
+                </CellLink>
+                <CellLink href={`/trainer/clients/${c.id}`}>
                   <span className="font-bold text-brand-purple">
                     {c.remainingSessions}
                   </span>
-                </td>
+                </CellLink>
               </tr>
             ))}
             {filtered.length === 0 && (
@@ -119,5 +116,28 @@ export function TrainerClientsTable({
         </table>
       </div>
     </div>
+  );
+}
+
+/** Vegeu `CellLink` a `clients-table.tsx`: mateixa raó, mateixa forma. */
+function CellLink({
+  href,
+  first,
+  children,
+}: {
+  href: string;
+  first?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <td className="p-0">
+      <Link
+        href={href}
+        tabIndex={first ? undefined : -1}
+        className="block px-4 py-3"
+      >
+        {children}
+      </Link>
+    </td>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -19,7 +20,8 @@ import { ReferralCodeCard } from "@/components/referral-code-card";
 const CARD =
   "relative overflow-hidden rounded-2xl p-5 text-white";
 const ACTION =
-  "mt-4 inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition-colors hover:bg-white/25";
+  "mt-4 inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-xs font-bold tracking-wide text-white uppercase transition-colors hover:bg-white/25 " +
+  `active:bg-white/30 ${TAP}`;
 
 function Glow({ className }: { className: string }) {
   return <div aria-hidden className={`pointer-events-none absolute ${className}`} />;
@@ -105,7 +107,7 @@ export function ReferralCta({
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+            className={`rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
           >
             {t("close")}
           </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { TAP } from "@/lib/utils";
 import { useActionState, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/lib/i18n/config";
@@ -229,7 +230,7 @@ export function GiftVoucherForm({
                   <button
                     type="button"
                     onClick={() => setConfirming(null)}
-                    className="rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                    className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
                   >
                     {tb("cancel")}
                   </button>
@@ -385,7 +386,7 @@ export function VoucherReady({
             <button
               type="button"
               onClick={copy}
-              className="rounded-lg border border-brand-border bg-white px-3 py-2 text-xs font-bold text-brand-dark transition-colors hover:border-brand-purple hover:text-brand-purple"
+              className={`rounded-lg border border-brand-border bg-white px-3 py-2 text-xs font-bold text-brand-dark transition-colors hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg ${TAP}`}
             >
               {copied ? t("copied") : t("copy")}
             </button>

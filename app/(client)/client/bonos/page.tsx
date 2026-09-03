@@ -1,3 +1,4 @@
+import { TAP_SURFACE } from "@/lib/utils";
 import { getViewer } from "@/lib/auth";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
@@ -95,7 +96,7 @@ export default async function ComprarBonoPage() {
       {settings.giftVouchersEnabled && (
         <Link
           href="/client/regals"
-          className="mt-8 flex items-center gap-4 rounded-2xl border border-brand-border bg-white p-4 transition-colors hover:border-brand-orange"
+          className={`mt-8 flex items-center gap-4 rounded-2xl border border-brand-border bg-white p-4 hover:border-brand-orange active:bg-brand-bg ${TAP_SURFACE}`}
         >
           <span
             aria-hidden

@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { intlLocale, type Locale } from "@/lib/i18n/config";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 import {
   weekdayOf,
   localDateStr,
@@ -143,9 +143,10 @@ export function TrialCalendar({
               }}
               className={clsx(
                 "px-3 py-1.5 text-sm font-bold",
+                TAP,
                 view === v
-                  ? "bg-brand-purple text-white"
-                  : "bg-white text-brand-muted hover:text-brand-dark",
+                  ? "bg-brand-purple text-white active:bg-brand-purple-dark"
+                  : "bg-white text-brand-muted hover:text-brand-dark active:bg-brand-bg",
               )}
             >
               {v === "day" ? t("day") : t("week")}
@@ -159,7 +160,7 @@ export function TrialCalendar({
           <button
             type="button"
             onClick={() => setOffset(0)}
-            className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg"
+            className={`rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             {t("today")}
           </button>
@@ -227,7 +228,7 @@ export function TrialCalendar({
                       <button
                         type="button"
                         onClick={() => setSlot(cellDate)}
-                        className="block h-full w-full rounded-md bg-brand-purple/10 px-1.5 py-1 text-[11px] font-bold text-brand-purple hover:bg-brand-purple/20"
+                        className={`block h-full w-full rounded-md bg-brand-purple/10 px-1.5 py-1 text-[11px] font-bold text-brand-purple hover:bg-brand-purple/20 active:bg-brand-bg ${TAP}`}
                       >
                         {t("free")}
                       </button>
@@ -305,7 +306,7 @@ function RequestModal({
             <button
               type="button"
               onClick={onClose}
-              className="mt-2 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
+              className={`mt-2 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
             >
               {t("close")}
             </button>
@@ -382,14 +383,14 @@ function RequestModal({
               <div className="mt-1 flex items-center gap-2">
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
+                  className={`flex-1 rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
                 >
                   {t("form.submit")}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                  className={`rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
                 >
                   {t("form.cancel")}
                 </button>
@@ -419,7 +420,7 @@ function NavBtn({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg"
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg active:opacity-70 ${TAP}`}
     >
       {children}
     </button>

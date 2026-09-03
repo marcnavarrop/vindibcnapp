@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { clsx } from "@/lib/utils";
+import { clsx, TAP } from "@/lib/utils";
 import { RequiredMark } from "@/components/ui/required-mark";
 
 function EyeIcon({ off }: { off: boolean }) {
@@ -96,7 +96,7 @@ export function PasswordField({
               : (showLabel ?? "Mostrar la contrasenya")
           }
           aria-pressed={visible}
-          className="absolute top-1/2 right-3 -translate-y-1/2 rounded-md p-0.5 text-brand-muted transition-colors hover:text-brand-purple"
+          className={`absolute top-1/2 right-3 -translate-y-1/2 rounded-md p-0.5 text-brand-muted transition-colors hover:text-brand-purple active:bg-brand-bg ${TAP}`}
         >
           <EyeIcon off={visible} />
         </button>

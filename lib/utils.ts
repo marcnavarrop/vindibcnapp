@@ -45,3 +45,17 @@ export const TAP =
   "transition-[background-color,border-color,opacity,transform] duration-100 " +
   "active:scale-95 disabled:active:scale-100 " +
   "[-webkit-tap-highlight-color:transparent] touch-manipulation";
+
+/**
+ * El mateix, per a superfícies grans: files de taula, cel·les de calendari,
+ * targetes.
+ *
+ * És `TAP` sense l'encongiment. En un botó, un 5% menys es llegeix com un
+ * clic; en una fila que ocupa tota l'amplada són quaranta píxels que s'escapen
+ * cap endins, i les vores deixen de quadrar amb les del costat: no sembla
+ * premuda, sembla trencada. El que sí funciona a qualsevol mida és que el fons
+ * respongui, i això ho posa cada superfície amb el seu to.
+ */
+export const TAP_SURFACE =
+  "transition-[background-color,border-color,opacity] duration-100 " +
+  "[-webkit-tap-highlight-color:transparent] touch-manipulation";
