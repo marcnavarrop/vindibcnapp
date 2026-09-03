@@ -1,4 +1,4 @@
-import { TAP_SURFACE } from "@/lib/utils";
+import { TAP } from "@/lib/utils";
 import Link from "next/link";
 import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
 import { AttentionPanel, AttentionRow } from "@/components/ui/attention";
@@ -212,7 +212,7 @@ export function QuickActions() {
         <Link
           key={a.href}
           href={a.href}
-          className={`flex items-center gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-base font-bold text-brand-dark hover:border-brand-purple hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP_SURFACE}`}
+          className={`flex items-center gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-base font-bold text-brand-dark hover:border-brand-purple hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange">
             <Icon name={a.icon} size={21} />
