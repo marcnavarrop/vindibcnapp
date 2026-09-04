@@ -61,6 +61,12 @@ export async function saveTiersAction(
 ): Promise<BonusFormState> {
   if (!(await requireAdmin())) return { error: "No autoritzat." };
 
+  // La freqüència viatja en un camp ocult del formulari. Sense ella no es desa
+  // res: amb dos jocs de trams, "quin" no pot ser una suposició.
+  const frequency = String(fd.get("frequency") ?? "");
+  if (frequency !== "annual" && frequency !== "biennial")
+    return { error: "Freqüència de trams no vàlida." };
+
   const mins = fd.getAll("minUnits").map(String);
   const maxs = fd.getAll("maxUnits").map(String);
   const rates = fd.getAll("ratePerUnit").map(String);
@@ -81,7 +87,7 @@ export async function saveTiersAction(
     return { error: "Hi ha màxims no numèrics." };
 
   try {
-    await saveTiers(tiers);
+    await saveTiers(tiers, frequency);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en desar els trams." };
   }
@@ -133,8 +139,11 @@ export async function generatePayoutAction(
   const periodStart = String(fd.get("periodStart") ?? "");
   if (!trainerId) return { error: "Falta el professional." };
 
+  // Declarat fora del `try` perquè el `catch` pugui dir de quina freqüència
+  // parla el missatge d'error.
+  let settings: Awaited<ReturnType<typeof getWorkerSettings>> = null;
   try {
-    const settings = await getWorkerSettings(trainerId);
+    settings = await getWorkerSettings(trainerId);
     if (!settings || !settings.enabled)
       return { error: "Aquest professional no té el bonus actiu." };
 
@@ -159,6 +168,14 @@ export async function generatePayoutAction(
     const msg = e instanceof Error ? e.message : "";
     if (msg === "DUPLICATE_PAYOUT" || msg.includes("bonus_payouts_unique_period"))
       return { error: "Aquest període ja té un payout generat." };
+    // Sense trams d'aquesta freqüència el càlcul dona 0 €, i un payout no es
+    // recalcula mai: val més no deixar tancar que congelar un zero per descuit.
+    if (msg === "NO_TIERS")
+      return {
+        error: `No hi ha trams ${
+          settings?.payoutFrequency === "biennial" ? "biennals" : "anuals"
+        } configurats. Configura'ls abans de tancar el període.`,
+      };
     return { error: msg || "Error en generar el bonus." };
   }
 

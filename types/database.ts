@@ -1352,6 +1352,7 @@ export interface Database {
           min_units: number;
           max_units: number | null;
           rate_per_unit: number;
+          frequency: BonusPayoutFrequency;
           effective_from: string;
           effective_until: string | null;
           created_at: string;
@@ -1361,6 +1362,7 @@ export interface Database {
           min_units: number;
           max_units?: number | null;
           rate_per_unit: number;
+          frequency?: BonusPayoutFrequency;
           effective_from?: string;
           effective_until?: string | null;
           created_at?: string;
@@ -1369,6 +1371,7 @@ export interface Database {
           min_units?: number;
           max_units?: number | null;
           rate_per_unit?: number;
+          frequency?: BonusPayoutFrequency;
           effective_from?: string;
           effective_until?: string | null;
         };
@@ -1400,6 +1403,7 @@ export interface Database {
           trainer_id: string;
           period_start: string;
           period_end: string;
+          frequency: BonusPayoutFrequency;
           total_units: number;
           total_amount: number;
           tier_breakdown: BonusTierLine[];
@@ -1411,6 +1415,7 @@ export interface Database {
           trainer_id: string;
           period_start: string;
           period_end: string;
+          frequency: BonusPayoutFrequency;
           total_units: number;
           total_amount: number;
           tier_breakdown?: BonusTierLine[];

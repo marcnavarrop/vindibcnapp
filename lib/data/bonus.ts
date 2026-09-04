@@ -23,6 +23,8 @@ export type BonusWeight = {
 };
 
 export type BonusTier = {
+  /** A quin joc pertany. Els dos són independents i tenen la seva pròpia vigència. */
+  frequency: BonusPayoutFrequency;
   id: string;
   minUnits: number;
   /** null = tram obert (l'últim). */
@@ -39,6 +41,8 @@ export type WorkerBonusSettings = {
 };
 
 export type BonusPayout = {
+  /** Amb quina freqüència es va tancar, i per tant quin joc de trams es va aplicar. */
+  frequency: BonusPayoutFrequency;
   id: string;
   trainerId: string;
   periodStart: string;
@@ -73,6 +77,15 @@ export type BonusProgress = {
   unitsToNextTier: number | null;
   /** Sessions completades sense cap pes vigent el seu dia. */
   unweightedSessions: number;
+  /**
+   * No hi ha cap tram configurat per a aquesta freqüència el dia que toca.
+   *
+   * Sense trams el càlcul dona 0 €, i un zero per descuit de configuració és
+   * indistingible d'un zero legítim (ningú ha treballat). Aquesta bandera
+   * permet dir-ho a la cara mentre el període encara és obert, i és la mateixa
+   * condició que bloqueja el tancament a `createPayout`.
+   */
+  noTiers: boolean;
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -352,23 +365,37 @@ export async function setWeight(
 
 // ─── Trams ──────────────────────────────────────────────────────────────────
 
-/** Trams vigents el dia indicat (per defecte avui), ordenats. */
-export async function listTiers(onDay?: string): Promise<BonusTier[]> {
+/**
+ * Trams d'UNA freqüència, vigents el dia indicat (per defecte avui), ordenats.
+ *
+ * `frequency` és obligatòria i no té valor per defecte a posta. Amb un
+ * `?? "annual"` de cortesia, un cridant que se l'oblidés cobraria en silenci
+ * amb la taula equivocada, i això són euros. Que el compilador obligui a
+ * decidir a cada lloc.
+ */
+export async function listTiers(
+  frequency: BonusPayoutFrequency,
+  onDay?: string,
+): Promise<BonusTier[]> {
   const day = onDay ?? todayStr();
 
   const rows = USE_MOCK
-    ? (await import("@/lib/mock/store")).getStore().bonus_tiers
+    ? (await import("@/lib/mock/store")).getStore().bonus_tiers.filter(
+        (t) => t.frequency === frequency,
+      )
     : await (async () => {
         const supabase = await createClient();
         const { data, error } = await supabase
           .from("bonus_tiers")
-          .select("id, min_units, max_units, rate_per_unit, effective_from, effective_until");
+          .select("id, min_units, max_units, rate_per_unit, effective_from, effective_until, frequency")
+          .eq("frequency", frequency);
         if (error) throw new Error(error.message);
         return data ?? [];
       })();
 
   const tiers: BonusTier[] = rows.map((t) => ({
     id: t.id,
+    frequency: t.frequency,
     minUnits: Number(t.min_units),
     maxUnits: t.max_units === null ? null : Number(t.max_units),
     ratePerUnit: Number(t.rate_per_unit),
@@ -380,22 +407,36 @@ export async function listTiers(onDay?: string): Promise<BonusTier[]> {
 }
 
 /**
- * Substitueix el joc de trams sencer.
+ * Substitueix el joc de trams sencer D'UNA FREQÜÈNCIA.
  *
  * Els trams es desen i s'apliquen com un conjunt: canviar-ne un afecta on
  * comença el següent, així que es tanca tot el joc vigent a ahir i s'insereix
  * el nou a partir d'avui. Com amb els pesos, si el joc vigent ja començava
  * avui s'esborra en comptes de tancar-lo.
+ *
+ * ⚠️ LES TRES OPERACIONS VAN ACOTADES PER FREQÜÈNCIA, i és el punt més delicat
+ * de tot aquest canvi. Abans hi havia un sol joc i "tanca'ls tots" era correcte;
+ * ara no. Si l'esborrat, el tancament o —sobretot— l'`in("id", …)` s'apliquessin
+ * sense filtrar, desar els trams anuals s'enduria per davant els biennals, i
+ * ningú se n'adonaria fins al següent tancament de període.
+ *
+ * La protecció real no és el filtre `frequency` de les consultes sinó que les
+ * llistes d'ids surten de `listTiers(frequency)`, que ja només retorna els
+ * d'aquest joc: `toDelete` i `toClose` no poden contenir un id de l'altra
+ * freqüència ni que es volgués. El `.eq("frequency", …)` que hi ha a sobre és
+ * un segon pany, redundant a posta.
  */
 export async function saveTiers(
   tiers: { minUnits: number; maxUnits: number | null; ratePerUnit: number }[],
+  frequency: BonusPayoutFrequency,
 ): Promise<void> {
   const problem = validateTiers(tiers);
   if (problem) throw new Error(problem);
 
   const today = todayStr();
   const yesterday = shiftDay(today, -1);
-  const current = await listTiers();
+  // Només els d'aquesta freqüència: d'aquí surten les llistes d'ids de sota.
+  const current = await listTiers(frequency);
 
   if (USE_MOCK) {
     const { getStore, saveStore } = await import("@/lib/mock/store");
@@ -411,6 +452,7 @@ export async function saveTiers(
     for (const t of tiers) {
       store.bonus_tiers.push({
         id: crypto.randomUUID(),
+        frequency,
         min_units: t.minUnits,
         max_units: t.maxUnits,
         rate_per_unit: t.ratePerUnit,
@@ -427,20 +469,28 @@ export async function saveTiers(
   const toDelete = current.filter((c) => c.effectiveFrom >= today).map((c) => c.id);
   const toClose = current.filter((c) => c.effectiveFrom < today).map((c) => c.id);
 
+  // (1) Esborrar els que ja començaven avui.
   if (toDelete.length > 0) {
-    const { error } = await admin.from("bonus_tiers").delete().in("id", toDelete);
+    const { error } = await admin
+      .from("bonus_tiers")
+      .delete()
+      .eq("frequency", frequency)
+      .in("id", toDelete);
     if (error) throw new Error(error.message);
   }
+  // (2) Tancar a ahir els que venien de més enrere.
   if (toClose.length > 0) {
     const { error } = await admin
       .from("bonus_tiers")
       .update({ effective_until: yesterday })
+      .eq("frequency", frequency)
       .in("id", toClose);
     if (error) throw new Error(error.message);
   }
-
+  // (3) Inserir el joc nou, amb la seva freqüència explícita.
   const { error } = await admin.from("bonus_tiers").insert(
     tiers.map((t) => ({
+      frequency,
       min_units: t.minUnits,
       max_units: t.maxUnits,
       rate_per_unit: t.ratePerUnit,
@@ -544,7 +594,7 @@ export async function computeBonus(
   const [sessions, weights, tiers] = await Promise.all([
     completedSessions(trainerId, period.start, period.end),
     listWeights(),
-    listTiers(tiersDay),
+    listTiers(frequency, tiersDay),
   ]);
 
   const acc = new Map<ServiceType, { sessions: number; units: number }>();
@@ -592,6 +642,7 @@ export async function computeBonus(
     currentTier,
     unitsToNextTier,
     unweightedSessions,
+    noTiers: tiers.length === 0,
   };
 }
 
@@ -621,6 +672,7 @@ export async function listPayouts(trainerId?: string): Promise<BonusPayout[]> {
         trainerId: p.trainer_id,
         periodStart: p.period_start,
         periodEnd: p.period_end,
+        frequency: p.frequency,
         totalUnits: Number(p.total_units),
         totalAmount: Number(p.total_amount),
         tierBreakdown: p.tier_breakdown,
@@ -633,7 +685,7 @@ export async function listPayouts(trainerId?: string): Promise<BonusPayout[]> {
   let query = supabase
     .from("bonus_payouts")
     .select(
-      "id, trainer_id, period_start, period_end, total_units, total_amount, tier_breakdown, generated_at, generated_by",
+      "id, trainer_id, period_start, period_end, frequency, total_units, total_amount, tier_breakdown, generated_at, generated_by",
     )
     .order("generated_at", { ascending: false });
   if (trainerId) query = query.eq("trainer_id", trainerId);
@@ -645,6 +697,7 @@ export async function listPayouts(trainerId?: string): Promise<BonusPayout[]> {
     trainerId: p.trainer_id,
     periodStart: p.period_start,
     periodEnd: p.period_end,
+    frequency: p.frequency,
     totalUnits: Number(p.total_units),
     totalAmount: Number(p.total_amount),
     tierBreakdown: (p.tier_breakdown ?? []) as BonusTierLine[],
@@ -671,6 +724,11 @@ export async function createPayout(
   progress: BonusProgress,
   generatedBy: string | null,
 ): Promise<string> {
+  // Un període sense trams configurats donaria 0 €, i congelar-ho seria pitjor
+  // que no deixar tancar: el payout no es recalcula mai, així que un descuit de
+  // configuració es convertiria en un pagament de zero per sempre. Es bloqueja
+  // aquí i no a la Server Action perquè aquest és l'únic camí que escriu.
+  if (progress.noTiers) throw new Error("NO_TIERS");
   if (USE_MOCK) {
     const { getStore, saveStore } = await import("@/lib/mock/store");
     const store = getStore();
@@ -688,6 +746,7 @@ export async function createPayout(
       trainer_id: progress.trainerId,
       period_start: progress.period.start,
       period_end: progress.period.end,
+      frequency: progress.frequency,
       total_units: progress.totalUnits,
       total_amount: progress.totalAmount,
       tier_breakdown: progress.lines,
@@ -705,6 +764,7 @@ export async function createPayout(
       trainer_id: progress.trainerId,
       period_start: progress.period.start,
       period_end: progress.period.end,
+      frequency: progress.frequency,
       total_units: progress.totalUnits,
       total_amount: progress.totalAmount,
       tier_breakdown: progress.lines,

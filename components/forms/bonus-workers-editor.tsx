@@ -16,7 +16,13 @@ export type WorkerRowData = {
   enabled: boolean;
   payoutFrequency: BonusPayoutFrequency;
   /** Estat del període en curs. `null` si no té el bonus actiu. */
-  current: { periodLabel: string; units: number; amount: number } | null;
+  current: {
+    periodLabel: string;
+    units: number;
+    amount: number;
+    /** No hi ha trams de la seva freqüència: l'import de 0 € no és real. */
+    noTiers: boolean;
+  } | null;
   /** Períodes tancables (el vigent i els anteriors), amb el payout ja fet si n'hi ha. */
   periods: { start: string; label: string; closedOn: string | null }[];
 };
@@ -35,10 +41,23 @@ function WorkerRow({ row }: { row: WorkerRowData }) {
         <div className="min-w-40 flex-1">
           <p className="font-bold text-brand-dark">{row.name}</p>
           {row.current ? (
-            <p className="text-xs text-brand-muted">
-              {row.current.periodLabel}: {row.current.units} unitats ·{" "}
-              {formatEur(row.current.amount)} acumulats
-            </p>
+            <>
+              <p className="text-xs text-brand-muted">
+                {row.current.periodLabel}: {row.current.units} unitats ·{" "}
+                {formatEur(row.current.amount)} acumulats
+              </p>
+              {/* Sense trams, aquest 0 € no vol dir "no ha treballat": vol dir
+                  que ningú ha configurat la taula de la seva freqüència. Es diu
+                  mentre el període encara és obert i es pot arreglar. */}
+              {row.current.noTiers && (
+                <p className="mt-1 text-xs font-bold text-brand-orange">
+                  No hi ha trams{" "}
+                  {row.payoutFrequency === "biennial" ? "biennals" : "anuals"}{" "}
+                  configurats: l&apos;import no és real i no es pot tancar el
+                  període.
+                </p>
+              )}
+            </>
           ) : (
             <p className="text-xs text-brand-muted">Sense bonus actiu</p>
           )}

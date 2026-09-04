@@ -46,10 +46,12 @@ function Group({
 }
 
 export default async function BonusPage() {
-  const [trainers, weights, tiers, workerSettings, payouts] = await Promise.all([
+  const [trainers, weights, tiersAnnual, tiersBiennial, workerSettings, payouts] =
+    await Promise.all([
     listTrainers(),
     currentWeightMap(),
-    listTiers(),
+    listTiers("annual"),
+    listTiers("biennial"),
     listWorkerSettings(),
     listPayouts(),
   ]);
@@ -102,6 +104,7 @@ export default async function BonusPage() {
           periodLabel: period.label,
           units: progress.totalUnits,
           amount: progress.totalAmount,
+          noTiers: progress.noTiers,
         },
         periods,
       };
@@ -132,12 +135,39 @@ export default async function BonusPage() {
           <BonusWeightsEditor rows={weightRows} />
         </Group>
 
+        {/*
+          Dos blocs i no un amb selector: un període biennal acumula el doble de
+          volum que un d'anual, així que els trams no poden ser els mateixos, i
+          separar-los visualment evita desar a la taula equivocada.
+        */}
         <Group
-          title="Trams"
-          desc="Preu per unitat segons el volum acumulat del període. Es cobra per trams, no tot al preu del tram més alt."
+          title="Trams · Anual"
+          desc="Preu per unitat segons el volum acumulat del període. Es cobra per trams, no tot al preu del tram més alt. S'apliquen als professionals amb tancament anual."
         >
           <BonusTiersEditor
-            tiers={tiers.map((t) => ({
+            frequency="annual"
+            tiers={tiersAnnual.map((t) => ({
+              minUnits: t.minUnits,
+              maxUnits: t.maxUnits,
+              ratePerUnit: t.ratePerUnit,
+            }))}
+          />
+        </Group>
+
+        <Group
+          title="Trams · Biennal"
+          desc="El joc equivalent per als professionals amb tancament cada dos anys. Un bienni acumula aproximadament el doble de volum, així que els llindars solen ser més alts."
+        >
+          {tiersBiennial.length === 0 && (
+            <p className="mb-3 rounded-xl border border-brand-orange/30 bg-brand-orange/10 px-4 py-3 text-sm text-brand-orange">
+              Encara no hi ha trams biennals. Els professionals amb tancament
+              biennal veuran 0 € i no se&apos;ls podrà tancar el període fins
+              que n&apos;hi hagi.
+            </p>
+          )}
+          <BonusTiersEditor
+            frequency="biennial"
+            tiers={tiersBiennial.map((t) => ({
               minUnits: t.minUnits,
               maxUnits: t.maxUnits,
               ratePerUnit: t.ratePerUnit,

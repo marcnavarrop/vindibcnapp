@@ -15,7 +15,19 @@ export type TierRowData = {
  * Editor del joc de trams sencer: es desa tot de cop, perquè els trams només
  * tenen sentit com a conjunt encadenat (el màxim d'un és el mínim del següent).
  */
-export function BonusTiersEditor({ tiers }: { tiers: TierRowData[] }) {
+export function BonusTiersEditor({
+  tiers,
+  frequency,
+}: {
+  tiers: TierRowData[];
+  /**
+   * Quin dels dos jocs edita aquest formulari. Cada freqüència té el seu
+   * editor propi, amb el seu botó de desar: amb un sol editor i un desplegable
+   * seria massa fàcil editar creient que ets a un joc i desar a l'altre, i
+   * aquí això són diners.
+   */
+  frequency: "annual" | "biennial";
+}) {
   const [state, action] = useActionState(saveTiersAction, {});
   const [rows, setRows] = useState<TierRowData[]>(
     tiers.length > 0 ? tiers : [{ minUnits: 0, maxUnits: null, ratePerUnit: 1 }],
@@ -51,6 +63,8 @@ export function BonusTiersEditor({ tiers }: { tiers: TierRowData[] }) {
 
   return (
     <form action={action} className="rounded-2xl border border-brand-border bg-white p-5">
+      {/* Sense això la Server Action no sap a quin joc desa, i es nega a desar. */}
+      <input type="hidden" name="frequency" value={frequency} />
       <ul className="flex flex-col gap-3">
         {rows.map((r, i) => (
           <li key={i} className="flex flex-wrap items-end gap-3">
