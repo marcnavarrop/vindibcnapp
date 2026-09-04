@@ -99,7 +99,16 @@ export type LibraryTexts = {
   videoError: string;
 };
 
-const CA: LibraryTexts = {
+/**
+ * Els textos en català, exportats.
+ *
+ * Els fan servir les vistes d'admin i de professional, que van en català fix i
+ * no tenen `NextIntlClientProvider` a sobre: la biblioteca d'aquesta mateixa
+ * pantalla i el panell d'exercicis assignats de la fitxa d'un client. Surten
+ * d'aquí i no es tornen a escriure a cada lloc perquè "Sense vídeo" i "Veure
+ * el vídeo" han de dir el mateix a les tres vistes.
+ */
+export const LIBRARY_TEXTS_CA: LibraryTexts = {
   search: "Cerca per nom o descripció…",
   searchAria: "Cercar exercicis",
   all: "Totes",
@@ -168,7 +177,7 @@ export function ExerciseLibrary({
   categories,
   basePath,
   deleteAction,
-  texts = CA,
+  texts = LIBRARY_TEXTS_CA,
 }: {
   exercises: Exercise[];
   categories: ExerciseCategoryItem[];
