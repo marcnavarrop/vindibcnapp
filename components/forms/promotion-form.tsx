@@ -11,6 +11,7 @@ import type { ClientTag } from "@/lib/data/client-tags";
 import type { Service } from "@/lib/data/services";
 import type { PromotionAudience, ServiceType } from "@/types/database";
 import type { OfertaFormState } from "@/app/(admin)/admin/ofertes/actions";
+import { TAP } from "@/lib/utils";
 
 export function PromotionForm({
   action,
@@ -244,7 +245,7 @@ export function PromotionForm({
           (tags.length === 0 ? (
             <p className="text-xs text-brand-orange">
               Encara no hi ha cap etiqueta. Crea&apos;n una a{" "}
-              <Link href="/admin/etiquetes" className="font-bold underline">
+              <Link href="/admin/etiquetes" className={`font-bold underline ${TAP}`}>
                 Etiquetes de client
               </Link>{" "}
               i torna aquí.
@@ -316,7 +317,7 @@ export function PromotionForm({
         <SubmitButton>{initial ? "Desar canvis" : "Crear oferta"}</SubmitButton>
         <Link
           href={cancelHref}
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { TAP } from "@/lib/utils";
+import { TAP, TAP_SURFACE } from "@/lib/utils";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -241,7 +241,7 @@ export function SupportFab({ basePath }: { basePath: string }) {
                 <Link
                   href={basePath}
                   onClick={() => setOpen(false)}
-                  className="mt-3 inline-block text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                  className={`mt-3 inline-block text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP_SURFACE}`}
                 >
                   Veure tot l&apos;historial →
                 </Link>

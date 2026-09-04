@@ -4,6 +4,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { GiftVouchersAdminTable } from "@/components/gift-vouchers-admin-table";
 import { GroupTabs } from "@/components/ui/group-tabs";
 import { BONS_TABS } from "@/lib/admin-tabs";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function AdminGiftVouchersPage() {
       <main className="mx-auto max-w-6xl p-6">
         <Link
           href="/admin"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Tornar
         </Link>
@@ -44,7 +45,7 @@ export default async function AdminGiftVouchersPage() {
             a activar a{" "}
             <Link
               href="/admin/configuracio"
-              className="font-bold text-brand-purple underline hover:text-brand-orange"
+              className={`font-bold text-brand-purple underline hover:text-brand-orange ${TAP}`}
             >
               Configuració → Centre
             </Link>

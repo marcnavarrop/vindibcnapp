@@ -7,6 +7,7 @@ import {
   notifyNextSessionAction,
   type NotificationActionResult,
 } from "@/app/actions/client-notification-actions";
+import { TAP } from "@/lib/utils";
 
 type ButtonState = { loading: boolean; result: NotificationActionResult | null };
 
@@ -41,7 +42,7 @@ function NotifButton({
           type="button"
           onClick={handleClick}
           disabled={isPending}
-          className="shrink-0 rounded-lg bg-brand-purple px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase disabled:opacity-50 hover:bg-brand-purple-light"
+          className={`shrink-0 rounded-lg bg-brand-purple px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase disabled:opacity-50 hover:bg-brand-purple-light ${TAP}`}
         >
           {isPending ? "Enviant…" : "Enviar"}
         </button>

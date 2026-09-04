@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ServiceForm } from "@/components/forms/service-form";
 import { getService } from "@/lib/data/services";
 import { updateServiceAction } from "@/app/(admin)/admin/serveis/actions";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function EditServicePage({
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/serveis"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Serveis
         </Link>

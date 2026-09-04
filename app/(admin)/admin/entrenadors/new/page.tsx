@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { TrainerForm } from "@/components/forms/trainer-form";
 import { createTrainerAction } from "@/app/(admin)/admin/entrenadors/actions";
+import { TAP } from "@/lib/utils";
 
 export default function NewTrainerPage() {
   return (
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/entrenadors"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Tornar
         </Link>

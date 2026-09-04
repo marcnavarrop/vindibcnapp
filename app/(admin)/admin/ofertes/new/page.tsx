@@ -3,6 +3,7 @@ import { PromotionForm } from "@/components/forms/promotion-form";
 import { listActiveServices } from "@/lib/data/services";
 import { listClientTags } from "@/lib/data/client-tags";
 import { createOfertaAction } from "@/app/(admin)/admin/ofertes/actions";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function NewOfertaPage() {
     <main className="mx-auto max-w-5xl p-6">
       <Link
         href="/admin/ofertes"
-        className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+        className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
       >
         ← Tornar a ofertes
       </Link>

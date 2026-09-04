@@ -8,6 +8,7 @@ import { SERVICE_LABELS, SERVICE_TYPES } from "@/lib/labels";
 import { PRO_PALETTE } from "@/lib/pro-colors";
 import type { ColorPalette } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
+import { TAP } from "@/lib/utils";
 
 export type ColorPro = { id: string; name: string; avatarUrl: string | null };
 
@@ -174,7 +175,7 @@ export function ColorsForm({
             setServices(palette.services);
             setPros(palette.pros);
           }}
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           Desfer els canvis
         </button>

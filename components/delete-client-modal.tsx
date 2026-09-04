@@ -5,6 +5,7 @@ import {
   deleteClientAction,
   type FormState,
 } from "@/app/(admin)/admin/clients/delete-actions";
+import { TAP, TAP_SURFACE } from "@/lib/utils";
 
 export function DeleteClientModal({
   clientId,
@@ -28,7 +29,7 @@ export function DeleteClientModal({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center rounded-lg border border-error/40 bg-white px-4 py-2 text-sm font-bold tracking-wide text-error uppercase transition-colors hover:bg-error/10"
+        className={`inline-flex items-center justify-center rounded-lg border border-error/40 bg-white px-4 py-2 text-sm font-bold tracking-wide text-error uppercase transition-colors hover:bg-error/10 ${TAP}`}
       >
         Eliminar client
       </button>
@@ -72,14 +73,14 @@ export function DeleteClientModal({
                 <button
                   type="submit"
                   disabled={!matches}
-                  className="flex-1 rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  className={`flex-1 rounded-lg bg-error px-3 py-2 text-sm font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${TAP_SURFACE}`}
                 >
                   Eliminar definitivament
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+                  className={`rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
                 >
                   Cancel·lar
                 </button>

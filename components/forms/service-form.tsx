@@ -8,6 +8,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { SERVICE_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType } from "@/types/database";
+import { TAP } from "@/lib/utils";
 
 const SERVICE_OPTIONS = (Object.keys(SERVICE_LABELS) as ServiceType[]).map(
   (value) => ({ value, label: SERVICE_LABELS[value] }),
@@ -83,7 +84,7 @@ export function ServiceForm({
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
           href="/admin/serveis"
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

@@ -3,6 +3,7 @@ import { addProgressAction, deleteProgressAction } from "@/app/actions/client-pr
 import type { AssignedExercise } from "@/lib/data/client-exercises";
 import type { ExerciseProgressEntry } from "@/lib/data/exercise-progress";
 import { formatDate } from "@/lib/labels";
+import { TAP } from "@/lib/utils";
 
 export function ClientProgressPanel({
   assigned,
@@ -75,7 +76,7 @@ export function ClientProgressPanel({
                         <input type="hidden" name="redirectPath" value={redirectPath} />
                         <button
                           type="submit"
-                          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
                         >
                           Eliminar
                         </button>
@@ -143,7 +144,7 @@ export function ClientProgressPanel({
                 </label>
                 <button
                   type="submit"
-                  className="rounded-lg bg-brand-purple px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+                  className={`rounded-lg bg-brand-purple px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light ${TAP}`}
                 >
                   + Registrar
                 </button>

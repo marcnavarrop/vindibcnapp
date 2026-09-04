@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPollResult } from "@/lib/data/polls";
 import { closePollAction } from "@/app/(admin)/admin/community/polls/actions";
 import { formatDate } from "@/lib/labels";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function PollResultPage({
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/admin/community?tab=polls"
-          className="text-sm text-brand-muted hover:text-brand-dark"
+          className={`text-sm text-brand-muted hover:text-brand-dark ${TAP}`}
         >
           ← Tornar
         </Link>
@@ -62,7 +63,7 @@ export default async function PollResultPage({
             const pct = totalVotes > 0 ? Math.round((opt.voteCount / totalVotes) * 100) : 0;
             return (
               <details key={opt.id} className="group">
-                <summary className="flex cursor-pointer list-none flex-col gap-1.5">
+                <summary className={`flex cursor-pointer list-none flex-col gap-1.5 ${TAP}`}>
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-bold text-brand-dark">{opt.label}</span>
                     <span className="text-brand-muted">
@@ -103,7 +104,7 @@ export default async function PollResultPage({
             <input type="hidden" name="id" value={poll.id} />
             <button
               type="submit"
-              className="rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-muted hover:border-error hover:text-error"
+              className={`rounded-lg border border-brand-border px-4 py-2 text-sm font-bold text-brand-muted hover:border-error hover:text-error ${TAP}`}
             >
               Tancar enquesta
             </button>

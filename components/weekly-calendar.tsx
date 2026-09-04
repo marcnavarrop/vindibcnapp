@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clsx, TAP_SURFACE } from "@/lib/utils";
+import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import {
   SERVICE_LABELS,
   RESERVATION_STATUS_LABELS,
@@ -228,7 +228,7 @@ export function WeeklyCalendar({
           <button
             type="button"
             onClick={() => setWeekOffset(0)}
-            className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg"
+            className={`rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg ${TAP}`}
           >
             Avui
           </button>
@@ -448,7 +448,7 @@ function TrialCard({
         backgroundColor: `${TRIAL_COLOR}1a`,
         border: `1.5px ${pending ? "dashed" : "solid"} ${TRIAL_COLOR}`,
       }}
-      className="block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight"
+      className={`block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight ${TAP_SURFACE}`}
       title={`Prova · ${t.fullName}`}
     >
       <span className="flex items-center gap-1">
@@ -518,7 +518,7 @@ function TrialModal({
           <div className="flex justify-between gap-4">
             <dt className="text-brand-muted">Telèfon</dt>
             <dd className="font-bold text-brand-dark">
-              <a href={`tel:${t.phone}`} className="hover:text-brand-purple">
+              <a href={`tel:${t.phone}`} className={`hover:text-brand-purple ${TAP}`}>
                 {t.phone}
               </a>
             </dd>
@@ -532,7 +532,7 @@ function TrialModal({
                 <input type="hidden" name="id" value={t.id} />
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
+                  className={`w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light ${TAP_SURFACE}`}
                 >
                   Acceptar
                 </button>
@@ -543,7 +543,7 @@ function TrialModal({
                 <input type="hidden" name="id" value={t.id} />
                 <button
                   type="submit"
-                  className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
+                  className={`w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 ${TAP_SURFACE}`}
                 >
                   Rebutjar
                 </button>
@@ -559,7 +559,7 @@ function TrialModal({
         <button
           type="button"
           onClick={onClose}
-          className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+          className={`mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
         >
           Tancar
         </button>
@@ -582,7 +582,7 @@ function NavButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg"
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg ${TAP}`}
     >
       {children}
     </button>
@@ -620,6 +620,7 @@ function ReservationCard({
       className={clsx(
         "block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight",
         cancelled && "opacity-50 line-through",
+        TAP_SURFACE,
       )}
       title={`${r.clientName} · ${SERVICE_LABELS[r.serviceType]}`}
     >
@@ -762,7 +763,7 @@ function ReservationModal({
           <h2 className="text-xl font-bold text-brand-dark">
             {done === "cancelled" ? "Reserva cancel·lada" : "Reserva marcada com feta"}
           </h2>
-          <button type="button" onClick={close} className="mt-2 w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark">
+          <button type="button" onClick={close} className={`mt-2 w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}>
             Tancar
           </button>
         </div>
@@ -830,7 +831,7 @@ function ReservationModal({
                 />
                 <button
                   type="submit"
-                  className="rounded-lg bg-brand-orange px-3 py-1.5 text-sm font-bold text-white hover:opacity-90"
+                  className={`rounded-lg bg-brand-orange px-3 py-1.5 text-sm font-bold text-white hover:opacity-90 ${TAP}`}
                 >
                   Desar
                 </button>
@@ -841,7 +842,7 @@ function ReservationModal({
                 <input type="hidden" name="id" value={r.id} />
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light"
+                  className={`w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light ${TAP_SURFACE}`}
                 >
                   Marcar feta
                 </button>
@@ -850,7 +851,7 @@ function ReservationModal({
                 <input type="hidden" name="id" value={r.id} />
                 <button
                   type="submit"
-                  className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10"
+                  className={`w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 ${TAP_SURFACE}`}
                 >
                   Cancel·lar
                 </button>
@@ -871,7 +872,7 @@ function ReservationModal({
         <button
           type="button"
           onClick={onClose}
-          className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark"
+          className={`mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
         >
           Tancar
         </button>

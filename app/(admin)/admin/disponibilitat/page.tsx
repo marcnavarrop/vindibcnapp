@@ -20,7 +20,7 @@ import {
   createBlockAdminAction,
   deleteBlockAdminAction,
 } from "@/app/(admin)/admin/disponibilitat/actions";
-import { clsx } from "@/lib/utils";
+import { TAP, clsx } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +67,7 @@ export default async function AdminDisponibilitatPage({
                   selected?.id === t.id
                     ? "border-brand-purple bg-brand-purple text-white"
                     : "border-brand-border bg-white text-brand-muted hover:text-brand-dark",
+                  TAP,
                 )}
               >
                 {t.fullName}

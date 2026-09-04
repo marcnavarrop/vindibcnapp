@@ -9,6 +9,7 @@ import { SERVICE_LABELS } from "@/lib/labels";
 import { createReservationAction } from "@/app/(admin)/admin/reservas/actions";
 import type { ReservationFormData } from "@/lib/data/reservations";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
+import { TAP } from "@/lib/utils";
 
 export function ReservationForm({
   clients,
@@ -100,7 +101,7 @@ export function ReservationForm({
         <SubmitButton pendingLabel="Reservant…">Crear reserva</SubmitButton>
         <Link
           href="/admin/reservas"
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

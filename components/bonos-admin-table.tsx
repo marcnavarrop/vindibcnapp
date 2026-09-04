@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { clsx } from "@/lib/utils";
+import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
 import { markBonoPaidAction } from "@/app/(admin)/admin/bonos/actions";
@@ -55,6 +55,7 @@ export function BonosAdminTable({ bonos }: { bonos: BonoListItem[] }) {
               filter === f.key
                 ? "bg-brand-purple text-white"
                 : "text-brand-muted hover:text-brand-dark",
+              TAP,
             )}
           >
             {f.label}
@@ -117,7 +118,7 @@ export function BonosAdminTable({ bonos }: { bonos: BonoListItem[] }) {
                       <input type="hidden" name="bonoId" value={b.id} />
                       <button
                         type="submit"
-                        className="rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light"
+                        className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
                       >
                         Marcar com pagat
                       </button>

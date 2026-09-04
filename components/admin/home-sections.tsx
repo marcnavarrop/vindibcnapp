@@ -1,4 +1,4 @@
-import { TAP } from "@/lib/utils";
+import { TAP, TAP_SURFACE } from "@/lib/utils";
 import Link from "next/link";
 import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
 import { AttentionPanel, AttentionRow } from "@/components/ui/attention";
@@ -177,7 +177,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
           </div>
         );
         return c.href ? (
-          <Link key={c.label} href={c.href} className="block h-full">
+          <Link key={c.label} href={c.href} className={`block h-full ${TAP_SURFACE}`}>
             {body}
           </Link>
         ) : (
@@ -249,7 +249,7 @@ export function TodayAtCentre({
         </h2>
         <Link
           href="/admin/reservas"
-          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
         >
           Veure l&apos;agenda
         </Link>

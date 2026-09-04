@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SERVICE_LABELS } from "@/lib/labels";
 import type { LowBono } from "@/lib/data/dashboard";
+import { TAP } from "@/lib/utils";
 
 /**
  * Targeta "Bons a punt d'esgotar-se" amb la llista clicable.
@@ -53,7 +54,7 @@ export function LowBonosCard({
             <li key={b.bonoId}>
               <Link
                 href={`${clientHrefBase}/${b.clientId}`}
-                className="flex items-baseline justify-between gap-2 py-1.5 text-xs hover:underline"
+                className={`flex items-baseline justify-between gap-2 py-1.5 text-xs hover:underline ${TAP}`}
               >
                 <span className="truncate">
                   <span className="font-bold text-brand-dark">

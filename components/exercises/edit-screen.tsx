@@ -18,6 +18,7 @@ import { ExerciseForm } from "@/components/forms/exercise-form";
 import { getExercise } from "@/lib/data/exercises";
 import { listExerciseCategories } from "@/lib/data/exercise-categories";
 import { updateExerciseAction } from "@/lib/actions/exercise-actions";
+import { TAP } from "@/lib/utils";
 
 const BACK_LINK =
   "text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple";
@@ -25,7 +26,7 @@ const BACK_LINK =
 /** Enllaç "← Biblioteca" de les pantalles de detall. */
 function BackToLibrary({ base }: { base: string }) {
   return (
-    <Link href={base} className={BACK_LINK}>
+    <Link href={base} className={`${BACK_LINK} ${TAP}`}>
       ← Biblioteca
     </Link>
   );

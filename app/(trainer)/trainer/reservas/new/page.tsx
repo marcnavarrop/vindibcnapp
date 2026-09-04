@@ -3,6 +3,7 @@ import { getViewer } from "@/lib/auth";
 import { ReservationForm } from "@/components/forms/reservation-form";
 import { getReservationFormData } from "@/lib/data/reservations";
 import { createTrainerReservationAction } from "@/app/(trainer)/trainer/reservas/actions";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function NewTrainerReservationPage({
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/trainer/reservas"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Tornar a l&apos;agenda
         </Link>

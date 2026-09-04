@@ -121,7 +121,7 @@ export function AppSidebar({
               type="button"
               onClick={() => setOpen(true)}
               aria-label="Obrir menú"
-              className="rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation"
+              className={`rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation ${TAP}`}
             >
               <MenuIcon />
             </button>
@@ -152,7 +152,7 @@ export function AppSidebar({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Tancar menú"
-                className="absolute top-3 right-3 rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation"
+                className={`absolute top-3 right-3 rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation ${TAP}`}
               >
                 <CloseIcon />
               </button>
@@ -485,7 +485,7 @@ function TranslatedCloseButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-label={t("closeMenu")}
-      className="absolute top-3 right-3 rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation"
+      className={`absolute top-3 right-3 rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation ${TAP}`}
     >
       <CloseIcon />
     </button>
@@ -500,7 +500,7 @@ function TranslatedMenuButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-label={t("openMenu")}
-      className="rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation"
+      className={`rounded-md p-1.5 transition-[background-color,transform] duration-100 hover:bg-white/10 active:scale-90 active:bg-white/20 [-webkit-tap-highlight-color:transparent] touch-manipulation ${TAP}`}
     >
       <MenuIcon />
     </button>

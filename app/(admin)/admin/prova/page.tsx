@@ -16,6 +16,7 @@ import {
 } from "@/app/(admin)/admin/prova/actions";
 import type { TrialStatus } from "@/types/database";
 import { assertModuleEnabled } from "@/lib/data/module-guard";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,7 @@ export default async function AdminProvaPage() {
       <main className="mx-auto max-w-5xl p-6">
       <Link
         href="/admin"
-        className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+        className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
       >
         ← Tornar
       </Link>
@@ -136,11 +137,11 @@ function TrialRow({
       <div className="min-w-[10rem] flex-1">
         <div className="font-bold text-brand-dark">{t.fullName}</div>
         <div className="text-xs text-brand-muted">
-          <a href={`tel:${t.phone}`} className="hover:text-brand-purple">
+          <a href={`tel:${t.phone}`} className={`hover:text-brand-purple ${TAP}`}>
             {t.phone}
           </a>{" "}
           ·{" "}
-          <a href={`mailto:${t.email}`} className="hover:text-brand-purple">
+          <a href={`mailto:${t.email}`} className={`hover:text-brand-purple ${TAP}`}>
             {t.email}
           </a>
         </div>
@@ -164,7 +165,7 @@ function TrialRow({
             <input type="hidden" name="id" value={t.id} />
             <button
               type="submit"
-              className="rounded-md bg-brand-purple px-2.5 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light"
+              className={`rounded-md bg-brand-purple px-2.5 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
             >
               Acceptar
             </button>
@@ -175,7 +176,7 @@ function TrialRow({
             <input type="hidden" name="id" value={t.id} />
             <button
               type="submit"
-              className="rounded-md border border-brand-border px-2.5 py-1.5 text-xs font-bold text-error hover:bg-error/10"
+              className={`rounded-md border border-brand-border px-2.5 py-1.5 text-xs font-bold text-error hover:bg-error/10 ${TAP}`}
             >
               Rebutjar
             </button>
@@ -191,7 +192,7 @@ function TrialRow({
         {canConvert && (
           <Link
             href={`/admin/clients/new?trial=${t.id}`}
-            className="rounded-md bg-brand-orange px-2.5 py-1.5 text-xs font-bold text-white hover:opacity-90"
+            className={`rounded-md bg-brand-orange px-2.5 py-1.5 text-xs font-bold text-white hover:opacity-90 ${TAP}`}
           >
             Convertir en client
           </Link>
@@ -216,7 +217,7 @@ function StatusButton({
       <input type="hidden" name="status" value={status} />
       <button
         type="submit"
-        className="rounded-md border border-brand-border px-2.5 py-1.5 text-xs font-bold text-brand-muted hover:text-brand-dark"
+        className={`rounded-md border border-brand-border px-2.5 py-1.5 text-xs font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
       >
         {label}
       </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteOfertaAction } from "@/app/(admin)/admin/ofertes/actions";
+import { TAP } from "@/lib/utils";
 
 export function DeleteOfertaButton({ id }: { id: string }) {
   return (
@@ -18,7 +19,7 @@ export function DeleteOfertaButton({ id }: { id: string }) {
       <input type="hidden" name="id" value={id} />
       <button
         type="submit"
-        className="text-xs font-bold tracking-wide text-error uppercase hover:opacity-70"
+        className={`text-xs font-bold tracking-wide text-error uppercase hover:opacity-70 ${TAP}`}
       >
         Eliminar
       </button>

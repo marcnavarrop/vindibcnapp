@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { Specialty } from "@/types/database";
+import { TAP } from "@/lib/utils";
 
 const SPECIALTY_OPTIONS = (
   Object.keys(SPECIALTY_LABELS) as Specialty[]
@@ -110,7 +111,7 @@ export function TrainerForm({
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple"
+              className={`rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple ${TAP}`}
             >
               {current ? "Canviar foto" : "Triar foto"}
             </button>
@@ -123,7 +124,7 @@ export function TrainerForm({
                   setRemoved(true);
                   if (fileRef.current) fileRef.current.value = "";
                 }}
-                className="rounded-lg px-3 py-1.5 text-xs font-bold text-brand-muted hover:text-error"
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold text-brand-muted hover:text-error ${TAP}`}
               >
                 Treure
               </button>
@@ -148,7 +149,7 @@ export function TrainerForm({
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
           href={cancelHref}
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

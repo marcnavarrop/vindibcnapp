@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { clsx } from "@/lib/utils";
+import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { SERVICE_LABELS, RESERVATION_STATUS_LABELS, formatDate } from "@/lib/labels";
@@ -44,6 +44,7 @@ export function TrainerUpcomingReservations({
                 scope === s
                   ? "bg-brand-purple text-white"
                   : "text-brand-muted hover:text-brand-dark",
+                TAP,
               )}
             >
               {s === "mine" ? "Els meus" : "Tots"}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { clsx, TAP_SURFACE } from "@/lib/utils";
+import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import type { ClientListItem } from "@/lib/data/clients";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 
@@ -49,6 +49,7 @@ export function TrainerClientsTable({
                 scope === s
                   ? "bg-brand-purple text-white"
                   : "text-brand-muted hover:text-brand-dark",
+                TAP,
               )}
             >
               {s === "mine" ? "Els meus" : "Tots"}

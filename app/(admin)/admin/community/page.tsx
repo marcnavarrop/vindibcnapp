@@ -55,7 +55,7 @@ export default async function CommunityPage({
               activeTab === key
                 ? "bg-brand-purple text-white"
                 : "text-brand-muted hover:text-brand-dark"
-            }`}
+            } ${TAP}`}
           >
             {label}
             {key === "polls" && polls.length > 0 && (
@@ -90,7 +90,7 @@ export default async function CommunityPage({
                 <div className="mt-3 flex items-center gap-4">
                   <Link
                     href={`/admin/community/${a.id}/edit`}
-                    className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                    className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
                   >
                     Editar
                   </Link>
@@ -98,7 +98,7 @@ export default async function CommunityPage({
                     <input type="hidden" name="id" value={a.id} />
                     <button
                       type="submit"
-                      className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                      className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
                     >
                       Eliminar
                     </button>
@@ -148,7 +148,7 @@ export default async function CommunityPage({
                 <div className="mt-3 flex items-center gap-4">
                   <Link
                     href={`/admin/community/polls/${p.id}`}
-                    className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                    className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
                   >
                     Veure resultats
                   </Link>
@@ -157,7 +157,7 @@ export default async function CommunityPage({
                       <input type="hidden" name="id" value={p.id} />
                       <button
                         type="submit"
-                        className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                        className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
                       >
                         Tancar
                       </button>
@@ -167,7 +167,7 @@ export default async function CommunityPage({
                     <input type="hidden" name="id" value={p.id} />
                     <button
                       type="submit"
-                      className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                      className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
                     >
                       Eliminar
                     </button>

@@ -9,6 +9,7 @@ import { SERVICE_LABELS, formatEur } from "@/lib/labels";
 import { createPaymentAction } from "@/app/(admin)/admin/pagos/actions";
 import type { PaymentFormData } from "@/lib/data/payments";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
+import { TAP } from "@/lib/utils";
 
 export function PaymentForm({
   clients,
@@ -92,7 +93,7 @@ export function PaymentForm({
         <SubmitButton>Registrar pagament</SubmitButton>
         <Link
           href="/admin/pagos"
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

@@ -97,7 +97,7 @@ export default async function ClientDetailPage({
           action={
             <Link
               href={`/admin/clients/${client.id}/bonos/new`}
-              className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+              className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
             >
               + Afegir bo
             </Link>
@@ -251,7 +251,7 @@ export default async function ClientDetailPage({
         <div>
           <Link
             href="/admin/clients"
-            className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+            className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
           >
             ← Clients
           </Link>

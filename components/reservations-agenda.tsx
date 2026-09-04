@@ -15,6 +15,7 @@ import {
 } from "@/app/(admin)/admin/reservas/actions";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { ReservationStatus } from "@/types/database";
+import { TAP } from "@/lib/utils";
 
 const STATUS_TONE: Record<ReservationStatus, "info" | "success" | "danger"> = {
   booked: "info",
@@ -194,7 +195,7 @@ function ReservationActions({ id }: { id: string }) {
         <input type="hidden" name="id" value={id} />
         <button
           type="submit"
-          className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-success hover:bg-success/10"
+          className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-success hover:bg-success/10 ${TAP}`}
         >
           Fet
         </button>
@@ -203,7 +204,7 @@ function ReservationActions({ id }: { id: string }) {
         <input type="hidden" name="id" value={id} />
         <button
           type="submit"
-          className="rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10"
+          className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10 ${TAP}`}
         >
           Cancel·lar
         </button>

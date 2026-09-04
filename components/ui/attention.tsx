@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/home-icon";
+import { TAP } from "@/lib/utils";
 
 /**
  * El plafó d'"Atenció immediata", compartit per l'inici de l'admin i el del
@@ -49,7 +50,7 @@ export function AttentionRow({
       </div>
       <Link
         href={href}
-        className="shrink-0 text-xs font-bold tracking-wide text-brand-orange uppercase hover:text-brand-dark"
+        className={`shrink-0 text-xs font-bold tracking-wide text-brand-orange uppercase hover:text-brand-dark ${TAP}`}
       >
         {cta} →
       </Link>

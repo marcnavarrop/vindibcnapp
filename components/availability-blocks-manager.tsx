@@ -6,6 +6,7 @@ import { SERVICE_LABELS } from "@/lib/labels";
 import type { AvailabilityBlock } from "@/lib/data/availability-blocks";
 import type { BlockFormState } from "@/lib/data/availability-block-submit";
 import type { ServiceType } from "@/types/database";
+import { TAP } from "@/lib/utils";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -135,7 +136,7 @@ export function AvailabilityBlocksManager({
                       <input type="hidden" name="id" value={b.id} />
                       <button
                         type="submit"
-                        className="text-xs font-bold tracking-wide text-error uppercase hover:underline"
+                        className={`text-xs font-bold tracking-wide text-error uppercase hover:underline ${TAP}`}
                       >
                         Eliminar
                       </button>

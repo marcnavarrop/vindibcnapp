@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { AnnouncementForm } from "@/components/forms/announcement-form";
 import { createAnnouncementAction } from "@/app/(admin)/admin/community/actions";
+import { TAP } from "@/lib/utils";
 
 export default function NewAnnouncementPage() {
   return (
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/community"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Comunitat
         </Link>

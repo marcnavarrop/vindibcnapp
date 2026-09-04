@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { ClientListItem } from "@/lib/data/clients";
 import { ResendInviteButton } from "@/components/resend-invite-button";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
-import { normalizeForSearch, digitsOnly, TAP_SURFACE } from "@/lib/utils";
+import { TAP, TAP_SURFACE, digitsOnly, normalizeForSearch } from "@/lib/utils";
 
 export function ClientsTable({
   clients,
@@ -77,7 +77,7 @@ export function ClientsTable({
               href="/admin/clients"
               aria-label="Treure el filtre de professional"
               title="Treure el filtre"
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-brand-purple/20"
+              className={`inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-brand-purple/20 ${TAP}`}
             >
               <svg
                 aria-hidden="true"

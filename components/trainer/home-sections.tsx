@@ -1,4 +1,4 @@
-import { TAP } from "@/lib/utils";
+import { TAP, TAP_SURFACE } from "@/lib/utils";
 import Link from "next/link";
 import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
 import { AttentionPanel, AttentionRow } from "@/components/ui/attention";
@@ -103,7 +103,7 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       {cards.map((c) => {
         const warn = c.label.startsWith("Bons") && d.lowBonos.length > 0;
         return (
-          <Link key={c.label} href={c.href} className="block h-full">
+          <Link key={c.label} href={c.href} className={`block h-full ${TAP_SURFACE}`}>
             {/*
               Al mòbil la icona va a sobre i no al costat, com a l'admin. Aquí
               les xifres són curtes —un compte de sessions o un percentatge—,
@@ -221,7 +221,7 @@ export function MyClients({ clients }: { clients: ClientListItem[] }) {
         </h2>
         <Link
           href="/trainer/clients"
-          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
         >
           Veure tots
         </Link>
@@ -237,7 +237,7 @@ export function MyClients({ clients }: { clients: ClientListItem[] }) {
             <li key={c.id}>
               <Link
                 href={`/trainer/clients/${c.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-brand-bg/50 sm:px-5"
+                className={`flex items-center gap-3 px-4 py-3 hover:bg-brand-bg/50 sm:px-5 ${TAP}`}
               >
                 <IconBox name="user" />
                 <span className="min-w-0 flex-1 truncate text-sm font-bold text-brand-dark">

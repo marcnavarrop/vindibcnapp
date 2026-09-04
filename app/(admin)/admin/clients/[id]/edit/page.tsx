@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ClientForm } from "@/components/forms/client-form";
 import { getClient, listTrainers } from "@/lib/data/clients";
 import { updateClientAction } from "@/app/(admin)/admin/clients/actions";
+import { TAP } from "@/lib/utils";
 
 export default async function EditClientPage({
   params,
@@ -20,7 +21,7 @@ export default async function EditClientPage({
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/admin/clients/${id}`}
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Tornar a la fitxa
         </Link>

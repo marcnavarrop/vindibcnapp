@@ -6,6 +6,7 @@ import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { createTrainerBonoAction } from "@/app/(trainer)/trainer/bonos/actions";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export default async function NewTrainerBonoPage({
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={`/trainer/clients/${clientId}`}
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Tornar a la fitxa
         </Link>

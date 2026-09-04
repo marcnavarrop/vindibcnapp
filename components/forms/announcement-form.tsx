@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/input";
 import { TextAreaField } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
+import { TAP } from "@/lib/utils";
 
 export type AnnouncementDefaults = {
   title: string;
@@ -43,7 +44,7 @@ export function AnnouncementForm({
         <SubmitButton pendingLabel="Publicant…">{submitLabel}</SubmitButton>
         <Link
           href="/admin/community"
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

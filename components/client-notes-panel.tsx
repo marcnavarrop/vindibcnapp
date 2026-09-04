@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TAP } from "@/lib/utils";
 
 /**
  * Notes internes d'un client, separades en clíniques i generals.
@@ -59,7 +60,7 @@ export function ClientNotesPanel({
         <div>
           <Link
             href={editHref}
-            className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+            className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
           >
             Editar notes →
           </Link>

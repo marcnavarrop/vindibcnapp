@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { clsx } from "@/lib/utils";
+import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   SERVICE_LABELS,
@@ -64,6 +64,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
               filter === f.key
                 ? "bg-brand-purple text-white"
                 : "text-brand-muted hover:text-brand-dark",
+              TAP,
             )}
           >
             {f.label}
@@ -134,7 +135,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     <a
                       href={`/client/regals/${v.id}/pdf`}
-                      className="text-xs font-bold text-brand-muted hover:text-brand-purple"
+                      className={`text-xs font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
                     >
                       PDF
                     </a>
@@ -143,7 +144,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                         <input type="hidden" name="voucherId" value={v.id} />
                         <button
                           type="submit"
-                          className="rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold whitespace-nowrap text-white hover:bg-brand-purple-light"
+                          className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold whitespace-nowrap text-white hover:bg-brand-purple-light ${TAP}`}
                         >
                           Marcar com pagat
                         </button>
@@ -156,7 +157,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                         <input type="hidden" name="voucherId" value={v.id} />
                         <button
                           type="submit"
-                          className="rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold whitespace-nowrap text-brand-muted hover:border-error hover:text-error"
+                          className={`rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold whitespace-nowrap text-brand-muted hover:border-error hover:text-error ${TAP}`}
                         >
                           Anul·lar
                         </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { clsx } from "@/lib/utils";
+import { TAP, clsx } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 
 /**
@@ -40,6 +40,7 @@ export function PendingTextButton({
       className={clsx(
         "inline-flex shrink-0 items-center gap-1.5 text-xs font-bold tracking-wide uppercase",
         className,
+        TAP,
       )}
     >
       {pending ? (

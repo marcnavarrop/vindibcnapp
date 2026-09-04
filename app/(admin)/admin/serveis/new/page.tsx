@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { ServiceForm } from "@/components/forms/service-form";
 import { createServiceAction } from "@/app/(admin)/admin/serveis/actions";
+import { TAP } from "@/lib/utils";
 
 export default function NewServicePage() {
   return (
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin/serveis"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Serveis
         </Link>

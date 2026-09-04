@@ -86,7 +86,7 @@ export default async function ServeisPage() {
                       <div className="ml-auto flex items-center gap-3">
                         <Link
                           href={`/admin/serveis/${s.id}/edit`}
-                          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
                         >
                           Editar
                         </Link>
@@ -99,7 +99,7 @@ export default async function ServeisPage() {
                           />
                           <button
                             type="submit"
-                            className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark"
+                            className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark ${TAP}`}
                           >
                             {s.active ? "Desactivar" : "Activar"}
                           </button>

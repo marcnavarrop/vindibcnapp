@@ -3,6 +3,7 @@ import { listBonos } from "@/lib/data/bonos";
 import { BonosAdminTable } from "@/components/bonos-admin-table";
 import { GroupTabs } from "@/components/ui/group-tabs";
 import { BONS_TABS } from "@/lib/admin-tabs";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function BonosPage() {
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href="/admin"
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← Tornar
         </Link>

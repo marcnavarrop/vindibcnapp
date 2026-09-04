@@ -10,6 +10,7 @@ import {
 } from "@/lib/labels";
 import type { AvailabilityRule } from "@/lib/data/availability";
 import type { ServiceType, Specialty } from "@/types/database";
+import { TAP } from "@/lib/utils";
 
 type Action = (formData: FormData) => void | Promise<void>;
 
@@ -139,7 +140,7 @@ export function AvailabilityManager({
         <div>
           <button
             type="submit"
-            className="rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+            className={`rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light ${TAP}`}
           >
             Afegir
           </button>
@@ -215,14 +216,14 @@ export function AvailabilityManager({
                       <div className="flex items-center gap-2">
                         <button
                           type="submit"
-                          className="rounded-md bg-brand-purple px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light"
+                          className={`rounded-md bg-brand-purple px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
                         >
                           Desar
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingId(null)}
-                          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark"
+                          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark ${TAP}`}
                         >
                           Cancel·lar
                         </button>
@@ -260,7 +261,7 @@ export function AvailabilityManager({
                         <button
                           type="button"
                           onClick={() => setEditingId(r.id)}
-                          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
                         >
                           Editar
                         </button>
@@ -268,7 +269,7 @@ export function AvailabilityManager({
                           <input type="hidden" name="id" value={r.id} />
                           <button
                             type="submit"
-                            className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error"
+                            className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
                           >
                             Eliminar
                           </button>

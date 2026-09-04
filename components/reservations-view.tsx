@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { clsx } from "@/lib/utils";
+import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import {
@@ -216,6 +216,7 @@ export function ReservationsView({
                 view === v
                   ? "bg-brand-purple text-white"
                   : "text-brand-muted hover:text-brand-dark",
+                TAP,
               )}
             >
               {v === "calendar" ? "Calendari" : "Llista"}
@@ -387,7 +388,7 @@ export function ReservationsView({
                     setClientQuery("");
                     clientInputRef.current?.focus();
                   }}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-dark"
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-dark ${TAP}`}
                   aria-label="Esborra filtre de client"
                 >
                   ×
@@ -399,7 +400,7 @@ export function ReservationsView({
                     <li key={name}>
                       <button
                         type="button"
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-brand-bg"
+                        className={`w-full px-3 py-2 text-left text-sm hover:bg-brand-bg ${TAP_SURFACE}`}
                         onMouseDown={() => {
                           setFilterClient(name);
                           setClientQuery(name);
@@ -420,7 +421,7 @@ export function ReservationsView({
             <button
               type="button"
               onClick={clearFilters}
-              className="ml-auto rounded-lg border border-brand-border px-2.5 py-1.5 text-xs font-bold text-brand-muted hover:text-brand-dark"
+              className={`ml-auto rounded-lg border border-brand-border px-2.5 py-1.5 text-xs font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
             >
               Netejar filtres
             </button>

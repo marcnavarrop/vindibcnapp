@@ -14,6 +14,7 @@ import {
   VIDEO_LIMIT_LABEL,
 } from "@/lib/exercise-video.constants";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
+import { TAP } from "@/lib/utils";
 
 export type ExerciseDefaults = {
   name: string;
@@ -177,7 +178,7 @@ export function ExerciseForm({
               <button
                 type="button"
                 onClick={() => setCreatingCategory(false)}
-                className="text-sm font-bold text-brand-muted hover:text-brand-dark"
+                className={`text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
               >
                 Cancel·lar
               </button>
@@ -190,7 +191,7 @@ export function ExerciseForm({
           <button
             type="button"
             onClick={() => setCreatingCategory(true)}
-            className="self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+            className={`self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
           >
             + Crear categoria nova
           </button>
@@ -282,7 +283,7 @@ export function ExerciseForm({
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
           href={cancelHref}
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

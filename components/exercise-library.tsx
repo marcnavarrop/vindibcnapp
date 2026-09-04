@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Film, ExternalLink, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { normalizeForSearch, clsx, TAP } from "@/lib/utils";
+import { TAP, TAP_SURFACE, clsx, normalizeForSearch } from "@/lib/utils";
 import type { Exercise } from "@/lib/data/exercises";
 import type { ExerciseCategoryItem } from "@/lib/data/exercise-categories";
 
@@ -279,7 +279,7 @@ export function ExerciseLibrary({
         {manage && (
           <Link
             href={`${basePath}/categories`}
-            className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+            className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
           >
             Gestionar categories →
           </Link>
@@ -377,7 +377,7 @@ function ExerciseCard({
           <div className="ml-auto flex items-center gap-3">
             <Link
               href={`${basePath}/${e.id}/edit`}
-              className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+              className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
             >
               Editar
             </Link>
@@ -512,7 +512,7 @@ export function VideoDialog({
         type="button"
         aria-label={texts.close}
         onClick={onClose}
-        className="absolute inset-0 h-full w-full cursor-default"
+        className={`absolute inset-0 h-full w-full cursor-default ${TAP_SURFACE}`}
       />
       <div
         role="dialog"

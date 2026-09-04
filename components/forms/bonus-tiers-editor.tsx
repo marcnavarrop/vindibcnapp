@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { saveTiersAction } from "@/app/(admin)/admin/facturacio/bonus-actions";
+import { TAP } from "@/lib/utils";
 
 export type TierRowData = {
   minUnits: number;
@@ -109,7 +110,7 @@ export function BonusTiersEditor({ tiers }: { tiers: TierRowData[] }) {
               <button
                 type="button"
                 onClick={() => removeRow(i)}
-                className="py-2 text-xs font-bold text-brand-muted underline hover:text-error"
+                className={`py-2 text-xs font-bold text-brand-muted underline hover:text-error ${TAP}`}
               >
                 Treure
               </button>
@@ -122,7 +123,7 @@ export function BonusTiersEditor({ tiers }: { tiers: TierRowData[] }) {
         <button
           type="button"
           onClick={addRow}
-          className="rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-purple transition-colors hover:border-brand-purple"
+          className={`rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-brand-purple transition-colors hover:border-brand-purple ${TAP}`}
         >
           + Afegir tram
         </button>

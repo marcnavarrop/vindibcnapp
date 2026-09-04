@@ -3,6 +3,7 @@ import { ClientForm } from "@/components/forms/client-form";
 import { listTrainers } from "@/lib/data/clients";
 import { getTrialForConversion } from "@/lib/data/trial-bookings";
 import { createClientAction } from "@/app/(admin)/admin/clients/actions";
+import { TAP } from "@/lib/utils";
 
 export default async function NewClientPage({
   searchParams,
@@ -30,7 +31,7 @@ export default async function NewClientPage({
       <main className="mx-auto max-w-5xl p-6">
         <Link
           href={trialId ? "/admin/prova" : "/admin/clients"}
-          className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
         >
           ← {trialId ? "Sessions de prova" : "Clients"}
         </Link>

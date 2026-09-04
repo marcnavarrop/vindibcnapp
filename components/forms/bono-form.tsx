@@ -9,6 +9,7 @@ import { formatEur, SERVICE_LABELS } from "@/lib/labels";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
+import { TAP } from "@/lib/utils";
 
 export function BonoForm({
   action,
@@ -119,7 +120,7 @@ export function BonoForm({
         <SubmitButton>Crear bo</SubmitButton>
         <Link
           href={cancelHref}
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

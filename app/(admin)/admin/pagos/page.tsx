@@ -20,7 +20,7 @@ export default async function PagosPage() {
           <div>
             <Link
               href="/admin"
-              className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+              className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
             >
               ← Tornar
             </Link>

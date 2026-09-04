@@ -7,6 +7,7 @@ import { SelectField } from "@/components/ui/select";
 import { TextAreaField } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
+import { TAP } from "@/lib/utils";
 
 export type ClientDefaults = {
   fullName: string;
@@ -84,7 +85,7 @@ export function ClientForm({
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
           href={cancelHref}
-          className="text-sm font-bold text-brand-muted hover:text-brand-purple"
+          className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar
         </Link>

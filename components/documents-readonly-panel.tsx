@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { formatDate } from "@/lib/labels";
 import type { ClientDocument } from "@/lib/data/client-documents";
+import { TAP } from "@/lib/utils";
 
 function formatBytes(bytes: number | null): string {
   if (!bytes) return "";
@@ -84,7 +85,7 @@ function ReadonlyDocumentRow({ doc }: { doc: ClientDocument }) {
         type="button"
         onClick={handleDownload}
         disabled={isPending}
-        className="ml-auto text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50"
+        className={`ml-auto text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50 ${TAP}`}
       >
         {isPending ? "…" : "Descarregar"}
       </button>

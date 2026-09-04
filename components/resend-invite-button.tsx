@@ -5,6 +5,7 @@ import {
   resendInviteAction,
   type ResendState,
 } from "@/app/(admin)/admin/invite-actions";
+import { TAP } from "@/lib/utils";
 
 /** Botó "Reenviar invitació" per a un usuari (per l'id del seu perfil). */
 export function ResendInviteButton({ profileId }: { profileId: string }) {
@@ -26,7 +27,7 @@ export function ResendInviteButton({ profileId }: { profileId: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple disabled:opacity-50"
+        className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple disabled:opacity-50 ${TAP}`}
         title="Reenviar l'email d'invitació per crear la contrasenya"
       >
         {pending ? "Enviant…" : "Reenviar invitació"}

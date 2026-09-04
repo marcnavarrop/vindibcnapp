@@ -33,6 +33,7 @@ import {
   formatEur,
   formatDate,
 } from "@/lib/labels";
+import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -116,7 +117,7 @@ export default async function TrainerClientDetailPage({
             canManage && (
               <Link
                 href={`/trainer/bonos/new?clientId=${client.id}`}
-                className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
               >
                 + Afegir bo
               </Link>
@@ -156,7 +157,7 @@ export default async function TrainerClientDetailPage({
                     <input type="hidden" name="bonoId" value={b.id} />
                     <button
                       type="submit"
-                      className="rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light"
+                      className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
                     >
                       Marcar com pagat
                     </button>
@@ -177,7 +178,7 @@ export default async function TrainerClientDetailPage({
             canManage && (
               <Link
                 href="/trainer/reservas/new"
-                className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
               >
                 + Nova reserva
               </Link>
@@ -273,7 +274,7 @@ export default async function TrainerClientDetailPage({
         <div>
           <Link
             href="/trainer/clients"
-            className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple"
+            className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
           >
             ← Clients
           </Link>

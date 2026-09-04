@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPollAction } from "@/app/(admin)/admin/community/polls/actions";
+import { TAP } from "@/lib/utils";
 
 export default function NewPollPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function NewPollPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-sm text-brand-muted hover:text-brand-dark"
+          className={`text-sm text-brand-muted hover:text-brand-dark ${TAP}`}
         >
           ← Tornar
         </button>
@@ -61,7 +62,7 @@ export default function NewPollPage() {
                 <button
                   type="button"
                   onClick={() => removeOption(i)}
-                  className="text-sm text-brand-muted hover:text-error"
+                  className={`text-sm text-brand-muted hover:text-error ${TAP}`}
                 >
                   ✕
                 </button>
@@ -71,7 +72,7 @@ export default function NewPollPage() {
           <button
             type="button"
             onClick={addOption}
-            className="self-start text-xs font-bold text-brand-purple hover:text-brand-orange"
+            className={`self-start text-xs font-bold text-brand-purple hover:text-brand-orange ${TAP}`}
           >
             + Afegir opció
           </button>
@@ -107,14 +108,14 @@ export default function NewPollPage() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="rounded-lg bg-brand-purple px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light"
+            className={`rounded-lg bg-brand-purple px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light ${TAP}`}
           >
             Publicar enquesta
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="rounded-lg border border-brand-border px-5 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark"
+            className={`rounded-lg border border-brand-border px-5 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
           >
             Cancel·lar
           </button>

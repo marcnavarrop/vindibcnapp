@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { PendingTextButton } from "@/components/ui/pending-text-button";
 import type { ClientTagWithUsage } from "@/lib/data/client-tags";
 import type { TagFormState } from "@/app/(admin)/admin/etiquetes/actions";
+import { TAP } from "@/lib/utils";
 
 /**
  * Catàleg d'etiquetes: crear-ne, reanomenar-les i esborrar-les.
@@ -90,7 +91,7 @@ export function TagCatalog({
                     />
                     <PendingTextButton
                       pendingLabel="Desant…"
-                      className="text-brand-purple hover:text-brand-orange disabled:opacity-50"
+                      className={`text-brand-purple hover:text-brand-orange disabled:opacity-50 ${TAP}`}
                     >
                       Desar
                     </PendingTextButton>
@@ -121,7 +122,7 @@ export function TagCatalog({
                           ? "Hi ha ofertes dirigides a aquesta etiqueta. Canvia-les primer."
                           : undefined
                       }
-                      className="text-brand-muted hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-brand-muted"
+                      className={`text-brand-muted hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-brand-muted ${TAP}`}
                     >
                       Esborrar
                     </PendingTextButton>

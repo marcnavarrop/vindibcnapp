@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { TAP_SURFACE } from "@/lib/utils";
 
 /**
  * Diàleg modal de confirmació.
@@ -63,7 +64,7 @@ export function ConfirmDialog({
         type="button"
         aria-label={ariaClose ?? "Tancar"}
         onClick={onClose}
-        className="absolute inset-0 h-full w-full cursor-default"
+        className={`absolute inset-0 h-full w-full cursor-default ${TAP_SURFACE}`}
       />
       <div
         ref={panelRef}

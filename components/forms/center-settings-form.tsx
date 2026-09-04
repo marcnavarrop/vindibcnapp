@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { updateCenterSettingsAction } from "@/app/(admin)/admin/configuracio/center-actions";
 import type { CenterSettings } from "@/lib/data/center-settings";
+import { TAP } from "@/lib/utils";
 
 /** Bloc temàtic: títol, descripció i barra esquerra. Tots els ajustos de la
  *  pàgina n'usen un, perquè cap secció es vegi diferent de les altres només
@@ -57,7 +58,7 @@ function Toggle({
         onClick={() => onChange(!checked)}
         className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple ${
           checked ? "bg-brand-purple" : "bg-brand-border"
-        }`}
+        } ${TAP}`}
       >
         <span
           className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
@@ -406,7 +407,7 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
               onClick={() => setReferralReferee((v) => !v)}
               className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple disabled:cursor-not-allowed ${
                 referralReferee ? "bg-brand-purple" : "bg-brand-border"
-              }`}
+              } ${TAP}`}
             >
               <span
                 className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${

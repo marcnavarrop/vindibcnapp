@@ -140,7 +140,7 @@ export default async function OfertesPage({
                   <div className="ml-auto flex items-center gap-3">
                     <Link
                       href={`/admin/ofertes/${p.id}/edit`}
-                      className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                      className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
                     >
                       Editar
                     </Link>
@@ -153,7 +153,7 @@ export default async function OfertesPage({
                       />
                       <button
                         type="submit"
-                        className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark"
+                        className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark ${TAP}`}
                       >
                         {p.active ? "Desactivar" : "Activar"}
                       </button>
