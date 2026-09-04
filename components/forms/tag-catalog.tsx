@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { TAP } from "@/lib/utils";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { PendingTextButton } from "@/components/ui/pending-text-button";
 import type { ClientTagWithUsage } from "@/lib/data/client-tags";
 import type { TagFormState } from "@/app/(admin)/admin/etiquetes/actions";
 
@@ -48,12 +49,9 @@ export function TagCatalog({
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark"
           />
         </label>
-        <button
-          type="submit"
-          className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
-        >
+        <SubmitButton pendingLabel="Creant…" className="shrink-0 whitespace-nowrap">
           Crear
-        </button>
+        </SubmitButton>
       </form>
 
       {error && (
@@ -90,12 +88,12 @@ export function TagCatalog({
                       required
                       className="min-w-0 flex-1 rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-dark"
                     />
-                    <button
-                      type="submit"
-                      className="shrink-0 text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+                    <PendingTextButton
+                      pendingLabel="Desant…"
+                      className="text-brand-purple hover:text-brand-orange disabled:opacity-50"
                     >
                       Desar
-                    </button>
+                    </PendingTextButton>
                   </form>
 
                   <Badge tone={t.clientCount > 0 ? "info" : "neutral"}>
@@ -115,18 +113,18 @@ export function TagCatalog({
 
                   <form action={deleteFormAction} className="ml-auto">
                     <input type="hidden" name="id" value={t.id} />
-                    <button
-                      type="submit"
+                    <PendingTextButton
+                      pendingLabel="Esborrant…"
                       disabled={inUseByPromotions}
                       title={
                         inUseByPromotions
                           ? "Hi ha ofertes dirigides a aquesta etiqueta. Canvia-les primer."
                           : undefined
                       }
-                      className="text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-brand-muted"
+                      className="text-brand-muted hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-brand-muted"
                     >
                       Esborrar
-                    </button>
+                    </PendingTextButton>
                   </form>
                 </div>
               );

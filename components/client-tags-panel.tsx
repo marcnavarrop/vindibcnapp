@@ -99,7 +99,9 @@ export function ClientTagsPanel({
           </label>
           {/* Mateix motiu que la casella: crear una etiqueta també va al servidor
               i tornava sense dir res mentrestant. */}
-          <SubmitButton pendingLabel="Creant…">Crear i assignar</SubmitButton>
+          <SubmitButton pendingLabel="Creant…" className="shrink-0 whitespace-nowrap">
+            Crear i assignar
+          </SubmitButton>
         </form>
       )}
     </section>
