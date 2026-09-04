@@ -11,6 +11,7 @@ import {
   formatTime,
 } from "@/lib/labels";
 import type { AdminDashboard } from "@/lib/data/dashboard";
+import { Badge } from "@/components/ui/badge";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { AdminAttention } from "@/lib/data/admin-attention";
 
@@ -276,8 +277,9 @@ export function TodayAtCentre({
                 <p className="truncate text-sm font-bold text-brand-dark">
                   {r.clientName}
                 </p>
-                <p className="truncate text-xs text-brand-muted">
+                <p className="flex items-center gap-1.5 truncate text-xs text-brand-muted">
                   {SERVICE_LABELS[r.serviceType]}
+                  {r.isComplimentary && <Badge tone="warn">Cortesia</Badge>}
                 </p>
               </div>
 

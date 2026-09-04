@@ -246,6 +246,13 @@ export type ReservationListItem = {
   scheduledAt: string;
   serviceType: ServiceType;
   status: ReservationStatus;
+  /**
+   * Sessió de cortesia (0070). Aquest tipus el consumeixen NOMÉS les vistes
+   * d'admin i professional —el calendari setmanal, l'agenda i els llistats—;
+   * l'àrea de client té la seva pròpia forma. Per això el distintiu no pot
+   * arribar-li al client per accident.
+   */
+  isComplimentary: boolean;
 };
 
 function nameOfClient(clientId: string, store: Store): string {
@@ -279,6 +286,7 @@ export async function listReservations(
         scheduledAt: r.scheduled_at,
         serviceType: r.service_type,
         status: r.status,
+        isComplimentary: r.is_complimentary,
       }));
   }
 
@@ -287,7 +295,7 @@ export async function listReservations(
   let query = supabase
     .from("reservations")
     .select(
-      `id, client_id, scheduled_at, service_type, status, trainer_id,
+      `id, client_id, scheduled_at, service_type, status, trainer_id, is_complimentary,
        client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name)),
        trainer:profiles!reservations_trainer_id_fkey(full_name)`,
     )
@@ -304,6 +312,7 @@ export async function listReservations(
     service_type: ServiceType;
     status: ReservationStatus;
     trainer_id: string | null;
+    is_complimentary: boolean;
     client: { profile: { full_name: string | null } | null } | null;
     trainer: { full_name: string | null } | null;
   };
@@ -316,6 +325,7 @@ export async function listReservations(
     scheduledAt: r.scheduled_at,
     serviceType: r.service_type,
     status: r.status,
+    isComplimentary: r.is_complimentary,
   }));
 }
 
@@ -400,11 +410,27 @@ export async function getReservationFormData(
   return { clients, trainers };
 }
 
+/**
+ * Què fa falta per crear una reserva des del panell.
+ *
+ * És una unió i no un objecte amb camps opcionals a posta: amb bo, el client i
+ * el tipus de servei SURTEN del bo i no s'han de poder contradir; sense bo
+ * —una sessió de cortesia— no hi ha d'on treure'ls i han de venir tots dos.
+ * El tipus obliga a dir-ho, en comptes de deixar-ho a un `if` que algú pugui
+ * oblidar.
+ */
 export type ReservationInput = {
-  bonoId: string;
   trainerId: string | null;
   scheduledAt: string; // ISO
-};
+} & (
+  | { bonoId: string; clientId?: undefined; serviceType?: undefined }
+  | {
+      /** Sessió de cortesia: gratuïta i sense consumir cap bo. */
+      bonoId: null;
+      clientId: string;
+      serviceType: ServiceType;
+    }
+);
 
 /**
  * Les places de grup que crea l'admin o el professional, una per data.
@@ -428,15 +454,20 @@ export type ReservationInput = {
  * Torna les sessions que queden al bo.
  */
 async function createGroupReservations(
+  /**
+   * El bo del qual surten les sessions, o `null` si són de cortesia. Quan és
+   * null, `clientId` diu de qui és la reserva —amb bo ho diu el bo.
+   */
   bono: {
     id: string;
     client_id: string;
     remaining_sessions: number;
     status: BonoStatus;
-  },
+  } | null,
+  clientId: string,
   trainerId: string | null,
   dates: string[],
-): Promise<number> {
+): Promise<number | null> {
   if (!trainerId)
     throw new Error("Una sessió de grup necessita un professional.");
 
@@ -445,10 +476,13 @@ async function createGroupReservations(
   if (viewer.role !== "admin") {
     if (viewer.role !== "trainer") throw new Error("No autoritzat.");
     const admin = createAdminClient();
+    // Es comprova contra `clientId` i no contra `bono.client_id`: amb cortesia
+    // no hi ha bo d'on treure'l. Amb bo, els dos valen el mateix —qui crida
+    // passa `bono.client_id`—, així que la comprovació no s'ha afluixat.
     const { data: seu } = await admin
       .from("clients")
       .select("id")
-      .eq("id", bono.client_id)
+      .eq("id", clientId)
       .eq("assigned_trainer_id", viewer.id)
       .maybeSingle();
     if (!seu) throw new Error("Aquest client no és teu.");
@@ -456,12 +490,14 @@ async function createGroupReservations(
 
   const admin = createAdminClient();
   const fetes: string[] = [];
-  let restant = bono.remaining_sessions;
+  let restant = bono ? bono.remaining_sessions : null;
 
   for (const scheduledAt of dates) {
     const { data: res, error } = await admin.rpc("book_group_slot", {
-      p_client_id: bono.client_id,
-      p_bono_id: bono.id,
+      p_client_id: clientId,
+      // Sense bo, la funció de la 0070 se salta el descompte i marca la fila
+      // com a cortesia. El lock i l'aforament segueixen igual.
+      p_bono_id: bono ? bono.id : null,
       p_expected_remaining: restant,
       p_trainer_id: trainerId,
       p_scheduled_at: scheduledAt,
@@ -472,13 +508,15 @@ async function createGroupReservations(
       // Desfem el que hagi entrat: la petició era d'N setmanes o cap.
       if (fetes.length > 0)
         await admin.from("reservations").delete().in("id", fetes);
-      await admin
-        .from("bonos")
-        .update({
-          remaining_sessions: bono.remaining_sessions,
-          status: bono.status,
-        })
-        .eq("id", bono.id);
+      // Restaurar el comptador només si n'hi havia. Una cortesia no n'ha tocat cap.
+      if (bono)
+        await admin
+          .from("bonos")
+          .update({
+            remaining_sessions: bono.remaining_sessions,
+            status: bono.status,
+          })
+          .eq("id", bono.id);
       if (error) throw new Error("No s'ha pogut crear la reserva.");
       const motiu = res && !res.ok ? res.reason : null;
       if (motiu === "taken")
@@ -489,7 +527,9 @@ async function createGroupReservations(
     }
 
     fetes.push(res.id);
-    restant = res.remaining;
+    // Amb cortesia la funció torna `remaining: null`: no hi ha comptador que
+    // seguir, i el següent cicle ha de tornar a enviar null.
+    restant = bono ? res.remaining : null;
   }
 
   return restant;
@@ -511,12 +551,18 @@ export async function createReservation(
 
   if (USE_MOCK) {
     const store = getStore();
-    const bono = store.bonos.find((b) => b.id === input.bonoId);
-    if (!bono) throw new Error("Bo no trobat.");
-    if (bono.remaining_sessions < weeks)
+    // Sense bo és una sessió de cortesia: el client i el tipus de servei venen
+    // de l'entrada, i no hi ha comptador que mirar ni descomptar.
+    const bono = input.bonoId
+      ? store.bonos.find((b) => b.id === input.bonoId)
+      : null;
+    if (input.bonoId && !bono) throw new Error("Bo no trobat.");
+    if (bono && bono.remaining_sessions < weeks)
       throw new Error(
         `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
       );
+    const clientId = bono ? bono.client_id : input.clientId!;
+    const serviceType = bono ? bono.service_type : input.serviceType!;
     for (const scheduled_at of dates) {
       // L'aforament també es respecta en simulació: si no, un grup s'omplia
       // sense límit en local i petava en real, que és la pitjor manera
@@ -530,103 +576,142 @@ export async function createReservation(
               r.status === "booked",
           )
           .map((r) => ({ service_type: r.service_type })),
-        bono.service_type,
+        serviceType,
       );
       store.reservations.push({
         id: crypto.randomUUID(),
-        client_id: bono.client_id,
-        bono_id: bono.id,
+        client_id: clientId,
+        bono_id: bono ? bono.id : null,
         trainer_id: input.trainerId,
         scheduled_at,
-        service_type: bono.service_type,
+        service_type: serviceType,
         status: "booked",
         series_id: null,
+        is_complimentary: !bono,
         created_at: new Date().toISOString(),
       });
     }
-    bono.remaining_sessions -= weeks;
-    // Un bo sense pagar que esgota sessions NO és "completat": si es
-    // marqués així, ni l'admin el podria cobrar ni el barrido d'impagats el
-    // trobaria mai. Es queda pendent fins que algú el pagui o decaigui.
-    if (bono.remaining_sessions === 0 && bono.status === "active")
-      bono.status = "completed";
-    // Primera reserva feta amb aquest bo: engega el compte del termini de
-    // pagament i ja no es torna a tocar.
-    bono.first_reservation_at ??= new Date().toISOString();
+    // Tot el que segueix és del bo. Una cortesia no en té: no descompta, no
+    // canvia d'estat i no engega cap termini de pagament.
+    if (bono) {
+      bono.remaining_sessions -= weeks;
+      // Un bo sense pagar que esgota sessions NO és "completat": si es
+      // marqués així, ni l'admin el podria cobrar ni el barrido d'impagats el
+      // trobaria mai. Es queda pendent fins que algú el pagui o decaigui.
+      if (bono.remaining_sessions === 0 && bono.status === "active")
+        bono.status = "completed";
+      // Primera reserva feta amb aquest bo: engega el compte del termini de
+      // pagament i ja no es torna a tocar.
+      bono.first_reservation_at ??= new Date().toISOString();
+    }
     saveStore(store);
     const trainerName = input.trainerId
       ? (store.profiles.find((p) => p.id === input.trainerId)?.full_name ?? null)
       : null;
-    await notifyReservation(bono.client_id, "reservation_confirmed", {
+    await notifyReservation(clientId, "reservation_confirmed", {
       scheduledAt: dates[0],
-      serviceType: bono.service_type,
+      serviceType,
       trainerName,
     });
-    await notifyBonoLowIfNeeded(
-      bono.client_id,
-      bono.service_type,
-      bono.remaining_sessions,
-    );
+    // L'avís de "et queden poques sessions" només té sentit si hi ha bo.
+    if (bono)
+      await notifyBonoLowIfNeeded(
+        clientId,
+        serviceType,
+        bono.remaining_sessions,
+      );
     return;
   }
 
   const supabase = await createClient();
-  const { data: bono, error: bErr } = await supabase
-    .from("bonos")
-    .select("id, client_id, service_type, remaining_sessions, status, first_reservation_at")
-    .eq("id", input.bonoId)
-    .single();
-  if (bErr || !bono) throw new Error("Bo no trobat.");
-  if (bono.remaining_sessions < weeks)
-    throw new Error(
-      `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
-    );
+
+  // Sense bo, una sessió de cortesia: no hi ha res a llegir ni a comprovar.
+  // Amb bo, exactament el mateix de sempre.
+  let bono: {
+    id: string;
+    client_id: string;
+    service_type: ServiceType;
+    remaining_sessions: number;
+    status: BonoStatus;
+    first_reservation_at: string | null;
+  } | null = null;
+
+  if (input.bonoId) {
+    const { data, error: bErr } = await supabase
+      .from("bonos")
+      .select("id, client_id, service_type, remaining_sessions, status, first_reservation_at")
+      .eq("id", input.bonoId)
+      .single();
+    if (bErr || !data) throw new Error("Bo no trobat.");
+    if (data.remaining_sessions < weeks)
+      throw new Error(
+        `Aquest bo només té ${data.remaining_sessions} sessions disponibles.`,
+      );
+    bono = data;
+  }
+
+  const clientId = bono ? bono.client_id : input.clientId!;
+  const serviceType = bono ? bono.service_type : input.serviceType!;
 
   // L'aforament d'un grup no el pot garantir cap índex únic (quatre files són
   // quatre files legítimes), així que aquest cas passa per la funció de
   // Postgres que serialitza per franja, igual que la reserva del client.
-  const remaining = bono.service_type === "grupo_reducido"
-    ? await createGroupReservations(bono, input.trainerId, dates)
-    : bono.remaining_sessions - weeks;
+  //
+  // La cortesia NO obre cap camí paral·lel: passa per la mateixa funció, amb
+  // el bo a null. El lock i el recompte d'aforament són els mateixos, i per
+  // això una plaça regalada ocupa lloc com qualsevol altra.
+  const remaining = serviceType === "grupo_reducido"
+    ? await createGroupReservations(bono, clientId, input.trainerId, dates)
+    : bono
+      ? bono.remaining_sessions - weeks
+      : null;
 
-  if (bono.service_type !== "grupo_reducido") {
+  if (serviceType !== "grupo_reducido") {
+    // L'individual segueix protegit per l'índex únic de la 0007, que filtra per
+    // status i service_type i no mira el bo: una cortesia individual tampoc pot
+    // trepitjar una franja ocupada.
     const { error: rErr } = await supabase.from("reservations").insert(
       dates.map((scheduled_at) => ({
-        client_id: bono.client_id,
-        bono_id: bono.id,
+        client_id: clientId,
+        bono_id: bono ? bono.id : null,
         trainer_id: input.trainerId,
         scheduled_at,
-        service_type: bono.service_type,
+        service_type: serviceType,
         status: "booked" as const,
+        is_complimentary: !bono,
       })),
     );
     if (rErr) throw rErr;
 
-    const { error: uErr } = await supabase
-      .from("bonos")
-      .update({
-        remaining_sessions: remaining,
-        // Només el bo ja pagat passa a "completat" (veure la nota del camí mock).
-        ...(remaining === 0 && bono.status === "active"
-          ? { status: "completed" as const }
-          : {}),
-        ...(bono.first_reservation_at
-          ? {}
-          : { first_reservation_at: new Date().toISOString() }),
-      })
-      .eq("id", bono.id);
-    if (uErr) throw uErr;
+    if (bono) {
+      const { error: uErr } = await supabase
+        .from("bonos")
+        .update({
+          remaining_sessions: remaining!,
+          // Només el bo ja pagat passa a "completat" (veure la nota del camí mock).
+          ...(remaining === 0 && bono.status === "active"
+            ? { status: "completed" as const }
+            : {}),
+          ...(bono.first_reservation_at
+            ? {}
+            : { first_reservation_at: new Date().toISOString() }),
+        })
+        .eq("id", bono.id);
+      if (uErr) throw uErr;
+    }
   }
 
   const trainer = input.trainerId
     ? await getProfileContact(input.trainerId)
     : null;
-  await notifyReservation(bono.client_id, "reservation_confirmed", {
+  await notifyReservation(clientId, "reservation_confirmed", {
     scheduledAt: dates[0],
-    serviceType: bono.service_type,
+    serviceType,
     trainerName: trainer?.name ?? null,
   });
-  await notifyBonoLowIfNeeded(bono.client_id, bono.service_type, remaining);
+  // Sense bo no hi ha cap comptador que pugui anar baix.
+  if (bono && remaining !== null)
+    await notifyBonoLowIfNeeded(clientId, serviceType, remaining);
 }
 
 
@@ -844,6 +929,7 @@ export async function createClientReservation(
       service_type: serviceType,
       status: "booked",
       series_id: null,
+      is_complimentary: false,
       created_at: new Date().toISOString(),
     });
     bono.remaining_sessions -= 1;

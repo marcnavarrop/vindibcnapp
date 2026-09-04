@@ -18,6 +18,7 @@ import {
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
+import { Badge } from "@/components/ui/badge";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
@@ -622,10 +623,22 @@ function ReservationCard({
         cancelled && "opacity-50 line-through",
         TAP_SURFACE,
       )}
-      title={`${r.clientName} · ${SERVICE_LABELS[r.serviceType]}`}
+      title={`${r.clientName} · ${SERVICE_LABELS[r.serviceType]}${r.isComplimentary ? " · Cortesia" : ""}`}
     >
       <span className="flex items-center gap-1 font-bold text-brand-dark">
         <span className="truncate">{firstName(r.clientName)}</span>
+        {/* Discret a posta: la fitxa fa 122 px i ja hi caben el nom, el servei
+            i l'ocupació. Una lletra en un rodó diu "aquesta és diferent" sense
+            robar l'espai del que s'hi ve a llegir; el detall complet surt en
+            obrir-la i al `title`. */}
+        {r.isComplimentary && (
+          <span
+            title="Sessió de cortesia"
+            className="shrink-0 rounded-full bg-brand-orange px-1 text-[9px] font-bold text-white"
+          >
+            C
+          </span>
+        )}
         {!canManage && <LockIcon />}
       </span>
       <span
@@ -792,7 +805,12 @@ function ReservationModal({
           className="mb-3 h-1.5 w-12 rounded-full"
           style={{ backgroundColor: colorOfService(palette, r.serviceType) }}
         />
-        <h2 className="text-lg font-bold text-brand-dark">{r.clientName}</h2>
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-lg font-bold text-brand-dark">{r.clientName}</h2>
+          {/* Aquí sí, sencer: al detall hi ha espai i és on l'admin ve a
+              entendre què és aquesta reserva. */}
+          {r.isComplimentary && <Badge tone="warn">Cortesia</Badge>}
+        </div>
         <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
         <dl className="mt-4 flex flex-col gap-2 text-sm">
           <Field label="Servei" value={SERVICE_LABELS[r.serviceType]} />

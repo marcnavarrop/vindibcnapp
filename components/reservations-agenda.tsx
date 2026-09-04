@@ -166,6 +166,7 @@ function Section({
                     <span className="text-brand-muted">
                       {SERVICE_LABELS[r.serviceType]}
                     </span>
+                    {r.isComplimentary && <Badge tone="warn">Cortesia</Badge>}
                     {r.trainerName && (
                       <span className="text-brand-muted">· {r.trainerName}</span>
                     )}

@@ -8,6 +8,7 @@ import {
   completeReservation,
   rescheduleReservation,
 } from "@/lib/data/reservations";
+import { parseReservationForm } from "@/lib/data/reservation-input";
 import { acceptTrial, rejectTrial } from "@/lib/data/trial-bookings";
 import { datetimeLocalToInstant } from "@/lib/center-time";
 import { getViewer } from "@/lib/auth";
@@ -21,25 +22,14 @@ export async function createTrainerReservationAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const bonoId = String(formData.get("bonoId") ?? "");
-  const trainerId = String(formData.get("trainerId") ?? "") || null;
-  const raw = String(formData.get("scheduledAt") ?? "");
-  const repeatWeeks = Number(formData.get("repeatWeeks")) || 1;
-
-  if (!bonoId) return { error: "Tria un bo." };
-  if (!raw) return { error: "Indica la data i hora." };
-  if (repeatWeeks < 1 || repeatWeeks > 52)
-    return { error: "Les repeticions han d'estar entre 1 i 52." };
-
-  // L'hora que s'escriu al panell és hora del centre, no del servidor.
-  const date = datetimeLocalToInstant(raw);
-  if (!date) return { error: "La data no és vàlida." };
+  // El parseig viu a `lib/data/reservation-input.ts`: aquesta acció i la del
+  // seu company eren dues còpies del mateix, i amb la cortesia haurien passat
+  // a ser dues còpies més llargues.
+  const parsed = parseReservationForm(formData);
+  if (!parsed.ok) return { error: parsed.error };
 
   try {
-    await createReservation(
-      { bonoId, trainerId, scheduledAt: date.toISOString() },
-      repeatWeeks,
-    );
+    await createReservation(parsed.input, parsed.repeatWeeks);
   } catch (e) {
     return {
       error: e instanceof Error ? e.message : "Error en crear la reserva.",

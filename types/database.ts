@@ -67,7 +67,8 @@ export type WaitlistStatus = "waiting" | "fulfilled" | "expired" | "cancelled";
  * els peus de qui el va llegir i el reclam optimista no ha entrat.
  */
 export type GroupBookingResult =
-  | { ok: true; id: string; remaining: number }
+  /** `remaining` és null quan la reserva és de cortesia: no hi ha cap bo que comptar (0070). */
+  | { ok: true; id: string; remaining: number | null }
   | { ok: false; reason: "taken" | "full" | "no_sessions" };
 
 export type ReferralRewardStatus = "pending" | "used" | "expired";
@@ -434,6 +435,7 @@ export interface Database {
           service_type: ServiceType;
           status: ReservationStatus;
           series_id: string | null;
+          is_complimentary: boolean;
           created_at: string;
         };
         Insert: {
@@ -445,6 +447,7 @@ export interface Database {
           service_type: ServiceType;
           status?: ReservationStatus;
           series_id?: string | null;
+          is_complimentary?: boolean;
           created_at?: string;
         };
         Update: {
@@ -456,6 +459,7 @@ export interface Database {
           service_type?: ServiceType;
           status?: ReservationStatus;
           series_id?: string | null;
+          is_complimentary?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -1459,14 +1463,17 @@ export interface Database {
       owns_client: { Args: { cid: string }; Returns: boolean };
       is_trainer_of: { Args: { cid: string }; Returns: boolean };
       /**
-       * Reserva una plaça de grup serialitzant per franja (0053). Retorna
-       * {ok:true,id,remaining} o {ok:false,reason:'taken'|'full'|'no_sessions'}.
+       * Reserva una plaça de grup serialitzant per franja (0053). Amb
+       * `p_bono_id` null la reserva és de cortesia: no descompta cap sessió,
+       * però ocupa plaça igual (0070). Retorna {ok:true,id,remaining} o
+       * {ok:false,reason:'taken'|'full'|'no_sessions'}.
        */
       book_group_slot: {
         Args: {
           p_client_id: string;
-          p_bono_id: string;
-          p_expected_remaining: number;
+          /** Null = sessió de cortesia: no es descompta cap sessió (0070). */
+          p_bono_id: string | null;
+          p_expected_remaining: number | null;
           p_trainer_id: string;
           p_scheduled_at: string;
           p_capacity: number;

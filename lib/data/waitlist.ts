@@ -523,6 +523,7 @@ async function promoteMock(
       service_type: c.service_type,
       status: "booked",
       series_id: null,
+      is_complimentary: false,
       created_at: new Date().toISOString(),
     });
     bono.remaining_sessions -= 1;
