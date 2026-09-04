@@ -17,13 +17,14 @@ import type { Exercise } from "@/lib/data/exercises";
  * i professional. Amb `canManage` surten el formulari d'assignació i els botons
  * de treure; sense, només la llista en lectura.
  *
- * LA TERCERA VISTA DEL MATEIX VÍDEO. Abans muntava aquí el reproductor gran
- * (`ExerciseVideoPlayer`) mentre la biblioteca i els exercicis assignats de
- * l'àrea de client ja feien servir la fitxa compacta amb icona i diàleg. Eren
- * tres maneres de fer el mateix. Ara les tres criden `VideoIndicator`,
- * `VideoDialog` i `videoKind`, i els textos surten de `LIBRARY_TEXTS_CA`: aquí
- * no es poden traduir amb hooks perquè l'admin i el professional van en català
- * fix i no tenen `NextIntlClientProvider` a sobre.
+ * LA TERCERA VISTA DEL MATEIX VÍDEO. Abans muntava aquí un reproductor gran
+ * incrustat —`components/exercise-video-player.tsx`, que era l'últim que el
+ * feia servir i ja s'ha esborrat— mentre la biblioteca i els exercicis
+ * assignats de l'àrea de client ja feien servir la fitxa compacta amb icona i
+ * diàleg. Eren tres maneres de fer el mateix. Ara les tres criden
+ * `VideoIndicator`, `VideoDialog` i `videoKind`, i els textos surten de
+ * `LIBRARY_TEXTS_CA`: aquí no es poden traduir amb hooks perquè l'admin i el
+ * professional van en català fix i no tenen `NextIntlClientProvider` a sobre.
  *
  * "use client" perquè el diàleg necessita estat. Les server actions arriben com
  * a propietats i funcionen igual: el que canvia és on es pinta, no qui escriu.
