@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ClientListItem } from "@/lib/data/clients";
 import { ResendInviteButton } from "@/components/resend-invite-button";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 import { normalizeForSearch, digitsOnly, TAP_SURFACE } from "@/lib/utils";
 
 export function ClientsTable({
@@ -32,8 +33,10 @@ export function ClientsTable({
         normalizeForSearch(c.phone).includes(q)
       )
         return true;
-      // El telèfon es desa amb prefix i espais ("+34 600 100 001"): comparant
-      // només dígits, cercar "600100" també el troba.
+      // Comparant només dígits, cercar "600100" troba el número tant si està
+      // desat pelat com amb prefix o espais. (Deia aquí que es desava com
+      // "+34 600 100 001"; això és la llavor del mode simulació. A la base real
+      // són dígits pelats i el camp no té cap validació de format.)
       return qDigits.length > 0 && digitsOnly(c.phone).includes(qDigits);
     });
   }, [query, clients]);
@@ -135,9 +138,13 @@ export function ClientsTable({
                   </span>
                 </CellLink>
                 {/* Fora de l'enllaç a posta: si el botó de reenviar la
-                    invitació hi anés a dins, tocar-lo obriria la fitxa. */}
-                <td className="px-4 py-3 text-right">
-                  <ResendInviteButton profileId={c.profileId} />
+                    invitació o el de WhatsApp hi anessin a dins, tocar-los
+                    obriria la fitxa en comptes de fer el que diuen. */}
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <WhatsAppLink phone={c.phone} name={c.fullName} variant="icon" />
+                    <ResendInviteButton profileId={c.profileId} />
+                  </div>
                 </td>
               </tr>
             ))}

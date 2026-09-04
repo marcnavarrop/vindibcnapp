@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { ClientTagsPanel } from "@/components/client-tags-panel";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 import { getClient } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
@@ -255,9 +256,18 @@ export default async function ClientDetailPage({
             ← Clients
           </Link>
           <h1 className="mt-1 text-2xl text-brand-dark">{client.fullName}</h1>
-          <p className="text-sm text-brand-muted">
-            {client.email}
-            {client.phone ? ` · ${client.phone}` : ""}
+          {/*
+            El botó va aquí, a la mateixa línia que el correu i el telèfon, i
+            no entre les accions de la dreta: contactar és una dada de
+            contacte, no una operació sobre la fitxa. Si no hi ha telèfon no es
+            pinta —igual que el telèfon mateix, que tampoc surt.
+          */}
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-brand-muted">
+            <span>
+              {client.email}
+              {client.phone ? ` · ${client.phone}` : ""}
+            </span>
+            <WhatsAppLink phone={client.phone} name={client.fullName} />
           </p>
           {/*
             Les etiquetes van aquí i no només a la seva pestanya: dirigeixen

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { clsx, TAP_SURFACE } from "@/lib/utils";
 import type { ClientListItem } from "@/lib/data/clients";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 
 /**
  * Tabla de clientes del área de entrenador/a con un conmutador
@@ -74,6 +75,7 @@ export function TrainerClientsTable({
               <th className="px-4 py-3 font-bold">Professional</th>
               <th className="px-4 py-3 font-bold">Bons actius</th>
               <th className="px-4 py-3 font-bold">Sessions rest.</th>
+              <th className="px-4 py-3 font-bold"></th>
             </tr>
           </thead>
           <tbody>
@@ -100,12 +102,18 @@ export function TrainerClientsTable({
                     {c.remainingSessions}
                   </span>
                 </CellLink>
+                {/* Cel·la nova, FORA dels CellLink: si la icona anés dins d'un
+                    enllaç a la fitxa, tocar-la obriria la fitxa i no WhatsApp.
+                    Mateix criteri que la taula de l'admin. */}
+                <td className="px-4 py-3 text-right">
+                  <WhatsAppLink phone={c.phone} name={c.fullName} variant="icon" />
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
                   Sense clients.
