@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { TAP } from "@/lib/utils";
+import { TAP_SURFACE } from "@/lib/utils";
 
 /**
  * La casella d'una etiqueta a la fitxa d'un client.
@@ -43,8 +43,23 @@ export function TagToggleButton({
       // Un botó que commuta un estat ha de dir-lo, no només pintar-lo: sense
       // això un lector de pantalla llegeix "VIP, botó" i prou.
       aria-pressed={checked}
-      className={`flex flex-1 items-center gap-3 text-left disabled:cursor-default ${
-        canAssign && !pending ? TAP : ""
+      // TAP_SURFACE i no TAP, i això és el moll de l'os d'aquest botó.
+      //
+      // `TAP` porta `active:scale-95`. Aquí el botó és `flex-1` i ocupa la fila
+      // sencera —840 px mesurats—, o sigui que en prémer-lo el marge esquerre
+      // se n'anava 21 px cap a la dreta. La casella viu als primers 16 px: entre
+      // el mousedown i el mouseup el botó li marxava de sota al dit, el mouseup
+      // queia al <form> i el `click` es disparava a l'ancestre comú. Clicar la
+      // casella no feia RES; clicar el text, que comença al píxel 329, sí.
+      //
+      // És exactament el cas que descriu el comentari de `TAP_SURFACE` a
+      // lib/utils.ts: encongir una cosa que ocupa tota l'amplada.
+      //
+      // El tacte es manté amb l'opacitat, que `TAP_SURFACE` ja transiciona. Un
+      // `active:bg-…` pintaria un rectangle que acaba on acaba el botó, sense
+      // arribar ni al farciment de la fila ni a la insígnia: mig ressaltat.
+      className={`flex flex-1 items-center gap-3 text-left disabled:cursor-default ${TAP_SURFACE} ${
+        canAssign && !pending ? "active:opacity-60" : ""
       } ${pending ? "opacity-60" : ""}`}
     >
       {/*
