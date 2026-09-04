@@ -142,7 +142,18 @@ export function ClientsTable({
                     obriria la fitxa en comptes de fer el que diuen. */}
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
-                    <WhatsAppLink phone={c.phone} name={c.fullName} variant="icon" />
+                    {/*
+                      El buit de la icona es reserva SEMPRE, tingui telèfon o no.
+                      Sense això, la icona li menjava una trentena de píxels a
+                      "Reenviar invitació" només a les files que en tenien —78,9 px
+                      contra 101,8 mesurats a 375 px—, i el text es partia en dues
+                      línies en unes files i en una a les altres. La columna ha de
+                      ser igual de ampla a totes; que la casella estigui buida és
+                      indiferent.
+                    */}
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+                      <WhatsAppLink phone={c.phone} name={c.fullName} variant="icon" />
+                    </span>
                     <ResendInviteButton profileId={c.profileId} />
                   </div>
                 </td>

@@ -104,9 +104,18 @@ export function TrainerClientsTable({
                 </CellLink>
                 {/* Cel·la nova, FORA dels CellLink: si la icona anés dins d'un
                     enllaç a la fitxa, tocar-la obriria la fitxa i no WhatsApp.
-                    Mateix criteri que la taula de l'admin. */}
-                <td className="px-4 py-3 text-right">
-                  <WhatsAppLink phone={c.phone} name={c.fullName} variant="icon" />
+                    Mateix criteri que la taula de l'admin.
+
+                    El buit es reserva sempre, com allà. Aquí no hi ha text que
+                    es pugui partir, però la icona fa 32 px d'alçada: sense el
+                    buit, les files amb telèfon feien 57 px i les que no, 44,5.
+                    La mateixa irregularitat, en vertical. */}
+                <td className="px-4 py-3">
+                  <div className="flex justify-end">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+                      <WhatsAppLink phone={c.phone} name={c.fullName} variant="icon" />
+                    </span>
+                  </div>
                 </td>
               </tr>
             ))}
