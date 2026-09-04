@@ -1,5 +1,5 @@
 import { formatEur } from "@/lib/labels";
-import type { Locale } from "@/lib/i18n/config";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
 import type { EffectivePrice } from "@/lib/data/promotions";
 
 /**
@@ -14,6 +14,27 @@ import type { EffectivePrice } from "@/lib/data/promotions";
  * des del client hi passa el seu `useLocale()`; l'admin no en passa i cau al
  * català, que és el que ja hi sortia.
  */
+/**
+ * El sufix del preu per sessió, en els tres idiomes.
+ *
+ * Va com a diccionari estàtic i no per `useTranslations`/`getTranslations`
+ * perquè aquest component es pinta als DOS costats: dins de formularis de
+ * client, que sí que tenen `NextIntlClientProvider` a sobre, i dins de la
+ * pàgina de serveis de l'admin, que és de servidor i no en té cap. Un hook
+ * trencaria la segona; una funció de `next-intl` per petició, la primera.
+ *
+ * Mateix criteri que `LOCALE_NAMES` i `INTL_LOCALE` a lib/i18n/config.ts, i
+ * que `LIBRARY_TEXTS_CA` a la biblioteca d'exercicis: text que ha de viure
+ * fora del context de petició es desa indexat per idioma i prou.
+ *
+ * La barra hi va inclosa perquè un idioma pugui canviar-la si mai cal.
+ */
+const PER_SESSION: Record<Locale, string> = {
+  ca: "/sessió",
+  es: "/sesión",
+  en: "/session",
+};
+
 export function PriceDisplay({
   ep,
   size = "md",
@@ -56,7 +77,8 @@ export function PriceDisplay({
       </span>
       {showPerSession !== undefined && showPerSession > 1 && (
         <span className="text-xs text-brand-muted">
-          {formatEur(ep.finalPrice / showPerSession, locale)}/sessió
+          {formatEur(ep.finalPrice / showPerSession, locale)}
+          {PER_SESSION[locale ?? DEFAULT_LOCALE] ?? PER_SESSION[DEFAULT_LOCALE]}
         </span>
       )}
     </span>
