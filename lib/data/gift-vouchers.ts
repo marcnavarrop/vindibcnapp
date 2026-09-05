@@ -785,6 +785,10 @@ export async function redeemGiftVoucher(input: {
       first_reservation_at: null,
       gift_voucher_id: v.id,
       stripe_checkout_session_id: null,
+      subscription_id: null,
+      subscription_cycle_start: null,
+      is_subscription_extra: false,
+      stripe_invoice_id: null,
       created_at: now,
     });
     v.status = "redeemed";

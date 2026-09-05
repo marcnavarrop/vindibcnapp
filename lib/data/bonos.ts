@@ -185,6 +185,10 @@ export async function createBono(input: BonoInput): Promise<string> {
       first_reservation_at: null,
       gift_voucher_id: null,
       stripe_checkout_session_id: null,
+      subscription_id: null,
+      subscription_cycle_start: null,
+      is_subscription_extra: false,
+      stripe_invoice_id: null,
       created_at: now,
     });
     saveStore(store);
@@ -248,15 +252,21 @@ export type BonoPurchaseQuote = {
   referralRewardId: string | null;
 };
 
-export async function quoteBonoPurchase(input: {
-  profileId: string;
-  serviceId: string;
-}): Promise<BonoPurchaseQuote> {
-  const { getEffectivePrice } = await import("@/lib/data/promotions");
-
-  // Fitxa del client i paquet del catàleg, segons el mode.
-  let clientId: string;
-  let service: {
+/**
+ * La fitxa del client i el paquet del catàleg, resolts per `service_role`.
+ *
+ * S'exporta perquè el fan servir DUES cotitzacions: la compra d'un bo i l'alta
+ * d'una subscripció (0072). Amb una còpia per cadascuna, el dia que canviï què
+ * compta com a "servei vàlid" —avui: que existeixi i estigui actiu— una de les
+ * dues es quedaria enrere sense que ho notés ningú.
+ *
+ * Que el paquet hagi d'estar ACTIU es comprova aquí i no a qui crida: el
+ * navegador només envia un `serviceId`, i el preu i les sessions han de sortir
+ * sempre del catàleg.
+ */
+export type CatalogueSelection = {
+  clientId: string;
+  service: {
     id: string;
     serviceType: ServiceType;
     name: string;
@@ -264,48 +274,65 @@ export async function quoteBonoPurchase(input: {
     defaultSessions: number;
     active: boolean;
   };
+};
 
+export async function loadClientAndService(input: {
+  profileId: string;
+  serviceId: string;
+}): Promise<CatalogueSelection> {
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === input.profileId);
     if (!client) throw new Error("Client no trobat.");
     const row = store.services.find((x) => x.id === input.serviceId && x.active);
     if (!row) throw new Error("Servei no vàlid.");
-    clientId = client.id;
-    service = {
-      id: row.id,
-      serviceType: row.service_type,
-      name: row.name,
-      price: row.price,
-      defaultSessions: row.default_sessions,
-      active: row.active,
+    return {
+      clientId: client.id,
+      service: {
+        id: row.id,
+        serviceType: row.service_type,
+        name: row.name,
+        price: row.price,
+        defaultSessions: row.default_sessions,
+        active: row.active,
+      },
     };
-  } else {
-    const admin = createAdminClient();
-    const { data: client, error: cErr } = await admin
-      .from("clients")
-      .select("id")
-      .eq("profile_id", input.profileId)
-      .single();
-    if (cErr || !client) throw new Error("Client no trobat.");
+  }
 
-    const { data: row, error: sErr } = await admin
-      .from("services")
-      .select("service_type, price, default_sessions, active, name")
-      .eq("id", input.serviceId)
-      .single();
-    if (sErr || !row || !row.active) throw new Error("Servei no vàlid.");
+  const admin = createAdminClient();
+  const { data: client, error: cErr } = await admin
+    .from("clients")
+    .select("id")
+    .eq("profile_id", input.profileId)
+    .single();
+  if (cErr || !client) throw new Error("Client no trobat.");
 
-    clientId = client.id;
-    service = {
+  const { data: row, error: sErr } = await admin
+    .from("services")
+    .select("service_type, price, default_sessions, active, name")
+    .eq("id", input.serviceId)
+    .single();
+  if (sErr || !row || !row.active) throw new Error("Servei no vàlid.");
+
+  return {
+    clientId: client.id,
+    service: {
       id: input.serviceId,
       serviceType: row.service_type,
       name: row.name,
       price: row.price,
       defaultSessions: row.default_sessions,
       active: row.active,
-    };
-  }
+    },
+  };
+}
+
+export async function quoteBonoPurchase(input: {
+  profileId: string;
+  serviceId: string;
+}): Promise<BonoPurchaseQuote> {
+  const { getEffectivePrice } = await import("@/lib/data/promotions");
+  const { clientId, service } = await loadClientAndService(input);
 
   // El millor descompte, i només un: l'oferta pública del catàleg o la
   // recompensa personal de referit. No es combinen.
@@ -367,6 +394,10 @@ export async function createPendingBono(input: {
       first_reservation_at: null,
       gift_voucher_id: null,
       stripe_checkout_session_id: null,
+      subscription_id: null,
+      subscription_cycle_start: null,
+      is_subscription_extra: false,
+      stripe_invoice_id: null,
       status: "pending_payment",
       purchased_at: now,
       created_at: now,

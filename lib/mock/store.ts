@@ -68,6 +68,7 @@ export type Store = {
   poll_options: Tables["poll_options"]["Row"][];
   poll_responses: Tables["poll_responses"]["Row"][];
   gift_vouchers: Tables["gift_vouchers"]["Row"][];
+  subscriptions: Tables["subscriptions"]["Row"][];
   booking_series: Tables["booking_series"]["Row"][];
   waitlist_entries: Tables["waitlist_entries"]["Row"][];
   professional_colors: Tables["professional_colors"]["Row"][];
@@ -114,6 +115,7 @@ function fromSeed(): Store {
     client_documents: structuredClone(seedClientDocuments),
     referral_rewards: structuredClone(seedReferralRewards),
     gift_vouchers: [],
+    subscriptions: [],
     booking_series: [],
     waitlist_entries: [],
     service_rates: [],
@@ -134,7 +136,7 @@ function fromSeed(): Store {
       { service_type: "grupo_reducido", color: "#ff6d17", updated_at: SEEDED_AT },
       { service_type: "fisioterapia", color: "#1d8a8a", updated_at: SEEDED_AT },
     ],
-    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, opening_time: "07:00:00", closing_time: "22:00:00", min_booking_hours: 0, bono_low_threshold: 1, reminder_hour_local: 20, bono_expiry_months: null, pending_payment_cancel_enabled: false, pending_payment_cancel_hours: null, module_comunitat_enabled: true, module_sessions_prova_enabled: true, module_documents_enabled: true, gift_vouchers_enabled: true, gift_voucher_expiry_months: 12, waitlist_enabled: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    centerSettings: { id: true, min_cancellation_hours: 24, trainers_see_colleagues_reservations: true, referral_program_active: false, referral_reward_referee: true, referral_discount_percent: 10, opening_time: "07:00:00", closing_time: "22:00:00", min_booking_hours: 0, bono_low_threshold: 1, reminder_hour_local: 20, bono_expiry_months: null, pending_payment_cancel_enabled: false, pending_payment_cancel_hours: null, module_comunitat_enabled: true, module_sessions_prova_enabled: true, module_documents_enabled: true, gift_vouchers_enabled: true, gift_voucher_expiry_months: 12, waitlist_enabled: true, subscriptions_enabled: false, subscription_extra_sessions_max: 1, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   };
 }
 

@@ -71,6 +71,26 @@ export type GroupBookingResult =
   | { ok: true; id: string; remaining: number | null }
   | { ok: false; reason: "taken" | "full" | "no_sessions" };
 
+/**
+ * Estat d'una subscripció mensual (0072).
+ *
+ * Tres i no quatre: 'past_due' ja vol dir "aturada fins que pagui". Un 'paused'
+ * a part seria el mateix estat amb dos noms.
+ */
+export type SubscriptionStatus = "active" | "past_due" | "cancelled";
+
+/**
+ * Què ha passat en intentar reclamar una sessió extra (`claim_subscription_extra`).
+ *
+ * 'stale_cycle' = qui la demana llegia una pantalla d'abans de la renovació;
+ * 'sessions_left' = encara li'n queden del cicle, i un extra només es demana
+ * amb el cicle exhaurit; 'limit_reached' = ja ha gastat la quota del mes.
+ */
+export type SubscriptionExtraResult =
+  | { ok: true; id: string; used: number }
+  | { ok: false; reason: "not_found" | "not_active" | "stale_cycle" | "limit_reached" }
+  | { ok: false; reason: "sessions_left"; remaining: number };
+
 export type ReferralRewardStatus = "pending" | "used" | "expired";
 export type ReservationStatus = "booked" | "completed" | "cancelled";
 export type TrialStatus =
@@ -226,6 +246,10 @@ export interface Database {
           first_reservation_at: string | null;
           gift_voucher_id: string | null;
           stripe_checkout_session_id: string | null;
+          subscription_id: string | null;
+          subscription_cycle_start: string | null;
+          is_subscription_extra: boolean;
+          stripe_invoice_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -241,6 +265,10 @@ export interface Database {
           first_reservation_at?: string | null;
           gift_voucher_id?: string | null;
           stripe_checkout_session_id?: string | null;
+          subscription_id?: string | null;
+          subscription_cycle_start?: string | null;
+          is_subscription_extra?: boolean;
+          stripe_invoice_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -256,7 +284,74 @@ export interface Database {
           first_reservation_at?: string | null;
           gift_voucher_id?: string | null;
           stripe_checkout_session_id?: string | null;
+          subscription_id?: string | null;
+          subscription_cycle_start?: string | null;
+          is_subscription_extra?: boolean;
+          stripe_invoice_id?: string | null;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: {
+          id: string;
+          client_id: string;
+          service_id: string;
+          service_type: ServiceType;
+          sessions_per_cycle: number;
+          package_name: string;
+          /** Preu del cicle, congelat a l'alta. No es torna a cotitzar mai. */
+          unit_price: number;
+          payment_method: PaymentMethod;
+          status: SubscriptionStatus;
+          /** Dia del mes de la renovació (1–31), retallat als mesos curts. */
+          anchor_day: number;
+          started_on: string;
+          current_cycle_start: string;
+          /** Null només quan status='cancelled'. */
+          next_renewal_on: string | null;
+          cancel_at_period_end: boolean;
+          cancelled_at: string | null;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          service_id: string;
+          service_type: ServiceType;
+          sessions_per_cycle: number;
+          package_name: string;
+          unit_price: number;
+          payment_method: PaymentMethod;
+          status?: SubscriptionStatus;
+          anchor_day: number;
+          started_on: string;
+          current_cycle_start: string;
+          next_renewal_on?: string | null;
+          cancel_at_period_end?: boolean;
+          cancelled_at?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          service_id?: string;
+          sessions_per_cycle?: number;
+          package_name?: string;
+          unit_price?: number;
+          status?: SubscriptionStatus;
+          anchor_day?: number;
+          current_cycle_start?: string;
+          next_renewal_on?: string | null;
+          cancel_at_period_end?: boolean;
+          cancelled_at?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -764,6 +859,13 @@ export interface Database {
         };
         Relationships: [];
       };
+      // La 0072 hi va afegir `subscription_renewed_email`,
+      // `subscription_payment_failed_email` i `subscription_cancelled_email`.
+      // Encara no hi són aquí a posta: en aquest projecte un avís és una unitat
+      // de tres peces —columna, tipus d'esdeveniment i plantilla— i
+      // `PREFERENCE_KEYS` es deriva dels tipus, no de la taula. Tipar la
+      // columna sense el seu esdeveniment només aconsegueix que el literal del
+      // mock deixi de quadrar. Entren juntes amb els avisos.
       notification_preferences: {
         Row: {
           id: string;
@@ -1159,6 +1261,8 @@ export interface Database {
           gift_vouchers_enabled: boolean;
           gift_voucher_expiry_months: number;
           waitlist_enabled: boolean;
+          subscriptions_enabled: boolean;
+          subscription_extra_sessions_max: number;
           created_at: string;
           updated_at: string;
         };
@@ -1183,6 +1287,8 @@ export interface Database {
           gift_vouchers_enabled?: boolean;
           gift_voucher_expiry_months?: number;
           waitlist_enabled?: boolean;
+          subscriptions_enabled?: boolean;
+          subscription_extra_sessions_max?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -1206,6 +1312,8 @@ export interface Database {
           gift_vouchers_enabled?: boolean;
           gift_voucher_expiry_months?: number;
           waitlist_enabled?: boolean;
+          subscriptions_enabled?: boolean;
+          subscription_extra_sessions_max?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -1486,6 +1594,24 @@ export interface Database {
         Returns: GroupBookingResult;
       };
       /**
+       * Reclama una sessió extra del cicle en curs (0073). Serialitza per
+       * subscripció amb un advisory lock i crea un bo d'1 sessió en
+       * 'pending_payment' — també quan es pagarà amb targeta: el que es reclama
+       * de manera atòmica és la PLAÇA dins de la quota, no el pagament.
+       */
+      claim_subscription_extra: {
+        Args: {
+          p_subscription_id: string;
+          p_cycle_start: string;
+          /** Dia del CENTRE. No es calcula a la base: la zona és configurable. */
+          p_today: string;
+          p_max_extras: number;
+          p_price: number;
+          p_expires_at: string;
+        };
+        Returns: SubscriptionExtraResult;
+      };
+      /**
        * Recompte de vots per opció d'enquesta. SECURITY DEFINER: la RLS de
        * `poll_responses` no deixa veure les respostes d'altri, i aquesta
        * funció només retorna el nombre —mai qui ha votat—. Migració 0059.
@@ -1505,6 +1631,7 @@ export interface Database {
       discount_type: DiscountType;
       promotion_scope: PromotionScope;
       bonus_payout_frequency: BonusPayoutFrequency;
+      subscription_status: SubscriptionStatus;
     };
     CompositeTypes: Record<never, never>;
   };

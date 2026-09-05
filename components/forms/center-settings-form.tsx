@@ -125,6 +125,10 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
     String(settings.pendingPaymentCancelHours ?? 48),
   );
   const [waitlist, setWaitlist] = useState(settings.waitlistEnabled);
+  const [subscriptions, setSubscriptions] = useState(settings.subscriptionsEnabled);
+  const [extraSessions, setExtraSessions] = useState(
+    String(settings.subscriptionExtraSessionsMax),
+  );
   const [giftVouchers, setGiftVouchers] = useState(settings.giftVouchersEnabled);
   const [giftVoucherMonths, setGiftVoucherMonths] = useState(
     String(settings.giftVoucherExpiryMonths),
@@ -324,6 +328,62 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           max={23}
           defaultValue={settings.reminderHourLocal}
         />
+      </Group>
+
+      <Group
+        title="Subscripcions"
+        desc="La quota mensual dels bons de grup: qui la té, se li renova sol cada mes el dia que es va donar d'alta."
+      >
+        <Toggle
+          name="subscriptionsEnabled"
+          title="Permetre subscriure's als bons de grup"
+          desc="El client pot contractar una quota mensual en comptes de comprar el bo cada vegada. Es renova el dia del mes en què es va donar d'alta i el preu li queda congelat des d'aquell dia. Si ho desactives no se n'hi podrà apuntar cap de nou, però les que ja hi són continuaran renovant-se: el centre no pot deixar sense sessions qui ja va dir que sí."
+          checked={subscriptions}
+          onChange={setSubscriptions}
+        />
+
+        {/* El valor va en un input ocult FORA del fieldset, com el termini de
+            cobrament i els mesos dels vals: un fieldset deshabilitat no envia
+            els seus camps i el límit es perdria en apagar el toggle. */}
+        <input
+          type="hidden"
+          name="subscriptionExtraSessionsMax"
+          value={extraSessions}
+        />
+        <fieldset
+          disabled={!subscriptions}
+          className={`flex flex-col gap-5 border-l-2 pl-4 transition-opacity ${
+            subscriptions ? "border-brand-purple/30" : "border-brand-border opacity-50"
+          }`}
+        >
+          <div>
+            <label
+              htmlFor="subscriptionExtraSessionsMax"
+              className="mb-1 block text-sm font-bold text-brand-dark"
+            >
+              Sessions extra per mes
+            </label>
+            <p className="mb-3 text-xs text-brand-muted">
+              Quantes sessions de més pot demanar un subscriptor un cop ha gastat
+              les del mes, sense esperar la renovació. Les paga al preu per
+              sessió del seu bo, no al d&apos;una sessió solta. Posa 0 per no
+              permetre&apos;n cap.
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                id="subscriptionExtraSessionsMax"
+                type="number"
+                min={0}
+                max={10}
+                step={1}
+                value={extraSessions}
+                onChange={(e) => setExtraSessions(e.target.value)}
+                className="w-28 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none disabled:cursor-not-allowed disabled:bg-brand-bg"
+              />
+              <span className="text-sm text-brand-muted">sessions</span>
+            </div>
+          </div>
+        </fieldset>
       </Group>
 
       <Group

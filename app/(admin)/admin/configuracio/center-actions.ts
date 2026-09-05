@@ -73,6 +73,15 @@ export async function updateCenterSettingsAction(
 
   const waitlistEnabled = fd.get("waitlistEnabled") === "true";
 
+  const subscriptionsEnabled = fd.get("subscriptionsEnabled") === "true";
+  // 0 és un valor legítim ("cap sessió extra"), així que el rang comença a 0 i
+  // no a 1. Com els altres ajustos amb interruptor, només es valida si està
+  // encès: amb el toggle apagat, un valor rar al camp no ha de bloquejar el
+  // desat de tota la resta.
+  const subscriptionExtraSessionsMax = intInRange(fd, "subscriptionExtraSessionsMax", 0, 10);
+  if (subscriptionsEnabled && subscriptionExtraSessionsMax === null)
+    return { error: "Les sessions extra han de ser entre 0 i 10." };
+
   const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);
   if (reminderHourLocal === null)
     return { error: "L'hora dels recordatoris ha de ser entre 0 i 23." };
@@ -94,6 +103,8 @@ export async function updateCenterSettingsAction(
       giftVouchersEnabled,
       giftVoucherExpiryMonths: giftVoucherExpiryMonths ?? undefined,
       waitlistEnabled,
+      subscriptionsEnabled,
+      subscriptionExtraSessionsMax: subscriptionExtraSessionsMax ?? undefined,
       reminderHourLocal,
       modules: {
         comunitat: fd.get("moduleComunitat") === "true",
