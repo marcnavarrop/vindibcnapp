@@ -202,6 +202,11 @@
       "dona": "Mujer",
       "altre": "Otro",
       "ns_nc": "Prefiero no decirlo"
+    },
+    "subscriptionStatus": {
+      "active": "Activa",
+      "past_due": "Parada por impago",
+      "cancelled": "Cancelada"
     }
   },
   "picker": {
@@ -275,7 +280,15 @@
       "errorStripe": "No se ha podido iniciar el pago.",
       "errorStripeOff": "El pago con tarjeta no está disponible ahora mismo.",
       "unauthorized": "No autorizado.",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "paySubscription": "Suscribirme cada mes",
+      "paySubscriptionDesc": "Se renueva solo el día {day} de cada mes y lo pagas en el centro. Pensado para quien viene cada semana y no quiere comprar el bono cada vez.",
+      "confirmSubscriptionTitle": "¿Confirmas la suscripción?",
+      "confirmSubscriptionBody": "Cada día {day} de mes recibirás estas sesiones y las pagarás en el centro. El precio te queda congelado: aunque suba la tarifa, tú sigues pagando lo mismo. Las sesiones que no uses NO se acumulan al mes siguiente —pero reservar ya cuenta, así que puedes coger franjas del mes que viene con las de este—. Puedes darte de baja cuando quieras y conservarás el mes que ya tengas pagado.",
+      "subscribing": "Suscribiendo…",
+      "okSubscriptionTitle": "Suscripción activada",
+      "okSubscriptionBody": "Ya tienes las sesiones de este mes y se renovarán solas. Págalas en el centro cuando quieras; mientras tanto ya puedes reservar.",
+      "errorSubscribe": "No se ha podido activar la suscripción."
     },
     "mine": {
       "title": "Mis bonos",
@@ -283,7 +296,15 @@
       "payments": "Historial de pagos",
       "noPayments": "Todavía no hay pagos.",
       "noClientRecord": "Todavía no tienes ficha de cliente.",
-      "sessionsOf": "{remaining} / {total} sesiones"
+      "sessionsOf": "{remaining} / {total} sesiones",
+      "subscriptionTitle": "Mi suscripción",
+      "subscriptionPerMonth": "{price} al mes",
+      "subscriptionRenewsOn": "Se renueva el {date}",
+      "subscriptionCycleSessions": "{remaining} de {total} sesiones este mes",
+      "subscriptionCycleEnds": "Estas sesiones valen hasta el {date}",
+      "subscriptionPending": "Este mes todavía consta sin pagar. Págalo en el centro para no quedarte sin la renovación.",
+      "subscriptionPastDue": "La suscripción está parada porque hay un mes sin cobrar. Se reanuda sola cuando lo pagues en el centro.",
+      "subscriptionNoCycle": "Todavía no se ha emitido el bono de este mes."
     },
     "confirmed": {
       "title": "Pago confirmado",

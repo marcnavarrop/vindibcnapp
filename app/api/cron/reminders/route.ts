@@ -8,6 +8,7 @@ import {
   BONO_EXPIRY_WARNING_DAYS,
 } from "@/lib/data/reminders";
 import { sweepExpiredBonos } from "@/lib/data/bonos";
+import { renewDueSubscriptions } from "@/lib/data/subscription-renewal";
 import { notifyOnce } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerHour, centerToday } from "@/lib/center-time";
@@ -87,6 +88,18 @@ async function handle(req: NextRequest) {
     else agendaSkipped++;
   }
 
+  // ─── Subscripcions que toca renovar ───
+  // Va PRIMER de tot el bloc de bons: el que emet aquí és el bo del mes nou, i
+  // val més que existeixi abans que passin per sobre l'escombrat de caducats i
+  // el d'impagats. Només toca les que es paguen al centre; les de targeta les
+  // mou Stripe pel seu compte.
+  //
+  // El cicle és mensual i el cron, diari: la resolució és exactament la que cal.
+  // Si un dia no corre, l'endemà recull igualment les que van quedar enrere
+  // —`listSubscriptionsDueForRenewal` agafa les d'avui I les d'abans— i se salta
+  // els mesos que ja hagin passat sencers en comptes d'emetre'ls caducats.
+  const renewals = await renewDueSubscriptions(centerToday());
+
   // ─── Bons a punt de caducar ───
   // S'enganxa al cron que ja existeix en comptes de muntar-ne un de nou: el
   // pla gratuït de Vercel només en permet un al dia. Abans de mirar quins
@@ -135,6 +148,13 @@ async function handle(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     day: tomorrowMadrid(),
+    subscriptions: {
+      due: renewals.length,
+      renewed: renewals.filter((r) => r.kind === "renewed").length,
+      paused_unpaid: renewals.filter((r) => r.kind === "paused").length,
+      cancelled: renewals.filter((r) => r.kind === "cancelled").length,
+      failed: renewals.filter((r) => r.kind === "failed").length,
+    },
     bonosUnpaid: {
       cancelled: unpaid.length,
       sessionsFreed: unpaid.reduce((n, b) => n + b.cancelledCount, 0),

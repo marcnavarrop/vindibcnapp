@@ -596,6 +596,7 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
     // Genera les recompenses de referit només quan el pagament es confirma.
     // És idempotent: no duplica si ja existeixen per aquest referit.
     await maybeGenerateReferralRewards(bono.client_id);
+    await resumeSubscription(bonoId);
     return;
   }
 
@@ -625,4 +626,26 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
   // Generate referral rewards if this is the first paid bono for this client
   // (maybeGenerateReferralRewards is idempotent — safe to call unconditionally)
   await maybeGenerateReferralRewards(bono.client_id);
+  await resumeSubscription(bonoId);
+}
+
+/**
+ * Si el bo que s'acaba de cobrar era el mes d'una subscripció aturada, la torna
+ * a posar en marxa.
+ *
+ * L'import dinàmic trenca un cicle: `subscriptions.ts` importa d'aquí
+ * (`loadClientAndService`) i necessitem cridar-lo en sentit contrari. Mateix
+ * recurs que ja fa servir `quoteBonoPurchase` amb `promotions`.
+ *
+ * No tomba el cobrament si falla: els diners ja estan anotats i el bo ja és
+ * actiu. Que la subscripció es quedi un dia més en 'past_due' és molt menys
+ * greu que desfer un pagament confirmat, i l'admin sempre la pot reactivar.
+ */
+async function resumeSubscription(bonoId: string): Promise<void> {
+  try {
+    const { resumeAfterCyclePayment } = await import("@/lib/data/subscriptions");
+    await resumeAfterCyclePayment(bonoId);
+  } catch (e) {
+    console.error("[subscripcions] no s'ha pogut reactivar després del cobrament:", e);
+  }
 }

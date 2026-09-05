@@ -202,6 +202,11 @@
       "dona": "Woman",
       "altre": "Other",
       "ns_nc": "Prefer not to say"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "past_due": "Paused, unpaid",
+      "cancelled": "Cancelled"
     }
   },
   "picker": {
@@ -275,7 +280,15 @@
       "errorStripe": "We couldn't start the payment.",
       "errorStripeOff": "Card payment isn't available right now.",
       "unauthorized": "Not authorised.",
-      "close": "Close"
+      "close": "Close",
+      "paySubscription": "Subscribe monthly",
+      "paySubscriptionDesc": "Renews on its own on the {day}th of each month and you pay at the centre. For people who come every week and would rather not buy a pass each time.",
+      "confirmSubscriptionTitle": "Confirm the subscription?",
+      "confirmSubscriptionBody": "On the {day}th of every month you'll get these sessions and pay for them at the centre. Your price is locked in: if the rate goes up, you keep paying the same. Sessions you don't use do NOT carry over to the next month — but booking already counts, so you can take next month's slots with this month's sessions. You can cancel whenever you like and you'll keep the month you've already paid for.",
+      "subscribing": "Subscribing…",
+      "okSubscriptionTitle": "Subscription active",
+      "okSubscriptionBody": "You've got this month's sessions and they'll renew on their own. Pay at the centre whenever you like; you can book in the meantime.",
+      "errorSubscribe": "The subscription could not be activated."
     },
     "mine": {
       "title": "My packages",
@@ -283,7 +296,15 @@
       "payments": "Payment history",
       "noPayments": "No payments yet.",
       "noClientRecord": "You don't have a client record yet.",
-      "sessionsOf": "{remaining} / {total} sessions"
+      "sessionsOf": "{remaining} / {total} sessions",
+      "subscriptionTitle": "My subscription",
+      "subscriptionPerMonth": "{price} per month",
+      "subscriptionRenewsOn": "Renews on {date}",
+      "subscriptionCycleSessions": "{remaining} of {total} sessions this month",
+      "subscriptionCycleEnds": "These sessions are valid until {date}",
+      "subscriptionPending": "This month is still unpaid. Pay at the centre so you don't miss the renewal.",
+      "subscriptionPastDue": "The subscription is paused because a month is unpaid. It resumes on its own once you pay at the centre.",
+      "subscriptionNoCycle": "This month's pass hasn't been issued yet."
     },
     "confirmed": {
       "title": "Payment confirmed",

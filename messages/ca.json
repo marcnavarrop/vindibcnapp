@@ -202,6 +202,11 @@
       "dona": "Dona",
       "altre": "Altre",
       "ns_nc": "Prefereixo no dir-ho"
+    },
+    "subscriptionStatus": {
+      "active": "Activa",
+      "past_due": "Aturada per impagament",
+      "cancelled": "Cancel·lada"
     }
   },
   "picker": {
@@ -275,7 +280,15 @@
       "errorStripe": "No s'ha pogut iniciar el pagament.",
       "errorStripeOff": "El pagament amb targeta no està disponible ara mateix.",
       "unauthorized": "No autoritzat.",
-      "close": "Tancar"
+      "close": "Tancar",
+      "paySubscription": "Subscriure-m'hi cada mes",
+      "paySubscriptionDesc": "Es renova sol el dia {day} de cada mes i el pagues al centre. Pensat per a qui ve cada setmana i no vol comprar el bo cada vegada.",
+      "confirmSubscriptionTitle": "Confirmes la subscripció?",
+      "confirmSubscriptionBody": "Cada dia {day} de mes rebràs aquestes sessions i les pagaràs al centre. El preu et queda congelat: encara que la tarifa pugi, tu segueixes pagant el mateix. Les sessions que no facis servir NO s'acumulen al mes següent —però reservar ja compta, així que pots agafar franges del mes que ve amb les d'aquest—. Pots donar-te de baixa quan vulguis i conservaràs el mes que ja tinguis pagat.",
+      "subscribing": "Subscrivint…",
+      "okSubscriptionTitle": "Subscripció activada",
+      "okSubscriptionBody": "Ja tens les sessions d'aquest mes i es renovaran soles. Paga-les al centre quan vulguis; mentrestant ja pots reservar.",
+      "errorSubscribe": "No s'ha pogut activar la subscripció."
     },
     "mine": {
       "title": "Els meus bons",
@@ -283,7 +296,15 @@
       "payments": "Historial de pagaments",
       "noPayments": "Encara no hi ha pagaments.",
       "noClientRecord": "Encara no tens fitxa de client.",
-      "sessionsOf": "{remaining} / {total} sessions"
+      "sessionsOf": "{remaining} / {total} sessions",
+      "subscriptionTitle": "La meva subscripció",
+      "subscriptionPerMonth": "{price} cada mes",
+      "subscriptionRenewsOn": "Es renova el {date}",
+      "subscriptionCycleSessions": "{remaining} de {total} sessions aquest mes",
+      "subscriptionCycleEnds": "Aquestes sessions valen fins al {date}",
+      "subscriptionPending": "Aquest mes encara consta sense pagar. Paga'l al centre per no quedar-te sense la renovació.",
+      "subscriptionPastDue": "La subscripció està aturada perquè hi ha un mes sense cobrar. Es reprèn sola quan el paguis al centre.",
+      "subscriptionNoCycle": "Encara no s'ha emès el bo d'aquest mes."
     },
     "confirmed": {
       "title": "Pagament confirmat",

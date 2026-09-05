@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { createPendingBono } from "@/lib/data/bonos";
 import { startBonoCheckout } from "@/lib/data/stripe-checkout";
+import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import { stripeEnabled } from "@/lib/stripe";
 import { redirect } from "next/navigation";
 
@@ -87,4 +88,42 @@ export async function startBonoCheckoutAction(
 
   if ("error" in result) return { errorCode: "errorStripe" };
   redirect(result.url);
+}
+
+export type SubscribeState = {
+  errorCode?: "unauthorized" | "errorService" | "errorSubscribe";
+  ok?: boolean;
+};
+
+/**
+ * El client es subscriu a un bo de grup, pagant al centre.
+ *
+ * Crea la subscripció I el bo del primer mes d'una tacada: a partir d'aquí, el
+ * mes u i el mes catorze passen exactament pel mateix camí. Com qualsevol bo
+ * pendent de pagament, les sessions ja es poden fer servir per reservar de
+ * seguida.
+ *
+ * Tota la validació —que el centre les tingui obertes, que el paquet sigui de
+ * grup, que no en tingui ja una de viva— viu al servidor, a `subscribeAtCenter`.
+ * Aquí només s'hi comprova qui truca.
+ */
+export async function subscribeAtCenterAction(
+  _prev: SubscribeState,
+  formData: FormData,
+): Promise<SubscribeState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
+
+  const serviceId = String(formData.get("serviceId") ?? "");
+  if (!serviceId) return { errorCode: "errorService" };
+
+  try {
+    await subscribeAtCenter({ profileId: viewer.id, serviceId });
+  } catch (e) {
+    console.error("[subscripcions] no s'ha pogut donar d'alta:", e);
+    return { errorCode: "errorSubscribe" };
+  }
+
+  revalidatePath("/client/bonos/meus");
+  return { ok: true };
 }

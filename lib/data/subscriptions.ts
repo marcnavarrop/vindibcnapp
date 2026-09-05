@@ -5,7 +5,9 @@ import { getStore, saveStore } from "@/lib/mock/store";
 import { loadClientAndService } from "@/lib/data/bonos";
 import { centerToday } from "@/lib/center-time";
 import { anchorDayFor, renewalAfter } from "@/lib/subscription-cycle";
+import { cycleExpiry } from "@/lib/subscription-cycle";
 import type {
+  BonoStatus,
   PaymentMethod,
   ServiceType,
   SubscriptionStatus,
@@ -442,4 +444,266 @@ export async function updateSubscription(
     })
     .eq("id", id);
   if (error) throw error;
+}
+
+// ─── El bo de cada mes ───────────────────────────────────────────────────────
+
+export type CycleBono = {
+  id: string;
+  status: BonoStatus;
+  totalSessions: number;
+  remainingSessions: number;
+  price: number;
+  expiresAt: string | null;
+};
+
+/** Estats en què el bo d'un cicle encara no s'ha cobrat. */
+const UNSETTLED: BonoStatus[] = ["pending_payment", "unpaid"];
+
+/**
+ * El bo BASE d'un cicle (no els extres), si ja s'ha emès.
+ *
+ * Només n'hi pot haver un: ho garanteix l'índex parcial
+ * `bonos_subscription_cycle_uidx` de la 0072, no aquesta consulta.
+ */
+export async function getCycleBono(
+  subscriptionId: string,
+  cycleStart: string,
+): Promise<CycleBono | null> {
+  if (USE_MOCK) {
+    const b = getStore().bonos.find(
+      (x) =>
+        x.subscription_id === subscriptionId &&
+        x.subscription_cycle_start === cycleStart &&
+        !x.is_subscription_extra,
+    );
+    return b
+      ? {
+          id: b.id,
+          status: b.status,
+          totalSessions: b.total_sessions,
+          remainingSessions: b.remaining_sessions,
+          price: b.price,
+          expiresAt: b.expires_at,
+        }
+      : null;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("bonos")
+    .select("id, status, total_sessions, remaining_sessions, price, expires_at")
+    .eq("subscription_id", subscriptionId)
+    .eq("subscription_cycle_start", cycleStart)
+    .eq("is_subscription_extra", false)
+    .maybeSingle();
+  if (error) throw error;
+  return data
+    ? {
+        id: data.id,
+        status: data.status,
+        totalSessions: data.total_sessions,
+        remainingSessions: data.remaining_sessions,
+        price: Number(data.price),
+        expiresAt: data.expires_at,
+      }
+    : null;
+}
+
+/**
+ * Emet el bo d'un cicle. ÚNIC camí pel qual una subscripció dona sessions.
+ *
+ * Que sigui un de sol és el que fa que el primer mes no pugui ser diferent de
+ * la resta: l'alta i la renovació número catorze passen per aquí exactament
+ * igual, i l'única cosa que canvia entre elles és l'estat amb què neix el bo
+ * (`pending_payment` si es paga al centre, `active` si Stripe ja ha cobrat).
+ *
+ * LA CADUCITAT NO SURT DE `expiryForNewBono`. Un bo de subscripció no dura els
+ * mesos que digui la configuració del centre: dura EL SEU CICLE i prou. És la
+ * decisió que les sessions no s'acumulin, i viu aquí perquè és aquí on es
+ * decideix. La data és l'últim dia abans de la renovació següent, de manera que
+ * el bo vell i el nou no conviuen mai.
+ *
+ * Idempotent per l'índex únic de la 0072 i no per cap SELECT previ: el cron pot
+ * córrer dos cops i el webhook de Stripe pot lliurar el mateix esdeveniment
+ * dues vegades alhora. Mateix criteri que `createPaidBono`.
+ */
+export async function issueCycleBono(input: {
+  subscription: Subscription;
+  cycleStart: string;
+  status: Extract<BonoStatus, "active" | "pending_payment">;
+  /** El que s'ha cobrat de veritat. Per defecte, el preu congelat. */
+  price?: number;
+  stripeInvoiceId?: string | null;
+}): Promise<{ id: string; created: boolean }> {
+  const { subscription: sub, cycleStart } = input;
+  const price = input.price ?? sub.unitPrice;
+  const expiresAt = cycleExpiry(cycleStart, sub.anchorDay);
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const existing = store.bonos.find(
+      (x) =>
+        x.subscription_id === sub.id &&
+        x.subscription_cycle_start === cycleStart &&
+        !x.is_subscription_extra,
+    );
+    if (existing) return { id: existing.id, created: false };
+
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    store.bonos.push({
+      id,
+      client_id: sub.clientId,
+      service_type: sub.serviceType,
+      total_sessions: sub.sessionsPerCycle,
+      remaining_sessions: sub.sessionsPerCycle,
+      price,
+      status: input.status,
+      purchased_at: now,
+      expires_at: expiresAt,
+      first_reservation_at: null,
+      gift_voucher_id: null,
+      stripe_checkout_session_id: null,
+      subscription_id: sub.id,
+      subscription_cycle_start: cycleStart,
+      is_subscription_extra: false,
+      stripe_invoice_id: input.stripeInvoiceId ?? null,
+      created_at: now,
+    });
+    saveStore(store);
+    return { id, created: true };
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("bonos")
+    .insert({
+      client_id: sub.clientId,
+      service_type: sub.serviceType,
+      total_sessions: sub.sessionsPerCycle,
+      remaining_sessions: sub.sessionsPerCycle,
+      price,
+      status: input.status,
+      expires_at: expiresAt,
+      subscription_id: sub.id,
+      subscription_cycle_start: cycleStart,
+      is_subscription_extra: false,
+      stripe_invoice_id: input.stripeInvoiceId ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (error?.code === "23505") {
+    const existing = await getCycleBono(sub.id, cycleStart);
+    if (!existing)
+      throw new Error("El bo del cicle consta duplicat però no s'ha pogut recuperar.");
+    return { id: existing.id, created: false };
+  }
+  if (error || !data)
+    throw new Error(`No s'ha pogut emetre el bo del cicle: ${error?.message}`);
+  return { id: data.id, created: true };
+}
+
+/**
+ * ¿S'ha cobrat el mes d'aquest cicle?
+ *
+ * Es respon mirant si hi ha un COBRAMENT anotat per aquell bo, i no el seu
+ * estat. L'estat sembla la resposta òbvia i no ho és, per una raó que costa de
+ * veure i que trencaria el fre de la renovació sencer:
+ *
+ * El bo d'un cicle caduca l'últim dia ABANS de la renovació següent. O sigui
+ * que el dia que toca renovar, el bo del mes que s'acaba ja ha passat de data i
+ * `sweepExpiredBonos` —que és peresós i corre a cada consulta de bons, no
+ * només al cron— l'haurà posat a 'expired'. I 'expired' és AMBIGU: hi arriben
+ * igual el bo pagat amb sessions sense gastar i el que no s'ha cobrat mai.
+ * Comprovant l'estat, el segon passaria per bo i el client aniria acumulant
+ * mesos impagats, que és exactament el que aquest fre existeix per evitar.
+ *
+ * `payments` no té aquesta ambigüitat: la fila hi és o no hi és, i qui l'escriu
+ * és sempre el mateix camí que activa el bo (`markBonoPaid`, `createPaidBono`).
+ *
+ * Ara bé, NOMÉS es consulta per a 'expired', que és l'únic estat ambigu. Mirar
+ * el cobrament de tots seria pitjor, i en la direcció que fa mal: `markBonoPaid`
+ * activa el bo i tot seguit anota el cobrament en dos passos, de manera que un
+ * error entremig deixaria un bo 'active' sense fila a `payments`. Amb la regla
+ * general, aquell client hauria pagat de veritat i se li aturaria la
+ * subscripció igualment. Preferim equivocar-nos a favor seu: qui ha arribat a
+ * 'active' o 'completed' ha passat per un camí que cobra.
+ *
+ * Un cicle sense cap bo no deu res: no s'ha arribat a emetre.
+ */
+export async function isCycleSettled(bono: CycleBono | null): Promise<boolean> {
+  if (bono === null) return true;
+  if (UNSETTLED.includes(bono.status)) return false;
+  if (bono.status === "expired") return bonoHasPayment(bono.id);
+  return true;
+}
+
+async function bonoHasPayment(bonoId: string): Promise<boolean> {
+  if (USE_MOCK)
+    return getStore().payments.some((p) => p.bono_id === bonoId);
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("payments")
+    .select("id")
+    .eq("bono_id", bonoId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+/**
+ * Torna a posar en marxa una subscripció aturada per impagament.
+ *
+ * La crida `markBonoPaid` quan el bo que s'acaba de cobrar és el del cicle en
+ * curs. NO ho fa pagar un extra: un extra és una sessió de més, no el mes; si
+ * el mes segueix a deure, la subscripció ha de continuar aturada.
+ *
+ * No avança res: només torna l'estat a 'active'. La renovació que es va quedar
+ * pendent la recull el barrido següent, que ja sap com posar-se al dia.
+ */
+export async function resumeAfterCyclePayment(bonoId: string): Promise<boolean> {
+  const link = await bonoSubscriptionLink(bonoId);
+  if (!link || link.isExtra) return false;
+
+  const sub = await getSubscription(link.subscriptionId);
+  if (!sub || sub.status !== "past_due") return false;
+  if (sub.currentCycleStart !== link.cycleStart) return false;
+
+  await updateSubscription(sub.id, { status: "active" });
+  return true;
+}
+
+async function bonoSubscriptionLink(bonoId: string): Promise<{
+  subscriptionId: string;
+  cycleStart: string;
+  isExtra: boolean;
+} | null> {
+  if (USE_MOCK) {
+    const b = getStore().bonos.find((x) => x.id === bonoId);
+    return b?.subscription_id && b.subscription_cycle_start
+      ? {
+          subscriptionId: b.subscription_id,
+          cycleStart: b.subscription_cycle_start,
+          isExtra: b.is_subscription_extra,
+        }
+      : null;
+  }
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("bonos")
+    .select("subscription_id, subscription_cycle_start, is_subscription_extra")
+    .eq("id", bonoId)
+    .maybeSingle();
+  return data?.subscription_id && data.subscription_cycle_start
+    ? {
+        subscriptionId: data.subscription_id,
+        cycleStart: data.subscription_cycle_start,
+        isExtra: data.is_subscription_extra,
+      }
+    : null;
 }

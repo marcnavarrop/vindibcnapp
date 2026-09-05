@@ -3,22 +3,31 @@ import { getClientByProfile } from "@/lib/data/clients";
 import { Badge } from "@/components/ui/badge";
 import { RouteTabs } from "@/components/ui/route-tabs";
 import { formatEur, formatDate } from "@/lib/labels";
+import { getCycleBono, getLiveSubscription } from "@/lib/data/subscriptions";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientBonosPage() {
-  const [t, tl, tb, tpm, tp, viewer] = await Promise.all([
+  const [t, tl, tb, tpm, tp, tsub, viewer] = await Promise.all([
     getTranslations("bonos"),
     getTranslations("labels.service"),
     getTranslations("labels.bonoStatus"),
     getTranslations("labels.paymentMethod"),
     getTranslations("picker"),
+    getTranslations("labels.subscriptionStatus"),
     getViewer(),
   ]);
   const locale = (await getLocale()) as Locale;
   const client = viewer ? await getClientByProfile(viewer.id) : null;
+
+  // La subscripció i el bo del mes en curs. Es demanen en sèrie perquè el segon
+  // necessita l'identificador del primer, i només si n'hi ha.
+  const subscription = client ? await getLiveSubscription(client.id) : null;
+  const cycleBono = subscription
+    ? await getCycleBono(subscription.id, subscription.currentCycleStart)
+    : null;
   const BONO_TABS = [
     { href: "/client/bonos", label: t("tabBuy"), accent: true },
     { href: "/client/bonos/meus", label: t("tabMine") },
@@ -35,6 +44,71 @@ export default async function ClientBonosPage() {
         </p>
       ) : (
         <div className="flex flex-col gap-6">
+          {/* La subscripció va a dalt de tot i no barrejada amb els bons: el que
+              hi ha aquí no és una compra sinó el que passarà cada mes, i és el
+              primer que vol saber qui en té una. */}
+          {subscription && (
+            <Panel title={t("mine.subscriptionTitle")}>
+              <Row>
+                <span className="font-bold text-brand-dark">
+                  {subscription.packageName}
+                </span>
+                <span>
+                  {t("mine.subscriptionPerMonth", {
+                    price: formatEur(subscription.unitPrice, locale),
+                  })}
+                </span>
+                {subscription.nextRenewalOn && (
+                  <span className="text-brand-muted">
+                    {t("mine.subscriptionRenewsOn", {
+                      date: formatDate(subscription.nextRenewalOn, locale),
+                    })}
+                  </span>
+                )}
+                <Badge tone={subscription.status === "active" ? "success" : "warn"}>
+                  {tsub(subscription.status)}
+                </Badge>
+              </Row>
+
+              {cycleBono ? (
+                <Row>
+                  <span className="text-brand-muted">
+                    {t("mine.subscriptionCycleSessions", {
+                      remaining: cycleBono.remainingSessions,
+                      total: cycleBono.totalSessions,
+                    })}
+                  </span>
+                  {cycleBono.expiresAt && (
+                    <span className="text-brand-muted">
+                      {t("mine.subscriptionCycleEnds", {
+                        date: formatDate(cycleBono.expiresAt, locale),
+                      })}
+                    </span>
+                  )}
+                </Row>
+              ) : (
+                <Empty>{t("mine.subscriptionNoCycle")}</Empty>
+              )}
+
+              {/* Dos avisos i no un: deure el mes en curs encara té arreglo
+                  abans de la renovació; estar aturada vol dir que ja ha passat.
+                  Dir-ho igual seria enganyar en un dels dos casos. */}
+              {subscription.status === "past_due" ? (
+                <Row>
+                  <span className="text-error">{t("mine.subscriptionPastDue")}</span>
+                </Row>
+              ) : (
+                cycleBono?.status === "pending_payment" && (
+                  <Row>
+                    <span className="text-brand-muted">
+                      {t("mine.subscriptionPending")}
+                    </span>
+                  </Row>
+                )
+              )}
+            </Panel>
+          )}
+
           <Panel title={t("mine.title")}>
             {client.bonos.length === 0 ? (
               <Empty>{t("mine.empty")}</Empty>

@@ -6,6 +6,8 @@ import { getPendingReferralReward } from "@/lib/data/referral";
 import { getClientByProfile } from "@/lib/data/clients";
 import { getColorPalette } from "@/lib/data/colors";
 import { getCenterSettings } from "@/lib/data/center-settings";
+import { getLiveSubscription } from "@/lib/data/subscriptions";
+import { centerToday } from "@/lib/center-time";
 import Link from "next/link";
 import { Gift } from "lucide-react";
 import { stripeEnabled } from "@/lib/stripe";
@@ -61,6 +63,20 @@ export default async function ComprarBonoPage() {
 
   const showRedeem =
     settings.giftVouchersEnabled || (await hasOutstandingGiftVouchers());
+
+  // Si ja en té una de viva no se n'hi ofereix una segona: l'índex únic de la
+  // 0072 la rebutjaria, i val més no ensenyar un botó que no pot funcionar.
+  // Només es pregunta si el centre les té obertes.
+  const liveSubscription =
+    settings.subscriptionsEnabled && client
+      ? await getLiveSubscription(client.id)
+      : null;
+
+  // El dia de renovació que se li promet és el d'AVUI al centre, que és el que
+  // `createSubscription` fixarà com a àncora. Es calcula al servidor perquè el
+  // navegador pot anar en una altra zona horària i prometre un dia que després
+  // no es compliria.
+  const renewalDay = Number(centerToday().slice(8, 10));
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   return (
@@ -91,6 +107,9 @@ export default async function ComprarBonoPage() {
         effectivePrices={effectivePrices}
         pendingReferralReward={pendingReferralReward}
         stripeEnabled={stripeEnabled()}
+        subscriptionsEnabled={settings.subscriptionsEnabled}
+        hasLiveSubscription={liveSubscription !== null}
+        renewalDay={renewalDay}
       />
 
       {/*

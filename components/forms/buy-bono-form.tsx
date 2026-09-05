@@ -9,8 +9,10 @@ import type { ColorPalette } from "@/lib/colors";
 import {
   createPendingBonoAction,
   startBonoCheckoutAction,
+  subscribeAtCenterAction,
   type FormState,
   type CheckoutState,
+  type SubscribeState,
 } from "@/app/(client)/client/bonos/buy-actions";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
@@ -23,7 +25,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { PaymentMethodOption } from "@/components/forms/payment-method-option";
-import { Building2, CreditCard } from "lucide-react";
+import { Building2, CreditCard, CalendarSync } from "lucide-react";
 
 // ─── Component principal ──────────────────────────────────────────────────────
 export function BuyBonoForm({
@@ -32,6 +34,9 @@ export function BuyBonoForm({
   pendingReferralReward = null,
   palette,
   stripeEnabled = false,
+  subscriptionsEnabled = false,
+  hasLiveSubscription = false,
+  renewalDay,
 }: {
   services: Service[];
   effectivePrices?: Record<string, EffectivePrice>;
@@ -40,6 +45,16 @@ export function BuyBonoForm({
   palette: ColorPalette;
   /** Es pot pagar amb targeta? Ho decideix el servidor, no el navegador. */
   stripeEnabled?: boolean;
+  /** El centre admet subscripcions noves. També es torna a mirar al servidor. */
+  subscriptionsEnabled?: boolean;
+  /** Ja en té una de viva: no se n'ofereix una segona. */
+  hasLiveSubscription?: boolean;
+  /**
+   * Dia del mes en què se li renovaria, que és el d'avui al centre. Arriba del
+   * servidor perquè el navegador pot anar en una altra zona horària, i el dia
+   * que se li promet ha de ser el que després calcularà l'alta.
+   */
+  renewalDay: number;
 }) {
   const locale = useLocale() as Locale;
   const t = useTranslations("bonos.buy");
@@ -56,6 +71,12 @@ export function BuyBonoForm({
     startBonoCheckoutAction,
     {} as CheckoutState,
   );
+  // Tercera sortida del mateix formulari, pel mateix motiu que la de targeta:
+  // comparteix el paquet triat sense duplicar cap camp.
+  const [subscribeState, subscribeAction] = useActionState(
+    subscribeAtCenterAction,
+    {} as SubscribeState,
+  );
 
   const [step, setStep] = useState<1 | 2>(1);
   /**
@@ -66,7 +87,7 @@ export function BuyBonoForm({
    * confondre fins i tot qui coneix l'app. El pas del mig només explica què
    * passarà; la lògica de negoci no canvia.
    */
-  const [confirming, setConfirming] = useState<null | "center" | "card">(null);
+  const [confirming, setConfirming] = useState<null | "center" | "card" | "subscription">(null);
   /** Condicions acceptades. Es reinicia cada cop que s'obre el diàleg. */
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
@@ -76,6 +97,25 @@ export function BuyBonoForm({
     () => services.find((s) => s.id === serviceId),
     [services, serviceId],
   );
+
+  // Estat: subscripció activada. Pantalla pròpia i no la del bo: el que s'acaba
+  // de fer no és una compra sinó una que es repetirà sola cada mes, i dir-ho
+  // ara estalvia la sorpresa del mes que ve.
+  if (subscribeState.ok) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
+        <AnimatedFeedback type="success" />
+        <p className="text-xl font-bold text-success">{t("okSubscriptionTitle")}</p>
+        <p className="max-w-sm text-sm text-brand-muted">{t("okSubscriptionBody")}</p>
+        <Link
+          href="/client/bonos/meus"
+          className={`mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
+        >
+          {t("okCta")}
+        </Link>
+      </div>
+    );
+  }
 
   // Estat: bo creat amb èxit
   if (state.ok) {
@@ -234,6 +274,20 @@ export function BuyBonoForm({
                 onClick={() => setConfirming("card")}
               />
             )}
+
+            {/* Només als bons de grup, i només si encara no en té cap de viva.
+                Les tres condicions es tornen a comprovar al servidor: aquí es
+                decideix què s'ENSENYA, no què es permet. */}
+            {subscriptionsEnabled &&
+              !hasLiveSubscription &&
+              serviceType === "grupo_reducido" && (
+                <PaymentMethodOption
+                  icon={<CalendarSync className="h-5 w-5" />}
+                  title={t("paySubscription")}
+                  description={<>{t("paySubscriptionDesc", { day: renewalDay })}</>}
+                  onClick={() => setConfirming("subscription")}
+                />
+              )}
           </div>
 
           {state.errorCode && (
@@ -241,6 +295,9 @@ export function BuyBonoForm({
           )}
           {checkoutState.errorCode && (
             <p className="text-sm text-error">{t(checkoutState.errorCode)}</p>
+          )}
+          {subscribeState.errorCode && (
+            <p className="text-sm text-error">{t(subscribeState.errorCode)}</p>
           )}
 
           {selected && (
@@ -251,7 +308,9 @@ export function BuyBonoForm({
               title={
                 confirming === "card"
                   ? t("confirmCardTitle")
-                  : t("confirmCentreTitle")
+                  : confirming === "subscription"
+                    ? t("confirmSubscriptionTitle")
+                    : t("confirmCentreTitle")
               }
               actions={
                 <>
@@ -269,6 +328,14 @@ export function BuyBonoForm({
                       disabled={!acceptsTerms}
                     >
                       {t("payCard")}
+                    </SubmitButton>
+                  ) : confirming === "subscription" ? (
+                    <SubmitButton
+                      formAction={subscribeAction}
+                      pendingLabel={t("subscribing")}
+                      disabled={!acceptsTerms}
+                    >
+                      {t("confirm")}
                     </SubmitButton>
                   ) : (
                     <SubmitButton
@@ -308,7 +375,9 @@ export function BuyBonoForm({
                 <p className="text-brand-charcoal">
                   {confirming === "card"
                     ? t("confirmCardBody")
-                    : t("confirmCentreBody")}
+                    : confirming === "subscription"
+                      ? t("confirmSubscriptionBody", { day: renewalDay })
+                      : t("confirmCentreBody")}
                 </p>
 
                 <label className="flex cursor-pointer items-start gap-2.5 text-brand-charcoal">
