@@ -3,7 +3,8 @@ import { getClientByProfile } from "@/lib/data/clients";
 import { Badge } from "@/components/ui/badge";
 import { RouteTabs } from "@/components/ui/route-tabs";
 import { formatEur, formatDate } from "@/lib/labels";
-import { getCycleBono, getLiveSubscription } from "@/lib/data/subscriptions";
+import { getCycleState, getLiveSubscription } from "@/lib/data/subscriptions";
+import { stripeEnabled } from "@/lib/stripe";
 import { SubscriptionManage } from "@/components/forms/subscription-manage";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
@@ -26,9 +27,10 @@ export default async function ClientBonosPage() {
   // La subscripció i el bo del mes en curs. Es demanen en sèrie perquè el segon
   // necessita l'identificador del primer, i només si n'hi ha.
   const subscription = client ? await getLiveSubscription(client.id) : null;
-  const cycleBono = subscription
-    ? await getCycleBono(subscription.id, subscription.currentCycleStart)
-    : null;
+  // Tot el que fa falta del mes en curs —el bo, els extres, si se'n pot demanar
+  // cap— surt d'una sola crida: la mateixa que després decidirà si es permet.
+  const cycle = subscription ? await getCycleState(subscription) : null;
+  const cycleBono = cycle?.cycleBono ?? null;
   const BONO_TABS = [
     { href: "/client/bonos", label: t("tabBuy"), accent: true },
     { href: "/client/bonos/meus", label: t("tabMine") },
@@ -124,6 +126,19 @@ export default async function ClientBonosPage() {
               <SubscriptionManage
                 byCard={subscription.paymentMethod === "card"}
                 cancelAtPeriodEnd={subscription.cancelAtPeriodEnd}
+                stripeEnabled={stripeEnabled()}
+                extra={
+                  cycle
+                    ? {
+                        canClaim: cycle.canClaimExtra,
+                        used: cycle.extrasUsed,
+                        max: cycle.extrasMax,
+                        price: cycle.pricePerSession,
+                        sessionsPerCycle: subscription.sessionsPerCycle,
+                        renewalDay: subscription.anchorDay,
+                      }
+                    : null
+                }
               />
             </Panel>
           )}

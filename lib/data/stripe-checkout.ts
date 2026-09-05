@@ -8,6 +8,7 @@ import {
   getLiveSubscription,
   getSubscriptionByStripeId,
   issueCycleBono,
+  markExtraBonoPaid,
   quoteSubscription,
   updateSubscription,
   type Subscription,
@@ -58,6 +59,7 @@ import type { ServiceType } from "@/types/database";
 const KIND_BONO = "bono";
 const KIND_VOUCHER = "gift_voucher";
 const KIND_SUBSCRIPTION = "subscription";
+const KIND_EXTRA = "bono_extra";
 
 type CheckoutMetadata = Record<string, string>;
 
@@ -326,6 +328,39 @@ export async function openBillingPortal(input: {
   }
 }
 
+/**
+ * Sessió de Checkout per pagar una sessió extra JA RECLAMADA.
+ *
+ * Aquí sí que hi ha un bo abans de pagar, i és l'única compra d'aquest fitxer
+ * que ho fa així. El motiu és a la 0073: el que es reclama de manera atòmica no
+ * és el pagament sinó la plaça dins de la quota del mes. Si el client abandona
+ * el pagament, el bo es queda pendent i el podrà pagar al centre; si esperéssim
+ * al webhook, podria pagar i trobar-se sense sessió.
+ */
+export async function startExtraCheckout(input: {
+  bonoId: string;
+  clientId: string;
+  serviceType: ServiceType;
+  price: number;
+  email: string | null;
+}): Promise<CheckoutStart> {
+  return createSession({
+    amountEuros: input.price,
+    productName: `${SERVICE_LABELS[input.serviceType]} · 1 sessió extra`,
+    productDescription: "Sessió extra de la teva subscripció, al preu per sessió del teu bo.",
+    metadata: {
+      kind: KIND_EXTRA,
+      bonoId: input.bonoId,
+      clientId: input.clientId,
+      serviceType: input.serviceType,
+    },
+    successPath: "/client/bonos/confirmacio",
+    cancelPath: "/client/bonos/meus",
+    customerEmail: input.email,
+    clientReferenceId: input.clientId,
+  });
+}
+
 // ─── Complir el pagament (només des del webhook) ────────────────────────────
 
 export type Fulfilment =
@@ -361,6 +396,8 @@ export async function fulfillCheckoutSession(
     return fulfillBono(session.id, m, paid, paymentIntentId);
   if (m.kind === KIND_VOUCHER)
     return fulfillGiftVoucher(session.id, m, paid, paymentIntentId);
+  if (m.kind === KIND_EXTRA)
+    return fulfillExtraBono(session.id, m, paid, paymentIntentId);
 
   return { status: "ignored", reason: `kind=${m.kind ?? "(cap)"}` };
 }
@@ -856,4 +893,42 @@ export async function scheduleStripeCancellation(
   await getStripe().subscriptions.update(stripeSubscriptionId, {
     cancel_at_period_end: true,
   });
+}
+
+/**
+ * Cobrar la sessió extra: el bo ja existia, aquí només passa a actiu.
+ *
+ * L'anotació del cobrament va FORA del `if`: encara que el bo ja no es pogués
+ * activar (perquè un lliurament anterior ja ho va fer, o perquè el termini de la
+ * 0044 el va fer decaure entremig), els diners hi són i han de constar. És
+ * idempotent per l'índex de `stripe_payment_id` de la 0054.
+ */
+async function fulfillExtraBono(
+  sessionId: string,
+  m: CheckoutMetadata,
+  paid: number,
+  paymentIntentId: string | null,
+): Promise<Fulfilment> {
+  const result = await markExtraBonoPaid({
+    bonoId: m.bonoId,
+    stripeCheckoutSessionId: sessionId,
+    price: paid,
+    stripePaymentId: paymentIntentId,
+  });
+  if (!result) return { status: "ignored", reason: `bo extra ${m.bonoId} no trobat` };
+
+  await createSystemPayment({
+    clientId: result.clientId,
+    bonoId: m.bonoId,
+    amount: paid,
+    method: "card",
+    concept: bonoConcept(result.serviceType, 1),
+    stripePaymentId: paymentIntentId,
+  });
+
+  return {
+    status: result.activated ? "created" : "duplicate",
+    kind: KIND_EXTRA,
+    id: m.bonoId,
+  };
 }

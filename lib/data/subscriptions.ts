@@ -2,6 +2,7 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
+import { getCenterSettings } from "@/lib/data/center-settings";
 import { loadClientAndService } from "@/lib/data/bonos";
 import { centerToday } from "@/lib/center-time";
 import { anchorDayFor, renewalAfter } from "@/lib/subscription-cycle";
@@ -202,6 +203,37 @@ export async function getLiveSubscription(
     .maybeSingle();
   if (error) throw error;
   return data ? toSubscription(data as Row) : null;
+}
+
+/**
+ * L'identificador de client d'un perfil, i res més.
+ *
+ * Va per `service_role` i demana una sola columna, com fa
+ * `loadClientAndService`. NO es fa servir `getClientByProfile`, que és el camí
+ * de les pantalles: aquell porta la fitxa sencera —bons, cobraments, etiquetes—
+ * per un id, i va pel client de SESSIÓ, de manera que només funciona dins d'una
+ * petició. Aquí en necessitem menys i en llocs on no sempre hi ha sessió.
+ */
+export async function clientIdForProfile(profileId: string): Promise<string | null> {
+  if (USE_MOCK)
+    return getStore().clients.find((c) => c.profile_id === profileId)?.id ?? null;
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("clients")
+    .select("id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
+/** La subscripció viva d'un perfil, resolent-ne el client pel camí de sobre. */
+export async function getLiveSubscriptionForProfile(
+  profileId: string,
+  serviceType: ServiceType = SUBSCRIBABLE_SERVICE_TYPE,
+): Promise<Subscription | null> {
+  const clientId = await clientIdForProfile(profileId);
+  return clientId ? getLiveSubscription(clientId, serviceType) : null;
 }
 
 export async function getSubscription(id: string): Promise<Subscription | null> {
@@ -721,4 +753,189 @@ async function bonoSubscriptionLink(bonoId: string): Promise<{
         isExtra: data.is_subscription_extra,
       }
     : null;
+}
+
+// ─── L'estat del mes en curs ────────────────────────────────────────────────
+
+export type CycleState = {
+  subscription: Subscription;
+  /** El bo base del mes. Null només si encara no s'ha emès. */
+  cycleBono: CycleBono | null;
+  /** Els extres ja demanats aquest mes que encara compten. */
+  extras: CycleBono[];
+  /** Sessions disponibles al cicle, sumant el bo base i els extres. */
+  sessionsLeft: number;
+  /** Extres gastats de la quota del mes. */
+  extrasUsed: number;
+  extrasMax: number;
+  /** Preu d'una sessió extra, si se'n pot demanar cap. */
+  pricePerSession: number;
+  /**
+   * ¿Es pot demanar un extra ARA?
+   *
+   * Les mateixes condicions que comprova `claim_subscription_extra` (0073), i
+   * per això es calculen en un sol lloc: aquí decideixen què s'ENSENYA i allà
+   * decideixen què es permet, però si les dues respostes divergissin el client
+   * veuria un botó que rebota.
+   */
+  canClaimExtra: boolean;
+};
+
+/**
+ * Un extra anul·lat o decaigut no gasta quota: el client no l'ha arribat a
+ * tenir. Mateixa llista que el `status not in (...)` de la 0073.
+ */
+const EXTRA_DOESNT_COUNT: BonoStatus[] = ["cancelled", "unpaid"];
+
+/** Els extres d'un cicle, en ordre d'emissió. */
+export async function getCycleExtras(
+  subscriptionId: string,
+  cycleStart: string,
+): Promise<CycleBono[]> {
+  if (USE_MOCK)
+    return getStore()
+      .bonos.filter(
+        (b) =>
+          b.subscription_id === subscriptionId &&
+          b.subscription_cycle_start === cycleStart &&
+          b.is_subscription_extra,
+      )
+      .map((b) => ({
+        id: b.id,
+        status: b.status,
+        totalSessions: b.total_sessions,
+        remainingSessions: b.remaining_sessions,
+        price: b.price,
+        expiresAt: b.expires_at,
+      }));
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("bonos")
+    .select("id, status, total_sessions, remaining_sessions, price, expires_at")
+    .eq("subscription_id", subscriptionId)
+    .eq("subscription_cycle_start", cycleStart)
+    .eq("is_subscription_extra", true)
+    .order("purchased_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((b) => ({
+    id: b.id,
+    status: b.status,
+    totalSessions: b.total_sessions,
+    remainingSessions: b.remaining_sessions,
+    price: Number(b.price),
+    expiresAt: b.expires_at,
+  }));
+}
+
+/**
+ * Tot el que fa falta saber del mes en curs, resolt d'un cop.
+ *
+ * El preu per sessió surt del bo BASE d'aquest mes i no del catàleg. És el que
+ * aquest client ha pagat de veritat aquest mes, així que una oferta segmentada
+ * hi arriba sola: no cal tornar a consultar cap promoció ni recordar quina se
+ * li va aplicar.
+ */
+export async function getCycleState(
+  subscription: Subscription,
+  today: string = centerToday(),
+): Promise<CycleState> {
+  const { subscriptionExtraSessionsMax, subscriptionsEnabled } =
+    await getCenterSettings();
+
+  const [cycleBono, extras] = await Promise.all([
+    getCycleBono(subscription.id, subscription.currentCycleStart),
+    getCycleExtras(subscription.id, subscription.currentCycleStart),
+  ]);
+
+  const usable = (b: CycleBono) =>
+    (b.status === "active" || b.status === "pending_payment") &&
+    (b.expiresAt === null || b.expiresAt >= today);
+
+  const sessionsLeft = [cycleBono, ...extras]
+    .filter((b): b is CycleBono => b !== null && usable(b))
+    .reduce((n, b) => n + b.remainingSessions, 0);
+
+  const extrasUsed = extras.filter(
+    (b) => !EXTRA_DOESNT_COUNT.includes(b.status),
+  ).length;
+
+  return {
+    subscription,
+    cycleBono,
+    extras,
+    sessionsLeft,
+    extrasUsed,
+    extrasMax: subscriptionExtraSessionsMax,
+    pricePerSession: cycleBono
+      ? pricePerSession(cycleBono.price, cycleBono.totalSessions)
+      : 0,
+    canClaimExtra:
+      subscriptionsEnabled &&
+      subscription.status === "active" &&
+      // Sense bo base no hi ha de què treure el preu per sessió, i tampoc hi ha
+      // res que puguem dir que s'ha exhaurit. La 0073 el deixaria passar —una
+      // suma sense files és zero— i per això es tanca aquí.
+      cycleBono !== null &&
+      sessionsLeft === 0 &&
+      extrasUsed < subscriptionExtraSessionsMax,
+  };
+}
+
+/**
+ * Marca com a cobrat un bo de sessió extra que s'ha pagat amb targeta.
+ *
+ * El cobrament s'anota SEMPRE, encara que el bo ja no estigui pendent. És
+ * deliberat: si el client va reservar amb l'extra i el termini de la 0044 el va
+ * fer decaure abans que arribés el pagament, l'estat ja no seria
+ * 'pending_payment' i amb un `where` estricte ens quedaríem els diners sense
+ * cap fila a `payments`. L'anotació és idempotent per l'índex de la 0054, així
+ * que repetir-la no fa mal; no anotar-la, sí.
+ *
+ * Torna si l'ha activat de veritat, per distingir el primer lliurament del
+ * webhook dels següents.
+ */
+export async function markExtraBonoPaid(input: {
+  bonoId: string;
+  stripeCheckoutSessionId: string;
+  price: number;
+  stripePaymentId: string | null;
+}): Promise<{ activated: boolean; clientId: string; serviceType: ServiceType } | null> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const b = store.bonos.find((x) => x.id === input.bonoId);
+    if (!b) return null;
+    const activated = b.status === "pending_payment" || b.status === "unpaid";
+    if (activated) {
+      b.status = "active";
+      b.stripe_checkout_session_id = input.stripeCheckoutSessionId;
+      saveStore(store);
+    }
+    return { activated, clientId: b.client_id, serviceType: b.service_type };
+  }
+
+  const admin = createAdminClient();
+  const { data: bono } = await admin
+    .from("bonos")
+    .select("id, client_id, service_type, status")
+    .eq("id", input.bonoId)
+    .eq("is_subscription_extra", true)
+    .maybeSingle();
+  if (!bono) return null;
+
+  let activated = false;
+  if (bono.status === "pending_payment" || bono.status === "unpaid") {
+    const { data } = await admin
+      .from("bonos")
+      .update({
+        status: "active",
+        stripe_checkout_session_id: input.stripeCheckoutSessionId,
+      })
+      .eq("id", input.bonoId)
+      .in("status", ["pending_payment", "unpaid"])
+      .select("id");
+    activated = (data ?? []).length > 0;
+  }
+
+  return { activated, clientId: bono.client_id, serviceType: bono.service_type };
 }
