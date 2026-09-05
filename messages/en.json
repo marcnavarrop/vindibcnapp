@@ -288,7 +288,11 @@
       "subscribing": "Subscribing…",
       "okSubscriptionTitle": "Subscription active",
       "okSubscriptionBody": "You've got this month's sessions and they'll renew on their own. Pay at the centre whenever you like; you can book in the meantime.",
-      "errorSubscribe": "The subscription could not be activated."
+      "errorSubscribe": "The subscription could not be activated.",
+      "paySubscriptionCard": "Subscribe by card",
+      "paySubscriptionCardDesc": "Renews on its own on the {day}th of each month and is charged to your card. You can change it or cancel whenever you like.",
+      "confirmSubscriptionCardTitle": "Confirm the card subscription?",
+      "confirmSubscriptionCardBody": "We'll take you to Stripe's payment page. On the {day}th of each month this amount is charged to your card and you get the sessions. Your price is locked in. Sessions you don't use do NOT carry over — but booking already counts. You can cancel whenever you like and keep the month you've paid for. If you don't complete the payment, nothing is created."
     },
     "mine": {
       "title": "My packages",
@@ -304,7 +308,18 @@
       "subscriptionCycleEnds": "These sessions are valid until {date}",
       "subscriptionPending": "This month is still unpaid. Pay at the centre so you don't miss the renewal.",
       "subscriptionPastDue": "The subscription is paused because a month is unpaid. It resumes on its own once you pay at the centre.",
-      "subscriptionNoCycle": "This month's pass hasn't been issued yet."
+      "subscriptionNoCycle": "This month's pass hasn't been issued yet.",
+      "subscriptionManageCard": "Change card or view receipts",
+      "subscriptionCancel": "Cancel my subscription",
+      "subscriptionCancelling": "Scheduling cancellation…",
+      "subscriptionEndsAfterCycle": "You've asked to cancel. You keep this month and nothing more will be charged.",
+      "subscriptionByCard": "Charged to your card",
+      "subscriptionByCentre": "Paid at the centre",
+      "errorCancel": "The cancellation could not be scheduled.",
+      "errorStripe": "The subscription settings could not be opened.",
+      "notFound": "No active subscription found.",
+      "notCard": "This subscription isn't paid by card.",
+      "unauthorized": "Not authorised."
     },
     "confirmed": {
       "title": "Payment confirmed",

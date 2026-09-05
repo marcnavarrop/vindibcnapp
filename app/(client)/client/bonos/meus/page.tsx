@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { RouteTabs } from "@/components/ui/route-tabs";
 import { formatEur, formatDate } from "@/lib/labels";
 import { getCycleBono, getLiveSubscription } from "@/lib/data/subscriptions";
+import { SubscriptionManage } from "@/components/forms/subscription-manage";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -65,6 +66,11 @@ export default async function ClientBonosPage() {
                     })}
                   </span>
                 )}
+                <span className="text-brand-muted">
+                  {subscription.paymentMethod === "card"
+                    ? t("mine.subscriptionByCard")
+                    : t("mine.subscriptionByCentre")}
+                </span>
                 <Badge tone={subscription.status === "active" ? "success" : "warn"}>
                   {tsub(subscription.status)}
                 </Badge>
@@ -90,6 +96,14 @@ export default async function ClientBonosPage() {
                 <Empty>{t("mine.subscriptionNoCycle")}</Empty>
               )}
 
+              {subscription.cancelAtPeriodEnd && (
+                <Row>
+                  <span className="text-brand-muted">
+                    {t("mine.subscriptionEndsAfterCycle")}
+                  </span>
+                </Row>
+              )}
+
               {/* Dos avisos i no un: deure el mes en curs encara té arreglo
                   abans de la renovació; estar aturada vol dir que ja ha passat.
                   Dir-ho igual seria enganyar en un dels dos casos. */}
@@ -106,6 +120,11 @@ export default async function ClientBonosPage() {
                   </Row>
                 )
               )}
+
+              <SubscriptionManage
+                byCard={subscription.paymentMethod === "card"}
+                cancelAtPeriodEnd={subscription.cancelAtPeriodEnd}
+              />
             </Panel>
           )}
 

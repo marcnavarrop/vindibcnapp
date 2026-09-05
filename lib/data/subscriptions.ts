@@ -5,7 +5,7 @@ import { getStore, saveStore } from "@/lib/mock/store";
 import { loadClientAndService } from "@/lib/data/bonos";
 import { centerToday } from "@/lib/center-time";
 import { anchorDayFor, renewalAfter } from "@/lib/subscription-cycle";
-import { cycleExpiry } from "@/lib/subscription-cycle";
+import { cycleExpiry, previousDay } from "@/lib/subscription-cycle";
 import type {
   BonoStatus,
   PaymentMethod,
@@ -524,6 +524,14 @@ export async function getCycleBono(
  * decideix. La data és l'últim dia abans de la renovació següent, de manera que
  * el bo vell i el nou no conviuen mai.
  *
+ * QUI DIU QUAN S'ACABA EL CICLE depèn de com es paga, i això no és una
+ * incoherència sinó la conseqüència d'una regla: manda el rellotge que cobra.
+ * Al centre cobrem nosaltres i el calculem amb l'àncora (`cycleExpiry`); amb
+ * targeta cobra Stripe i el període ens l'ha de dir ell (`cycleEnd`). Deduir-lo
+ * pel nostre compte en el segon cas seria posar dos rellotges a decidir el
+ * mateix mes: n'hi ha prou que algú es doni d'alta a les 00:30 d'aquí —quan a
+ * UTC encara és ahir— perquè les dues respostes es separin un dia.
+ *
  * Idempotent per l'índex únic de la 0072 i no per cap SELECT previ: el cron pot
  * córrer dos cops i el webhook de Stripe pot lliurar el mateix esdeveniment
  * dues vegades alhora. Mateix criteri que `createPaidBono`.
@@ -534,11 +542,18 @@ export async function issueCycleBono(input: {
   status: Extract<BonoStatus, "active" | "pending_payment">;
   /** El que s'ha cobrat de veritat. Per defecte, el preu congelat. */
   price?: number;
+  /**
+   * Primer dia del cicle SEGÜENT, quan qui el sap és Stripe. Sense això es
+   * dedueix de l'àncora, que és el que val per als pagaments al centre.
+   */
+  cycleEnd?: string;
   stripeInvoiceId?: string | null;
 }): Promise<{ id: string; created: boolean }> {
   const { subscription: sub, cycleStart } = input;
   const price = input.price ?? sub.unitPrice;
-  const expiresAt = cycleExpiry(cycleStart, sub.anchorDay);
+  const expiresAt = input.cycleEnd
+    ? previousDay(input.cycleEnd)
+    : cycleExpiry(cycleStart, sub.anchorDay);
 
   if (USE_MOCK) {
     const store = getStore();

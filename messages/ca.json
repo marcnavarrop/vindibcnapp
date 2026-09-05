@@ -288,7 +288,11 @@
       "subscribing": "Subscrivint…",
       "okSubscriptionTitle": "Subscripció activada",
       "okSubscriptionBody": "Ja tens les sessions d'aquest mes i es renovaran soles. Paga-les al centre quan vulguis; mentrestant ja pots reservar.",
-      "errorSubscribe": "No s'ha pogut activar la subscripció."
+      "errorSubscribe": "No s'ha pogut activar la subscripció.",
+      "paySubscriptionCard": "Subscriure-m'hi amb targeta",
+      "paySubscriptionCardDesc": "Es renova sol el dia {day} de cada mes i es cobra a la teva targeta. Pots canviar-la o donar-te de baixa quan vulguis.",
+      "confirmSubscriptionCardTitle": "Confirmes la subscripció amb targeta?",
+      "confirmSubscriptionCardBody": "Et portem a la pàgina de pagament de Stripe. Cada dia {day} de mes es cobrarà aquest import a la teva targeta i rebràs les sessions. El preu et queda congelat. Les sessions que no facis servir NO s'acumulen al mes següent —però reservar ja compta—. Pots donar-te de baixa quan vulguis i conservaràs el mes que ja tinguis pagat. Si no acabes de pagar, no es crea res."
     },
     "mine": {
       "title": "Els meus bons",
@@ -304,7 +308,18 @@
       "subscriptionCycleEnds": "Aquestes sessions valen fins al {date}",
       "subscriptionPending": "Aquest mes encara consta sense pagar. Paga'l al centre per no quedar-te sense la renovació.",
       "subscriptionPastDue": "La subscripció està aturada perquè hi ha un mes sense cobrar. Es reprèn sola quan el paguis al centre.",
-      "subscriptionNoCycle": "Encara no s'ha emès el bo d'aquest mes."
+      "subscriptionNoCycle": "Encara no s'ha emès el bo d'aquest mes.",
+      "subscriptionManageCard": "Canviar la targeta o veure els rebuts",
+      "subscriptionCancel": "Donar-me de baixa",
+      "subscriptionCancelling": "Programant la baixa…",
+      "subscriptionEndsAfterCycle": "Has demanat la baixa. Conserves aquest mes i no se'n cobrarà cap més.",
+      "subscriptionByCard": "Es cobra a la teva targeta",
+      "subscriptionByCentre": "Es paga al centre",
+      "errorCancel": "No s'ha pogut programar la baixa.",
+      "errorStripe": "No s'ha pogut obrir la gestió de la subscripció.",
+      "notFound": "No s'ha trobat cap subscripció activa.",
+      "notCard": "Aquesta subscripció no es paga amb targeta.",
+      "unauthorized": "No autoritzat."
     },
     "confirmed": {
       "title": "Pagament confirmat",

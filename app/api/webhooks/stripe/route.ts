@@ -1,11 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
-import { fulfillCheckoutSession } from "@/lib/data/stripe-checkout";
+import {
+  fulfillCheckoutSession,
+  fulfillSubscriptionInvoice,
+  markSubscriptionCancelled,
+  markSubscriptionPastDue,
+  syncSubscriptionSchedule,
+  type Fulfilment,
+} from "@/lib/data/stripe-checkout";
 
 /**
- * Webhook de Stripe: l'ÚNIC lloc on una compra amb targeta es converteix en un
- * bo o en un val.
+ * Webhook de Stripe: l'ÚNIC lloc on el que Stripe cobra es converteix en un bo,
+ * un val o un mes de subscripció.
  *
  * Qui autentica aquesta petició és la signatura de Stripe, no cap sessió: per
  * això la ruta queda FORA del `matcher` del middleware, igual que `/api/cron/*`.
@@ -19,6 +26,40 @@ import { fulfillCheckoutSession } from "@/lib/data/stripe-checkout";
 // cru. `force-dynamic` perquè no se'n memoritzi res.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * Els esdeveniments que escoltem, i per què cadascun.
+ *
+ * `checkout.session.completed` només serveix per als pagaments ÚNICS (bo i val).
+ * Les subscripcions no hi passen a posta: el seu primer cobrament arriba com una
+ * factura més, igual que el catorzè, i tractar-los pel mateix camí és el que fa
+ * que el mes u no pugui divergir de la resta.
+ *
+ * `invoice.paid` i no `invoice.payment_succeeded`: el primer és el que garanteix
+ * que la factura ha quedat saldada, també quan s'ha cobrat en diverses vegades.
+ *
+ * `customer.subscription.deleted` tanca les dues sortides que no controlem des
+ * d'aquí: la baixa que el client fa al portal de Stripe i l'abandó de Stripe
+ * quan es cansa de reintentar un cobrament.
+ *
+ * `customer.subscription.updated` hi és perquè una baixa al portal NO arriba com
+ * un `deleted` sinó com un `updated` amb `cancel_at_period_end`, i el `deleted`
+ * no ve fins un mes després. Sense escoltar-lo, durant tot aquell mes diríem al
+ * client que se li renovarà.
+ */
+const HANDLERS: Record<string, (e: Stripe.Event) => Promise<Fulfilment>> = {
+  "checkout.session.completed": (e) =>
+    fulfillCheckoutSession(e.data.object as Stripe.Checkout.Session),
+  "invoice.paid": (e) => fulfillSubscriptionInvoice(e.data.object as Stripe.Invoice),
+  "invoice.payment_failed": (e) =>
+    markSubscriptionPastDue(e.data.object as Stripe.Invoice),
+  "customer.subscription.deleted": (e) =>
+    markSubscriptionCancelled(e.data.object as Stripe.Subscription),
+  // El quart, que no era al disseny: sense ell, una baixa feta al portal de
+  // Stripe no es notaria aquí fins d'aquí a un mes. Veure `syncSubscriptionSchedule`.
+  "customer.subscription.updated": (e) =>
+    syncSubscriptionSchedule(e.data.object as Stripe.Subscription),
+};
 
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -43,13 +84,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "signatura no vàlida" }, { status: 400 });
   }
 
-  if (event.type !== "checkout.session.completed")
-    return NextResponse.json({ received: true, ignored: event.type });
+  const handler = HANDLERS[event.type];
+  if (!handler) return NextResponse.json({ received: true, ignored: event.type });
 
   try {
-    const result = await fulfillCheckoutSession(
-      event.data.object as Stripe.Checkout.Session,
-    );
+    const result = await handler(event);
     // Un duplicat respon 200: Stripe avisa que pot lliurar el mateix
     // esdeveniment més d'un cop, i respondre-li un error el faria insistir amb
     // una feina que ja està feta.

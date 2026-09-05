@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { createPendingBono } from "@/lib/data/bonos";
-import { startBonoCheckout } from "@/lib/data/stripe-checkout";
+import { startBonoCheckout, startSubscriptionCheckout } from "@/lib/data/stripe-checkout";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import { stripeEnabled } from "@/lib/stripe";
 import { redirect } from "next/navigation";
@@ -126,4 +126,38 @@ export async function subscribeAtCenterAction(
 
   revalidatePath("/client/bonos/meus");
   return { ok: true };
+}
+
+/**
+ * Subscriure's PAGANT AMB TARGETA: obre el Checkout en mode subscripció.
+ *
+ * Com amb el bo, aquí no es crea res. La subscripció neix quan Stripe emet i
+ * cobra la primera factura, i ho diu pel webhook: si el client tanca la pestanya
+ * abans de pagar, no queda res penjat.
+ */
+export async function startSubscriptionCheckoutAction(
+  _prev: CheckoutState,
+  formData: FormData,
+): Promise<CheckoutState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
+  if (!stripeEnabled()) return { errorCode: "errorStripeOff" };
+
+  const serviceId = String(formData.get("serviceId") ?? "");
+  if (!serviceId) return { errorCode: "errorService" };
+
+  let result;
+  try {
+    result = await startSubscriptionCheckout({
+      profileId: viewer.id,
+      serviceId,
+      email: viewer.email || null,
+    });
+  } catch (e) {
+    console.error("[subscripcions] no s'ha pogut obrir el pagament:", e);
+    return { errorCode: "errorStripe" };
+  }
+
+  if ("error" in result) return { errorCode: "errorStripe" };
+  redirect(result.url);
 }

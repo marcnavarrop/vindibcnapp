@@ -10,6 +10,7 @@ import {
   createPendingBonoAction,
   startBonoCheckoutAction,
   subscribeAtCenterAction,
+  startSubscriptionCheckoutAction,
   type FormState,
   type CheckoutState,
   type SubscribeState,
@@ -77,6 +78,10 @@ export function BuyBonoForm({
     subscribeAtCenterAction,
     {} as SubscribeState,
   );
+  const [subCardState, subCardAction] = useActionState(
+    startSubscriptionCheckoutAction,
+    {} as CheckoutState,
+  );
 
   const [step, setStep] = useState<1 | 2>(1);
   /**
@@ -87,7 +92,7 @@ export function BuyBonoForm({
    * confondre fins i tot qui coneix l'app. El pas del mig només explica què
    * passarà; la lògica de negoci no canvia.
    */
-  const [confirming, setConfirming] = useState<null | "center" | "card" | "subscription">(null);
+  const [confirming, setConfirming] = useState<null | "center" | "card" | "subscription" | "subscriptionCard">(null);
   /** Condicions acceptades. Es reinicia cada cop que s'obre el diàleg. */
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
@@ -281,12 +286,24 @@ export function BuyBonoForm({
             {subscriptionsEnabled &&
               !hasLiveSubscription &&
               serviceType === "grupo_reducido" && (
-                <PaymentMethodOption
-                  icon={<CalendarSync className="h-5 w-5" />}
-                  title={t("paySubscription")}
-                  description={<>{t("paySubscriptionDesc", { day: renewalDay })}</>}
-                  onClick={() => setConfirming("subscription")}
-                />
+                <>
+                  <PaymentMethodOption
+                    icon={<CalendarSync className="h-5 w-5" />}
+                    title={t("paySubscription")}
+                    description={<>{t("paySubscriptionDesc", { day: renewalDay })}</>}
+                    onClick={() => setConfirming("subscription")}
+                  />
+                  {stripeEnabled && (
+                    <PaymentMethodOption
+                      icon={<CalendarSync className="h-5 w-5" />}
+                      title={t("paySubscriptionCard")}
+                      description={
+                        <>{t("paySubscriptionCardDesc", { day: renewalDay })}</>
+                      }
+                      onClick={() => setConfirming("subscriptionCard")}
+                    />
+                  )}
+                </>
               )}
           </div>
 
@@ -299,6 +316,9 @@ export function BuyBonoForm({
           {subscribeState.errorCode && (
             <p className="text-sm text-error">{t(subscribeState.errorCode)}</p>
           )}
+          {subCardState.errorCode && (
+            <p className="text-sm text-error">{t(subCardState.errorCode)}</p>
+          )}
 
           {selected && (
             <ConfirmDialog
@@ -310,7 +330,9 @@ export function BuyBonoForm({
                   ? t("confirmCardTitle")
                   : confirming === "subscription"
                     ? t("confirmSubscriptionTitle")
-                    : t("confirmCentreTitle")
+                    : confirming === "subscriptionCard"
+                      ? t("confirmSubscriptionCardTitle")
+                      : t("confirmCentreTitle")
               }
               actions={
                 <>
@@ -333,6 +355,14 @@ export function BuyBonoForm({
                     <SubmitButton
                       formAction={subscribeAction}
                       pendingLabel={t("subscribing")}
+                      disabled={!acceptsTerms}
+                    >
+                      {t("confirm")}
+                    </SubmitButton>
+                  ) : confirming === "subscriptionCard" ? (
+                    <SubmitButton
+                      formAction={subCardAction}
+                      pendingLabel={t("goingToStripe")}
                       disabled={!acceptsTerms}
                     >
                       {t("confirm")}
@@ -377,7 +407,9 @@ export function BuyBonoForm({
                     ? t("confirmCardBody")
                     : confirming === "subscription"
                       ? t("confirmSubscriptionBody", { day: renewalDay })
-                      : t("confirmCentreBody")}
+                      : confirming === "subscriptionCard"
+                        ? t("confirmSubscriptionCardBody", { day: renewalDay })
+                        : t("confirmCentreBody")}
                 </p>
 
                 <label className="flex cursor-pointer items-start gap-2.5 text-brand-charcoal">

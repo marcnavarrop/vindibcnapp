@@ -288,7 +288,11 @@
       "subscribing": "Suscribiendo…",
       "okSubscriptionTitle": "Suscripción activada",
       "okSubscriptionBody": "Ya tienes las sesiones de este mes y se renovarán solas. Págalas en el centro cuando quieras; mientras tanto ya puedes reservar.",
-      "errorSubscribe": "No se ha podido activar la suscripción."
+      "errorSubscribe": "No se ha podido activar la suscripción.",
+      "paySubscriptionCard": "Suscribirme con tarjeta",
+      "paySubscriptionCardDesc": "Se renueva solo el día {day} de cada mes y se cobra a tu tarjeta. Puedes cambiarla o darte de baja cuando quieras.",
+      "confirmSubscriptionCardTitle": "¿Confirmas la suscripción con tarjeta?",
+      "confirmSubscriptionCardBody": "Te llevamos a la página de pago de Stripe. Cada día {day} de mes se cobrará este importe a tu tarjeta y recibirás las sesiones. El precio te queda congelado. Las sesiones que no uses NO se acumulan al mes siguiente —pero reservar ya cuenta—. Puedes darte de baja cuando quieras y conservarás el mes que ya tengas pagado. Si no acabas de pagar, no se crea nada."
     },
     "mine": {
       "title": "Mis bonos",
@@ -304,7 +308,18 @@
       "subscriptionCycleEnds": "Estas sesiones valen hasta el {date}",
       "subscriptionPending": "Este mes todavía consta sin pagar. Págalo en el centro para no quedarte sin la renovación.",
       "subscriptionPastDue": "La suscripción está parada porque hay un mes sin cobrar. Se reanuda sola cuando lo pagues en el centro.",
-      "subscriptionNoCycle": "Todavía no se ha emitido el bono de este mes."
+      "subscriptionNoCycle": "Todavía no se ha emitido el bono de este mes.",
+      "subscriptionManageCard": "Cambiar la tarjeta o ver los recibos",
+      "subscriptionCancel": "Darme de baja",
+      "subscriptionCancelling": "Programando la baja…",
+      "subscriptionEndsAfterCycle": "Has pedido la baja. Conservas este mes y no se cobrará ninguno más.",
+      "subscriptionByCard": "Se cobra a tu tarjeta",
+      "subscriptionByCentre": "Se paga en el centro",
+      "errorCancel": "No se ha podido programar la baja.",
+      "errorStripe": "No se ha podido abrir la gestión de la suscripción.",
+      "notFound": "No se ha encontrado ninguna suscripción activa.",
+      "notCard": "Esta suscripción no se paga con tarjeta.",
+      "unauthorized": "No autorizado."
     },
     "confirmed": {
       "title": "Pago confirmado",

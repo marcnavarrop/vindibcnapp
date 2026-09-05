@@ -4,6 +4,16 @@ import { getStripe, siteOrigin, toCents, fromCents, STRIPE_MIN_CENTS } from "@/l
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quoteBonoPurchase, createPaidBono } from "@/lib/data/bonos";
 import {
+  createSubscription,
+  getLiveSubscription,
+  getSubscriptionByStripeId,
+  issueCycleBono,
+  quoteSubscription,
+  updateSubscription,
+  type Subscription,
+} from "@/lib/data/subscriptions";
+import { centerDateStr } from "@/lib/center-time";
+import {
   quoteGiftVoucher,
   createGiftVoucherFromSnapshot,
   getGiftVoucher,
@@ -14,7 +24,7 @@ import {
 } from "@/lib/data/gift-vouchers";
 import { uploadGiftVoucherPdf } from "@/lib/data/gift-voucher-doc";
 import { giftVoucherBuyerLocale } from "@/lib/data/gift-vouchers";
-import { createSystemPayment } from "@/lib/data/payments";
+import { createSystemPayment, bonoConcept } from "@/lib/data/payments";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { SERVICE_LABELS } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
@@ -47,6 +57,7 @@ import type { ServiceType } from "@/types/database";
  */
 const KIND_BONO = "bono";
 const KIND_VOUCHER = "gift_voucher";
+const KIND_SUBSCRIPTION = "subscription";
 
 type CheckoutMetadata = Record<string, string>;
 
@@ -187,6 +198,132 @@ export async function startGiftVoucherCheckout(input: {
     customerEmail: input.email,
     clientReferenceId: quote.clientId,
   });
+}
+
+// ─── Subscripció amb targeta ────────────────────────────────────────────────
+
+/**
+ * Sessió de Checkout per SUBSCRIURE'S, no per comprar un cop.
+ *
+ * PER QUÈ `mode: 'subscription'` I NO UN COBRAMENT NOSTRE CADA MES
+ *
+ * Perquè avui aquí no hi ha cap targeta desada: el Checkout de pagament únic
+ * que ja teníem crea un client convidat i no guarda cap mètode de pagament. Fer
+ * els cobraments recurrents pel nostre compte voldria dir construir la
+ * persistència del Customer, els PaymentIntents fora de sessió, l'escala de
+ * reintents i el camí de tornada quan el banc demana 3DS sense el client al
+ * davant... i disparar-ho tot des d'un cron que corre un cop al dia a hora
+ * fixa. Stripe ja ho fa, i el seu aniversari de facturació és exactament el que
+ * s'ha decidit: el dia del mes en què cadascú es va donar d'alta.
+ *
+ * EL PREU VA INLINE (`price_data`) i no com un Price del catàleg de Stripe.
+ * Així queda congelat a l'alta amb l'oferta segmentada que tingués aquell dia,
+ * que és la decisió D2, i no cal mantenir un Price per cada combinació de
+ * paquet i descompte.
+ *
+ * LES METADADES VAN A `subscription_data` i no a la sessió. És la diferència
+ * que fa que tot el que ve després funcioni: les de la sessió només viatgen amb
+ * `checkout.session.completed`, mentre que les de la subscripció les porta CADA
+ * factura, també la del mes catorze. Així el compliment té sempre a mà de qui
+ * és i què va comprar, sense haver de recordar-ho nosaltres.
+ */
+export async function startSubscriptionCheckout(input: {
+  profileId: string;
+  serviceId: string;
+  email: string | null;
+}): Promise<CheckoutStart> {
+  const { subscriptionsEnabled } = await getCenterSettings();
+  if (!subscriptionsEnabled)
+    return { error: "Les subscripcions no estan disponibles ara mateix." };
+
+  const quote = await quoteSubscription({
+    profileId: input.profileId,
+    serviceId: input.serviceId,
+  });
+
+  // Primera barrera del conflicte "ja en té una". La segona, i la que de debò
+  // garanteix res, és l'índex únic de la 0072 al compliment; però val més
+  // aturar-ho abans de cobrar que haver de tornar els diners després.
+  const existing = await getLiveSubscription(quote.clientId, quote.serviceType);
+  if (existing)
+    return { error: "Ja tens una subscripció activa d'aquest servei." };
+
+  const cents = toCents(quote.unitPrice);
+  if (cents < STRIPE_MIN_CENTS)
+    return {
+      error:
+        "Aquest import és massa petit per cobrar-lo amb targeta. Tria l'opció de pagar al centre.",
+    };
+
+  const origin = await siteOrigin();
+  const metadata: CheckoutMetadata = {
+    kind: KIND_SUBSCRIPTION,
+    profileId: input.profileId,
+    clientId: quote.clientId,
+    serviceId: quote.serviceId,
+    serviceType: quote.serviceType,
+    sessionsPerCycle: String(quote.sessionsPerCycle),
+    packageName: meta(quote.packageName, 200),
+  };
+
+  try {
+    const session = await getStripe().checkout.sessions.create({
+      mode: "subscription",
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "eur",
+            unit_amount: cents,
+            recurring: { interval: "month" },
+            product_data: {
+              name: quote.packageName,
+              description: `${SERVICE_LABELS[quote.serviceType]} · ${quote.sessionsPerCycle} sessions al mes`,
+            },
+          },
+        },
+      ],
+      subscription_data: { metadata },
+      client_reference_id: quote.clientId,
+      customer_email: input.email ?? undefined,
+      success_url: `${origin}/client/bonos/confirmacio?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/client/bonos`,
+    });
+
+    if (!session.url) return { error: "Stripe no ha retornat cap adreça de pagament." };
+    return { url: session.url };
+  } catch (e) {
+    console.error("[stripe] no s'ha pogut obrir la subscripció:", e);
+    return {
+      error: "No s'ha pogut obrir la pàgina de pagament. Torna-ho a provar en un moment.",
+    };
+  }
+}
+
+/**
+ * El portal de facturació de Stripe: on el client canvia la targeta, mira els
+ * rebuts i pot donar-se de baixa.
+ *
+ * No en fem una pantalla pròpia perquè seria pitjor: tocar dades de targeta vol
+ * dir tornar a entrar en l'abast de PCI, i la baixa i el canvi de mètode ja els
+ * té Stripe fets i traduïts. El que sí que és nostre és el que passa DESPRÉS —la
+ * baixa arriba per webhook—, i això no canvia.
+ */
+export async function openBillingPortal(input: {
+  stripeCustomerId: string;
+  returnPath: string;
+}): Promise<{ url: string } | { error: string }> {
+  const origin = await siteOrigin();
+  try {
+    const portal = await getStripe().billingPortal.sessions.create({
+      customer: input.stripeCustomerId,
+      return_url: `${origin}${input.returnPath}`,
+    });
+    return { url: portal.url };
+  } catch (e) {
+    console.error("[stripe] no s'ha pogut obrir el portal:", e);
+    return { error: "No s'ha pogut obrir la gestió de la subscripció." };
+  }
 }
 
 // ─── Complir el pagament (només des del webhook) ────────────────────────────
@@ -344,4 +481,379 @@ async function buyerName(profileId: string): Promise<string | null> {
     .eq("id", profileId)
     .maybeSingle();
   return data?.full_name ?? null;
+}
+
+// ─── Subscripcions: complir el que Stripe cobra ─────────────────────────────
+
+/**
+ * L'esdeveniment que mou TOT el cicle de vida d'una subscripció amb targeta és
+ * `invoice.paid`, i no `checkout.session.completed`.
+ *
+ * El motiu és que el primer cobrament i el catorzè arriben exactament igual:
+ * Stripe emet una factura també per l'alta (`billing_reason:
+ * 'subscription_create'`). Amb un sol camí, el mes u no pot divergir de la
+ * resta —que és la mateixa raó per la qual `issueCycleBono` és una funció sola—
+ * i la regla de la casa es manté: obrir el Checkout no crea res.
+ *
+ * `checkout.session.completed` en mode subscripció, doncs, no cal escoltar-lo.
+ */
+
+type SubscriptionMeta = {
+  clientId: string;
+  serviceId: string;
+  serviceType: ServiceType;
+  sessionsPerCycle: number;
+  packageName: string;
+};
+
+/** La subscripció de Stripe que ha generat aquesta factura. */
+function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const details = invoice.parent?.subscription_details;
+  if (!details) return null;
+  return typeof details.subscription === "string"
+    ? details.subscription
+    : (details.subscription?.id ?? null);
+}
+
+/**
+ * Les metadades que vam posar a `subscription_data` en obrir el Checkout.
+ *
+ * Stripe en congela una còpia a cada factura, així que normalment ja les portem
+ * a sobre. Si no hi fossin es demana la subscripció: val més una crida de més
+ * que deixar una compra sense complir.
+ */
+async function subscriptionMeta(
+  invoice: Stripe.Invoice,
+  stripeSubscriptionId: string,
+): Promise<SubscriptionMeta | null> {
+  let raw = invoice.parent?.subscription_details?.metadata ?? null;
+  if (!raw || !raw.clientId) {
+    const sub = await getStripe().subscriptions.retrieve(stripeSubscriptionId);
+    raw = sub.metadata ?? null;
+  }
+  if (!raw || raw.kind !== KIND_SUBSCRIPTION || !raw.clientId) return null;
+
+  return {
+    clientId: raw.clientId,
+    serviceId: raw.serviceId,
+    serviceType: raw.serviceType as ServiceType,
+    sessionsPerCycle: Number(raw.sessionsPerCycle),
+    packageName: raw.packageName,
+  };
+}
+
+/**
+ * El període que aquesta factura ha cobrat, en DIES DEL CENTRE.
+ *
+ * Surt de la línia de la factura i no del nostre càlcul: amb targeta el
+ * rellotge que cobra és el de Stripe, i el cicle ha de ser el que ell ha
+ * facturat. Veure `issueCycleBono`.
+ */
+function invoicePeriod(invoice: Stripe.Invoice): { start: string; end: string } | null {
+  const line = invoice.lines?.data?.[0];
+  if (!line?.period) return null;
+  return {
+    start: centerDateStr(new Date(line.period.start * 1000)),
+    end: centerDateStr(new Date(line.period.end * 1000)),
+  };
+}
+
+/** El PaymentIntent d'una factura, per poder-la retornar si cal. */
+async function invoicePaymentIntent(invoice: Stripe.Invoice): Promise<string | null> {
+  const fromPayload = invoice.payments?.data
+    ?.map((p) => p.payment?.payment_intent)
+    .find(Boolean);
+  if (fromPayload)
+    return typeof fromPayload === "string" ? fromPayload : fromPayload.id;
+
+  // El webhook no sempre porta la llista expandida.
+  try {
+    const full = await getStripe().invoices.retrieve(invoice.id!, {
+      expand: ["payments.data.payment.payment_intent"],
+    });
+    const pi = full.payments?.data?.map((p) => p.payment?.payment_intent).find(Boolean);
+    return pi ? (typeof pi === "string" ? pi : pi.id) : null;
+  } catch (e) {
+    console.error("[stripe] no s'ha pogut llegir el PaymentIntent de la factura:", e);
+    return null;
+  }
+}
+
+/**
+ * Complir una factura de subscripció: emetre el mes que s'acaba de cobrar.
+ *
+ * Idempotent per l'índex únic de `stripe_invoice_id` (0072), com tota la resta
+ * d'aquest fitxer: si l'esdeveniment arriba dos cops, el segon rebota amb un
+ * 23505 que es llegeix com "això ja estava fet".
+ */
+export async function fulfillSubscriptionInvoice(
+  invoice: Stripe.Invoice,
+): Promise<Fulfilment> {
+  const stripeSubscriptionId = invoiceSubscriptionId(invoice);
+  if (!stripeSubscriptionId)
+    return { status: "ignored", reason: "factura sense subscripció" };
+
+  // `amount_paid` i no `amount_due`: aquí només compta el que hi ha cobrat.
+  if (invoice.amount_paid <= 0)
+    return { status: "ignored", reason: `amount_paid=${invoice.amount_paid}` };
+
+  const period = invoicePeriod(invoice);
+  if (!period)
+    return { status: "ignored", reason: "factura sense període" };
+
+  const paid = fromCents(invoice.amount_paid);
+  let subscription = await getSubscriptionByStripeId(stripeSubscriptionId);
+
+  // Primera factura: encara no tenim fila. Es crea ara i no en obrir el
+  // Checkout, perquè fins que Stripe no cobra no hi ha subscripció de veritat.
+  if (!subscription) {
+    const meta = await subscriptionMeta(invoice, stripeSubscriptionId);
+    if (!meta) return { status: "ignored", reason: "sense metadades nostres" };
+
+    const created = await createSubscriptionFromInvoice({
+      meta,
+      stripeSubscriptionId,
+      customerId: typeof invoice.customer === "string" ? invoice.customer : (invoice.customer?.id ?? null),
+      unitPrice: paid,
+      period,
+      invoice,
+    });
+    if ("conflict" in created)
+      return { status: "ignored", reason: created.conflict };
+    subscription = created.subscription;
+  }
+
+  const bono = await issueCycleBono({
+    subscription,
+    cycleStart: period.start,
+    cycleEnd: period.end,
+    // Neix ACTIU i no pendent: els diners ja hi són.
+    status: "active",
+    price: paid,
+    stripeInvoiceId: invoice.id,
+  });
+
+  // El cobrament s'identifica per la FACTURA i no pel PaymentIntent. Una
+  // factura és un mes i només un, sempre ve informada, i així la idempotència
+  // de l'índex de la 0054 no depèn que el webhook porti la llista de pagaments
+  // expandida (que no sempre la porta).
+  await createSystemPayment({
+    clientId: subscription.clientId,
+    bonoId: bono.id,
+    amount: paid,
+    method: "card",
+    concept: bonoConcept(subscription.serviceType, subscription.sessionsPerCycle),
+    stripePaymentId: invoice.id ?? null,
+  });
+
+  // Un cobrament que arriba després d'un impagament la torna a posar en marxa,
+  // i el cicle avança sempre al que Stripe acaba de facturar.
+  await updateSubscription(subscription.id, {
+    status: "active",
+    currentCycleStart: period.start,
+    nextRenewalOn: period.end,
+  });
+
+  return {
+    status: bono.created ? "created" : "duplicate",
+    kind: KIND_SUBSCRIPTION,
+    id: subscription.id,
+  };
+}
+
+/**
+ * L'alta a partir de la primera factura, amb el conflicte resolt.
+ *
+ * EL CONFLICTE: el client ja té una subscripció viva d'aquest servei i n'acaba
+ * de pagar una altra amb targeta. L'índex `subscriptions_one_live_per_client`
+ * (0072) no deixa crear la segona, i els diners ja són a casa.
+ *
+ * Es fa amb doble barrera —la pantalla no ofereix el botó i
+ * `startSubscriptionCheckout` s'hi torna a negar— però queda una escletxa real:
+ * entre obrir el Checkout i pagar, el client (o l'admin) pot donar-ne d'alta una
+ * al centre. La cursa és petita i les conseqüències no: cal decidir-la.
+ *
+ * ES CANCEL·LA A STRIPE I ES RETORNEN ELS DINERS. Les altres dues sortides són
+ * pitjors:
+ *
+ *   · Enganxar-la a la fila que ja hi ha vol dir que aquella persona es quedi
+ *     amb un preu i un dia de renovació que no són els que li havíem promès, i
+ *     amb el cicle nostre i el de Stripe dient coses diferents. És exactament el
+ *     problema dels dos rellotges que aquest disseny evita a tot arreu.
+ *
+ *   · Respondre un error perquè Stripe reintenti no arregla res: el conflicte és
+ *     un estat permanent nostre, no una fallada passatgera. Stripe insistiria
+ *     hores, es rendiria, i quedaria una subscripció seva viva cobrant cada mes
+ *     sense cap fila aquí. És el pitjor final possible.
+ *
+ * Cobrar dues vegades pel mateix dret no és defensable, i tornar-ho és l'única
+ * sortida que deixa les dues parts com estaven. Es respon 200 perquè Stripe no
+ * hi torni, i es deixa constància ben visible al registre.
+ */
+async function createSubscriptionFromInvoice(input: {
+  meta: SubscriptionMeta;
+  stripeSubscriptionId: string;
+  customerId: string | null;
+  unitPrice: number;
+  period: { start: string; end: string };
+  invoice: Stripe.Invoice;
+}): Promise<{ subscription: Subscription } | { conflict: string }> {
+  const { meta, period } = input;
+
+  try {
+    const subscription = await createSubscription({
+      quote: {
+        clientId: meta.clientId,
+        serviceId: meta.serviceId,
+        serviceType: meta.serviceType,
+        sessionsPerCycle: meta.sessionsPerCycle,
+        packageName: meta.packageName,
+        unitPrice: input.unitPrice,
+      },
+      paymentMethod: "card",
+      stripeCustomerId: input.customerId,
+      stripeSubscriptionId: input.stripeSubscriptionId,
+      // El cicle el marca Stripe des del primer dia.
+      startedOn: period.start,
+    });
+
+    // `createSubscription` fixa la propera renovació amb la nostra aritmètica.
+    // Amb targeta mana la de Stripe, així que se sobreescriu de seguida.
+    await updateSubscription(subscription.id, { nextRenewalOn: period.end });
+    return { subscription: { ...subscription, nextRenewalOn: period.end } };
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    if (code !== "23505") throw e;
+
+    await refundConflictingSubscription(input.stripeSubscriptionId, input.invoice);
+    return {
+      conflict: `el client ${meta.clientId} ja tenia una subscripció viva; s'ha cancel·lat i retornat`,
+    };
+  }
+}
+
+async function refundConflictingSubscription(
+  stripeSubscriptionId: string,
+  invoice: Stripe.Invoice,
+): Promise<void> {
+  console.error(
+    `[stripe] CONFLICTE de subscripció ${stripeSubscriptionId}: es cancel·la i es retorna la factura ${invoice.id}.`,
+  );
+
+  try {
+    await getStripe().subscriptions.cancel(stripeSubscriptionId);
+  } catch (e) {
+    // Ja podria estar cancel·lada per un lliurament anterior del mateix
+    // esdeveniment: no és motiu per no intentar el retorn.
+    console.error("[stripe] no s'ha pogut cancel·lar la subscripció en conflicte:", e);
+  }
+
+  const paymentIntent = await invoicePaymentIntent(invoice);
+  if (!paymentIntent) {
+    console.error(
+      `[stripe] ATENCIÓ: la factura ${invoice.id} no té PaymentIntent; el retorn s'ha de fer a mà des del panell.`,
+    );
+    return;
+  }
+
+  try {
+    // La clau d'idempotència és la factura: si l'esdeveniment arriba dos cops,
+    // Stripe reconeix el segon intent com el mateix i no retorna res dues
+    // vegades. Aquí no ens val cap índex nostre: els diners són a la seva banda.
+    await getStripe().refunds.create(
+      { payment_intent: paymentIntent, reason: "duplicate" },
+      { idempotencyKey: `refund-conflict-${invoice.id}` },
+    );
+  } catch (e) {
+    console.error(
+      `[stripe] ATENCIÓ: no s'ha pogut retornar la factura ${invoice.id}; cal fer-ho a mà.`,
+      e,
+    );
+  }
+}
+
+/**
+ * Un cobrament que falla atura la subscripció, igual que un mes sense cobrar al
+ * centre. No es cancel·la: Stripe encara la pot rescatar amb els seus reintents,
+ * i si ho aconsegueix, `invoice.paid` la tornarà a posar en marxa sola.
+ */
+export async function markSubscriptionPastDue(
+  invoice: Stripe.Invoice,
+): Promise<Fulfilment> {
+  const stripeSubscriptionId = invoiceSubscriptionId(invoice);
+  if (!stripeSubscriptionId)
+    return { status: "ignored", reason: "factura sense subscripció" };
+
+  const subscription = await getSubscriptionByStripeId(stripeSubscriptionId);
+  if (!subscription) return { status: "ignored", reason: "subscripció desconeguda" };
+  if (subscription.status === "cancelled")
+    return { status: "ignored", reason: "ja cancel·lada" };
+
+  await updateSubscription(subscription.id, { status: "past_due" });
+  return { status: "created", kind: KIND_SUBSCRIPTION, id: subscription.id };
+}
+
+/**
+ * Baixa definitiva: la dona per closa aquí també.
+ *
+ * Arriba tant si el client s'ha donat de baixa des del portal com si Stripe l'ha
+ * abandonada després d'esgotar els reintents. Les sessions del mes ja pagat NO
+ * es toquen: el seu bo té la seva pròpia data i s'acaba quan li toca.
+ */
+export async function markSubscriptionCancelled(
+  stripeSubscription: Stripe.Subscription,
+): Promise<Fulfilment> {
+  const subscription = await getSubscriptionByStripeId(stripeSubscription.id);
+  if (!subscription) return { status: "ignored", reason: "subscripció desconeguda" };
+  if (subscription.status === "cancelled")
+    return { status: "duplicate", kind: KIND_SUBSCRIPTION, id: subscription.id };
+
+  await updateSubscription(subscription.id, {
+    status: "cancelled",
+    nextRenewalOn: null,
+    cancelledAt: new Date().toISOString(),
+  });
+  return { status: "created", kind: KIND_SUBSCRIPTION, id: subscription.id };
+}
+
+/**
+ * Sincronitza la baixa programada des de Stripe.
+ *
+ * Aquest quart esdeveniment no estava al disseny i hi ha entrat perquè el
+ * portal de facturació obre un forat real: quan el client s'hi dona de baixa,
+ * Stripe NO emet `customer.subscription.deleted` sinó `updated` amb
+ * `cancel_at_period_end: true`, i el `deleted` no arriba fins que s'acaba el
+ * període. Sense escoltar-ho, la nostra pantalla li seguiria dient "es renova el
+ * dia X" durant un mes sencer després d'haver-se donat de baixa. Un mes
+ * ensenyant una cosa falsa sobre els seus diners val més que un `case` de més.
+ *
+ * Només es mira `cancel_at_period_end`. L'estat de Stripe no es copia: qui
+ * decideix que una subscripció està aturada per impagament és `invoice.payment_
+ * failed`, i qui la tanca és `deleted`. Dos camins escrivint el mateix camp és
+ * com es fabrica una incoherència.
+ */
+export async function syncSubscriptionSchedule(
+  stripeSubscription: Stripe.Subscription,
+): Promise<Fulfilment> {
+  const subscription = await getSubscriptionByStripeId(stripeSubscription.id);
+  if (!subscription) return { status: "ignored", reason: "subscripció desconeguda" };
+
+  const cancelAtPeriodEnd = stripeSubscription.cancel_at_period_end === true;
+  if (subscription.cancelAtPeriodEnd === cancelAtPeriodEnd)
+    return { status: "duplicate", kind: KIND_SUBSCRIPTION, id: subscription.id };
+
+  await updateSubscription(subscription.id, { cancelAtPeriodEnd });
+  return { status: "created", kind: KIND_SUBSCRIPTION, id: subscription.id };
+}
+
+/**
+ * Programa la baixa a Stripe. La fila nostra la marca qui crida: aquí només es
+ * parla amb Stripe, que és qui ha de deixar de cobrar.
+ */
+export async function scheduleStripeCancellation(
+  stripeSubscriptionId: string,
+): Promise<void> {
+  await getStripe().subscriptions.update(stripeSubscriptionId, {
+    cancel_at_period_end: true,
+  });
 }
