@@ -71,8 +71,12 @@ export async function listBlocksLite(
       .availability_blocks.filter((b) => b.trainer_id === trainerId)
       .map((b) => ({ startAt: b.start_at, endAt: b.end_at }));
   }
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // Client de SERVEI, igual que `listAvailabilityLite` i pel mateix motiu:
+  // `assertWithinAvailability` les crida totes dues i ha de poder córrer sense
+  // sessió (cron de renovació, webhook de Stripe). Un bloqueig és una franja
+  // sense ningú a dins: no hi ha res de ningú a protegir.
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("availability_blocks")
     .select("start_at, end_at")
     .eq("trainer_id", trainerId);

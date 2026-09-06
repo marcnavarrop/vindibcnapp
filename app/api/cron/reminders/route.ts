@@ -26,6 +26,18 @@ function summarize(renewals: RenewalOutcome[]) {
     paused_unpaid: renewals.filter((r) => r.kind === "paused").length,
     cancelled: renewals.filter((r) => r.kind === "cancelled").length,
     failed: renewals.filter((r) => r.kind === "failed").length,
+    // L'extensió automàtica de sèries (0074). Es diu perquè, sense dir-ho, una
+    // que no reserva res s'assembla massa a una que no tenia res a reservar.
+    seriesExtended: renewals
+      .filter((r) => r.kind === "renewed")
+      .reduce(
+        (acc, r) => ({
+          created: acc.created + r.seriesExtended.created,
+          waitlisted: acc.waitlisted + r.seriesExtended.waitlisted,
+          failed: acc.failed + r.seriesExtended.failed,
+        }),
+        { created: 0, waitlisted: 0, failed: 0 },
+      ),
   };
 }
 

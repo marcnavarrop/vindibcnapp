@@ -696,7 +696,17 @@ export async function fulfillSubscriptionInvoice(
   // que Stripe reintentés una factura que ja hem complert.
   try {
     const { extendSeriesForSubscription } = await import("@/lib/data/series-extension");
-    await extendSeriesForSubscription({ ...subscription, currentCycleStart: period.start });
+    const extended = await extendSeriesForSubscription({
+      ...subscription,
+      currentCycleStart: period.start,
+    });
+    // Es deixa dit al registre: una extensió que no col·loca res s'assembla
+    // massa a una que no tenia res a col·locar, i aquí no hi ha cap resposta on
+    // pugui pujar (el webhook contesta a Stripe, no a nosaltres).
+    for (const e of extended)
+      console.log(
+        `[stripe] sèrie ${e.seriesId}: +${e.created} reserves, ${e.waitlisted} en espera, ${e.failed} fallides${e.skipped ? ` (${e.skipped})` : ""}`,
+      );
   } catch (e) {
     console.error(`[stripe] ${subscription.id}: les sèries no s'han allargat:`, e);
   }

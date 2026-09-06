@@ -96,8 +96,19 @@ export async function listAvailabilityLite(
       .availability_rules.filter((r) => r.trainer_id === trainerId)
       .map(toLite);
   }
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // Client de SERVEI i no de sessió, pel mateix motiu que la seva germana
+  // `listAllTrainerRulesLite` de sota: la RLS d'`availability_rules` obre el
+  // SELECT als autenticats, i aquesta funció ha de córrer TAMBÉ on no hi ha cap
+  // sessió. La crida `assertWithinAvailability`, i aquesta la criden ara el
+  // cron de renovació i el webhook de Stripe —dos camins que la 0065 va deixar
+  // sense accés amb la clau anon a posta—. Amb el client de sessió, allà la
+  // consulta petava amb "permission denied for function is_admin" i la sèrie
+  // que s'havia d'allargar sola no reservava mai res, sense dir-ho.
+  //
+  // No obre cap forat: aquí només hi ha horaris (dia, hores, serveis), cap dada
+  // de ningú, i qui decideix què se'n publica és el servidor.
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("availability_rules")
     .select("weekday, start_time, end_time, valid_from, valid_until, service_types")
     .eq("trainer_id", trainerId);

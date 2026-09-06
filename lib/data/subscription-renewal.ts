@@ -66,7 +66,15 @@ export async function subscribeAtCenter(input: {
 // ─── Renovació ───────────────────────────────────────────────────────────────
 
 export type RenewalOutcome =
-  | { kind: "renewed"; subscriptionId: string; clientId: string; bonoId: string; cycleStart: string }
+  | {
+      kind: "renewed";
+      subscriptionId: string;
+      clientId: string;
+      bonoId: string;
+      cycleStart: string;
+      /** Sessions que l'extensió automàtica ha col·locat, si n'hi havia cap. */
+      seriesExtended: { created: number; waitlisted: number; failed: number };
+    }
   | { kind: "paused"; subscriptionId: string; clientId: string }
   | { kind: "cancelled"; subscriptionId: string; clientId: string }
   | { kind: "failed"; subscriptionId: string; error: string };
@@ -177,7 +185,7 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
   // sessions. Va DESPRÉS del bo i abans de la data: si peta, la renovació encara
   // no consta feta i el barrido de demà hi tornarà (el bo no es duplicarà, que
   // d'això ja se n'encarrega l'índex únic de la 0072).
-  await extendSeries(sub);
+  const seriesExtended = await extendSeries(sub);
 
   // L'ordre importa: primer el bo, després la data. Si peta pel mig, la
   // subscripció segueix devent la renovació i demà s'hi torna; el bo ja emès no
@@ -193,6 +201,7 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
     clientId: sub.clientId,
     bonoId: bono.id,
     cycleStart,
+    seriesExtended,
   };
 }
 
@@ -202,11 +211,33 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
  * No tomba la renovació si falla: el mes ja està emès i el client ja té les
  * seves sessions. Que una sèrie no s'hagi pogut allargar és un disgust, però
  * perdre la renovació sencera per una franja ocupada seria molt pitjor.
+ *
+ * El QUE HA PASSAT, en canvi, sí que puja. Abans es descartava, i el resultat
+ * va ser que una extensió que no reservava res s'assemblava exactament a una
+ * que no tenia res a reservar: el bug de la clau anon —cap sessió al cron, cap
+ * regla de disponibilitat, cap reserva— hauria pogut viure mesos així.
  */
-async function extendSeries(sub: Subscription): Promise<void> {
+async function extendSeries(
+  sub: Subscription,
+): Promise<{ created: number; waitlisted: number; failed: number }> {
+  const zero = { created: 0, waitlisted: 0, failed: 0 };
   try {
-    await extendSeriesForSubscription(sub);
+    const out = await extendSeriesForSubscription(sub);
+    const total = out.reduce(
+      (acc, o) => ({
+        created: acc.created + o.created,
+        waitlisted: acc.waitlisted + o.waitlisted,
+        failed: acc.failed + o.failed,
+      }),
+      zero,
+    );
+    if (total.failed > 0)
+      console.error(
+        `[subscripcions] ${sub.id}: ${total.failed} ocurrències de sèrie no s'han pogut col·locar.`,
+      );
+    return total;
   } catch (e) {
     console.error(`[subscripcions] ${sub.id}: les sèries no s'han allargat:`, e);
+    return { ...zero, failed: 1 };
   }
 }
