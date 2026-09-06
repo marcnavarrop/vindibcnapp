@@ -348,7 +348,10 @@
       "body": "El bo ja és teu i el pots fer servir per reservar ara mateix. No has de pagar res al centre.",
       "sessionsPrice": "{sessions} sessions · {price}",
       "book": "Reservar una sessió",
-      "seeMine": "Veure els meus bons"
+      "seeMine": "Veure els meus bons",
+      "subscriptionTitle": "Subscripció activada",
+      "subscriptionBody": "Ja tens les sessions d'aquest mes i es renovaran soles cada mes. Pots donar-te de baixa quan vulguis des dels teus bons.",
+      "subscriptionRenews": "Es renova el {date}"
     }
   },
   "gifts": {

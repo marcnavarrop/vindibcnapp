@@ -348,7 +348,10 @@
       "body": "The package is yours and you can use it to book right now. There's nothing to pay at the centre.",
       "sessionsPrice": "{sessions} sessions · {price}",
       "book": "Book a session",
-      "seeMine": "See my packages"
+      "seeMine": "See my packages",
+      "subscriptionTitle": "Subscription active",
+      "subscriptionBody": "You've got this month's sessions and they'll renew on their own each month. You can cancel any time from your passes.",
+      "subscriptionRenews": "Renews on {date}"
     }
   },
   "gifts": {

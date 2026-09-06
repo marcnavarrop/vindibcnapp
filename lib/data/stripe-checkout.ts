@@ -367,6 +367,47 @@ export async function startExtraCheckout(input: {
   });
 }
 
+/**
+ * La subscripció NOSTRA que ha sortit d'una sessió de Checkout.
+ *
+ * Existeix per a la pantalla de tornada, i resol un cap solt del bloc 3: la
+ * compra d'un bo solt i la d'una subscripció aterren totes dues a
+ * /client/bonos/confirmacio amb un `session_id`, però allà només se sabia
+ * buscar un bo per `stripe_checkout_session_id`. En una subscripció aquella
+ * columna es queda NULA per disseny —el bo no neix del Checkout sinó de
+ * `invoice.paid`, i porta `stripe_invoice_id`—, així que la pantalla no el
+ * trobava mai i es quedava girant per sempre.
+ *
+ * El pont és la mateixa sessió: Stripe hi desa quina subscripció ha creat. Es
+ * pregunta a Stripe i es busca la nostra fila per `stripe_subscription_id`, que
+ * és la que el webhook sí que omple.
+ *
+ * NO crea res, com tota la pàgina de tornada: si el webhook encara no ha passat,
+ * torna null i la pantalla segueix esperant. La redirecció no és una prova de
+ * pagament ni aquí ni enlloc.
+ */
+export async function getSubscriptionByCheckoutSession(
+  sessionId: string,
+): Promise<Subscription | null> {
+  let stripeSubscriptionId: string | null = null;
+  try {
+    const session = await getStripe().checkout.sessions.retrieve(sessionId);
+    if (session.mode !== "subscription") return null;
+    stripeSubscriptionId =
+      typeof session.subscription === "string"
+        ? session.subscription
+        : (session.subscription?.id ?? null);
+  } catch (e) {
+    // Una sessió que no existeix (un `session_id` inventat a la barra
+    // d'adreces) no és un error nostre: simplement no hi ha res a ensenyar.
+    console.error("[stripe] no s'ha pogut llegir la sessió de Checkout:", e);
+    return null;
+  }
+  if (!stripeSubscriptionId) return null;
+
+  return getSubscriptionByStripeId(stripeSubscriptionId);
+}
+
 // ─── Complir el pagament (només des del webhook) ────────────────────────────
 
 export type Fulfilment =

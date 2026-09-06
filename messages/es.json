@@ -348,7 +348,10 @@
       "body": "El bono ya es tuyo y lo puedes usar para reservar ahora mismo. No tienes que pagar nada en el centro.",
       "sessionsPrice": "{sessions} sesiones · {price}",
       "book": "Reservar una sesión",
-      "seeMine": "Ver mis bonos"
+      "seeMine": "Ver mis bonos",
+      "subscriptionTitle": "Suscripción activada",
+      "subscriptionBody": "Ya tienes las sesiones de este mes y se renovarán solas cada mes. Puedes darte de baja cuando quieras desde tus bonos.",
+      "subscriptionRenews": "Se renueva el {date}"
     }
   },
   "gifts": {
