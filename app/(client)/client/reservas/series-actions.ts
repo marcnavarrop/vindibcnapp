@@ -34,6 +34,8 @@ export type SeriesFormInput = {
   bookOnlyAvailable: boolean;
   allowAlternatives: boolean;
   allowWaitlist: boolean;
+  /** La sèrie s'allarga sola a cada renovació de la subscripció (0074). */
+  autoExtend?: boolean;
 };
 
 export type CalculateState = {
@@ -51,7 +53,18 @@ async function toRequest(
   // Amb la cua tancada pel centre, la sèrie no en pot crear cap entrada per
   // molt que ho demani el formulari. Es talla aquí i no només a la pantalla:
   // amagar una casella no impedeix que algú enviï el camp a mà.
-  const { waitlistEnabled } = await getCenterSettings();
+  const { waitlistEnabled, subscriptionsEnabled } = await getCenterSettings();
+
+  // La casella d'allargar-se sola només val si el client TÉ subscripció viva.
+  // Es comprova al servidor pel mateix motiu que la cua: amagar-la a la
+  // pantalla no impedeix que algú enviï el camp a mà, i una sèrie marcada sense
+  // res que la renovi es quedaria 'active' per sempre.
+  const { getLiveSubscriptionForProfile } = await import("@/lib/data/subscriptions");
+  const subscription =
+    subscriptionsEnabled && input.autoExtend
+      ? await getLiveSubscriptionForProfile(profileId, input.serviceType)
+      : null;
+
   return {
     profileId,
     firstAt: input.firstAt,
@@ -63,6 +76,7 @@ async function toRequest(
     bookOnlyAvailable: input.bookOnlyAvailable,
     allowAlternatives: input.allowAlternatives,
     allowWaitlist: waitlistEnabled && input.allowWaitlist,
+    autoExtend: subscription !== null,
   };
 }
 

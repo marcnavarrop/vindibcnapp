@@ -691,6 +691,16 @@ export async function fulfillSubscriptionInvoice(
     nextRenewalOn: period.end,
   });
 
+  // Les sèries marcades per allargar-se (0074), ara que hi ha sessions noves.
+  // Dins d'un try: si falla, el mes ja està cobrat i emès, i respondre 500 faria
+  // que Stripe reintentés una factura que ja hem complert.
+  try {
+    const { extendSeriesForSubscription } = await import("@/lib/data/series-extension");
+    await extendSeriesForSubscription({ ...subscription, currentCycleStart: period.start });
+  } catch (e) {
+    console.error(`[stripe] ${subscription.id}: les sèries no s'han allargat:`, e);
+  }
+
   return {
     status: bono.created ? "created" : "duplicate",
     kind: KIND_SUBSCRIPTION,

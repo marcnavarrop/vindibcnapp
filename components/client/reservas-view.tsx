@@ -42,6 +42,7 @@ export function ClientReservasView({
   closingHour,
   series,
   waitlistEnabled,
+  hasSubscription,
   waitlist,
 }: {
   data: ClientCenterData;
@@ -54,6 +55,8 @@ export function ClientReservasView({
   series: SeriesSummary[];
   /** El centre accepta inscripcions noves a la llista d'espera. */
   waitlistEnabled: boolean;
+  /** El client té subscripció viva de grup (0072). */
+  hasSubscription: boolean;
   /** Les esperes vives del client, per no oferir-li apuntar-s'hi dos cops. */
   waitlist: { id: string; trainerId: string | null; desiredAt: string }[];
 }) {
@@ -105,6 +108,7 @@ export function ClientReservasView({
             onSeriesReady={setReview}
             onDialogOpen={() => setReview(null)}
             waitlistEnabled={waitlistEnabled}
+            hasSubscription={hasSubscription}
             waitlist={waitlist}
           />
         </div>

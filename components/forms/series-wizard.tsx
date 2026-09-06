@@ -58,6 +58,8 @@ export type SeriesReviewState = {
   occurrences: ResolvedOccurrence[];
   bonoRemaining: number;
   skippedForBono: number;
+  /** El client té subscripció viva: canvia què vol dir que faltin sessions. */
+  hasSubscription: boolean;
 };
 
 const FREQUENCIES: BookingFrequency[] = ["weekly", "biweekly", "monthly"];
@@ -76,12 +78,19 @@ export function RecurrenceFields({
   seed,
   remainingSessions,
   waitlistEnabled = false,
+  hasSubscription = false,
   onReady,
   secondaryAction,
 }: {
   seed: SeriesSeed;
   /** Sessions del bo d'aquest servei, per saber si arribaran. */
   remainingSessions?: number;
+  /**
+   * El client té una subscripció viva d'aquest servei (0072). Canvia dues coses:
+   * apareix la casella d'allargar la sèrie sola, i el que falta per sessions
+   * deixa de ser un límit per passar a ser una espera.
+   */
+  hasSubscription?: boolean;
   /**
    * El centre accepta inscripcions noves a la cua. Si no, l'opció ni surt;
    * el servidor també la ignora, que és el que de debò la tanca.
@@ -101,6 +110,7 @@ export function RecurrenceFields({
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [alternatives, setAlternatives] = useState(true);
   const [waitlist, setWaitlist] = useState(false);
+  const [autoExtend, setAutoExtend] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -114,6 +124,9 @@ export function RecurrenceFields({
     bookOnlyAvailable: onlyAvailable,
     allowAlternatives: alternatives,
     allowWaitlist: waitlist,
+    // Només té sentit amb subscripció: sense res que la renovi, una sèrie
+    // marcada per allargar-se no s'allargaria mai.
+    autoExtend: hasSubscription && autoExtend,
   };
 
   function calculate() {
@@ -130,6 +143,7 @@ export function RecurrenceFields({
         occurrences: res.occurrences ?? [],
         bonoRemaining: res.bonoRemaining ?? 0,
         skippedForBono: res.skippedForBono ?? 0,
+        hasSubscription,
       });
     });
   }
@@ -236,6 +250,14 @@ export function RecurrenceFields({
                 onChange={setWaitlist}
                 title={t("addWaitlist")}
                 desc={t("addWaitlistDesc")}
+              />
+            )}
+            {hasSubscription && (
+              <Check
+                checked={autoExtend}
+                onChange={setAutoExtend}
+                title={t("autoExtend")}
+                desc={t("autoExtendDesc")}
               />
             )}
           </div>
@@ -392,11 +414,21 @@ export function SeriesReview({
           </p>
         )}
         {review.skippedForBono > 0 && (
-          <p className="mt-2 text-xs font-bold text-brand-orange">
-            {t("bonoLimit", {
-              remaining: review.bonoRemaining,
-              skipped: review.skippedForBono,
-            })}
+          // Amb subscripció el missatge no és el mateix: el que falta no queda
+          // fora, queda per al mes que ve. Dir-li "no hi caben" a qui es renova
+          // cada mes seria fals, i encara més si ha marcat que s'allargui sola.
+          <p
+            className={`mt-2 text-xs font-bold ${review.hasSubscription ? "text-brand-purple" : "text-brand-orange"}`}
+          >
+            {review.hasSubscription
+              ? t(review.input.autoExtend ? "bonoLimitAutoExtend" : "bonoLimitSubscription", {
+                  remaining: review.bonoRemaining,
+                  skipped: review.skippedForBono,
+                })
+              : t("bonoLimit", {
+                  remaining: review.bonoRemaining,
+                  skipped: review.skippedForBono,
+                })}
           </p>
         )}
         {stats.alternatives > 0 && (

@@ -162,6 +162,7 @@ export function ClientCenterCalendar({
   onSeriesReady,
   onDialogOpen,
   waitlistEnabled = false,
+  hasSubscription = false,
   waitlist = [],
 }: {
   data: ClientCenterData;
@@ -169,6 +170,8 @@ export function ClientCenterCalendar({
   cancelAction: CancelAction;
   /** El centre accepta inscripcions noves a la cua. */
   waitlistEnabled?: boolean;
+  /** El client té subscripció viva d'aquest servei (0072). */
+  hasSubscription?: boolean;
   /** Les esperes VIVES del client, per no oferir-li apuntar-s'hi dos cops. */
   waitlist?: { id: string; trainerId: string | null; desiredAt: string }[];
   /**
@@ -774,6 +777,7 @@ export function ClientCenterCalendar({
           }}
           remainingSessions={data.bonoSessions[book.service]}
           waitlistEnabled={waitlistEnabled}
+          hasSubscription={hasSubscription}
           onSeriesReady={
             onSeriesReady
               ? (review) => {
@@ -813,6 +817,7 @@ export function ClientCenterCalendar({
           }
           remainingSessions={data.bonoSessions[own.service]}
           waitlistEnabled={waitlistEnabled}
+          hasSubscription={hasSubscription}
           onSeriesReady={
             onSeriesReady
               ? (review) => {
@@ -1015,6 +1020,7 @@ function CreateModal({
   seed,
   remainingSessions,
   waitlistEnabled,
+  hasSubscription,
   onSeriesReady,
   action,
   onClose,
@@ -1030,6 +1036,8 @@ function CreateModal({
   seed?: SeriesSeed;
   remainingSessions?: number;
   waitlistEnabled?: boolean;
+  /** El client té subscripció viva d'aquest servei (0072). */
+  hasSubscription?: boolean;
   onSeriesReady?: (review: SeriesReviewState) => void;
   action: CreateAction;
   onClose: () => void;
@@ -1120,6 +1128,7 @@ function CreateModal({
           seed={seed}
           remainingSessions={remainingSessions}
           waitlistEnabled={waitlistEnabled}
+          hasSubscription={hasSubscription}
           onReady={onSeriesReady}
           secondaryAction={
             <button
@@ -1174,6 +1183,7 @@ function OwnModal({
   seed,
   remainingSessions,
   waitlistEnabled,
+  hasSubscription,
   onSeriesReady,
   onClose,
 }: {
@@ -1189,6 +1199,8 @@ function OwnModal({
   seed?: SeriesSeed;
   remainingSessions?: number;
   waitlistEnabled?: boolean;
+  /** El client té subscripció viva d'aquest servei (0072). */
+  hasSubscription?: boolean;
   onSeriesReady?: (review: SeriesReviewState) => void;
   onClose: () => void;
 }) {
@@ -1266,6 +1278,7 @@ function OwnModal({
           seed={seed}
           remainingSessions={remainingSessions}
           waitlistEnabled={waitlistEnabled}
+          hasSubscription={hasSubscription}
           onReady={onSeriesReady}
           secondaryAction={
             <button

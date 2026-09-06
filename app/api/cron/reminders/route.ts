@@ -8,12 +8,26 @@ import {
   BONO_EXPIRY_WARNING_DAYS,
 } from "@/lib/data/reminders";
 import { sweepExpiredBonos } from "@/lib/data/bonos";
-import { renewDueSubscriptions } from "@/lib/data/subscription-renewal";
+import {
+  renewDueSubscriptions,
+  type RenewalOutcome,
+} from "@/lib/data/subscription-renewal";
 import { notifyOnce } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerHour, centerToday } from "@/lib/center-time";
 
 export const dynamic = "force-dynamic";
+
+/** El resum de la passada de renovacions, que es diu des de dues sortides. */
+function summarize(renewals: RenewalOutcome[]) {
+  return {
+    due: renewals.length,
+    renewed: renewals.filter((r) => r.kind === "renewed").length,
+    paused_unpaid: renewals.filter((r) => r.kind === "paused").length,
+    cancelled: renewals.filter((r) => r.kind === "cancelled").length,
+    failed: renewals.filter((r) => r.kind === "failed").length,
+  };
+}
 
 
 /**
@@ -33,6 +47,22 @@ async function handle(req: NextRequest) {
   if (auth !== `Bearer ${secret}`)
     return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
 
+  // ─── Subscripcions que toca renovar ───
+  //
+  // VA ABANS DE LA GUARDA DE L'HORA, i això no és un detall d'ordre sinó una
+  // correcció. `reminder_hour_local` existeix per no enviar els RECORDATORIS
+  // massa d'hora, i mentre la renovació quedava a sota en depenia sense cap
+  // motiu: un centre que posés l'hora d'avisos a les 22 —quan el cron ja ha
+  // corregut a les 20 locals— hauria deixat de renovar subscripcions per sempre,
+  // en silenci. Cobrar un mes i emetre'n les sessions no és una preferència
+  // d'enviament; passa el dia que toca, corri el cron a l'hora que corri.
+  //
+  // Només toca les que es paguen al centre; les de targeta les mou Stripe pel
+  // seu compte. El cicle és mensual i el cron, diari: la resolució és la que
+  // cal. Si un dia no corre, l'endemà recull les que van quedar enrere i se
+  // salta els mesos ja passats en comptes d'emetre'ls caducats.
+  const renewals = await renewDueSubscriptions(centerToday());
+
   // ─── Hora d'enviament configurable ───
   // LIMITACIÓ: el pla gratuït de Vercel només permet UN cron diari, amb l'hora
   // fixada a vercel.json (no es pot canviar sense desplegar). Així doncs,
@@ -48,6 +78,8 @@ async function handle(req: NextRequest) {
       skipped: "encara no és l'hora configurada",
       horaLocalDelCentre: horaLocal,
       reminderHourLocal,
+      // Les renovacions SÍ que s'han fet: no depenen de l'hora dels avisos.
+      subscriptions: summarize(renewals),
     });
   }
 
@@ -87,18 +119,6 @@ async function handle(req: NextRequest) {
     if (did) agendaSent++;
     else agendaSkipped++;
   }
-
-  // ─── Subscripcions que toca renovar ───
-  // Va PRIMER de tot el bloc de bons: el que emet aquí és el bo del mes nou, i
-  // val més que existeixi abans que passin per sobre l'escombrat de caducats i
-  // el d'impagats. Només toca les que es paguen al centre; les de targeta les
-  // mou Stripe pel seu compte.
-  //
-  // El cicle és mensual i el cron, diari: la resolució és exactament la que cal.
-  // Si un dia no corre, l'endemà recull igualment les que van quedar enrere
-  // —`listSubscriptionsDueForRenewal` agafa les d'avui I les d'abans— i se salta
-  // els mesos que ja hagin passat sencers en comptes d'emetre'ls caducats.
-  const renewals = await renewDueSubscriptions(centerToday());
 
   // ─── Bons a punt de caducar ───
   // S'enganxa al cron que ja existeix en comptes de muntar-ne un de nou: el
@@ -148,13 +168,7 @@ async function handle(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     day: tomorrowMadrid(),
-    subscriptions: {
-      due: renewals.length,
-      renewed: renewals.filter((r) => r.kind === "renewed").length,
-      paused_unpaid: renewals.filter((r) => r.kind === "paused").length,
-      cancelled: renewals.filter((r) => r.kind === "cancelled").length,
-      failed: renewals.filter((r) => r.kind === "failed").length,
-    },
+    subscriptions: summarize(renewals),
     bonosUnpaid: {
       cancelled: unpaid.length,
       sessionsFreed: unpaid.reduce((n, b) => n + b.cancelledCount, 0),

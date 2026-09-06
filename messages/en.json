@@ -586,7 +586,11 @@
     },
     "everyFromFull": "Every {frequency}, starting {day} at {time}",
     "limitsHint": "Fill in one or both. With both, the series stops at whichever comes first.",
-    "ifNoSpace": "If there's no space…"
+    "ifNoSpace": "If there's no space…",
+    "autoExtend": "Extend it on its own each month",
+    "autoExtendDesc": "When the subscription renews, the remaining sessions will be booked following this same pattern, with nothing more to do. If the slot is taken that month, that session is skipped: your time is never changed without telling you.",
+    "bonoLimitSubscription": "{remaining} sessions are booked now. The other {skipped} will be booked when the subscription renews.",
+    "bonoLimitAutoExtend": "{remaining} sessions are booked now. The remaining {skipped} will be booked on their own when the subscription renews."
   },
   "comunitat": {
     "title": "Community",

@@ -2,6 +2,7 @@ import "server-only";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerToday } from "@/lib/center-time";
 import { renewalAfter } from "@/lib/subscription-cycle";
+import { extendSeriesForSubscription } from "@/lib/data/series-extension";
 import {
   createSubscription,
   getCycleBono,
@@ -172,6 +173,12 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
     status: "pending_payment",
   });
 
+  // Les sèries que el client hagi marcat per allargar-se, ara que ja té
+  // sessions. Va DESPRÉS del bo i abans de la data: si peta, la renovació encara
+  // no consta feta i el barrido de demà hi tornarà (el bo no es duplicarà, que
+  // d'això ja se n'encarrega l'índex únic de la 0072).
+  await extendSeries(sub);
+
   // L'ordre importa: primer el bo, després la data. Si peta pel mig, la
   // subscripció segueix devent la renovació i demà s'hi torna; el bo ja emès no
   // es duplica perquè l'índex únic de la 0072 no ho permet.
@@ -187,4 +194,19 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
     bonoId: bono.id,
     cycleStart,
   };
+}
+
+/**
+ * Allarga les sèries del client, si en té cap marcada.
+ *
+ * No tomba la renovació si falla: el mes ja està emès i el client ja té les
+ * seves sessions. Que una sèrie no s'hagi pogut allargar és un disgust, però
+ * perdre la renovació sencera per una franja ocupada seria molt pitjor.
+ */
+async function extendSeries(sub: Subscription): Promise<void> {
+  try {
+    await extendSeriesForSubscription(sub);
+  } catch (e) {
+    console.error(`[subscripcions] ${sub.id}: les sèries no s'han allargat:`, e);
+  }
 }

@@ -439,6 +439,7 @@ export interface Database {
           allow_waitlist: boolean;
           status: BookingSeriesStatus;
           first_at: string | null;
+          auto_extend: boolean;
           created_at: string;
         };
         Insert: {
@@ -455,6 +456,7 @@ export interface Database {
           allow_waitlist?: boolean;
           status?: BookingSeriesStatus;
           first_at?: string | null;
+          auto_extend?: boolean;
           created_at?: string;
         };
         Update: Partial<{
@@ -471,6 +473,7 @@ export interface Database {
           allow_waitlist: boolean;
           status: BookingSeriesStatus;
           first_at: string | null;
+          auto_extend?: boolean;
           created_at: string;
         }>;
         Relationships: [];

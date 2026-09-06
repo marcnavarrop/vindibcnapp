@@ -18,6 +18,7 @@ import {
   centerHour,
   centerWeekday,
   centerLocalToInstant,
+  centerToday,
 } from "@/lib/center-time";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import {
@@ -50,6 +51,12 @@ export type SeriesRequest = {
   bookOnlyAvailable: boolean;
   allowAlternatives: boolean;
   allowWaitlist: boolean;
+  /**
+   * La sèrie s'allarga sola a cada renovació de la subscripció (0074).
+   * Opcional perquè l'extensió reutilitza aquest mateix tipus i allà no toca
+   * tornar-lo a escriure: la fila ja el porta.
+   */
+  autoExtend?: boolean;
 };
 
 export type SeriesPlan = {
@@ -607,6 +614,27 @@ export async function commitSeries(
   if (ctx.error) throw new Error(ctx.error);
 
   const seriesId = await insertSeries(req, ctx.clientId, ctx.bonoId);
+  return applyOccurrences(req, decided, seriesId, ctx);
+}
+
+/**
+ * Escriu les ocurrències decidides dins d'una sèrie que JA existeix.
+ *
+ * S'ha separat de `commitSeries` per un motiu concret: l'extensió automàtica
+ * (0074) fa exactament això mateix cada mes, però sobre la sèrie que ja hi és en
+ * comptes de crear-ne una de nova. Amb una còpia, el dia que canviï com
+ * s'adopta una reserva o com s'apunta una espera, l'extensió es quedaria fent
+ * el d'abans sense que ho notés ningú.
+ */
+export async function applyOccurrences(
+  req: SeriesRequest,
+  decided: ResolvedOccurrence[],
+  seriesId: string,
+  loaded?: Ctx,
+): Promise<CommitResult> {
+  const ctx = loaded ?? (await loadContext(req));
+  if (ctx.error) throw new Error(ctx.error);
+
   let created = 0;
   let adopted = 0;
   let waitlisted = 0;
@@ -745,6 +773,7 @@ async function insertSeries(
     book_only_available: req.bookOnlyAvailable,
     allow_alternatives: req.allowAlternatives,
     allow_waitlist: req.allowWaitlist,
+    auto_extend: req.autoExtend ?? false,
     // D'on surt la sèrie. Sense això, davant d'una sèrie que hagués sortit
     // malament no hi havia manera de saber quina sessió l'havia originat.
     first_at: req.firstAt,
@@ -905,6 +934,14 @@ export type SeriesSummary = {
  * bonic, però tampoc hi queda res per fer-hi, i deixar-la 'active' per sempre
  * seria mentir més que dir-ne 'completed'.
  *
+ * L'EXCEPCIÓ SÓN LES SÈRIES QUE S'ALLARGUEN SOLES (0074). Aquestes es queden
+ * sense reserves futures cada mes, just entre que s'acaben les sessions i arriba
+ * la renovació, i és exactament l'estat normal de la seva vida. Tancar-les aquí
+ * les mataria en aquella escletxa: quan la renovació hi arribés, ja no serien
+ * 'active' i no s'allargarien mai més. Es mantenen vives mentre puguin créixer
+ * de veritat —queda subscripció, i la sèrie no ha arribat als seus límits—, i
+ * el dia que deixin de poder-ho fer es tanquen com totes.
+ *
  * Les esperes compten: mentre en quedi alguna a la cua, la sèrie encara pot
  * rebre una plaça si algú cancel·la, i per tant no s'ha acabat.
  */
@@ -930,7 +967,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
         (w) => w.series_id === s.id && w.status === "waiting",
       );
       if (future.length === 0) {
-        if (!waiting) {
+        if (!waiting && !(await canStillGrow(s, clientId))) {
           s.status = "completed";
           changed = true;
         }
@@ -952,7 +989,9 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
   const admin = createAdminClient();
   const { data: series } = await admin
     .from("booking_series")
-    .select("id, service_type, frequency")
+    .select(
+      "id, service_type, frequency, auto_extend, end_date, occurrence_count",
+    )
     .eq("client_id", clientId)
     .eq("status", "active")
     .order("created_at", { ascending: false });
@@ -980,7 +1019,11 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
   for (const s of series) {
     const future = (res ?? []).filter((r) => r.series_id === s.id);
     if (future.length === 0) {
-      if (!(waits ?? []).some((w) => w.series_id === s.id)) finished.push(s.id);
+      if (
+        !(waits ?? []).some((w) => w.series_id === s.id) &&
+        !(await canStillGrow(s, clientId))
+      )
+        finished.push(s.id);
       continue;
     }
     out.push({
@@ -1006,6 +1049,64 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
   }
 
   return out;
+}
+
+/**
+ * ¿Aquesta sèrie encara pot rebre ocurrències noves?
+ *
+ * Només les que s'allarguen soles (0074), i només mentre les tres coses siguin
+ * certes alhora: el client encara té subscripció, la data límit no ha passat i
+ * no s'han col·locat ja totes les ocurrències demanades. Si en falla una, la
+ * sèrie s'ha acabat de veritat i es pot tancar.
+ *
+ * Es consulta NOMÉS per a les sèries que estaven a punt de tancar-se i tenen la
+ * casella marcada, que són poques: la lectura normal no paga res per això.
+ */
+async function canStillGrow(
+  s: {
+    id: string;
+    service_type: ServiceType;
+    auto_extend?: boolean | null;
+    end_date?: string | null;
+    occurrence_count?: number | null;
+  },
+  clientId: string,
+): Promise<boolean> {
+  if (!s.auto_extend) return false;
+  if (s.end_date && s.end_date < centerToday()) return false;
+
+  if (s.occurrence_count !== null && s.occurrence_count !== undefined) {
+    const placed = await countPlacedOccurrences(s.id);
+    if (placed >= s.occurrence_count) return false;
+  }
+
+  const { getLiveSubscription } = await import("@/lib/data/subscriptions");
+  const sub = await getLiveSubscription(clientId, s.service_type);
+  return sub !== null;
+}
+
+/** Ocurrències ja col·locades: reserves de qualsevol estat, més esperes. */
+async function countPlacedOccurrences(seriesId: string): Promise<number> {
+  if (USE_MOCK) {
+    const store = getStore();
+    return (
+      store.reservations.filter((r) => r.series_id === seriesId).length +
+      store.waitlist_entries.filter((w) => w.series_id === seriesId).length
+    );
+  }
+
+  const admin = createAdminClient();
+  const [res, waits] = await Promise.all([
+    admin
+      .from("reservations")
+      .select("id", { count: "exact", head: true })
+      .eq("series_id", seriesId),
+    admin
+      .from("waitlist_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("series_id", seriesId),
+  ]);
+  return (res.count ?? 0) + (waits.count ?? 0);
 }
 
 export { localDayString };

@@ -586,7 +586,11 @@
     },
     "everyFromFull": "Cada {frequency}, a partir del {day} a las {time}",
     "limitsHint": "Puedes rellenar uno o los dos. Con los dos, la serie se para con el primero que llegue.",
-    "ifNoSpace": "Si no hay plaza…"
+    "ifNoSpace": "Si no hay plaza…",
+    "autoExtend": "Alargarla sola cada mes",
+    "autoExtendDesc": "Cuando la suscripción se renueve, se reservarán las sesiones que falten siguiendo este mismo patrón, sin tener que volver. Si la franja está ocupada ese mes, esa sesión no se hace: nunca se te cambia la hora sin decírtelo.",
+    "bonoLimitSubscription": "Ahora se reservan {remaining} sesiones. Las {skipped} que faltan se reservarán cuando la suscripción se renueve.",
+    "bonoLimitAutoExtend": "Ahora se reservan {remaining} sesiones. Las {skipped} restantes se reservarán solas al renovarse la suscripción."
   },
   "comunitat": {
     "title": "Comunidad",
