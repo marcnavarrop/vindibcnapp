@@ -61,7 +61,9 @@ export default async function ClientBonosPage() {
                     price: formatEur(subscription.unitPrice, locale),
                   })}
                 </span>
-                {subscription.nextRenewalOn && (
+                {/* Cap compte enrere mentre està congelada: el rellotge està
+                    aturat i ensenyar una data diria el contrari. */}
+                {subscription.status !== "paused" && subscription.nextRenewalOn && (
                   <span className="text-brand-muted">
                     {t("mine.subscriptionRenewsOn", {
                       date: formatDate(subscription.nextRenewalOn, locale),
@@ -73,12 +75,34 @@ export default async function ClientBonosPage() {
                     ? t("mine.subscriptionByCard")
                     : t("mine.subscriptionByCentre")}
                 </span>
-                <Badge tone={subscription.status === "active" ? "success" : "warn"}>
+                {/* Lila per a la congelada i taronja per a l'impagament: el
+                    client ha de poder distingir "no deus res, t'ho hem aturat
+                    nosaltres" d'un avís de deute amb un cop d'ull. */}
+                <Badge
+                  tone={
+                    subscription.status === "active"
+                      ? "success"
+                      : subscription.status === "paused"
+                        ? "info"
+                        : "warn"
+                  }
+                >
                   {tsub(subscription.status)}
                 </Badge>
               </Row>
 
-              {cycleBono ? (
+              {subscription.status === "paused" ? (
+                <Row>
+                  <span className="text-brand-purple">
+                    {t("mine.subscriptionPaused")}{" "}
+                    {subscription.resumeOn
+                      ? t("mine.subscriptionPausedUntil", {
+                          date: formatDate(subscription.resumeOn, locale),
+                        })
+                      : t("mine.subscriptionPausedOpen")}
+                  </span>
+                </Row>
+              ) : cycleBono ? (
                 <Row>
                   <span className="text-brand-muted">
                     {t("mine.subscriptionCycleSessions", {
@@ -109,7 +133,7 @@ export default async function ClientBonosPage() {
               {/* Dos avisos i no un: deure el mes en curs encara té arreglo
                   abans de la renovació; estar aturada vol dir que ja ha passat.
                   Dir-ho igual seria enganyar en un dels dos casos. */}
-              {subscription.status === "past_due" ? (
+              {subscription.status === "paused" ? null : subscription.status === "past_due" ? (
                 <Row>
                   <span className="text-error">{t("mine.subscriptionPastDue")}</span>
                 </Row>
@@ -126,6 +150,7 @@ export default async function ClientBonosPage() {
               <SubscriptionManage
                 byCard={subscription.paymentMethod === "card"}
                 cancelAtPeriodEnd={subscription.cancelAtPeriodEnd}
+                paused={subscription.status === "paused"}
                 stripeEnabled={stripeEnabled()}
                 extra={
                   cycle

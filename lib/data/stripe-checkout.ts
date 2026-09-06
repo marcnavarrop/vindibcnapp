@@ -691,11 +691,29 @@ export async function fulfillSubscriptionInvoice(
 
   // Un cobrament que arriba després d'un impagament la torna a posar en marxa,
   // i el cicle avança sempre al que Stripe acaba de facturar.
-  await updateSubscription(subscription.id, {
-    status: "active",
-    currentCycleStart: period.start,
-    nextRenewalOn: period.end,
-  });
+  //
+  // TRET SI ESTÀ CONGELADA. Congelar-la a Stripe vol dir moure-li el
+  // `trial_end`, i durant un trial Stripe no genera cap factura: si n'arriba
+  // una, o és d'abans de la pausa i s'ha cobrat tard, o el `trial_end` no es va
+  // arribar a aplicar. En els dos casos, el que NO pot passar és que una fila
+  // que el centre va decidir congelar es desperti sola i torni a emetre bons
+  // cada mes sense que ningú ho hagi demanat.
+  //
+  // El bo i el cobrament d'aquesta factura SÍ que s'han fet, just aquí sobre, i
+  // és el que toca: els diners han entrat i han de constar. El que no es toca és
+  // l'estat ni el cicle.
+  if (subscription.status === "paused") {
+    console.error(
+      `[stripe] ATENCIÓ: factura ${invoice.id} cobrada sobre la subscripció ${subscription.id}, que està CONGELADA. ` +
+        `El bo i el cobrament s'han anotat, però no es descongela. Revisa el trial_end a Stripe.`,
+    );
+  } else {
+    await updateSubscription(subscription.id, {
+      status: "active",
+      currentCycleStart: period.start,
+      nextRenewalOn: period.end,
+    });
+  }
 
   // Stripe ja sap fins quan va el període: no cal deduir-ho de l'àncora.
   await notifySubscriptionRenewed(subscription, period.start, previousDay(period.end));
@@ -855,6 +873,12 @@ export async function markSubscriptionPastDue(
   if (subscription.status === "cancelled")
     return { status: "ignored", reason: "ja cancel·lada" };
 
+  // Una congelada no deu res: si Stripe intenta cobrar-li i falla, el problema
+  // és que la congelació no s'ha aplicat allà, no que el client no pagui.
+  // Acusar-lo d'impagament seria dir-li el contrari del que li vam dir.
+  if (subscription.status === "paused")
+    return { status: "ignored", reason: "congelada pel centre" };
+
   await updateSubscription(subscription.id, { status: "past_due" });
   await notifySubscriptionPaymentFailed(subscription, subscription.currentCycleStart);
   return { status: "created", kind: KIND_SUBSCRIPTION, id: subscription.id };
@@ -910,7 +934,12 @@ export async function syncSubscriptionSchedule(
     return { status: "duplicate", kind: KIND_SUBSCRIPTION, id: subscription.id };
 
   await updateSubscription(subscription.id, { cancelAtPeriodEnd });
-  await notifySubscriptionCancelled(subscription);
+
+  // L'avís NOMÉS quan es dona de baixa. Aquest camí també salta quan el client
+  // DESFÀ la baixa des del portal de Stripe (true → false), i llavors se li
+  // enviava un correu dient-li que s'havia donat de baixa: just el contrari del
+  // que acabava de fer.
+  if (cancelAtPeriodEnd) await notifySubscriptionCancelled(subscription);
   return { status: "created", kind: KIND_SUBSCRIPTION, id: subscription.id };
 }
 

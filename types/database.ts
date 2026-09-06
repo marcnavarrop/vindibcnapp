@@ -77,7 +77,17 @@ export type GroupBookingResult =
  * Tres i no quatre: 'past_due' ja vol dir "aturada fins que pagui". Un 'paused'
  * a part seria el mateix estat amb dos noms.
  */
-export type SubscriptionStatus = "active" | "past_due" | "cancelled";
+export type SubscriptionStatus =
+  | "active"
+  /** Aturada perquè hi ha un mes sense cobrar. La reprèn el cobrament. */
+  | "past_due"
+  /**
+   * Congelada per decisió del CENTRE (0075). No deu res: és el contrari de
+   * 'past_due', i el client ho ha de llegir així. Només l'admin la posa i la
+   * treu; el client no té cap acció.
+   */
+  | "paused"
+  | "cancelled";
 
 /**
  * Què ha passat en intentar reclamar una sessió extra (`claim_subscription_extra`).
@@ -312,6 +322,10 @@ export interface Database {
           next_renewal_on: string | null;
           cancel_at_period_end: boolean;
           cancelled_at: string | null;
+          /** Quan el centre la va congelar. Null si no està pausada. */
+          paused_at: string | null;
+          /** Represa prevista. Null = indefinida (només al centre). */
+          resume_on: string | null;
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
           created_at: string;
@@ -333,6 +347,8 @@ export interface Database {
           next_renewal_on?: string | null;
           cancel_at_period_end?: boolean;
           cancelled_at?: string | null;
+          paused_at?: string | null;
+          resume_on?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           created_at?: string;
@@ -349,6 +365,8 @@ export interface Database {
           next_renewal_on?: string | null;
           cancel_at_period_end?: boolean;
           cancelled_at?: string | null;
+          paused_at?: string | null;
+          resume_on?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           updated_at?: string;
@@ -885,6 +903,8 @@ export interface Database {
           subscription_renewed_email: boolean;
           subscription_payment_failed_email: boolean;
           subscription_cancelled_email: boolean;
+          subscription_paused_email: boolean;
+          subscription_resumed_email: boolean;
           created_at: string;
         };
         Insert: {
@@ -909,6 +929,8 @@ export interface Database {
           subscription_renewed_email?: boolean;
           subscription_payment_failed_email?: boolean;
           subscription_cancelled_email?: boolean;
+          subscription_paused_email?: boolean;
+          subscription_resumed_email?: boolean;
           created_at?: string;
         };
         Update: Partial<{
@@ -933,6 +955,8 @@ export interface Database {
           subscription_renewed_email?: boolean;
           subscription_payment_failed_email?: boolean;
           subscription_cancelled_email?: boolean;
+          subscription_paused_email?: boolean;
+          subscription_resumed_email?: boolean;
           created_at: string;
         }>;
         Relationships: [];

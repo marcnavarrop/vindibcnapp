@@ -483,6 +483,43 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "subscription_paused": {
+      const t = i.ns("emails.subscriptionPaused");
+      subject = t("subject");
+      block = {
+        heading: t("heading"),
+        // Dos paràgrafs i no un: el primer treu la por ("no has de fer res") i
+        // el segon explica que el temps no es perd, que és el que de debò
+        // distingeix una congelació d'una baixa.
+        intro: [hola, t("intro1"), t("intro2")],
+        details: rows([
+          [tl("service"), service],
+          // Només si n'hi ha: una pausa indefinida no té data, i inventar-ne una
+          // seria pitjor que no dir-ne res.
+          [tl("resumesOn"), d.resumeOnIso ? i.date(d.resumeOnIso) : undefined],
+        ]),
+        cta: { label: t("cta"), url: appLink("/client/bonos/meus") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
+    case "subscription_resumed": {
+      const t = i.ns("emails.subscriptionResumed");
+      subject = t("subject");
+      block = {
+        heading: t("heading"),
+        intro: [hola, t("intro")],
+        details: rows([
+          [tl("service"), service],
+          [tl("nextRenewal"), d.nextRenewalIso ? i.date(d.nextRenewalIso) : undefined],
+        ]),
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
     case "community": {
       const t = i.ns("emails.community");
       subject = `${d.title ? esc(d.title) + " · " : ""}${t("subject")}`;

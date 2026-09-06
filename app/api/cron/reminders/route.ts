@@ -12,6 +12,7 @@ import {
   renewDueSubscriptions,
   type RenewalOutcome,
 } from "@/lib/data/subscription-renewal";
+import { resumeDueSubscriptions } from "@/lib/data/subscription-pause";
 import { notifyOnce } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerHour, centerToday } from "@/lib/center-time";
@@ -73,6 +74,11 @@ async function handle(req: NextRequest) {
   // seu compte. El cicle és mensual i el cron, diari: la resolució és la que
   // cal. Si un dia no corre, l'endemà recull les que van quedar enrere i se
   // salta els mesos ja passats en comptes d'emetre'ls caducats.
+  // Les congelades a qui els toca despertar-se van PRIMER: si avui és el dia de
+  // la represa I el de la renovació, el que ha de passar és que es reprengui i
+  // després es renovi, no que es quedi un mes més aturada per ordre d'execució.
+  const resumed = await resumeDueSubscriptions(centerToday());
+
   const renewals = await renewDueSubscriptions(centerToday());
 
   // ─── Hora d'enviament configurable ───
@@ -91,7 +97,7 @@ async function handle(req: NextRequest) {
       horaLocalDelCentre: horaLocal,
       reminderHourLocal,
       // Les renovacions SÍ que s'han fet: no depenen de l'hora dels avisos.
-      subscriptions: summarize(renewals),
+      subscriptions: { ...summarize(renewals), resumed },
     });
   }
 
@@ -180,7 +186,7 @@ async function handle(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     day: tomorrowMadrid(),
-    subscriptions: summarize(renewals),
+    subscriptions: { ...summarize(renewals), resumed },
     bonosUnpaid: {
       cancelled: unpaid.length,
       sessionsFreed: unpaid.reduce((n, b) => n + b.cancelledCount, 0),

@@ -1,0 +1,25 @@
+-- ============================================================================
+-- VindiBCN · 0075 — L'estat 'paused', tot sol
+--
+-- VA EN UN FITXER A PART, I NO ÉS UNA MANIA. A Postgres, el valor nou d'un enum
+-- no es pot FER SERVIR fins que la transacció que l'afegeix ha fet commit. La
+-- 0076 el necessita a dins de tres CHECK, i posar-ho tot junt peta amb "unsafe
+-- use of new value of enum type" —o pitjor, peta a la meitat i deixa l'esquema
+-- a mitges.
+--
+-- Així que: s'executa aquesta, s'espera que acabi, i després la 0076.
+--
+-- QUÈ ÉS 'paused' I QUÈ NO
+--
+-- És una decisió del CENTRE: congelar la subscripció d'algú que se'n va un
+-- temps. No deu res. Per això no es podia fer passar per 'past_due', que vol dir
+-- exactament el contrari —"aturada perquè hi ha un mes sense cobrar"— i que el
+-- client llegeix com un avís d'impagament. Acusar d'impagament algú que està al
+-- corrent perquè ens estalviàvem un valor d'enum hauria estat mentir-li a la
+-- cara des de la seva pròpia pantalla.
+--
+-- Només l'admin pausa i reprèn. El client no té cap acció: ell no s'ha congelat
+-- res, li ho han congelat.
+-- ============================================================================
+
+alter type public.subscription_status add value if not exists 'paused';

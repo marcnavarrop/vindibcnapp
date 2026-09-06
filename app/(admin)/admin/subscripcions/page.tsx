@@ -36,6 +36,7 @@ export default async function AdminSubscriptionsPage() {
         anchorDay: s.anchorDay,
         nextRenewalOn: s.nextRenewalOn,
         cancelAtPeriodEnd: s.cancelAtPeriodEnd,
+        resumeOn: s.resumeOn,
         currentCycleStart: s.currentCycleStart,
         sessionsLeft: cycle.sessionsLeft,
         cycleBonoStatus: cycle.cycleBono?.status ?? null,

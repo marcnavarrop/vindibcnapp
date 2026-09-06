@@ -206,7 +206,8 @@
     "subscriptionStatus": {
       "active": "Activa",
       "past_due": "Aturada per impagament",
-      "cancelled": "Cancel·lada"
+      "cancelled": "Cancel·lada",
+      "paused": "Congelada"
     }
   },
   "picker": {
@@ -337,7 +338,10 @@
       "staleCycle": "La subscripció s'acaba de renovar. Torna a carregar la pàgina.",
       "failed": "No s'ha pogut afegir la sessió extra.",
       "cancel": "Cancel·lar",
-      "close": "Tancar"
+      "close": "Tancar",
+      "subscriptionPaused": "El centre ha congelat la teva subscripció. No has de pagar res mentre estigui així, i el temps aturat no el perds: en reprendre-la, la renovació es retarda els mateixos dies.",
+      "subscriptionPausedUntil": "Es reprendrà el {date}.",
+      "subscriptionPausedOpen": "Es reprendrà quan el centre ho decideixi."
     },
     "confirmed": {
       "title": "Pagament confirmat",
@@ -768,6 +772,14 @@
         "subscription_cancelled": {
           "label": "Baixa de la subscripció",
           "description": "Quan la subscripció es dona de baixa, la demanis tu o el centre."
+        },
+        "subscription_paused": {
+          "label": "Subscripció congelada",
+          "description": "Quan el centre congela temporalment la teva subscripció."
+        },
+        "subscription_resumed": {
+          "label": "Subscripció represa",
+          "description": "Quan el centre la torna a posar en marxa."
         }
       }
     },
@@ -867,7 +879,9 @@
       "validUntil": "Vàlid fins al",
       "perMonth": "Import mensual",
       "nextRenewal": "Propera renovació",
-      "sessionsThisCycle": "Sessions d'aquest mes"
+      "sessionsThisCycle": "Sessions d'aquest mes",
+      "resumesOn": "Es reprèn el",
+      "pausedSince": "Congelada des del"
     },
     "footer": {
       "tagline": "Centre d'entrenament personal i fisioteràpia",
@@ -986,6 +1000,21 @@
       "intro": "No es tornarà a renovar. Les sessions que ja tinguis pagades les conserves fins que caduquin.",
       "cta": "Veure els meus bons",
       "outro": "Pots tornar-t'hi a subscriure quan vulguis."
+    },
+    "subscriptionPaused": {
+      "subject": "La teva subscripció queda congelada · VindiBCN",
+      "heading": "Hem congelat la teva subscripció",
+      "intro1": "Mentre estigui així no se't cobrarà res ni se't renovarà cap mes. No has de fer res.",
+      "intro2": "El temps que estigui congelada no el perds: quan es reprengui, la renovació es retarda exactament els mateixos dies.",
+      "cta": "Veure els meus bons",
+      "outro": "Si no ho esperaves, digues-nos-ho i ho mirem."
+    },
+    "subscriptionResumed": {
+      "subject": "La teva subscripció torna a estar en marxa · VindiBCN",
+      "heading": "Ja tornem a estar en marxa",
+      "intro": "La subscripció s'ha reprès. La propera renovació s'ha retardat els dies que ha estat congelada.",
+      "cta": "Reservar una sessió",
+      "outro": "Les sessions del mes que tenies també conserven els dies que van quedar aturats."
     }
   },
   "voucherPdf": {

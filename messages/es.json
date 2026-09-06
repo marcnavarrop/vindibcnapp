@@ -206,7 +206,8 @@
     "subscriptionStatus": {
       "active": "Activa",
       "past_due": "Parada por impago",
-      "cancelled": "Cancelada"
+      "cancelled": "Cancelada",
+      "paused": "Congelada"
     }
   },
   "picker": {
@@ -337,7 +338,10 @@
       "staleCycle": "La suscripción acaba de renovarse. Vuelve a cargar la página.",
       "failed": "No se ha podido añadir la sesión extra.",
       "cancel": "Cancelar",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "subscriptionPaused": "El centro ha congelado tu suscripción. No tienes que pagar nada mientras esté así, y el tiempo parado no lo pierdes: al reanudarla, la renovación se retrasa los mismos días.",
+      "subscriptionPausedUntil": "Se reanudará el {date}.",
+      "subscriptionPausedOpen": "Se reanudará cuando el centro lo decida."
     },
     "confirmed": {
       "title": "Pago confirmado",
@@ -768,6 +772,14 @@
         "subscription_cancelled": {
           "label": "Baja de la suscripción",
           "description": "Cuando la suscripción se da de baja, la pidas tú o el centro."
+        },
+        "subscription_paused": {
+          "label": "Suscripción congelada",
+          "description": "Cuando el centro congela temporalmente tu suscripción."
+        },
+        "subscription_resumed": {
+          "label": "Suscripción reanudada",
+          "description": "Cuando el centro vuelve a ponerla en marcha."
         }
       }
     },
@@ -867,7 +879,9 @@
       "validUntil": "Válido hasta el",
       "perMonth": "Importe mensual",
       "nextRenewal": "Próxima renovación",
-      "sessionsThisCycle": "Sesiones de este mes"
+      "sessionsThisCycle": "Sesiones de este mes",
+      "resumesOn": "Se reanuda el",
+      "pausedSince": "Congelada desde el"
     },
     "footer": {
       "tagline": "Centro de entrenamiento personal y fisioterapia",
@@ -986,6 +1000,21 @@
       "intro": "No se volverá a renovar. Las sesiones que ya tengas pagadas las conservas hasta que caduquen.",
       "cta": "Ver mis bonos",
       "outro": "Puedes volver a suscribirte cuando quieras."
+    },
+    "subscriptionPaused": {
+      "subject": "Tu suscripción queda congelada · VindiBCN",
+      "heading": "Hemos congelado tu suscripción",
+      "intro1": "Mientras esté así no se te cobrará nada ni se te renovará ningún mes. No tienes que hacer nada.",
+      "intro2": "El tiempo que esté congelada no lo pierdes: cuando se reanude, la renovación se retrasa exactamente los mismos días.",
+      "cta": "Ver mis bonos",
+      "outro": "Si no lo esperabas, dínoslo y lo miramos."
+    },
+    "subscriptionResumed": {
+      "subject": "Tu suscripción vuelve a estar en marcha · VindiBCN",
+      "heading": "Ya volvemos a estar en marcha",
+      "intro": "La suscripción se ha reanudado. La próxima renovación se ha retrasado los días que ha estado congelada.",
+      "cta": "Reservar una sesión",
+      "outro": "Las sesiones del mes que tenías también conservan los días que quedaron parados."
     }
   },
   "voucherPdf": {

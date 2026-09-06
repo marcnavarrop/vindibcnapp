@@ -134,6 +134,8 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     subscription_renewed_email: true,
     subscription_payment_failed_email: true,
     subscription_cancelled_email: true,
+    subscription_paused_email: true,
+    subscription_resumed_email: true,
     created_at: now,
   }),
 );

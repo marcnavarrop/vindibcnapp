@@ -10,6 +10,8 @@ import { TAP } from "@/lib/utils";
 import {
   adminCancelSubscriptionAction,
   adminChangePriceAction,
+  adminPauseSubscriptionAction,
+  adminResumeSubscriptionAction,
   type AdminSubscriptionState,
 } from "@/app/(admin)/admin/subscripcions/actions";
 import type { PaymentMethod, ServiceType, SubscriptionStatus, BonoStatus } from "@/types/database";
@@ -27,6 +29,7 @@ export type SubscriptionRow = {
   anchorDay: number;
   nextRenewalOn: string | null;
   cancelAtPeriodEnd: boolean;
+  resumeOn: string | null;
   currentCycleStart: string;
   sessionsLeft: number;
   cycleBonoStatus: BonoStatus | null;
@@ -37,18 +40,26 @@ export type SubscriptionRow = {
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
   active: "Activa",
   past_due: "Aturada per impagament",
+  paused: "Congelada",
   cancelled: "Cancel·lada",
 };
-const STATUS_TONE: Record<SubscriptionStatus, "success" | "warn" | "neutral"> = {
+
+// 'paused' va en lila i NO en taronja. El taronja d'aquesta taula vol dir
+// "alguna cosa no va bé" —un mes sense cobrar—, i una congelació és una decisió
+// del centre sobre algú que està al corrent. Pintar-les igual seria fer passar
+// per avís el que no ho és.
+const STATUS_TONE: Record<SubscriptionStatus, "success" | "warn" | "neutral" | "info"> = {
   active: "success",
   past_due: "warn",
+  paused: "info",
   cancelled: "neutral",
 };
 
-type Filter = "live" | "past_due" | "all";
+type Filter = "live" | "past_due" | "paused" | "all";
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "live", label: "Vives" },
   { key: "past_due", label: "Aturades" },
+  { key: "paused", label: "Congelades" },
   { key: "all", label: "Totes" },
 ];
 
@@ -56,6 +67,8 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
   const [filter, setFilter] = useState<Filter>("live");
   const [cancelling, setCancelling] = useState<SubscriptionRow | null>(null);
   const [pricing, setPricing] = useState<SubscriptionRow | null>(null);
+  const [pausing, setPausing] = useState<SubscriptionRow | null>(null);
+  const [resuming, setResuming] = useState<SubscriptionRow | null>(null);
 
   const [cancelState, cancelAction] = useActionState(
     adminCancelSubscriptionAction,
@@ -63,6 +76,14 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
   );
   const [priceState, priceAction] = useActionState(
     adminChangePriceAction,
+    {} as AdminSubscriptionState,
+  );
+  const [pauseState, pauseAction] = useActionState(
+    adminPauseSubscriptionAction,
+    {} as AdminSubscriptionState,
+  );
+  const [resumeState, resumeAction] = useActionState(
+    adminResumeSubscriptionAction,
     {} as AdminSubscriptionState,
   );
 
@@ -73,7 +94,9 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
           ? true
           : filter === "past_due"
             ? r.status === "past_due"
-            : r.status !== "cancelled",
+            : filter === "paused"
+              ? r.status === "paused"
+              : r.status !== "cancelled",
       ),
     [rows, filter],
   );
@@ -103,11 +126,15 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
         ))}
       </div>
 
-      {(cancelState.error || priceState.error) && (
-        <p className="text-sm text-error">{cancelState.error ?? priceState.error}</p>
+      {(cancelState.error || priceState.error || pauseState.error || resumeState.error) && (
+        <p className="text-sm text-error">
+          {cancelState.error ?? priceState.error ?? pauseState.error ?? resumeState.error}
+        </p>
       )}
-      {(cancelState.ok || priceState.ok) && (
-        <p className="text-sm font-bold text-success">{cancelState.ok ?? priceState.ok}</p>
+      {(cancelState.ok || priceState.ok || pauseState.ok || resumeState.ok) && (
+        <p className="text-sm font-bold text-success">
+          {cancelState.ok ?? priceState.ok ?? pauseState.ok ?? resumeState.ok}
+        </p>
       )}
 
       <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
@@ -144,6 +171,10 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
+                  {r.status === "paused" ? (
+                    <span className="text-brand-muted">—</span>
+                  ) : (
+                  <>
                   <span className="font-bold text-brand-purple">{r.sessionsLeft}</span>
                   <span className="text-brand-muted"> disponibles</span>
                   {/* El que fa útil la pantalla: si el mes en curs està cobrat.
@@ -160,10 +191,29 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
                       {r.extrasUsed}/{r.extrasMax} extra
                     </span>
                   )}
+                  </>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-brand-muted">
-                  {r.nextRenewalOn ? formatDate(r.nextRenewalOn) : "—"}
-                  <span className="block text-xs">dia {r.anchorDay} de cada mes</span>
+                  {/* Congelada = el rellotge està aturat. Ensenyar-hi una data de
+                      renovació seria dir que corre, quan el que passa és
+                      exactament el contrari. La data hi és a la base —congelada—
+                      però aquí no vol dir res fins que es reprengui. */}
+                  {r.status === "paused" ? (
+                    <>
+                      <span className="text-brand-purple">Aturada</span>
+                      <span className="block text-xs">
+                        {r.resumeOn
+                          ? `es reprèn el ${formatDate(r.resumeOn)}`
+                          : "sense data de represa"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      {r.nextRenewalOn ? formatDate(r.nextRenewalOn) : "—"}
+                      <span className="block text-xs">dia {r.anchorDay} de cada mes</span>
+                    </>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
@@ -175,13 +225,31 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col items-end gap-1.5">
-                    {r.paymentMethod === "cash" && r.status !== "cancelled" && (
+                    {r.paymentMethod === "cash" && r.status === "active" && (
                       <button
                         type="button"
                         onClick={() => setPricing(r)}
                         className={`rounded-md bg-brand-bg px-2.5 py-1 text-xs font-bold text-brand-dark hover:bg-brand-border ${TAP}`}
                       >
                         Canviar preu
+                      </button>
+                    )}
+                    {r.status === "active" && (
+                      <button
+                        type="button"
+                        onClick={() => setPausing(r)}
+                        className={`rounded-md bg-brand-purple/10 px-2.5 py-1 text-xs font-bold text-brand-purple hover:bg-brand-purple/20 ${TAP}`}
+                      >
+                        Congelar
+                      </button>
+                    )}
+                    {r.status === "paused" && (
+                      <button
+                        type="button"
+                        onClick={() => setResuming(r)}
+                        className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
+                      >
+                        Reprendre
                       </button>
                     )}
                     {r.status !== "cancelled" && !r.cancelAtPeriodEnd && (
@@ -236,6 +304,90 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
           {cancelling?.paymentMethod === "card" && (
             <> També s&apos;avisarà Stripe perquè deixi de cobrar.</>
           )}
+        </p>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        ariaClose="Tancar"
+        open={pausing !== null}
+        onClose={() => setPausing(null)}
+        title="Congelar la subscripció?"
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setPausing(null)}
+              className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
+            >
+              Cancel·lar
+            </button>
+            <form action={pauseAction} onSubmit={() => setPausing(null)}>
+              <input type="hidden" name="subscriptionId" value={pausing?.id ?? ""} />
+              <input type="hidden" name="resumeOn" id="admin-resume-on" />
+              <SubmitButton pendingLabel="Congelant…">Congelar</SubmitButton>
+            </form>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3 text-sm">
+          <p className="text-brand-charcoal">
+            Mentre estigui congelada, {pausing?.clientName} no pagarà res, no se
+            li emetrà cap bo nou i no podrà demanar sessions extra. El temps
+            aturat no el perd: en reprendre-la, la renovació es retarda
+            exactament els dies que hagi estat congelada, i la caducitat del bo
+            del mes en curs també.
+          </p>
+          <label className="flex flex-col gap-1">
+            <span className="font-bold text-brand-dark">
+              Data de represa{pausing?.paymentMethod === "card" ? "" : " (opcional)"}
+            </span>
+            <input
+              type="date"
+              defaultValue=""
+              onChange={(e) => {
+                const h = document.getElementById("admin-resume-on") as HTMLInputElement | null;
+                if (h) h.value = e.target.value;
+              }}
+              className="w-48 rounded-lg border border-brand-border px-3 py-2 text-sm"
+            />
+          </label>
+          <p className="text-xs text-brand-muted">
+            {pausing?.paymentMethod === "card"
+              ? // No és una norma nostra que es pugui relaxar: a Stripe la
+                // congelació es fa amb un termini que caduca, i sense data
+                // tornaria a cobrar sola quan s'acabés.
+                "Obligatòria: es paga amb targeta, i a Stripe la congelació ha de tenir data límit. Sense ella tornaria a cobrar sola."
+              : "Si la deixes buida queda congelada fins que la reprenguis tu. Amb data, es reprèn sola aquell dia."}
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        ariaClose="Tancar"
+        open={resuming !== null}
+        onClose={() => setResuming(null)}
+        title="Reprendre la subscripció?"
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setResuming(null)}
+              className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
+            >
+              Cancel·lar
+            </button>
+            <form action={resumeAction} onSubmit={() => setResuming(null)}>
+              <input type="hidden" name="subscriptionId" value={resuming?.id ?? ""} />
+              <SubmitButton pendingLabel="Reprenent…">Reprendre</SubmitButton>
+            </form>
+          </>
+        }
+      >
+        <p className="text-sm text-brand-charcoal">
+          La subscripció de {resuming?.clientName} torna a estar en marxa. La
+          propera renovació es retarda els dies que ha estat congelada, i el
+          mateix la caducitat del bo del mes en curs: el temps aturat se li
+          retorna sencer.
         </p>
       </ConfirmDialog>
 

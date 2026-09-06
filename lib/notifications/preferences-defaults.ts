@@ -29,6 +29,10 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   subscription_renewed_email: true,
   subscription_payment_failed_email: true,
   subscription_cancelled_email: true,
+  // Congelar-li —o descongelar-li— un servei que paga és una decisió del centre
+  // sobre la seva subscripció. Assabentar-se'n tampoc és opcional.
+  subscription_paused_email: true,
+  subscription_resumed_email: true,
   // Avisos del professional sobre la seva agenda (operatius = true).
   trainer_booking_received_email: true,
   trainer_booking_cancelled_email: true,

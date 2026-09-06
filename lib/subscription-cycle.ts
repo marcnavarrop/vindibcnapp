@@ -100,3 +100,32 @@ export function previousDay(iso: string): string {
 export function cycleExpiry(cycleStart: string, anchorDay: number): string {
   return previousDay(renewalAfter(cycleStart, anchorDay));
 }
+
+/**
+ * Suma dies a una data. Sense retallar res: aquí no hi ha mesos, hi ha dies.
+ *
+ * És el que fa falta per reprendre una subscripció congelada, i deliberadament
+ * NO passa per `addMonthsClamped`: una pausa de 20 dies retarda la renovació 20
+ * dies exactes, no "un mes escàs".
+ */
+export function addDays(iso: string, days: number): string {
+  const [y, m, d] = parts(iso);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  t.setUTCDate(t.getUTCDate() + days);
+  return fmt(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
+}
+
+/**
+ * Dies sencers entre dues dates (`to − from`). Negatiu si `to` és anterior.
+ *
+ * Es compta sobre dies del CENTRE, no sobre instants: una pausa del dia 6 al 26
+ * són 20 dies encara que s'hagi congelat a les 23:50 i reprès a les 00:10, i
+ * comptar-ho en hores donaria 19 o 21 segons l'estona del dia.
+ */
+export function daysBetween(from: string, to: string): number {
+  const [fy, fm, fd] = parts(from);
+  const [ty, tm, td] = parts(to);
+  const a = Date.UTC(fy, fm - 1, fd);
+  const b = Date.UTC(ty, tm - 1, td);
+  return Math.round((b - a) / 86_400_000);
+}

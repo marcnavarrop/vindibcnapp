@@ -43,6 +43,8 @@ export type NotificationEventType =
   | "subscription_renewed"
   | "subscription_payment_failed"
   | "subscription_cancelled"
+  | "subscription_paused"
+  | "subscription_resumed"
   // Vals de regal:
   | "gift_voucher_redeemed"
   | "gift_voucher_gifted"
@@ -209,6 +211,16 @@ export const EVENT_META: Record<
     audience: ["client"],
     group: "general",
   },
+  subscription_paused: {
+    ...CLIENT_EVENT_TEXT.subscription_paused,
+    audience: ["client"],
+    group: "general",
+  },
+  subscription_resumed: {
+    ...CLIENT_EVENT_TEXT.subscription_resumed,
+    audience: ["client"],
+    group: "general",
+  },
   gift_voucher_redeemed: {
     ...CLIENT_EVENT_TEXT.gift_voucher_redeemed,
     audience: ["client"],
@@ -245,6 +257,8 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "subscription_renewed",
   "subscription_payment_failed",
   "subscription_cancelled",
+  "subscription_paused",
+  "subscription_resumed",
   "trial_request",
   "trial_status",
   "community",

@@ -47,6 +47,10 @@ export type Subscription = {
   nextRenewalOn: string | null;
   cancelAtPeriodEnd: boolean;
   cancelledAt: string | null;
+  /** Quan el centre la va congelar. Null si no està pausada. */
+  pausedAt: string | null;
+  /** Represa prevista. Null = indefinida (només possible al centre). */
+  resumeOn: string | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   createdAt: string;
@@ -68,6 +72,8 @@ type Row = {
   next_renewal_on: string | null;
   cancel_at_period_end: boolean;
   cancelled_at: string | null;
+  paused_at: string | null;
+  resume_on: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   created_at: string;
@@ -91,6 +97,8 @@ function toSubscription(r: Row): Subscription {
     nextRenewalOn: r.next_renewal_on,
     cancelAtPeriodEnd: r.cancel_at_period_end,
     cancelledAt: r.cancelled_at,
+    pausedAt: r.paused_at,
+    resumeOn: r.resume_on,
     stripeCustomerId: r.stripe_customer_id,
     stripeSubscriptionId: r.stripe_subscription_id,
     createdAt: r.created_at,
@@ -98,7 +106,7 @@ function toSubscription(r: Row): Subscription {
 }
 
 const COLUMNS =
-  "id, client_id, service_id, service_type, sessions_per_cycle, package_name, unit_price, payment_method, status, anchor_day, started_on, current_cycle_start, next_renewal_on, cancel_at_period_end, cancelled_at, stripe_customer_id, stripe_subscription_id, created_at";
+  "id, client_id, service_id, service_type, sessions_per_cycle, package_name, unit_price, payment_method, status, anchor_day, started_on, current_cycle_start, next_renewal_on, cancel_at_period_end, cancelled_at, paused_at, resume_on, stripe_customer_id, stripe_subscription_id, created_at";
 
 // ─── Cotització ──────────────────────────────────────────────────────────────
 
@@ -170,8 +178,14 @@ export function pricePerSession(unitPrice: number, sessions: number): number {
 
 // ─── Lectura ─────────────────────────────────────────────────────────────────
 
-/** Estats en què una subscripció encara existeix per al client. */
-const LIVE: SubscriptionStatus[] = ["active", "past_due"];
+/**
+ * Estats en què una subscripció encara existeix per al client.
+ *
+ * 'paused' hi entra: congelar no és donar de baixa. Mentre hi sigui, el client
+ * no en pot contractar una altra (l'índex únic de la 0072 tampoc l'hi deixaria)
+ * i les seves sèries no es tanquen esperant una renovació que tornarà.
+ */
+const LIVE: SubscriptionStatus[] = ["active", "past_due", "paused"];
 
 /**
  * La subscripció viva d'un client per a un tipus de servei, si en té.
@@ -374,6 +388,37 @@ export async function listSubscriptionsDueForRenewal(
   return (data as Row[]).map(toSubscription);
 }
 
+/**
+ * Les congelades que tenien data de represa i ja els toca.
+ *
+ * Les indefinides (`resume_on` null) no hi surten mai: aquelles només les
+ * desperta l'admin, que és el que vol dir indefinida.
+ */
+export async function listSubscriptionsDueForResume(
+  today: string = centerToday(),
+): Promise<Subscription[]> {
+  if (USE_MOCK)
+    return getStore()
+      .subscriptions.filter(
+        (s) =>
+          s.status === "paused" &&
+          s.resume_on !== null &&
+          s.resume_on <= today,
+      )
+      .map((s) => toSubscription(s as Row));
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("subscriptions")
+    .select(COLUMNS)
+    .eq("status", "paused")
+    .not("resume_on", "is", null)
+    .lte("resume_on", today)
+    .order("resume_on", { ascending: true });
+  if (error) throw error;
+  return (data as Row[]).map(toSubscription);
+}
+
 // ─── Escriptura ──────────────────────────────────────────────────────────────
 
 export type NewSubscription = {
@@ -418,6 +463,8 @@ export async function createSubscription(
     next_renewal_on: renewalAfter(startedOn, anchorDay),
     cancel_at_period_end: false,
     cancelled_at: null,
+    paused_at: null,
+    resume_on: null,
     stripe_customer_id: input.stripeCustomerId ?? null,
     stripe_subscription_id: input.stripeSubscriptionId ?? null,
   };
@@ -460,6 +507,10 @@ export type SubscriptionPatch = {
   nextRenewalOn?: string | null;
   cancelAtPeriodEnd?: boolean;
   cancelledAt?: string | null;
+  pausedAt?: string | null;
+  resumeOn?: string | null;
+  /** Canvia en reprendre una pausa: la renovació s'ha desplaçat de dia. */
+  anchorDay?: number;
   unitPrice?: number;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
@@ -490,6 +541,9 @@ export async function updateSubscription(
     if (patch.nextRenewalOn !== undefined) s.next_renewal_on = patch.nextRenewalOn;
     if (patch.cancelAtPeriodEnd !== undefined) s.cancel_at_period_end = patch.cancelAtPeriodEnd;
     if (patch.cancelledAt !== undefined) s.cancelled_at = patch.cancelledAt;
+    if (patch.pausedAt !== undefined) s.paused_at = patch.pausedAt;
+    if (patch.resumeOn !== undefined) s.resume_on = patch.resumeOn;
+    if (patch.anchorDay !== undefined) s.anchor_day = patch.anchorDay;
     if (patch.unitPrice !== undefined) s.unit_price = patch.unitPrice;
     if (patch.stripeCustomerId !== undefined) s.stripe_customer_id = patch.stripeCustomerId;
     if (patch.stripeSubscriptionId !== undefined)
@@ -508,6 +562,9 @@ export async function updateSubscription(
       ...(patch.nextRenewalOn !== undefined && { next_renewal_on: patch.nextRenewalOn }),
       ...(patch.cancelAtPeriodEnd !== undefined && { cancel_at_period_end: patch.cancelAtPeriodEnd }),
       ...(patch.cancelledAt !== undefined && { cancelled_at: patch.cancelledAt }),
+      ...(patch.pausedAt !== undefined && { paused_at: patch.pausedAt }),
+      ...(patch.resumeOn !== undefined && { resume_on: patch.resumeOn }),
+      ...(patch.anchorDay !== undefined && { anchor_day: patch.anchorDay }),
       ...(patch.unitPrice !== undefined && { unit_price: patch.unitPrice }),
       ...(patch.stripeCustomerId !== undefined && { stripe_customer_id: patch.stripeCustomerId }),
       ...(patch.stripeSubscriptionId !== undefined && {
@@ -979,4 +1036,38 @@ export async function markExtraBonoPaid(input: {
   }
 
   return { activated, clientId: bono.client_id, serviceType: bono.service_type };
+}
+
+/**
+ * Mou la caducitat d'un bo. L'única cosa que ho fa servir és reprendre una
+ * subscripció congelada: el mes que va quedar aturat ha de conservar els dies
+ * que li van prendre.
+ *
+ * NO toca l'estat. Si el bo ja constava 'expired' perquè la pausa va durar més
+ * que el cicle, el barrido de caducitats el tornarà a mirar amb la data nova i
+ * el deixarà com toca —i si ja s'havia gastat, no hi ha res a recuperar.
+ */
+export async function shiftBonoExpiry(
+  bonoId: string,
+  expiresAt: string,
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const b = store.bonos.find((x) => x.id === bonoId);
+    if (!b) return;
+    b.expires_at = expiresAt;
+    // Un bo que havia caducat durant la pausa torna a ser utilitzable: la data
+    // nova diu que encara no li tocava.
+    if (b.status === "expired") b.status = "active";
+    saveStore(store);
+    return;
+  }
+
+  const admin = createAdminClient();
+  await admin.from("bonos").update({ expires_at: expiresAt }).eq("id", bonoId);
+  await admin
+    .from("bonos")
+    .update({ status: "active" })
+    .eq("id", bonoId)
+    .eq("status", "expired");
 }

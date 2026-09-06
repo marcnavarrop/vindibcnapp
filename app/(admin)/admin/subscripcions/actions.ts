@@ -9,15 +9,17 @@ import {
 import { notifySubscriptionCancelled } from "@/lib/data/subscription-notify";
 import { scheduleStripeCancellation } from "@/lib/data/stripe-checkout";
 import { centerToday } from "@/lib/center-time";
+import {
+  pauseSubscription,
+  resumeSubscription,
+  type PauseRefusal,
+} from "@/lib/data/subscription-pause";
 
 /**
- * Les dues accions que l'admin pot fer sobre una subscripció.
+ * Les accions que l'admin pot fer sobre una subscripció.
  *
- * NO n'hi ha cap de "pausar", i és deliberat: 'past_due' ja vol dir "aturada
- * fins que pagui" i el client ho llegeix així. Una pausa decidida pel centre és
- * un fet DIFERENT —no deu res— i mereixeria el seu propi estat a l'enum, o
- * sigui una migració i una decisió sobre què se li diu al client. Fer-la passar
- * per 'past_due' seria acusar d'impagament algú que està al corrent.
+ * Congelar i reprendre són d'ell i només d'ell: el client no s'ha congelat res,
+ * li ho han congelat. Per això no hi ha cap acció equivalent a la seva pantalla.
  */
 
 export type AdminSubscriptionState = { error?: string; ok?: string };
@@ -112,4 +114,70 @@ export async function adminNotifyCancelledAction(
   if (!sub) return { error: "Subscripció no trobada." };
   await notifySubscriptionCancelled(sub);
   return { ok: "Avís enviat (si el client el té activat)." };
+}
+
+
+// ─── Congelar i reprendre ───────────────────────────────────────────────────
+
+const PAUSE_ERROR: Record<PauseRefusal, string> = {
+  notFound: "Subscripció no trobada.",
+  notActive: "Només es pot congelar una subscripció activa.",
+  alreadyPaused: "Ja estava congelada.",
+  cardNeedsResumeDate:
+    "Amb targeta cal indicar la data de represa: a Stripe la congelació té data límit i sense ella tornaria a cobrar sola.",
+  resumeDateInPast: "La data de represa ha de ser futura.",
+  stripeFailed: "Stripe no ha acceptat l'aturada del cobrament. No s'ha canviat res.",
+};
+
+/**
+ * Congela la subscripció. Cap cobrament, cap bo nou, cap compte enrere.
+ *
+ * La data de represa és opcional al centre i OBLIGATÒRIA amb targeta, i el
+ * motiu no és un caprici: a Stripe això es fa movent el `trial_end`, que admet
+ * com a molt dos anys. Una pausa indefinida amb targeta seria un cobrament que
+ * torna sol quan aquell termini s'acabi.
+ */
+export async function adminPauseSubscriptionAction(
+  _prev: AdminSubscriptionState,
+  fd: FormData,
+): Promise<AdminSubscriptionState> {
+  if (!(await admin())) return { error: "No autoritzat." };
+
+  const id = String(fd.get("subscriptionId") ?? "");
+  const raw = String(fd.get("resumeOn") ?? "").trim();
+  const resumeOn = raw || null;
+
+  const r = await pauseSubscription({ subscriptionId: id, resumeOn });
+  if (!r.ok) return { error: PAUSE_ERROR[r.reason] };
+
+  revalidatePath("/admin/subscripcions");
+  return {
+    ok: resumeOn
+      ? `Subscripció congelada. Es reprendrà sola el ${resumeOn}.`
+      : "Subscripció congelada indefinidament. La reprendràs tu quan toqui.",
+  };
+}
+
+/** La torna a posar en marxa i li retorna els dies que ha estat aturada. */
+export async function adminResumeSubscriptionAction(
+  _prev: AdminSubscriptionState,
+  fd: FormData,
+): Promise<AdminSubscriptionState> {
+  if (!(await admin())) return { error: "No autoritzat." };
+
+  const r = await resumeSubscription({
+    subscriptionId: String(fd.get("subscriptionId") ?? ""),
+  });
+  if (!r.ok)
+    return {
+      error:
+        r.reason === "stripeFailed"
+          ? "Stripe no ha acceptat la represa. No s'ha canviat res."
+          : "No s'ha pogut reprendre la subscripció.",
+    };
+
+  revalidatePath("/admin/subscripcions");
+  return {
+    ok: `Represa. Ha estat congelada ${r.daysPaused} dies, així que la propera renovació passa al ${r.nextRenewalOn}.`,
+  };
 }

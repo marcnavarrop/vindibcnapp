@@ -30,11 +30,18 @@ import {
 export function SubscriptionManage({
   byCard,
   cancelAtPeriodEnd,
+  paused = false,
   extra,
   stripeEnabled,
 }: {
   byCard: boolean;
   cancelAtPeriodEnd: boolean;
+  /**
+   * Congelada pel centre. El client no hi té CAP acció: no s'ha congelat res,
+   * li ho han congelat, i oferir-li botons que no pot fer servir només serveix
+   * per fer-lo dubtar de si això ho ha provocat ell.
+   */
+  paused?: boolean;
   /** L'estat de la quota d'extres del mes. Null = el centre no en permet cap. */
   extra: {
     canClaim: boolean;
@@ -65,6 +72,10 @@ export function SubscriptionManage({
     claimExtraByCardAction,
     {} as ExtraState,
   );
+
+  // Congelada: cap acció. Ni extra, ni baixa, ni canvi de targeta. La
+  // congelació la va decidir el centre i és el centre qui la treu.
+  if (paused) return null;
 
   return (
     <div className="flex flex-col gap-2 px-5 py-3">

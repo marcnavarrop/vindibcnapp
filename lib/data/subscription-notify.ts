@@ -22,9 +22,16 @@ import type { Subscription } from "@/lib/data/subscriptions";
  * d'un cicle és un avís i només un, el reintenti qui el reintenti.
  */
 
+type SubscriptionEvent =
+  | "subscription_renewed"
+  | "subscription_payment_failed"
+  | "subscription_cancelled"
+  | "subscription_paused"
+  | "subscription_resumed";
+
 async function send(
   sub: Subscription,
-  type: "subscription_renewed" | "subscription_payment_failed" | "subscription_cancelled",
+  type: SubscriptionEvent,
   relatedKey: string,
   data: Record<string, string>,
 ): Promise<void> {
@@ -78,4 +85,32 @@ export async function notifySubscriptionPaymentFailed(
 /** Baixa definitiva. Un sol avís per subscripció: no se'n dona de baixa dues. */
 export async function notifySubscriptionCancelled(sub: Subscription): Promise<void> {
   await send(sub, "subscription_cancelled", `subscription-cancelled:${sub.id}`, {});
+}
+
+/**
+ * El centre l'ha congelada.
+ *
+ * L'identificador porta l'instant de la pausa: congelar i reprendre la mateixa
+ * subscripció diverses vegades són fets diferents, i el segon no ha de quedar
+ * mut perquè el primer ja es va avisar.
+ */
+export async function notifySubscriptionPaused(
+  sub: Subscription,
+  pausedAt: string,
+  resumeOn: string | null,
+): Promise<void> {
+  await send(sub, "subscription_paused", `subscription-paused:${sub.id}:${pausedAt}`, {
+    resumeOnIso: resumeOn ?? "",
+  });
+}
+
+/** Torna a estar en marxa, amb la data de renovació ja desplaçada. */
+export async function notifySubscriptionResumed(
+  sub: Subscription,
+  resumedOn: string,
+  nextRenewalOn: string | null,
+): Promise<void> {
+  await send(sub, "subscription_resumed", `subscription-resumed:${sub.id}:${resumedOn}`, {
+    nextRenewalIso: nextRenewalOn ?? "",
+  });
 }

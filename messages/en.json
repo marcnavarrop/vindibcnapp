@@ -206,7 +206,8 @@
     "subscriptionStatus": {
       "active": "Active",
       "past_due": "Paused, unpaid",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "paused": "On hold"
     }
   },
   "picker": {
@@ -337,7 +338,10 @@
       "staleCycle": "The subscription has just renewed. Please reload the page.",
       "failed": "The extra session could not be added.",
       "cancel": "Cancel",
-      "close": "Close"
+      "close": "Close",
+      "subscriptionPaused": "The centre has put your subscription on hold. You pay nothing while it is, and you don't lose the time: when it resumes, your renewal moves back by the same number of days.",
+      "subscriptionPausedUntil": "It will resume on {date}.",
+      "subscriptionPausedOpen": "It will resume when the centre decides."
     },
     "confirmed": {
       "title": "Payment confirmed",
@@ -768,6 +772,14 @@
         "subscription_cancelled": {
           "label": "Subscription cancelled",
           "description": "When the subscription is cancelled, whether by you or by the centre."
+        },
+        "subscription_paused": {
+          "label": "Subscription frozen",
+          "description": "When the centre temporarily freezes your subscription."
+        },
+        "subscription_resumed": {
+          "label": "Subscription resumed",
+          "description": "When the centre starts it up again."
         }
       }
     },
@@ -867,7 +879,9 @@
       "validUntil": "Valid until",
       "perMonth": "Monthly amount",
       "nextRenewal": "Next renewal",
-      "sessionsThisCycle": "Sessions this month"
+      "sessionsThisCycle": "Sessions this month",
+      "resumesOn": "Resumes on",
+      "pausedSince": "On hold since"
     },
     "footer": {
       "tagline": "Personal training and physiotherapy centre",
@@ -986,6 +1000,21 @@
       "intro": "It won't renew again. Sessions you've already paid for are yours until they expire.",
       "cta": "View my passes",
       "outro": "You can subscribe again whenever you like."
+    },
+    "subscriptionPaused": {
+      "subject": "Your subscription is on hold · VindiBCN",
+      "heading": "We've put your subscription on hold",
+      "intro1": "While it's on hold you won't be charged and no month will renew. There's nothing for you to do.",
+      "intro2": "You don't lose the time it's held: when it resumes, your renewal moves back by exactly the same number of days.",
+      "cta": "View my passes",
+      "outro": "If you weren't expecting this, let us know and we'll look into it."
+    },
+    "subscriptionResumed": {
+      "subject": "Your subscription is running again · VindiBCN",
+      "heading": "We're up and running again",
+      "intro": "The subscription has resumed. Your next renewal has moved back by the days it was on hold.",
+      "cta": "Book a session",
+      "outro": "This month's sessions also keep the days that were frozen."
     }
   },
   "voucherPdf": {
