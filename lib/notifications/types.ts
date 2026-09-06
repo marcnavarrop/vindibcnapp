@@ -39,6 +39,10 @@ export type NotificationEventType =
   | "invoice_generated"
   // Llista d'espera:
   | "waitlist_fulfilled"
+  // Subscripcions (0072):
+  | "subscription_renewed"
+  | "subscription_payment_failed"
+  | "subscription_cancelled"
   // Vals de regal:
   | "gift_voucher_redeemed"
   | "gift_voucher_gifted"
@@ -190,6 +194,21 @@ export const EVENT_META: Record<
     audience: ["client"],
     group: "general",
   },
+  subscription_renewed: {
+    ...CLIENT_EVENT_TEXT.subscription_renewed,
+    audience: ["client"],
+    group: "general",
+  },
+  subscription_payment_failed: {
+    ...CLIENT_EVENT_TEXT.subscription_payment_failed,
+    audience: ["client"],
+    group: "general",
+  },
+  subscription_cancelled: {
+    ...CLIENT_EVENT_TEXT.subscription_cancelled,
+    audience: ["client"],
+    group: "general",
+  },
   gift_voucher_redeemed: {
     ...CLIENT_EVENT_TEXT.gift_voucher_redeemed,
     audience: ["client"],
@@ -223,6 +242,9 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "bono_low",
   "bono_expiring_soon",
   "bono_unpaid_cancelled",
+  "subscription_renewed",
+  "subscription_payment_failed",
+  "subscription_cancelled",
   "trial_request",
   "trial_status",
   "community",

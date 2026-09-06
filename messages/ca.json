@@ -756,6 +756,18 @@
         "gift_voucher_redeemed": {
           "label": "T'han bescanviat un regal",
           "description": "Quan algú fa servir un val de regal que has comprat."
+        },
+        "subscription_renewed": {
+          "label": "Renovació de la subscripció",
+          "description": "Cada mes, quan et rebem les sessions noves de la subscripció."
+        },
+        "subscription_payment_failed": {
+          "label": "Subscripció aturada per impagament",
+          "description": "Quan un mes no s'ha pogut cobrar i la subscripció es queda aturada."
+        },
+        "subscription_cancelled": {
+          "label": "Baixa de la subscripció",
+          "description": "Quan la subscripció es dona de baixa, la demanis tu o el centre."
         }
       }
     },
@@ -852,7 +864,10 @@
       "gift": "Regal",
       "code": "Codi",
       "date": "Data",
-      "validUntil": "Vàlid fins al"
+      "validUntil": "Vàlid fins al",
+      "perMonth": "Import mensual",
+      "nextRenewal": "Propera renovació",
+      "sessionsThisCycle": "Sessions d'aquest mes"
     },
     "footer": {
       "tagline": "Centre d'entrenament personal i fisioteràpia",
@@ -949,7 +964,29 @@
       "cta": "Entra a la teva àrea",
       "outro": "Qualsevol dubte, respon a aquest correu o parla amb el centre. Ens veiem aviat!"
     },
-    "sessions": "{count, plural, one {# sessió} other {# sessions}}"
+    "sessions": "{count, plural, one {# sessió} other {# sessions}}",
+    "subscriptionRenewed": {
+      "subject": "Ja tens les sessions d'aquest mes · VindiBCN",
+      "heading": "La teva subscripció s'ha renovat",
+      "intro": "Ja tens disponibles les sessions d'aquest mes. Es poden fer servir fins al dia que s'indica; les que no facis servir no passen al mes següent.",
+      "cta": "Reservar una sessió",
+      "outro": "Si no vols continuar, pots donar-te de baixa quan vulguis des dels teus bons."
+    },
+    "subscriptionPaymentFailed": {
+      "subject": "La teva subscripció s'ha aturat · VindiBCN",
+      "heading": "No hem pogut cobrar aquest mes",
+      "intro1": "La subscripció queda aturada i no es renovarà fins que el mes pendent estigui cobrat.",
+      "intro2": "Les sessions que ja tinguis reservades no es toquen.",
+      "cta": "Veure els meus bons",
+      "outro": "Si creus que és un error, digues-nos-ho i ho mirem."
+    },
+    "subscriptionCancelled": {
+      "subject": "Subscripció donada de baixa · VindiBCN",
+      "heading": "La teva subscripció s'ha donat de baixa",
+      "intro": "No es tornarà a renovar. Les sessions que ja tinguis pagades les conserves fins que caduquin.",
+      "cta": "Veure els meus bons",
+      "outro": "Pots tornar-t'hi a subscriure quan vulguis."
+    }
   },
   "voucherPdf": {
     "docTitle": "Val de regal {code} · {centre}",

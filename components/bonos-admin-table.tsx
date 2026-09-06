@@ -22,15 +22,23 @@ const STATUS_TONE: Record<
   unpaid: "danger",
 };
 
-type Filter = "all" | "pending_payment" | "active";
+type Filter = "all" | "pending_payment" | "unpaid" | "active";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "Tots" },
   { key: "pending_payment", label: "Pendents de pagament" },
+  { key: "unpaid", label: "Decaiguts sense cobrar" },
   { key: "active", label: "Actius" },
 ];
 
-export function BonosAdminTable({ bonos }: { bonos: BonoListItem[] }) {
+export function BonosAdminTable({
+  bonos,
+  today,
+}: {
+  bonos: BonoListItem[];
+  /** Dia del CENTRE. Ve del servidor: el navegador pot anar en una altra zona. */
+  today: string;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
 
   const pendingCount = useMemo(
@@ -113,14 +121,38 @@ export function BonosAdminTable({ bonos }: { bonos: BonoListItem[] }) {
                   </Badge>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {b.status === "pending_payment" && (
+                  {(b.status === "pending_payment" || b.status === "unpaid") && (
                     <form action={markBonoPaidAction}>
                       <input type="hidden" name="bonoId" value={b.id} />
                       <button
                         type="submit"
-                        className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
+                        // Un bo decaigut també es pot cobrar: fins ara el client
+                        // es plantava al centre amb els diners i no hi havia on
+                        // anotar-los. El text avisa del que NO torna, que són
+                        // les hores: l'escombrat les va alliberar i poden ser
+                        // d'algú altre.
+                        title={
+                          b.status !== "unpaid"
+                            ? undefined
+                            : b.expiresAt && b.expiresAt < today
+                              ? "El cobrament s'anota i, si és d'una subscripció, la torna a posar en marxa. El bo NO es recupera: ja ha passat de data."
+                              : "Recupera el bo amb les sessions que li quedaven. Les reserves que es van cancel·lar en decaure NO tornen: s'han de tornar a demanar."
+                        }
+                        className={`rounded-md px-2.5 py-1 text-xs font-bold text-white ${
+                          b.status === "unpaid"
+                            ? "bg-brand-orange hover:opacity-90"
+                            : "bg-brand-purple hover:bg-brand-purple-light"
+                        } ${TAP}`}
                       >
-                        Marcar com pagat
+                        {b.status !== "unpaid"
+                          ? "Marcar com pagat"
+                          : b.expiresAt && b.expiresAt < today
+                            ? // No promet el que no pot complir: un bo que ja ha
+                              // passat de data tornarà a caducar tot seguit. El
+                              // cobrament sí que s'anota, i és el que desbloqueja
+                              // la subscripció.
+                              "Només cobrar"
+                            : "Cobrar i recuperar"}
                       </button>
                     </form>
                   )}

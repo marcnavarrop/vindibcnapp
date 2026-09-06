@@ -131,6 +131,9 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     gift_voucher_redeemed_email: true,
     new_client_registered_email: true,
     new_exercises_assigned_email: false,
+    subscription_renewed_email: true,
+    subscription_payment_failed_email: true,
+    subscription_cancelled_email: true,
     created_at: now,
   }),
 );

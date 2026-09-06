@@ -27,6 +27,12 @@ import { uploadGiftVoucherPdf } from "@/lib/data/gift-voucher-doc";
 import { giftVoucherBuyerLocale } from "@/lib/data/gift-vouchers";
 import { createSystemPayment, bonoConcept } from "@/lib/data/payments";
 import { getCenterSettings } from "@/lib/data/center-settings";
+import {
+  notifySubscriptionCancelled,
+  notifySubscriptionPaymentFailed,
+  notifySubscriptionRenewed,
+} from "@/lib/data/subscription-notify";
+import { previousDay } from "@/lib/subscription-cycle";
 import { SERVICE_LABELS } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
 
@@ -691,6 +697,9 @@ export async function fulfillSubscriptionInvoice(
     nextRenewalOn: period.end,
   });
 
+  // Stripe ja sap fins quan va el període: no cal deduir-ho de l'àncora.
+  await notifySubscriptionRenewed(subscription, period.start, previousDay(period.end));
+
   // Les sèries marcades per allargar-se (0074), ara que hi ha sessions noves.
   // Dins d'un try: si falla, el mes ja està cobrat i emès, i respondre 500 faria
   // que Stripe reintentés una factura que ja hem complert.
@@ -847,6 +856,7 @@ export async function markSubscriptionPastDue(
     return { status: "ignored", reason: "ja cancel·lada" };
 
   await updateSubscription(subscription.id, { status: "past_due" });
+  await notifySubscriptionPaymentFailed(subscription, subscription.currentCycleStart);
   return { status: "created", kind: KIND_SUBSCRIPTION, id: subscription.id };
 }
 
@@ -900,6 +910,7 @@ export async function syncSubscriptionSchedule(
     return { status: "duplicate", kind: KIND_SUBSCRIPTION, id: subscription.id };
 
   await updateSubscription(subscription.id, { cancelAtPeriodEnd });
+  await notifySubscriptionCancelled(subscription);
   return { status: "created", kind: KIND_SUBSCRIPTION, id: subscription.id };
 }
 

@@ -20,7 +20,16 @@ function madridTime(iso: string): string {
 }
 
 /** UUID determinista a partir d'una cadena (per a l'idempotència del log). */
-function stableUuid(s: string): string {
+/**
+ * Un uuid estable a partir d'un text, per al `relatedId` dels avisos.
+ *
+ * S'exporta perquè els avisos de subscripció (bloc 6) el necessiten pel mateix
+ * motiu que els d'aquí: `notifyOnce` només sap que ja ha enviat una cosa si
+ * l'identificador que se li dona és el mateix cada vegada. Amb una còpia, dues
+ * famílies d'avisos podrien acabar generant identificadors diferents per al
+ * mateix fet.
+ */
+export function stableUuid(s: string): string {
   const h = createHash("sha1").update(s).digest("hex");
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
 }

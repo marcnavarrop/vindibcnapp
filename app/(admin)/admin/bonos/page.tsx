@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listBonos } from "@/lib/data/bonos";
+import { centerToday } from "@/lib/center-time";
 import { BonosAdminTable } from "@/components/bonos-admin-table";
 import { GroupTabs } from "@/components/ui/group-tabs";
 import { BONS_TABS } from "@/lib/admin-tabs";
@@ -22,7 +23,9 @@ export default async function BonosPage() {
         </Link>
         <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Bons</h1>
 
-        <BonosAdminTable bonos={bonos} />
+        {/* El dia del CENTRE, no el del navegador: la taula l'usa per dir si
+            un bo decaigut ja ha passat de data abans que l'admin el cobri. */}
+        <BonosAdminTable bonos={bonos} today={centerToday()} />
       </main>
     </>
   );

@@ -111,6 +111,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
       icon: "ticket",
       children: [
         { href: "/admin/bonos", label: "Bons" },
+        { href: "/admin/subscripcions", label: "Subscripcions" },
         { href: "/admin/pagos", label: "Pagaments" },
         { href: "/admin/vals-regal", label: "Vals de regal" },
         { href: "/admin/referits", label: "Referits" },

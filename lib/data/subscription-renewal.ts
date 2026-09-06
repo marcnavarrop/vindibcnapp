@@ -4,6 +4,12 @@ import { centerToday } from "@/lib/center-time";
 import { renewalAfter } from "@/lib/subscription-cycle";
 import { extendSeriesForSubscription } from "@/lib/data/series-extension";
 import {
+  notifySubscriptionCancelled,
+  notifySubscriptionPaymentFailed,
+  notifySubscriptionRenewed,
+} from "@/lib/data/subscription-notify";
+import { cycleExpiry } from "@/lib/subscription-cycle";
+import {
   createSubscription,
   getCycleBono,
   getLiveSubscription,
@@ -155,6 +161,7 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
       nextRenewalOn: null,
       cancelledAt: new Date().toISOString(),
     });
+    await notifySubscriptionCancelled(sub);
     return { kind: "cancelled", subscriptionId: sub.id, clientId: sub.clientId };
   }
 
@@ -163,6 +170,7 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
   const previous = await getCycleBono(sub.id, sub.currentCycleStart);
   if (!(await isCycleSettled(previous))) {
     await updateSubscription(sub.id, { status: "past_due" });
+    await notifySubscriptionPaymentFailed(sub, sub.currentCycleStart);
     return { kind: "paused", subscriptionId: sub.id, clientId: sub.clientId };
   }
 
@@ -194,6 +202,8 @@ async function renewOne(sub: Subscription, today: string): Promise<RenewalOutcom
     currentCycleStart: cycleStart,
     nextRenewalOn: next,
   });
+
+  await notifySubscriptionRenewed(sub, cycleStart, cycleExpiry(cycleStart, sub.anchorDay));
 
   return {
     kind: "renewed",

@@ -2,6 +2,7 @@ import "server-only";
 import type { NotificationEvent } from "@/lib/notifications/types";
 import { staticI18n, type StaticI18n } from "@/lib/i18n/no-request";
 import type { Locale } from "@/lib/i18n/config";
+import { formatEur } from "@/lib/labels";
 import {
   BRAND,
   CENTER_NAME,
@@ -425,6 +426,58 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
           [tl("cancelled"), d.cancelled],
         ]),
         cta: { label: t("cta"), url: appLink("/client/bonos") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
+    case "subscription_renewed": {
+      const t = i.ns("emails.subscriptionRenewed");
+      subject = t("subject");
+      block = {
+        heading: t("heading"),
+        intro: [hola, t("intro")],
+        details: rows([
+          [tl("service"), service],
+          [tl("sessionsThisCycle"), d.sessions],
+          // La data arriba en ISO i es formata AQUÍ, amb l'idioma de qui llegeix.
+          // És el contracte de tot aquest fitxer (`when`, `expires`): una data
+          // ja formatada pel cridant sortiria en català dins d'un correu en
+          // castellà, que és exactament el que passava.
+          [tl("validUntil"), d.untilIso ? i.date(d.untilIso) : undefined],
+        ]),
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
+    case "subscription_payment_failed": {
+      const t = i.ns("emails.subscriptionPaymentFailed");
+      subject = t("subject");
+      block = {
+        heading: t("heading"),
+        intro: [hola, t("intro1"), t("intro2")],
+        details: rows([
+          [tl("service"), service],
+          // L'import, igual: arriba en cru i es formata amb l'idioma del
+          // destinatari. `formatEur` sense locale cau al català.
+          [tl("perMonth"), d.amountEur ? formatEur(Number(d.amountEur), i.locale) : undefined],
+        ]),
+        cta: { label: t("cta"), url: appLink("/client/bonos/meus") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
+    case "subscription_cancelled": {
+      const t = i.ns("emails.subscriptionCancelled");
+      subject = t("subject");
+      block = {
+        heading: t("heading"),
+        intro: [hola, t("intro")],
+        details: rows([[tl("service"), service]]),
+        cta: { label: t("cta"), url: appLink("/client/bonos/meus") },
         outro: [t("outro")],
         footer: "client",
       };

@@ -862,13 +862,6 @@ export interface Database {
         };
         Relationships: [];
       };
-      // La 0072 hi va afegir `subscription_renewed_email`,
-      // `subscription_payment_failed_email` i `subscription_cancelled_email`.
-      // Encara no hi són aquí a posta: en aquest projecte un avís és una unitat
-      // de tres peces —columna, tipus d'esdeveniment i plantilla— i
-      // `PREFERENCE_KEYS` es deriva dels tipus, no de la taula. Tipar la
-      // columna sense el seu esdeveniment només aconsegueix que el literal del
-      // mock deixi de quadrar. Entren juntes amb els avisos.
       notification_preferences: {
         Row: {
           id: string;
@@ -889,6 +882,9 @@ export interface Database {
           new_exercises_assigned_email: boolean;
           bono_expiring_soon_email: boolean;
           bono_unpaid_cancelled_email: boolean;
+          subscription_renewed_email: boolean;
+          subscription_payment_failed_email: boolean;
+          subscription_cancelled_email: boolean;
           created_at: string;
         };
         Insert: {
@@ -910,6 +906,9 @@ export interface Database {
           new_exercises_assigned_email?: boolean;
           bono_expiring_soon_email?: boolean;
           bono_unpaid_cancelled_email?: boolean;
+          subscription_renewed_email?: boolean;
+          subscription_payment_failed_email?: boolean;
+          subscription_cancelled_email?: boolean;
           created_at?: string;
         };
         Update: Partial<{
@@ -931,6 +930,9 @@ export interface Database {
           new_exercises_assigned_email: boolean;
           bono_expiring_soon_email: boolean;
           bono_unpaid_cancelled_email: boolean;
+          subscription_renewed_email?: boolean;
+          subscription_payment_failed_email?: boolean;
+          subscription_cancelled_email?: boolean;
           created_at: string;
         }>;
         Relationships: [];

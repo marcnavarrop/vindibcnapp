@@ -756,6 +756,18 @@
         "gift_voucher_redeemed": {
           "label": "Your gift was redeemed",
           "description": "When someone uses a gift voucher you bought."
+        },
+        "subscription_renewed": {
+          "label": "Subscription renewal",
+          "description": "Each month, when your new subscription sessions arrive."
+        },
+        "subscription_payment_failed": {
+          "label": "Subscription paused, unpaid",
+          "description": "When a month couldn't be charged and the subscription is paused."
+        },
+        "subscription_cancelled": {
+          "label": "Subscription cancelled",
+          "description": "When the subscription is cancelled, whether by you or by the centre."
         }
       }
     },
@@ -852,7 +864,10 @@
       "gift": "Gift",
       "code": "Code",
       "date": "Date",
-      "validUntil": "Valid until"
+      "validUntil": "Valid until",
+      "perMonth": "Monthly amount",
+      "nextRenewal": "Next renewal",
+      "sessionsThisCycle": "Sessions this month"
     },
     "footer": {
       "tagline": "Personal training and physiotherapy centre",
@@ -949,7 +964,29 @@
       "cta": "Go to my area",
       "outro": "If you have any questions, reply to this email or talk to the centre. See you soon!"
     },
-    "sessions": "{count, plural, one {# session} other {# sessions}}"
+    "sessions": "{count, plural, one {# session} other {# sessions}}",
+    "subscriptionRenewed": {
+      "subject": "This month's sessions are ready · VindiBCN",
+      "heading": "Your subscription has renewed",
+      "intro": "This month's sessions are available. They can be used until the date shown; any you don't use do not carry over to next month.",
+      "cta": "Book a session",
+      "outro": "If you'd rather stop, you can cancel any time from your passes."
+    },
+    "subscriptionPaymentFailed": {
+      "subject": "Your subscription is paused · VindiBCN",
+      "heading": "We couldn't charge this month",
+      "intro1": "The subscription is paused and won't renew until the outstanding month is paid.",
+      "intro2": "Sessions you've already booked are untouched.",
+      "cta": "View my passes",
+      "outro": "If you think this is a mistake, let us know and we'll look into it."
+    },
+    "subscriptionCancelled": {
+      "subject": "Subscription cancelled · VindiBCN",
+      "heading": "Your subscription has been cancelled",
+      "intro": "It won't renew again. Sessions you've already paid for are yours until they expire.",
+      "cta": "View my passes",
+      "outro": "You can subscribe again whenever you like."
+    }
   },
   "voucherPdf": {
     "docTitle": "Gift voucher {code} · {centre}",

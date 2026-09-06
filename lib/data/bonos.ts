@@ -572,17 +572,31 @@ export async function getBonoClientId(bonoId: string): Promise<string | null> {
   return data?.client_id ?? null;
 }
 
+/** Estats des dels quals un bo encara es pot cobrar. */
+const COLLECTABLE: BonoStatus[] = ["pending_payment", "unpaid"];
+
 /**
- * Marca un bono pendiente como pagado: lo activa y registra el cobro en
- * efectivo (lo hace el admin cuando el cliente paga en el centro).
+ * Cobra un bo: l'activa i anota el cobrament en efectiu. El fa l'admin (o
+ * l'entrenador/a del client, des de la 0056) quan el client paga al centre.
+ *
+ * TAMBÉ ACCEPTA ELS 'unpaid', i no és un descuit. Un bo decau a 'unpaid' quan
+ * passa el termini de la 0044 sense cobrar-se, i fins ara aquell bo ja no es
+ * podia cobrar per cap pantalla: el client apareixia al centre amb els diners i
+ * no hi havia on anotar-los. Amb les subscripcions això deixa de ser un cas
+ * rar —un subscriptor que es retarda un mes hi cau sol— i el forat es notaria.
+ *
+ * El que NO torna són les reserves. Quan el bo va decaure, l'escombrat va
+ * alliberar les seves sessions futures i aquelles franges ja poden ser d'algú
+ * altre. El bo recupera les sessions que li quedaven; les hores, s'han de
+ * tornar a demanar. La pantalla ho diu abans de cobrar.
  */
 export async function markBonoPaid(bonoId: string): Promise<void> {
   if (USE_MOCK) {
     const store = getStore();
     const bono = store.bonos.find((b) => b.id === bonoId);
     if (!bono) throw new Error("Bo no trobat.");
-    if (bono.status !== "pending_payment")
-      throw new Error("Aquest bo no està pendent de pagament.");
+    if (!COLLECTABLE.includes(bono.status))
+      throw new Error("Aquest bo no es pot cobrar.");
 
     bono.status = "active";
     saveStore(store);
@@ -607,13 +621,16 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
     .eq("id", bonoId)
     .single();
   if (bErr || !bono) throw new Error("Bo no trobat.");
-  if (bono.status !== "pending_payment")
-    throw new Error("Aquest bo no està pendent de pagament.");
+  if (!COLLECTABLE.includes(bono.status))
+    throw new Error("Aquest bo no es pot cobrar.");
 
   const { error: uErr } = await supabase
     .from("bonos")
     .update({ status: "active" })
-    .eq("id", bonoId);
+    .eq("id", bonoId)
+    // El mateix filtre que la comprovació de sobre, però a la consulta: si dos
+    // cobraments arriben alhora, només un troba el bo per cobrar.
+    .in("status", COLLECTABLE);
   if (uErr) throw uErr;
 
   await createPayment({

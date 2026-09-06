@@ -22,6 +22,13 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // Al client se li han cancel·lat sessions: assabentar-se'n no és opcional.
   bono_unpaid_cancelled_email: true,
   community_email: false,
+  // Els tres actius per defecte. Aquí es mouen diners sense que el client premi
+  // res —se li cobra un mes, se li atura la subscripció, se li dona de baixa—:
+  // assabentar-se'n no és una comoditat opcional. Mateix criteri que
+  // `bono_unpaid_cancelled_email`.
+  subscription_renewed_email: true,
+  subscription_payment_failed_email: true,
+  subscription_cancelled_email: true,
   // Avisos del professional sobre la seva agenda (operatius = true).
   trainer_booking_received_email: true,
   trainer_booking_cancelled_email: true,

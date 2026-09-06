@@ -227,6 +227,20 @@ export async function clientIdForProfile(profileId: string): Promise<string | nu
   return data?.id ?? null;
 }
 
+/** El perfil d'un client. El camí invers de `clientIdForProfile`. */
+export async function profileIdForClient(clientId: string): Promise<string | null> {
+  if (USE_MOCK)
+    return getStore().clients.find((c) => c.id === clientId)?.profile_id ?? null;
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("clients")
+    .select("profile_id")
+    .eq("id", clientId)
+    .maybeSingle();
+  return data?.profile_id ?? null;
+}
+
 /** La subscripció viva d'un perfil, resolent-ne el client pel camí de sobre. */
 export async function getLiveSubscriptionForProfile(
   profileId: string,
@@ -276,20 +290,47 @@ export async function getSubscriptionByStripeId(
   return data ? toSubscription(data as Row) : null;
 }
 
-/** Totes les subscripcions, per al panell de l'admin. Les vives primer. */
-export async function listSubscriptions(): Promise<Subscription[]> {
-  if (USE_MOCK)
-    return getStore()
-      .subscriptions.map((s) => toSubscription(s as Row))
+/** Una subscripció amb el nom de qui la té, per al panell de l'admin. */
+export type SubscriptionWithClient = Subscription & { clientName: string };
+
+/**
+ * Totes les subscripcions, per al panell de l'admin. Les vives primer.
+ *
+ * El nom del client ve al MATEIX join, com fa `listBonos`: una taula que ha
+ * d'ensenyar noms i demana els noms a part acaba fent una consulta per fila el
+ * dia que algú hi afegeix una columna.
+ */
+export async function listSubscriptions(): Promise<SubscriptionWithClient[]> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const name = (clientId: string) => {
+      const c = store.clients.find((x) => x.id === clientId);
+      return store.profiles.find((p) => p.id === c?.profile_id)?.full_name ?? "—";
+    };
+    return store.subscriptions
+      .map((s) => ({ ...toSubscription(s as Row), clientName: name(s.client_id) }))
       .sort(byLiveThenRenewal);
+  }
 
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("subscriptions")
-    .select(COLUMNS)
+    .select(
+      `${COLUMNS},
+       client:clients!subscriptions_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
+    )
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data as Row[]).map(toSubscription).sort(byLiveThenRenewal);
+
+  type WithClient = Row & {
+    client: { profile: { full_name: string | null } | null } | null;
+  };
+  return (data as unknown as WithClient[])
+    .map((r) => ({
+      ...toSubscription(r),
+      clientName: r.client?.profile?.full_name ?? "—",
+    }))
+    .sort(byLiveThenRenewal);
 }
 
 function byLiveThenRenewal(a: Subscription, b: Subscription): number {

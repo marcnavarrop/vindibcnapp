@@ -756,6 +756,18 @@
         "gift_voucher_redeemed": {
           "label": "Te han canjeado un regalo",
           "description": "Cuando alguien usa un vale de regalo que has comprado."
+        },
+        "subscription_renewed": {
+          "label": "Renovación de la suscripción",
+          "description": "Cada mes, cuando te llegan las sesiones nuevas de la suscripción."
+        },
+        "subscription_payment_failed": {
+          "label": "Suscripción parada por impago",
+          "description": "Cuando un mes no se ha podido cobrar y la suscripción se queda parada."
+        },
+        "subscription_cancelled": {
+          "label": "Baja de la suscripción",
+          "description": "Cuando la suscripción se da de baja, la pidas tú o el centro."
         }
       }
     },
@@ -852,7 +864,10 @@
       "gift": "Regalo",
       "code": "Código",
       "date": "Fecha",
-      "validUntil": "Válido hasta el"
+      "validUntil": "Válido hasta el",
+      "perMonth": "Importe mensual",
+      "nextRenewal": "Próxima renovación",
+      "sessionsThisCycle": "Sesiones de este mes"
     },
     "footer": {
       "tagline": "Centro de entrenamiento personal y fisioterapia",
@@ -949,7 +964,29 @@
       "cta": "Entra en tu área",
       "outro": "Cualquier duda, responde a este correo o habla con el centro. ¡Nos vemos pronto!"
     },
-    "sessions": "{count, plural, one {# sesión} other {# sesiones}}"
+    "sessions": "{count, plural, one {# sesión} other {# sesiones}}",
+    "subscriptionRenewed": {
+      "subject": "Ya tienes las sesiones de este mes · VindiBCN",
+      "heading": "Tu suscripción se ha renovado",
+      "intro": "Ya tienes disponibles las sesiones de este mes. Se pueden usar hasta el día que se indica; las que no uses no pasan al mes siguiente.",
+      "cta": "Reservar una sesión",
+      "outro": "Si no quieres continuar, puedes darte de baja cuando quieras desde tus bonos."
+    },
+    "subscriptionPaymentFailed": {
+      "subject": "Tu suscripción se ha parado · VindiBCN",
+      "heading": "No hemos podido cobrar este mes",
+      "intro1": "La suscripción queda parada y no se renovará hasta que el mes pendiente esté cobrado.",
+      "intro2": "Las sesiones que ya tengas reservadas no se tocan.",
+      "cta": "Ver mis bonos",
+      "outro": "Si crees que es un error, dínoslo y lo miramos."
+    },
+    "subscriptionCancelled": {
+      "subject": "Suscripción dada de baja · VindiBCN",
+      "heading": "Tu suscripción se ha dado de baja",
+      "intro": "No se volverá a renovar. Las sesiones que ya tengas pagadas las conservas hasta que caduquen.",
+      "cta": "Ver mis bonos",
+      "outro": "Puedes volver a suscribirte cuando quieras."
+    }
   },
   "voucherPdf": {
     "docTitle": "Vale de regalo {code} · {centre}",

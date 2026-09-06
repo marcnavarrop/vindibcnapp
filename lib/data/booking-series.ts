@@ -677,7 +677,13 @@ export async function applyOccurrences(
         });
         await tagReservation(trainerId, at, ctx.clientId, seriesId);
         created++;
-      } catch {
+      } catch (e) {
+        // El motiu es DIU. Abans es descartava, i això va amagar durant tot un
+        // bloc que l'extensió automàtica no reservava mai res des del cron: cap
+        // sessió, cap regla de disponibilitat llegible, i totes les ocurrències
+        // "fallides" sense cap pista de per què. Una franja que s'ha ocupat
+        // entremig és normal; una excepció que es repeteix, no.
+        console.error(`[sèries] ${seriesId} ${at}: ${(e as Error).message}`);
         failed++;
       }
       continue;
@@ -696,7 +702,8 @@ export async function applyOccurrences(
           seriesId,
         });
         waitlisted++;
-      } catch {
+      } catch (e) {
+        console.error(`[sèries] ${seriesId} espera ${date} ${time}: ${(e as Error).message}`);
         failed++;
       }
     }
