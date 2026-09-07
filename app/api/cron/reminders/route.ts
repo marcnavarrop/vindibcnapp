@@ -169,16 +169,21 @@ async function handle(req: NextRequest) {
   let unpaidSent = 0;
   let unpaidSkipped = 0;
   for (const b of unpaid) {
-    const did = await notifyOnce({
-      type: "bono_unpaid_cancelled",
-      recipient: b.recipient,
-      relatedId: b.relatedId,
-      data: {
-        name: b.recipient.name ?? "",
-        serviceType: b.serviceType,
-        cancelled: String(b.cancelledCount),
+    const did = await notifyOnce(
+      {
+        type: "bono_unpaid_cancelled",
+        recipient: b.recipient,
+        relatedId: b.relatedId,
+        data: {
+          name: b.recipient.name ?? "",
+          serviceType: b.serviceType,
+          cancelled: String(b.cancelledCount),
+        },
       },
-    });
+      // Obligatori: li acabem de cancel·lar sessions ja reservades. Si no ho
+      // sap, es presenta a una sessió que ja no existeix.
+      { ignorePreferences: true },
+    );
     if (did) unpaidSent++;
     else unpaidSkipped++;
   }

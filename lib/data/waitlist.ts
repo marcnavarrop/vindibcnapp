@@ -550,20 +550,25 @@ async function notifyPromotion(
   const contact = await getProfileContact(profileId);
   if (!contact) return;
   const trainer = freed.trainerId ? await getProfileContact(freed.trainerId) : null;
-  await notify({
-    type: "waitlist_fulfilled",
-    recipient: contact,
-    // La reserva acabada de crear, no l'instant: `notification_log.related_id`
-    // és un uuid, i amb una marca de temps la inserció fallava. `notify` s'ho
-    // empassava tot i l'avís no quedava registrat enlloc.
-    relatedId: reservationId,
-    data: {
-      name: contact.name ?? "",
-      whenIso: freed.scheduledAt,
-      serviceType: freed.serviceType,
-      trainer: trainer?.name ?? "",
+  await notify(
+    {
+      type: "waitlist_fulfilled",
+      recipient: contact,
+      // La reserva acabada de crear, no l'instant: `notification_log.related_id`
+      // és un uuid, i amb una marca de temps la inserció fallava. `notify` s'ho
+      // empassava tot i l'avís no quedava registrat enlloc.
+      relatedId: reservationId,
+      data: {
+        name: contact.name ?? "",
+        whenIso: freed.scheduledAt,
+        serviceType: freed.serviceType,
+        trainer: trainer?.name ?? "",
+      },
     },
-  });
+    // Obligatori: se li acaba de crear una reserva que ell no ha demanat en
+    // aquell moment. Si no ho sap, no hi va i crema la sessió.
+    { ignorePreferences: true },
+  );
 }
 
 async function profileOfClient(clientId: string): Promise<string | null> {

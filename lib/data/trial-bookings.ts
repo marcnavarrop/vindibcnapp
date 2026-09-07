@@ -761,12 +761,19 @@ async function updateTrialStatus(
 async function notifyTrialStatus(id: string, status: "confirmed" | "rejected"): Promise<void> {
   const t = (await listTrialBookings()).find((x) => x.id === id);
   if (!t) return;
-  await notify({
-    type: "trial_status",
-    recipient: { profileId: null, email: t.email, phone: t.phone, name: t.fullName },
-    relatedId: t.id,
-    data: { name: t.fullName, whenIso: t.scheduledAt, status },
-  });
+  await notify(
+    {
+      type: "trial_status",
+      recipient: { profileId: null, email: t.email, phone: t.phone, name: t.fullName },
+      relatedId: t.id,
+      data: { name: t.fullName, whenIso: t.scheduledAt, status },
+    },
+    // Obligatori: és la resposta al que va demanar ell. Sense això, o es
+    // presenta a una prova rebutjada o es perd una d'acceptada. Explícit
+    // encara que el destinatari sigui un visitant sense perfil —i per tant
+    // sense preferències—: qui llegeixi això no ho ha d'haver de deduir.
+    { ignorePreferences: true },
+  );
 }
 
 /** L'entrenador (o admin) accepta una prova pendent → 'confirmed'. */

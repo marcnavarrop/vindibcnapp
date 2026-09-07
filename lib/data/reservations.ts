@@ -118,17 +118,27 @@ async function notifyReservation(
 ): Promise<void> {
   const c = await clientContact(clientId);
   if (!c) return;
-  await notify({
-    type,
-    recipient: c,
-    relatedId: info.reservationId ?? null,
-    data: {
-      name: c.name ?? "",
-      whenIso: info.scheduledAt,
-      serviceType: info.serviceType,
-      ...(info.trainerName ? { trainer: info.trainerName } : {}),
+  await notify(
+    {
+      type,
+      recipient: c,
+      relatedId: info.reservationId ?? null,
+      data: {
+        name: c.name ?? "",
+        whenIso: info.scheduledAt,
+        serviceType: info.serviceType,
+        ...(info.trainerName ? { trainer: info.trainerName } : {}),
+      },
     },
-  });
+    /*
+     * Els dos avisos surten d'aquí, però només un és obligatori.
+     *
+     * Una reserva que existeix la pot veure a l'app quan vulgui; una que ja no
+     * existeix, no. Per això la cancel·lació no es pot apagar i la confirmació
+     * sí —que a més és, de bon tros, la de més volum.
+     */
+    { ignorePreferences: type === "reservation_cancelled" },
+  );
 }
 
 /**

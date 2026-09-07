@@ -46,25 +46,34 @@ export async function redeemGiftVoucherAction(
   const result = await redeemGiftVoucher({ code, profileId: viewer.id });
   if (!result.ok) return { errorCode: result.code };
 
-  // Avís al comprador: ha pagat un regal i vol saber que ha arribat. Respecta
-  // les seves preferències i mai tomba el canvi si falla.
+  // Avís al comprador: ha pagat un regal i acaben de bescanviar-l'hi. Mai
+  // tomba el canvi si falla.
   const buyer = await giftVoucherBuyerContact(result.voucherId);
   if (buyer) {
     const contact = await getProfileContact(buyer.profileId);
     if (contact)
-      await notify({
-        type: "gift_voucher_redeemed",
-        recipient: contact,
-        relatedId: result.voucherId,
-        data: {
-          name: contact.name ?? "",
-          recipient: buyer.recipientName ?? "",
-          packageName: buyer.packageName,
-          sessions: String(result.sessions),
-          code: code.trim().toUpperCase(),
-          whenIso: new Date().toISOString(),
+      await notify(
+        {
+          type: "gift_voucher_redeemed",
+          recipient: contact,
+          relatedId: result.voucherId,
+          data: {
+            name: contact.name ?? "",
+            recipient: buyer.recipientName ?? "",
+            packageName: buyer.packageName,
+            sessions: String(result.sessions),
+            code: code.trim().toUpperCase(),
+            whenIso: new Date().toISOString(),
+          },
         },
-      });
+        /*
+         * Obligatori, i el motiu no és l'obvi: no és que "vulgui saber-ho".
+         * Un val és un instrument al portador, i aquest correu és l'ÚNICA
+         * senyal que li pot arribar a qui el va pagar si algú el bescanvia
+         * per error o de mala fe. Apagar-lo era apagar això.
+         */
+        { ignorePreferences: true },
+      );
   }
 
   revalidatePath("/client/bonos/meus");

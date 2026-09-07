@@ -41,12 +41,18 @@ async function send(
     const recipient = await getProfileContact(profileId);
     if (!recipient) return;
 
-    await notifyOnce({
-      type,
-      recipient,
-      relatedId: stableUuid(relatedKey),
-      data: { name: recipient.name ?? "", serviceType: sub.serviceType, ...data },
-    });
+    await notifyOnce(
+      {
+        type,
+        recipient,
+        relatedId: stableUuid(relatedKey),
+        data: { name: recipient.name ?? "", serviceType: sub.serviceType, ...data },
+      },
+      // Els cinc avisos de subscripció són obligatoris: aquí es mouen diners
+      // sense que el client premi res. Passa per aquest únic `send`, de manera
+      // que cap dels cinc se'l pot deixar.
+      { ignorePreferences: true },
+    );
   } catch (e) {
     console.error(`[subscripcions] l'avís ${type} de ${sub.id} no ha sortit:`, e);
   }

@@ -71,13 +71,19 @@ export async function notify(
  * Variant idempotent: no envia si ja consta un enviament correcte d'aquest
  * esdeveniment per a `relatedId` en email (per als recordatoris del cron).
  */
-export async function notifyOnce(event: NotificationEvent): Promise<boolean> {
+export async function notifyOnce(
+  event: NotificationEvent,
+  // Es reenvia tal qual a `notify`: sense això, un esdeveniment obligatori que
+  // s'enviï per aquí (els de subscripció, el bo decaigut) no tindria com
+  // dir-ho i tornaria a passar per les preferències.
+  opts?: { ignorePreferences?: boolean },
+): Promise<boolean> {
   if (!event.relatedId) {
-    await notify(event);
+    await notify(event, opts);
     return true;
   }
   if (await alreadySent(event.type, event.relatedId, "email")) return false;
-  await notify(event);
+  await notify(event, opts);
   return true;
 }
 
