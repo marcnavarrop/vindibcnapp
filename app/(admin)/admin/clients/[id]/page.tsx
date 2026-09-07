@@ -6,7 +6,8 @@ import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { ClientTagsPanel } from "@/components/client-tags-panel";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
-import { getClient } from "@/lib/data/clients";
+import { AssignTrainerForm } from "@/components/forms/assign-trainer-form";
+import { getClient, listTrainers } from "@/lib/data/clients";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
 import { listExercises } from "@/lib/data/exercises";
@@ -50,6 +51,7 @@ export default async function ClientDetailPage({
     allProgress,
     allTags,
     clientTags,
+    trainers,
   ] = await Promise.all([
     getClient(id),
     listClientExercises(id),
@@ -58,6 +60,7 @@ export default async function ClientDetailPage({
     listAllProgressForClient(id),
     listClientTags(),
     listTagsOfClient(id),
+    listTrainers(),
   ]);
   if (!client) notFound();
 
@@ -76,7 +79,25 @@ export default async function ClientDetailPage({
       content: (
         <div className="flex flex-col gap-6">
           <section className="grid gap-4 sm:grid-cols-3">
-            <Info label="Professional" value={client.trainerName ?? "Sense assignar"} />
+            {/*
+              Assignar el professional es fa aquí, a la fitxa, i no només dins
+              d'"Editar". A la fitxa del professional ja era així des que es va
+              fer `reassignClientTrainer`; l'administració s'havia quedat amb
+              una targeta de només lectura, i qui obria la fitxa d'algú acabat
+              de registrar hi veia "Sense assignar" sense res per fer-hi.
+
+              El formulari d'Editar desa de cop nom, correu, telèfon i les notes
+              clíniques: obrir-lo per canviar un desplegable era passar per
+              sobre de dades de salut per a res.
+            */}
+            <div className="rounded-2xl border border-brand-border bg-white p-5">
+              <AssignTrainerForm
+                clientId={client.id}
+                trainers={trainers}
+                currentTrainerId={client.assignedTrainerId}
+                label="Professional assignat/da"
+              />
+            </div>
             <Info label="Bons actius" value={String(client.activeBonos)} />
             <Info label="Sessions restants" value={String(client.remainingSessions)} />
           </section>

@@ -22,10 +22,18 @@ export function AssignTrainerForm({
   clientId,
   trainers,
   currentTrainerId,
+  /*
+   * Cada àrea anomena aquest camp com l'anomena a la resta de les seves
+   * pantalles: "Entrenador assignat" al professional, "Professional
+   * assignat/da" a l'administració (com el `ClientForm` d'Editar). El
+   * formulari és el mateix; el rètol, no.
+   */
+  label = "Entrenador assignat",
 }: {
   clientId: string;
   trainers: { id: string; name: string }[];
   currentTrainerId: string | null;
+  label?: string;
 }) {
   const [state, formAction] = useActionState(
     reassignClientTrainerAction,
@@ -60,7 +68,7 @@ export function AssignTrainerForm({
     <form action={formAction} className="flex flex-col gap-3">
       <input type="hidden" name="clientId" value={clientId} />
       <SelectField
-        label="Entrenador assignat"
+        label={label}
         name="trainerId"
         value={trainerId}
         onChange={(e) => setTrainerId(e.target.value)}
