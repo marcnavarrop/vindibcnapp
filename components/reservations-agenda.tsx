@@ -13,7 +13,9 @@ import {
   cancelReservationAction,
   completeReservationAction,
 } from "@/app/(admin)/admin/reservas/actions";
+import { SessionNotePanel } from "@/components/session-note-panel";
 import type { ReservationListItem } from "@/lib/data/reservations";
+import type { SessionNote } from "@/lib/data/session-notes";
 import type { ReservationStatus } from "@/types/database";
 import { TAP } from "@/lib/utils";
 
@@ -39,6 +41,8 @@ export function ReservationsAgenda({
   trainers,
   nowISO,
   manageableIds,
+  notes,
+  noteableIds,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -48,6 +52,20 @@ export function ReservationsAgenda({
    * gestión (Fet/Cancel·lar). Si se omite, todas son gestionables (admin).
    */
   manageableIds?: string[];
+  /** Les notes que qui mira POT llegir, per id de reserva. La RLS ja ha filtrat. */
+  notes?: Record<string, SessionNote>;
+  /**
+   * Les reserves de les quals qui mira pot ESCRIURE la nota: les que va donar
+   * ELL. Llista diferent i més estreta que `manageableIds`, que són les dels
+   * seus clients —amb aquelles pot marcar "Fet" encara que la sessió la donés
+   * un company, però la nota no és seva.
+   *
+   * Ull amb el default: si no es passa, aquí NO escriu ningú, al revés que
+   * `manageableIds`, on l'absència vol dir "tot" (admin). Els dos silencis
+   * volen dir coses contràries a posta: obrir la gestió a l'admin és el que
+   * toca; obrir-li l'escriptura de les notes, no.
+   */
+  noteableIds?: string[];
 }) {
   const [trainer, setTrainer] = useState("");
   const [status, setStatus] = useState("");
@@ -55,6 +73,9 @@ export function ReservationsAgenda({
     () => (manageableIds ? new Set(manageableIds) : null),
     [manageableIds],
   );
+  // Sense llista, ningú escriu. El contrari de `manageable`, que sense llista
+  // ho obre tot: allà l'absència vol dir "admin"; aquí, "no és teva".
+  const noteable = useMemo(() => new Set(noteableIds ?? []), [noteableIds]);
 
   const { upcoming, past } = useMemo(() => {
     const filtered = reservations.filter(
@@ -114,11 +135,17 @@ export function ReservationsAgenda({
         emptyLabel="No hi ha reserves properes."
         canManage={(id) => !manageable || manageable.has(id)}
       />
+      {/* La nota només surt a "Passades": parla de com ha anat la sessió, i
+          d'una que no ha començat encara no hi ha res a dir. El servidor ho
+          torna a comprovar (`sessionHasStarted`), això és perquè no surti el
+          formulari on no toca. */}
       <Section
         title="Passades"
         groups={past}
         emptyLabel="No hi ha reserves passades."
         canManage={(id) => !manageable || manageable.has(id)}
+        notes={notes}
+        canWriteNote={(id) => noteable.has(id)}
       />
     </div>
   );
@@ -129,11 +156,15 @@ function Section({
   groups,
   emptyLabel,
   canManage,
+  notes,
+  canWriteNote,
 }: {
   title: string;
   groups: DayGroup[];
   emptyLabel: string;
   canManage: (id: string) => boolean;
+  notes?: Record<string, SessionNote>;
+  canWriteNote?: (id: string) => boolean;
 }) {
   return (
     <section>
@@ -153,10 +184,8 @@ function Section({
               </h3>
               <div className="overflow-hidden rounded-2xl border border-brand-border bg-white divide-y divide-brand-border">
                 {g.items.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-sm"
-                  >
+                  <div key={r.id} className="px-5 py-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <span className="w-12 font-bold text-brand-purple">
                       {formatTime(r.scheduledAt)}
                     </span>
@@ -178,6 +207,14 @@ function Section({
                         <ReservationActions id={r.id} />
                       )}
                     </div>
+                  </div>
+                  {(notes || canWriteNote) && r.status !== "cancelled" && (
+                    <SessionNotePanel
+                      reservationId={r.id}
+                      note={notes?.[r.id] ?? null}
+                      canEdit={canWriteNote?.(r.id) ?? false}
+                    />
+                  )}
                   </div>
                 ))}
               </div>

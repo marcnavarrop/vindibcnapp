@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin/prova", label: "Sessions de prova" },
 ];
 import { ReservationsView } from "@/components/reservations-view";
+import { getNotesForReservations } from "@/lib/data/session-notes";
 import { listReservations } from "@/lib/data/reservations";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listTrainers } from "@/lib/data/clients";
@@ -40,6 +41,16 @@ export default async function ReservasPage() {
       getColorPalette(),
     ]);
   const nowISO = new Date().toISOString();
+  // L'administració LLEGEIX les notes i no n'escriu cap: no es passa
+  // `noteableIds`, i sense llista el panell no ofereix formulari. És la
+  // desviació deliberada del patró `*_admin_write` que documenta la 0079, i
+  // aquí és només cosmètica: encara que el formulari sortís, la policy no
+  // deixaria desar res.
+  const notes = Object.fromEntries(
+    await getNotesForReservations(
+      reservations.filter((r) => r.scheduledAt <= nowISO).map((r) => r.id),
+    ),
+  );
 
   return (
     <>
@@ -68,6 +79,7 @@ export default async function ReservasPage() {
           reservations={reservations}
           trainers={trainers}
           nowISO={nowISO}
+          notes={notes}
           newReservationBase="/admin/reservas/new"
           openingHour={centerSettings.openingHour}
           closingHour={centerSettings.closingHour}

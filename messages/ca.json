@@ -540,7 +540,16 @@
     },
     "today": "Avui",
     "noServicesHere": "Aquest professional no ofereix cap dels serveis dels teus bons.",
-    "showAllTrainers": "Mostra tots els professionals"
+    "showAllTrainers": "Mostra tots els professionals",
+    "pastSessions": {
+      "title": "Sessions passades",
+      "intro": "Les sessions que ja has fet i, si n'hi ha, la nota del teu entrenador.",
+      "empty": "Encara no tens cap sessió feta.",
+      "noteTitle": "Nota de la sessió",
+      "with": "amb {name}",
+      "by": "{name} · {date}",
+      "noNote": "Sense nota."
+    }
   },
   "wizard": {
     "repeatEvery": "Repeteix cada",

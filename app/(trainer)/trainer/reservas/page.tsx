@@ -15,6 +15,7 @@ import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
+import { getNotesForReservations } from "@/lib/data/session-notes";
 import {
   cancelTrainerReservationAction,
   completeTrainerReservationAction,
@@ -59,13 +60,33 @@ export default async function TrainerReservasPage() {
     .filter((r) => myClientIds.has(r.clientId))
     .map((r) => r.id);
 
+  // LES NOTES VAN PER UNA ALTRA LLISTA, i la diferència és tot el sentit de la
+  // funció: `manageableIds` són les reserves dels MEUS CLIENTS —hi puc marcar
+  // "Fet" encara que la sessió la donés un company—, i això són les que vaig
+  // donar JO. La nota d'una sessió és de qui la va fer, no de qui coordina.
+  //
+  // Si algú les unifica algun dia "perquè s'assemblen", la policy de la 0079
+  // seguirà dient que no: el formulari sortiria i el desat fallaria. Millor
+  // que no surti.
+  const noteableIds = reservations
+    .filter((r) => r.trainerId === trainerId)
+    .map((r) => r.id);
+
   // Si l'ajust de centre ho desactiva, el trainer només veu les seves pròpies reserves.
   const visibleReservations =
     centerSettings.trainersSeColleaguesReservations
       ? reservations
       : reservations.filter((r) => r.trainerId === trainerId);
 
+  // Només les passades: són les úniques on la nota té sentit i on es pinta.
   const nowISO = new Date().toISOString();
+  const notes = Object.fromEntries(
+    await getNotesForReservations(
+      visibleReservations
+        .filter((r) => r.scheduledAt <= nowISO)
+        .map((r) => r.id),
+    ),
+  );
 
   return (
     <>
@@ -93,6 +114,8 @@ export default async function TrainerReservasPage() {
           trainers={trainers}
           nowISO={nowISO}
           manageableIds={manageableIds}
+          notes={notes}
+          noteableIds={noteableIds}
           newReservationBase="/trainer/reservas/new"
           cancelAction={cancelTrainerReservationAction}
           completeAction={completeTrainerReservationAction}

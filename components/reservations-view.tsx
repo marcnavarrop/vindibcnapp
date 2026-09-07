@@ -9,6 +9,7 @@ import {
   SERVICE_TYPES,
 } from "@/lib/labels";
 import type { ReservationListItem } from "@/lib/data/reservations";
+import type { SessionNote } from "@/lib/data/session-notes";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import {
   blocksOf,
@@ -38,6 +39,8 @@ export function ReservationsView({
   trainers,
   nowISO,
   manageableIds,
+  notes,
+  noteableIds,
   newReservationBase,
   cancelAction,
   completeAction,
@@ -60,6 +63,10 @@ export function ReservationsView({
   trainers: { id: string; name: string }[];
   nowISO: string;
   manageableIds?: string[];
+  /** Notes de sessió llegibles i, a part, de quines es pot escriure. Vegeu
+   *  `ReservationsAgenda`: són dues llistes diferents a posta. */
+  notes?: Record<string, SessionNote>;
+  noteableIds?: string[];
   newReservationBase: string;
   cancelAction: ReservationAction;
   completeAction: ReservationAction;
@@ -468,6 +475,8 @@ export function ReservationsView({
           trainers={trainers}
           nowISO={nowISO}
           manageableIds={manageableIds}
+          notes={notes}
+          noteableIds={noteableIds}
         />
       )}
     </div>

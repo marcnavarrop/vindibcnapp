@@ -7,6 +7,8 @@ import { ClientReservasView } from "@/components/client/reservas-view";
 import { getLiveSubscription } from "@/lib/data/subscriptions";
 import { listActiveSeries } from "@/lib/data/booking-series";
 import { listWaitlistForClient } from "@/lib/data/waitlist";
+import { listPastSessions } from "@/lib/data/session-notes";
+import { PastSessions } from "@/components/client/past-sessions";
 import {
   createOwnReservationAction,
   cancelOwnReservationAction,
@@ -36,12 +38,17 @@ export default async function ClientReservasPage() {
 
   // Les sèries vives i les esperes del client. Van juntes perquè totes dues
   // depenen del client ja resolt i no s'esperen l'una a l'altra.
-  const [series, waitlist] = data.clientId
+  const [series, waitlist, pastSessions] = data.clientId
     ? await Promise.all([
         listActiveSeries(data.clientId),
         listWaitlistForClient(data.clientId),
+        // Consulta a part, i amb la sessió del client. `getClientCenterData` va
+        // amb la clau de servei i porta les reserves de TOT el centre per pintar
+        // el calendari: si la nota hi entrés, s'hi publicarien les dels altres
+        // clients pel mateix camí. Aquí qui filtra és la RLS de la 0079.
+        listPastSessions(data.clientId),
       ])
-    : [[], []];
+    : [[], [], []];
 
   // La subscripció decideix dues coses a l'assistent: si surt la casella
   // d'allargar la sèrie sola, i si les sessions que falten són un límit o una
@@ -75,6 +82,12 @@ export default async function ClientReservasPage() {
           .filter((w) => w.status === "waiting")
           .map((w) => ({ id: w.id, trainerId: w.trainerId, desiredAt: w.desiredAt }))}
       />
+
+      {/* Sota el calendari, no dins: reservar i mirar enrere són dues coses
+          diferents i el calendari ja té prou feina. */}
+      <div className="mt-6">
+        <PastSessions sessions={pastSessions} />
+      </div>
     </main>
   );
 }

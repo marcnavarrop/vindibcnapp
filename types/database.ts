@@ -1000,6 +1000,31 @@ export interface Database {
         };
         Relationships: [];
       };
+      /** Nota de seguiment d'una sessió (0079). Una per reserva. */
+      session_notes: {
+        Row: {
+          reservation_id: string;
+          author_id: string | null;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          reservation_id: string;
+          author_id?: string | null;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          reservation_id?: string;
+          author_id?: string | null;
+          body?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       /** Peticions de canvi de correu d'accés pendents de confirmar (0078). */
       email_change_requests: {
         Row: {

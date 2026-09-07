@@ -540,7 +540,16 @@
     },
     "today": "Today",
     "noServicesHere": "This professional doesn't offer any of the services your packages cover.",
-    "showAllTrainers": "Show all professionals"
+    "showAllTrainers": "Show all professionals",
+    "pastSessions": {
+      "title": "Past sessions",
+      "intro": "The sessions you have already had and, if there is one, your trainer's note.",
+      "empty": "You have no past sessions yet.",
+      "noteTitle": "Session note",
+      "with": "with {name}",
+      "by": "{name} · {date}",
+      "noNote": "No note."
+    }
   },
   "wizard": {
     "repeatEvery": "Repeat every",

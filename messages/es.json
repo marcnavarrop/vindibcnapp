@@ -540,7 +540,16 @@
     },
     "today": "Hoy",
     "noServicesHere": "Este profesional no ofrece ninguno de los servicios de tus bonos.",
-    "showAllTrainers": "Mostrar todos los profesionales"
+    "showAllTrainers": "Mostrar todos los profesionales",
+    "pastSessions": {
+      "title": "Sesiones pasadas",
+      "intro": "Las sesiones que ya has hecho y, si la hay, la nota de tu entrenador.",
+      "empty": "Todavía no tienes ninguna sesión hecha.",
+      "noteTitle": "Nota de la sesión",
+      "with": "con {name}",
+      "by": "{name} · {date}",
+      "noNote": "Sin nota."
+    }
   },
   "wizard": {
     "repeatEvery": "Repite cada",
