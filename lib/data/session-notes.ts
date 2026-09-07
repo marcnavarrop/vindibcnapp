@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { USE_MOCK } from "@/lib/config";
 import { getStore } from "@/lib/mock/store";
 import type { ServiceType, ReservationStatus } from "@/types/database";
@@ -18,8 +19,23 @@ import type { ServiceType, ReservationStatus } from "@/types/database";
  * Aquí la porta és la policy `session_notes_select` de la 0079: el
  * professional D'AQUELLA reserva, el seu client i l'administració. Un altre
  * professional —encara que coordini el mateix client— no en treu ni una fila.
- * Si aquest fitxer fes servir `createAdminClient`, aquella garantia
+ * Si la CONSULTA de les notes fes servir `createAdminClient`, aquella garantia
  * desapareixeria i ningú se n'adonaria fins que algú es queixés.
+ *
+ * L'EXCEPCIÓ: ELS NOMS
+ *
+ * `resolveNames` sí que va amb la clau de servei, i la diferència importa.
+ * `profiles_select` (0006) deixa que un CLIENT llegeixi només el seu propi
+ * perfil: `id = auth.uid()`. Amb la seva sessió, doncs, un join a `profiles`
+ * torna buit i la nota li sortia signada amb un guionet —justament el contrari
+ * del que `author_id` existeix per garantir—. Per això `getClientCenterData`
+ * també resol els noms amb la clau de servei.
+ *
+ * És segur perquè el que decideix QUÈ es veu ja ha passat per la RLS: els noms
+ * es busquen NOMÉS per a les files que la policy ja ha deixat sortir. La clau
+ * de servei no eixampla el conjunt, només li posa nom. Barrejar les dues coses
+ * —fer la consulta de les notes amb la clau de servei -"total, ja filtro jo
+ * després"— és el que no s'ha de fer mai.
  */
 
 export type SessionNote = {
@@ -47,22 +63,27 @@ type NoteRow = {
   author_id: string | null;
   created_at: string;
   updated_at: string;
-  author: { full_name: string | null } | null;
 };
 
-function toNote(r: NoteRow): SessionNote {
-  return {
-    reservationId: r.reservation_id,
-    body: r.body,
-    authorId: r.author_id,
-    authorName: r.author?.full_name ?? null,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
+const SELECT = "reservation_id, body, author_id, created_at, updated_at";
 
-const SELECT =
-  "reservation_id, body, author_id, created_at, updated_at, author:profiles!session_notes_author_id_fkey(full_name)";
+/**
+ * Els noms de qui surt a la pantalla, per id. Amb la clau de servei i NOMÉS per
+ * a ids que ja han passat la RLS (vegeu la capçalera). Torna un `Map` buit si
+ * no hi ha res a buscar, perquè qui crida no hagi de comprovar-ho.
+ */
+async function resolveNames(ids: (string | null)[]): Promise<Map<string, string>> {
+  const wanted = [...new Set(ids.filter((x): x is string => !!x))];
+  const out = new Map<string, string>();
+  if (wanted.length === 0) return out;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("id, full_name")
+    .in("id", wanted);
+  for (const p of data ?? []) if (p.full_name) out.set(p.id, p.full_name);
+  return out;
+}
 
 /**
  * Les notes d'un grapat de reserves, en una sola consulta.
@@ -83,8 +104,18 @@ export async function getNotesForReservations(
     .from("session_notes")
     .select(SELECT)
     .in("reservation_id", reservationIds);
-  for (const row of (data ?? []) as unknown as NoteRow[]) {
-    out.set(row.reservation_id, toNote(row));
+
+  const rows = (data ?? []) as unknown as NoteRow[];
+  const names = await resolveNames(rows.map((r) => r.author_id));
+  for (const r of rows) {
+    out.set(r.reservation_id, {
+      reservationId: r.reservation_id,
+      body: r.body,
+      authorId: r.author_id,
+      authorName: r.author_id ? (names.get(r.author_id) ?? null) : null,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    });
   }
   return out;
 }
@@ -157,10 +188,7 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("reservations")
-    .select(
-      `id, scheduled_at, service_type, status,
-       trainer:profiles!reservations_trainer_id_fkey(full_name)`,
-    )
+    .select("id, scheduled_at, service_type, status, trainer_id")
     .eq("client_id", clientId)
     .neq("status", "cancelled")
     .lte("scheduled_at", new Date().toISOString())
@@ -171,16 +199,19 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
     scheduled_at: string;
     service_type: ServiceType;
     status: ReservationStatus;
-    trainer: { full_name: string | null } | null;
+    trainer_id: string | null;
   }[];
 
-  const notes = await getNotesForReservations(list.map((r) => r.id));
+  const [notes, trainerNames] = await Promise.all([
+    getNotesForReservations(list.map((r) => r.id)),
+    resolveNames(list.map((r) => r.trainer_id)),
+  ]);
   return list.map((r) => ({
     id: r.id,
     scheduledAt: r.scheduled_at,
     serviceType: r.service_type,
     status: r.status,
-    trainerName: r.trainer?.full_name ?? null,
+    trainerName: r.trainer_id ? (trainerNames.get(r.trainer_id) ?? null) : null,
     note: notes.get(r.id) ?? null,
   }));
 }
