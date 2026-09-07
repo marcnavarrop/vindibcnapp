@@ -24,9 +24,13 @@ function parse(formData: FormData): ClientInput {
   };
 }
 
-function validate(input: ClientInput): string | null {
+/**
+ * `requireEmail` només a l'alta. A l'edició el camp va `disabled` i, per tant,
+ * no arriba al FormData: exigir-lo hauria fet impossible desar la fitxa.
+ */
+function validate(input: ClientInput, requireEmail: boolean): string | null {
   if (!input.fullName) return "El nom és obligatori.";
-  if (!input.email) return "El correu electrònic és obligatori.";
+  if (requireEmail && !input.email) return "El correu electrònic és obligatori.";
   return null;
 }
 
@@ -35,7 +39,7 @@ export async function createClientAction(
   formData: FormData,
 ): Promise<FormState> {
   const input = parse(formData);
-  const error = validate(input);
+  const error = validate(input, true);
   if (error) return { error };
 
   let id: string;
@@ -65,11 +69,21 @@ export async function updateClientAction(
   formData: FormData,
 ): Promise<FormState> {
   const input = parse(formData);
-  const error = validate(input);
+  const error = validate(input, false);
   if (error) return { error };
 
   try {
-    await updateClientRecord(id, input);
+    // Camp a camp i no `...input`: `email` es queda fora encara que arribi al
+    // FormData —un POST a mà el pot portar, el `disabled` de la pantalla no és
+    // cap barrera—, i si un dia s'afegeix un camp nou a `ClientUpdateInput`,
+    // oblidar-lo aquí no compila.
+    await updateClientRecord(id, {
+      fullName: input.fullName,
+      phone: input.phone,
+      assignedTrainerId: input.assignedTrainerId,
+      clinicalNotes: input.clinicalNotes,
+      generalNotes: input.generalNotes,
+    });
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en desar." };
   }

@@ -465,10 +465,26 @@ export async function createClientRecord(input: ClientInput): Promise<string> {
   return clientRow.id;
 }
 
-/** Actualiza los datos de un cliente existente. */
+/**
+ * Dades editables d'un client que JA existeix: les mateixes de l'alta menys el
+ * correu.
+ *
+ * És un `Omit` i no un comentari a posta. El correu d'un client viu a dos
+ * llocs —`auth.users.email`, que és amb el que entra, i `profiles.email`, que
+ * és on li arriben els avisos— i aquesta funció només sabia escriure el segon.
+ * Canviar-lo aquí els separava en silenci. Traient-lo del TIPUS, el cos
+ * d'aquesta funció no el pot tornar a escriure encara que algú ho intenti: ho
+ * atura el compilador, no la bona voluntat de qui ho toqui d'aquí a un any.
+ *
+ * Canviar el correu de debò (les dues columnes i la identitat d'Auth) és una
+ * operació a part i deliberada, que encara no existeix a l'app.
+ */
+export type ClientUpdateInput = Omit<ClientInput, "email">;
+
+/** Actualiza los datos de un cliente existente. El correu NO s'hi toca. */
 export async function updateClientRecord(
   id: string,
-  input: ClientInput,
+  input: ClientUpdateInput,
 ): Promise<void> {
   if (USE_MOCK) {
     const store = getStore();
@@ -480,7 +496,6 @@ export async function updateClientRecord(
     const profile = store.profiles.find((p) => p.id === client.profile_id);
     if (profile) {
       profile.full_name = input.fullName;
-      profile.email = input.email;
       profile.phone = input.phone;
     }
     saveStore(store);
@@ -510,7 +525,6 @@ export async function updateClientRecord(
     .from("profiles")
     .update({
       full_name: input.fullName,
-      email: input.email,
       phone: input.phone,
     })
     .eq("id", client.profile_id);

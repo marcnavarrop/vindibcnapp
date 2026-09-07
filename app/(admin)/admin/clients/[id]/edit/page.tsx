@@ -30,6 +30,8 @@ export default async function EditClientPage({
         <ClientForm
           action={updateClientAction.bind(null, id)}
           trainers={trainers}
+          // Editant algú que ja existeix: el correu es veu però no es toca.
+          editableEmail={false}
           submitLabel="Desar canvis"
           cancelHref={`/admin/clients/${id}`}
           defaults={{

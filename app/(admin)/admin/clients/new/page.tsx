@@ -44,6 +44,9 @@ export default async function NewClientPage({
           trainers={trainers}
           defaults={defaults}
           trialId={trialId}
+          // L'alta (i la conversió d'una prova) és l'únic lloc on aquest camp
+          // fa el que sembla: hi neix l'usuari d'Auth amb aquest correu.
+          editableEmail
           submitLabel="Crear client"
           cancelHref={trialId ? "/admin/prova" : "/admin/clients"}
         />
