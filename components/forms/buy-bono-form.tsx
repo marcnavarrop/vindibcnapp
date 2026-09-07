@@ -93,6 +93,15 @@ export function BuyBonoForm({
    * passarà; la lògica de negoci no canvia.
    */
   const [confirming, setConfirming] = useState<null | "center" | "card" | "subscription" | "subscriptionCard">(null);
+  /**
+   * El desplegable de la subscripció. NOMÉS controla què es veu.
+   *
+   * `confirming` conserva els seus quatre valors a posta: els diàlegs, les
+   * accions i les dues rutes del servidor ja hi estan lligats, i reduir-los
+   * només per estalviar dos noms hauria tocat codi que avui ja s'ha remenat
+   * prou. Aquí només canvia la presentació.
+   */
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
   /** Condicions acceptades. Es reinicia cada cop que s'obre el diàleg. */
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
@@ -179,6 +188,8 @@ export function BuyBonoForm({
           intro={tp("introBono")}
           onSelect={(type) => {
             setServiceType(type);
+            // El desplegable era d'una tria anterior: es replega.
+            setSubscribeOpen(false);
             // Preselecciona el primer paquet d'aquest tipus
             const first = services.find((s) => s.serviceType === type);
             if (first) setServiceId(first.id);
@@ -287,26 +298,50 @@ export function BuyBonoForm({
               !hasLiveSubscription &&
               serviceType === "grupo_reducido" && (
                 <>
-                  {/* Les dues de subscripció porten el seu accent: no són una
-                      tercera i quarta manera de pagar el mateix, sinó un
-                      compromís que es repetirà cada mes. */}
+                  {/* UNA sola porta, i el mètode a dins.
+                      Amb les dues rutes al primer nivell, el selector tenia
+                      quatre caixes i dues deien gairebé el mateix: la decisió
+                      de fons —pagar avui o comprometre's cada mes— quedava
+                      barrejada amb la de com es paga, que és molt més petita.
+                      Ara es prenen en aquest ordre. */}
                   <PaymentMethodOption
                     variant="subscription"
                     icon={<CalendarSync className="h-5 w-5" />}
-                    title={t("paySubscription")}
-                    description={<>{t("paySubscriptionDesc", { day: renewalDay })}</>}
-                    onClick={() => setConfirming("subscription")}
+                    title={t("paySubscribe")}
+                    description={<>{t("paySubscribeDesc", { day: renewalDay })}</>}
+                    // Sense targeta només hi ha un camí: desplegar per ensenyar
+                    // una única opció seria fer-li prémer dos cops el mateix.
+                    onClick={() =>
+                      stripeEnabled
+                        ? setSubscribeOpen((v) => !v)
+                        : setConfirming("subscription")
+                    }
                   />
-                  {stripeEnabled && (
-                    <PaymentMethodOption
-                      variant="subscription"
-                      icon={<CalendarSync className="h-5 w-5" />}
-                      title={t("paySubscriptionCard")}
-                      description={
-                        <>{t("paySubscriptionCardDesc", { day: renewalDay })}</>
-                      }
-                      onClick={() => setConfirming("subscriptionCard")}
-                    />
+
+                  {stripeEnabled && subscribeOpen && (
+                    <div className="ml-1 flex flex-col gap-2 border-l-2 border-brand-purple-light/40 pl-4">
+                      <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
+                        {t("paySubscribeHow")}
+                      </span>
+                      <PaymentMethodOption
+                        variant="subscription"
+                        icon={<Building2 className="h-5 w-5" />}
+                        title={t("paySubscribeAtCentre")}
+                        description={
+                          <>{t("paySubscribeAtCentreDesc")}</>
+                        }
+                        onClick={() => setConfirming("subscription")}
+                      />
+                      <PaymentMethodOption
+                        variant="subscription"
+                        icon={<CreditCard className="h-5 w-5" />}
+                        title={t("paySubscribeByCard")}
+                        description={
+                          <>{t("paySubscribeByCardDesc")}</>
+                        }
+                        onClick={() => setConfirming("subscriptionCard")}
+                      />
+                    </div>
                   )}
                 </>
               )}
