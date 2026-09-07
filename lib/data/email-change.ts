@@ -77,7 +77,14 @@ async function passwordIsCorrect(email: string, password: string): Promise<boole
   );
   const { error } = await probe.auth.signInWithPassword({ email, password });
   if (error) return false;
-  await probe.auth.signOut().catch(() => {});
+  // `scope: "local"` NO és decoratiu. `signOut()` sense arguments val
+  // `scope: "global"`, que revoca TOTES les sessions de la persona: comprovar
+  // la contrasenya la tirava fora del seu propi navegador i tornava al login
+  // just després de demanar el canvi. Vist en la prova en producció, no en cap
+  // test. Amb "local" només es tanca la sessió que ha obert aquesta
+  // comprovació, que és exactament el que volem: ni deixar-la viva ni tocar
+  // la de ningú altre.
+  await probe.auth.signOut({ scope: "local" }).catch(() => {});
   return true;
 }
 
