@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { passwordIsCorrect } from "@/lib/data/reauth";
 import { USE_MOCK } from "@/lib/config";
 import { appLink } from "@/lib/notifications/brand";
 import {
@@ -57,35 +57,6 @@ export type PendingEmailChange = { newEmail: string; requestedAt: string };
 
 function sha256(s: string): string {
   return createHash("sha256").update(s).digest("hex");
-}
-
-/**
- * Comprova la contrasenya AL SERVIDOR, sense tocar la sessió de qui ho demana.
- *
- * `ChangePasswordForm` fa la reautenticació al navegador, i allà és un
- * ressalt: qui tingui la sessió pot cridar l'acció del servidor directament i
- * saltar-se-la. Aquí la comprovació la fa el servidor amb un client d'un sol
- * ús —sense persistir sessió— i el resultat el decideix Supabase, no el
- * formulari. Es tanca la sessió que aquest login crea perquè no quedi cap
- * refresh token viu per una comprovació.
- */
-async function passwordIsCorrect(email: string, password: string): Promise<boolean> {
-  const probe = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  );
-  const { error } = await probe.auth.signInWithPassword({ email, password });
-  if (error) return false;
-  // `scope: "local"` NO és decoratiu. `signOut()` sense arguments val
-  // `scope: "global"`, que revoca TOTES les sessions de la persona: comprovar
-  // la contrasenya la tirava fora del seu propi navegador i tornava al login
-  // just després de demanar el canvi. Vist en la prova en producció, no en cap
-  // test. Amb "local" només es tanca la sessió que ha obert aquesta
-  // comprovació, que és exactament el que volem: ni deixar-la viva ni tocar
-  // la de ningú altre.
-  await probe.auth.signOut({ scope: "local" }).catch(() => {});
-  return true;
 }
 
 /** La petició pendent d'un perfil, si n'hi ha cap de viva. */

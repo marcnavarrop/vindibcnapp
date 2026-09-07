@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { changePasswordAction } from "@/app/actions/password-actions";
 import { useTranslations } from "next-intl";
 import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ type Texts = {
     same: string;
     noAccount: string;
     wrongCurrent: string;
+    failed: string;
   };
 };
 
@@ -51,6 +53,7 @@ const CA: Texts = {
     same: "La nova contrasenya ha de ser diferent de l'actual.",
     noAccount: "No s'ha pogut identificar el teu compte.",
     wrongCurrent: "La contrasenya actual no és correcta.",
+    failed: "No s'ha pogut canviar la contrasenya.",
   },
 };
 
@@ -84,6 +87,7 @@ function Translated() {
           same: te("same"),
           noAccount: te("noAccount"),
           wrongCurrent: te("wrongCurrent"),
+          failed: te("failed"),
         },
       }}
     />
@@ -91,9 +95,24 @@ function Translated() {
 }
 
 /**
- * Canvi de contrasenya per a l'usuari amb sessió oberta. Per seguretat es torna
- * a autenticar amb la contrasenya actual abans d'aplicar la nova (evita que algú
- * amb una sessió oberta sense vigilar la canviï).
+ * Canvi de contrasenya per a l'usuari amb sessió oberta.
+ *
+ * LA CONTRASENYA ACTUAL LA COMPROVA EL SERVIDOR
+ *
+ * Abans es feia aquí: `signInWithPassword` al navegador i, si anava bé,
+ * `updateUser({password})`. Semblava una reautenticació però era un ressalt:
+ * qui tingués la sessió oberta podia saltar-se-la, perquè qui decidia si la
+ * contrasenya era bona era aquest component. Ara tot passa a
+ * `changePasswordAction`, igual que al canvi de correu.
+ *
+ * Les comprovacions que queden aquí (longitud, que coincideixin, que sigui
+ * diferent) són comoditat: donen resposta immediata sense anar i tornar. Les
+ * que manen són les del servidor, que les repeteix.
+ *
+ * De passada, aquest formulari ja no necessita el client de Supabase i l'import
+ * dinàmic que el baixava ha desaparegut. Això NO vol dir que la pantalla se
+ * l'estalviï: el botó de tancar sessió del menú el segueix baixant a totes les
+ * pàgines. El que s'estalvia és baixar-lo en canviar la contrasenya.
  */
 function Body({ texts }: { texts: Texts }) {
   const [current, setCurrent] = useState("");
@@ -112,34 +131,16 @@ function Body({ texts }: { texts: Texts }) {
     if (password === current) return setError(texts.errors.same);
 
     setLoading(true);
-    // Import dinàmic, com al botó de tancar sessió: amb l'estàtic, tot
-    // @supabase/supabase-js (~51 kB gzip, amb realtime que no fem servir)
-    // entrava al bundle inicial de les DUES pantalles de Configuració, que
-    // pesaven 192 i 186 kB quan la resta es mou entre 103 i 132 kB. Aquí només
-    // baixa quan algú canvia la contrasenya de veritat.
-    const { createClient } = await import("@/lib/supabase/client");
-    const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    const email = data.user?.email;
-    if (!email) {
-      setError(texts.errors.noAccount);
-      setLoading(false);
-      return;
-    }
-    // Reautenticació amb la contrasenya actual.
-    const { error: signInErr } = await supabase.auth.signInWithPassword({
-      email,
-      password: current,
-    });
-    if (signInErr) {
-      setError(texts.errors.wrongCurrent);
-      setLoading(false);
-      return;
-    }
-    const { error: updErr } = await supabase.auth.updateUser({ password });
+    const fd = new FormData();
+    fd.set("current", current);
+    fd.set("password", password);
+    const res = await changePasswordAction({}, fd);
     setLoading(false);
-    if (updErr) {
-      setError(updErr.message);
+
+    if (res.errorCode) {
+      // El servidor torna un CODI i el text el posa el diccionari de qui mira
+      // la pantalla, com a la resta de Configuració.
+      setError(texts.errors[res.errorCode]);
       return;
     }
     setCurrent("");
