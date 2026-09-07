@@ -9,9 +9,10 @@ import { changeOwnPassword, type PasswordChangeError } from "@/lib/data/password
  * Viu a `app/actions/` i no dins de l'àrea d'un rol perquè el formulari és el
  * mateix a client, professional i administració.
  *
- * El compte sobre el qual actua surt de `getViewer()` —la cookie de sessió—,
- * mai d'un id que enviï el navegador: si vingués del formulari, qualsevol amb
- * una sessió podria canviar-li la contrasenya a algú altre.
+ * El compte sobre el qual actua surt SEMPRE de les cookies de sessió, mai d'un
+ * id que enviï el navegador: si vingués del formulari, qualsevol amb una
+ * sessió podria canviar-li la contrasenya a algú altre. `getViewer()` només
+ * s'hi fa servir per saber si hi ha sessió i amb quin correu reautenticar.
  */
 export type PasswordFormState = { errorCode?: PasswordChangeError; ok?: boolean };
 
@@ -23,7 +24,6 @@ export async function changePasswordAction(
   if (!viewer) return { errorCode: "noAccount" };
 
   const error = await changeOwnPassword({
-    profileId: viewer.id,
     email: viewer.email,
     currentPassword: String(formData.get("current") ?? ""),
     newPassword: String(formData.get("password") ?? ""),
