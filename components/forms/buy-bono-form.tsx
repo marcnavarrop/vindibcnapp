@@ -287,7 +287,11 @@ export function BuyBonoForm({
               !hasLiveSubscription &&
               serviceType === "grupo_reducido" && (
                 <>
+                  {/* Les dues de subscripció porten el seu accent: no són una
+                      tercera i quarta manera de pagar el mateix, sinó un
+                      compromís que es repetirà cada mes. */}
                   <PaymentMethodOption
+                    variant="subscription"
                     icon={<CalendarSync className="h-5 w-5" />}
                     title={t("paySubscription")}
                     description={<>{t("paySubscriptionDesc", { day: renewalDay })}</>}
@@ -295,6 +299,7 @@ export function BuyBonoForm({
                   />
                   {stripeEnabled && (
                     <PaymentMethodOption
+                      variant="subscription"
                       icon={<CalendarSync className="h-5 w-5" />}
                       title={t("paySubscriptionCard")}
                       description={

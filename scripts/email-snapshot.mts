@@ -32,6 +32,14 @@ const EXPIRES_ISO = "2026-03-22T12:00:00.000Z";
 const EXPIRES = "22 de març del 2026";
 
 /*
+ * Data pròpia per als correus de subscripció. La compartida de sobre la fan
+ * servir vint plantilles i canviar-la remouria tots els seus snapshots per no
+ * res; aquí interessa una data que es llegeixi com el que és —la propera
+ * renovació d'algú que es va donar d'alta el dia 7— i no una caducitat de bo.
+ */
+const RENEWS_ISO = "2026-10-07T00:00:00.000Z";
+
+/*
  * Cada data i cada servei van amb les DUES claus: la vella (text ja fet) i la
  * nova (cru), amb el mateix valor. Així un sol fitxer de dades val per a la
  * versió d'abans i la de després, i el diff compara només el que ha canviat
@@ -91,11 +99,11 @@ const DATA: Record<NotificationEventType, Record<string, string>> = {
   new_exercises_assigned: { name: "Ana Ferrer" },
   invoice_generated: { name: "Laia Puig", period: "Març 2026", total: "1.240,00 €" },
   waitlist_fulfilled: { name: "Ana Ferrer", ...WHENS, ...GRUP, trainer: "Laia Puig" },
-  subscription_renewed: { name: "Ana Ferrer", ...GRUP, sessions: "8", untilIso: EXPIRES_ISO },
+  subscription_renewed: { name: "Ana Ferrer", ...GRUP, sessions: "8", untilIso: "2026-10-06T00:00:00.000Z" },
   subscription_payment_failed: { name: "Ana Ferrer", ...GRUP, amountEur: "140" },
   subscription_cancelled: { name: "Ana Ferrer", ...GRUP },
-  subscription_paused: { name: "Ana Ferrer", ...GRUP, resumeOnIso: EXPIRES_ISO },
-  subscription_resumed: { name: "Ana Ferrer", ...GRUP, nextRenewalIso: EXPIRES_ISO },
+  subscription_paused: { name: "Ana Ferrer", ...GRUP, resumeOnIso: RENEWS_ISO },
+  subscription_resumed: { name: "Ana Ferrer", ...GRUP, nextRenewalIso: RENEWS_ISO },
   gift_voucher_redeemed: { name: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "EP Individual · 5 sessions", packageName: "EP Individual", sessions: "5", buyer: "Pau Riera" },
   gift_voucher_gifted: { name: "Laura", recipient: "Laura", buyer: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "EP Individual · 5 sessions", packageName: "EP Individual", sessions: "5", expires: EXPIRES, expiresIso: EXPIRES_ISO, message: "Per molts anys!" },
   support_ticket_created: { reporter: "Laia Puig", area: "trainer", title: "El calendari no carrega", category: "bug", description: "En obrir Reserves surt en blanc.", ...WHENS },

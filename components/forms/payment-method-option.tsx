@@ -1,6 +1,7 @@
 "use client";
 
 import { TAP } from "@/lib/utils";
+
 /**
  * Una opció de mètode de pagament: icona, títol i una línia del que passarà.
  *
@@ -12,26 +13,66 @@ import { TAP } from "@/lib/utils";
  * El tractament visual és el de les targetes de tipus de servei: caixa
  * quadrada amb la icona sobre fons tenyit i el text al costat.
  */
+
+/**
+ * Què s'està triant. NO és decoració: separa una compra que s'acaba avui d'un
+ * compromís que es repetirà cada mes.
+ *
+ * Les quatre opcions eren idèntiques (mateix blanc, mateix vorell lila, mateix
+ * contenidor d'icona), i les dues de subscripció es llegien com una tercera i
+ * quarta manera de pagar el mateix. No ho són: comprometre's a un cobrament
+ * mensual i pagar un bo una vegada són coses de mida diferent, i la pantalla ho
+ * ha de dir abans que el text.
+ *
+ * EL COLOR NO ÉS ARBITRARI. A la paleta del projecte el taronja ja té amo
+ * —"reservado para lo que requiere acción del admin", ho diu el comentari de
+ * `globals.css`— i el verd blau és de les notes clíniques. L'únic accent de la
+ * família de marca sense significat assignat és `brand-purple-light`, que a més
+ * diu el que volem: parent del primari, però un altre grup.
+ */
+export type PaymentMethodVariant = "oneOff" | "subscription";
+
+const STYLES: Record<
+  PaymentMethodVariant,
+  { box: string; chip: string }
+> = {
+  oneOff: {
+    box: "border-brand-purple bg-white hover:bg-brand-purple/5 active:bg-brand-purple/10",
+    chip: "bg-brand-purple/10 text-brand-purple",
+  },
+  // TRES diferències alhora: el to del vorell, el fons tenyit i —la que de debò
+  // es veu de lluny— el quadre de la icona PLE en comptes de tenyit. Amb només
+  // el vorell la distinció existia però calia comparar-los de prim a prim, que
+  // és exactament el que no ha de caldre.
+  subscription: {
+    box: "border-brand-purple-light bg-brand-purple-light/5 hover:bg-brand-purple-light/10 active:bg-brand-purple-light/20",
+    chip: "bg-brand-purple-light text-white",
+  },
+};
+
 export function PaymentMethodOption({
   icon,
   title,
   description,
   onClick,
+  variant = "oneOff",
 }: {
   icon: React.ReactNode;
   title: string;
   description: React.ReactNode;
   onClick: () => void;
+  variant?: PaymentMethodVariant;
 }) {
+  const s = STYLES[variant];
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-4 rounded-xl border-2 border-brand-purple bg-white px-4 py-3 text-left transition-colors hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
+      className={`flex items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-colors ${s.box} ${TAP}`}
     >
       <span
         aria-hidden
-        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-brand-purple"
+        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${s.chip}`}
       >
         {icon}
       </span>
