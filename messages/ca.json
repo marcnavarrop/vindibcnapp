@@ -660,7 +660,8 @@
       "personal": "Dades personals",
       "privacy": "Privacitat",
       "notifications": "Notificacions",
-      "password": "Contrasenya"
+      "password": "Contrasenya",
+      "account": "Compte"
     },
     "sections": "Seccions",
     "prefs": {
@@ -673,7 +674,7 @@
       "title": "Dades personals",
       "fullName": "Nom complet",
       "email": "Correu electrònic",
-      "emailHint": "El correu és el teu usuari d'accés i no es pot canviar aquí.",
+      "emailHint": "El correu és el teu usuari d'accés. El pots canviar a la pestanya «Compte».",
       "phone": "Telèfon",
       "birthDate": "Data de naixement",
       "height": "Alçada (cm)",
@@ -808,6 +809,32 @@
         "noAccount": "No s'ha pogut identificar el teu compte.",
         "wrongCurrent": "La contrasenya actual no és correcta.",
         "failed": "No s'ha pogut canviar la contrasenya."
+      }
+    },
+    "email": {
+      "title": "Correu d'accés",
+      "hint": "Aquest és el correu amb què entres i on reps els avisos.",
+      "current": "Correu actual",
+      "new": "Correu nou",
+      "password": "Contrasenya actual",
+      "passwordHint": "La demanem per assegurar-nos que ets tu qui ho demana.",
+      "submit": "Canviar el correu",
+      "saving": "Enviant…",
+      "ok": "T'hem enviat un enllaç a {email}. Obre'l des d'aquella bústia per acabar el canvi. Fins llavors segueixes entrant amb el correu d'ara.",
+      "pendingTitle": "Pendent de confirmar",
+      "pending": "Has demanat canviar el correu a {email}. Obre l'enllaç que t'hi hem enviat.",
+      "cancel": "Anul·lar la petició",
+      "cancelled": "Petició anul·lada.",
+      "show": "Mostrar la contrasenya",
+      "hide": "Amagar la contrasenya",
+      "errors": {
+        "invalid": "Indica un correu vàlid.",
+        "same": "El correu nou ha de ser diferent de l'actual.",
+        "taken": "Aquest correu no es pot fer servir.",
+        "wrongPassword": "La contrasenya no és correcta.",
+        "noAccount": "No s'ha pogut identificar el teu compte.",
+        "tooSoon": "Fa un moment que ho has demanat. Espera uns minuts abans de tornar-ho a provar.",
+        "failed": "No s'ha pogut demanar el canvi de correu."
       }
     }
   },
@@ -1022,6 +1049,19 @@
       "intro": "La subscripció s'ha reprès. La propera renovació s'ha retardat els dies que ha estat congelada.",
       "cta": "Reservar una sessió",
       "outro": "Les sessions del mes que tenies també conserven els dies que van quedar aturats."
+    },
+    "emailChange": {
+      "subject": "Confirma el teu correu nou — VindiBCN",
+      "heading": "Confirma el teu correu nou",
+      "intro": "Has demanat fer servir aquesta adreça per entrar a VindiBCN. Fes clic al botó per confirmar-ho:",
+      "cta": "Confirmar el correu nou",
+      "outro": "Si no ho has demanat tu, ignora aquest correu: sense aquest clic no canvia res."
+    },
+    "emailChangeAlert": {
+      "subject": "S'ha demanat canviar el correu del teu compte — VindiBCN",
+      "heading": "S'ha demanat canviar el teu correu d'accés",
+      "intro": "Algú ha demanat canviar el correu d'accés del teu compte de {old} a {new}. T'ho expliquem aquí perquè en quedis assabentat.",
+      "outro": "Si has estat tu, no has de fer res en aquest correu: el canvi s'acaba des de la bústia nova. Si NO has estat tu, escriu-nos de seguida i canvia la contrasenya: algú podria haver entrat al teu compte."
     }
   },
   "voucherPdf": {

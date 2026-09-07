@@ -246,6 +246,80 @@ export function renderWelcomeEmail(input: {
   };
 }
 
+/**
+ * Email al correu NOU: l'únic dels dos que porta enllaç.
+ *
+ * L'enllaç NO és el de Supabase sinó un de nostre, amb un secret opac que no
+ * val res per si sol: la verificació la fa el servidor quan la pàgina la
+ * demana amb JS. El motiu és el mateix que a `/auth/update-password` —que un
+ * escàner d'enllaços no consumeixi el que ha de consumir una persona— però
+ * aquí calia una altra peça, perquè `verifyOtp` no accepta els tokens de canvi
+ * de correu (comprovat; la 0078 ho explica).
+ */
+export function renderEmailChangeEmail(input: {
+  name: string | null;
+  url: string;
+  /** Idioma de qui el rep. Sense res, català. */
+  locale?: Locale | null;
+}): RenderedEmail {
+  const i = staticI18n(input.locale);
+  const te = i.ns("emails");
+  const t = i.ns("emails.emailChange");
+  const hola = input.name?.trim()
+    ? te("greeting", { name: input.name.trim() })
+    : te("greetingPlain");
+  const block: Block = {
+    heading: t("heading"),
+    intro: [hola, t("intro")],
+    cta: { label: t("cta"), url: input.url },
+    outro: [t("outro")],
+    footer: "plain",
+  };
+  return {
+    subject: t("subject"),
+    html: layout(block, i),
+    text: plain(block, i),
+  };
+}
+
+/**
+ * Avís al correu VELL. Deliberadament SENSE enllaç ni botó.
+ *
+ * Aquesta és la peça de seguretat de tot el flux. Supabase, pel seu compte,
+ * també escriu a l'adreça antiga, però hi posa un enllaç VIU que completa el
+ * canvi: comprovat contra el projecte real —un sol clic des del correu vell va
+ * aplicar el canvi—. Això converteix l'avís que hauria de protegir la persona
+ * en el botó que remata el robatori si algú li ha agafat la sessió.
+ *
+ * El nostre no ofereix cap acció. Només explica què s'ha demanat i què fer si
+ * no ha estat ella. Per això el flux no fa servir el correu de Supabase.
+ */
+export function renderEmailChangeAlertEmail(input: {
+  name: string | null;
+  oldEmail: string;
+  newEmail: string;
+  /** Idioma de qui el rep. Sense res, català. */
+  locale?: Locale | null;
+}): RenderedEmail {
+  const i = staticI18n(input.locale);
+  const te = i.ns("emails");
+  const t = i.ns("emails.emailChangeAlert");
+  const hola = input.name?.trim()
+    ? te("greeting", { name: input.name.trim() })
+    : te("greetingPlain");
+  const block: Block = {
+    heading: t("heading"),
+    intro: [hola, t("intro", { old: input.oldEmail, new: input.newEmail })],
+    outro: [t("outro")],
+    footer: "plain",
+  };
+  return {
+    subject: t("subject"),
+    html: layout(block, i),
+    text: plain(block, i),
+  };
+}
+
 export function renderEmail(event: NotificationEvent): RenderedEmail {
   // L'idioma surt del DESTINATARI, no de qui envia. Un mateix esdeveniment
   // —les novetats de la comunitat— arriba a clients i professionals dins del

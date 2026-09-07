@@ -4,12 +4,14 @@ import { getConsentStatus } from "@/lib/data/consents";
 import { getPreferences } from "@/lib/notifications/preferences";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getReferralStats } from "@/lib/data/referral";
+import { getPendingEmailChange } from "@/lib/data/email-change";
 import { ProfileSettingsForm } from "@/components/forms/profile-settings-form";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { HealthConsentForm } from "@/components/forms/health-consent-form";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
 import { ChangePasswordForm } from "@/components/forms/change-password-form";
+import { ChangeEmailForm } from "@/components/forms/change-email-form";
 import { ReferralCodeCard } from "@/components/referral-code-card";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { USE_MOCK } from "@/lib/config";
@@ -22,15 +24,23 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientConfigPage() {
   const viewer = await getViewer();
-  const [settings, consent, prefs, centerSettings, referralStats, locale] =
-    await Promise.all([
-      viewer ? getProfileSettings(viewer.id) : Promise.resolve(null),
-      viewer ? getConsentStatus(viewer.id) : Promise.resolve(null),
-      viewer ? getPreferences(viewer.id) : Promise.resolve(null),
-      getCenterSettings(),
-      viewer ? getReferralStats(viewer.id) : Promise.resolve(null),
-      resolveLocale(),
-    ]);
+  const [
+    settings,
+    consent,
+    prefs,
+    centerSettings,
+    referralStats,
+    locale,
+    pendingEmail,
+  ] = await Promise.all([
+    viewer ? getProfileSettings(viewer.id) : Promise.resolve(null),
+    viewer ? getConsentStatus(viewer.id) : Promise.resolve(null),
+    viewer ? getPreferences(viewer.id) : Promise.resolve(null),
+    getCenterSettings(),
+    viewer ? getReferralStats(viewer.id) : Promise.resolve(null),
+    resolveLocale(),
+    viewer ? getPendingEmailChange(viewer.id) : Promise.resolve(null),
+  ]);
   const t = await getTranslations("config");
 
   const tabs = [
@@ -87,8 +97,29 @@ export default async function ClientConfigPage() {
         <p className="text-sm text-brand-muted">{t("unavailable")}</p>
       ),
     },
+    /*
+      La pestanya es diu "Compte" i no "Contrasenya" perquè ara hi viuen les
+      DUES credencials d'accés. El correu va aquí i no a "Dades personals" a
+      posta: no és una dada més del perfil sinó allò amb què s'entra, el canvi
+      té dos passos i acaba en una altra bústia.
+    */
     ...(!USE_MOCK
-      ? [{ label: t("tabs.password"), content: <ChangePasswordForm translated /> }]
+      ? [
+          {
+            label: t("tabs.account"),
+            content: (
+              <>
+                {settings?.email && (
+                  <ChangeEmailForm
+                    currentEmail={settings.email}
+                    pending={pendingEmail}
+                  />
+                )}
+                <ChangePasswordForm translated />
+              </>
+            ),
+          },
+        ]
       : []),
   ];
 

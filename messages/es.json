@@ -660,7 +660,8 @@
       "personal": "Datos personales",
       "privacy": "Privacidad",
       "notifications": "Notificaciones",
-      "password": "Contraseña"
+      "password": "Contraseña",
+      "account": "Cuenta"
     },
     "sections": "Secciones",
     "prefs": {
@@ -673,7 +674,7 @@
       "title": "Datos personales",
       "fullName": "Nombre completo",
       "email": "Correo electrónico",
-      "emailHint": "El correo es tu usuario de acceso y no se puede cambiar aquí.",
+      "emailHint": "El correo es tu usuario de acceso. Puedes cambiarlo en la pestaña «Cuenta».",
       "phone": "Teléfono",
       "birthDate": "Fecha de nacimiento",
       "height": "Altura (cm)",
@@ -808,6 +809,32 @@
         "noAccount": "No se ha podido identificar tu cuenta.",
         "wrongCurrent": "La contraseña actual no es correcta.",
         "failed": "No se ha podido cambiar la contraseña."
+      }
+    },
+    "email": {
+      "title": "Correo de acceso",
+      "hint": "Este es el correo con el que entras y donde recibes los avisos.",
+      "current": "Correo actual",
+      "new": "Correo nuevo",
+      "password": "Contraseña actual",
+      "passwordHint": "Te la pedimos para asegurarnos de que eres tú quien lo pide.",
+      "submit": "Cambiar el correo",
+      "saving": "Enviando…",
+      "ok": "Te hemos enviado un enlace a {email}. Ábrelo desde ese buzón para terminar el cambio. Hasta entonces sigues entrando con el correo actual.",
+      "pendingTitle": "Pendiente de confirmar",
+      "pending": "Has pedido cambiar el correo a {email}. Abre el enlace que te hemos enviado allí.",
+      "cancel": "Anular la petición",
+      "cancelled": "Petición anulada.",
+      "show": "Mostrar la contraseña",
+      "hide": "Ocultar la contraseña",
+      "errors": {
+        "invalid": "Indica un correo válido.",
+        "same": "El correo nuevo debe ser distinto del actual.",
+        "taken": "Este correo no se puede usar.",
+        "wrongPassword": "La contraseña no es correcta.",
+        "noAccount": "No se ha podido identificar tu cuenta.",
+        "tooSoon": "Acabas de pedirlo. Espera unos minutos antes de volver a intentarlo.",
+        "failed": "No se ha podido pedir el cambio de correo."
       }
     }
   },
@@ -1022,6 +1049,19 @@
       "intro": "La suscripción se ha reanudado. La próxima renovación se ha retrasado los días que ha estado congelada.",
       "cta": "Reservar una sesión",
       "outro": "Las sesiones del mes que tenías también conservan los días que quedaron parados."
+    },
+    "emailChange": {
+      "subject": "Confirma tu correo nuevo — VindiBCN",
+      "heading": "Confirma tu correo nuevo",
+      "intro": "Has pedido usar esta dirección para entrar en VindiBCN. Haz clic en el botón para confirmarlo:",
+      "cta": "Confirmar el correo nuevo",
+      "outro": "Si no lo has pedido tú, ignora este correo: sin este clic no cambia nada."
+    },
+    "emailChangeAlert": {
+      "subject": "Se ha pedido cambiar el correo de tu cuenta — VindiBCN",
+      "heading": "Se ha pedido cambiar tu correo de acceso",
+      "intro": "Alguien ha pedido cambiar el correo de acceso de tu cuenta de {old} a {new}. Te lo contamos aquí para que estés al tanto.",
+      "outro": "Si has sido tú, no tienes que hacer nada en este correo: el cambio se termina desde el buzón nuevo. Si NO has sido tú, escríbenos enseguida y cambia la contraseña: alguien podría haber entrado en tu cuenta."
     }
   },
   "voucherPdf": {

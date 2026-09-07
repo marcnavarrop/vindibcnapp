@@ -1000,6 +1000,37 @@ export interface Database {
         };
         Relationships: [];
       };
+      /** Peticions de canvi de correu d'accés pendents de confirmar (0078). */
+      email_change_requests: {
+        Row: {
+          id: string;
+          profile_id: string;
+          new_email: string;
+          token_hash: string;
+          created_at: string;
+          expires_at: string;
+          consumed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          new_email: string;
+          token_hash: string;
+          created_at?: string;
+          expires_at: string;
+          consumed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          profile_id?: string;
+          new_email?: string;
+          token_hash?: string;
+          created_at?: string;
+          expires_at?: string;
+          consumed_at?: string | null;
+        };
+        Relationships: [];
+      };
       trial_bookings: {
         Row: {
           id: string;

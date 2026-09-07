@@ -660,7 +660,8 @@
       "personal": "Your details",
       "privacy": "Privacy",
       "notifications": "Notifications",
-      "password": "Password"
+      "password": "Password",
+      "account": "Account"
     },
     "sections": "Sections",
     "prefs": {
@@ -673,7 +674,7 @@
       "title": "Your details",
       "fullName": "Full name",
       "email": "Email address",
-      "emailHint": "Your email is your sign-in name and can't be changed here.",
+      "emailHint": "Your email is your sign-in name. You can change it on the \"Account\" tab.",
       "phone": "Phone",
       "birthDate": "Date of birth",
       "height": "Height (cm)",
@@ -808,6 +809,32 @@
         "noAccount": "We couldn't identify your account.",
         "wrongCurrent": "That current password isn't right.",
         "failed": "We couldn't change your password."
+      }
+    },
+    "email": {
+      "title": "Sign-in email",
+      "hint": "This is the email you sign in with and where your notices arrive.",
+      "current": "Current email",
+      "new": "New email",
+      "password": "Current password",
+      "passwordHint": "We ask for it to make sure it's really you.",
+      "submit": "Change email",
+      "saving": "Sending…",
+      "ok": "We sent a link to {email}. Open it from that mailbox to finish the change. Until then you keep signing in with your current email.",
+      "pendingTitle": "Waiting for confirmation",
+      "pending": "You asked to change your email to {email}. Open the link we sent there.",
+      "cancel": "Cancel the request",
+      "cancelled": "Request cancelled.",
+      "show": "Show password",
+      "hide": "Hide password",
+      "errors": {
+        "invalid": "Enter a valid email.",
+        "same": "The new email must be different from the current one.",
+        "taken": "This email can't be used.",
+        "wrongPassword": "That password is not correct.",
+        "noAccount": "We couldn't identify your account.",
+        "tooSoon": "You just asked for this. Wait a few minutes before trying again.",
+        "failed": "We couldn't request the email change."
       }
     }
   },
@@ -1022,6 +1049,19 @@
       "intro": "The subscription has resumed. Your next renewal has moved back by the days it was on hold.",
       "cta": "Book a session",
       "outro": "This month's sessions also keep the days that were frozen."
+    },
+    "emailChange": {
+      "subject": "Confirm your new email — VindiBCN",
+      "heading": "Confirm your new email",
+      "intro": "You asked to use this address to sign in to VindiBCN. Click the button to confirm:",
+      "cta": "Confirm new email",
+      "outro": "If you didn't ask for this, ignore this email: nothing changes without that click."
+    },
+    "emailChangeAlert": {
+      "subject": "A change of your account email was requested — VindiBCN",
+      "heading": "Someone asked to change your sign-in email",
+      "intro": "Someone asked to change the sign-in email of your account from {old} to {new}. We are telling you here so you know.",
+      "outro": "If this was you, there's nothing to do in this email: the change is finished from the new mailbox. If it was NOT you, write to us straight away and change your password: someone may have got into your account."
     }
   },
   "voucherPdf": {
