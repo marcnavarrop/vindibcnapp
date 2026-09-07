@@ -142,6 +142,24 @@ export async function sendPasswordRecovery(email: string): Promise<void> {
   });
   // Usuari inexistent o error → no revelem res (silenciós).
   if (error || !data?.properties?.hashed_token) return;
+  // NOMÉS `full_name`. De tot el metadata, aquesta és l'única clau que llegim
+  // enlloc del projecte, i convé que segueixi sent així.
+  //
+  // NO FACIS SERVIR `user_metadata.email`
+  //
+  // Hi és —la posa GoTrue en donar-se d'alta, amb `email_verified`, `sub` i
+  // companyia— i es queda DESFASADA quan algú canvia el correu d'accés.
+  // Comprovat contra producció: després d'un canvi confirmat, `auth.users.email`
+  // i `identities[].identity_data.email` van al correu nou, i aquesta es queda
+  // amb el vell. És una cadena amb bona pinta i valor caducat, que és pitjor que
+  // no tenir-ne cap.
+  //
+  // No la sincronitzem a posta: és columna de GoTrue, que hi escriu ell a cada
+  // alta, així que qualsevol còpia nostra la pot desfer ell. Esborrar-la tampoc
+  // dura: el registre següent la torna a posar.
+  //
+  // El correu bo és `auth.users.email` (i, dins de l'app, `profiles.email`, que
+  // el segueix des de la 0077). Vegeu la capçalera d'aquella migració.
   const name = (data.user?.user_metadata?.full_name as string | undefined) ?? null;
   const { subject, html, text } = renderRecoveryEmail({
     name,

@@ -84,12 +84,71 @@ Invitación y recuperación con `admin.auth.admin.generateLink()`: obtenemos el
 Otros:
 - **`/forgot-password`** (público) + enlace "Has oblidat la contrasenya?" en
   `/login`.
-- **Cambio voluntario**: sección "Contrasenya" en Configuració (los 3 roles),
-  con **reautenticación** (pide la contraseña actual) antes de `updateUser`.
-  Oculta en modo demo/mock. → `components/forms/change-password-form.tsx`.
+- **Cambio voluntario**: sección "Contrasenya" en Configuració → **Compte** (los
+  3 roles), con **reautenticación en el servidor** (ver más abajo). Oculta en
+  modo demo/mock. → `components/forms/change-password-form.tsx` +
+  `app/actions/password-actions.ts`.
 - **Redirect tras login**: `lib/auth-redirect.ts` (`safeRedirect`) — vuelve al
   destino original de un CTA tras loguearse; solo rutas internas y respetando el
   rol (anti open-redirect + anti bypass de permisos).
+
+### Cambio del correo de acceso (`lib/data/email-change.ts`)
+
+El cliente lo pide desde **Configuració → Compte** con su contraseña, y lo
+confirma **desde el buzón nuevo**. Migración **0078** (`email_change_requests`).
+
+**No se usa el camino nativo de Supabase**, y el motivo no es la marca:
+
+- `updateUser({email})` manda **dos** correos por su cuenta, con la plantilla
+  por defecto en inglés, fuera del `notification_log` y sin pasar por el corte
+  de `realSendAllowed()`.
+- El que va a la dirección **antigua lleva un enlace vivo**: comprobado dos
+  veces contra producción (con direcciones `+buzonviejo`/`+buzonnuevo` para
+  descartar confusión), **un solo clic desde el correo viejo aplica el cambio
+  entero**. El aviso que debería ser la red de seguridad es el botón que remata
+  el robo si alguien se ha hecho con la sesión.
+
+Nuestro flujo: **enlace sólo al correo nuevo**, **aviso sin ninguna acción** al
+viejo, ambos en el idioma de quien los recibe y ambos en `notification_log`
+(`auth_email_change` / `auth_email_change_alert`).
+
+**Por qué hay una tabla de por medio.** Invitación y recuperación verifican el
+token con JS en `/auth/update-password` para que los escáneres de enlaces (GET
+sin JS) no lo quemen. Con el cambio de correo eso no se puede repetir:
+`verifyOtp` **no acepta** tokens de `email_change`. Seis métodos probados sobre
+el mismo token —seguía vivo, porque el sexto funcionó—:
+
+| Intento | Resultado |
+|---|---|
+| `POST /verify {type:'email_change', token_hash}` | `403 otp_expired` |
+| `POST /verify {type:'email_change_new', token_hash}` | `400` tipo inválido |
+| `POST /verify {type:'email_change', token, email: nuevo}` | `403 otp_expired` |
+| `POST /verify {type:'email_change', token, email: viejo}` | `403 otp_expired` |
+| `GET /verify?token_hash=…&type=email_change` | `400` |
+| `GET /verify?token=<crudo>&type=email_change` | **`303`, cambio aplicado** |
+
+El único camino que funciona es justo el que un escáner dispara solo. Por eso
+el enlace del correo lleva un **secreto nuestro** (`/auth/confirm-email?r=…`),
+de la tabla sólo se guarda su SHA-256, y el token de GoTrue se acuña y se gasta
+**en el servidor** cuando la página lo pide con JS.
+
+### Reautenticación: siempre en el servidor
+
+Tanto el cambio de correo como el de contraseña piden la contraseña actual y la
+comprueban **en el servidor** (`lib/data/reauth.ts`), con un cliente de un solo
+uso que no persiste sesión. Hacerlo en el navegador es un resalte, no una
+barrera: quien tenga la sesión puede llamar a la server action y saltárselo.
+
+Dos trampas que costaron sendos arreglos, ambas encontradas probando en
+producción y ninguna visible para `tsc`, el lint ni el build:
+
+- `signOut()` **sin argumentos vale `scope: "global"`** y revoca TODAS las
+  sesiones de la persona: comprobarle la contraseña la echaba de su propio
+  navegador. Va con `scope: "local"`.
+- `admin.updateUserById({password})` **también revoca los refresh tokens**. La
+  contraseña nueva se aplica con el cliente de SERVIDOR (el que lleva las
+  cookies de quien lo pide), no con el Admin API: así GoTrue conserva esa sesión
+  y cierra sólo las demás.
 
 ### Estados de la contraseña (resumen)
 
@@ -138,6 +197,15 @@ Con la arquitectura actual, Supabase **no envía emails**:
 - **"Confirm email"** (Authentication → Providers → Email) → **desactivado**: el
   registro público de clientes (`/register` con `signUp`) funciona sin
   confirmación. **No cambiar** sin revisar el impacto en el envío.
+- **"Secure email change"** (Authentication → **Sign In / Providers** → Email;
+  no en Email Templates, donde sólo están las plantillas) → **activado**, y
+  **no hace lo que su nombre promete en este proyecto**. Con él activo la
+  documentación dice que hacen falta las dos confirmaciones, la del correo
+  viejo y la del nuevo; medido aquí, **basta un clic desde cualquiera de los
+  dos**. Se sospecha interacción con el autoconfirm del registro, pero eso
+  **no está comprobado** y se deja como conjetura. No nos afecta —nuestro flujo
+  no usa el camino nativo— pero conviene saberlo antes de proponer
+  "simplifiquemos, que Supabase ya lo hace": no lo hace.
 
 ---
 
@@ -151,6 +219,17 @@ Con la arquitectura actual, Supabase **no envía emails**:
   por eso hay wordmark de texto al lado.
 - **BIMI** (logo en el avatar del remitente en Gmail): descartado por coste
   (~1.000 €/año de certificado VMC).
+- **`user_metadata.email` se queda desfasado a propósito.** El correo de una
+  persona vive en cuatro sitios. Tres se mantienen solos: `auth.users.email` y
+  `identities[].identity_data.email` los lleva GoTrue, y `profiles.email` lo
+  sigue el trigger de la **0077**. El cuarto,
+  `auth.users.raw_user_meta_data.email`, **no**: tras un cambio de correo se
+  queda con el valor viejo.
+  **No lo leas.** De todo el metadata, el código sólo usa `full_name`
+  (`lib/notifications/auth-emails.ts`). No lo sincronizamos porque esa columna
+  la escribe GoTrue en cada alta —cualquier copia nuestra la puede deshacer él—
+  y borrarlo tampoco dura: el registro siguiente lo repone. Un desfase uniforme
+  y documentado se razona; uno intermitente, no.
 
 ---
 
@@ -160,6 +239,9 @@ Con la arquitectura actual, Supabase **no envía emails**:
 - **0020** — columnas de agenda del profesional (`trainer_booking_*`,
   `trainer_daily_agenda`).
 - **0021** — columnas del aviso de nuevo cliente (`new_client_registered_*`).
+- **0077** — trigger que sincroniza `profiles.email` cuando cambia el de Auth.
+- **0078** — `email_change_requests` (RLS cerrada: sin políticas, sólo la clave
+  de servicio).
 
 ## 8. Registro público de clientes (`/register`)
 
