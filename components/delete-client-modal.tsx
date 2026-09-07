@@ -29,7 +29,14 @@ export function DeleteClientModal({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center justify-center rounded-lg border border-error/40 bg-white px-4 py-2 text-sm font-bold tracking-wide text-error uppercase transition-colors hover:bg-error/10 ${TAP}`}
+        /*
+         * `shrink-0 whitespace-nowrap` com els seus dos companys de fila.
+         * Sense això era l'ÚNIC dels tres que podia encongir, així que
+         * absorbia tota la compressió ell sol: el text es partia en dues
+         * línies, el botó creixia a 58px d'alt contra els 38 dels altres i
+         * l'`items-center` de la fila els descentrava a tots.
+         */
+        className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-error/40 bg-white px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-error uppercase transition-colors hover:bg-error/10 ${TAP}`}
       >
         Eliminar client
       </button>

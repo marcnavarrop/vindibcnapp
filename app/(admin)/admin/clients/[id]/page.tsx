@@ -268,8 +268,19 @@ export default async function ClientDetailPage({
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      {/*
+        `flex-wrap` a la fila i al bloc d'accions: els tres botons necessiten
+        ~431px i en un mòbil de 375 en queden 327 útils. Amb `shrink-0` als
+        tres i sense poder passar de línia, la fila sortia de la pantalla i
+        arrossegava el `main` sencer (541px de scroll contra 375 de finestra),
+        que és el que tallava el contingut per l'esquerra. Ara baixen de línia
+        en comptes de desbordar.
+
+        El `min-w-0` de la columna esquerra és la part que no es veu: sense
+        ell, un correu llarg imposa la seva amplada mínima i torna a empènyer.
+      */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
           <Link
             href="/admin/clients"
             className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
@@ -305,7 +316,7 @@ export default async function ClientDetailPage({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <a
             href={`/admin/clients/${client.id}/export`}
             className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-brand-charcoal uppercase hover:bg-white/60 active:bg-brand-border ${TAP}`}
