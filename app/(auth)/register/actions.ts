@@ -86,6 +86,7 @@ export type RegisterErrorCode =
   | "noName"
   | "badEmail"
   | "noPhone"
+  | "noBirthDate"
   | "shortPassword"
   | "passwordMismatch";
 
@@ -109,6 +110,7 @@ export async function validateRegistrationAction(input: {
   fullName: string;
   email: string;
   phone: string;
+  birthDate: string;
   password: string;
   passwordConfirm: string;
 }): Promise<{ errorCode?: RegisterErrorCode }> {
@@ -116,6 +118,18 @@ export async function validateRegistrationAction(input: {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(input.email.trim()))
     return { errorCode: "badEmail" };
   if (!input.phone.trim()) return { errorCode: "noPhone" };
+  /*
+   * El format es comprova, no només que hi hagi alguna cosa.
+   *
+   * Un `<input type="date">` només pot donar YYYY-MM-DD o buit, però qui
+   * s'envia el formulari a mà pot posar-hi el que vulgui. Amb text lliure,
+   * `updateProfileSettings` l'enviaria a una columna `date` i Postgres el
+   * rebutjaria; com que aquella crida va dins d'un try/catch best-effort, l'alta
+   * tiraria endavant amb la data buida. O sigui: sense aquesta línia, el camp
+   * seria obligatori només per als qui fan servir el formulari.
+   */
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.birthDate.trim()))
+    return { errorCode: "noBirthDate" };
   if (input.password.length < 6) return { errorCode: "shortPassword" };
   if (input.password !== input.passwordConfirm)
     return { errorCode: "passwordMismatch" };
@@ -141,6 +155,7 @@ export async function completeRegistrationProfileAction(input: {
   weightKg: string;
   gender: string;
   emergencyContact: string;
+  objective: string;
 }): Promise<void> {
   const viewer = await getViewer();
   if (!viewer) return;
@@ -173,7 +188,9 @@ export async function completeRegistrationProfileAction(input: {
     weightKg: num(input.weightKg),
     gender,
     emergencyContact: input.emergencyContact.trim() || null,
-    // "Objectiu" no es demana a l'alta: es queda a Configuració.
-    objective: current?.objective || null,
+    // "Objectiu" ara SÍ que es demana a l'alta, opcional. El `current` de
+    // reserva es manté per si aquesta funció es tornés a executar sobre un
+    // perfil que ja en tingués un: un enviament buit no l'ha d'esborrar.
+    objective: input.objective.trim() || current?.objective || null,
   });
 }

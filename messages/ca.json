@@ -106,6 +106,7 @@
       "noName": "Escriu el teu nom i cognoms.",
       "badEmail": "Aquest correu no sembla vàlid.",
       "noPhone": "Cal un telèfon de contacte.",
+      "noBirthDate": "Cal la teva data de naixement.",
       "shortPassword": "La contrasenya ha de tenir com a mínim 6 caràcters.",
       "passwordMismatch": "Les contrasenyes no coincideixen."
     }

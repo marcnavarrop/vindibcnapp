@@ -9,6 +9,7 @@ import { USE_MOCK } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
+import { TextAreaField } from "@/components/ui/textarea";
 import { PasswordField } from "@/components/ui/password-field";
 import { RequiredNote } from "@/components/ui/required-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -80,13 +81,15 @@ export function RegisterPanel() {
     const password = String(fd.get("password") ?? "");
     const passwordConfirm = String(fd.get("passwordConfirm") ?? "");
     const referralCode = get("referralCode").toUpperCase() || undefined;
+    const birthDate = get("birthDate");
     const perfil = {
       phone,
-      birthDate: get("birthDate"),
+      birthDate,
       heightCm: get("heightCm"),
       weightKg: get("weightKg"),
       gender: get("gender"),
       emergencyContact: get("emergencyContact"),
+      objective: get("objective"),
     };
 
     // Talla aquí, sense enviar res: qui s'equivoca repetint la contrasenya ha
@@ -117,6 +120,7 @@ export function RegisterPanel() {
         fullName,
         email,
         phone,
+        birthDate,
         password,
         passwordConfirm,
       });
@@ -241,6 +245,17 @@ export function RegisterPanel() {
           autoComplete="tel"
         />
 
+        {/* Obligatòria, i per això surt aquí i no dins del bloc opcional de
+            més avall: la data de naixement forma part de les dades que el
+            centre necessita, no de les que es poden deixar per a un altre dia. */}
+        <Field
+          label={tp("birthDate")}
+          name="birthDate"
+          type="date"
+          required
+          autoComplete="bday"
+        />
+
         <PasswordField
           label={t("password")}
           name="password"
@@ -264,8 +279,6 @@ export function RegisterPanel() {
           <legend className="px-1 text-xs font-bold tracking-wide text-brand-muted uppercase">
             {t("optionalTitle")}
           </legend>
-
-          <Field label={tp("birthDate")} name="birthDate" type="date" />
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
@@ -296,6 +309,15 @@ export function RegisterPanel() {
             label={tp("emergency")}
             name="emergencyContact"
             placeholder={tp("emergencyPlaceholder")}
+          />
+
+          {/* Mateix camp, mateixes claus i mateix component que a Configuració
+              → Dades personals. Opcional: aquí serveix perquè qui s'apunta ja
+              pugui dir a què ve, però no és cap requisit per obrir el compte. */}
+          <TextAreaField
+            label={tp("objective")}
+            name="objective"
+            placeholder={tp("objectivePlaceholder")}
           />
         </fieldset>
 
