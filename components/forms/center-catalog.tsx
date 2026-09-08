@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Button } from "@/components/ui/button";
 import { TAP } from "@/lib/utils";
 import type { Center } from "@/lib/data/centers";
-import type { CenterFormState } from "@/app/(admin)/admin/centres/actions";
+import type { CenterFormState } from "@/lib/actions/centers-registry";
 
 type Action = (
   prev: CenterFormState,
