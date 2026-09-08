@@ -11,6 +11,7 @@ import {
 import { buildClientManual } from "@/lib/help/client-manual";
 import { HelpManual } from "@/components/client/help-manual";
 import { PrintManualButton } from "@/components/client/print-manual-button";
+import { BackToTop } from "@/components/client/back-to-top";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,8 @@ export default async function ClientAjudaPage() {
       </div>
 
       <HelpManual chapters={chapters} />
+
+      <BackToTop />
     </main>
   );
 }
