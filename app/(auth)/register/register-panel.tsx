@@ -6,6 +6,7 @@ import { TAP } from "@/lib/utils";
 import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK } from "@/lib/config";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
@@ -260,7 +261,7 @@ export function RegisterPanel() {
           label={t("password")}
           name="password"
           required
-          minLength={6}
+          minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
         />
 
@@ -268,7 +269,7 @@ export function RegisterPanel() {
           label={t("passwordConfirm")}
           name="passwordConfirm"
           required
-          minLength={6}
+          minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
         />
 

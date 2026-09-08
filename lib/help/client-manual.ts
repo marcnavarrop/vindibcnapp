@@ -72,6 +72,8 @@ export type ManualSettings = {
   reminderHourLocal: number;
   /** Dies d'antelació de l'avís de bo a punt de caducar. */
   bonoExpiryWarningDays: number;
+  /** Mínim de caràcters d'una contrasenya. */
+  minPasswordLength: number;
   giftVouchersEnabled: boolean;
   giftVoucherExpiryMonths: number;
   waitlistEnabled: boolean;
@@ -105,7 +107,7 @@ export function buildClientManual(s: ManualSettings): Chapter[] {
         { t: "h", text: "Crear el compte" },
         {
           t: "p",
-          text: "Des de la pantalla d'entrada, «Crear compte». Et demanem el nom i cognoms, el correu electrònic, un telèfon, la data de naixement i una contrasenya de sis caràcters com a mínim. El telèfon i la data de naixement són obligatoris: el centre ha de poder trucar-te si una sessió es mou o hi ha una urgència.",
+          text: `Des de la pantalla d'entrada, «Crear compte». Et demanem el nom i cognoms, el correu electrònic, un telèfon, la data de naixement i una contrasenya de ${s.minPasswordLength} caràcters com a mínim. El telèfon i la data de naixement són obligatoris: el centre ha de poder trucar-te si una sessió es mou o hi ha una urgència.`,
         },
         {
           t: "p",
@@ -883,7 +885,7 @@ export function buildClientManual(s: ManualSettings): Chapter[] {
         { t: "h", text: "Compte: canviar la contrasenya" },
         {
           t: "p",
-          text: "Cal la contrasenya actual i la nova dues vegades. La nova ha de tenir vuit caràcters com a mínim i ser diferent de l'actual. Canviar-la no et tanca la sessió: segueixes dins.",
+          text: `Cal la contrasenya actual i la nova dues vegades. La nova ha de tenir ${s.minPasswordLength} caràcters com a mínim i ser diferent de l'actual. Canviar-la no et tanca la sessió: segueixes dins.`,
         },
         ...(s.referralProgramActive
           ? ([

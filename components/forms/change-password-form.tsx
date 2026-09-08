@@ -5,6 +5,7 @@ import { changePasswordAction } from "@/app/actions/password-actions";
 import { useTranslations } from "next-intl";
 import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 /**
  * Els textos del formulari, ja resolts.
@@ -126,7 +127,7 @@ function Body({ texts }: { texts: Texts }) {
     e.preventDefault();
     setError(null);
     setOk(false);
-    if (password.length < 8) return setError(texts.errors.tooShort);
+    if (password.length < MIN_PASSWORD_LENGTH) return setError(texts.errors.tooShort);
     if (password !== confirm) return setError(texts.errors.mismatch);
     if (password === current) return setError(texts.errors.same);
 

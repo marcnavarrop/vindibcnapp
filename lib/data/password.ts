@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { passwordIsCorrect } from "@/lib/data/reauth";
 import { USE_MOCK } from "@/lib/config";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 /**
  * Canvi voluntari de contrasenya de qui té la sessió oberta.
@@ -33,9 +34,6 @@ export type PasswordChangeError =
   | "wrongCurrent"
   | "failed";
 
-/** Mínim de caràcters. El mateix que ja demanava el formulari. */
-const MIN_LENGTH = 8;
-
 export async function changeOwnPassword(input: {
   /** El correu de qui té la sessió: només per reautenticar, no per triar compte.
    *  El compte sobre el qual s'actua el decideixen les cookies. */
@@ -45,7 +43,7 @@ export async function changeOwnPassword(input: {
 }): Promise<PasswordChangeError | null> {
   // Les mateixes regles que el formulari, però aquí manen. Les del navegador
   // són comoditat: es desactiven des de la consola en dues línies.
-  if (input.newPassword.length < MIN_LENGTH) return "tooShort";
+  if (input.newPassword.length < MIN_PASSWORD_LENGTH) return "tooShort";
   if (input.newPassword === input.currentPassword) return "same";
   if (!input.email) return "noAccount";
   if (USE_MOCK) return "failed";

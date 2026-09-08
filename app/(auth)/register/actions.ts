@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
 import { USE_MOCK } from "@/lib/config";
 import { onNewClientRegistered } from "@/lib/data/registration";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 /**
  * Alta en mode demo: crea el perfil al store simulat i executa el post-registre.
@@ -130,7 +131,8 @@ export async function validateRegistrationAction(input: {
    */
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.birthDate.trim()))
     return { errorCode: "noBirthDate" };
-  if (input.password.length < 6) return { errorCode: "shortPassword" };
+  if (input.password.length < MIN_PASSWORD_LENGTH)
+    return { errorCode: "shortPassword" };
   if (input.password !== input.passwordConfirm)
     return { errorCode: "passwordMismatch" };
   return {};

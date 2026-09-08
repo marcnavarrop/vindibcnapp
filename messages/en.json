@@ -107,7 +107,7 @@
       "badEmail": "That email doesn't look valid.",
       "noPhone": "A contact phone number is required.",
       "noBirthDate": "Your date of birth is required.",
-      "shortPassword": "The password must be at least 6 characters.",
+      "shortPassword": "The password must be at least 8 characters.",
       "passwordMismatch": "The passwords don't match."
     }
   },

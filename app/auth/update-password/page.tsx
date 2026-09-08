@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { useSearchParams } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -65,8 +66,10 @@ function UpdatePasswordInner() {
     const confirm = String(fd.get("confirm") ?? "");
 
     setError(null);
-    if (password.length < 8)
-      return setError("La contrasenya ha de tenir com a mínim 8 caràcters.");
+    if (password.length < MIN_PASSWORD_LENGTH)
+      return setError(
+        `La contrasenya ha de tenir com a mínim ${MIN_PASSWORD_LENGTH} caràcters.`,
+      );
     if (password !== confirm)
       return setError("Les contrasenyes no coincideixen.");
 
@@ -131,14 +134,14 @@ function UpdatePasswordInner() {
               label="Nova contrasenya"
               name="password"
               required
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
               autoComplete="new-password"
             />
             <PasswordField
               label="Repeteix la contrasenya"
               name="confirm"
               required
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
               autoComplete="new-password"
             />
             {error && <p className="text-sm text-error">{error}</p>}
