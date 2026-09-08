@@ -24,8 +24,13 @@ const SHOW_AFTER_PX = 600;
  *
  * No surt al paper, com la resta de controls: seria una fletxa impresa que no
  * porta enlloc.
+ *
+ * `aboveFab`: a l'àrea del professional i a la de l'administració, la cantonada
+ * de baix a la dreta ja l'ocupa el botó rodó de suport. Amb això el botó puja i
+ * se li posa a sobre en comptes de quedar-hi a sota. El client no té el botó de
+ * suport, i allà la cantonada és lliure.
  */
-export function BackToTop() {
+export function BackToTop({ aboveFab = false }: { aboveFab?: boolean }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -57,9 +62,11 @@ export function BackToTop() {
             : "smooth",
         })
       }
-      className={`fixed right-4 bottom-4 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-white text-brand-muted shadow-md transition-opacity duration-200 hover:text-brand-purple focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 sm:right-6 sm:bottom-6 print:hidden ${
-        visible ? "opacity-100" : "pointer-events-none opacity-0"
-      } ${TAP}`}
+      className={`fixed right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-white text-brand-muted shadow-md transition-opacity duration-200 hover:text-brand-purple focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 sm:right-6 print:hidden ${
+        // El botó de suport fa 56 px i seu a 16 px del terra (24 a partir de
+        // `sm`): aquestes són aquelles mides més el buit entre els dos.
+        aboveFab ? "bottom-20 sm:bottom-24" : "bottom-4 sm:bottom-6"
+      } ${visible ? "opacity-100" : "pointer-events-none opacity-0"} ${TAP}`}
     >
       <span className="sr-only">Torna a dalt</span>
       <ArrowUp className="h-4 w-4" aria-hidden />

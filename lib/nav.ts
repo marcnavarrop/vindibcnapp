@@ -159,6 +159,9 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/trainer/exercicis", label: "Exercicis", icon: "dumbbell" },
     { href: "/trainer/comunitat", label: "Comunitat", icon: "community" },
     { href: "/trainer/configuracio", label: "Configuració", icon: "settings" },
+    // L'última del menú, com al client i pel mateix motiu: no és una àrea on
+    // es faci res, és on s'hi va quan alguna de les altres no s'entén.
+    { href: "/trainer/ajuda", label: "Ajuda", icon: "help" },
   ],
   // El client és l'única àrea amb icones de moment: el seu menú es va
   // redissenyar abans que el d'admin i professional, que segueixen amb la
@@ -176,8 +179,8 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/client/comunitat", label: "Comunitat", labelKey: "comunitat", icon: "community" },
     { href: "/client/configuracio", label: "Configuració", labelKey: "configuracio", icon: "settings" },
     // L'última del menú a posta: no és una àrea on es faci res, és on s'hi va
-    // quan alguna de les altres no s'entén. Només la té el client; el manual
-    // del professional i el de l'administració encara no existeixen.
+    // quan alguna de les altres no s'entén. El professional ja té la seva;
+    // la de l'administració encara no existeix.
     { href: "/client/ajuda", label: "Ajuda", labelKey: "ajuda", icon: "help" },
   ],
 };
