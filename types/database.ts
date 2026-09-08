@@ -1000,6 +1000,29 @@ export interface Database {
         };
         Relationships: [];
       };
+      /**
+       * Registre de noms de centres (0080). Fase 1 del multi-centre:
+       * deliberadament òrfena — cap altra taula hi apunta. No confondre amb
+       * `center_settings`, que és un singleton global d'ajustos.
+       */
+      centers: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       /** Nota de seguiment d'una sessió (0079). Una per reserva. */
       session_notes: {
         Row: {

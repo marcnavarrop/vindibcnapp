@@ -136,6 +136,10 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     },
     { href: "/admin/exercicis", label: "Exercicis", icon: "dumbbell" },
     { href: "/admin/community", label: "Comunitat", icon: "community" },
+    // Al costat de Configuració perquè és del mateix ordre —coses del centre,
+    // no del dia a dia— i com a entrada pròpia perquè Configuració és una
+    // pantalla sola, no un grup: penjar-l'hi hauria obligat a reestructurar-la.
+    { href: "/admin/centres", label: "Centres", icon: "catalog" },
     { href: "/admin/configuracio", label: "Configuració", icon: "settings" },
   ],
   trainer: [
