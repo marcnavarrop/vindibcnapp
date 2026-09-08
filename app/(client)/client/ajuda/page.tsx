@@ -1,4 +1,5 @@
 import { getCenterSettings } from "@/lib/data/center-settings";
+import { BONO_EXPIRY_WARNING_DAYS } from "@/lib/data/reminders";
 import { stripeEnabled } from "@/lib/stripe";
 import { GROUP_CAPACITY } from "@/lib/labels";
 import { DOCUMENT_MAX_MB } from "@/lib/documents";
@@ -44,6 +45,7 @@ export default async function ClientAjudaPage() {
     pendingPaymentCancelEnabled: settings.pendingPaymentCancelEnabled,
     pendingPaymentCancelHours: settings.pendingPaymentCancelHours,
     reminderHourLocal: settings.reminderHourLocal,
+    bonoExpiryWarningDays: BONO_EXPIRY_WARNING_DAYS,
     giftVouchersEnabled: settings.giftVouchersEnabled,
     giftVoucherExpiryMonths: settings.giftVoucherExpiryMonths,
     waitlistEnabled: settings.waitlistEnabled,

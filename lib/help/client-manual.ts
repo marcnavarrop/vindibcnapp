@@ -70,6 +70,8 @@ export type ManualSettings = {
   pendingPaymentCancelEnabled: boolean;
   pendingPaymentCancelHours: number | null;
   reminderHourLocal: number;
+  /** Dies d'antelació de l'avís de bo a punt de caducar. */
+  bonoExpiryWarningDays: number;
   giftVouchersEnabled: boolean;
   giftVoucherExpiryMonths: number;
   waitlistEnabled: boolean;
@@ -939,7 +941,7 @@ export function buildClientManual(s: ManualSettings): Chapter[] {
             ],
             [
               "Bo a punt de caducar",
-              "Uns dies abans que caduqui un bo amb sessions sense fer.",
+              `${s.bonoExpiryWarningDays} dies abans que caduqui un bo amb sessions sense fer.`,
               "Sí",
             ],
             [
