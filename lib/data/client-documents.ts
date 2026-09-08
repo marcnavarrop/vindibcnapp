@@ -2,9 +2,9 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { DOCUMENT_MAX_BYTES } from "@/lib/documents";
 
 const BUCKET = "client-documents";
-const MAX_SIZE = 15 * 1024 * 1024; // 15 MB
 const ALLOWED_MIME = new Set([
   "application/pdf",
   "image/jpeg",
@@ -39,7 +39,7 @@ export type DocumentRejection = "tooBig" | "badFormat";
 export function validateDocumentFile(
   file: File,
 ): { ok: true } | { ok: false; code: DocumentRejection } {
-  if (file.size > MAX_SIZE) return { ok: false, code: "tooBig" };
+  if (file.size > DOCUMENT_MAX_BYTES) return { ok: false, code: "tooBig" };
   if (!ALLOWED_MIME.has(file.type)) return { ok: false, code: "badFormat" };
   return { ok: true };
 }

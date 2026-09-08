@@ -20,7 +20,8 @@ export type NavIcon =
   | "settings"
   | "people"
   | "catalog"
-  | "billing";
+  | "billing"
+  | "help";
 
 export type NavItem = {
   href: string;
@@ -174,6 +175,10 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/client/documents", label: "Documents", labelKey: "documents", icon: "document" },
     { href: "/client/comunitat", label: "Comunitat", labelKey: "comunitat", icon: "community" },
     { href: "/client/configuracio", label: "Configuració", labelKey: "configuracio", icon: "settings" },
+    // L'última del menú a posta: no és una àrea on es faci res, és on s'hi va
+    // quan alguna de les altres no s'entén. Només la té el client; el manual
+    // del professional i el de l'administració encara no existeixen.
+    { href: "/client/ajuda", label: "Ajuda", labelKey: "ajuda", icon: "help" },
   ],
 };
 

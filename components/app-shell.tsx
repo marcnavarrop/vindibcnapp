@@ -47,7 +47,9 @@ export async function AppShell({
         avatarUrl={avatar}
         modules={settings.modules}
       />
-      <div className="lg:pl-64">{children}</div>
+      {/* En imprimir no hi ha sidebar, així que el contingut no ha de
+          deixar-li lloc: sense això el manual sortiria escapçat per la dreta. */}
+      <div className="lg:pl-64 print:pl-0">{children}</div>
 
       {/* Accés ràpid al suport des de qualsevol pantalla de les àrees internes.
           Va aquí i no a cada pàgina: així no se'n pot quedar cap sense.

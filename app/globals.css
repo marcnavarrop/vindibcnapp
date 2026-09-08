@@ -48,3 +48,79 @@ h2,
 h3 {
   font-family: var(--font-display), Georgia, serif;
 }
+
+/* ─────────────────────────── Impressió ───────────────────────────
+   Pensat per al manual d'ajuda (/client/ajuda), que porta un botó
+   "Descarregar PDF" que no fa res més que cridar `window.print()`. No hi ha
+   cap llibreria de PDF pel mig: el generador és el navegador, i el que el
+   guia és això.
+
+   Les regles que sí que es poden dir amb Tailwind viuen al costat del marcatge
+   (`print:hidden` al menú, `print:pl-0` al contingut). Aquí queda només el que
+   una utilitat no sap dir: els marges de la pàgina de paper, on es pot partir
+   i on no, i el color de fons —que els navegadors no imprimeixen per defecte i
+   deixaria text blanc sobre blanc a les caixes de color—. */
+@media print {
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000;
+    /* El paper no té 16px de base: amb la mida de pantalla el manual sortia
+       en massa fulls i amb les línies massa curtes per als marges d'un A4. */
+    font-size: 10.5pt;
+  }
+
+  /* Sense això, tot el que porta un fons de marca (les caixes d'avís, les
+     capçaleres de taula) s'imprimeix en blanc i el text clar desapareix. */
+  .print-manual [class*="bg-"],
+  .print-manual [class*="text-"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Un títol no es queda mai sol al peu d'un full. */
+  .print-manual h1,
+  .print-manual h2,
+  .print-manual h3,
+  .print-manual h4 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  /* Cada capítol comença a full nou; el primer no, o el PDF s'obriria amb una
+     pàgina en blanc darrere de la portada. */
+  .print-manual [data-chapter] {
+    break-before: page;
+    page-break-before: always;
+  }
+  .print-manual [data-chapter]:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  /* Les peces curtes —un avís, una fila de taula, un pas— no es parteixen. */
+  .print-manual aside,
+  .print-manual li,
+  .print-manual tr,
+  .print-manual [data-nobreak] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-manual p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Els enllaços del manual són àncores dins del mateix document: ensenyar-ne
+     l'URL entre parèntesis (el truc habitual de `content: attr(href)`) només
+     hi afegiria soroll. Es queden com a text, sense subratllat. */
+  .print-manual a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

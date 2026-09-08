@@ -7,8 +7,8 @@ import { formatDate } from "@/lib/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { ClientDocument } from "@/lib/data/client-documents";
 import type { DocFormState } from "@/app/(client)/client/documents/actions";
+import { DOCUMENT_MAX_MB as MAX_MB } from "@/lib/documents";
 
-const MAX_MB = 15;
 const ALLOWED_EXT = ["pdf", "jpg", "jpeg", "png", "heic", "heif", "doc", "docx"];
 const ALLOWED_MIME = new Set([
   "application/pdf",

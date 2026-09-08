@@ -16,6 +16,7 @@ import {
   Contact,
   Package,
   Receipt,
+  CircleHelp,
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
@@ -52,6 +53,7 @@ const NAV_ICONS: Record<NavIcon, LucideIcon> = {
   people: Contact,
   catalog: Package,
   billing: Receipt,
+  help: CircleHelp,
 };
 
 /** Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área. */
@@ -95,7 +97,7 @@ export function AppSidebar({
   return (
     <>
       {/* ── Sidebar fijo (escritorio) ── */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col bg-brand-purple text-white">
+      <aside className="hidden bg-brand-purple text-white lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col print:!hidden">
         <SidebarContent
           role={role}
           specialty={specialty}
@@ -108,7 +110,7 @@ export function AppSidebar({
       </aside>
 
       {/* ── Barra superior (móvil) ── */}
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 bg-brand-purple px-4 py-3 text-white lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 bg-brand-purple px-4 py-3 text-white lg:hidden print:hidden">
         <div className="flex items-center gap-3">
           {/* L'etiqueta la sent un lector de pantalla: ha d'anar en l'idioma
               de qui llegeix. Va en un component a part perquè `aria-label`
