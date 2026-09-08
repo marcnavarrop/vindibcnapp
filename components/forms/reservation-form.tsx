@@ -15,12 +15,21 @@ export function ReservationForm({
   clients,
   trainers,
   action = createReservationAction,
+  cancelHref,
   defaultScheduledAt,
 }: {
   clients: ReservationFormData["clients"];
   trainers: ReservationFormData["trainers"];
   /** Acción del formulario; por defecto la del área admin. */
   action?: (prev: FormState, formData: FormData) => Promise<FormState>;
+  /**
+   * On torna "Cancel·lar". SENSE VALOR PER DEFECTE a posta: aquest formulari
+   * el fan servir dues àrees, i quan l'enllaç apuntava fix a l'agenda de
+   * l'admin, el professional que el premia xocava contra el middleware i
+   * acabava a la seva pantalla d'inici sense saber per què. Un valor per
+   * defecte només hauria amagat el mateix error una mica millor.
+   */
+  cancelHref: string;
   /** Valor inicial de data i hora (YYYY-MM-DDTHH:mm), p. ej. desde el calendario. */
   defaultScheduledAt?: string;
 }) {
@@ -141,7 +150,7 @@ export function ReservationForm({
       <div className="flex items-center gap-3">
         <SubmitButton pendingLabel="Reservant…">Crear reserva</SubmitButton>
         <Link
-          href="/admin/reservas"
+          href={cancelHref}
           className={`text-sm font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
         >
           Cancel·lar

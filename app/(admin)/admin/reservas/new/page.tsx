@@ -26,6 +26,7 @@ export default async function NewReservationPage({
         <ReservationForm
           clients={clients}
           trainers={trainers}
+          cancelHref="/admin/reservas"
           defaultScheduledAt={at}
         />
       </main>

@@ -38,6 +38,7 @@ export default async function NewTrainerReservationPage({
             clients={clients}
             trainers={trainers}
             action={createTrainerReservationAction}
+            cancelHref="/trainer/reservas"
             defaultScheduledAt={at}
           />
         )}
