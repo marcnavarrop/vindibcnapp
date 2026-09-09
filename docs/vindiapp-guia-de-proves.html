@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VindiApp — Guia de proves</title>
+<style>
+  :root {
+    --purple: #642263;
+    --purple-light: #965495;
+    --orange: #ff6d17;
+    --dark: #1b1d1f;
+    --charcoal: #303133;
+    --muted: #777777;
+    --border: #eaeaea;
+    --bg: #f7f7f7;
+    --purple-tint: #f5eef4;
+    --orange-tint: #fff2ea;
+    --green: #1a7a4c;
+    --green-tint: #eaf7f0;
+    --amber-tint: #fef3c7;
+    --amber: #b45309;
+    --red-tint: #fee2e2;
+    --red: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--charcoal);
+    background: var(--bg);
+    margin: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 860px; margin: 0 auto; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+  header { background: var(--purple); color: #fff; padding: 48px 48px 40px; }
+  .wordmark { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
+  .wordmark .bcn { color: var(--orange); }
+  header .subtitle { margin: 8px 0 0; font-size: 17px; color: rgba(255,255,255,0.85); font-weight: 400; }
+  .doc-tag { display: inline-block; margin-top: 20px; padding: 5px 14px; background: rgba(255,255,255,0.15); border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .content { padding: 40px 48px 56px; }
+
+  .intro { background: var(--purple-tint); border-left: 4px solid var(--purple); padding: 18px 22px; border-radius: 6px; margin-bottom: 28px; }
+  .intro p { margin: 0 0 8px; }
+  .intro p:last-child { margin-bottom: 0; }
+  .intro strong { color: var(--purple); }
+
+  .app-link { display: inline-block; background: var(--orange); color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 16px; margin: 4px 0 8px; }
+
+  h2 { color: var(--purple); font-size: 22px; margin: 48px 0 4px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+  h2 .num { display: inline-block; background: var(--purple); color: #fff; width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; font-size: 15px; margin-right: 10px; vertical-align: middle; }
+  h3 { color: var(--dark); font-size: 17px; margin: 26px 0 6px; }
+  h3 .flag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--orange); background: var(--orange-tint); padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+  h4 { color: var(--purple); font-size: 15px; margin: 20px 0 6px; }
+
+  p { margin: 10px 0; }
+  ul { margin: 10px 0; padding-left: 22px; }
+  li { margin: 5px 0; }
+
+  code { background: var(--purple-tint); color: var(--purple); padding: 2px 7px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 15px; }
+  th { background: var(--purple); color: #fff; text-align: left; padding: 12px 14px; font-weight: 600; }
+  th:first-child { border-top-left-radius: 8px; }
+  th:last-child { border-top-right-radius: 8px; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: var(--bg); }
+
+  .tip, .note { padding: 14px 18px; border-radius: 6px; margin: 18px 0; font-size: 15px; }
+  .tip { background: var(--orange-tint); border-left: 4px solid var(--orange); }
+  .tip strong { color: var(--orange); }
+  .note { background: var(--purple-tint); border-left: 4px solid var(--purple-light); }
+  .note strong { color: var(--purple); }
+  .warn { background: var(--amber-tint); border-left: 4px solid var(--amber); padding: 14px 18px; border-radius: 6px; margin: 18px 0; font-size: 15px; }
+  .warn strong { color: var(--amber); }
+
+  .roles-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+  .roles-box ul { margin: 0; }
+
+  .checklist { list-style: none; padding-left: 0; margin: 12px 0; }
+  .checklist li { padding: 7px 0 7px 30px; position: relative; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before { content: "☐"; position: absolute; left: 0; top: 7px; color: var(--purple-light); font-size: 17px; }
+
+  .status-table td:first-child { font-weight: 600; color: var(--dark); }
+
+  .toc { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px 26px; margin: 20px 0; columns: 2; column-gap: 30px; }
+  .toc a { color: var(--purple); text-decoration: none; font-weight: 600; font-size: 14px; }
+  .toc li { margin: 4px 0; break-inside: avoid; }
+
+  .new-badge { display: inline-block; background: var(--green-tint); color: var(--green); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+
+  footer { background: var(--dark); color: rgba(255,255,255,0.7); padding: 24px 48px; font-size: 13px; text-align: center; }
+  footer .wordmark-sm { font-weight: 800; color: #fff; font-size: 15px; }
+  footer .wordmark-sm .bcn { color: var(--orange); }
+
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; max-width: 100%; }
+    h2, h3 { break-after: avoid; }
+  }
+  @media (max-width: 640px) {
+    header, .content, footer { padding-left: 24px; padding-right: 24px; }
+    table { font-size: 13px; }
+    td, th { padding: 9px 10px; }
+    .toc { columns: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <h1 class="wordmark">Vindi<span class="bcn">App</span></h1>
+    <p class="subtitle">Guia de proves completa — plataforma de gestió del centre</p>
+    <span class="doc-tag">Document oficial · actualitzat 9 de setembre 2026</span>
+  </header>
+
+  <div class="content">
+
+    <div class="intro">
+      <p>Aquesta és la guia <strong>completa</strong> de VindiApp. Respecte de la versió del 2 d'agost hi ha molta cosa nova: <strong>pagament amb targeta</strong>, <strong>vals de regal</strong>, <strong>subscripcions mensuals</strong>, <strong>reserves en sèrie i llista d'espera</strong>, <strong>ofertes segmentades</strong>, <strong>notes de sessió</strong>, <strong>l'app en tres idiomes</strong> i <strong>tres manuals d'usuari</strong> dins de la mateixa app.</p>
+      <p><strong>Els pagaments són segurs de provar.</strong> Stripe està en <strong>mode test</strong>: no es cobra ni un cèntim de veritat, per molt que la pantalla digui imports. Es paga amb la targeta de prova <code>4242 4242 4242 4242</code>.</p>
+      <p><strong>La resta de dades ja no són totes de mentida.</strong> A la base hi conviuen clients de demostració i persones reals (el mateix Marc, entre d'altres). Prova, clica i experimenta lliurement amb els comptes demo; però abans d'editar, esborrar o cancel·lar res des de la fitxa d'un client, mira de qui és.</p>
+    </div>
+
+    <p>On és l'app:</p>
+    <a class="app-link" href="https://vindibcnapp.vercel.app">vindibcnapp.vercel.app</a>
+
+    <h2>Comptes de prova</h2>
+    <table>
+      <thead><tr><th>Qui ets</th><th>Correu</th><th>Contrasenya</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Administrador</strong><br><span style="color:var(--muted);font-size:13px;">gestor del centre</span></td><td><code>vindibcn@gmail.com</code></td><td><code>VindiDemo2026!</code></td></tr>
+        <tr><td><strong>Entrenador</strong></td><td><code>demo.entrenador@vindibcn.com</code></td><td><code>VindiDemo2026!</code></td></tr>
+        <tr><td><strong>Fisioterapeuta</strong></td><td><code>demo.fisio@vindibcn.com</code></td><td><code>VindiDemo2026!</code></td></tr>
+        <tr><td><strong>Client</strong></td><td><code>demo.client@vindibcn.com</code></td><td><code>VindiDemo2026!</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <strong>Consell:</strong> per canviar de rol, tanca sessió i torna a entrar amb un altre correu. Amb una finestra d'incògnit en paral·lel pots tenir dos rols oberts alhora — és gairebé imprescindible per provar les subscripcions i la llista d'espera, on una acció de l'admin ha de veure's a l'instant a l'àrea del client.
+    </div>
+    <div class="note">
+      <strong>Sobre els correus:</strong> l'admin és el teu Gmail real, així que els avisos li arribaran de veritat. Els comptes demo d'entrenador/fisio/client no tenen bústia real (Resend els té a la llista de supressió) — els correus no s'entreguen físicament, però tot funciona igual. Per veure un correu real, fes servir el teu propi correu (registre) o els comptes reals Laia/Raul.
+    </div>
+    <div class="warn">
+      <strong>Abans de començar amb els diners:</strong> tots els pagaments amb targeta d'aquesta guia van contra Stripe en <strong>mode test</strong>. La targeta és <code>4242 4242 4242 4242</code>, amb qualsevol data futura i qualsevol CVC. No facis servir una targeta teva de veritat: no cal, i en mode test seria rebutjada igualment.
+    </div>
+
+    <h2>Índex</h2>
+    <ul class="toc">
+      <li><a href="#admin">1. Administrador</a></li>
+      <li><a href="#facturacio">2. Facturació i Bonus</a></li>
+      <li><a href="#trainer">3. Entrenador / Fisio</a></li>
+      <li><a href="#client">4. Client</a></li>
+      <li><a href="#targeta">5. Pagaments amb targeta <span class="new-badge">Nou</span></a></li>
+      <li><a href="#vals">6. Vals de regal <span class="new-badge">Nou</span></a></li>
+      <li><a href="#subscripcions">7. Subscripcions mensuals <span class="new-badge">Nou</span></a></li>
+      <li><a href="#series">8. Sèries, llista d'espera i cortesia <span class="new-badge">Nou</span></a></li>
+      <li><a href="#prova">9. Sessió de prova pública</a></li>
+      <li><a href="#calendari">10. El calendari a fons</a></li>
+      <li><a href="#ofertes">11. Ofertes segmentades i etiquetes <span class="new-badge">Nou</span></a></li>
+      <li><a href="#notes">12. Notes de sessió <span class="new-badge">Nou</span></a></li>
+      <li><a href="#reassignacio">13. Reassignació de client <span class="new-badge">Nou</span></a></li>
+      <li><a href="#config">14. Configuració del centre <span class="new-badge">Ampliat</span></a></li>
+      <li><a href="#referits">15. Sistema de referits</a></li>
+      <li><a href="#idiomes">16. L'app en tres idiomes <span class="new-badge">Nou</span></a></li>
+      <li><a href="#notif">17. Notificacions <span class="new-badge">Reescrit</span></a></li>
+      <li><a href="#rgpd">18. Privacitat i RGPD</a></li>
+      <li><a href="#manuals">19. Els manuals d'usuari <span class="new-badge">Nou</span></a></li>
+      <li><a href="#suport">20. Suport tècnic intern <span class="new-badge">Nou</span></a></li>
+      <li><a href="#pendent">21. Coses que encara no funcionen</a></li>
+      <li><a href="#feedback">22. Com donar feedback</a></li>
+    </ul>
+
+    <h2 id="admin"><span class="num">1</span> Administrador</h2>
+    <p>Correu: <code>vindibcn@gmail.com</code></p>
+    <p>El menú s'organitza en grups amb pestanyes: <strong>Persones</strong>, <strong>Reserves</strong>, <strong>Bons i pagaments</strong>, <strong>Catàleg</strong>, <strong>Facturació</strong>, a més d'Inici, Exercicis, Comunitat, Configuració i <strong>Ajuda</strong>, soles.</p>
+
+    <h3>1.1 Inici <span class="flag">Refet</span></h3>
+    <ul class="checklist">
+      <li><strong>Sis xifres</strong>, totes clicables (et porten a la pantalla d'on surten): Ingressos del mes (amb % vs mes anterior), <strong>Pendent de cobrament</strong>, <strong>Bons a punt d'esgotar-se</strong>, Sessions (avui / setmana), <strong>Ocupació setmanal</strong> i <strong>Conversió de proves</strong></li>
+      <li>Les dues que es poden posar taronges (pendent de cobrament, bons baixos) només ho fan <strong>quan hi ha alguna cosa a fer</strong> — comprova-ho cobrant un bo pendent i veient com es calma</li>
+      <li><strong>Quatre accions ràpides</strong>: Nou client, Nova reserva, Bons pendents, Vals de regal</li>
+      <li><strong>"El que espera resposta"</strong>: sol·licituds de prova pendents amb compte enrere, vals de regal per cobrar, recompenses de referit per aplicar. <strong>Si no hi ha res de les tres coses, la secció no es pinta</strong> (comprova-ho també)</li>
+      <li>"Avui al centre": les sessions del dia de tot l'equip. Les de cortesia porten l'etiqueta <strong>"Cortesia"</strong></li>
+      <li>Ocupació per professional: qui no té cap disponibilitat definida <strong>no hi surt</strong> (no és un 0 %, és una divisió per zero)</li>
+      <li>Amb producció "buida", tot surt a zero o amb guionet, sense errors</li>
+    </ul>
+
+    <h3>1.2 Persones → Clients</h3>
+    <ul class="checklist">
+      <li><strong>Cercador instantani</strong>: per nom, correu o telèfon (sense accents; el telèfon es compara només amb els dígits, així que "600100" el troba amb prefix o amb espais)</li>
+      <li>La cerca mira <strong>només dades del client</strong>: escriure el nom d'una professional no retorna els seus clients (per això hi ha el filtre per professional, que s'activa des del recompte de la pantalla de Professionals)</li>
+      <li>A cada fila, dues accions fora de l'enllaç: la <strong>icona de WhatsApp</strong> (només si té telèfon) i "Reenviar invitació". Comprova que tocar la fila obre la fitxa i que tocar les icones <strong>no</strong> l'obre</li>
+      <li>"+ Nou client": nom, correu, telèfon, professional assignat i els dos blocs de notes</li>
+      <li><strong>El correu només s'escriu a l'alta.</strong> A "Editar" es veu però no es toca — el canvia el client des de la seva àrea (secció 4.6)</li>
+    </ul>
+
+    <h3>1.3 La fitxa del client <span class="flag">Deu pestanyes</span></h3>
+    <ul class="checklist">
+      <li>Capçalera: nom, correu, <strong>telèfon amb enllaç a WhatsApp</strong> i les <strong>etiquetes</strong> que porti (surten aquí, i no només a la seva pestanya, perquè dirigeixen ofertes)</li>
+      <li>Tres botons a dalt: Exportar dades, Editar, Eliminar client</li>
+      <li>Les deu pestanyes: <strong>Resum</strong>, Bons, Pagaments, Reserves, Exercicis, Progrés, Documents, <strong>Etiquetes</strong>, Notes, Notificacions</li>
+      <li>A <strong>Resum</strong>: canvia el professional assignat <strong>des d'aquí mateix</strong>, amb un desplegable, sense passar per "Editar" (secció 13)</li>
+      <li>A "Bons": <strong>"+ Afegir bo"</strong> ven un bo a aquesta persona amb el preu que li toca a <strong>ella</strong> (ofertes segmentades incloses — provar amb un client etiquetat)</li>
+      <li>A "Notes": edita clíniques i generals per separat i desa. <strong>Cap de les dues la veu el client</strong></li>
+      <li>A "Progrés": registra una càrrega (kg+reps) d'un exercici assignat</li>
+      <li>A "Notificacions": prova "Reenviar invitació", "Notificar exercicis nous" i "Recordatori de propera sessió"</li>
+      <li>Amb un client que rebi fisioteràpia i encara no hagi acceptat el consentiment de salut, comprova que surt el <strong>requadre taronja</strong> sota la capçalera</li>
+    </ul>
+
+    <h3>1.4 Persones → Professionals</h3>
+    <ul class="checklist">
+      <li>"+ Nou professional": nom, correu, <strong>foto</strong> (JPG/PNG/WEBP fins a 3 MB) i especialitat — rep la invitació per correu</li>
+      <li>Un cop creat, el nom i el correu <strong>es veuen però no es toquen</strong>; la foto i l'especialitat sí</li>
+      <li>L'especialitat no és decorativa: <strong>decideix quins serveis vénen marcats per defecte</strong> en crear-li una franja de disponibilitat</li>
+      <li><strong>Clica el número de clients assignats</strong>: et porta a Clients ja filtrat per ell, amb un xip per treure el filtre. Amb zero clients no és enllaç</li>
+      <li>Comprova que <strong>no hi ha botó d'esborrar</strong>: si algú plega, se li buida la disponibilitat</li>
+    </ul>
+
+    <h3>1.5 Reserves → Reserves</h3>
+    <ul class="checklist">
+      <li>Dues vistes amb el selector de dalt: <strong>Calendari</strong> i <strong>Llista</strong></li>
+      <li>Filtra per <strong>professional</strong>, per <strong>client</strong> i per <strong>tipus de servei</strong> — combinables, amb "Netejar filtres"</li>
+      <li>Color de la targeta = tipus de servei (es canvia a Configuració → Colors)</li>
+      <li><strong>"Mostrar disponibilitat"</strong>: ombreja les franges lliures amb el color de <strong>cada persona</strong>, i es poden encendre i apagar un per un</li>
+      <li>L'admin gestiona QUALSEVOL reserva de qualsevol professional, sense cadenat mai</li>
+      <li>Les reserves cancel·lades desapareixen del calendari en viu (segueixen a l'historial)</li>
+      <li>A la vista de llista, les sessions passades porten <strong>la nota del professional</strong> si n'hi ha (secció 12)</li>
+      <li>Les sol·licituds de prova pendents surten al calendari i s'accepten o rebutgen <strong>tocant-les</strong>, sense anar a la seva pantalla</li>
+    </ul>
+
+    <h3>1.6 Reserves → Crear i gestionar</h3>
+    <ul class="checklist">
+      <li>"+ Nova reserva", o tocant un forat del calendari (arriba amb el dia i l'hora ja posats)</li>
+      <li>El desplegable de bo <strong>només ensenya bons amb sessions disponibles</strong>. Si surt buit, ven-li'n un abans</li>
+      <li><strong>Casella "Sessió de cortesia"</strong>: en marcar-la desapareix el selector de bo i has de dir el tipus de servei (secció 8.3)</li>
+      <li><strong>"Repeticions setmanals"</strong>: fins a 52 reserves, una per setmana, a la mateixa hora</li>
+      <li>Prova les tres accions sobre una reserva: <strong>Cancel·lar</strong> (retorna la sessió al bo + avisa el client + cedeix la plaça a la llista d'espera), <strong>Completar</strong> (és el que la fa comptar a liquidacions i bonus) i <strong>Reprogramar</strong> (canvia dia i hora sense tocar el bo)</li>
+    </ul>
+    <div class="warn"><strong>Una sessió que va passar i ningú no va marcar com a completada no es paga.</strong> És la causa número u de "la liquidació no em quadra" (secció 2.2).</div>
+
+    <h3>1.7 Reserves → Disponibilitat</h3>
+    <ul class="checklist">
+      <li>Regles setmanals: diversos dies alhora + franja + data d'inici (fi opcional) + <strong>quins serveis s'hi ofereixen</strong></li>
+      <li>Una franja <strong>sense cap servei marcat no la pot fer servir ningú</strong> — prova-ho</li>
+      <li><strong>Bloquejos temporals</strong>: vacances, baixes o una tarda puntual, com a dia complet o amb hora exacta, amb motiu opcional. Un bloqueig <strong>guanya sempre</strong> a l'horari setmanal</li>
+      <li>Si el bloqueig cau sobre reserves ja fetes, la pantalla t'atura i te les ensenya: <strong>el bloqueig es crea igualment</strong>, tu tries quines cancel·les (les marcades retornen la sessió al bo i avisen el client)</li>
+      <li>Comprova que <strong>un bloqueig que ja ha començat no es pot esborrar</strong>, i un futur sí</li>
+    </ul>
+    <div class="warn"><strong>Mentre un professional no tingui cap franja, ningú no li pot reservar res.</strong> És la causa número u de "no em deixa reservar amb ella".</div>
+
+    <h3>1.8 Bons i pagaments → Bons</h3>
+    <ul class="checklist">
+      <li>Un bo "Pendent de pagament" (comprat amb "Pagar al centre") <strong>ja es pot fer servir per reservar a l'instant</strong></li>
+      <li><strong>"Marcar com pagat" ja no és un sol clic</strong>: obre un diàleg amb client, servei, sessions i import, i avisa que un cop fet <strong>no es pot desfer des de cap pantalla</strong></li>
+      <li>Sobre un bo <strong>decaigut</strong> per impagament, el botó canvia: <strong>"Cobrar i recuperar"</strong> (torna el bo amb les sessions que li quedaven; les reserves cancel·lades <strong>no</strong> tornen) o <strong>"Només cobrar"</strong> si ja ha passat de data</li>
+      <li>Cobrar un bo pot fer tres coses més alhora: generar una recompensa de referit, reprendre una subscripció aturada i anotar un pagament en efectiu</li>
+      <li>Indicador de risc en taronja si s'han consumit sessions abans de pagar</li>
+    </ul>
+
+    <h3>1.9 Bons i pagaments → Subscripcions <span class="flag">Nou</span></h3>
+    <p>Té secció pròpia: veure <a href="#subscripcions">7</a>. Comprova de passada que la barra de pestanyes del grup n'ensenya <strong>cinc</strong> (Bons, Subscripcions, Pagaments, Vals de regal, Referits) des de qualsevol de les cinc pantalles.</p>
+
+    <h3>1.10 Bons i pagaments → Pagaments</h3>
+    <ul class="checklist">
+      <li>Registre de tot el que ha entrat, amb el total de l'històric a dalt a la dreta. És d'aquí que surt la xifra d'ingressos de l'inici</li>
+      <li>Comprova que hi apareixen apunts de <strong>cinc orígens</strong>: venda de bo, cobrament d'un bo pendent, cobrament d'un val de regal, <strong>renovació d'una subscripció</strong> i alta manual</li>
+      <li>"+ Nou pagament": client, bo opcional (triar-lo omple l'import sol), quantitat i mètode</li>
+      <li>Comprova que <strong>no hi ha esborrar ni editar</strong>: és un llibre de comptes, un apunt equivocat es corregeix amb un altre apunt</li>
+    </ul>
+
+    <h3>1.11 Catàleg → Serveis / Ofertes / Etiquetes</h3>
+    <ul class="checklist">
+      <li>Serveis: paquets agrupats amb preus reals, edita/afegeix/desactiva</li>
+      <li>Ofertes i Etiquetes tenen secció pròpia: veure <a href="#ofertes">11</a></li>
+      <li>Comprova que <strong>Etiquetes surt al menú lateral</strong> i no només com a pestanya de dins del grup</li>
+    </ul>
+
+    <h3>1.12 Exercicis</h3>
+    <ul class="checklist">
+      <li>La biblioteca és <strong>compartida</strong> amb els professionals: un exercici no és de qui el va crear</li>
+      <li>Crea'n un amb nom, <strong>categoria</strong>, descripció i vídeo: prova les dues maneres, <strong>pujar un fitxer</strong> (des del mòbil) i <strong>enganxar una adreça</strong> (YouTube, Vimeo)</li>
+      <li><strong>Categories</strong>: pantalla pròpia, a la qual s'arriba des de la biblioteca. Crea'n una, filtra-hi</li>
+      <li>L'assignació no es fa aquí sinó a la fitxa del client → Exercicis</li>
+    </ul>
+
+    <h3>1.13 Comunitat → Anuncis / Enquestes</h3>
+    <ul class="checklist">
+      <li>Anuncis: crea'n un i comprova que el client i el professional el veuen. Surt signat amb qui el va escriure</li>
+      <li>Enquestes: opció única o múltiple i, opcionalment, <strong>dia de tancament automàtic</strong></li>
+      <li><strong>"Veure resultats" ensenya els percentatges i, desplegant cada opció, els noms de qui l'ha votada.</strong> Per al client són anònims: ell només veu els percentatges</li>
+      <li>"Tancar" la deixa visible sense admetre respostes; "Eliminar" se l'endú amb les respostes</li>
+    </ul>
+    <div class="note"><strong>Compte amb què promets:</strong> si dius als clients que una enquesta és anònima, recorda que tu sí que veus qui ha votat què.</div>
+
+    <h3>1.14 Configuració i Ajuda</h3>
+    <p>Configuració té ara cinc pestanyes: <strong>Centre</strong>, <strong>Registre de centres</strong>, <strong>Colors</strong>, Notificacions i Seguretat — veure secció <a href="#config">14</a>. "Ajuda" és el manual de l'administració, l'última entrada del menú — veure secció <a href="#manuals">19</a>.</p>
+
+    <h2 id="facturacio"><span class="num">2</span> Facturació i Bonus</h2>
+    <div class="warn">
+      <strong>Important:</strong> aquesta secció és una <strong>eina de càlcul intern</strong>, no genera documents amb validesa fiscal garantida. El format del document és provisional fins que es confirmi amb l'assessor si els professionals són autònoms o empleats.
+    </div>
+
+    <h3>2.1 Tarifes</h3>
+    <ul class="checklist">
+      <li>Defineix un import <strong>global del centre</strong> per cada tipus de servei (la mateixa tarifa aplica a tots els professionals per igual)</li>
+      <li>Per a Grup Reduït: és un import fix per la franja sencera, no per client que hi assisteix</li>
+      <li>Si edites una tarifa, no esborra l'anterior — queda l'històric per calcular correctament períodes passats</li>
+    </ul>
+
+    <h3>2.2 Liquidacions</h3>
+    <ul class="checklist">
+      <li>Tria un professional i un període (mes o rang personalitzat)</li>
+      <li>Calcula: compta les sessions <strong>completades</strong> reals i les multiplica per la tarifa vigent el dia de cada sessió</li>
+      <li>Prem <strong>"Generar factura"</strong>: s'obre un diàleg de revisió (professional, període, desglossament, total) — <strong>res es desa encara</strong></li>
+      <li>Confirma amb "Sí, generar i enviar": es desa, es genera un PDF descarregable, i s'envia un correu automàtic al professional</li>
+      <li>Torna a intentar generar una factura del <strong>mateix període</strong>: queda bloquejat amb avís clar (no es pot duplicar)</li>
+      <li>Canviar una tarifa <strong>després</strong> de generar una factura no altera l'import ja generat (queda congelat)</li>
+      <li>Si els números no quadren: o hi ha sessions sense marcar com a completades, o hi ha sessions d'un servei que aquell dia <strong>no tenia cap tarifa vigent</strong> — <strong>el peu del càlcul t'ho diu amb el nombre exacte</strong></li>
+    </ul>
+
+    <h3>2.3 Bonus</h3>
+    <ul class="checklist">
+      <li>Defineix un <strong>pes</strong> per cada tipus de sessió (ex. individual=1, grup=0.5)</li>
+      <li>Defineix <strong>trams progressius</strong> (com l'IRPF: les primeres X unitats a un preu, només l'excés a l'altre)</li>
+      <li><strong>Els trams són per freqüència</strong>: el joc de trams de l'anual i el del biennal són llistes separades. Comprova que canviar un no toca l'altre</li>
+      <li>Per cada professional: activa el bonus i tria freqüència <strong>Anual o Biennal</strong></li>
+      <li>Si no et deixa tancar un bonus, el missatge diu quina de les tres és: no hi ha trams per a aquella freqüència, el període ja estava tancat, o no hi ha cap unitat acumulada</li>
+      <li>El professional veu el seu progrés a la seva pantalla d'Inici (secció 3.1)</li>
+    </ul>
+
+    <h2 id="trainer"><span class="num">3</span> Entrenador / Fisio</h2>
+    <p>Correu: <code>demo.entrenador@vindibcn.com</code> o <code>demo.fisio@vindibcn.com</code></p>
+
+    <h3>3.1 Inici</h3>
+    <ul class="checklist">
+      <li>Targetes KPI del seu dia a dia, amb la capçalera "avui" en <strong>hora del centre</strong></li>
+      <li>"Properes reserves" amb toggle <strong>"Els meus / Tots"</strong> — en "Tots" veus les dels companys (sense poder-les tocar)</li>
+      <li>Botó <strong>"Afegir al calendari"</strong> a cada reserva pròpia (Google/Apple/Outlook)</li>
+      <li>Si té el bonus actiu: panell <strong>"El teu bonus"</strong> amb període actual, unitats acumulades, tram i import estimat</li>
+    </ul>
+
+    <h3>3.2 Clients <span class="flag">Ampliat</span></h3>
+    <ul class="checklist">
+      <li>Toggle "Els meus / Tots" — veus la fitxa completa de qualsevol client (coordinació), però només edites/reserves els teus assignats</li>
+      <li>Icona de <strong>WhatsApp</strong> a la llista i a la fitxa</li>
+      <li><strong>Pots canviar el professional assignat d'un client</strong>, també si no és teu (secció 13)</li>
+      <li><strong>Pots etiquetar els teus clients</strong> i crear una etiqueta nova des de la fitxa; el que no pots és mantenir el catàleg d'etiquetes</li>
+      <li>Notes clíniques/generals: <strong>només lectura</strong> per al trainer</li>
+    </ul>
+
+    <h3>3.3 Reserves</h3>
+    <ul class="checklist">
+      <li><strong>Multicheck de companys</strong> (si l'admin ho ha activat a Configuració): desmarcat per defecte, marca'n un o diversos per veure les seves reserves superposades</li>
+      <li>Checkbox <strong>"Mostrar la meva disponibilitat"</strong>: ombreig verd suau, on/off</li>
+      <li>Clica una franja buida per reservar, una reserva pròpia per gestionar-la</li>
+      <li>Pot crear <strong>sessions de cortesia</strong> i <strong>repeticions setmanals</strong>, igual que l'admin</li>
+      <li>A la vista de llista, apartat <strong>"Passades"</strong>: hi escriu <strong>la nota de la sessió</strong> (secció 12)</li>
+    </ul>
+
+    <h3>3.4 Bons <span class="flag">Nou: ven i cobra</span></h3>
+    <ul class="checklist">
+      <li>La pantalla "Bons" del menú és <strong>només de consulta</strong>: tots els bons del centre, sense cap botó</li>
+      <li><strong>Els bons es creen des de la fitxa del client</strong> → pestanya Bons, i només per als clients assignats</li>
+      <li>Allà mateix hi ha <strong>"Marcar com pagat"</strong> per als pendents de cobrament (amb el mateix diàleg de confirmació que l'admin)</li>
+    </ul>
+
+    <h3>3.5 Les meves factures</h3>
+    <ul class="checklist">
+      <li>Els períodes que l'administració ja ha tancat, amb dates, import i <strong>el desglossament per servei i tarifa</strong></li>
+      <li>Botó de descàrrega del PDF. Pantalla de només lectura</li>
+    </ul>
+
+    <h3>3.6 Exercicis, Disponibilitat, Comunitat, Configuració, Ajuda</h3>
+    <ul class="checklist">
+      <li><strong>Manté la biblioteca d'exercicis</strong>: en crea, n'edita i gestiona categories, igual que l'admin</li>
+      <li>Disponibilitat: mateixa gestió que l'admin (regles setmanals + bloquejos), però només per a ell</li>
+      <li>Configuració té <strong>dues</strong> pestanyes: Notificacions i Contrasenya</li>
+      <li>Botó rodó de <strong>suport</strong> a baix a la dreta de totes les pantalles (secció 20) i <strong>"Ajuda"</strong> al final del menú (secció 19)</li>
+    </ul>
+
+    <h2 id="client"><span class="num">4</span> Client</h2>
+    <p>Correu: <code>demo.client@vindibcn.com</code></p>
+    <div class="note"><strong>La part més important de provar:</strong> és la que faran servir els teus clients cada dia. I és l'única àrea que parla tres idiomes (secció 16).</div>
+
+    <h3>4.1 Inici <span class="flag">Refet</span></h3>
+    <ul class="checklist">
+      <li>Quatre xifres: <strong>Sessions restants</strong>, <strong>Bons actius</strong>, <strong>Properes reserves</strong> (7 dies) i <strong>Assistència</strong></li>
+      <li>Tres accions: Reservar sessió, Comprar bo, Els meus entrenaments</li>
+      <li>Blocs de bons actius (amb la data de caducitat o "sense data"), properes reserves i comunitat</li>
+      <li>Targetes de creixement: <strong>"Regala Vindi"</strong> (secció 6) i <strong>"Porta un amic"</strong> amb el codi de referit i el botó de copiar (secció 15)</li>
+      <li>Amb un compte sense fitxa de client, comprova que surt l'avís "Encara no tens fitxa de client" i no un error</li>
+    </ul>
+
+    <h3>4.2 Reserves</h3>
+    <ul class="checklist">
+      <li>Vista per dia o per setmana (<strong>al mòbil s'obre per dia</strong>), amb fletxes endavant i endarrere</li>
+      <li>El calendari s'obre <strong>filtrat pel teu professional assignat</strong> — canvia a "Tots" per veure la resta</li>
+      <li>Color per professional (llegenda sota el calendari) + filtres per servei i per professional</li>
+      <li>Només hi surt <strong>el que pots reservar amb els bons que tens</strong>. Sense bo actiu no surt cap franja, i l'app t'ho diu a dalt de tot</li>
+      <li>Grup Reduït: comptador d'ocupació amb semàfor — verd si hi ha lloc de sobres, ambre si en queda una, vermell si és plena</li>
+      <li>En obrir una sessió de grup <strong>veus qui s'hi ha apuntat</strong>; a la graella, no (el calendari es veu de lluny)</li>
+      <li>Reserva pròpia: es marca en verd amb un check i <strong>surt sempre, encara que hi hagi filtres posats</strong></li>
+      <li>Prova que el botó es bloqueja i diu "Reservant…" — un doble clic no ha de fer dues reserves</li>
+      <li>Intenta reservar dues sessions a la mateixa hora: la segona ja no és clicable</li>
+      <li>Cancel·lar demana confirmació; passat el marge mínim <strong>el botó desapareix i l'app explica per què</strong></li>
+      <li><strong>"Sessions passades"</strong>, a sota: l'historial amb <strong>la nota del professional</strong> si n'hi ha (secció 12)</li>
+      <li>Sèries i llista d'espera: secció <a href="#series">8</a></li>
+    </ul>
+
+    <h3>4.3 Bons</h3>
+    <ul class="checklist">
+      <li>Pestanyes "Comprar bo nou" / "Els meus bons"</li>
+      <li>Compra en 3 passos: servei → paquet → <strong>com el pagues</strong></li>
+      <li>Abans de crear res, <strong>finestra de resum amb la casella de condicions de compra</strong>: fins que no la marques, el botó no s'activa</li>
+      <li>Preu tatxat + etiqueta de descompte si hi ha oferta activa (i l'avís de si s'aplica el teu descompte de referit o l'oferta)</li>
+      <li>"Pagar al centre": el bo neix <strong>pendent de pagament</strong> i <strong>ja el pots fer servir</strong> a l'instant</li>
+      <li>"Pagar amb targeta": secció <a href="#targeta">5</a></li>
+      <li><strong>Bescanviar un val de regal</strong> des d'aquesta mateixa pantalla (secció 6)</li>
+    </ul>
+
+    <h3>4.4 Exercicis / Documents / Comunitat</h3>
+    <ul class="checklist">
+      <li>Exercicis: el teu progrés (evolució de càrrega), assignats amb vídeo, biblioteca completa</li>
+      <li>Documents: puja/descarrega/esborra els teus (PDF, imatge, Word)</li>
+      <li>Comunitat: anuncis + <strong>respon una enquesta</strong> (un cop votat, veus els percentatges i queda fixat)</li>
+    </ul>
+
+    <h3>4.5 Configuració → Dades personals, Privacitat, Notificacions</h3>
+    <ul class="checklist">
+      <li><strong>Nom i telèfon són obligatoris</strong> (asterisc); data de naixement, alçada, pes, gènere, contacte d'emergència i objectiu, opcionals</li>
+      <li>Si el compte és d'abans que el telèfon fos obligatori, el formulari te'l demana el primer cop que hi desis res — <strong>no és un error</strong></li>
+      <li>El correu hi surt però <strong>no s'hi pot tocar</strong>: es canvia a "Compte"</li>
+      <li><strong>Selector d'idioma</strong> a dalt, sota "Preferències": es desa sol en triar-lo, sense botó (secció 16)</li>
+      <li>Privacitat: <strong>data i versió</strong> del que vas acceptar en registrar-te, i el <strong>consentiment de dades de salut</strong> amb la casella per donar-lo</li>
+      <li>Notificacions: la llista amb caselles "Email". Comprova que <strong>no hi surten tots</strong> els avisos (secció 17)</li>
+      <li>Codi de referit al final de Dades personals, amb el compte d'amics que has portat</li>
+    </ul>
+
+    <h3>4.6 Configuració → Compte <span class="flag">Nou</span></h3>
+    <ul class="checklist">
+      <li><strong>Canviar el correu d'accés, en dos passos</strong>: escrius el correu nou i <strong>la contrasenya actual</strong>; t'enviem un enllaç a la bústia <strong>NOVA</strong></li>
+      <li>Fins que no obris l'enllaç des d'allà, <strong>el canvi no es fa</strong> i segueixes entrant amb el de sempre — comprova-ho intentant entrar amb el nou abans de confirmar</li>
+      <li>Mentre la petició està pendent, l'app t'ho recorda i <strong>et deixa anul·lar-la</strong></li>
+      <li><strong>El correu antic rep un avís</strong> que algú ha demanat el canvi. Comprova que arriba: és l'única senyal si no has estat tu</li>
+      <li>Un cop confirmat, comprova que el correu <strong>de la fitxa</strong> també ha canviat (no només el d'accés)</li>
+      <li><strong>Canviar la contrasenya</strong>: cal l'actual i la nova dues vegades, mínim 8 caràcters i diferent de l'actual</li>
+      <li>Comprova que <strong>canviar-la no et tanca la sessió</strong>: segueixes dins</li>
+      <li>Prova a posar malament la contrasenya actual: <strong>es comprova al servidor</strong>, no només al navegador</li>
+    </ul>
+
+    <h2 id="targeta"><span class="num">5</span> Pagaments amb targeta (Stripe) <span class="new-badge">Nou</span></h2>
+    <div class="warn">
+      <strong>Mode test.</strong> Stripe encara no està verificat a nom del centre, així que tot va contra l'entorn de proves: <strong>no es cobra res de veritat</strong>. Targeta <code>4242 4242 4242 4242</code>, qualsevol data futura, qualsevol CVC, qualsevol codi postal. Als comptes reals no els arribarà cap càrrec.
+    </div>
+    <p>La pàgina de pagament és de Stripe: <strong>les dades de la targeta no passen mai pel domini de VindiApp</strong>.</p>
+
+    <h3>5.1 La regla que ordena tot el flux</h3>
+    <ul class="checklist">
+      <li><strong>Prémer "Pagar amb targeta" no crea res.</strong> El bo neix quan Stripe confirma el cobrament</li>
+      <li>En tornar pots trobar-te la pantalla <strong>"Estem confirmant el pagament"</strong>: vol dir que la confirmació encara no ha arribat. Espera — el bo apareix sol</li>
+      <li><strong>Tanca la pestanya de Stripe a mitges</strong>: comprova que no es crea ni es cobra res, i que pots tornar a intentar-ho</li>
+      <li>Escriu a mà l'adreça de la pantalla d'èxit sense haver pagat: comprova que <strong>no et regala cap bo</strong> (la tornada no val com a prova de pagament)</li>
+    </ul>
+
+    <h3>5.2 Comprar un bo amb targeta</h3>
+    <ul class="checklist">
+      <li>Client → Bons → Comprar bo nou → servei → paquet → <strong>"Pagar amb targeta"</strong></li>
+      <li>Accepta les condicions, paga amb la 4242 i comprova que el bo apareix <strong>actiu</strong> (no "pendent de pagament")</li>
+      <li>Comprova que a l'admin surt el <strong>pagament anotat</strong> a Bons i pagaments → Pagaments</li>
+      <li>Prova una targeta rebutjada de Stripe (<code>4000 0000 0000 0002</code>): no s'ha de crear cap bo</li>
+    </ul>
+
+    <h3>5.3 Si les claus de Stripe no hi són</h3>
+    <ul class="checklist">
+      <li>Comprova que, sense claus, <strong>el botó de targeta simplement no apareix</strong> i només s'ofereix "Pagar al centre" — no ha de sortir mai un botó que porti a un error</li>
+    </ul>
+
+    <h2 id="vals"><span class="num">6</span> Vals de regal (Regala Vindi) <span class="new-badge">Nou</span></h2>
+    <p>Un val de regal és el mateix paquet de sessions que compraries per a tu, però amb un codi perquè el faci servir una altra persona. S'hi arriba des de la targeta de l'Inici del client o del final de la pantalla de Bons.</p>
+
+    <h3>6.1 Comprar-lo (client)</h3>
+    <ul class="checklist">
+      <li>Servei → paquet → (opcional) <strong>nom de qui el rep, el seu correu i una dedicatòria</strong> → com el pagues</li>
+      <li>Comprova que <strong>els vals es paguen sempre a preu de catàleg</strong>: un descompte personal teu no s'hi aplica</li>
+      <li>Un cop creat: <strong>copiar el codi</strong>, <strong>descarregar el PDF</strong> o <strong>enviar-lo per correu</strong> des de la mateixa pantalla</li>
+      <li>Descarrega el PDF i comprova el <strong>logotip</strong> i que surt en <strong>l'idioma de qui el compra</strong> (secció 16)</li>
+      <li>Al final de la pantalla, la llista dels que has regalat amb codi, paquet, import, estat i data — i el PDF sempre recuperable</li>
+    </ul>
+    <div class="warn"><strong>Pagat al centre = codi que encara no funciona.</strong> El val es genera i es descarrega de seguida, però <strong>no és bescanviable fins que el centre confirma el cobrament</strong>. Pagat amb targeta, neix ja bescanviable. Prova les dues coses.</div>
+
+    <h3>6.2 Bescanviar-lo (l'altre client)</h3>
+    <ul class="checklist">
+      <li>Des de Client → Bons, el bloc per <strong>introduir el codi</strong></li>
+      <li>Comprova que un val <strong>pendent de pagament</strong> no es deixa bescanviar, i que el missatge ho explica</li>
+      <li>Un cop bescanviat, es converteix en <strong>un bo seu</strong> i ja pot reservar</li>
+      <li><strong>Qui el va pagar rep un correu</strong> avisant que s'ha bescanviat — comprova que arriba (aquest avís no es pot desactivar)</li>
+      <li>Prova a bescanviar dues vegades el mateix codi: la segona ha de fallar amb un missatge clar</li>
+    </ul>
+
+    <h3>6.3 Gestió des de l'admin</h3>
+    <ul class="checklist">
+      <li>Bons i pagaments → Vals de regal. <strong>Cinc estats</strong>: Pendent de pagament, Actiu, Bescanviat, Caducat, Anul·lat</li>
+      <li>Tres accions: <strong>PDF</strong> (reimprimir o reenviar), <strong>Marcar com pagat</strong> (només als pendents) i <strong>Anul·lar</strong> (no surt als bescanviats)</li>
+      <li>Els pendents han de sortir al plafó <strong>"El que espera resposta"</strong> de l'Inici</li>
+      <li>Desactiva la venda a Configuració → Centre i comprova que <strong>els clients no en poden comprar de nous però els que ja hi ha es continuen cobrant i bescanviant</strong>, i que la pantalla no desapareix del menú</li>
+      <li>La taula no s'ha de sortir de la pantalla al mòbil</li>
+    </ul>
+
+    <h2 id="subscripcions"><span class="num">7</span> Subscripcions mensuals de grup <span class="new-badge">Nou</span></h2>
+    <p>La quota mensual dels bons de <strong>grup reduït</strong>: en comptes de comprar el bo cada vegada, el client paga cada mes i rep les seves sessions. <strong>Només els bons de grup es poden subscriure</strong>, i només se'n pot tenir <strong>una de viva alhora</strong>.</p>
+
+    <h3>7.1 Les dues regles que ho ordenen tot</h3>
+    <ul class="checklist">
+      <li>Es renova <strong>el dia del mes en què es va donar d'alta</strong>, no el dia 1 — i l'app li diu quin és abans de confirmar</li>
+      <li>El <strong>preu queda congelat</strong>: puja el preu del paquet al catàleg i comprova que qui ja està subscrit segueix pagant el mateix</li>
+    </ul>
+
+    <h3>7.2 Alta (client)</h3>
+    <ul class="checklist">
+      <li>Bons → Comprar bo nou → un paquet de <strong>Grup reduït</strong>: hi ha d'haver <strong>una sola porta</strong> cap a la subscripció, amb el mètode de pagament a dins</li>
+      <li><strong>Alta "al centre"</strong>: es crea a l'instant, amb el bo del primer mes pendent de cobrament</li>
+      <li><strong>Alta amb targeta</strong> (4242): comprova que la pantalla de tornada <strong>sap esperar</strong> i que la subscripció no es confon amb una compra d'un dia</li>
+      <li>Comprova que amb una subscripció viva ja no se n'ofereix una segona</li>
+      <li>Amb les subscripcions desactivades a Configuració, comprova que <strong>no se'n poden contractar de noves però les vigents es continuen renovant</strong></li>
+    </ul>
+
+    <h3>7.3 El que veu el client (Els meus bons)</h3>
+    <ul class="checklist">
+      <li>Targeta "La meva subscripció": import mensual, <strong>data de renovació</strong>, sessions que li queden aquest mes i <strong>fins quan valen</strong></li>
+      <li>Si el mes consta sense pagar, l'avís per pagar-lo al centre; si està aturada per impagament, que <strong>es reprèn sola en pagar</strong></li>
+      <li><strong>"Afegir una sessió extra"</strong> quan ja ha gastat les del mes: es paga <strong>al preu per sessió del seu bo</strong>, no al d'una sessió solta, i caduca amb el mes. Prova pagant-la al centre i amb targeta</li>
+      <li>Comprova el <strong>límit d'extres</strong>: passat el màxim configurat, el botó ja no ha de sortir</li>
+      <li><strong>"Canviar la targeta o veure els rebuts"</strong>: obre el portal de client de Stripe (només si es paga amb targeta)</li>
+      <li><strong>"Donar-me de baixa"</strong>: comprova que <strong>no és immediata</strong> — conserva el mes pagat i no se'n cobra cap més. El botó desapareix un cop demanada</li>
+      <li>Amb la subscripció <strong>congelada</strong> pel centre, comprova que el client <strong>no té cap acció</strong> i que l'app li explica que no ha de pagar res i que no perd el temps aturat</li>
+    </ul>
+
+    <h3>7.4 El panell de l'admin</h3>
+    <ul class="checklist">
+      <li>Filtres: <strong>Vives, Aturades, Congelades, Totes</strong></li>
+      <li>Cada fila: client, paquet, quota, <strong>com va aquest mes</strong> (sessions restants i si el bo del cicle està cobrat), quan es renova i estat</li>
+      <li>Els estats es distingeixen a cop d'ull: <strong>Aturada per impagament en taronja</strong> (hi ha feina) i <strong>Congelada en lila</strong> (és una decisió teva)</li>
+      <li><strong>Donar de baixa</strong>: al final del període ja pagat, mai a l'instant</li>
+      <li><strong>Canviar el preu mensual</strong>: només afecta els cicles següents. Comprova que <strong>amb targeta no es pot canviar des d'aquí</strong></li>
+      <li><strong>Congelar</strong>: cap cobrament, cap bo nou, cap compte enrere. Amb targeta, <strong>la data de represa és obligatòria</strong>; al centre pot ser indefinida</li>
+      <li><strong>Reprendre</strong>: comprova que la propera renovació <strong>es desplaça exactament els dies que va estar congelada</strong></li>
+    </ul>
+
+    <h3>7.5 Les renovacions automàtiques</h3>
+    <ul class="checklist">
+      <li>La renovació emet el bo del mes, anota el cobrament i <strong>estén les sèries de reserves</strong> cap al mes nou (secció 8.1)</li>
+      <li>Si el mes no es pot cobrar, la subscripció queda <strong>aturada per impagament</strong> i el client rep l'avís</li>
+      <li>Les renovacions <strong>no esperen l'hora dels recordatoris</strong>: es fan el dia que toca</li>
+    </ul>
+    <div class="note"><strong>Limitació coneguda i acceptada:</strong> una congelació més llarga que un cicle sencer retorna el temps de la renovació però <strong>no reemet el bo d'aquell mes</strong>. La sortida és manual, des del panell d'admin.</div>
+
+    <h2 id="series"><span class="num">8</span> Sèries, llista d'espera i sessions de cortesia <span class="new-badge">Nou</span></h2>
+
+    <h3>8.1 Reservar en bucle: les sèries (client)</h3>
+    <ul class="checklist">
+      <li>Dues portes: la casella <strong>"Fer-ho recurrent"</strong> en reservar, i <strong>"Repetir en bucle a partir d'aquesta"</strong> sobre una sessió que ja tens</li>
+      <li>Tries la freqüència (<strong>cada setmana, cada dues, cada mes</strong>) i fins quan (una data, un nombre de sessions, o tots dos: mana el primer límit)</li>
+      <li><strong>"Veure les sessions"</strong> calcula la sèrie i te l'ensenya sencera. <strong>Comprova que encara no s'ha reservat res</strong></li>
+      <li>Llegeix les etiquetes de la revisió: <strong>Confirmada</strong>, <strong>Ja reservada</strong> (s'adopta, no es duplica), <strong>Alternativa proposada</strong> (no compta fins que prems "Accepta"), <strong>Llista d'espera</strong>, <strong>Sense places</strong></li>
+      <li>Opcions de <strong>"Si no hi ha plaça…"</strong>: reservar només les disponibles (per defecte), <strong>proposar alternatives</strong> (una altra hora o un altre professional), <strong>afegir a la llista d'espera</strong>, i <strong>allargar-la sola cada mes</strong> (només amb subscripció)</li>
+      <li>Si el bo no arriba per a totes, l'app <strong>t'ho diu abans de confirmar</strong>: quantes es reserven i quantes queden fora</li>
+      <li>Comprova que la sèrie respecta <strong>l'antelació mínima del centre</strong> i que <strong>no promet hores que ja tens ocupades</strong></li>
+      <li>"Les meves sèries": veure com va acabar cadascuna i <strong>cancel·lar-la sencera</strong></li>
+      <li>Amb subscripció i auto-extensió: en renovar-se, comprova que <strong>les sessions que faltaven es reserven soles</strong> seguint el mateix patró, i que si la franja està ocupada aquella sessió simplement no es fa (mai se li canvia l'hora sense dir-l'hi)</li>
+    </ul>
+
+    <h3>8.2 La llista d'espera</h3>
+    <ul class="checklist">
+      <li>Amb una sessió de grup <strong>plena</strong>, el client s'hi pot apuntar (si el centre ho té activat)</li>
+      <li>Mentre hi és, <strong>la franja li surt marcada</strong> i des d'allà mateix se'n pot donar de baixa</li>
+      <li>Cancel·la una plaça d'aquella sessió (des de l'admin o des d'un altre client) i comprova que <strong>la reserva es fa sola</strong> per al primer de la cua, es descompta la sessió del seu bo i <strong>li arriba el correu</strong></li>
+      <li>Aquest avís <strong>no es pot desactivar</strong>: la reserva es fa sense que ell premi res</li>
+      <li>Desactiva la llista d'espera a Configuració i comprova que <strong>no s'hi apunta ningú nou però els que ja hi eren segueixen entrant</strong></li>
+      <li>L'aforament de grup el garanteix la base de dades: <strong>prova a reservar la darrera plaça des de dues finestres alhora</strong> — només una ha de passar</li>
+    </ul>
+
+    <h3>8.3 Sessions de cortesia</h3>
+    <ul class="checklist">
+      <li>Es creen des d'Admin o Professional → Nova reserva, amb la casella <strong>"Sessió de cortesia"</strong></li>
+      <li>En marcar-la <strong>desapareix el selector de bo</strong> i has de dir el <strong>tipus de servei</strong></li>
+      <li>Comprova que <strong>no descompta cap sessió de cap bo</strong>, ni tan sols amb repeticions setmanals</li>
+      <li>En una sessió de grup, <strong>ocupa plaça igual</strong>: el màxim es respecta</li>
+      <li>Comprova que surt etiquetada com a <strong>"Cortesia"</strong> a "Avui al centre" i al calendari</li>
+    </ul>
+
+    <h2 id="prova"><span class="num">9</span> Sessió de prova pública</h2>
+    <ul class="checklist">
+      <li>Ves a <code>vindibcnapp.vercel.app/prova</code> en incògnit</li>
+      <li><strong>La pàgina està en tres idiomes</strong>, amb el selector a dalt (secció 16)</li>
+      <li>Només veus franges lliures d'entrenament individual (mai fisioteràpia), entre <strong>24 h i 30 dies</strong> vista</li>
+      <li>Deixes nom, telèfon i correu, i <strong>acceptes els termes</strong></li>
+      <li><strong>La sol·licitud pendent pre-bloqueja la franja</strong>: comprova des d'un altre navegador que ningú més la pot agafar mentre no es respon</li>
+      <li>Ha de sortir al plafó "El que espera resposta" de l'Inici de l'admin, <strong>amb compte enrere</strong></li>
+      <li>S'accepta o es rebutja des de la pantalla de Sessions de prova <strong>o tocant-la al calendari</strong></li>
+      <li>Un cop confirmada, apareixen <strong>"Completada", "No presentat" i "Cancel·lar"</strong> — la xifra de conversió es calcula sobre les fetes</li>
+      <li><strong>"Convertir en client"</strong>: obre l'alta amb nom, correu, telèfon i professional ja posats i la nota "Prové d'una sessió de prova". Comprova que <strong>el botó desapareix</strong> un cop convertida i que la pantalla on aterra existeix</li>
+      <li>El mateix correu no pot demanar-ne una altra (antiabús)</li>
+      <li>Comprova que el correu de resposta arriba <strong>amb la data de la sessió</strong> i que aquest avís s'envia sempre</li>
+      <li>Desactiva el mòdul "Sessions de prova" i comprova que <strong>la pàgina pública deixa d'existir</strong>, no només d'enllaçar-se</li>
+    </ul>
+
+    <h2 id="calendari"><span class="num">10</span> El calendari a fons</h2>
+    <table>
+      <thead><tr><th>Element</th><th>Admin/Trainer</th><th>Client</th></tr></thead>
+      <tbody>
+        <tr><td>Color de la targeta</td><td>Per <strong>tipus de servei</strong></td><td>Per <strong>professional</strong></td></tr>
+        <tr><td>Reserva pròpia</td><td>—</td><td>Verd + check ✓ (surt sempre, encara que filtris)</td></tr>
+        <tr><td>Nom del professional</td><td>Nom + primer cognom</td><td>Nom de pila</td></tr>
+        <tr><td>Capa de disponibilitat</td><td>Ombrejat amb el <strong>color de cada persona</strong>, encès/apagat un per un</td><td>—</td></tr>
+        <tr><td>Reserves de companys</td><td>Multicheck opcional, amb cadenat</td><td>"Ocupat" (sense noms)</td></tr>
+        <tr><td>Sessions de grup</td><td>Pastilla del servei</td><td>Comptador <code>2/4</code> amb semàfor; noms només en obrir-la</td></tr>
+        <tr><td>Sessions de cortesia</td><td>Etiqueta "Cortesia"</td><td>Una sessió seva més</td></tr>
+        <tr><td>Sol·licituds de prova</td><td>Ocupen la franja i s'accepten tocant-les</td><td>La franja no surt lliure</td></tr>
+        <tr><td>Notes de sessió</td><td>A la vista de <strong>llista</strong>, sota les passades</td><td>A "Sessions passades"</td></tr>
+      </tbody>
+    </table>
+    <p>Reserves cancel·lades: desapareixen del calendari en viu, es mantenen a l'historial. Totes les hores i dates es pinten en <strong>hora del centre</strong>, no la del navegador ni la del servidor.</p>
+
+    <h2 id="ofertes"><span class="num">11</span> Ofertes segmentades i etiquetes <span class="new-badge">Nou</span></h2>
+
+    <h3>11.1 Etiquetes de client</h3>
+    <ul class="checklist">
+      <li>Catàleg → <strong>Etiquetes</strong>. Text lliure: "VIP", "matins", "ve del gimnàs del costat". <strong>El client no les veu mai</strong></li>
+      <li>La llista diu <strong>quants clients porta cada etiqueta i quines ofertes hi apunten</strong></li>
+      <li>Es creen, es reanomenen i s'esborren des d'aquí; <strong>s'assignen des de la fitxa del client</strong> (pestanya Etiquetes), on també se'n pot crear una de nova i assignar-la de cop</li>
+      <li>Crea'n una amb un nom que ja existeix amb una altra caixa o amb espais (" Vip "): <strong>ha de reaprofitar la que hi havia</strong>, no crear-ne una segona</li>
+      <li>Comprova que <strong>la casella respon de seguida</strong> en marcar-la i que clicar-la no cau al buit</li>
+      <li>Un professional pot etiquetar <strong>els seus</strong> clients; mantenir el catàleg, no</li>
+    </ul>
+
+    <h3>11.2 El públic d'una oferta</h3>
+    <ul class="checklist">
+      <li>Una oferta respon dues preguntes: <strong>QUÈ rebaixa</strong> (tot un tipus de servei, o paquets concrets) i <strong>A QUI arriba</strong></li>
+      <li>Els tres públics: <strong>Tothom</strong>, <strong>clients amb una etiqueta</strong>, i <strong>clients amb un bo actiu d'un servei concret</strong></li>
+      <li>Amb el públic "bo actiu": comprova que <strong>un bo pendent de pagament no obre l'oferta</strong> i un de caducat tampoc</li>
+      <li>Si encara no hi ha cap etiqueta, el formulari <strong>t'envia a crear-ne una</strong></li>
+      <li>A la llista, els públics segmentats surten en <strong>lila</strong> i "Tothom" en gris</li>
+      <li>Comprova el preu <strong>des de dos comptes de client diferents</strong>: un dins del públic i un fora. I des de la fitxa, en vendre-li un bo des de l'admin, que apliqui el preu <strong>d'ell</strong></li>
+    </ul>
+
+    <h3>11.3 Solapaments, estats i esborrat</h3>
+    <ul class="checklist">
+      <li>Crea una oferta que trepitgi una altra: <strong>avisa amb un requadre taronja però la crea igualment</strong></li>
+      <li>Comprova que el patró normal de segmentar (dues ofertes sobre el mateix paquet per a públics diferents) <strong>no dispara l'avís</strong></li>
+      <li>Amb dues ofertes sobre el mateix paquet i la mateixa persona, <strong>guanya la més barata</strong>. Mai se sumen</li>
+      <li>Els quatre estats: Activa, Futura, Caducada, Desactivada. "Desactivar" l'apaga sense perdre-la; "Eliminar" la treu</li>
+      <li>Intenta <strong>esborrar una etiqueta que una oferta fa servir</strong>: ha de quedar bloquejat amb un missatge que ho expliqui</li>
+      <li>Esborra'n una que no faci servir ningú: ha de funcionar, i les assignacions cauen amb ella</li>
+    </ul>
+
+    <h2 id="notes"><span class="num">12</span> Notes de sessió <span class="new-badge">Nou</span></h2>
+    <p>Cada sessió ja feta pot portar una nota de seguiment: com ha anat, què s'ha treballat, què cal recordar. A les sessions futures no hi és.</p>
+
+    <h3>12.1 Qui l'escriu</h3>
+    <ul class="checklist">
+      <li><strong>Només el professional d'AQUELLA sessió.</strong> No és el mateix que "els meus clients": si la sessió d'un client teu la va donar un company, <strong>la nota és d'ell</strong> i tu no veus el formulari</li>
+      <li>La nota <strong>sempre surt signada</strong> amb el nom de qui la va escriure i la data</li>
+      <li>Si l'administració reassigna la reserva a un altre professional, <strong>l'accés passa al nou</strong> però <strong>l'autoria de la nota es queda amb qui la va escriure</strong></li>
+    </ul>
+
+    <h3>12.2 Qui la llegeix</h3>
+    <div class="warn"><strong>La llegeixen tres, i el client és un d'ells.</strong> El professional d'aquella sessió, <strong>el client de qui és la sessió</strong>, i l'administració. <strong>Els altres professionals no</strong>, ni tan sols el que té aquell client assignat. Escriu-la, doncs, sabent que la llegirà el client.</div>
+    <ul class="checklist">
+      <li>Escriu una nota com a professional i comprova que <strong>el client la veu</strong> a la seva àrea → Reserves → "Sessions passades", <strong>signada amb el nom del professional</strong> (no amb un guionet)</li>
+      <li>Comprova que <strong>un altre professional no la veu</strong>, encara que tingui aquell client assignat</li>
+      <li>Comprova que <strong>l'admin la llegeix però no n'escriu cap</strong>: no és que la pantalla no ho ofereixi, és que la base no ho deixaria desar</li>
+      <li>El cos de la nota <strong>no es tradueix mai</strong> (és text lliure del centre); el que l'envolta, sí</li>
+    </ul>
+
+    <h2 id="reassignacio"><span class="num">13</span> Reassignació de client entre professionals <span class="new-badge">Nou</span></h2>
+    <ul class="checklist">
+      <li>Es fa des de la <strong>fitxa del client → pestanya Resum</strong>, amb un desplegable, <strong>sense passar per "Editar"</strong></li>
+      <li>Ho pot fer <strong>l'administració</strong> i també <strong>qualsevol professional</strong>, encara que el client no sigui seu</li>
+      <li>Un cop reassignat, comprova que:</li>
+      <li>— el <strong>recompte de clients</strong> de tots dos professionals a Persones → Professionals quadra</li>
+      <li>— el calendari del client s'obre filtrat pel <strong>nou</strong> professional</li>
+      <li>— les <strong>reserves ja fetes no canvien de mans</strong> soles</li>
+      <li>— el nou professional pot editar la fitxa i reservar-li, i l'antic ja no</li>
+      <li>Comprova que els tres botons de la fitxa <strong>no es surten de la pantalla</strong> al mòbil</li>
+    </ul>
+
+    <h2 id="config"><span class="num">14</span> Configuració del centre <span class="new-badge">Ampliat</span></h2>
+    <p>Admin → Configuració, ara amb <strong>cinc pestanyes</strong>: Centre, Registre de centres, Colors, Notificacions i Seguretat.</p>
+
+    <h3>14.1 Centre</h3>
+    <p>Va per blocs i <strong>el botó de desar és un de sol, al final</strong>. El que canviïs aquí canvia com es comporten les tres àrees a l'instant.</p>
+    <ul class="checklist">
+      <li><strong>Horari i reserves</strong>: obertura i tancament (és la franja que pinten <strong>tots</strong> els calendaris), antelació mínima per reservar i <strong>antelació mínima per cancel·lar</strong></li>
+      <li><strong>Bons</strong>: llindar de "bo a punt d'esgotar-se", <strong>caducitat dels bons</strong> (només val per als que es venguin a partir d'ara), <strong>anul·lació dels pendents no cobrats a temps</strong> (amb el termini en hores des de la primera reserva) i <strong>venda de vals de regal</strong> amb la seva validesa</li>
+      <li><strong>Notificacions</strong>: hora local a partir de la qual surten els avisos del dia</li>
+      <li><strong>Subscripcions</strong>: permetre'n de noves i <strong>màxim de sessions extra per mes</strong></li>
+      <li><strong>Llista d'espera</strong>: permetre apuntar-s'hi</li>
+      <li><strong>Coordinació</strong>: "Els professionals veuen les reserves dels companys"</li>
+      <li><strong>Referits</strong>: actiu, percentatge, i si el nou client també cobra</li>
+      <li><strong>Mòduls</strong>: Comunitat, Sessions de prova i Documents</li>
+    </ul>
+    <div class="warn"><strong>Dues coses que val la pena comprovar de veritat.</strong> Primera: un <strong>mòdul apagat no s'amaga només del menú</strong> — la seva adreça deixa d'existir, així que escriure-la a mà tampoc hi porta. Segona: els interruptors que s'apaguen (vals, llista d'espera, subscripcions) <strong>mai no toquen enrere</strong> sobre qui ja va dir que sí; impedeixen entrar-hi de nou, no expulsen ningú.</div>
+    <div class="note"><strong>Limitació coneguda de l'hora dels recordatoris:</strong> el procés diari corre a una hora fixa i aquest camp <strong>no el mou</strong>; només decideix si, quan el procés ja corre, toca enviar-los. Si hi poses una hora <strong>posterior</strong> a la que corre el procés, els recordatoris sortiran l'endemà.</div>
+
+    <h3>14.2 Registre de centres <span class="flag">Fase 1</span></h3>
+    <ul class="checklist">
+      <li>És una llista de <strong>noms</strong> de centres: donar-ne d'alta i reanomenar-los</li>
+      <li><strong>No governa res encara</strong>: no separa clients, ni agendes, ni comptabilitat. És la base per a quan calgui</li>
+      <li>Comprova que <strong>no hi ha esborrar</strong> (un nom mal escrit es reanomena) i que no es confon amb la pestanya "Centre", que són els ajustos</li>
+    </ul>
+
+    <h3>14.3 Colors</h3>
+    <ul class="checklist">
+      <li>Dos blocs: <strong>tipus de servei</strong> (pinta l'agenda de l'equip i les targetes de compra) i <strong>professionals</strong> (pinta la disponibilitat i el calendari del client)</li>
+      <li>La vista prèvia reprodueix <strong>la pastilla del calendari tal com quedarà</strong>, no un quadrat de color</li>
+      <li>"Desfer els canvis" torna al que hi havia desat, sempre que no hagis premut "Desar colors"</li>
+    </ul>
+
+    <h2 id="referits"><span class="num">15</span> Sistema de referits</h2>
+    <ul class="checklist">
+      <li>S'activa des de Configuració → Centre, amb el % i si el nou client també cobra</li>
+      <li>Cada client té el seu codi a <strong>dos llocs</strong>: la targeta "Porta un amic" de l'Inici i Configuració → Dades personals</li>
+      <li>Un client nou pot introduir el codi <strong>en registrar-se</strong></li>
+      <li><strong>La recompensa no neix en apuntar-se sinó quan es COBRA el primer bo del referit</strong> — comprova que apareix sola en marcar-lo com a pagat</li>
+      <li>El descompte s'aplica automàticament a la següent compra, i <strong>no se suma amb una oferta</strong>: s'aplica el que surti millor i l'altre es guarda</li>
+      <li>Comprova que <strong>el descompte es llegeix igual el miri qui el miri</strong> (client i admin han de veure el mateix import)</li>
+      <li>Els pendents surten al plafó d'atenció de l'Inici. L'històric és a Bons i pagaments → Referits, amb les tres xifres de dalt</li>
+    </ul>
+
+    <h2 id="idiomes"><span class="num">16</span> L'app en tres idiomes <span class="new-badge">Nou</span></h2>
+    <p>Català, castellà i anglès. <strong>És l'àrea de client i el que veu la gent de fora</strong>: administració i professional es queden en <strong>català fix</strong>, a posta.</p>
+    <ul class="checklist">
+      <li><strong>Traduït</strong>: tota l'àrea de client, la pantalla d'entrada i el registre, la pàgina pública <code>/prova</code>, les pàgines legals, el <strong>PDF del val de regal</strong> i el <strong>manual del client</strong></li>
+      <li><strong>Els correus també</strong>: s'escriuen en l'idioma del perfil de qui els rep</li>
+      <li>El selector és a la pantalla d'entrada, al registre, a <code>/prova</code> i a Configuració → Dades personals</li>
+      <li>A Configuració es desa <strong>sol en triar-lo</strong>, sense botó, i el canvi és immediat</li>
+      <li>Comprova que la tria <strong>sobreviu a tancar el navegador</strong> (dura un any)</li>
+      <li>Les <strong>dates i hores</strong> han de canviar de format amb l'idioma, però sempre en <strong>24 h i amb el dia al davant</strong> (l'anglès va en format britànic a posta)</li>
+      <li>Comprova els plurals: "1 sessió" i no "1 sessions", i el "/sessió" del preu per sessió</li>
+      <li>Canvia l'idioma d'un client i comprova que <strong>el proper correu li arriba traduït</strong></li>
+      <li>Comprova que admin i professional <strong>segueixen en català</strong> encara que el navegador estigui en un altre idioma</li>
+      <li>Si mai falta una traducció, ha de sortir <strong>el català</strong>, no una clau tècnica ni un buit</li>
+    </ul>
+
+    <h2 id="notif"><span class="num">17</span> Notificacions <span class="new-badge">Reescrit</span></h2>
+    <p>Correus reals des de <code>hola@vindibcn.com</code>. Cada persona tria els seus des de Configuració → Notificacions… <strong>però no tots es poden apagar</strong>.</p>
+
+    <h3>17.1 El criteri</h3>
+    <p>És <strong>obligatori</strong> l'avís que compleix les tres coses alhora: notifica una cosa <strong>ja consumada</strong>, que la persona <strong>no ha provocat</strong> en aquell instant, i que <strong>no pot descobrir mirant l'app</strong>. Per això la reserva <em>cancel·lada</em> s'envia sempre i la <em>confirmada</em> no: una reserva que existeix la pot veure quan vulgui; una que ja no existeix, no.</p>
+
+    <h3>17.2 Els quinze avisos del client: 10 obligatoris, 5 opcionals</h3>
+    <table class="status-table">
+      <thead><tr><th>Avís</th><th>Es pot apagar?</th></tr></thead>
+      <tbody>
+        <tr><td>Reserva confirmada</td><td>Sí (ve encès)</td></tr>
+        <tr><td>Recordatori de sessió</td><td>Sí (ve apagat)</td></tr>
+        <tr><td>Bo a punt d'esgotar-se</td><td>Sí (ve apagat)</td></tr>
+        <tr><td>Bo a punt de caducar</td><td>Sí — avisa <em>abans</em>, d'un estat visible a l'app</td></tr>
+        <tr><td>Novetats de la comunitat</td><td>Sí (ve apagat)</td></tr>
+        <tr><td><strong>Reserva cancel·lada</strong></td><td><strong>No</strong></td></tr>
+        <tr><td><strong>Resposta a la sessió de prova</strong></td><td><strong>No</strong> — és la contestació al que va demanar ell</td></tr>
+        <tr><td><strong>Bo impagat anul·lat</strong></td><td><strong>No</strong> — li cauen reserves ja fetes</td></tr>
+        <tr><td><strong>Plaça de la llista d'espera</strong></td><td><strong>No</strong> — se li crea una reserva sense prémer res</td></tr>
+        <tr><td><strong>Val de regal bescanviat</strong></td><td><strong>No</strong> — un val és al portador i aquest correu és l'única senyal</td></tr>
+        <tr><td><strong>Subscripció renovada</strong></td><td><strong>No</strong> — hi ha diners pel mig</td></tr>
+        <tr><td><strong>Cobrament fallit</strong></td><td><strong>No</strong></td></tr>
+        <tr><td><strong>Subscripció donada de baixa</strong></td><td><strong>No</strong></td></tr>
+        <tr><td><strong>Subscripció congelada</strong></td><td><strong>No</strong></td></tr>
+        <tr><td><strong>Subscripció represa</strong></td><td><strong>No</strong></td></tr>
+      </tbody>
+    </table>
+    <ul class="checklist">
+      <li>Comprova a Configuració → Notificacions del client que <strong>hi surten cinc caselles i no quinze</strong>: els obligatoris no s'hi pinten</li>
+      <li>Apaga'n un d'opcional, dispara'l i comprova que <strong>no arriba</strong>; dispara'n un d'obligatori i comprova que arriba igualment</li>
+    </ul>
+
+    <h3>17.3 Els del professional i els de l'admin</h3>
+    <ul class="checklist">
+      <li>Professional: <strong>nova reserva d'un client</strong>, <strong>cancel·lació d'un client</strong> i <strong>resum diari de l'agenda</strong> (aquest ve apagat), més <strong>nova sol·licitud de prova</strong></li>
+      <li>La <strong>factura generada</strong> se li envia sempre i no surt a preferències: és un avís sobre la seva pròpia retribució</li>
+      <li>Admin: <strong>nou client registrat</strong> i les sol·licituds de prova</li>
+      <li><strong>Cap avís s'envia dues vegades</strong> encara que el procés diari es repeteixi</li>
+      <li>Fora de producció <strong>no surt cap correu</strong> encara que hi hagi la clau — comprova-ho si proves en local</li>
+    </ul>
+
+    <h2 id="rgpd"><span class="num">18</span> Privacitat i RGPD</h2>
+    <ul class="checklist">
+      <li>Consentiment obligatori al registre (Política de Privacitat + Avís Legal), amb <strong>data i versió</strong> desades i visibles per al client</li>
+      <li><strong>Consentiment específic de dades de salut</strong>: el dóna el client des de la seva àrea. Mentre no hi sigui, la fitxa avisa amb un requadre taronja i <strong>no s'hi han de registrar notes mèdiques</strong></li>
+      <li><strong>"Exportar dades"</strong> des de la fitxa: perfil, fitxa, bons, reserves, pagaments, exercicis, progrés, consentiments i llista de documents</li>
+      <li><strong>"Eliminar client"</strong>: cal <strong>escriure el nom exacte</strong> de la persona. És irreversible</li>
+      <li>Comprova què sobreviu a l'esborrat: <strong>els pagaments es conserven anonimitzats</strong> per obligació fiscal; bons, reserves, mesures, exercicis i consentiments cauen</li>
+      <li>Les pàgines legals (<code>/legal/*</code>) estan <strong>en tres idiomes</strong> i porten <strong>banner d'esborrany</strong></li>
+    </ul>
+    <div class="warn"><strong>Textos legals pendents</strong> de revisió per l'assessor. I <strong>no hi ha pantalla</strong> per consultar el registre d'accessos: les exportacions i supressions s'apunten, però es consulten des de la base de dades.</div>
+
+    <h2 id="manuals"><span class="num">19</span> Els manuals d'usuari (Ajuda) <span class="new-badge">Nou</span></h2>
+    <p>Els tres rols tenen ara un manual dins de la mateixa app, com a <strong>última entrada del menú</strong>. No cal llegir-los per provar; el que sí que val la pena és <strong>comprovar que diuen la veritat</strong>.</p>
+    <table>
+      <thead><tr><th>Manual</th><th>On</th><th>Què cobreix</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Client</strong></td><td><code>/client/ajuda</code></td><td>13 capítols: bons, reserves i sèries, exercicis, documents, comunitat, Regala Vindi, porta un amic, configuració, els correus, què fer si alguna cosa no va, glossari. <strong>En tres idiomes</strong></td></tr>
+        <tr><td><strong>Professional</strong></td><td><code>/trainer/ajuda</code></td><td>18 capítols: la seva agenda, clients, la nota de sessió, disponibilitat, bons, factures, suport. Català</td></tr>
+        <tr><td><strong>Administració</strong></td><td><code>/admin/ajuda</code></td><td>33 capítols: tot el panell, incloent facturació, subscripcions, ofertes, configuració i <strong>"el que passa sol cada dia"</strong>. Català</td></tr>
+      </tbody>
+    </table>
+    <ul class="checklist">
+      <li><strong>Els números surten de la configuració real del centre.</strong> Canvia un ajust (per exemple el llindar de bo baix o la caducitat) i comprova que <strong>la frase del manual canvia</strong></li>
+      <li>Apaga un mòdul i comprova que <strong>el seu capítol desapareix</strong> del manual; apaga un interruptor (vals, llista d'espera, subscripcions) i comprova que <strong>el capítol es queda però canvia la frase</strong> que diu com està ara</li>
+      <li>Prova el <strong>botó d'imprimir</strong> i que el text no surt escapçat per la dreta</li>
+      <li>Prova el <strong>"tornar a l'índex"</strong> quan has baixat molt</li>
+      <li>Al manual del client, canvia l'idioma i comprova que <strong>l'índex, el títol i els avisos</strong> també es tradueixen</li>
+    </ul>
+    <div class="note"><strong>Pendent conegut:</strong> al manual del client, el contacte del centre encara és un text de farciment. Falta el que hi hagi de posar-hi.</div>
+
+    <h2 id="suport"><span class="num">20</span> Suport tècnic intern <span class="new-badge">Nou</span></h2>
+    <ul class="checklist">
+      <li>Botó rodó lila a baix a la dreta de <strong>totes</strong> les pantalles d'admin i professional. <strong>El client no el té</strong> — comprova-ho</li>
+      <li>Obre un panell amb títol, <strong>categoria</strong> (Error, Pregunta, Suggeriment) i descripció. Es tanca amb Escape o tocant fora</li>
+      <li>Hi ha també la pantalla completa amb el llistat i filtre per estat</li>
+      <li><strong>L'admin veu els tiquets de tot l'equip i en mou l'estat</strong> (Obert, En curs, Resolt); el professional només els seus i <strong>no els pot moure</strong></li>
+      <li>En obrir-ne un, arriba <strong>un correu a qui desenvolupa l'app</strong></li>
+      <li>És el canal cap al desenvolupador, <strong>no</strong> per parlar amb l'equip ni amb els clients</li>
+    </ul>
+
+    <h2 id="pendent"><span class="num">21</span> Coses que encara no funcionen</h2>
+    <p>Aquesta llista ha encongit molt des d'agost: <strong>el pagament amb targeta, les reserves recurrents i el multi-idioma ja hi són</strong>.</p>
+    <table class="status-table">
+      <thead><tr><th>Què</th><th>Per què</th></tr></thead>
+      <tbody>
+        <tr><td>WhatsApp automàtic</td><td>Tràmits previs amb Meta. Hi ha <strong>botó de contacte manual</strong> a la fitxa i a les llistes, però l'app no envia missatges sola</td></tr>
+        <tr><td>Sincronització real amb Google Calendar</td><td>Hi ha "Afegir al calendari" (Google/Apple/Outlook), que és un enllaç: no manté les dues agendes sincronitzades</td></tr>
+        <tr><td>Stripe encara en <strong>mode test</strong></td><td>Pendent que Raul verifiqui el compte. Fins llavors no es cobra de veritat</td></tr>
+        <tr><td>Admin i professional només en català</td><td>Deliberat: qui hi treballa és del centre. Traduir el panell intern costaria a cada canvi sense que ningú ho demani</td></tr>
+        <tr><td>El registre de centres no governa res</td><td>Fase 1: només guarda noms. No separa clients, agendes ni comptabilitat</td></tr>
+        <tr><td>Les factures del professional no són fiscals</td><td>Càlcul intern; el format oficial es confirmarà amb l'assessoria</td></tr>
+        <tr><td>Pausa de subscripció més llarga que un cicle</td><td>Retorna el temps de la renovació però no reemet el bo d'aquell mes. Sortida manual des de l'admin</td></tr>
+        <tr><td>No hi ha pantalla del registre d'accessos RGPD</td><td>Les exportacions i supressions s'apunten, però es consulten des de la base de dades</td></tr>
+        <tr><td>Textos legals en esborrany</td><td>Pendents de l'assessor. Ho diu un banner a les mateixes pàgines</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="feedback"><span class="num">22</span> Com donar feedback</h2>
+    <p>Apunta't qualsevol cosa que no entenguis, no funcioni com esperaves, trobis a faltar, o facis avui amb Trainingym i aquí no puguis fer. Aquest últim és el més important.</p>
+    <p>Si ets a dins de l'app i és un error concret, el camí més curt és <strong>el botó de suport</strong> (secció 20): arriba directament a qui la desenvolupa, amb la categoria i la descripció que hi posis.</p>
+
+  </div>
+
+  <footer>
+    <div class="wordmark-sm">Vindi<span class="bcn">App</span></div>
+    <div style="margin-top:6px;">Plataforma de gestió del centre · Document de proves</div>
+  </footer>
+
+</div>
+</body>
+</html>
