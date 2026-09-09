@@ -72,7 +72,14 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="relative my-auto w-full max-w-lg rounded-2xl border border-brand-border bg-white p-6 shadow-xl outline-none"
+        /*
+         * `text-left` no és decoració: el diàleg es queda on el pinta qui el
+         * fa servir, i `text-align` s'hereta. Obert des d'una cel·la alineada
+         * a la dreta —el botó de cobrar un bo, a la taula de l'admin— el títol
+         * i els paràgrafs sortien tots arrambats a la dreta. L'alineació d'un
+         * modal no pot dependre d'on seu el botó que l'obre.
+         */
+        className="relative my-auto w-full max-w-lg rounded-2xl border border-brand-border bg-white p-6 text-left shadow-xl outline-none"
       >
         <h2 className="text-lg font-bold text-brand-dark">{title}</h2>
         {description && (
