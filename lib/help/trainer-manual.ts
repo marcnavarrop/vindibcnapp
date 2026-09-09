@@ -472,7 +472,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Qui la llegeix" },
         {
           t: "warn",
-          text: "La nota de sessió la llegeixen l'administració i els professionals, no el client. La versió que veu ell és una altra i s'escriu a part. Tot i així, escriu-la pensant que la llegirà algú que no era a la sala.",
+          text: "La llegiu tres: tu, el client de la sessió —a la seva àrea, amb les sessions que ja ha fet— i l'administració. Els teus companys no, ni tan sols el que tingui aquell client assignat. Escriu-la, doncs, pensant que la llegirà ell.",
         },
       ],
     },

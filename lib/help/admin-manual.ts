@@ -496,7 +496,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "El client no veu mai aquestes notes. Les llegiu el professional que la va escriure, els seus companys i tu.",
+          text: "Les llegiu tres: el professional d'AQUELLA sessió, el client de qui és, i tu. Els altres professionals no, ni tan sols el que coordina aquell mateix client. El client la troba a la seva àrea, a Reserves, amb les sessions que ja ha fet: escriu-les sabent que les llegirà ell.",
         },
         ...(s.modules.sessionsProva
           ? ([
@@ -1266,7 +1266,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "Els vots són anònims per a tu: veus quantes respostes ha rebut cada opció, no qui ha votat què.",
+          text: "Els vots NO són anònims per a tu: desplegant una opció dels resultats hi surten els noms de qui l'ha votada. Per al client sí que ho són —ell només veu els percentatges—, així que si li promets una enquesta anònima, recorda que tu els veus.",
         },
       ],
     },
