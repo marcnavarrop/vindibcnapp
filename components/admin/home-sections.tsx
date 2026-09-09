@@ -40,11 +40,17 @@ export function Header({ name, today }: { name: string; today: string }) {
 // ─────────────────────────── Mètriques ───────────────────────────
 
 /**
- * Les sis de sempre, amb el mateix càlcul.
+ * Les mètriques de dalt, amb el mateix càlcul.
  *
  * Els números surten de `getAdminDashboard` sense tocar-los: aquí només canvia
  * com es pinten. Sis en una fila serien massa estretes, així que van de tres
  * en tres —dues files a l'escriptori, dues columnes al mòbil—.
+ *
+ * Són sis o cinc. La conversió de proves cau quan el mòdul està apagat, i no
+ * per estètica: la seva targeta enllaça a `/admin/prova`, que amb el mòdul
+ * apagat respon 404. Amagar-la és el mateix criteri que fa desaparèixer
+ * l'entrada del menú. La graella no s'immuta —tres per fila, i l'última en
+ * queda amb dues—, així que no cal tocar res més.
  */
 export function KpiRow({ d }: { d: AdminDashboard }) {
   const {
@@ -123,17 +129,26 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
           : "Sense franges definides",
       href: "/admin/disponibilitat",
     },
-    {
-      icon: "user",
-      label: "Conversió de proves",
-      value:
-        trialConversion.pct === null ? "—" : `${pct1(trialConversion.pct)}%`,
-      hint:
-        trialConversion.total === 0
-          ? "Encara no hi ha proves fetes"
-          : `${trialConversion.converted} de ${trialConversion.total} proves`,
-      href: "/admin/prova",
-    },
+    // El mòdul de proves apagat arriba com a null i la targeta no s'afegeix.
+    // El guionet segueix sent per a "encara no n'hi ha cap", que és una altra
+    // cosa: aleshores la pantalla existeix i val la pena poder-hi anar.
+    ...(trialConversion
+      ? [
+          {
+            icon: "user" as IconName,
+            label: "Conversió de proves",
+            value:
+              trialConversion.pct === null
+                ? "—"
+                : `${pct1(trialConversion.pct)}%`,
+            hint:
+              trialConversion.total === 0
+                ? "Encara no hi ha proves fetes"
+                : `${trialConversion.converted} de ${trialConversion.total} proves`,
+            href: "/admin/prova",
+          },
+        ]
+      : []),
   ];
 
   return (

@@ -65,7 +65,15 @@ export type AdminDashboard = {
     pct: number;
     perTrainer: TrainerOccupancy[];
   };
-  trialConversion: { converted: number; total: number; pct: number | null };
+  /**
+   * Null quan el mòdul de sessions de prova està apagat.
+   *
+   * No és "zero proves": és que la pantalla d'on surt la xifra ja no existeix
+   * —`/admin/prova` respon 404 amb el mòdul apagat—, així que la targeta no
+   * s'ha de pintar. Va com a null i no com a booleà a part perquè el tipus
+   * obligui a mirar-ho abans de llegir el percentatge.
+   */
+  trialConversion: { converted: number; total: number; pct: number | null } | null;
 };
 
 // ─────────────────────── Dades crues ───────────────────────
@@ -398,11 +406,17 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
       pct: slotsTotal > 0 ? (bookedTotal / slotsTotal) * 100 : 0,
       perTrainer,
     },
-    trialConversion: {
-      converted,
-      total: happened.length,
-      pct: happened.length > 0 ? (converted / happened.length) * 100 : null,
-    },
+    // Amb el mòdul apagat no hi ha xifra: mateix criteri que les recompenses
+    // de referit a `getAdminAttention`, que amb el programa aturat ni es
+    // demanen. Una mètrica que enllaça a una pàgina que ja no existeix és
+    // pitjor que no tenir-la.
+    trialConversion: settings.modules.sessionsProva
+      ? {
+          converted,
+          total: happened.length,
+          pct: happened.length > 0 ? (converted / happened.length) * 100 : null,
+        }
+      : null,
   };
 }
 

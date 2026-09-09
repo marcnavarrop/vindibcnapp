@@ -138,9 +138,9 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "La pantalla d'entrada respon a «com va el centre avui i què reclama la meva atenció». De dalt a baix: sis xifres, quatre accions ràpides, el que espera resposta, les sessions del dia, els bons que s'acaben i l'ocupació per professional.",
+          text: `La pantalla d'entrada respon a «com va el centre avui i què reclama la meva atenció». De dalt a baix: ${s.modules.sessionsProva ? "sis" : "cinc"} xifres, quatre accions ràpides, el que espera resposta, les sessions del dia, els bons que s'acaben i l'ocupació per professional.`,
         },
-        { t: "h", text: "Les sis xifres" },
+        { t: "h", text: s.modules.sessionsProva ? "Les sis xifres" : "Les cinc xifres" },
         {
           t: "p",
           text: "Totes són enllaços: toca-les i vas a la pantalla d'on surten. Les dues que poden posar-se taronges ho fan només quan hi ha alguna cosa a fer.",
@@ -168,10 +168,14 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
               "Ocupació setmanal",
               "Quantes franges de disponibilitat de tot el centre tenen reserva aquesta setmana. Sense cap franja definida surt un guionet, no un zero: no és que el centre estigui buit, és que encara ningú no ha dit quan hi és.",
             ],
-            [
-              "Conversió de proves",
-              "Quantes sessions de prova que es van arribar a fer han acabat en client. Sense proves fetes, guionet.",
-            ],
+            ...(s.modules.sessionsProva
+              ? ([
+                  [
+                    "Conversió de proves",
+                    "Quantes sessions de prova que es van arribar a fer han acabat en client. Sense proves fetes, guionet.",
+                  ],
+                ] as [string, string][])
+              : []),
           ],
         },
         { t: "h", text: "Accions ràpides" },

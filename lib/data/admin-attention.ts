@@ -39,8 +39,16 @@ export async function getAdminAttention(): Promise<AdminAttention> {
 
   // Les recompenses només es demanen si el programa està engegat: amb el
   // programa apagat, una llista de descomptes pendents no vol dir res.
+  //
+  // I les proves, només si el mòdul hi és. Amb el mòdul apagat no en poden
+  // entrar de noves, però les que van quedar pendents seguien sortint aquí amb
+  // el seu compte enrere i un botó "Revisar" cap a `/admin/prova`, que ja
+  // respon 404: un avís urgent que no porta enlloc. Deixen de bloquejar
+  // franges soles quan caduquen, com sempre.
   const [trialsRaw, vouchersRaw, rewardsRaw] = await Promise.all([
-    pendingTrialAttention(),
+    settings.modules.sessionsProva
+      ? pendingTrialAttention()
+      : Promise.resolve([]),
     listVouchersPendingPayment(),
     settings.referralProgramActive
       ? listReferralRewardsAdmin()
