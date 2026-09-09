@@ -85,8 +85,20 @@ const FLIPPED = {
  * Cada una amb el seu motiu, perquè la llista no creixi sola.
  */
 const SAME_ON_PURPOSE = new Set([
-  "Sí", // ca i es s'escriuen igual
-  "No", // els tres s'escriuen igual
+  // ca i es s'escriuen igual
+  "Sí",
+  "Reserva confirmada",
+  "Confirmada",
+  "Congelada",
+  "Idioma",
+  "Franja",
+  "EP Individual",
+  // Nom del producte: no es tradueix en castellà.
+  "Regala Vindi",
+  // Els tres s'escriuen igual
+  "No",
+  // ca i en s'escriuen igual
+  "Documents",
 ]);
 
 /** L'esquelet d'un manual: tot el que NO és text. */

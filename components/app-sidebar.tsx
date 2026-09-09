@@ -56,10 +56,30 @@ const NAV_ICONS: Record<NavIcon, LucideIcon> = {
   help: CircleHelp,
 };
 
-/** Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área. */
+/**
+ * Subtítulo bajo el logo: la especialidad para fisios, si no la etiqueta del área.
+ *
+ * El CLIENT no passa per aquí: la seva etiqueta va traduïda i la pinta
+ * `ClientAreaLabel`. Aquesta es queda per a l'admin i el professional, que
+ * treballen en català fix.
+ */
 function areaSubtitle(role: Role, specialty: Specialty | null): string {
   if (role === "trainer" && specialty) return SPECIALTY_LABELS[specialty];
   return AREA_LABELS[role];
+}
+
+/**
+ * L'etiqueta de l'àrea de client, en el seu idioma.
+ *
+ * Era l'última cosa del menú del client que es quedava en català: un client
+ * anglès llegia tot el menú traduït i, just sota el logotip, «Àrea client».
+ * Va a part i no dins d'`areaSubtitle` perquè aquella és una funció pura que
+ * criden les tres àrees, i el hook de traducció només pot viure en un
+ * component.
+ */
+function ClientAreaLabel() {
+  const t = useTranslations("nav");
+  return <>{t("areaLabel")}</>;
 }
 
 /**
@@ -134,7 +154,11 @@ export function AppSidebar({
         </div>
         <div className="flex items-center gap-2">
           <Avatar name={fullName} email={email} url={avatarUrl} />
-          {role === "client" ? <TranslatedSignOut compact /> : <SignOutButton />}
+          {role === "client" ? (
+            <TranslatedSignOut compact />
+          ) : (
+            <SignOutButton />
+          )}
         </div>
       </header>
 
@@ -160,14 +184,14 @@ export function AppSidebar({
               </button>
             )}
             <SidebarContent
-          role={role}
-          specialty={specialty}
-          fullName={fullName}
-          email={email}
-          avatarUrl={avatarUrl}
-          pathname={pathname}
-          modules={modules}
-        />
+              role={role}
+              specialty={specialty}
+              fullName={fullName}
+              email={email}
+              avatarUrl={avatarUrl}
+              pathname={pathname}
+              modules={modules}
+            />
           </div>
         </div>
       )}
@@ -199,7 +223,11 @@ function SidebarContent({
       <Link href={HOME_PATH[role]} className="px-2 pt-2">
         <Wordmark height={30} />
         <span className="mt-1.5 block text-xs font-bold tracking-widest text-white/60 uppercase">
-          {areaSubtitle(role, specialty)}
+          {role === "client" ? (
+            <ClientAreaLabel />
+          ) : (
+            areaSubtitle(role, specialty)
+          )}
         </span>
       </Link>
 
@@ -208,8 +236,7 @@ function SidebarContent({
           {filterNavByModules(NAV_GROUPS[role], modules).map((entry) => {
             if (isNavGroup(entry)) {
               const active = entry.children.some(
-                (c) =>
-                  pathname === c.href || pathname.startsWith(`${c.href}/`),
+                (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
               );
               return (
                 <li key={entry.label}>
@@ -378,7 +405,11 @@ function SidebarFooter({
         )}
       </span>
       {profileHref && (
-        <ChevronRight size={18} aria-hidden className="shrink-0 text-white/50" />
+        <ChevronRight
+          size={18}
+          aria-hidden
+          className="shrink-0 text-white/50"
+        />
       )}
     </>
   );
@@ -399,11 +430,7 @@ function SidebarFooter({
         <div className="flex items-center gap-3 px-1 py-1.5">{identity}</div>
       )}
 
-      {translated ? (
-        <TranslatedSignOut />
-      ) : (
-        <SignOutButton variant="panel" />
-      )}
+      {translated ? <TranslatedSignOut /> : <SignOutButton variant="panel" />}
     </div>
   );
 }

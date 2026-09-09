@@ -425,7 +425,8 @@
     "signOut": "Cerrar sesión",
     "openMenu": "Abrir menú",
     "sectionTabs": "Navegación de sección",
-    "closeMenu": "Cerrar menú"
+    "closeMenu": "Cerrar menú",
+    "areaLabel": "Área cliente"
   },
   "reservas": {
     "title": "Reservas",

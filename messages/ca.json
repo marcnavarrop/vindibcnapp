@@ -425,7 +425,8 @@
     "signOut": "Tancar sessió",
     "openMenu": "Obrir menú",
     "sectionTabs": "Navegació de secció",
-    "closeMenu": "Tancar menú"
+    "closeMenu": "Tancar menú",
+    "areaLabel": "Àrea client"
   },
   "reservas": {
     "title": "Reserves",
