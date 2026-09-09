@@ -5,6 +5,7 @@ import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
 import { markBonoPaidAction } from "@/app/(admin)/admin/bonos/actions";
+import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import type { BonoListItem } from "@/lib/data/bonos";
 import type { BonoStatus } from "@/types/database";
 
@@ -121,40 +122,27 @@ export function BonosAdminTable({
                   </Badge>
                 </td>
                 <td className="px-4 py-3 text-right">
+                  {/*
+                    Un bo decaigut també es pot cobrar: fins ara el client es
+                    plantava al centre amb els diners i no hi havia on
+                    anotar-los. Els tres casos (pendent, decaigut recuperable i
+                    decaigut passat de data) els distingeix el botó, que ara
+                    demana confirmació abans de cobrar; el que abans era un
+                    `title` que només veia qui hi passava el ratolí, ara és la
+                    descripció del diàleg.
+                  */}
                   {(b.status === "pending_payment" || b.status === "unpaid") && (
-                    <form action={markBonoPaidAction}>
-                      <input type="hidden" name="bonoId" value={b.id} />
-                      <button
-                        type="submit"
-                        // Un bo decaigut també es pot cobrar: fins ara el client
-                        // es plantava al centre amb els diners i no hi havia on
-                        // anotar-los. El text avisa del que NO torna, que són
-                        // les hores: l'escombrat les va alliberar i poden ser
-                        // d'algú altre.
-                        title={
-                          b.status !== "unpaid"
-                            ? undefined
-                            : b.expiresAt && b.expiresAt < today
-                              ? "El cobrament s'anota i, si és d'una subscripció, la torna a posar en marxa. El bo NO es recupera: ja ha passat de data."
-                              : "Recupera el bo amb les sessions que li quedaven. Les reserves que es van cancel·lar en decaure NO tornen: s'han de tornar a demanar."
-                        }
-                        className={`rounded-md px-2.5 py-1 text-xs font-bold text-white ${
-                          b.status === "unpaid"
-                            ? "bg-brand-orange hover:opacity-90"
-                            : "bg-brand-purple hover:bg-brand-purple-light"
-                        } ${TAP}`}
-                      >
-                        {b.status !== "unpaid"
-                          ? "Marcar com pagat"
-                          : b.expiresAt && b.expiresAt < today
-                            ? // No promet el que no pot complir: un bo que ja ha
-                              // passat de data tornarà a caducar tot seguit. El
-                              // cobrament sí que s'anota, i és el que desbloqueja
-                              // la subscripció.
-                              "Només cobrar"
-                            : "Cobrar i recuperar"}
-                      </button>
-                    </form>
+                    <MarkBonoPaidButton
+                      action={markBonoPaidAction}
+                      bonoId={b.id}
+                      clientName={b.clientName}
+                      serviceType={b.serviceType}
+                      price={b.price}
+                      remainingSessions={b.remainingSessions}
+                      totalSessions={b.totalSessions}
+                      status={b.status}
+                      expired={!!b.expiresAt && b.expiresAt < today}
+                    />
                   )}
                 </td>
               </tr>

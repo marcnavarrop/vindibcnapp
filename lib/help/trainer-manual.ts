@@ -236,7 +236,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "«Marcar com pagat» activa el bo i les sessions passen a estar disponibles a l'instant. No hi ha pantalla de confirmació ni manera de desfer-ho des d'aquí: si t'equivoques de bo, avisa l'administració.",
+          text: "«Marcar com pagat» demana confirmació abans de fer res: el primer clic obre un resum amb el servei, les sessions i l'import, i fins que no el confirmes no s'ha cobrat res. Un cop confirmat, el bo passa a actiu, les sessions queden disponibles a l'instant i s'anota un pagament en efectiu. Això sí que no es desfà des d'aquí: si t'equivoques de bo, avisa l'administració.",
         },
         { t: "h", text: "Reserves" },
         {

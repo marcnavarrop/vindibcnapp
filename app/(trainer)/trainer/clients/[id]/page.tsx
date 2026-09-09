@@ -24,6 +24,7 @@ import {
   removeExerciseTrainerAction,
 } from "@/app/(trainer)/trainer/clients/exercises-actions";
 import { markTrainerBonoPaidAction } from "@/app/(trainer)/trainer/bonos/actions";
+import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { toggleClientTagAction } from "@/app/(admin)/admin/etiquetes/actions";
 import {
   SERVICE_LABELS,
@@ -151,17 +152,25 @@ export default async function TrainerClientDetailPage({
                   Només per als clients propis: `canManage` és la mateixa
                   condició que deixa afegir-los un bo, i la RLS de la 0056 la
                   torna a comprovar a la base.
+
+                  El botó és el mateix component que fa servir la taula de
+                  l'administració, amb el seu diàleg de confirmació: cobrar
+                  activa el bo, anota el pagament i pot reprendre una
+                  subscripció, i res d'això es desfà des d'aquí. Sense nom de
+                  client a posta: som dins de la seva fitxa.
                 */}
                 {canManage && b.status === "pending_payment" && (
-                  <form action={markTrainerBonoPaidAction} className="ml-auto">
-                    <input type="hidden" name="bonoId" value={b.id} />
-                    <button
-                      type="submit"
-                      className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
-                    >
-                      Marcar com pagat
-                    </button>
-                  </form>
+                  <span className="ml-auto">
+                    <MarkBonoPaidButton
+                      action={markTrainerBonoPaidAction}
+                      bonoId={b.id}
+                      serviceType={b.serviceType}
+                      price={b.price}
+                      remainingSessions={b.remainingSessions}
+                      totalSessions={b.totalSessions}
+                      status={b.status}
+                    />
+                  </span>
                 )}
               </Row>
             ))
