@@ -124,6 +124,11 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
       children: [
         { href: "/admin/serveis", label: "Serveis" },
         { href: "/admin/ofertes", label: "Ofertes" },
+        // Hi era a la barra de pestanyes del grup però no al menú, i les dues
+        // llistes han de dir el mateix: per arribar a Etiquetes calia entrar
+        // abans a Serveis o a Ofertes i descobrir-la de rebot. És on es
+        // decideix el públic de les ofertes segmentades; no és una subpantalla.
+        { href: "/admin/etiquetes", label: "Etiquetes" },
       ],
     },
     {
@@ -138,6 +143,9 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/admin/exercicis", label: "Exercicis", icon: "dumbbell" },
     { href: "/admin/community", label: "Comunitat", icon: "community" },
     { href: "/admin/configuracio", label: "Configuració", icon: "settings" },
+    // L'última, com al client i al professional i pel mateix motiu: no és una
+    // àrea on es faci res, és on s'hi va quan alguna de les altres no s'entén.
+    { href: "/admin/ajuda", label: "Ajuda", icon: "help" },
   ],
   trainer: [
     { href: "/trainer", label: "Inici", exact: true, icon: "home" },
@@ -179,8 +187,7 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     { href: "/client/comunitat", label: "Comunitat", labelKey: "comunitat", icon: "community" },
     { href: "/client/configuracio", label: "Configuració", labelKey: "configuracio", icon: "settings" },
     // L'última del menú a posta: no és una àrea on es faci res, és on s'hi va
-    // quan alguna de les altres no s'entén. El professional ja té la seva;
-    // la de l'administració encara no existeix.
+    // quan alguna de les altres no s'entén. Els tres rols ja la tenen.
     { href: "/client/ajuda", label: "Ajuda", labelKey: "ajuda", icon: "help" },
   ],
 };
