@@ -880,6 +880,14 @@
       "deleteFailed": "No s'ha pogut eliminar el document."
     }
   },
+  "help": {
+    "title": "Ajuda",
+    "subtitle": "Com funciona la teva àrea de client, secció per secció.",
+    "downloadPdf": "Descarregar PDF",
+    "toc": "Què hi trobaràs",
+    "tocAria": "Índex del manual",
+    "warnPrefix": "Compte: "
+  },
   "workouts": {
     "title": "Exercicis",
     "intro": "Els exercicis que t'ha assignat el teu professional i la biblioteca del centre.",

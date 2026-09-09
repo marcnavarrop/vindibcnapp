@@ -880,6 +880,14 @@
       "deleteFailed": "We couldn't delete the document."
     }
   },
+  "help": {
+    "title": "Help",
+    "subtitle": "How your client area works, section by section.",
+    "downloadPdf": "Download PDF",
+    "toc": "What you'll find",
+    "tocAria": "Manual contents",
+    "warnPrefix": "Careful: "
+  },
   "workouts": {
     "title": "Exercises",
     "intro": "The exercises your professional has assigned you, plus the centre's library.",

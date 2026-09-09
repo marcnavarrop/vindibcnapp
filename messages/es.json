@@ -880,6 +880,14 @@
       "deleteFailed": "No se ha podido eliminar el documento."
     }
   },
+  "help": {
+    "title": "Ayuda",
+    "subtitle": "Cómo funciona tu área de cliente, sección por sección.",
+    "downloadPdf": "Descargar PDF",
+    "toc": "Qué encontrarás",
+    "tocAria": "Índice del manual",
+    "warnPrefix": "Atención: "
+  },
   "workouts": {
     "title": "Ejercicios",
     "intro": "Los ejercicios que te ha asignado tu profesional y la biblioteca del centro.",

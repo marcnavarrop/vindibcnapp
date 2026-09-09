@@ -9,6 +9,7 @@
     "lint": "eslint",
     "i18n:check": "node scripts/i18n-check.mjs",
     "i18n:inventory": "node scripts/i18n-inventory.mjs",
+    "manual:check": "node scripts/manual-check.mjs",
     "emails:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/email-snapshot.mts",
     "emails:review": "node scripts/email-review.mjs",
     "legal:snapshot": "node scripts/legal-snapshot.mjs",

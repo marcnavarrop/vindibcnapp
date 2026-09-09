@@ -15,11 +15,41 @@ import type { Block, Chapter } from "@/lib/help/client-manual";
  *
  * `print-manual` és la classe amb què la fulla d'impressió (globals.css) el
  * reconeix, i `data-chapter` marca on pot començar un full nou.
+ *
+ * LES TRES CADENES QUE SÍ QUE SAP
+ *
+ * "No sap res del contingut" era gairebé cert: hi havia tres frases en català
+ * escrites aquí dins —el títol de l'índex, la seva etiqueta d'accessibilitat i
+ * el prefix dels avisos—. Amb els tres manuals en català no es notava; el dia
+ * que el del client es tradueix, sí. Arriben per `labels`, amb el català per
+ * defecte: el professional i l'administració no han de passar res, i el client
+ * hi posa els seus.
  */
-export function HelpManual({ chapters }: { chapters: Chapter[] }) {
+export type ManualLabels = {
+  /** Títol de l'índex. */
+  toc: string;
+  /** Etiqueta d'accessibilitat de l'índex. */
+  tocAria: string;
+  /** Prefix en negreta dels blocs d'avís. Porta l'espai final. */
+  warnPrefix: string;
+};
+
+const CA_LABELS: ManualLabels = {
+  toc: "Què hi trobaràs",
+  tocAria: "Índex del manual",
+  warnPrefix: "Compte: ",
+};
+
+export function HelpManual({
+  chapters,
+  labels = CA_LABELS,
+}: {
+  chapters: Chapter[];
+  labels?: ManualLabels;
+}) {
   return (
     <div className="print-manual flex flex-col gap-10">
-      <TableOfContents chapters={chapters} />
+      <TableOfContents chapters={chapters} labels={labels} />
 
       {chapters.map((c, i) => (
         <section key={c.id} id={c.id} data-chapter className="scroll-mt-20">
@@ -29,7 +59,7 @@ export function HelpManual({ chapters }: { chapters: Chapter[] }) {
           </h2>
           <div className="flex flex-col gap-4">
             {c.blocks.map((b, j) => (
-              <BlockView key={j} block={b} />
+              <BlockView key={j} block={b} labels={labels} />
             ))}
           </div>
         </section>
@@ -44,15 +74,21 @@ export function HelpManual({ chapters }: { chapters: Chapter[] }) {
  * Es queda al PDF a posta encara que els enllaços no s'hi puguin prémer: en
  * paper segueix fent de sumari, que és mitja feina d'un índex.
  */
-function TableOfContents({ chapters }: { chapters: Chapter[] }) {
+function TableOfContents({
+  chapters,
+  labels,
+}: {
+  chapters: Chapter[];
+  labels: ManualLabels;
+}) {
   return (
     <nav
-      aria-label="Índex del manual"
+      aria-label={labels.tocAria}
       data-nobreak
       className="rounded-2xl border border-brand-border bg-white p-5"
     >
       <h2 className="mb-3 text-sm font-bold tracking-wide text-brand-muted uppercase">
-        Què hi trobaràs
+        {labels.toc}
       </h2>
       <ol className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
         {chapters.map((c, i) => (
@@ -71,7 +107,13 @@ function TableOfContents({ chapters }: { chapters: Chapter[] }) {
   );
 }
 
-function BlockView({ block: b }: { block: Block }) {
+function BlockView({
+  block: b,
+  labels,
+}: {
+  block: Block;
+  labels: ManualLabels;
+}) {
   switch (b.t) {
     case "h":
       return (
@@ -125,7 +167,7 @@ function BlockView({ block: b }: { block: Block }) {
     case "warn":
       return (
         <aside className="rounded-xl border-l-4 border-brand-orange bg-brand-orange/5 px-4 py-3 text-sm leading-relaxed text-brand-charcoal">
-          <span className="font-bold">Compte: </span>
+          <span className="font-bold">{labels.warnPrefix}</span>
           {b.text}
         </aside>
       );
