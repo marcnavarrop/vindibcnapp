@@ -27,6 +27,35 @@
     "demoSubtitle": "Simulación sin Supabase. Elige con qué rol quieres entrar; los datos son de ejemplo.",
     "demoEnterAs": "Entrar como {role}"
   },
+  "forgotPassword": {
+    "title": "Restablecer la contraseña",
+    "intro": "Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.",
+    "email": "Correo electrónico",
+    "submit": "Enviar enlace",
+    "submitting": "Enviando…",
+    "sent": "Si hay una cuenta con este correo, te hemos enviado un enlace para crear una contraseña nueva. Revisa tu bandeja de entrada.",
+    "back": "← Volver a iniciar sesión",
+    "errorBadEmail": "Indica un correo válido."
+  },
+  "updatePassword": {
+    "title": "Crea tu contraseña",
+    "verifying": "Verificando el enlace…",
+    "invalid": "Este enlace no es válido o ha caducado. Pide uno nuevo desde <link>restablecer la contraseña</link>.",
+    "newPassword": "Nueva contraseña",
+    "repeatPassword": "Repite la contraseña",
+    "save": "Guardar y entrar",
+    "saving": "Guardando…",
+    "errorTooShort": "La contraseña debe tener como mínimo {min} caracteres.",
+    "errorMismatch": "Las contraseñas no coinciden.",
+    "errorConnection": "Ha habido un problema de conexión. Vuelve a intentarlo."
+  },
+  "confirmEmail": {
+    "title": "Cambiar el correo de acceso",
+    "verifying": "Confirmando…",
+    "done": "Hecho. A partir de ahora entra con <b>{email}</b>.",
+    "invalid": "Este enlace ya no es válido. Puede que haya caducado, que ya lo hayas usado o que hayas pedido el cambio otra vez después. Vuelve a pedirlo desde Configuración.",
+    "back": "← Ir a iniciar sesión"
+  },
   "trial": {
     "metaTitle": "Sesión de prueba gratuita · VindiBCN",
     "metaDescription": "Pide una sesión de prueba de entrenamiento personal sin compromiso.",

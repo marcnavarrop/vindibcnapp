@@ -27,6 +27,35 @@
     "demoSubtitle": "Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són d'exemple.",
     "demoEnterAs": "Entrar com a {role}"
   },
+  "forgotPassword": {
+    "title": "Restablir la contrasenya",
+    "intro": "Introdueix el teu correu i t'enviarem un enllaç per crear una contrasenya nova.",
+    "email": "Correu electrònic",
+    "submit": "Enviar enllaç",
+    "submitting": "Enviant…",
+    "sent": "Si hi ha un compte amb aquest correu, t'hem enviat un enllaç per crear una contrasenya nova. Revisa la teva safata d'entrada.",
+    "back": "← Tornar a iniciar sessió",
+    "errorBadEmail": "Indica un correu vàlid."
+  },
+  "updatePassword": {
+    "title": "Crea la teva contrasenya",
+    "verifying": "Verificant l'enllaç…",
+    "invalid": "Aquest enllaç no és vàlid o ha caducat. Demana'n un de nou des de <link>restablir la contrasenya</link>.",
+    "newPassword": "Nova contrasenya",
+    "repeatPassword": "Repeteix la contrasenya",
+    "save": "Desar i entrar",
+    "saving": "Desant…",
+    "errorTooShort": "La contrasenya ha de tenir com a mínim {min} caràcters.",
+    "errorMismatch": "Les contrasenyes no coincideixen.",
+    "errorConnection": "Hi ha hagut un problema de connexió. Torna-ho a provar."
+  },
+  "confirmEmail": {
+    "title": "Canviar el correu d'accés",
+    "verifying": "Confirmant…",
+    "done": "Fet. A partir d'ara entra amb <b>{email}</b>.",
+    "invalid": "Aquest enllaç ja no és vàlid. Pot ser que hagi caducat, que ja l'hagis fet servir o que hagis demanat el canvi una altra vegada després. Torna-ho a demanar des de Configuració.",
+    "back": "← Anar a iniciar sessió"
+  },
   "trial": {
     "metaTitle": "Sessió de prova gratuïta · VindiBCN",
     "metaDescription": "Demana una sessió de prova d'entrenament personal sense compromís.",

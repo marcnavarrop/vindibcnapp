@@ -1049,6 +1049,28 @@ export interface Database {
         Relationships: [];
       };
       /** Peticions de canvi de correu d'accés pendents de confirmar (0078). */
+      /** Fre del restabliment de contrasenya (0081). Només hashes. */
+      password_reset_requests: {
+        Row: {
+          id: string;
+          email_hash: string;
+          ip_hash: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email_hash: string;
+          ip_hash?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email_hash?: string;
+          ip_hash?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       email_change_requests: {
         Row: {
           id: string;

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Wordmark } from "@/components/wordmark";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Field } from "@/components/ui/input";
@@ -15,6 +16,7 @@ const SHELL =
 
 /** Sol·licitud de restabliment de contrasenya (envia email de recovery). */
 export default function ForgotPasswordPage() {
+  const t = useTranslations("forgotPassword");
   const [state, formAction] = useActionState(
     requestPasswordResetAction,
     {} as ForgotState,
@@ -25,29 +27,31 @@ export default function ForgotPasswordPage() {
       <div className={SHELL}>
         <div className="mb-6 flex flex-col gap-1">
           <Wordmark height={30} />
-          <h1 className="text-xl text-brand-dark">Restablir la contrasenya</h1>
+          <h1 className="text-xl text-brand-dark">{t("title")}</h1>
         </div>
 
         {state.ok ? (
           <p className="rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-            Si hi ha un compte amb aquest correu, t&apos;hem enviat un enllaç per
-            crear una contrasenya nova. Revisa la teva safata d&apos;entrada.
+            {t("sent")}
           </p>
         ) : (
           <form action={formAction} className="flex flex-col gap-5">
-            <p className="text-sm text-brand-muted">
-              Introdueix el teu correu i t&apos;enviarem un enllaç per crear una
-              contrasenya nova.
-            </p>
+            <p className="text-sm text-brand-muted">{t("intro")}</p>
             <Field
-              label="Correu electrònic"
+              label={t("email")}
               name="email"
               type="email"
               required
               autoComplete="email"
             />
-            {state.error && <p className="text-sm text-error">{state.error}</p>}
-            <SubmitButton pendingLabel="Enviant…">Enviar enllaç</SubmitButton>
+            {/* L'acció torna un CODI, no una frase: qui sap l'idioma és la
+                pantalla, no el servidor. Mateix criteri que la sessió de prova. */}
+            {state.errorCode && (
+              <p className="text-sm text-error">{t("errorBadEmail")}</p>
+            )}
+            <SubmitButton pendingLabel={t("submitting")}>
+              {t("submit")}
+            </SubmitButton>
           </form>
         )}
 
@@ -56,7 +60,7 @@ export default function ForgotPasswordPage() {
             href="/login"
             className="font-bold text-brand-purple hover:text-brand-orange"
           >
-            ← Tornar a iniciar sessió
+            {t("back")}
           </Link>
         </p>
       </div>

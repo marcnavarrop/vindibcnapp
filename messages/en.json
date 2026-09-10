@@ -27,6 +27,35 @@
     "demoSubtitle": "Simulation without Supabase. Choose which role to enter as; the data is sample data.",
     "demoEnterAs": "Enter as {role}"
   },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "intro": "Enter your email and we'll send you a link to create a new password.",
+    "email": "Email",
+    "submit": "Send link",
+    "submitting": "Sending…",
+    "sent": "If there's an account with this email, we've sent you a link to create a new password. Check your inbox.",
+    "back": "← Back to sign in",
+    "errorBadEmail": "Enter a valid email address."
+  },
+  "updatePassword": {
+    "title": "Create your password",
+    "verifying": "Checking the link…",
+    "invalid": "This link isn't valid or has expired. Request a new one from <link>reset your password</link>.",
+    "newPassword": "New password",
+    "repeatPassword": "Repeat password",
+    "save": "Save and sign in",
+    "saving": "Saving…",
+    "errorTooShort": "The password must be at least {min} characters long.",
+    "errorMismatch": "The passwords don't match.",
+    "errorConnection": "There was a connection problem. Please try again."
+  },
+  "confirmEmail": {
+    "title": "Change your sign-in email",
+    "verifying": "Confirming…",
+    "done": "Done. From now on you sign in with <b>{email}</b>.",
+    "invalid": "This link is no longer valid. It may have expired, you may have already used it, or you may have requested the change again afterwards. Request it again from Settings.",
+    "back": "← Go to sign in"
+  },
   "trial": {
     "metaTitle": "Free trial session · VindiBCN",
     "metaDescription": "Book a no-strings personal training trial session.",
