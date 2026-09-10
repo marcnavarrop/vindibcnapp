@@ -407,6 +407,17 @@ export function ClientCenterCalendar({
     return items;
   }
 
+  /**
+   * `locale` a les dependències NO és una formalitat del linter.
+   *
+   * Aquest text ("setembre de 2026", "dimarts 9 de setembre") el formata
+   * `Intl` amb l'idioma de qui mira, i `days` està memoritzat a la seva vegada
+   * sobre `[view, offset]`: en canviar d'idioma, la seva REFERÈNCIA no es mou.
+   * Sense `locale` aquí, doncs, cap de les dues dependències canviava i el
+   * memo tornava el valor vell: el calendari es traduïa sencer menys aquesta
+   * capçalera, que es quedava en l'idioma anterior fins que la persona
+   * canviava de vista o de setmana.
+   */
   const periodLabel = useMemo(() => {
     if (view === "week") {
       return new Intl.DateTimeFormat(intlLocale(locale), {
@@ -419,7 +430,7 @@ export function ClientCenterCalendar({
       day: "numeric",
       month: "long",
     }).format(days[0]);
-  }, [view, days]);
+  }, [view, days, locale]);
 
   const shownTrainers = trainers.filter((t) => showTrainer(t.id));
 

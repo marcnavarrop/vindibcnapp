@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/wordmark";
@@ -23,6 +24,7 @@ type Status = "verifying" | "ready" | "invalid";
  * consumeixen el token d'un sol ús abans que l'usuari cliqui.
  */
 function UpdatePasswordInner() {
+  const t = useTranslations("updatePassword");
   const params = useSearchParams();
   const [status, setStatus] = useState<Status>("verifying");
   const [error, setError] = useState<string | null>(null);
@@ -67,11 +69,9 @@ function UpdatePasswordInner() {
 
     setError(null);
     if (password.length < MIN_PASSWORD_LENGTH)
-      return setError(
-        `La contrasenya ha de tenir com a mínim ${MIN_PASSWORD_LENGTH} caràcters.`,
-      );
+      return setError(t("errorTooShort", { min: MIN_PASSWORD_LENGTH }));
     if (password !== confirm)
-      return setError("Les contrasenyes no coincideixen.");
+      return setError(t("errorMismatch"));
 
     setLoading(true);
     let navigating = false;
@@ -100,7 +100,7 @@ function UpdatePasswordInner() {
       navigating = true;
       window.location.assign(roleHome(role));
     } catch {
-      setError("Hi ha hagut un problema de connexió. Torna-ho a provar.");
+      setError(t("errorConnection"));
     } finally {
       if (!navigating) setLoading(false);
     }
@@ -111,34 +111,36 @@ function UpdatePasswordInner() {
       <div className={SHELL}>
         <div className="mb-6 flex flex-col gap-1">
           <Wordmark height={30} />
-          <h1 className="text-xl text-brand-dark">Crea la teva contrasenya</h1>
+          <h1 className="text-xl text-brand-dark">{t("title")}</h1>
         </div>
 
         {status === "verifying" ? (
-          <p className="text-sm text-brand-muted">Verificant l&apos;enllaç…</p>
+          <p className="text-sm text-brand-muted">{t("verifying")}</p>
         ) : status === "invalid" ? (
           <p className="rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-            Aquest enllaç no és vàlid o ha caducat. Demana&apos;n un de nou des de{" "}
-            <a
-              href="/forgot-password"
-              className="font-bold text-brand-purple underline"
-            >
-              restablir la contrasenya
-            </a>
-            .
+            {t.rich("invalid", {
+              link: (chunks) => (
+                <a
+                  href="/forgot-password"
+                  className="font-bold text-brand-purple underline"
+                >
+                  {chunks}
+                </a>
+              ),
+            })}
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {/* Camps no controlats: es llegeixen del FormData al submit. */}
             <PasswordField
-              label="Nova contrasenya"
+              label={t("newPassword")}
               name="password"
               required
               minLength={MIN_PASSWORD_LENGTH}
               autoComplete="new-password"
             />
             <PasswordField
-              label="Repeteix la contrasenya"
+              label={t("repeatPassword")}
               name="confirm"
               required
               minLength={MIN_PASSWORD_LENGTH}
@@ -146,7 +148,7 @@ function UpdatePasswordInner() {
             />
             {error && <p className="text-sm text-error">{error}</p>}
             <Button type="submit" disabled={loading}>
-              {loading ? "Desant…" : "Desar i entrar"}
+              {loading ? t("saving") : t("save")}
             </Button>
           </form>
         )}

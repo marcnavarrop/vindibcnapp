@@ -4,7 +4,37 @@ import { sendEmail } from "@/lib/email";
 import { appLink } from "@/lib/notifications/brand";
 import { renderInviteEmail, renderRecoveryEmail } from "@/lib/notifications/templates";
 import { writeLog } from "@/lib/notifications/log";
+import { toLocale, type Locale } from "@/lib/i18n/config";
 import type { UserRole } from "@/types/database";
+
+/**
+ * L'idioma en què llegeix aquesta persona.
+ *
+ * Els dos correus de compte —invitació i recuperació— sortien SEMPRE en català
+ * encara que les seves plantilles ja acceptessin `locale` i les altres tres
+ * (benvinguda, canvi de correu i avís al correu vell) sí que l'hi passessin.
+ * Un client amb `preferred_language = "es"` demanava restablir la contrasenya i
+ * rebia el correu en una llengua que potser no llegeix.
+ *
+ * Es consulta aquí i no al cridant perquè els dos camins que hi arriben tenen
+ * el `profileId` a mà i cap dels dos té el motiu de saber d'idiomes. Si la
+ * consulta falla, es cau al català de sempre: un correu en la llengua per
+ * defecte és molt millor que cap correu.
+ */
+async function localeForProfile(profileId: string | null): Promise<Locale | null> {
+  if (!profileId) return null;
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("profiles")
+      .select("preferred_language")
+      .eq("id", profileId)
+      .maybeSingle();
+    return data ? toLocale(data.preferred_language) : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Emails de compte (invitació i recuperació). A diferència de les
@@ -34,6 +64,7 @@ async function sendInvite(
   const { subject, html, text } = renderInviteEmail({
     name,
     url: callbackUrl(tokenHash, "invite"),
+    locale: await localeForProfile(profileId),
   });
   const res = await sendEmail({ to: email, subject, html, text });
   await writeLog({
@@ -164,6 +195,8 @@ export async function sendPasswordRecovery(email: string): Promise<void> {
   const { subject, html, text } = renderRecoveryEmail({
     name,
     url: callbackUrl(data.properties.hashed_token, "recovery"),
+    // El perfil ja està resolt aquí: `generateLink` ens torna l'usuari.
+    locale: await localeForProfile(data.user?.id ?? null),
   });
   const res = await sendEmail({ to: email, subject, html, text });
   await writeLog({

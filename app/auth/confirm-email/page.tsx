@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Wordmark } from "@/components/wordmark";
 import { confirmEmailChangeAction } from "@/app/auth/confirm-email/actions";
@@ -24,6 +25,7 @@ type Status = "verifying" | "ok" | "invalid";
  * GoTrue i el gasta és el servidor (`confirmEmailChangeAction`).
  */
 function ConfirmEmailInner() {
+  const t = useTranslations("confirmEmail");
   const params = useSearchParams();
   const [status, setStatus] = useState<Status>("verifying");
   const [email, setEmail] = useState<string | null>(null);
@@ -53,26 +55,25 @@ function ConfirmEmailInner() {
       <div className={SHELL}>
         <div className="mb-6 flex flex-col gap-1">
           <Wordmark height={30} />
-          <h1 className="text-xl text-brand-dark">
-            Canviar el correu d&apos;accés
-          </h1>
+          <h1 className="text-xl text-brand-dark">{t("title")}</h1>
         </div>
 
         {status === "verifying" && (
-          <p className="text-sm text-brand-muted">Confirmant…</p>
+          <p className="text-sm text-brand-muted">{t("verifying")}</p>
         )}
 
         {status === "ok" && (
           <p className="rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-            Fet. A partir d&apos;ara entra amb <strong>{email}</strong>.
+            {t.rich("done", {
+              email: email ?? "",
+              b: (chunks) => <strong>{chunks}</strong>,
+            })}
           </p>
         )}
 
         {status === "invalid" && (
           <p className="rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-            Aquest enllaç ja no és vàlid. Pot ser que hagi caducat, que ja
-            l&apos;hagis fet servir o que hagis demanat el canvi una altra
-            vegada després. Torna-ho a demanar des de Configuració.
+            {t("invalid")}
           </p>
         )}
 
@@ -81,7 +82,7 @@ function ConfirmEmailInner() {
             href="/login"
             className="font-bold text-brand-purple hover:text-brand-orange"
           >
-            ← Anar a iniciar sessió
+            {t("back")}
           </Link>
         </p>
       </div>
