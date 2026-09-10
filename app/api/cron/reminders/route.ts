@@ -16,6 +16,8 @@ import { resumeDueSubscriptions } from "@/lib/data/subscription-pause";
 import { notifyOnce } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerHour, centerToday } from "@/lib/center-time";
+import { toucaEnviarAvisos } from "@/lib/cron-window";
+import { prunePasswordResetRequests } from "@/lib/data/password-reset";
 
 export const dynamic = "force-dynamic";
 
@@ -81,23 +83,87 @@ async function handle(req: NextRequest) {
 
   const renewals = await renewDueSubscriptions(centerToday());
 
+  // ─── Estat dels bons: tampoc depèn de l'hora dels avisos ───
+  //
+  // PUGEN PER SOBRE DE LA GUARDA pel mateix motiu que les subscripcions. Que un
+  // bo estigui caducat, o que un de pendent hagi passat el termini i alliberi
+  // les seves franges, és estat del negoci: passa el dia que toca, corri el
+  // cron a l'hora que corri. Deixar-ho a sota volia dir que amb l'hora mal
+  // configurada no s'escombrés mai.
+  //
+  // `sweepExpiredBonos` és PERESÓS a posta i per això no fa mal quedar-se
+  // enrere: `isBonoExpired` ja descarta els caducats a la lectura. L'altre sí
+  // que en fa: cancel·la bons i allibera reserves.
+  await sweepExpiredBonos();
+
+  // ─── Bons pendents de pagament que han passat el termini ───
+  // Anul·la el bo i allibera les franges futures que ocupava. Un bo que mai
+  // s'ha fet servir per reservar no entra aquí: no li treu el lloc a ningú.
+  //
+  // L'AVÍS VIATJA AMB EL BARRIDO i no es queda a sota de la guarda. Separar-los
+  // seria pitjor que no pujar cap dels dos: el bo es cancel·laria avui, l'avís
+  // esperaria a una passada que ja no el trobaria a la llista —perquè ja està
+  // cancel·lat— i el client no s'assabentaria MAI que li han tret unes sessions
+  // que tenia reservades.
+  const unpaid = await cancelOverduePendingBonos();
+  let unpaidSent = 0;
+  let unpaidSkipped = 0;
+  for (const b of unpaid) {
+    const did = await notifyOnce(
+      {
+        type: "bono_unpaid_cancelled",
+        recipient: b.recipient,
+        relatedId: b.relatedId,
+        data: {
+          name: b.recipient.name ?? "",
+          serviceType: b.serviceType,
+          cancelled: String(b.cancelledCount),
+        },
+      },
+      // Obligatori: li acabem de cancel·lar sessions ja reservades. Si no ho
+      // sap, es presenta a una sessió que ja no existeix.
+      { ignorePreferences: true },
+    );
+    if (did) unpaidSent++;
+    else unpaidSkipped++;
+  }
+
+  const bonosUnpaid = {
+    cancelled: unpaid.length,
+    sessionsFreed: unpaid.reduce((n, b) => n + b.cancelledCount, 0),
+    processed: unpaidSent,
+    skipped_already_sent: unpaidSkipped,
+  };
+
+  // ─── Neteja del fre del restabliment (0081) ───
+  // Files que ja no frenen res. També per sobre de la guarda: és manteniment,
+  // no un avís, i deixar-ho a sota faria créixer la taula per sempre.
+  const resetPruned = await prunePasswordResetRequests();
+
   // ─── Hora d'enviament configurable ───
+  //
+  // A partir d'aquí ve el que SÍ que és una preferència d'enviament: avisos de
+  // cortesia que el centre vol que surtin a una hora concreta.
+  //
   // LIMITACIÓ: el pla gratuït de Vercel només permet UN cron diari, amb l'hora
-  // fixada a vercel.json (no es pot canviar sense desplegar). Així doncs,
-  // `reminder_hour_local` NO mou l'execució del cron: només decideix si, en la
-  // finestra en què el cron ja corre, toca enviar o no. Si l'hora local del
-  // centre encara no ha arribat al valor configurat, aquesta execució no envia
-  // res i els recordatoris sortiran en la del dia següent.
+  // fixada a vercel.json (no es pot canviar sense desplegar). Per això la guarda
+  // no pot ser `horaLocal < reminderHourLocal` a seques: amb una sola passada,
+  // "encara és aviat" i "avui no s'envia mai" són la mateixa condició. Es frena
+  // NOMÉS si queda avui una passada que caigui ja a l'hora bona. Tot el
+  // raonament i les dates concretes són a lib/cron-window.ts.
   const { reminderHourLocal } = await getCenterSettings();
-  const horaLocal = centerHour(new Date());
-  if (horaLocal < reminderHourLocal) {
+  const ara = new Date();
+  const horaLocal = centerHour(ara);
+  if (!toucaEnviarAvisos(ara, reminderHourLocal)) {
     return NextResponse.json({
       ok: true,
-      skipped: "encara no és l'hora configurada",
+      skipped: "encara no és l'hora configurada i avui queda una passada millor",
       horaLocalDelCentre: horaLocal,
       reminderHourLocal,
-      // Les renovacions SÍ que s'han fet: no depenen de l'hora dels avisos.
+      // Tot això SÍ que s'ha fet: no depèn de l'hora dels avisos.
       subscriptions: { ...summarize(renewals), resumed },
+      bonosUnpaid,
+      resetPruned,
     });
   }
 
@@ -140,9 +206,8 @@ async function handle(req: NextRequest) {
 
   // ─── Bons a punt de caducar ───
   // S'enganxa al cron que ja existeix en comptes de muntar-ne un de nou: el
-  // pla gratuït de Vercel només en permet un al dia. Abans de mirar quins
-  // caduquen aviat, es tanquen els que ja ho han fet.
-  await sweepExpiredBonos();
+  // pla gratuït de Vercel només en permet un al dia. Els que ja han caducat
+  // s'han tancat més amunt, abans de la guarda de l'hora.
   const expiring = await listExpiringBonoTargets(centerToday());
   let expSent = 0;
   let expSkipped = 0;
@@ -162,42 +227,12 @@ async function handle(req: NextRequest) {
     else expSkipped++;
   }
 
-  // ─── Bons pendents de pagament que han passat el termini ───
-  // Anul·la el bo i allibera les franges futures que ocupava. Un bo que mai
-  // s'ha fet servir per reservar no entra aquí: no li treu el lloc a ningú.
-  const unpaid = await cancelOverduePendingBonos();
-  let unpaidSent = 0;
-  let unpaidSkipped = 0;
-  for (const b of unpaid) {
-    const did = await notifyOnce(
-      {
-        type: "bono_unpaid_cancelled",
-        recipient: b.recipient,
-        relatedId: b.relatedId,
-        data: {
-          name: b.recipient.name ?? "",
-          serviceType: b.serviceType,
-          cancelled: String(b.cancelledCount),
-        },
-      },
-      // Obligatori: li acabem de cancel·lar sessions ja reservades. Si no ho
-      // sap, es presenta a una sessió que ja no existeix.
-      { ignorePreferences: true },
-    );
-    if (did) unpaidSent++;
-    else unpaidSkipped++;
-  }
-
   return NextResponse.json({
     ok: true,
     day: tomorrowMadrid(),
     subscriptions: { ...summarize(renewals), resumed },
-    bonosUnpaid: {
-      cancelled: unpaid.length,
-      sessionsFreed: unpaid.reduce((n, b) => n + b.cancelledCount, 0),
-      processed: unpaidSent,
-      skipped_already_sent: unpaidSkipped,
-    },
+    bonosUnpaid,
+    resetPruned,
     bonosExpiring: {
       window_days: BONO_EXPIRY_WARNING_DAYS,
       targets: expiring.length,
