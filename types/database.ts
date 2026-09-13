@@ -72,6 +72,17 @@ export type GroupBookingResult =
   | { ok: false; reason: "taken" | "full" | "no_sessions" };
 
 /**
+ * Resultat de `book_individual_slot` (0084), el mirall de l'anterior per a les
+ * sessions que NO són de grup.
+ *
+ * No hi ha 'full': una sessió individual ocupa la franja sencera, així que o hi
+ * és algú —'taken'— o no. La resta és idèntica.
+ */
+export type IndividualBookingResult =
+  | { ok: true; id: string; remaining: number | null }
+  | { ok: false; reason: "taken" | "no_sessions" };
+
+/**
  * Estat d'una subscripció mensual (0072).
  *
  * Tres i no quatre: 'past_due' ja vol dir "aturada fins que pagui". Un 'paused'
@@ -1725,8 +1736,31 @@ export interface Database {
           p_trainer_id: string;
           p_scheduled_at: string;
           p_capacity: number;
+          /** Durada de la sessió; té valor per defecte a la base (0083). */
+          p_duration_minutes?: number;
         };
         Returns: GroupBookingResult;
+      };
+      /**
+       * Reserva una sessió que NO és de grup serialitzant per professional
+       * (0084), amb el MATEIX advisory lock que `book_group_slot` perquè les
+       * dues es vegin. Rebutja la franja si s'hi solapa qualsevol reserva viva
+       * o prova, sigui de grup o no. Amb `p_bono_id` null és de cortesia.
+       */
+      book_individual_slot: {
+        Args: {
+          p_client_id: string;
+          /** Null = sessió de cortesia: no es descompta cap sessió (0070). */
+          p_bono_id: string | null;
+          p_expected_remaining: number | null;
+          /** Pot ser null: una reserva pot quedar sense professional assignat. */
+          p_trainer_id: string | null;
+          p_scheduled_at: string;
+          p_service_type: ServiceType;
+          /** Durada de la sessió; té valor per defecte a la base. */
+          p_duration_minutes?: number;
+        };
+        Returns: IndividualBookingResult;
       };
       /**
        * Reclama una sessió extra del cicle en curs (0073). Serialitza per

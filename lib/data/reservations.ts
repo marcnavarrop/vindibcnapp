@@ -14,7 +14,11 @@ import {
   rangesOverlap,
   sessionEndIso,
 } from "@/lib/availability-slots";
-import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
+// Només la variant de simulació: als camins reals les proves les compta la
+// funció de Postgres que reserva (book_group_slot / book_individual_slot),
+// dins del seu pany. Comptar-les també aquí seria una segona opinió sense
+// autoritat.
+import { mockActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
@@ -542,6 +546,36 @@ export type ReservationInput = {
  *
  * Torna les sessions que queden al bo.
  */
+/**
+ * Qui pot crear una reserva per a aquest client des del camí manual.
+ *
+ * Aquesta comprovació existeix perquè els dos camins manuals —grup i
+ * individual— escriuen amb la clau de SERVEI, que se salta la RLS. La RLS ja no
+ * hi és per aturar ningú, així que el permís s'ha de mirar aquí: admin sempre;
+ * professional, només si el client és seu.
+ *
+ * Abans vivia dins de `createGroupReservations`. Quan la individual va passar
+ * també per una funció de Postgres (0084) va deixar d'estar protegida per la
+ * RLS del client de sessió, i duplicar la comprovació era convidar-les a
+ * separar-se amb el temps.
+ */
+async function assertMayBookFor(clientId: string): Promise<void> {
+  const viewer = await getViewer();
+  if (!viewer) throw new Error("No autoritzat.");
+  if (viewer.role === "admin") return;
+  if (viewer.role !== "trainer") throw new Error("No autoritzat.");
+  // Es comprova contra `clientId` i no contra `bono.client_id`: amb cortesia
+  // no hi ha bo d'on treure'l. Amb bo, els dos valen el mateix —qui crida
+  // passa `bono.client_id`—, així que la comprovació no s'ha afluixat.
+  const { data: seu } = await createAdminClient()
+    .from("clients")
+    .select("id")
+    .eq("id", clientId)
+    .eq("assigned_trainer_id", viewer.id)
+    .maybeSingle();
+  if (!seu) throw new Error("Aquest client no és teu.");
+}
+
 async function createGroupReservations(
   /**
    * El bo del qual surten les sessions, o `null` si són de cortesia. Quan és
@@ -560,22 +594,9 @@ async function createGroupReservations(
   if (!trainerId)
     throw new Error("Una sessió de grup necessita un professional.");
 
-  const viewer = await getViewer();
-  if (!viewer) throw new Error("No autoritzat.");
-  if (viewer.role !== "admin") {
-    if (viewer.role !== "trainer") throw new Error("No autoritzat.");
-    const admin = createAdminClient();
-    // Es comprova contra `clientId` i no contra `bono.client_id`: amb cortesia
-    // no hi ha bo d'on treure'l. Amb bo, els dos valen el mateix —qui crida
-    // passa `bono.client_id`—, així que la comprovació no s'ha afluixat.
-    const { data: seu } = await admin
-      .from("clients")
-      .select("id")
-      .eq("id", clientId)
-      .eq("assigned_trainer_id", viewer.id)
-      .maybeSingle();
-    if (!seu) throw new Error("Aquest client no és teu.");
-  }
+  // El permís el mira `createReservation` abans de triar camí, un sol cop per a
+  // les dues funcions. Aquí ja no es repeteix: era una consulta de més per cada
+  // reserva que feia un professional.
 
   const admin = createAdminClient();
   const fetes: string[] = [];
@@ -619,6 +640,70 @@ async function createGroupReservations(
     fetes.push(res.id);
     // Amb cortesia la funció torna `remaining: null`: no hi ha comptador que
     // seguir, i el següent cicle ha de tornar a enviar null.
+    restant = bono ? res.remaining : null;
+  }
+
+  return restant;
+}
+
+/**
+ * Reserves que NO són de grup, una per data, per `book_individual_slot` (0084).
+ *
+ * Espill de `createGroupReservations`, i per la mateixa raó: entre el SELECT
+ * que mirava si la franja estava lliure i l'INSERT no hi havia res, i una
+ * reserva individual que trepitja un grup no la pot aturar la constraint de la
+ * 0082 —les files de grup en queden fora a posta—. Ara les dues funcions
+ * agafen el MATEIX pany per professional, així que es veuen l'una a l'altra.
+ *
+ * Tot o res, com a la de grup: si una de les N setmanes no hi cap, s'esborra
+ * el que hagi entrat i es torna el comptador del bo on estava.
+ */
+async function createIndividualReservations(
+  bono: {
+    id: string;
+    client_id: string;
+    remaining_sessions: number;
+    status: BonoStatus;
+  } | null,
+  clientId: string,
+  trainerId: string | null,
+  serviceType: ServiceType,
+  dates: string[],
+): Promise<number | null> {
+  const admin = createAdminClient();
+  const fetes: string[] = [];
+  let restant = bono ? bono.remaining_sessions : null;
+
+  for (const scheduledAt of dates) {
+    const { data: res, error } = await admin.rpc("book_individual_slot", {
+      p_client_id: clientId,
+      p_bono_id: bono ? bono.id : null,
+      p_expected_remaining: restant,
+      p_trainer_id: trainerId,
+      p_scheduled_at: scheduledAt,
+      p_service_type: serviceType,
+      p_duration_minutes: SESSION_DURATION_MINUTES,
+    });
+
+    if (error || !res || !res.ok) {
+      if (fetes.length > 0)
+        await admin.from("reservations").delete().in("id", fetes);
+      if (bono)
+        await admin
+          .from("bonos")
+          .update({
+            remaining_sessions: bono.remaining_sessions,
+            status: bono.status,
+          })
+          .eq("id", bono.id);
+      if (error) throw new Error("No s'ha pogut crear la reserva.");
+      const motiu = res && !res.ok ? res.reason : null;
+      if (motiu === "no_sessions")
+        throw new Error("Aquest bo no té sessions disponibles.");
+      throw new Error("Aquesta franja ja està ocupada.");
+    }
+
+    fetes.push(res.id);
     restant = bono ? res.remaining : null;
   }
 
@@ -758,86 +843,34 @@ export async function createReservation(
       serviceType,
     );
 
-  // L'aforament d'un grup no el pot garantir cap índex únic (quatre files són
-  // quatre files legítimes), així que aquest cas passa per la funció de
-  // Postgres que serialitza per franja, igual que la reserva del client.
+  // Els dos camins passen per una funció de Postgres que serialitza per
+  // professional amb un advisory lock, i tots dos agafen la MATEIXA clau: és
+  // l'única manera que un grup i una individual es vegin l'un a l'altre.
   //
-  // La cortesia NO obre cap camí paral·lel: passa per la mateixa funció, amb
-  // el bo a null. El lock i el recompte d'aforament són els mateixos, i per
-  // això una plaça regalada ocupa lloc com qualsevol altra.
-  const remaining = serviceType === "grupo_reducido"
-    ? await createGroupReservations(bono, clientId, input.trainerId, dates)
-    : bono
-      ? bono.remaining_sessions - weeks
-      : null;
-
-  if (serviceType !== "grupo_reducido") {
-    // La garantia real és de la base: la constraint EXCLUDE de la 0082, que
-    // compara RANGS i no instants. Substitueix l'índex únic de la 0007, que
-    // deixava conviure 9:00 i 9:30 perquè només mirava si l'instant era igual.
-    //
-    // Aquesta comprovació prèvia no és la garantia: és per donar un error
-    // entenedor abans, i per veure els grups —que queden fora de la constraint
-    // a posta i que una sessió individual tampoc pot trepitjar.
-    //
-    // Es llegeix amb la clau de SERVEI i no amb la de sessió: aquí es pregunta
-    // "qui ocupa aquesta franja", i sota RLS un professional podria no veure
-    // les reserves d'un company. Veure'n menys de les que hi ha faria passar la
-    // comprovació. Per a les individuals la constraint encara ho aturaria, però
-    // per als grups —que en queden fora— seria un forat de debò.
-    const occupancyDb = createAdminClient();
-    for (const scheduled_at of dates)
-      assertSlotFree(
-        [
-          ...(await fetchOccupants(
-            occupancyDb,
-            input.trainerId,
-            scheduled_at,
-            SESSION_DURATION_MINUTES,
-          )),
-          ...(input.trainerId
-            ? await fetchActiveHoldsAt(
-                occupancyDb,
-                input.trainerId,
-                scheduled_at,
-                SESSION_DURATION_MINUTES,
-              )
-            : []),
-        ],
-        serviceType,
-      );
-
-    const { error: rErr } = await supabase.from("reservations").insert(
-      dates.map((scheduled_at) => ({
-        client_id: clientId,
-        bono_id: bono ? bono.id : null,
-        trainer_id: input.trainerId,
-        scheduled_at,
-        duration_minutes: SESSION_DURATION_MINUTES,
-        service_type: serviceType,
-        status: "booked" as const,
-        is_complimentary: !bono,
-      })),
-    );
-    if (rErr) throw rErr;
-
-    if (bono) {
-      const { error: uErr } = await supabase
-        .from("bonos")
-        .update({
-          remaining_sessions: remaining!,
-          // Només el bo ja pagat passa a "completat" (veure la nota del camí mock).
-          ...(remaining === 0 && bono.status === "active"
-            ? { status: "completed" as const }
-            : {}),
-          ...(bono.first_reservation_at
-            ? {}
-            : { first_reservation_at: new Date().toISOString() }),
-        })
-        .eq("id", bono.id);
-      if (uErr) throw uErr;
-    }
-  }
+  //   · Grup       → book_group_slot (0053/0070/0083). L'aforament no el pot
+  //                  garantir cap índex: quatre files són quatre files.
+  //   · No grup    → book_individual_slot (0084). La constraint de la 0082 ja
+  //                  l'aturava contra una altra individual, però no contra un
+  //                  grup, perquè les files de grup queden fora de la
+  //                  constraint a posta.
+  //
+  // La cortesia NO obre cap camí paral·lel: passa per la mateixa funció, amb el
+  // bo a null. El lock i el recompte són els mateixos, i per això una plaça
+  // regalada ocupa lloc com qualsevol altra.
+  //
+  // Les dues escriuen amb la clau de servei, que se salta la RLS. Per això qui
+  // mira el permís és `assertMayBookFor` i no la base.
+  await assertMayBookFor(clientId);
+  const remaining =
+    serviceType === "grupo_reducido"
+      ? await createGroupReservations(bono, clientId, input.trainerId, dates)
+      : await createIndividualReservations(
+          bono,
+          clientId,
+          input.trainerId,
+          serviceType,
+          dates,
+        );
 
   const trainer = input.trainerId
     ? await getProfileContact(input.trainerId)
@@ -1172,60 +1205,36 @@ export async function createClientReservation(
       throw new Error("El grup d'aquesta franja ja està complet.");
     }
   } else {
-    // 4. La franja del profesional no puede solaparse. Aquí la garantia real
-    //    és la constraint EXCLUDE de la 0082, que compara RANGS: aquesta
-    //    comprovació és per donar un error entenedor abans, no per evitar la
-    //    cursa. També és qui veu els grups i les proves, que la constraint no
-    //    cobreix.
-    const existing = await fetchOccupants(
-      admin,
-      trainerId,
-      scheduledAt,
-      SESSION_DURATION_MINUTES,
-    );
-    // Les proves 'pending'/'confirmed' també ocupen el forat.
-    const holds = await fetchActiveHoldsAt(
-      admin,
-      trainerId,
-      scheduledAt,
-      SESSION_DURATION_MINUTES,
-    );
-    assertSlotFree([...existing, ...holds], serviceType);
-
-    // 5. Reclamo atómico de la sesión (decrement-first con bloqueo optimista).
-    const { data: claimed, error: dErr } = await admin
-      .from("bonos")
-      .update({
-        remaining_sessions: nextRemaining,
-        ...(nextRemaining === 0 && bono.status === "active"
-          ? { status: "completed" as const }
-          : {}),
-        ...(bono.first_reservation_at
-          ? {}
-          : { first_reservation_at: new Date().toISOString() }),
-      })
-      .eq("id", bono.id)
-      .eq("remaining_sessions", bono.remaining_sessions)
-      .select("id")
-      .single();
-    if (dErr || !claimed)
-      throw new Error("Aquest bo no té sessions disponibles.");
-
-    // 6. Inserta la reserva; si falla, devuelve la sesión reclamada.
-    const { error: rErr } = await admin.from("reservations").insert({
-      client_id: client.id,
-      bono_id: bono.id,
-      trainer_id: trainerId,
-      scheduled_at: scheduledAt,
-      duration_minutes: SESSION_DURATION_MINUTES,
-      service_type: serviceType,
-      status: "booked",
+    // 4. Comprovar la franja, descomptar la sessió i inserir, tot dins del
+    //    mateix pany i la mateixa transacció (`book_individual_slot`, 0084).
+    //
+    //    Abans això eren tres passos de l'aplicació: mirar si la franja estava
+    //    lliure, descomptar el bo i inserir, i si l'INSERT petava, tornar la
+    //    sessió al bo a mà. Dues coses no quadraven:
+    //
+    //      · Entre el SELECT i l'INSERT no hi havia res. La constraint de la
+    //        0082 tapava el xoc contra una altra individual, però no contra un
+    //        GRUP, que en queda fora a posta.
+    //      · El "torna la sessió" escrivia `status: 'active'`, i el bo podia
+    //        ser 'pending_payment'. Donar-lo per actiu el cobrava per la cara.
+    //
+    //    Dins de la funció no hi ha res a desfer: si l'INSERT peta, l'excepció
+    //    se'n duu el descompte amb ella.
+    const { data: res, error: bErr2 } = await admin.rpc("book_individual_slot", {
+      p_client_id: client.id,
+      p_bono_id: bono.id,
+      p_expected_remaining: bono.remaining_sessions,
+      p_trainer_id: trainerId,
+      p_scheduled_at: scheduledAt,
+      p_service_type: serviceType,
+      p_duration_minutes: SESSION_DURATION_MINUTES,
     });
-    if (rErr) {
-      await admin
-        .from("bonos")
-        .update({ remaining_sessions: bono.remaining_sessions, status: "active" })
-        .eq("id", bono.id);
+    if (bErr2) throw new Error("No s'ha pogut crear la reserva.");
+    if (!res || !res.ok) {
+      // Els mateixos missatges de sempre: qui reserva no ha de notar que per
+      // dins això ha canviat de lloc.
+      if (res?.reason === "no_sessions")
+        throw new Error("Aquest bo no té sessions disponibles.");
       throw new Error("Aquesta franja ja està ocupada.");
     }
   }

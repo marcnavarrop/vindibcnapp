@@ -398,46 +398,30 @@ export async function promoteFromWaitlist(freed: {
         }
         createdId = res.id;
       } else {
-        // Serveis individuals: la garantia real és l'índex únic de la 0007,
-        // igual que a `createClientReservation`. Reclam optimista i INSERT.
-        const next = bono.remaining_sessions - 1;
-        const { data: claimed } = await admin
-          .from("bonos")
-          .update({
-            remaining_sessions: next,
-            ...(next === 0 && bono.status === "active"
-              ? { status: "completed" as const }
-              : {}),
-            ...(bono.first_reservation_at
-              ? {}
-              : { first_reservation_at: new Date().toISOString() }),
-          })
-          .eq("id", bono.id)
-          .eq("remaining_sessions", bono.remaining_sessions)
-          .select("id")
-          .single();
-        if (!claimed) continue;
-
-        const { data: created, error: rErr } = await admin
-          .from("reservations")
-          .insert({
-            client_id: c.client_id,
-            bono_id: bono.id,
-            trainer_id: trainerId,
-            scheduled_at: freed.scheduledAt,
-            service_type: c.service_type,
-            status: "booked",
-          })
-          .select("id")
-          .single();
-        if (rErr || !created) {
-          // Torna la sessió: la plaça se l'ha endut algú altre pel mig.
-          // `bono.status` i no "active": el bo podia ser 'pending_payment' i
-          // donar-lo per actiu el cobraria per la cara.
-          await restoreBono(admin, bono.id, bono.remaining_sessions, bono.status);
-          continue;
+        // Serveis individuals: `book_individual_slot` (0084), el mirall de la
+        // de grup i amb el MATEIX pany. Aquest camí feia el mateix ball que
+        // `createClientReservation` —descomptar, inserir i tornar la sessió si
+        // l'INSERT petava— i tenia la mateixa escletxa: la constraint de la
+        // 0082 no el protegia d'un grup que hagués ocupat la franja mentrestant.
+        // Dins de la funció no hi ha res a desfer.
+        const { data: res, error: iErr } = await admin.rpc("book_individual_slot", {
+          p_client_id: c.client_id,
+          p_bono_id: bono.id,
+          p_expected_remaining: bono.remaining_sessions,
+          p_trainer_id: trainerId,
+          p_scheduled_at: freed.scheduledAt,
+          p_service_type: c.service_type,
+          p_duration_minutes: SESSION_DURATION_MINUTES,
+        });
+        if (iErr) return { promoted: false, reason: "Error en la promoció." };
+        if (!res || !res.ok) {
+          // Mateix criteri que als grups: 'no_sessions' és d'AQUEST candidat i
+          // el següent de la cua encara pot entrar-hi; 'taken' és de la FRANJA,
+          // i si ja no hi cap ningú no cal seguir provant.
+          if (res?.reason === "no_sessions") continue;
+          return { promoted: false, reason: "La franja segueix plena." };
         }
-        createdId = created.id;
+        createdId = res.id;
       }
 
       // `eq("status","waiting")` tanca la cursa: si dues cancel·lacions
