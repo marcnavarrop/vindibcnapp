@@ -8,12 +8,17 @@ import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
 import { listBlocksLite } from "@/lib/data/availability-blocks";
-import { isServiceAvailableOn, isInstantBlocked } from "@/lib/availability-slots";
+import {
+  isServiceAvailableOn,
+  isInstantBlocked,
+  rangesOverlap,
+  sessionEndIso,
+} from "@/lib/availability-slots";
 import { mockActiveHoldsAt, fetchActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
-import { GROUP_CAPACITY } from "@/lib/labels";
+import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { getViewer } from "@/lib/auth";
 import type {
   Database,
@@ -23,12 +28,20 @@ import type {
 } from "@/types/database";
 import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 
-/** Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio. */
+/**
+ * Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio.
+ *
+ * Amb `trainerId` nul no hi ha res a comprovar: una reserva sense professional
+ * assignat no trepitja l'horari de ningú. Abans el tipus era `string` i qui
+ * cridava des del camí manual —on el professional és opcional— no podia
+ * fer-ho sense rodejos; per això aquell camí no comprovava res.
+ */
 async function assertWithinAvailability(
-  trainerId: string,
+  trainerId: string | null,
   when: Date,
   serviceType: ServiceType,
 ): Promise<void> {
+  if (!trainerId) return;
   const [rules, blocks] = await Promise.all([
     listAvailabilityLite(trainerId),
     listBlocksLite(trainerId),
@@ -245,6 +258,72 @@ function assertSlotFree(
   } else if (existing.length > 0) {
     throw new Error("Aquesta franja ja està ocupada.");
   }
+}
+
+/**
+ * Final (exclòs) d'una fila de reserva, en mil·lisegons.
+ *
+ * `duration_minutes` es llegeix amb un valor de reserva a posta: al mode
+ * simulació hi pot haver un fitxer desat per una versió anterior a la 0082, i
+ * una durada indefinida convertiria tota la comparació en NaN —que no falla,
+ * simplement deixa de veure ocupants—. A la base la columna és NOT NULL.
+ */
+const rowEndMs = (r: {
+  scheduled_at: string;
+  duration_minutes?: number | null;
+}): number =>
+  new Date(r.scheduled_at).getTime() +
+  (r.duration_minutes ?? SESSION_DURATION_MINUTES) * 60_000;
+
+/**
+ * Qui ocupa la franja [scheduledAt, +durationMinutes) d'aquest professional.
+ *
+ * Abans de la 0082 això era una igualtat: `scheduled_at === scheduledAt`. Era
+ * cert només mentre totes les sessions comencessin en punt. Dues sessions d'una
+ * hora que comencen a les 9:00 i a les 9:30 tenen instants diferents i es
+ * trepitgen mitja hora, i la igualtat no en veia cap de les dues.
+ *
+ * Inclou les de GRUP: una sessió individual no pot entrar on ja hi ha un grup,
+ * encara que només el solapi en part.
+ */
+export function mockOccupants(
+  store: Store,
+  trainerId: string | null,
+  scheduledAt: string,
+  durationMinutes: number,
+): { service_type: ServiceType; client_id: string }[] {
+  if (!trainerId) return [];
+  const start = new Date(scheduledAt).getTime();
+  const end = start + durationMinutes * 60_000;
+  return store.reservations
+    .filter(
+      (r) =>
+        r.trainer_id === trainerId &&
+        r.status === "booked" &&
+        rangesOverlap(start, end, new Date(r.scheduled_at).getTime(), rowEndMs(r)),
+    )
+    .map((r) => ({ service_type: r.service_type, client_id: r.client_id }));
+}
+
+/** El bessó de `mockOccupants` contra el backend real. */
+export async function fetchOccupants(
+  db: DB,
+  trainerId: string | null,
+  scheduledAt: string,
+  durationMinutes: number,
+): Promise<{ service_type: ServiceType; client_id: string }[]> {
+  if (!trainerId) return [];
+  // `ends_at` el manté el trigger de la 0082, així que el solapament es pregunta
+  // amb dues comparacions indexables i sense aritmètica per fila.
+  const { data, error } = await db
+    .from("reservations")
+    .select("service_type, client_id")
+    .eq("trainer_id", trainerId)
+    .eq("status", "booked")
+    .lt("scheduled_at", sessionEndIso(scheduledAt, durationMinutes))
+    .gt("ends_at", scheduledAt);
+  if (error) throw error;
+  return (data ?? []) as { service_type: ServiceType; client_id: string }[];
 }
 
 export type ReservationListItem = {
@@ -512,6 +591,7 @@ async function createGroupReservations(
       p_trainer_id: trainerId,
       p_scheduled_at: scheduledAt,
       p_capacity: GROUP_CAPACITY,
+      p_duration_minutes: SESSION_DURATION_MINUTES,
     });
 
     if (error || !res || !res.ok) {
@@ -574,18 +654,20 @@ export async function createReservation(
     const clientId = bono ? bono.client_id : input.clientId!;
     const serviceType = bono ? bono.service_type : input.serviceType!;
     for (const scheduled_at of dates) {
+      // La disponibilitat del professional també mana per aquí. Fins ara aquest
+      // camí —el manual, el d'admin i professional— no la mirava gens: podia
+      // col·locar una sessió a qualsevol hora, fos o no l'horari de ningú.
+      await assertWithinAvailability(
+        input.trainerId,
+        new Date(scheduled_at),
+        serviceType,
+      );
       // L'aforament també es respecta en simulació: si no, un grup s'omplia
       // sense límit en local i petava en real, que és la pitjor manera
-      // d'assabentar-se'n.
+      // d'assabentar-se'n. Per SOLAPAMENT des de la 0082: abans es comparava
+      // l'instant exacte i una sessió de 9:30 no veia la de 9:00.
       assertSlotFree(
-        store.reservations
-          .filter(
-            (r) =>
-              r.trainer_id === input.trainerId &&
-              r.scheduled_at === scheduled_at &&
-              r.status === "booked",
-          )
-          .map((r) => ({ service_type: r.service_type })),
+        mockOccupants(store, input.trainerId, scheduled_at, SESSION_DURATION_MINUTES),
         serviceType,
       );
       store.reservations.push({
@@ -594,6 +676,9 @@ export async function createReservation(
         bono_id: bono ? bono.id : null,
         trainer_id: input.trainerId,
         scheduled_at,
+        duration_minutes: SESSION_DURATION_MINUTES,
+        // A la base l'escriu el trigger de la 0082. Aquí, a mà.
+        ends_at: sessionEndIso(scheduled_at, SESSION_DURATION_MINUTES),
         service_type: serviceType,
         status: "booked",
         series_id: null,
@@ -663,6 +748,16 @@ export async function createReservation(
   const clientId = bono ? bono.client_id : input.clientId!;
   const serviceType = bono ? bono.service_type : input.serviceType!;
 
+  // La disponibilitat del professional mana també per aquí. Aquest camí —el
+  // manual d'admin i professional— no la mirava gens, i podia col·locar una
+  // sessió a una hora que no era l'horari de ningú.
+  for (const scheduled_at of dates)
+    await assertWithinAvailability(
+      input.trainerId,
+      new Date(scheduled_at),
+      serviceType,
+    );
+
   // L'aforament d'un grup no el pot garantir cap índex únic (quatre files són
   // quatre files legítimes), així que aquest cas passa per la funció de
   // Postgres que serialitza per franja, igual que la reserva del client.
@@ -677,15 +772,48 @@ export async function createReservation(
       : null;
 
   if (serviceType !== "grupo_reducido") {
-    // L'individual segueix protegit per l'índex únic de la 0007, que filtra per
-    // status i service_type i no mira el bo: una cortesia individual tampoc pot
-    // trepitjar una franja ocupada.
+    // La garantia real és de la base: la constraint EXCLUDE de la 0082, que
+    // compara RANGS i no instants. Substitueix l'índex únic de la 0007, que
+    // deixava conviure 9:00 i 9:30 perquè només mirava si l'instant era igual.
+    //
+    // Aquesta comprovació prèvia no és la garantia: és per donar un error
+    // entenedor abans, i per veure els grups —que queden fora de la constraint
+    // a posta i que una sessió individual tampoc pot trepitjar.
+    //
+    // Es llegeix amb la clau de SERVEI i no amb la de sessió: aquí es pregunta
+    // "qui ocupa aquesta franja", i sota RLS un professional podria no veure
+    // les reserves d'un company. Veure'n menys de les que hi ha faria passar la
+    // comprovació. Per a les individuals la constraint encara ho aturaria, però
+    // per als grups —que en queden fora— seria un forat de debò.
+    const occupancyDb = createAdminClient();
+    for (const scheduled_at of dates)
+      assertSlotFree(
+        [
+          ...(await fetchOccupants(
+            occupancyDb,
+            input.trainerId,
+            scheduled_at,
+            SESSION_DURATION_MINUTES,
+          )),
+          ...(input.trainerId
+            ? await fetchActiveHoldsAt(
+                occupancyDb,
+                input.trainerId,
+                scheduled_at,
+                SESSION_DURATION_MINUTES,
+              )
+            : []),
+        ],
+        serviceType,
+      );
+
     const { error: rErr } = await supabase.from("reservations").insert(
       dates.map((scheduled_at) => ({
         client_id: clientId,
         bono_id: bono ? bono.id : null,
         trainer_id: input.trainerId,
         scheduled_at,
+        duration_minutes: SESSION_DURATION_MINUTES,
         service_type: serviceType,
         status: "booked" as const,
         is_complimentary: !bono,
@@ -910,29 +1038,33 @@ export async function createClientReservation(
       .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
     if (!bono)
       throw new Error("No tens cap bo actiu d'aquest tipus amb sessions.");
+    // També per solapament: el client no pot estar a dos llocs alhora, i "a la
+    // mateixa hora" ja no vol dir "amb el mateix instant d'inici".
+    const startMs = when.getTime();
+    const endMs = startMs + SESSION_DURATION_MINUTES * 60_000;
     const clientAlreadyBooked = store.reservations.some(
-      (r) => r.client_id === client.id && r.scheduled_at === scheduledAt && r.status === "booked",
+      (r) =>
+        r.client_id === client.id &&
+        r.status === "booked" &&
+        rangesOverlap(startMs, endMs, new Date(r.scheduled_at).getTime(), rowEndMs(r)),
     );
     if (clientAlreadyBooked) throw new Error("Ja tens una reserva a aquesta hora.");
     await assertWithinAvailability(trainerId, when, serviceType);
     assertSlotFree(
       [
-        ...store.reservations
-          .filter(
-            (r) =>
-              r.trainer_id === trainerId &&
-              r.scheduled_at === scheduledAt &&
-              r.status === "booked",
-          )
-          .map((r) => ({ service_type: r.service_type })),
+        // Per SOLAPAMENT, no per instant igual: una sessió de 9:00 i una de
+        // 9:30 es trepitgen mitja hora i abans no es veien.
+        ...mockOccupants(store, trainerId, scheduledAt, SESSION_DURATION_MINUTES),
         // Les proves 'pending'/'confirmed' també ocupen el forat.
-        ...mockActiveHoldsAt(store, trainerId, scheduledAt),
+        ...mockActiveHoldsAt(store, trainerId, scheduledAt, SESSION_DURATION_MINUTES),
       ],
       serviceType,
     );
     store.reservations.push({
       id: crypto.randomUUID(),
       client_id: client.id,
+      duration_minutes: SESSION_DURATION_MINUTES,
+      ends_at: sessionEndIso(scheduledAt, SESSION_DURATION_MINUTES),
       bono_id: bono.id,
       trainer_id: trainerId,
       scheduled_at: scheduledAt,
@@ -1027,6 +1159,7 @@ export async function createClientReservation(
       p_trainer_id: trainerId,
       p_scheduled_at: scheduledAt,
       p_capacity: GROUP_CAPACITY,
+      p_duration_minutes: SESSION_DURATION_MINUTES,
     });
     if (gErr) throw new Error("No s'ha pogut crear la reserva.");
     if (!res || !res.ok) {
@@ -1040,21 +1173,24 @@ export async function createClientReservation(
     }
   } else {
     // 4. La franja del profesional no puede solaparse. Aquí la garantia real
-    //    és l'índex únic de la 0007: aquesta comprovació és per donar un error
-    //    entenedor abans, no per evitar la cursa.
-    const { data: existing, error: eErr } = await admin
-      .from("reservations")
-      .select("service_type")
-      .eq("trainer_id", trainerId)
-      .eq("scheduled_at", scheduledAt)
-      .eq("status", "booked");
-    if (eErr) throw eErr;
-    // Les proves 'pending'/'confirmed' també ocupen el forat.
-    const holds = await fetchActiveHoldsAt(admin, trainerId, scheduledAt);
-    assertSlotFree(
-      [...((existing ?? []) as { service_type: ServiceType }[]), ...holds],
-      serviceType,
+    //    és la constraint EXCLUDE de la 0082, que compara RANGS: aquesta
+    //    comprovació és per donar un error entenedor abans, no per evitar la
+    //    cursa. També és qui veu els grups i les proves, que la constraint no
+    //    cobreix.
+    const existing = await fetchOccupants(
+      admin,
+      trainerId,
+      scheduledAt,
+      SESSION_DURATION_MINUTES,
     );
+    // Les proves 'pending'/'confirmed' també ocupen el forat.
+    const holds = await fetchActiveHoldsAt(
+      admin,
+      trainerId,
+      scheduledAt,
+      SESSION_DURATION_MINUTES,
+    );
+    assertSlotFree([...existing, ...holds], serviceType);
 
     // 5. Reclamo atómico de la sesión (decrement-first con bloqueo optimista).
     const { data: claimed, error: dErr } = await admin
@@ -1081,6 +1217,7 @@ export async function createClientReservation(
       bono_id: bono.id,
       trainer_id: trainerId,
       scheduled_at: scheduledAt,
+      duration_minutes: SESSION_DURATION_MINUTES,
       service_type: serviceType,
       status: "booked",
     });

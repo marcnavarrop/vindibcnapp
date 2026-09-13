@@ -548,6 +548,9 @@ export interface Database {
           bono_id: string | null;
           trainer_id: string | null;
           scheduled_at: string;
+          duration_minutes: number;
+          /** Derivat pel trigger de la 0082; l'aplicació no l'escriu mai. */
+          ends_at: string;
           service_type: ServiceType;
           status: ReservationStatus;
           series_id: string | null;
@@ -560,6 +563,7 @@ export interface Database {
           bono_id?: string | null;
           trainer_id?: string | null;
           scheduled_at: string;
+          duration_minutes?: number;
           service_type: ServiceType;
           status?: ReservationStatus;
           series_id?: string | null;
@@ -572,6 +576,7 @@ export interface Database {
           bono_id?: string | null;
           trainer_id?: string | null;
           scheduled_at?: string;
+          duration_minutes?: number;
           service_type?: ServiceType;
           status?: ReservationStatus;
           series_id?: string | null;

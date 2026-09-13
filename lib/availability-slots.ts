@@ -36,6 +36,37 @@ export type AvailabilityBlockLite = {
 /** Bloqueo con el profesional dueño (para el calendario global). */
 export type TrainerBlockLite = AvailabilityBlockLite & { trainerId: string };
 
+/**
+ * ¿Dos franjas semiabiertas [inicio, fin) se solapan?
+ *
+ * És la condició de sempre entre dos intervals, i la mateixa que fa servir la
+ * constraint de la 0082 amb `tstzrange(..., '[)')`. Semioberta vol dir que una
+ * sessió de 9:00 a 10:00 i una de 10:00 a 11:00 NO es trepitgen: són seguides.
+ *
+ * Tots quatre valors en mil·lisegons.
+ */
+export function rangesOverlap(
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+): boolean {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+/**
+ * Final (exclòs) d'una sessió, en ISO.
+ *
+ * El bessó en JavaScript del que fa el trigger `trg_reservations_ends_at` de la
+ * 0082 a la base. Es fa servir al mode simulació —que no té triggers— i per
+ * construir les consultes de solapament.
+ */
+export function sessionEndIso(startIso: string, durationMinutes: number): string {
+  return new Date(
+    new Date(startIso).getTime() + durationMinutes * 60_000,
+  ).toISOString();
+}
+
 /** ¿El instante `at` cae dentro de algún bloqueo? (inicio incluido, fin excluido) */
 export function isInstantBlocked(
   blocks: AvailabilityBlockLite[],
