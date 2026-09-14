@@ -1,4 +1,5 @@
 import "server-only";
+import { SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
@@ -16,6 +17,7 @@ import {
 import {
   centerDateStr,
   centerHour,
+  centerSlot,
   centerWeekday,
   centerLocalToInstant,
   centerToday,
@@ -427,8 +429,9 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
         rules.filter((r) => r.trainerId === trainerId),
         centerDateStr(at),
         centerWeekday(at),
-        centerHour(at),
+        centerSlot(at),
         service,
+        SESSION_DURATION_MINUTES,
       );
     };
 

@@ -10,6 +10,7 @@ import {
   centerDateStr,
   centerWeekday,
   centerHour,
+  centerSlot,
 } from "@/lib/center-time";
 import { CENTER_EMAIL } from "@/lib/email";
 import { notify, getProfileContact } from "@/lib/notifications";
@@ -349,7 +350,7 @@ function pickTrainer(
   // casualitat. En arreglar l'entrada, aquest va quedar al descobert.
   const day = centerDateStr(when);
   const wd = centerWeekday(when);
-  const h = centerHour(when);
+  const slot = centerSlot(when);
 
   for (const trainerId of new Set(candidates)) {
     if (!isFree(trainerId)) continue;
@@ -357,7 +358,16 @@ function pickTrainer(
     // bloquejos són instants absoluts: es comparen amb el `when` real.
     if (isInstantBlocked(blocksOf(blocks, trainerId), when)) continue;
     const trainerRules = rules.filter((r) => r.trainerId === trainerId);
-    if (isServiceAvailableOn(trainerRules, day, wd, h, TRIAL_SERVICE))
+    if (
+      isServiceAvailableOn(
+        trainerRules,
+        day,
+        wd,
+        slot,
+        TRIAL_SERVICE,
+        TRIAL_DURATION_MINUTES,
+      )
+    )
       return trainerId;
   }
   return null;
@@ -485,8 +495,9 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
           trainerRules,
           centerDateStr(when),
           centerWeekday(when),
-          centerHour(when),
+          centerSlot(when),
           TRIAL_SERVICE,
+          TRIAL_DURATION_MINUTES,
         ) &&
         (await isTrainerFreeReal(admin, tid, scheduledAt))
       ) {

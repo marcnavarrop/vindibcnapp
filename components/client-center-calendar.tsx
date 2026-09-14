@@ -4,12 +4,18 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { clsx, TAP } from "@/lib/utils";
-import { SERVICE_TYPES, GROUP_CAPACITY } from "@/lib/labels";
+import {
+  SERVICE_TYPES,
+  GROUP_CAPACITY,
+  SESSION_DURATION_MINUTES,
+} from "@/lib/labels";
 import { intlLocale, type Locale } from "@/lib/i18n/config";
 import {
   weekdayOf,
   localDateStr,
   offeredServices,
+  hourToSlot,
+  slotToHour,
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import { colorOfPro, type ColorPalette } from "@/lib/colors";
@@ -290,8 +296,11 @@ export function ClientCenterCalendar({
     let minH = openingHour;
     let maxH = closingHour;
     for (const r of rules) {
-      minH = Math.min(minH, r.startHour);
-      maxH = Math.max(maxH, r.endHour);
+      // La graella d'aquesta pantalla segueix sent d'una hora (bloc 3): els
+      // extrems de la regla es porten a l'hora que els conté, cap a fora, per
+      // no retallar cap franja al pintar-la.
+      minH = Math.min(minH, slotToHour(r.startSlot));
+      maxH = Math.max(maxH, Math.ceil(r.endSlot / 2));
     }
     for (const r of reservations) {
       if (r.status === "cancelled") continue;
@@ -336,7 +345,14 @@ export function ClientCenterCalendar({
       const groupHere = resHere.filter(
         (r) => r.serviceType === "grupo_reducido",
       );
-      const offered = offeredServices(rules, blocks, t.id, cellDate, h);
+      const offered = offeredServices(
+        rules,
+        blocks,
+        t.id,
+        cellDate,
+        hourToSlot(h),
+        SESSION_DURATION_MINUTES,
+      );
 
       // Els noms només existeixen a les reserves de grup: el servidor no els
       // envia per a cap altre servei (vegeu `mateName` a client-calendar.ts).

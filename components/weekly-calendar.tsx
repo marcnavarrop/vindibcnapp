@@ -8,10 +8,12 @@ import {
   RESERVATION_STATUS_LABELS,
   GROUP_CAPACITY,
   SERVICE_TYPES,
+  SESSION_DURATION_MINUTES,
 } from "@/lib/labels";
 import {
-  isHourAvailable,
-  isHourBlocked,
+  isSlotAvailable,
+  isSlotBlocked,
+  hourToSlot,
   offeredServices,
   type AvailabilityRuleLite,
   type AvailabilityBlockLite,
@@ -286,18 +288,32 @@ export function WeeklyCalendar({
               </div>
               {days.map((d, dayIdx) => {
                 const items = cells.get(`${dayIdx}-${h}`) ?? [];
-                const slot = new Date(d);
-                slot.setHours(h, 0, 0, 0);
+                // La graella d'aquesta pantalla segueix sent d'una hora: el
+                // salt a mitges hores és del bloc 3. Aquí només es tradueix
+                // l'hora de la fila al slot que li correspon.
+                const cellDate = new Date(d);
+                cellDate.setHours(h, 0, 0, 0);
+                const cellSlot = hourToSlot(h);
                 const goNew = () =>
                   router.push(
                     `${newReservationBase}?at=${encodeURIComponent(
-                      toLocalInput(slot),
+                      toLocalInput(cellDate),
                     )}`,
                   );
                 const inAvailability =
                   availability &&
-                  isHourAvailable(availability, slot, h) &&
-                  !isHourBlocked(blocks ?? [], slot, h);
+                  isSlotAvailable(
+                    availability,
+                    cellDate,
+                    cellSlot,
+                    SESSION_DURATION_MINUTES,
+                  ) &&
+                  !isSlotBlocked(
+                    blocks ?? [],
+                    cellDate,
+                    cellSlot,
+                    SESSION_DURATION_MINUTES,
+                  );
                 // Qui té aquesta franja disponible. Un bloqueig temporal
                 // (vacances, baixa) el treu encara que la regla setmanal hi sigui.
                 // offeredServices ja té en compte les regles I els bloquejos
@@ -308,8 +324,9 @@ export function WeeklyCalendar({
                       l.rules,
                       layerBlocks,
                       l.trainerId,
-                      slot,
-                      h,
+                      cellDate,
+                      cellSlot,
+                      SESSION_DURATION_MINUTES,
                     );
                     return { ...l, services: SERVICE_TYPES.filter((st) => svc.has(st)) };
                   })

@@ -1,7 +1,12 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { USE_MOCK } from "@/lib/config";
-import { centerDateStr, centerWeekday, centerHour, centerToday } from "@/lib/center-time";
+import {
+  centerDateStr,
+  centerWeekday,
+  centerSlot,
+  centerToday,
+} from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
@@ -59,8 +64,9 @@ async function assertWithinAvailability(
       rules,
       centerDateStr(when),
       centerWeekday(when),
-      centerHour(when),
+      centerSlot(when),
       serviceType,
+      SESSION_DURATION_MINUTES,
     )
   )
     throw new Error(
