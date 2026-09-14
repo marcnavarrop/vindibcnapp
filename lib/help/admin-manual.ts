@@ -472,7 +472,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: `Totes les reserves del centre, de tots els professionals. Es veu de dues maneres, amb el selector de dalt: Calendari —una graella de la setmana, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}— o Llista.`,
+          text: `Totes les reserves del centre, de tots els professionals. Es veu de dues maneres, amb el selector de dalt: Calendari —una graella de la setmana, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}, amb una fila per cada mitja hora— o Llista.`,
+        },
+        {
+          t: "note",
+          text: "Al calendari només les files en punt porten l'hora escrita; la línia del mig parteix l'hora en dues. I com que una sessió dura una hora, n'ocupa dues files: la segona surt ombrejada i no s'hi pot clicar, perquè no és un forat lliure sinó la mateixa sessió continuant.",
         },
         { t: "h", text: "Els colors" },
         {
@@ -595,6 +599,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         {
           t: "p",
           text: "Una franja és: uns dies de la setmana, una hora d'inici i una de fi, una data des de quan val i (opcionalment) fins quan, i quins serveis s'hi ofereixen. Es poden marcar diversos dies alhora i es creen totes de cop.",
+        },
+        {
+          t: "p",
+          text: "Les hores van de mitja en mitja hora —les 9:00 o les 9:30, però no les 9:15— i la franja ha de durar com a mínim una sessió. Dins d'ella, un client pot començar cada mitja hora sempre que la sessió hi càpiga sencera: en una franja de 9:00 a 13:00 l'última hora d'inici són les 12:00.",
         },
         {
           t: "p",
