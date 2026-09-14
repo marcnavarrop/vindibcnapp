@@ -11,12 +11,15 @@ import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import {
   isServiceAvailableOn,
+  rangesOverlap,
+  slotToHHMM,
+  hourToSlot,
+  slotsFor,
   isInstantBlocked,
   blocksOf,
 } from "@/lib/availability-slots";
 import {
   centerDateStr,
-  centerHour,
   centerSlot,
   centerWeekday,
   centerLocalToInstant,
@@ -94,10 +97,28 @@ function occupancyAt(
   trainerId: string,
   at: Date,
 ): SlotRow[] {
-  const t = at.getTime();
-  return taken.filter(
-    (s) => s.trainer_id === trainerId && new Date(s.scheduled_at).getTime() === t,
-  );
+  // Per SOLAPAMENT i no per instant igual: amb la graella de mitja hora, una
+  // sessió de les 9:30 ocupa la franja de les 10:00 encara que no hi comenci.
+  // És el mateix criteri que `book_group_slot` (0083) i la constraint de la
+  // 0082 apliquen a la base; si aquí es mirés només l'instant, el planificador
+  // prometria franges que després el servidor rebutjaria.
+  const start = at.getTime();
+  const end = start + SESSION_DURATION_MINUTES * 60_000;
+  return taken.filter((s) => {
+    if (s.trainer_id !== trainerId) return false;
+    const o = new Date(s.scheduled_at).getTime();
+    return rangesOverlap(start, end, o, o + SESSION_DURATION_MINUTES * 60_000);
+  });
+}
+
+/** ¿El client ja té alguna cosa que es trepitgi amb aquest instant? */
+function ownOverlaps(ownAt: Map<number, OwnSlot>, at: Date): boolean {
+  const start = at.getTime();
+  const end = start + SESSION_DURATION_MINUTES * 60_000;
+  for (const t of ownAt.keys())
+    if (rangesOverlap(start, end, t, t + SESSION_DURATION_MINUTES * 60_000))
+      return true;
+  return false;
 }
 
 /**
@@ -127,17 +148,17 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
   // ho és: creuant el canvi d'hora la sèrie es desplaçaria una hora, i qui
   // reserva "cada dijous a les 10" espera les 10 tot l'any.
   const firstDay = centerDateStr(first);
-  const firstHour = centerHour(first);
+  // L'hora de rellotge SENCERA, amb els minuts. Abans això era `centerHour` i
+  // es reconstruïa cada ocurrència com "HH:00": una sèrie de les 9:30 hauria
+  // caigut sencera a les 9:00, en silenci.
+  const firstTime = slotToHHMM(centerSlot(first));
   const dates = generateOccurrences({
     first: new Date(`${firstDay}T00:00:00Z`),
     frequency: req.frequency,
     endDate: req.endDate,
     occurrenceCount: req.occurrenceCount,
   }).map((d) =>
-    centerLocalToInstant(
-      d.toISOString().slice(0, 10),
-      `${String(firstHour).padStart(2, "0")}:00`,
-    ),
+    centerLocalToInstant(d.toISOString().slice(0, 10), firstTime),
   );
 
   const occurrences: ResolvedOccurrence[] = [];
@@ -309,10 +330,12 @@ function findAlternative(
   ctx: Ctx,
 ): ResolvedOccurrence["alternative"] | null {
   const day = centerDateStr(when);
-  const hour = centerHour(when);
+  const slot = centerSlot(when);
 
   const free = (trainerId: string, at: Date) => {
-    if (ctx.ownAt.has(at.getTime())) return false;
+    // Per solapament: si el client ja té una sessió a les 9:30, les 10:00
+    // tampoc li serveixen com a alternativa.
+    if (ownOverlaps(ctx.ownAt, at)) return false;
     const here = occupancyAt(taken, trainerId, at);
     return (
       ctx.offers(trainerId, at, req.serviceType) &&
@@ -320,14 +343,24 @@ function findAlternative(
     );
   };
 
-  // a) Mateix dia, mateix professional: es busca cap enfora (±1 h, ±2 h…).
-  for (let delta = 1; delta <= 6; delta++) {
-    for (const h of [hour - delta, hour + delta]) {
-      if (h < ctx.openingHour || h >= ctx.closingHour) continue;
+  // a) Mateix dia, mateix professional: es busca cap enfora.
+  //
+  // El pas era d'una hora i ara és de mitja, així que el rang (±6 h) es manté
+  // amb el doble de passos. Que el pas sigui més fi no és un detall: a una
+  // sèrie de les 9:30 abans se li proposaven les 8:00 o les 10:00 i mai les
+  // 10:00... ni les 9:00, perquè totes les alternatives es construïen "en
+  // punt". Ara la primera que es prova és la mitja hora del costat, que és la
+  // que menys trenca la rutina de qui reserva.
+  const primer = hourToSlot(ctx.openingHour);
+  const ultim = hourToSlot(ctx.closingHour) - slotsFor(SESSION_DURATION_MINUTES);
+  for (let delta = 1; delta <= 2 * 6; delta++) {
+    for (const s of [slot - delta, slot + delta]) {
+      // La sessió ha de cabre sencera dins de l'horari del centre.
+      if (s < primer || s > ultim) continue;
       // L'hora es construeix en hora del CENTRE i es converteix a instant:
       // `setHours` sobre l'instant faria servir la zona del procés (UTC a
       // Vercel) i buscaria alternatives al mig de la matinada d'aquí.
-      const at = centerLocalToInstant(day, `${String(h).padStart(2, "0")}:00`);
+      const at = centerLocalToInstant(day, slotToHHMM(s));
       if (at.getTime() - Date.now() < ctx.minBookingMs) continue;
       if (free(req.trainerId, at))
         return {
