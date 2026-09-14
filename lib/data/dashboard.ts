@@ -1,4 +1,5 @@
 import "server-only";
+import { SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore } from "@/lib/mock/store";
@@ -13,7 +14,9 @@ import {
 } from "@/lib/data/availability-blocks";
 import { isBonoExpired } from "@/lib/data/bonos";
 import {
-  availableHoursOn,
+  availableSlotsOn,
+  slotsFor,
+  slotToHHMM,
   weekdayOfDay,
   isInstantBlocked,
   blocksOf,
@@ -25,7 +28,7 @@ import {
 import {
   toCenterLocal,
   centerDateStr,
-  centerHour,
+  centerSlot,
   centerLocalToInstant,
 } from "@/lib/center-time";
 import type { BonoStatus, ServiceType, TrialStatus } from "@/types/database";
@@ -256,7 +259,7 @@ function occupancyOf(
   rules: AvailabilityRuleLite[],
   blocks: AvailabilityBlockLite[],
   weekDays: string[],
-  isBooked: (day: string, hour: number) => boolean,
+  isBooked: (day: string, slot: number) => boolean,
 ): { slots: number; booked: number; pct: number } {
   let slots = 0;
   let booked = 0;
@@ -264,15 +267,17 @@ function occupancyOf(
   for (const day of weekDays) {
     // Sense Date pel mig: el dia i el dia de la setmana van explícits, que és
     // l'única manera que no depengui de la zona horària del procés.
-    for (const h of availableHoursOn(rules, day, weekdayOfDay(day))) {
+    //
+    // Es compten els slots COBERTS per l'horari, no els inicis possibles: això
+    // és capacitat. Abans es comptaven hores i ara mitges hores, o sigui que el
+    // denominador es dobla — però el numerador també, perquè una reserva d'una
+    // hora marca els dos slots que ocupa. La proporció no es mou.
+    for (const slot of availableSlotsOn(rules, day, weekdayOfDay(day))) {
       // El bloqueig és un instant real: cal l'hora del centre convertida.
-      const slotInstant = centerLocalToInstant(
-        day,
-        `${String(h).padStart(2, "0")}:00`,
-      );
+      const slotInstant = centerLocalToInstant(day, slotToHHMM(slot));
       if (isInstantBlocked(blocks, slotInstant)) continue;
       slots++;
-      if (isBooked(day, h)) booked++;
+      if (isBooked(day, slot)) booked++;
     }
   }
 
@@ -358,7 +363,11 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   for (const r of raw.reservations) {
     if (!COUNTS_AS_SESSION(r.status) || !r.trainerId) continue;
     const d = new Date(r.scheduledAt);
-    bookedKeys.add(`${r.trainerId}|${centerDateStr(d)}|${centerHour(d)}`);
+    // Tots els slots que ocupa, no només el d'inici: una sessió d'una hora
+    // n'ocupa dos i ha de comptar com a dos contra el denominador.
+    const from = centerSlot(d);
+    for (let i = 0; i < slotsFor(SESSION_DURATION_MINUTES); i++)
+      bookedKeys.add(`${r.trainerId}|${centerDateStr(d)}|${from + i}`);
   }
 
   const perTrainer: TrainerOccupancy[] = [];
@@ -586,7 +595,10 @@ export async function getTrainerDashboard(
     const day = centerDateStr(d);
     if (day === todayStr) today++;
     if (weekSet.has(day)) week++;
-    bookedKeys.add(`${day}|${centerHour(d)}`);
+    // Mateix criteri que al tauler d'admin: tots els slots que ocupa.
+    const from = centerSlot(d);
+    for (let i = 0; i < slotsFor(SESSION_DURATION_MINUTES); i++)
+      bookedKeys.add(`${day}|${from + i}`);
   }
 
   // ── Bons a punt d'esgotar-se ──

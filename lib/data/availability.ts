@@ -5,6 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import {
   localDateStr,
+  startSlotOf,
+  endSlotOf,
   type AvailabilityRuleLite,
   type TrainerRuleLite,
 } from "@/lib/availability-slots";
@@ -22,7 +24,6 @@ export type AvailabilityRule = {
 };
 
 const hhmm = (t: string) => t.slice(0, 5);
-const toHour = (t: string) => parseInt(t.slice(0, 2), 10);
 
 function toLite(r: {
   weekday: number;
@@ -34,8 +35,11 @@ function toLite(r: {
 }): AvailabilityRuleLite {
   return {
     weekday: r.weekday,
-    startHour: toHour(r.start_time),
-    endHour: toHour(r.end_time),
+    // Cap a dins: l'inici puja i el final baixa. La columna és `time` i admet
+    // qualsevol minut encara que el formulari no; arrodonir cap a fora obriria
+    // franges que el professional no ha declarat.
+    startSlot: startSlotOf(r.start_time),
+    endSlot: endSlotOf(r.end_time),
     validFrom: r.valid_from,
     validUntil: r.valid_until,
     serviceTypes: r.service_types ?? [],

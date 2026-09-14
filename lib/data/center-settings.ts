@@ -1,4 +1,5 @@
 import "server-only";
+import { slotOf, slotToHour } from "@/lib/availability-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -90,9 +91,24 @@ const DEFAULT: CenterSettings = {
  * "07:00:00" → 7. Els calendaris treballen amb hores senceres, així que del
  * `time` de la base de dades només se n'agafa l'hora.
  */
+/**
+ * Hora d'obertura/tancament del centre, en hores SENCERES.
+ *
+ * El centre obre i tanca en punt per decisió de producte: la mitja hora la
+ * necessita l'horari dels professionals, no el del local. Però el truncament ja
+ * no es fa amb un `parseInt` propi —n'hi havia tres de repartits pel projecte i
+ * tots tres deien el mateix— sinó derivant-lo de `slotOf`, que és l'únic lloc
+ * del codi que sap llegir una hora de rellotge.
+ *
+ * Que sigui una decisió i no un descuit importa: `timeOf` torna a escriure
+ * "HH:00:00", o sigui que desar els ajustos NORMALITZA la columna a hores
+ * senceres. Si algun dia el centre ha d'obrir a les 7:30, el que cal canviar és
+ * aquesta parella de funcions i el formulari, no anar a buscar truncaments
+ * amagats.
+ */
 function hourOf(time: string | null | undefined, fallback: number): number {
   if (!time) return fallback;
-  const h = parseInt(time.slice(0, 2), 10);
+  const h = slotToHour(slotOf(time));
   return Number.isFinite(h) && h >= 0 && h <= 23 ? h : fallback;
 }
 

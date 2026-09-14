@@ -7,7 +7,12 @@ import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { avatarUrls } from "@/lib/data/avatars";
-import type { TrainerRuleLite, TrainerBlockLite } from "@/lib/availability-slots";
+import {
+  startSlotOf,
+  endSlotOf,
+  type TrainerRuleLite,
+  type TrainerBlockLite,
+} from "@/lib/availability-slots";
 import type {
   ServiceType,
   ReservationStatus,
@@ -178,8 +183,8 @@ export async function getClientCenterData(
     const rules = store.availability_rules.map((r) => ({
       trainerId: r.trainer_id,
       weekday: r.weekday,
-      startHour: parseInt(r.start_time.slice(0, 2), 10),
-      endHour: parseInt(r.end_time.slice(0, 2), 10),
+      startSlot: startSlotOf(r.start_time),
+      endSlot: endSlotOf(r.end_time),
       validFrom: r.valid_from,
       validUntil: r.valid_until,
       serviceTypes: r.service_types ?? [],

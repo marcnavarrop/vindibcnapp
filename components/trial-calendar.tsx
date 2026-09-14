@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import { SESSION_DURATION_MINUTES } from "@/lib/labels";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { intlLocale, type Locale } from "@/lib/i18n/config";
@@ -8,7 +9,9 @@ import { clsx, TAP } from "@/lib/utils";
 import {
   weekdayOf,
   localDateStr,
-  isHourBlocked,
+  isSlotBlocked,
+  hourToSlot,
+  slotsFor,
   blocksOf,
   type TrainerRuleLite,
   type TrainerBlockLite,
@@ -23,6 +26,13 @@ import type { PublicTrialData } from "@/lib/data/trial-bookings";
 import type { TrialFormState } from "@/app/prova/actions";
 
 const HOUR = 60 * 60 * 1000;
+
+/**
+ * Una sessió de prova és una sessió estàndard del centre: no en té de pròpia.
+ * Bessó de `TRIAL_DURATION_MINUTES` a lib/data/trial-bookings.ts i de
+ * `v_trial_mins` a les migracions 0083 i 0084; si un dia canvia, canvia als tres.
+ */
+const TRIAL_DURATION = SESSION_DURATION_MINUTES;
 
 type CreateAction = (
   prev: TrialFormState,
@@ -60,11 +70,16 @@ function slotIsFree(
     if (r.weekday !== wd) continue;
     if (day < r.validFrom) continue;
     if (r.validUntil && day > r.validUntil) continue;
-    if (h < r.startHour || h >= r.endHour) continue;
+    // La graella d'aquesta pantalla segueix sent d'una hora (bloc 3): l'hora
+    // es tradueix al seu slot, i la sessió ha de cabre sencera dins la regla.
+    const slot = hourToSlot(h);
+    if (slot < r.startSlot || slot + slotsFor(TRIAL_DURATION) > r.endSlot)
+      continue;
     if (!r.serviceTypes.includes(TRIAL_SERVICE)) continue;
     if (busy.has(`${r.trainerId}|${day}|${h}`)) continue;
     // Vacances o absències: la regla setmanal hi és, però aquell dia no.
-    if (isHourBlocked(blocksOf(blocks, r.trainerId), date, h)) continue;
+    if (isSlotBlocked(blocksOf(blocks, r.trainerId), date, slot, TRIAL_DURATION))
+      continue;
     return true; // hi ha com a mínim un entrenador lliure
   }
   return false;

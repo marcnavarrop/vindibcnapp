@@ -1,4 +1,5 @@
 import { CENTER_TZ } from "@/lib/config";
+import { slotOf } from "@/lib/availability-slots";
 
 /**
  * Conversions entre l'hora de rellotge del centre i instants absoluts.
@@ -45,6 +46,21 @@ export function centerDateStr(utcDate: Date): string {
 /** Hora (0-23) del centre per a un instant donat. */
 export function centerHour(utcDate: Date): number {
   return toCenterLocal(utcDate).getUTCHours();
+}
+
+/**
+ * Slot de mitja hora (0..47) del centre per a un instant donat.
+ *
+ * Germà de `centerHour`, per al codi que ja compta en slots. Es queda aquí i no
+ * a `availability-slots.ts` perquè el que sap de la zona horària del centre és
+ * aquest mòdul; allà la lògica és pura i no toca cap rellotge.
+ */
+export function centerSlot(utcDate: Date): number {
+  const d = toCenterLocal(utcDate);
+  // Passa per `slotOf` en comptes de repetir l'aritmètica: la conversió d'una
+  // hora de rellotge a slot viu en un sol lloc, i si la graella deixés de ser
+  // de mitja hora aquí no hi hauria res a tocar.
+  return slotOf(`${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`);
 }
 
 /** Dia de la setmana al centre en la convenció del negoci (dilluns = 0). */
