@@ -11,6 +11,7 @@
     "i18n:inventory": "node scripts/i18n-inventory.mjs",
     "manual:check": "node scripts/manual-check.mjs",
     "slots:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/slots-check.mts",
+    "availability:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/availability-form-check.mts",
     "emails:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/email-snapshot.mts",
     "emails:review": "node scripts/email-review.mjs",
     "legal:snapshot": "node scripts/legal-snapshot.mjs",

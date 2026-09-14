@@ -1,14 +1,13 @@
 "use server";
 
-import { centerToday } from "@/lib/center-time";
 
 import { revalidatePath } from "next/cache";
+import { deleteAvailabilityRule } from "@/lib/data/availability";
 import {
-  createAvailabilityRules,
-  updateAvailabilityRule,
-  deleteAvailabilityRule,
-} from "@/lib/data/availability";
-import { parseServiceTypes } from "@/lib/labels";
+  submitAvailabilityRules,
+  submitAvailabilityUpdate,
+  type AvailabilityFormState,
+} from "@/lib/data/availability-submit";
 import { getViewer } from "@/lib/auth";
 import { deleteAvailabilityBlock } from "@/lib/data/availability-blocks";
 import {
@@ -16,42 +15,28 @@ import {
   type BlockFormState,
 } from "@/lib/data/availability-block-submit";
 
-function parseWeekdays(formData: FormData): number[] {
-  return formData
-    .getAll("weekdays")
-    .map((v) => Number(v))
-    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
-}
-
 /** Crea disponibilidad para el entrenador `trainerId` (admin). */
 export async function createAvailabilityAdminAction(
   trainerId: string,
+  prev: AvailabilityFormState,
   formData: FormData,
-) {
-  await createAvailabilityRules({
-    trainerId,
-    weekdays: parseWeekdays(formData),
-    startTime: String(formData.get("startTime") ?? ""),
-    endTime: String(formData.get("endTime") ?? ""),
-    validFrom:
-      String(formData.get("validFrom") ?? "") || centerToday(),
-    validUntil: String(formData.get("validUntil") ?? "").trim() || null,
-    serviceTypes: parseServiceTypes(formData.getAll("serviceTypes")),
-  });
-  revalidatePath("/admin/disponibilitat");
+): Promise<AvailabilityFormState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "admin") return { error: "No autoritzat." };
+  const res = await submitAvailabilityRules(trainerId, formData);
+  if (res.ok) revalidatePath("/admin/disponibilitat");
+  return res;
 }
 
-export async function updateAvailabilityAdminAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  if (!id) return;
-  await updateAvailabilityRule(id, {
-    startTime: String(formData.get("startTime") ?? ""),
-    endTime: String(formData.get("endTime") ?? ""),
-    validFrom: String(formData.get("validFrom") ?? ""),
-    validUntil: String(formData.get("validUntil") ?? "").trim() || null,
-    serviceTypes: parseServiceTypes(formData.getAll("serviceTypes")),
-  });
-  revalidatePath("/admin/disponibilitat");
+export async function updateAvailabilityAdminAction(
+  prev: AvailabilityFormState,
+  formData: FormData,
+): Promise<AvailabilityFormState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "admin") return { error: "No autoritzat." };
+  const res = await submitAvailabilityUpdate(formData);
+  if (res.ok) revalidatePath("/admin/disponibilitat");
+  return res;
 }
 
 export async function deleteAvailabilityAdminAction(formData: FormData) {

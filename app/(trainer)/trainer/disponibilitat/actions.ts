@@ -1,55 +1,43 @@
 "use server";
 
-import { centerToday } from "@/lib/center-time";
 
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
+import { deleteAvailabilityRule } from "@/lib/data/availability";
 import {
-  createAvailabilityRules,
-  updateAvailabilityRule,
-  deleteAvailabilityRule,
-} from "@/lib/data/availability";
-import { parseServiceTypes } from "@/lib/labels";
+  submitAvailabilityRules,
+  submitAvailabilityUpdate,
+  type AvailabilityFormState,
+} from "@/lib/data/availability-submit";
 import { deleteAvailabilityBlock } from "@/lib/data/availability-blocks";
 import {
   submitAvailabilityBlock,
   type BlockFormState,
 } from "@/lib/data/availability-block-submit";
 
-function parseWeekdays(formData: FormData): number[] {
-  return formData
-    .getAll("weekdays")
-    .map((v) => Number(v))
-    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
-}
-
-export async function createAvailabilityTrainerAction(formData: FormData) {
+export async function createAvailabilityTrainerAction(
+  prev: AvailabilityFormState,
+  formData: FormData,
+): Promise<AvailabilityFormState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "trainer") return;
-  await createAvailabilityRules({
-    trainerId: viewer.id,
-    weekdays: parseWeekdays(formData),
-    startTime: String(formData.get("startTime") ?? ""),
-    endTime: String(formData.get("endTime") ?? ""),
-    validFrom:
-      String(formData.get("validFrom") ?? "") || centerToday(),
-    validUntil: String(formData.get("validUntil") ?? "").trim() || null,
-    serviceTypes: parseServiceTypes(formData.getAll("serviceTypes")),
-  });
-  revalidatePath("/trainer/disponibilitat");
+  if (!viewer || viewer.role !== "trainer") return { error: "No autoritzat." };
+  const res = await submitAvailabilityRules(viewer.id, formData);
+  if (res.ok) revalidatePath("/trainer/disponibilitat");
+  return res;
 }
 
-export async function updateAvailabilityTrainerAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  if (!id) return;
-  await updateAvailabilityRule(id, {
-    startTime: String(formData.get("startTime") ?? ""),
-    endTime: String(formData.get("endTime") ?? ""),
-    validFrom: String(formData.get("validFrom") ?? ""),
-    validUntil: String(formData.get("validUntil") ?? "").trim() || null,
-    serviceTypes: parseServiceTypes(formData.getAll("serviceTypes")),
-  });
-  revalidatePath("/trainer/disponibilitat");
+export async function updateAvailabilityTrainerAction(
+  prev: AvailabilityFormState,
+  formData: FormData,
+): Promise<AvailabilityFormState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return { error: "No autoritzat." };
+  // Quina franja es pot tocar ho decideix la RLS de la 0013 (l'admin o el seu
+  // amo). Aquí només es comprova que qui demana sigui un professional; si la
+  // franja no és seva, la base ho atura i l'error arriba com a missatge.
+  const res = await submitAvailabilityUpdate(formData);
+  if (res.ok) revalidatePath("/trainer/disponibilitat");
+  return res;
 }
 
 export async function deleteAvailabilityTrainerAction(formData: FormData) {
