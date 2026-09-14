@@ -39,6 +39,14 @@ export const SLOT_MINUTES = 30;
 /** Quants slots té un dia. */
 export const SLOTS_PER_DAY = (24 * 60) / SLOT_MINUTES;
 
+/** Quants slots té una hora. Els calendaris hi miren per saber on va l'etiqueta. */
+export const SLOTS_PER_HOUR = 60 / SLOT_MINUTES;
+
+/** ¿Aquest slot cau en punt? (el 18 sí —les 9:00—, el 19 no). */
+export function isOnTheHour(slot: number): boolean {
+  return slot % SLOTS_PER_HOUR === 0;
+}
+
 /**
  * Slot que conté una hora de rellotge ("09:30", "09:30:00" o "09:45").
  *
@@ -235,6 +243,17 @@ export function weekdayOfDay(day: string): number {
 export function localDateStr(date: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
+}
+
+/**
+ * Slot en què cau un instant, llegit amb els getters LOCALS.
+ *
+ * Mateixa advertència que `localDateStr` i `weekdayOf`: és la variant del
+ * navegador. Al servidor s'usa `centerSlot`, que sap la zona del centre.
+ */
+export function localSlotOf(date: Date): number {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return slotOf(`${p(date.getHours())}:${p(date.getMinutes())}`);
 }
 
 /** ¿La regla `r` rige el día `day` (día de la semana `wd`)? */

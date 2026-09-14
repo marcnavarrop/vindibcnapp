@@ -9,7 +9,6 @@ import {
   datetimeLocalToInstant,
   centerDateStr,
   centerWeekday,
-  centerHour,
   centerSlot,
 } from "@/lib/center-time";
 import { CENTER_EMAIL } from "@/lib/email";
@@ -19,6 +18,7 @@ import {
   isInstantBlocked,
   blocksOf,
   rangesOverlap,
+  slotsFor,
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
@@ -265,10 +265,16 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
   const busy = new Set<string>();
   const addBusy = (trainerId: string | null, iso: string) => {
     if (!trainerId) return;
-    // Clau en hora del CENTRE: el calendari públic la busca amb el dia i
-    // l'hora que pinta, i les regles del centre estan en aquesta hora.
+    // Clau en SLOT de mitja hora del CENTRE: el calendari públic la busca amb
+    // el dia i el slot que pinta, i les regles del centre estan en aquesta hora.
+    //
+    // S'hi marquen TOTS els slots que la sessió ocupa, no només el d'inici: una
+    // sessió d'una hora que comença a les 9:00 també deixa les 9:30 sense
+    // espai per a una prova, que dura el mateix.
     const d = new Date(iso);
-    busy.add(`${trainerId}|${centerDateStr(d)}|${centerHour(d)}`);
+    const from = centerSlot(d);
+    for (let i = 0; i < slotsFor(SESSION_DURATION_MINUTES); i++)
+      busy.add(`${trainerId}|${centerDateStr(d)}|${from + i}`);
   };
 
   if (USE_MOCK) {

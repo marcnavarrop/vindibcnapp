@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   WEEKDAY_SHORT,
   WEEKDAY_LONG,
@@ -9,10 +9,27 @@ import {
   defaultServiceTypesFor,
 } from "@/lib/labels";
 import type { AvailabilityRule } from "@/lib/data/availability";
+import type { AvailabilityFormState } from "@/lib/data/availability-submit";
 import type { ServiceType, Specialty } from "@/types/database";
 import { TAP } from "@/lib/utils";
 
-type Action = (formData: FormData) => void | Promise<void>;
+type Action = (
+  prev: AvailabilityFormState,
+  formData: FormData,
+) => Promise<AvailabilityFormState>;
+
+/** Acció sense estat: només l'esborrat, que no té res a validar. */
+type PlainAction = (formData: FormData) => void | Promise<void>;
+
+/** El missatge d'error del servidor, amb el mateix aspecte que als bloquejos. */
+function FormError({ state }: { state: AvailabilityFormState }) {
+  if (!state.error) return null;
+  return (
+    <p role="alert" className="text-sm text-error">
+      {state.error}
+    </p>
+  );
+}
 
 /** Grupo de checkboxes de servicios ofrecidos en la franja. */
 function ServiceTypesField({
@@ -49,6 +66,95 @@ function ServiceTypesField({
   );
 }
 
+/**
+ * Edició d'una franja.
+ *
+ * Va en un component a part perquè cada fila necessita el seu propi
+ * `useActionState` —un hook no es pot cridar dins d'un `.map()`— i perquè el
+ * formulari només s'ha de tancar quan el servidor diu que sí. Abans es tancava
+ * a l'`onSubmit`, o sigui abans de saber el resultat: amb validació de debò,
+ * això hauria fet desaparèixer el missatge d'error just quan cal llegir-lo.
+ */
+function EditRuleForm({
+  rule: r,
+  updateAction,
+  onDone,
+}: {
+  rule: AvailabilityRule;
+  updateAction: Action;
+  onDone: () => void;
+}) {
+  const [state, action] = useActionState(updateAction, {});
+
+  useEffect(() => {
+    if (state.ok) onDone();
+  }, [state.ok, onDone]);
+
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-3 px-5 py-3">
+      <input type="hidden" name="id" value={r.id} />
+      <Labeled label="Inici">
+        <input
+          type="time"
+          name="startTime"
+          step={1800}
+          required
+          defaultValue={r.startTime}
+          className={inputCls}
+        />
+      </Labeled>
+      <Labeled label="Fi">
+        <input
+          type="time"
+          name="endTime"
+          step={1800}
+          required
+          defaultValue={r.endTime}
+          className={inputCls}
+        />
+      </Labeled>
+      <Labeled label="Des de">
+        <input
+          type="date"
+          name="validFrom"
+          required
+          defaultValue={r.validFrom}
+          className={inputCls}
+        />
+      </Labeled>
+      <Labeled label="Fins a">
+        <input
+          type="date"
+          name="validUntil"
+          defaultValue={r.validUntil ?? ""}
+          className={inputCls}
+        />
+      </Labeled>
+      <div className="w-full">
+        <ServiceTypesField selected={r.serviceTypes} small />
+      </div>
+      <div className="w-full">
+        <FormError state={state} />
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          className={`rounded-md bg-brand-purple px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
+        >
+          Desar
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark ${TAP}`}
+        >
+          Cancel·lar
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export function AvailabilityManager({
   rules,
   todayStr,
@@ -62,8 +168,9 @@ export function AvailabilityManager({
   specialty: Specialty | null;
   createAction: Action;
   updateAction: Action;
-  deleteAction: Action;
+  deleteAction: PlainAction;
 }) {
+  const [createState, create] = useActionState(createAction, {});
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const byDay = WEEKDAY_LONG.map((label, wd) => ({
@@ -76,7 +183,7 @@ export function AvailabilityManager({
     <div className="flex flex-col gap-6">
       {/* Alta ágil: varios días + franja + validez */}
       <form
-        action={createAction}
+        action={create}
         className="flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-6"
       >
         <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
@@ -105,7 +212,7 @@ export function AvailabilityManager({
             <input
               type="time"
               name="startTime"
-              step={3600}
+              step={1800}
               required
               defaultValue="09:00"
               className={inputCls}
@@ -115,7 +222,7 @@ export function AvailabilityManager({
             <input
               type="time"
               name="endTime"
-              step={3600}
+              step={1800}
               required
               defaultValue="13:00"
               className={inputCls}
@@ -136,6 +243,8 @@ export function AvailabilityManager({
         </div>
 
         <ServiceTypesField selected={defaultServiceTypesFor(specialty)} />
+
+        <FormError state={createState} />
 
         <div>
           <button
@@ -166,69 +275,12 @@ export function AvailabilityManager({
               <div className="divide-y divide-brand-border">
                 {d.rules.map((r) =>
                   editingId === r.id ? (
-                    <form
+                    <EditRuleForm
                       key={r.id}
-                      action={updateAction}
-                      onSubmit={() => setEditingId(null)}
-                      className="flex flex-wrap items-end gap-3 px-5 py-3"
-                    >
-                      <input type="hidden" name="id" value={r.id} />
-                      <Labeled label="Inici">
-                        <input
-                          type="time"
-                          name="startTime"
-                          step={3600}
-                          required
-                          defaultValue={r.startTime}
-                          className={inputCls}
-                        />
-                      </Labeled>
-                      <Labeled label="Fi">
-                        <input
-                          type="time"
-                          name="endTime"
-                          step={3600}
-                          required
-                          defaultValue={r.endTime}
-                          className={inputCls}
-                        />
-                      </Labeled>
-                      <Labeled label="Des de">
-                        <input
-                          type="date"
-                          name="validFrom"
-                          required
-                          defaultValue={r.validFrom}
-                          className={inputCls}
-                        />
-                      </Labeled>
-                      <Labeled label="Fins a">
-                        <input
-                          type="date"
-                          name="validUntil"
-                          defaultValue={r.validUntil ?? ""}
-                          className={inputCls}
-                        />
-                      </Labeled>
-                      <div className="w-full">
-                        <ServiceTypesField selected={r.serviceTypes} small />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="submit"
-                          className={`rounded-md bg-brand-purple px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
-                        >
-                          Desar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark ${TAP}`}
-                        >
-                          Cancel·lar
-                        </button>
-                      </div>
-                    </form>
+                      rule={r}
+                      updateAction={updateAction}
+                      onDone={() => setEditingId(null)}
+                    />
                   ) : (
                     <div
                       key={r.id}

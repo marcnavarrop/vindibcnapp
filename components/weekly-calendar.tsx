@@ -14,6 +14,11 @@ import {
   isSlotAvailable,
   isSlotBlocked,
   hourToSlot,
+  localSlotOf,
+  isOnTheHour,
+  slotToHHMM,
+  slotsFor,
+  SLOT_MINUTES,
   offeredServices,
   type AvailabilityRuleLite,
   type AvailabilityBlockLite,
@@ -98,6 +103,9 @@ function toLocalInput(d: Date): string {
   )}:${pad(d.getMinutes())}`;
 }
 
+/** Quantes files de mitja hora ocupa una sessió. Avui, dues. */
+const SLOTS_PER_SESSION = slotsFor(SESSION_DURATION_MINUTES);
+
 export function WeeklyCalendar({
   reservations,
   manageableIds,
@@ -173,8 +181,12 @@ export function WeeklyCalendar({
     [weekStart],
   );
 
-  // Reservas de esta semana, agrupadas por (día, hora).
-  const { cells, hours, groupOccupancy, trialCells } = useMemo(() => {
+  // Reserves d'aquesta setmana, agrupades per (dia, SLOT).
+  //
+  // Abans la clau era l'hora sencera, i per tant una sessió de les 9:30 queia a
+  // la fila de les 9:00 barrejada amb la que hi hagués. Ara cada sessió va a la
+  // seva fila.
+  const { cells, slots, covered, groupOccupancy, trialCells } = useMemo(() => {
     const inWeek = reservations.filter((r) => {
       const d = new Date(r.scheduledAt);
       return d >= weekStart && d < weekEnd;
@@ -189,30 +201,50 @@ export function WeeklyCalendar({
     }
 
     const map = new Map<string, ReservationListItem[]>();
-    let minH = openingHour;
-    let maxH = closingHour;
+    // Els slots que una sessió TAPA sense començar-hi. Una sessió d'una hora
+    // n'ocupa dos: si la segona fila es pintés lliure, convidaria a reservar-hi
+    // una cosa que el servidor rebutjaria per solapament.
+    const cov = new Set<string>();
+    let minSlot = hourToSlot(openingHour);
+    let maxSlot = hourToSlot(closingHour);
+
+    const occupy = (dayIdx: number, from: number) => {
+      minSlot = Math.min(minSlot, from);
+      maxSlot = Math.max(maxSlot, from + SLOTS_PER_SESSION);
+      for (let i = 1; i < SLOTS_PER_SESSION; i++)
+        cov.add(`${dayIdx}-${from + i}`);
+    };
+
     for (const r of inWeek) {
       if (r.status === "cancelled") continue;
       const d = new Date(r.scheduledAt);
       const dayIdx = (d.getDay() + 6) % 7;
-      const h = d.getHours();
-      minH = Math.min(minH, h);
-      maxH = Math.max(maxH, h + 1);
-      const key = `${dayIdx}-${h}`;
+      const s = localSlotOf(d);
+      occupy(dayIdx, s);
+      const key = `${dayIdx}-${s}`;
       (map.get(key) ?? map.set(key, []).get(key)!).push(r);
     }
-    // Sessions de prova d'aquesta setmana, agrupades per (dia, hora).
+    // Sessions de prova d'aquesta setmana, agrupades per (dia, slot).
     const trialMap = new Map<string, TrialHoldItem[]>();
     for (const t of trials) {
       const d = new Date(t.scheduledAt);
       if (d < weekStart || d >= weekEnd) continue;
-      const key = `${(d.getDay() + 6) % 7}-${d.getHours()}`;
+      const dayIdx = (d.getDay() + 6) % 7;
+      const s = localSlotOf(d);
+      occupy(dayIdx, s);
+      const key = `${dayIdx}-${s}`;
       (trialMap.get(key) ?? trialMap.set(key, []).get(key)!).push(t);
     }
 
-    const hrs: number[] = [];
-    for (let h = minH; h < maxH; h++) hrs.push(h);
-    return { cells: map, hours: hrs, groupOccupancy: occ, trialCells: trialMap };
+    const list: number[] = [];
+    for (let s = minSlot; s < maxSlot; s++) list.push(s);
+    return {
+      cells: map,
+      slots: list,
+      covered: cov,
+      groupOccupancy: occ,
+      trialCells: trialMap,
+    };
   }, [reservations, trials, weekStart, weekEnd, openingHour, closingHour]);
 
   const monthLabel = new Intl.DateTimeFormat("ca-ES", {
@@ -277,23 +309,29 @@ export function WeeklyCalendar({
             })}
           </div>
 
-          {/* Filas por hora */}
-          {hours.map((h) => (
+          {/* Files de mitja hora. L'hora segueix sent la unitat que es LLEGEIX:
+              només la fila en punt porta etiqueta, i la línia del mig és més
+              fluixa, de manera que cada hora es veu com un bloc amb dues
+              meitats en comptes de com dues files soltes. */}
+          {slots.map((slot) => (
             <div
-              key={h}
-              className="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-brand-border last:border-0"
+              key={slot}
+              className={clsx(
+                "grid grid-cols-[3.5rem_repeat(7,1fr)] border-b last:border-0",
+                isOnTheHour(slot) ? "border-brand-border/30" : "border-brand-border",
+              )}
             >
               <div className="px-1 py-2 text-right text-xs font-bold text-brand-muted">
-                {pad(h)}:00
+                {isOnTheHour(slot) ? slotToHHMM(slot) : ""}
               </div>
               {days.map((d, dayIdx) => {
-                const items = cells.get(`${dayIdx}-${h}`) ?? [];
-                // La graella d'aquesta pantalla segueix sent d'una hora: el
-                // salt a mitges hores és del bloc 3. Aquí només es tradueix
-                // l'hora de la fila al slot que li correspon.
+                const items = cells.get(`${dayIdx}-${slot}`) ?? [];
+                // Tapada per una sessió que va començar abans: no s'hi pot
+                // encabir res, així que ni s'hi clica ni es pinta disponible.
+                const isCovered = covered.has(`${dayIdx}-${slot}`);
                 const cellDate = new Date(d);
-                cellDate.setHours(h, 0, 0, 0);
-                const cellSlot = hourToSlot(h);
+                cellDate.setHours(0, slot * SLOT_MINUTES, 0, 0);
+                const cellSlot = slot;
                 const goNew = () =>
                   router.push(
                     `${newReservationBase}?at=${encodeURIComponent(
@@ -301,6 +339,7 @@ export function WeeklyCalendar({
                     )}`,
                   );
                 const inAvailability =
+                  !isCovered &&
                   availability &&
                   isSlotAvailable(
                     availability,
@@ -318,7 +357,7 @@ export function WeeklyCalendar({
                 // (vacances, baixa) el treu encara que la regla setmanal hi sigui.
                 // offeredServices ja té en compte les regles I els bloquejos
                 // temporals: si torna buit, aquest professional no hi és.
-                const freeHere = (availabilityLayers ?? [])
+                const freeHere = (isCovered ? [] : (availabilityLayers ?? []))
                   .map((l) => {
                     const svc = offeredServices(
                       l.rules,
@@ -337,22 +376,33 @@ export function WeeklyCalendar({
                 return (
                   <div
                     key={dayIdx}
-                    role="button"
-                    tabIndex={0}
-                    onClick={goNew}
+                    role={isCovered ? undefined : "button"}
+                    tabIndex={isCovered ? undefined : 0}
+                    onClick={isCovered ? undefined : goNew}
                     onKeyDown={(e) => {
+                      if (isCovered) return;
                       if (e.target === e.currentTarget && e.key === "Enter")
                         goNew();
                     }}
                     className={clsx(
-                      "relative cursor-pointer border-l border-brand-border p-1 text-left align-top hover:bg-brand-bg/60 active:bg-brand-bg",
-                      TAP_SURFACE,
-                      // La fila només creix quan hi ha disponibilitat a pintar:
-                      // qui no fa servir la capa no paga l'alçada extra.
-                      freeHere.length > 0 ? "min-h-[4.75rem]" : "min-h-[3.25rem]",
+                      "relative border-l border-brand-border p-1 text-left align-top",
+                      !isCovered &&
+                        `cursor-pointer hover:bg-brand-bg/60 active:bg-brand-bg ${TAP_SURFACE}`,
+                      // Cada fila és mitja hora, així que l'alçada és la meitat
+                      // llarga d'abans i no la meitat justa: un xip de reserva
+                      // ha de seguir cabent-hi sense estrènyer-se.
+                      freeHere.length > 0 ? "min-h-[3rem]" : "min-h-[2.25rem]",
+                      // La segona meitat d'una sessió. Sense tenyir-la semblaria
+                      // una franja lliure just sota d'una d'ocupada, i el que
+                      // hi ha és la mateixa sessió continuant.
+                      isCovered && "bg-brand-bg/60",
                       inAvailability && "bg-emerald-400/10 ring-1 ring-inset ring-emerald-300/40",
                     )}
-                    aria-label={`Nova reserva ${DAY_NAMES[dayIdx]} ${pad(h)}:00`}
+                    aria-label={
+                      isCovered
+                        ? undefined
+                        : `Nova reserva ${DAY_NAMES[dayIdx]} ${slotToHHMM(slot)}`
+                    }
                     title={
                       freeHere.length
                         ? `Disponible: ${freeHere
@@ -384,7 +434,7 @@ export function WeeklyCalendar({
                           }}
                         />
                       ))}
-                      {(trialCells.get(`${dayIdx}-${h}`) ?? []).map((t) => (
+                      {(trialCells.get(`${dayIdx}-${slot}`) ?? []).map((t) => (
                         <TrialCard
                           key={t.id}
                           t={t}
