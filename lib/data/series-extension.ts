@@ -2,7 +2,12 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
-import { centerDateStr, centerHour, centerLocalToInstant } from "@/lib/center-time";
+import {
+  centerDateStr,
+  centerSlot,
+  centerLocalToInstant,
+} from "@/lib/center-time";
+import { slotToHHMM } from "@/lib/availability-slots";
 import { nextOccurrence } from "@/lib/booking-series-core";
 import {
   applyOccurrences,
@@ -153,11 +158,14 @@ async function extendOne(s: SeriesToExtend): Promise<ExtensionOutcome> {
 function nextAfter(iso: string, frequency: BookingFrequency): string {
   const at = new Date(iso);
   const day = centerDateStr(at);
-  const hour = centerHour(at);
+  // L'hora de rellotge SENCERA, amb els minuts. Abans era `centerHour` i es
+  // reconstruïa com "HH:00": una sèrie de les 9:30 s'hauria anat prolongant
+  // sola a les 9:00, i pel cron, sense que ningú ho veiés passar.
+  const time = slotToHHMM(centerSlot(at));
   const next = nextOccurrence(new Date(`${day}T00:00:00Z`), frequency);
   return centerLocalToInstant(
     next.toISOString().slice(0, 10),
-    `${String(hour).padStart(2, "0")}:00`,
+    time,
   ).toISOString();
 }
 
