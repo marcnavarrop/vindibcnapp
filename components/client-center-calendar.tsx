@@ -15,7 +15,11 @@ import {
   localDateStr,
   offeredServices,
   hourToSlot,
-  slotToHour,
+  localSlotOf,
+  isOnTheHour,
+  slotToHHMM,
+  slotsFor,
+  SLOT_MINUTES,
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import { colorOfPro, type ColorPalette } from "@/lib/colors";
@@ -157,6 +161,9 @@ type CellItem =
       slot: Date;
     };
 
+/** Quantes files de mitja hora ocupa una sessió. Avui, dues. */
+const SLOTS_PER_SESSION = slotsFor(SESSION_DURATION_MINUTES);
+
 export function ClientCenterCalendar({
   data,
   createAction,
@@ -268,16 +275,23 @@ export function ClientCenterCalendar({
   const trainerName = (id: string | null) =>
     trainers.find((x) => x.id === id)?.name ?? t("professional");
 
-  // Índice de reservas por trainer|fecha|hora.
-  const resIndex = useMemo(() => {
+  // Índex de reserves per trainer|data|SLOT, i quins slots queden TAPATS per
+  // una sessió que va començar abans. Una sessió d'una hora n'ocupa dos: si el
+  // segon es pintés lliure, el client hi clicaria i el servidor el rebutjaria
+  // per solapament.
+  const { resIndex, coveredIndex } = useMemo(() => {
     const m = new Map<string, ClientCenterData["reservations"]>();
+    const cov = new Set<string>();
     for (const r of reservations) {
       if (r.status === "cancelled") continue;
       const d = new Date(r.scheduledAt);
-      const key = `${r.trainerId}|${localDateStr(d)}|${d.getHours()}`;
+      const base = `${r.trainerId}|${localDateStr(d)}`;
+      const s = localSlotOf(d);
+      const key = `${base}|${s}`;
       (m.get(key) ?? m.set(key, []).get(key)!).push(r);
+      for (let i = 1; i < SLOTS_PER_SESSION; i++) cov.add(`${base}|${s + i}`);
     }
-    return m;
+    return { resIndex: m, coveredIndex: cov };
   }, [reservations]);
 
   // Días visibles.
@@ -291,25 +305,22 @@ export function ClientCenterCalendar({
     return [d];
   }, [view, offset]);
 
-  // Rango horario a partir de reglas y reservas.
-  const hours = useMemo(() => {
-    let minH = openingHour;
-    let maxH = closingHour;
+  // Rang de files, ja en slots de mitja hora.
+  const slots = useMemo(() => {
+    let min = hourToSlot(openingHour);
+    let max = hourToSlot(closingHour);
     for (const r of rules) {
-      // La graella d'aquesta pantalla segueix sent d'una hora (bloc 3): els
-      // extrems de la regla es porten a l'hora que els conté, cap a fora, per
-      // no retallar cap franja al pintar-la.
-      minH = Math.min(minH, slotToHour(r.startSlot));
-      maxH = Math.max(maxH, Math.ceil(r.endSlot / 2));
+      min = Math.min(min, r.startSlot);
+      max = Math.max(max, r.endSlot);
     }
     for (const r of reservations) {
       if (r.status === "cancelled") continue;
-      const h = new Date(r.scheduledAt).getHours();
-      minH = Math.min(minH, h);
-      maxH = Math.max(maxH, h + 1);
+      const s = localSlotOf(new Date(r.scheduledAt));
+      min = Math.min(min, s);
+      max = Math.max(max, s + SLOTS_PER_SESSION);
     }
     const out: number[] = [];
-    for (let h = minH; h < maxH; h++) out.push(h);
+    for (let s = min; s < max; s++) out.push(s);
     return out;
   }, [rules, reservations, openingHour, closingHour]);
 
@@ -319,27 +330,36 @@ export function ClientCenterCalendar({
   const showTrainer = (id: string | null) =>
     trainerFilter === "all" || trainerFilter === id;
 
-  /** Calcula los chips de una celda (fecha, hora). */
-  function cellItems(date: Date, h: number): CellItem[] {
+  /** Calcula los chips de una celda (fecha, slot de media hora). */
+  function cellItems(date: Date, slot: number): CellItem[] {
     const cellDate = new Date(date);
-    cellDate.setHours(h, 0, 0, 0);
+    cellDate.setHours(0, slot * SLOT_MINUTES, 0, 0);
     const inFuture = cellDate.getTime() > Date.now();
-    const inHours = h >= openingHour && h < closingHour;
+    // La sessió sencera ha de cabre dins de l'horari del centre, no només el
+    // seu primer mitja hora: amb graella de mitja hora, començar a les 21:30
+    // amb el centre tancant a les 22:00 deixaria mitja sessió fora.
+    const inHours =
+      slot >= hourToSlot(openingHour) &&
+      slot + SLOTS_PER_SESSION <= hourToSlot(closingHour);
     const day = localDateStr(cellDate);
     const items: CellItem[] = [];
 
-    // Si ja tens una reserva confirmada a aquesta hora, no mostris noves franges lliures.
-    const clientAlreadyBookedThisHour = reservations.some(
-      (r) =>
-        r.isOwn &&
-        r.status !== "cancelled" &&
-        localDateStr(new Date(r.scheduledAt)) === day &&
-        new Date(r.scheduledAt).getHours() === h,
-    );
+    // Si ja tens una reserva que es trepitjaria amb aquesta, no mostris noves
+    // franges lliures. Abans es comparava l'hora sencera; ara, el solapament:
+    // amb una sessió teva a les 9:30, les 10:00 tampoc et serveixen.
+    const clientAlreadyBookedThisHour = reservations.some((r) => {
+      if (!r.isOwn || r.status === "cancelled") return false;
+      const d = new Date(r.scheduledAt);
+      if (localDateStr(d) !== day) return false;
+      const s = localSlotOf(d);
+      return slot < s + SLOTS_PER_SESSION && s < slot + SLOTS_PER_SESSION;
+    });
 
     for (const t of trainers) {
       if (!showTrainer(t.id)) continue;
-      const resHere = resIndex.get(`${t.id}|${day}|${h}`) ?? [];
+      // Tapada per una sessió que va començar abans: aquí no hi comença res.
+      if (coveredIndex.has(`${t.id}|${day}|${slot}`)) continue;
+      const resHere = resIndex.get(`${t.id}|${day}|${slot}`) ?? [];
       const ownHere = resHere.filter((r) => r.isOwn);
       const exclusive = resHere.find((r) => r.serviceType !== "grupo_reducido");
       const groupHere = resHere.filter(
@@ -350,7 +370,7 @@ export function ClientCenterCalendar({
         blocks,
         t.id,
         cellDate,
-        hourToSlot(h),
+        slot,
         SESSION_DURATION_MINUTES,
       );
 
@@ -625,23 +645,29 @@ export function ClientCenterCalendar({
             })}
           </div>
 
-          {hours.map((h) => (
+          {/* Files de mitja hora. Només la fila en punt porta etiqueta, i la
+              línia del mig és més fluixa: cada hora es llegeix com un bloc amb
+              dues meitats, no com dues files soltes. */}
+          {slots.map((slot) => (
             <div
-              key={h}
-              className="grid border-b border-brand-border last:border-0"
+              key={slot}
+              className={clsx(
+                "grid border-b last:border-0",
+                isOnTheHour(slot) ? "border-brand-border/30" : "border-brand-border",
+              )}
               style={{
                 gridTemplateColumns: `3.5rem repeat(${days.length}, 1fr)`,
               }}
             >
               <div className="px-1 py-2 text-right text-xs font-bold text-brand-muted">
-                {pad(h)}:00
+                {isOnTheHour(slot) ? slotToHHMM(slot) : ""}
               </div>
               {days.map((d, dayIdx) => {
-                const items = cellItems(d, h);
+                const items = cellItems(d, slot);
                 return (
                   <div
                     key={dayIdx}
-                    className="min-h-[3.25rem] border-l border-brand-border p-1 align-top"
+                    className="min-h-[2.25rem] border-l border-brand-border p-1 align-top"
                   >
                     <div className="flex flex-col gap-1">
                       {items.map((it, idx) => {

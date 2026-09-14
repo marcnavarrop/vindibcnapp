@@ -12,6 +12,9 @@ import {
   isSlotBlocked,
   hourToSlot,
   slotsFor,
+  isOnTheHour,
+  slotToHHMM,
+  SLOT_MINUTES,
   blocksOf,
   type TrainerRuleLite,
   type TrainerBlockLite,
@@ -62,21 +65,25 @@ function slotIsFree(
   busy: Set<string>,
   blocks: TrainerBlockLite[],
   date: Date,
-  h: number,
+  slot: number,
 ): boolean {
   const wd = weekdayOf(date);
   const day = localDateStr(date);
+  const ocupa = slotsFor(TRIAL_DURATION);
   for (const r of rules) {
     if (r.weekday !== wd) continue;
     if (day < r.validFrom) continue;
     if (r.validUntil && day > r.validUntil) continue;
-    // La graella d'aquesta pantalla segueix sent d'una hora (bloc 3): l'hora
-    // es tradueix al seu slot, i la sessió ha de cabre sencera dins la regla.
-    const slot = hourToSlot(h);
-    if (slot < r.startSlot || slot + slotsFor(TRIAL_DURATION) > r.endSlot)
-      continue;
+    // La prova ha de cabre sencera dins de la regla.
+    if (slot < r.startSlot || slot + ocupa > r.endSlot) continue;
     if (!r.serviceTypes.includes(TRIAL_SERVICE)) continue;
-    if (busy.has(`${r.trainerId}|${day}|${h}`)) continue;
+    // Cap dels slots que ocuparia pot estar pres. `busy` ja ve del servidor
+    // amb tots els slots de cada sessió marcats, però la prova també en dura
+    // dos: si el segon xoca, la franja no serveix.
+    let xoca = false;
+    for (let i = 0; i < ocupa; i++)
+      if (busy.has(`${r.trainerId}|${day}|${slot + i}`)) xoca = true;
+    if (xoca) continue;
     // Vacances o absències: la regla setmanal hi és, però aquell dia no.
     if (isSlotBlocked(blocksOf(blocks, r.trainerId), date, slot, TRIAL_DURATION))
       continue;
@@ -125,9 +132,10 @@ export function TrialCalendar({
     return [d];
   }, [view, offset]);
 
-  const hours = useMemo(() => {
+  const slots = useMemo(() => {
     const out: number[] = [];
-    for (let h = openingHour; h < closingHour; h++) out.push(h);
+    for (let s = hourToSlot(openingHour); s < hourToSlot(closingHour); s++)
+      out.push(s);
     return out;
   }, [openingHour, closingHour]);
 
@@ -216,28 +224,33 @@ export function TrialCalendar({
             })}
           </div>
 
-          {hours.map((h) => (
+          {/* Files de mitja hora. Només la fila en punt porta etiqueta, i la
+              línia del mig és més fluixa: cada hora es llegeix com un bloc. */}
+          {slots.map((slot) => (
             <div
-              key={h}
-              className="grid border-b border-brand-border last:border-0"
+              key={slot}
+              className={clsx(
+                "grid border-b last:border-0",
+                isOnTheHour(slot) ? "border-brand-border/30" : "border-brand-border",
+              )}
               style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, 1fr)` }}
             >
               <div className="px-1 py-2 text-right text-xs font-bold text-brand-muted">
-                {pad(h)}:00
+                {isOnTheHour(slot) ? slotToHHMM(slot) : ""}
               </div>
               {days.map((d, dayIdx) => {
                 const cellDate = new Date(d);
-                cellDate.setHours(h, 0, 0, 0);
+                cellDate.setHours(0, slot * SLOT_MINUTES, 0, 0);
                 // `ms` i no `t`: aquí dins `t` és el traductor.
                 const ms = cellDate.getTime();
                 const bookable =
                   ms >= minMs &&
                   ms <= maxMs &&
-                  slotIsFree(rules, busy, blocks, cellDate, h);
+                  slotIsFree(rules, busy, blocks, cellDate, slot);
                 return (
                   <div
                     key={dayIdx}
-                    className="min-h-[3rem] border-l border-brand-border p-1"
+                    className="min-h-[2rem] border-l border-brand-border p-1"
                   >
                     {bookable && (
                       <button
