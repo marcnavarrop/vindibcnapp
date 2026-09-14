@@ -2,9 +2,14 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
-import { slotHasRoom } from "@/lib/data/reservations";
+import {
+  slotHasRoom,
+  fetchOccupants,
+  mockOccupants,
+} from "@/lib/data/reservations";
 import { isBonoExpired } from "@/lib/data/bonos";
-import { GROUP_CAPACITY } from "@/lib/labels";
+import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
+import { sessionEndIso } from "@/lib/availability-slots";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerDateStr, centerLocalToInstant } from "@/lib/center-time";
@@ -320,13 +325,14 @@ export async function promoteFromWaitlist(freed: {
     // La franja ha de seguir tenint lloc: en un grup, alliberar-ne una plaça no
     // vol dir que el grup s'hagi buidat. Als grups això és només un descart
     // ràpid — qui mana és `book_group_slot`, que compta dins del lock.
-    const { data: existing } = await admin
-      .from("reservations")
-      .select("service_type, client_id")
-      .eq("trainer_id", trainerId)
-      .eq("scheduled_at", freed.scheduledAt)
-      .eq("status", "booked");
-    const occupied = (existing ?? []) as { service_type: ServiceType; client_id: string }[];
+    // Per solapament des de la 0082: mentre la franja estava lliure algú pot
+    // haver reservat a les 9:30, i això també la torna a omplir.
+    const occupied = await fetchOccupants(
+      admin,
+      trainerId,
+      freed.scheduledAt,
+      SESSION_DURATION_MINUTES,
+    );
     if (!slotHasRoom(occupied, freed.serviceType))
       return { promoted: false, reason: "La franja segueix plena." };
 
@@ -379,6 +385,7 @@ export async function promoteFromWaitlist(freed: {
           p_trainer_id: trainerId,
           p_scheduled_at: freed.scheduledAt,
           p_capacity: GROUP_CAPACITY,
+      p_duration_minutes: SESSION_DURATION_MINUTES,
         });
         if (gErr) return { promoted: false, reason: "Error en la promoció." };
         if (!res || !res.ok) {
@@ -391,46 +398,30 @@ export async function promoteFromWaitlist(freed: {
         }
         createdId = res.id;
       } else {
-        // Serveis individuals: la garantia real és l'índex únic de la 0007,
-        // igual que a `createClientReservation`. Reclam optimista i INSERT.
-        const next = bono.remaining_sessions - 1;
-        const { data: claimed } = await admin
-          .from("bonos")
-          .update({
-            remaining_sessions: next,
-            ...(next === 0 && bono.status === "active"
-              ? { status: "completed" as const }
-              : {}),
-            ...(bono.first_reservation_at
-              ? {}
-              : { first_reservation_at: new Date().toISOString() }),
-          })
-          .eq("id", bono.id)
-          .eq("remaining_sessions", bono.remaining_sessions)
-          .select("id")
-          .single();
-        if (!claimed) continue;
-
-        const { data: created, error: rErr } = await admin
-          .from("reservations")
-          .insert({
-            client_id: c.client_id,
-            bono_id: bono.id,
-            trainer_id: trainerId,
-            scheduled_at: freed.scheduledAt,
-            service_type: c.service_type,
-            status: "booked",
-          })
-          .select("id")
-          .single();
-        if (rErr || !created) {
-          // Torna la sessió: la plaça se l'ha endut algú altre pel mig.
-          // `bono.status` i no "active": el bo podia ser 'pending_payment' i
-          // donar-lo per actiu el cobraria per la cara.
-          await restoreBono(admin, bono.id, bono.remaining_sessions, bono.status);
-          continue;
+        // Serveis individuals: `book_individual_slot` (0084), el mirall de la
+        // de grup i amb el MATEIX pany. Aquest camí feia el mateix ball que
+        // `createClientReservation` —descomptar, inserir i tornar la sessió si
+        // l'INSERT petava— i tenia la mateixa escletxa: la constraint de la
+        // 0082 no el protegia d'un grup que hagués ocupat la franja mentrestant.
+        // Dins de la funció no hi ha res a desfer.
+        const { data: res, error: iErr } = await admin.rpc("book_individual_slot", {
+          p_client_id: c.client_id,
+          p_bono_id: bono.id,
+          p_expected_remaining: bono.remaining_sessions,
+          p_trainer_id: trainerId,
+          p_scheduled_at: freed.scheduledAt,
+          p_service_type: c.service_type,
+          p_duration_minutes: SESSION_DURATION_MINUTES,
+        });
+        if (iErr) return { promoted: false, reason: "Error en la promoció." };
+        if (!res || !res.ok) {
+          // Mateix criteri que als grups: 'no_sessions' és d'AQUEST candidat i
+          // el següent de la cua encara pot entrar-hi; 'taken' és de la FRANJA,
+          // i si ja no hi cap ningú no cal seguir provant.
+          if (res?.reason === "no_sessions") continue;
+          return { promoted: false, reason: "La franja segueix plena." };
         }
-        createdId = created.id;
+        createdId = res.id;
       }
 
       // `eq("status","waiting")` tanca la cursa: si dues cancel·lacions
@@ -481,11 +472,11 @@ async function promoteMock(
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
   if (candidates.length === 0) return { promoted: false, reason: "Ningú a la cua." };
 
-  const occupied = store.reservations.filter(
-    (r) =>
-      r.trainer_id === freed.trainerId &&
-      r.scheduled_at === freed.scheduledAt &&
-      r.status === "booked",
+  const occupied = mockOccupants(
+    store,
+    freed.trainerId,
+    freed.scheduledAt,
+    SESSION_DURATION_MINUTES,
   );
   if (!slotHasRoom(occupied, freed.serviceType))
     return { promoted: false, reason: "La franja segueix plena." };
@@ -520,6 +511,8 @@ async function promoteMock(
       bono_id: bono.id,
       trainer_id: freed.trainerId,
       scheduled_at: freed.scheduledAt,
+      duration_minutes: SESSION_DURATION_MINUTES,
+      ends_at: sessionEndIso(freed.scheduledAt, SESSION_DURATION_MINUTES),
       service_type: c.service_type,
       status: "booked",
       series_id: null,

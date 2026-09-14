@@ -1,7 +1,9 @@
-import { SERVICE_LABELS, TRAINING_SERVICES } from "@/lib/labels";
+import {
+  SERVICE_LABELS,
+  TRAINING_SERVICES,
+  SESSION_DURATION_MINUTES,
+} from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
-
-export const SESSION_DURATION_MINUTES = 60;
 
 const CENTER_LOCATION =
   "Vindi BCN, Carrer de la Mare de Déu dels Desemparats, 14-16, Gràcia, 08012 Barcelona";

@@ -17,6 +17,7 @@ import {
   isServiceAvailableOn,
   isInstantBlocked,
   blocksOf,
+  rangesOverlap,
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
@@ -26,7 +27,7 @@ import {
   type TrialErrorCode,
 } from "@/lib/data/trial-bookings.constants";
 import { TRIAL_SERVICE } from "@/lib/data/trial-bookings.constants";
-import { TRAINING_SERVICES } from "@/lib/labels";
+import { TRAINING_SERVICES, SESSION_DURATION_MINUTES } from "@/lib/labels";
 import type { Database, ServiceType, TrialStatus } from "@/types/database";
 
 type DB = SupabaseClient<Database>;
@@ -129,35 +130,64 @@ async function sweepExpiredReal(admin: DB): Promise<void> {
 
 // ─────────────── Holds que ocupen un forat (per a reservations) ───────────────
 
-/** Proves que ocupen (trainer, scheduled_at) exacte, al store mock. */
+/**
+ * Una prova no porta durada pròpia: és una sessió estàndard del centre. Si
+ * algun dia en porta, aquesta constant és la que ha de desaparèixer (i el seu
+ * bessó `v_trial_mins` dins de `book_group_slot`, migració 0083).
+ */
+const TRIAL_DURATION_MINUTES = SESSION_DURATION_MINUTES;
+
+/**
+ * Proves que TREPITGEN la franja [scheduledAt, +durationMinutes) del trainer.
+ *
+ * Abans era `scheduled_at` exacte. Amb sessions que poden començar a les 9:30,
+ * "ocupar la mateixa franja" i "començar al mateix segon" van deixar de ser el
+ * mateix: una prova a les 9:30 ocupa mitja hora d'una sessió de les 9:00.
+ */
 export function mockActiveHoldsAt(
   store: Store,
   trainerId: string,
   scheduledAtISO: string,
+  durationMinutes: number,
 ): { service_type: ServiceType }[] {
   const now = Date.now();
+  const start = new Date(scheduledAtISO).getTime();
+  const end = start + durationMinutes * 60_000;
   return store.trial_bookings
-    .filter(
-      (t) =>
-        t.trainer_id === trainerId &&
-        t.scheduled_at === scheduledAtISO &&
-        isActiveHold(t, now),
-    )
+    .filter((t) => {
+      if (t.trainer_id !== trainerId || !isActiveHold(t, now)) return false;
+      const tStart = new Date(t.scheduled_at).getTime();
+      return rangesOverlap(
+        start,
+        end,
+        tStart,
+        tStart + TRIAL_DURATION_MINUTES * 60_000,
+      );
+    })
     .map((t) => ({ service_type: t.service_type }));
 }
 
-/** Proves que ocupen (trainer, scheduled_at) exacte, al backend real. */
+/** El bessó de `mockActiveHoldsAt` contra el backend real. */
 export async function fetchActiveHoldsAt(
   admin: DB,
   trainerId: string,
   scheduledAtISO: string,
+  durationMinutes: number,
 ): Promise<{ service_type: ServiceType }[]> {
   const now = new Date().toISOString();
+  const start = new Date(scheduledAtISO).getTime();
+  // La prova comença abans del final de la franja que es demana, i acaba
+  // després del seu inici. Com que la durada d'una prova és fixa, la segona
+  // condició es pot escriure sobre `scheduled_at` i seguir sent indexable.
   const { data } = await admin
     .from("trial_bookings")
     .select("service_type, status, expires_at")
     .eq("trainer_id", trainerId)
-    .eq("scheduled_at", scheduledAtISO)
+    .lt("scheduled_at", new Date(start + durationMinutes * 60_000).toISOString())
+    .gt(
+      "scheduled_at",
+      new Date(start - TRIAL_DURATION_MINUTES * 60_000).toISOString(),
+    )
     .in("status", ["pending", "confirmed"]);
   return (data ?? [])
     .filter((t) => t.status === "confirmed" || t.expires_at >= now)
@@ -532,15 +562,26 @@ function isTrainerFreeMock(store: Store, trainerId: string, scheduledAt: string)
 }
 
 async function isTrainerFreeReal(admin: DB, trainerId: string, scheduledAt: string): Promise<boolean> {
+  // Per solapament, com la resta: una reserva de les 9:00 ocupa mitja hora
+  // d'una prova que vulgui començar a les 9:30.
+  const endIso = new Date(
+    new Date(scheduledAt).getTime() + TRIAL_DURATION_MINUTES * 60_000,
+  ).toISOString();
   const { data: res } = await admin
     .from("reservations")
     .select("id")
     .eq("trainer_id", trainerId)
-    .eq("scheduled_at", scheduledAt)
     .eq("status", "booked")
+    .lt("scheduled_at", endIso)
+    .gt("ends_at", scheduledAt)
     .limit(1);
   if ((res ?? []).length > 0) return false;
-  const holds = await fetchActiveHoldsAt(admin, trainerId, scheduledAt);
+  const holds = await fetchActiveHoldsAt(
+    admin,
+    trainerId,
+    scheduledAt,
+    TRIAL_DURATION_MINUTES,
+  );
   return holds.length === 0;
 }
 

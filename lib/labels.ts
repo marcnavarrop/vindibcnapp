@@ -101,6 +101,17 @@ export function parseServiceTypes(values: (string | File)[]): ServiceType[] {
 /** Capacidad por defecto de una sesión de grupo reducido (para el "N/4"). */
 export const GROUP_CAPACITY = 4;
 
+/**
+ * Quant dura una sessió, en minuts.
+ *
+ * Viu aquí, al costat de l'aforament, perquè és una regla del negoci i no un
+ * detall de cap pantalla. Abans vivia a `lib/calendar-links.ts` i només servia
+ * per pintar l'esdeveniment .ics; des de la 0082 és també el que s'escriu a
+ * `reservations.duration_minutes` i, amb ell, el que decideix quina franja
+ * ocupa una reserva.
+ */
+export const SESSION_DURATION_MINUTES = 60;
+
 export const BONO_STATUS_LABELS: Record<BonoStatus, string> = ca.labels.bonoStatus;
 
 /**
