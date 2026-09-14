@@ -1010,6 +1010,14 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
+            ca: "Hi ha una fila per cada mitja hora, i les sessions poden començar tant en punt com a i mitja. Només les files en punt porten l'hora escrita; la línia del mig parteix l'hora en dues.",
+            es: "Hay una fila por cada media hora, y las sesiones pueden empezar tanto en punto como a y media. Solo las filas en punto llevan la hora escrita; la línea del medio parte la hora en dos.",
+            en: "There is one row per half hour, and sessions can start either on the hour or at half past. Only the on-the-hour rows are labelled; the fainter line in between splits the hour in two.",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
             ca: "Cada professional té el seu color, i la llegenda de sota el calendari diu quin és de qui. A dalt hi ha dos filtres, per servei i per professional, per si vols mirar només una cosa. Si tens un professional assignat, el filtre ja hi ve posat.",
             es: "Cada profesional tiene su color, y la leyenda de debajo del calendario dice cuál es de quién. Arriba hay dos filtros, por servicio y por profesional, por si quieres mirar solo una cosa. Si tienes un profesional asignado, el filtro ya viene puesto.",
             en: "Each professional has their own colour, and the key below the calendar says which is whose. At the top there are two filters, by service and by professional, in case you want to look at just one thing. If you have a professional assigned to you, that filter comes ready set.",
@@ -1033,17 +1041,17 @@ export function buildClientManual(
                 en: "A coloured slot with a service name",
               }),
               T({
-                ca: "És lliure i la pots reservar. Si un professional ofereix dues coses a la mateixa hora, en surt una per cada servei que tu puguis reservar.",
-                es: "Está libre y la puedes reservar. Si un profesional ofrece dos cosas a la misma hora, sale una por cada servicio que tú puedas reservar.",
-                en: "It's free and you can book it. If a professional offers two things at the same hour, one appears for each service you're able to book.",
+                ca: "És lliure i la pots reservar. Si un professional ofereix dues coses a la mateixa franja, en surt una per cada servei que tu puguis reservar.",
+                es: "Está libre y la puedes reservar. Si un profesional ofrece dos cosas en la misma franja, sale una por cada servicio que tú puedas reservar.",
+                en: "It's free and you can book it. If a professional offers two things in the same slot, one appears for each service you're able to book.",
               }),
             ],
             [
               T({ ca: "Ocupat", es: "Ocupado", en: "Taken" }),
               T({
-                ca: "Aquella hora ja la té ocupada una altra persona. No hi veus mai qui és.",
-                es: "Esa hora ya la tiene ocupada otra persona. No ves nunca quién es.",
-                en: "That hour is already taken by someone else. You never see who.",
+                ca: "Aquella franja ja la té ocupada una altra persona. No hi veus mai qui és. Com que una sessió dura una hora, també tapa la mitja hora següent.",
+                es: "Esa franja ya la tiene ocupada otra persona. No ves nunca quién es. Como una sesión dura una hora, también tapa la media hora siguiente.",
+                en: "That slot is already taken by someone else. You never see who. Since a session lasts an hour, it also covers the following half hour.",
               }),
             ],
             [

@@ -311,11 +311,15 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "El calendari setmanal" },
         {
           t: "p",
-          text: "Set columnes i una fila per hora. Les fletxes de dalt mouen la setmana i el botó del mig torna a l'actual. Cada reserva és una peça de color; les de grup reduït porten al costat quanta gent hi ha apuntada sobre l'aforament.",
+          text: "Set columnes i una fila per cada mitja hora. Només les files en punt porten l'hora escrita; la línia del mig, més fluixa, parteix l'hora en dues. Les fletxes de dalt mouen la setmana i el botó del mig torna a l'actual. Cada reserva és una peça de color; les de grup reduït porten al costat quanta gent hi ha apuntada sobre l'aforament.",
         },
         {
           t: "p",
           text: "Tocar un forat buit obre el formulari de nova reserva amb el dia i l'hora ja posats. Tocar una reserva obre la seva fitxa, amb el que hi puguis fer.",
+        },
+        {
+          t: "note",
+          text: "Una sessió dura una hora i per tant ocupa DUES files. La segona surt ombrejada i no s'hi pot clicar: no és un forat lliure, és la mateixa sessió continuant.",
         },
         { t: "h", text: "La capa de disponibilitat" },
         {
@@ -489,7 +493,15 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Afegir una franja" },
         {
           t: "p",
-          text: "El formulari de dalt crea diverses regles de cop. Marques els dies de la setmana que vulguis, poses l'hora d'inici i la de fi, i des de quina data val la regla (i fins quan, si vols que caduqui sola). Les hores van de punta a punta d'hora.",
+          text: "El formulari de dalt crea diverses regles de cop. Marques els dies de la setmana que vulguis, poses l'hora d'inici i la de fi, i des de quina data val la regla (i fins quan, si vols que caduqui sola). Les hores van de mitja en mitja hora: pots posar les 9:00 o les 9:30, però no les 9:15.",
+        },
+        {
+          t: "p",
+          text: "Dins d'una franja, un client pot començar cada mitja hora sempre que la sessió hi càpiga SENCERA. En una franja de 9:00 a 13:00 es pot començar a les 9:00, 9:30, 10:00… i l'última hora d'inici són les 12:00: a les 12:30 la sessió acabaria fora.",
+        },
+        {
+          t: "note",
+          text: "Per això una franja no pot durar menys d'una sessió. Si n'hi poses una de més curta, la pantalla t'avisa i no la desa: abans es desava i quedava allà sense que ningú la pogués reservar mai.",
         },
         {
           t: "p",
