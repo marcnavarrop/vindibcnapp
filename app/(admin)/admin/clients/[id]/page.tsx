@@ -308,8 +308,20 @@ export default async function ClientDetailPage({
           */}
           {clientTags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
+              {/*
+                L'únic Badge amb text que no controlem: el nom de l'etiqueta
+                l'escriu l'admin i no té sostre. Amb el `whitespace-nowrap` de
+                la base, un nom llarg se'n sortiria d'aquesta fila en comptes de
+                partir-se, així que aquí es talla amb punts suspensius i el nom
+                sencer queda al `title`.
+              */}
               {clientTags.map((t) => (
-                <Badge key={t.id} tone="info">
+                <Badge
+                  key={t.id}
+                  tone="info"
+                  className="max-w-full truncate"
+                  title={t.name}
+                >
                   {t.name}
                 </Badge>
               ))}

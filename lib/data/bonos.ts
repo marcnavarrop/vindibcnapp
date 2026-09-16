@@ -9,9 +9,11 @@ import {
   applyReferralReward,
   applyReferralRewardIfPending,
   getPendingReferralReward,
+  releaseReferralRewardOfBono,
 } from "@/lib/data/referral";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerToday } from "@/lib/center-time";
+import { cancelBlockFor, CANCEL_BLOCK_LABELS } from "@/lib/bono-rules";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
 
 // ─── Caducitat ───────────────────────────────────────────────────────────────
@@ -101,6 +103,12 @@ export type BonoListItem = {
   status: BonoStatus;
   /** Data de caducitat fixada en comprar-lo. Null = no caduca. */
   expiresAt: string | null;
+  /**
+   * El mes d'una subscripció, si n'és. La taula ho necessita per no oferir
+   * d'anul·lar-lo: donar-se de baixa té el seu camí, i anul·lar el bo deixaria
+   * la subscripció viva.
+   */
+  subscriptionId: string | null;
 };
 
 function clientName(clientId: string, store: Store): string {
@@ -124,6 +132,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
       price: b.price,
       status: b.status,
       expiresAt: b.expires_at ?? null,
+      subscriptionId: b.subscription_id ?? null,
     }));
   }
 
@@ -132,7 +141,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
   const { data, error } = await supabase
     .from("bonos")
     .select(
-      `id, client_id, service_type, total_sessions, remaining_sessions, price, status, expires_at,
+      `id, client_id, service_type, total_sessions, remaining_sessions, price, status, expires_at, subscription_id,
        client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
     )
     .order("created_at", { ascending: false });
@@ -147,6 +156,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
     price: number;
     status: BonoStatus;
     expires_at: string | null;
+    subscription_id: string | null;
     client: { profile: { full_name: string | null } | null } | null;
   };
   return (data as unknown as Row[]).map((r) => ({
@@ -159,6 +169,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
     price: r.price,
     status: r.status,
     expiresAt: r.expires_at,
+    subscriptionId: r.subscription_id,
   }));
 }
 
@@ -674,4 +685,77 @@ async function resumeSubscription(bonoId: string): Promise<void> {
   } catch (e) {
     console.error("[subscripcions] no s'ha pogut reactivar després del cobrament:", e);
   }
+}
+
+// ─── Anul·lar un bo ──────────────────────────────────────────────────────────
+
+/**
+ * Anul·la un bo: el passa a 'cancelled' i torna la recompensa de referit que
+ * s'hi hagués gastat.
+ *
+ * NO toca el cobrament. Si el bo era actiu, els diners segueixen anotats a
+ * `payments`: no hi ha cap forma de representar-hi una devolució, i inventar-ne
+ * una a mitges (esborrar la fila) trencaria l'històric que la 0016 va decidir
+ * conservar. El llibre dirà que es va cobrar i el bo dirà que està anul·lat,
+ * que és la veritat; la devolució es fa fora de l'app.
+ */
+export async function cancelBono(
+  bonoId: string,
+  opts: { isAdmin: boolean },
+): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const bono = store.bonos.find((b) => b.id === bonoId);
+    if (!bono) throw new Error("Bo no trobat.");
+    const block = cancelBlockFor(
+      {
+        status: bono.status,
+        remainingSessions: bono.remaining_sessions,
+        totalSessions: bono.total_sessions,
+        subscriptionId: bono.subscription_id,
+      },
+      opts.isAdmin,
+    );
+    if (block) throw new Error(CANCEL_BLOCK_LABELS[block]);
+
+    bono.status = "cancelled";
+    saveStore(store);
+    await releaseReferralRewardOfBono(bonoId);
+    return;
+  }
+
+  const supabase = await createClient();
+  const { data: bono, error: bErr } = await supabase
+    .from("bonos")
+    .select("id, status, remaining_sessions, total_sessions, subscription_id")
+    .eq("id", bonoId)
+    .single();
+  if (bErr || !bono) throw new Error("Bo no trobat.");
+
+  const block = cancelBlockFor(
+    {
+      status: bono.status,
+      remainingSessions: bono.remaining_sessions,
+      totalSessions: bono.total_sessions,
+      subscriptionId: bono.subscription_id,
+    },
+    opts.isAdmin,
+  );
+  if (block) throw new Error(CANCEL_BLOCK_LABELS[block]);
+
+  const { data: updated, error: uErr } = await supabase
+    .from("bonos")
+    .update({ status: "cancelled" })
+    .eq("id", bonoId)
+    // Les mateixes condicions, però a la consulta: si entremig algú ha cobrat
+    // el bo o hi ha reservat una sessió, aquesta anul·lació ja no troba res.
+    // Mateix criteri que `markBonoPaid` amb el seu `.in('status', ...)`.
+    .eq("status", bono.status)
+    .eq("remaining_sessions", bono.total_sessions)
+    .select("id");
+  if (uErr) throw uErr;
+  if (!updated || updated.length === 0)
+    throw new Error("El bo ha canviat mentrestant. Torna-ho a mirar.");
+
+  await releaseReferralRewardOfBono(bonoId);
 }

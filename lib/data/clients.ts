@@ -35,6 +35,11 @@ export type ClientBono = {
   status: BonoStatus;
   /** Data de caducitat fixada en comprar-lo. Null = no caduca. */
   expiresAt: string | null;
+  /**
+   * El mes d'una subscripció, si n'és. La fitxa ho necessita per no oferir
+   * d'anul·lar-lo: donar-se de baixa té el seu camí (`cancelBlockFor`).
+   */
+  subscriptionId: string | null;
 };
 
 export type ClientReservation = {
@@ -180,6 +185,7 @@ function buildDetail(clientId: string): ClientDetail | null {
         price: b.price,
         status: b.status,
         expiresAt: b.expires_at ?? null,
+        subscriptionId: b.subscription_id ?? null,
       })),
     reservations: store.reservations
       .filter((r) => r.client_id === clientId)
@@ -230,6 +236,7 @@ type DetailRow = {
     remaining_sessions: number;
     price: number;
     status: BonoStatus;
+    subscription_id: string | null;
   }[];
   reservations: {
     id: string;
@@ -258,7 +265,7 @@ async function fetchClientDetail(
       `id, profile_id, assigned_trainer_id, clinical_notes, general_notes,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
-       bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at),
+       bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at, subscription_id),
        reservations(id, scheduled_at, service_type, status, trainer_id, trainer:profiles!reservations_trainer_id_fkey(full_name, avatar_path)),
        payments(id, amount, method, paid_at)`,
     )
@@ -289,6 +296,7 @@ async function fetchClientDetail(
       price: b.price,
       status: b.status,
       expiresAt: b.expires_at ?? null,
+      subscriptionId: b.subscription_id ?? null,
     })),
     reservations: row.reservations
       .slice()

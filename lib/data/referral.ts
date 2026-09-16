@@ -251,6 +251,46 @@ export async function applyReferralRewardIfPending(
   return (data?.length ?? 0) > 0;
 }
 
+/**
+ * Torna al client la recompensa que es va gastar en un bo, quan aquell bo
+ * s'anul·la. Torna quantes n'ha alliberat.
+ *
+ * El descompte de referit se'l va guanyar portant algú, i no el perd perquè
+ * després s'anul·li la compra on el va fer servir: si no es tornés, un bo
+ * anul·lat es quedaria el descompte i el client no tindria on reclamar-lo.
+ *
+ * Es filtra per `status = 'used'` i no només pel bo: una recompensa 'expired'
+ * no ha de ressuscitar perquè algú anul·li un bo vell, i repetir l'operació no
+ * ha de fer res la segona vegada. Per això és idempotent per construcció —en
+ * alliberar-la deixa de complir el filtre.
+ */
+export async function releaseReferralRewardOfBono(
+  bonoId: string,
+): Promise<number> {
+  if (USE_MOCK) {
+    const { getStore, saveStore } = await import("@/lib/mock/store");
+    const store = getStore();
+    const afectades = store.referral_rewards.filter(
+      (r) => r.used_in_bono_id === bonoId && r.status === "used",
+    );
+    for (const r of afectades) {
+      r.status = "pending";
+      r.used_in_bono_id = null;
+    }
+    if (afectades.length > 0) saveStore(store);
+    return afectades.length;
+  }
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("referral_rewards")
+    .update({ status: "pending", used_in_bono_id: null })
+    .eq("used_in_bono_id", bonoId)
+    .eq("status", "used")
+    .select("id");
+  return data?.length ?? 0;
+}
+
 export async function getReferralStats(profileId: string): Promise<{
   code: string | null;
   referredCount: number;

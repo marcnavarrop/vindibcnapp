@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
-import { getClient } from "@/lib/data/clients";
-import { createBono, markBonoPaid, getBonoClientId } from "@/lib/data/bonos";
+import { createBono, markBonoPaid, getBonoClientId, cancelBono } from "@/lib/data/bonos";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType } from "@/types/database";
 
@@ -46,13 +45,16 @@ export async function createTrainerBonoAction(
 }
 
 /**
- * El professional marca com pagat un bo d'un client SEU.
+ * El professional marca com pagat un bo de QUALSEVOL client.
  *
- * La comprovació es fa aquí i la RLS la torna a fer a la base. No és
- * redundància inútil: la política és el que de debò impedeix tocar el bo d'un
- * altre, però si l'única barrera fos aquella, forçar l'acció amb un id aliè
- * acabaria en un error de base de dades opac. Comprovant-ho abans, qui ho
- * intenti rep un "No autoritzat" i el bo no s'arriba ni a llegir.
+ * Fins a la 0085 només podia cobrar els dels seus assignats. Qui té la persona
+ * al davant amb els diners a la mà no sempre és qui la té assignada —es
+ * cobreixen baixes, es reparteixen hores—, i el criteri de la casa ja era que
+ * es veu tot el centre per coordinar-se. Cobrar passa al costat de veure.
+ *
+ * El que segueix igual: crear un bo o gestionar la resta de la fitxa continua
+ * essent només per als clients propis. Això ho amplia la política
+ * `bonos_trainer_collect_any`, que fixa d'on pot venir el bo i on ha d'acabar.
  */
 export async function markTrainerBonoPaidAction(
   formData: FormData,
@@ -63,14 +65,38 @@ export async function markTrainerBonoPaidAction(
   const bonoId = String(formData.get("bonoId") ?? "");
   if (!bonoId) return;
 
-  // De quin client és aquest bo, i és un dels meus?
+  // El client ja no decideix si es pot cobrar, però sí quina fitxa s'ha de
+  // refrescar: el bo cobrat hi surt amb l'estat nou.
   const clientId = await getBonoClientId(bonoId);
-  if (!clientId) return;
-  const client = await getClient(clientId);
-  if (!client || client.assignedTrainerId !== viewer.id) return;
 
   await markBonoPaid(bonoId);
 
-  revalidatePath(`/trainer/clients/${clientId}`);
+  if (clientId) revalidatePath(`/trainer/clients/${clientId}`);
+  revalidatePath("/trainer/bonos");
+}
+
+/**
+ * El professional anul·la un bo PENDENT de pagament.
+ *
+ * `isAdmin: false` no és una formalitat: és el que fa que un bo ja cobrat
+ * reboti aquí. Anul·lar-ne un d'actiu vol dir deixar diners cobrats al llibre
+ * sense res que ho compensi —a `payments` no hi ha manera d'anotar una
+ * devolució—, i això és de l'administració. La regla sencera viu a
+ * `cancelBlockFor` i la torna a comprovar la RLS de la 0085.
+ */
+export async function cancelTrainerBonoAction(
+  formData: FormData,
+): Promise<void> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return;
+
+  const bonoId = String(formData.get("bonoId") ?? "");
+  if (!bonoId) return;
+
+  const clientId = await getBonoClientId(bonoId);
+
+  await cancelBono(bonoId, { isAdmin: false });
+
+  if (clientId) revalidatePath(`/trainer/clients/${clientId}`);
   revalidatePath("/trainer/bonos");
 }

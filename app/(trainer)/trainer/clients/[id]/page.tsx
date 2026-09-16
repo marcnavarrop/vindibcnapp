@@ -23,8 +23,13 @@ import {
   assignExerciseTrainerAction,
   removeExerciseTrainerAction,
 } from "@/app/(trainer)/trainer/clients/exercises-actions";
-import { markTrainerBonoPaidAction } from "@/app/(trainer)/trainer/bonos/actions";
+import {
+  markTrainerBonoPaidAction,
+  cancelTrainerBonoAction,
+} from "@/app/(trainer)/trainer/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
+import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { cancelBlockFor } from "@/lib/bono-rules";
 import { toggleClientTagAction } from "@/app/(admin)/admin/etiquetes/actions";
 import { centerToday } from "@/lib/center-time";
 import {
@@ -36,6 +41,7 @@ import {
   formatDate,
 } from "@/lib/labels";
 import { TAP } from "@/lib/utils";
+import type { BonoStatus } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +81,26 @@ export default async function TrainerClientDetailPage({
     client.bonos.some((b) => b.serviceType === "fisioterapia") ||
     client.reservations.some((r) => r.serviceType === "fisioterapia");
   const needsHealthConsent = receivesFisio && !consent.healthDataAt;
+
+  // Les dues accions sobre un bo, amb la mateixa regla que les taules. Cap de
+  // les dues mira `canManage`: vegeu el comentari de la pestanya Bons.
+  const canCollect = (b: { status: string }) =>
+    b.status === "pending_payment" || b.status === "unpaid";
+  const canCancelBono = (b: {
+    status: BonoStatus;
+    remainingSessions: number;
+    totalSessions: number;
+    subscriptionId: string | null;
+  }) =>
+    cancelBlockFor(
+      {
+        status: b.status,
+        remainingSessions: b.remainingSessions,
+        totalSessions: b.totalSessions,
+        subscriptionId: b.subscriptionId,
+      },
+      false,
+    ) === null;
 
   const redirectPath = `/trainer/clients/${id}`;
   const assignedTagIds = new Set(clientTags.map((t) => t.id));
@@ -158,27 +184,24 @@ export default async function TrainerClientDetailPage({
                   {BONO_STATUS_LABELS[b.status]}
                 </Badge>
                 {/*
-                  Només per als clients propis: `canManage` és la mateixa
-                  condició que deixa afegir-los un bo, i la RLS de la 0056 la
-                  torna a comprovar a la base.
+                  CAP DELS DOS BOTONS VA LLIGAT A `canManage`, i és a posta.
 
-                  El botó és el mateix component que fa servir la taula de
-                  l'administració, amb el seu diàleg de confirmació: cobrar
-                  activa el bo, anota el pagament i pot reprendre una
-                  subscripció, i res d'això es desfà des d'aquí. Sense nom de
-                  client a posta: som dins de la seva fitxa.
+                  Des de la 0085, cobrar un bo no depèn de qui tingui el client
+                  assignat: qui el té al davant amb els diners a la mà no sempre
+                  és qui el té assignat. Anul·lar tampoc, però sí que té sostre
+                  —un bo ja cobrat és de l'admin—, i això ho decideix
+                  `cancelBlockFor`, no aquesta fitxa.
 
-                  Els DECAIGUTS també, i no hi eren. `markBonoPaid` fa temps
-                  que els accepta i la taula de l'admin ja els oferia, però
-                  aquí la condició s'havia quedat només amb els pendents: un
-                  professional amb el client al davant i els diners a la mà no
-                  tenia cap pantalla on anotar-ho, i havia d'anar a buscar
-                  l'admin. El `expired` va lligat: sense ell el diàleg
-                  prometria recuperar un bo que ja ha passat de data.
+                  El que segueix lligat a `canManage` és la resta: afegir un bo,
+                  crear reserves, assignar exercicis i posar etiquetes.
+
+                  Són els mateixos components que fa servir la taula de
+                  l'administració, amb els seus diàlegs. Sense nom de client a
+                  posta: som dins de la seva fitxa.
                 */}
-                {canManage &&
-                  (b.status === "pending_payment" || b.status === "unpaid") && (
-                    <span className="ml-auto">
+                {(canCollect(b) || canCancelBono(b)) && (
+                  <span className="ml-auto flex items-center gap-2">
+                    {canCollect(b) && (
                       <MarkBonoPaidButton
                         action={markTrainerBonoPaidAction}
                         bonoId={b.id}
@@ -189,8 +212,19 @@ export default async function TrainerClientDetailPage({
                         status={b.status}
                         expired={!!b.expiresAt && b.expiresAt < today}
                       />
-                    </span>
-                  )}
+                    )}
+                    {canCancelBono(b) && (
+                      <CancelBonoButton
+                        action={cancelTrainerBonoAction}
+                        bonoId={b.id}
+                        serviceType={b.serviceType}
+                        price={b.price}
+                        totalSessions={b.totalSessions}
+                        status={b.status}
+                      />
+                    )}
+                  </span>
+                )}
               </Row>
             ))
           )}
@@ -322,17 +356,35 @@ export default async function TrainerClientDetailPage({
           </p>
           {clientTags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
+              {/*
+                L'únic Badge amb text que no controlem: el nom de l'etiqueta
+                l'escriu l'admin i no té sostre. Amb el `whitespace-nowrap` de
+                la base, un nom llarg se'n sortiria d'aquesta fila en comptes de
+                partir-se, així que aquí es talla amb punts suspensius i el nom
+                sencer queda al `title`.
+              */}
               {clientTags.map((t) => (
-                <Badge key={t.id} tone="info">
+                <Badge
+                  key={t.id}
+                  tone="info"
+                  className="max-w-full truncate"
+                  title={t.name}
+                >
                   {t.name}
                 </Badge>
               ))}
             </div>
           )}
         </div>
+        {/*
+          Ja no diu "Només lectura", perquè deixaria de ser veritat: des de la
+          0085 aquesta fitxa té botons que funcionen —cobrar-li un bo, i
+          anul·lar-n'hi un de pendent— encara que el client no sigui seu. Un
+          segell que contradiu els botons que té a sota fa dubtar de tots dos.
+        */}
         {!canManage && (
-          <span className="rounded-full bg-brand-muted/10 px-3 py-1 text-xs font-bold tracking-wide text-brand-muted uppercase">
-            Només lectura
+          <span className="rounded-full bg-brand-muted/10 px-3 py-1 text-center text-xs font-bold tracking-wide text-brand-muted uppercase">
+            Només consulta · pots cobrar-li bons
           </span>
         )}
       </div>

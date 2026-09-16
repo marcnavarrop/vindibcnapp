@@ -80,7 +80,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Quan obris la fitxa d'un client que no és teu, hi veuràs una marca «Només lectura» a dalt a la dreta i els botons d'acció no hi seran. No és una decisió de la pantalla: la base de dades comprova el mateix, així que encara que el botó sortís, el desat fallaria.",
+          text: "Quan obris la fitxa d'un client que no és teu, hi veuràs una marca «Només consulta · pots cobrar-li bons» a dalt a la dreta, i els botons de gestió no hi seran. Diu això i no «Només lectura» perquè hi ha una excepció, i és la del capítol de Bons: cobrar-li un bo pendent sí que ho pots fer, sigui de qui sigui. La resta, no. No és una decisió de la pantalla: la base de dades comprova el mateix, així que encara que el botó sortís, el desat fallaria.",
         },
         { t: "h", text: "El que no pots canviar tu" },
         {
@@ -565,7 +565,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Aquesta pantalla és una vista de tots els bons del centre, amb el client, el servei, les sessions consumides sobre el total, el preu, la data de caducitat i l'estat. Des d'aquí pots cobrar els bons dels teus clients assignats; els de la resta els veus per coordinar-te, però no els pots tocar.",
+          text: "Aquesta pantalla és una vista de tots els bons del centre, amb el client, el servei, les sessions consumides sobre el total, el preu, la data de caducitat i l'estat. Des d'aquí pots cobrar QUALSEVOL bo del centre, també el d'un client que no és teu: qui el té al davant amb els diners a la mà no sempre és qui el té assignat.",
         },
         { t: "h", text: "Els dos filtres" },
         {
@@ -575,7 +575,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Cobrar un bo" },
         {
           t: "p",
-          text: "El botó «Marcar com pagat» surt a les files dels teus clients que estiguin pendents de cobrament o decaigudes. A les files d'un company no hi surt res: consultar-les sí, cobrar-les no. No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
+          text: "El botó «Marcar com pagat» surt a totes les files pendents de cobrament o decaigudes, siguin del client que siguin. El que NO s'ha obert és la resta: crear un bo, crear reserves, assignar exercicis o posar etiquetes segueix essent només per als teus clients assignats. No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
         },
         {
           t: "p",
@@ -583,7 +583,20 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons, i només per als clients que tens assignats. Allà mateix hi tens el mateix botó de cobrament, amb el mateix quadre de confirmació.",
+          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons, i això sí que és només per als clients que tens assignats. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
+        },
+        { t: "h", text: "Anul·lar un bo" },
+        {
+          t: "p",
+          text: "Al costat de «Marcar com pagat» hi ha «Anul·lar», i surt molt menys sovint. Només es pot anul·lar un bo que estigui PENDENT DE PAGAMENT i que no tingui cap sessió gastada. Com que reservar descompta la sessió a l'instant, un bo intacte és també un bo sense cap reserva viva: anul·lar no pot ser la drecera per esborrar feina ja feta.",
+        },
+        {
+          t: "p",
+          text: "Un bo que JA ESTÀ COBRAT no el pots anul·lar tu, encara que estigui intacte: els diners ja són al llibre i a l'app no hi ha manera d'anotar una devolució. Això és de l'administració. Tampoc es pot anul·lar el bo d'una subscripció: per aturar-la cal donar-la de baixa des de la subscripció, o el mes que ve en naixeria un altre.",
+        },
+        {
+          t: "note",
+          text: "Si en comprar el bo el client va gastar un descompte de referit, anul·lar-lo li torna el descompte: se'l va guanyar portant algú i no el perd perquè després s'anul·li la compra on el va fer servir.",
         },
         { t: "h", text: "Els estats" },
         {
@@ -608,6 +621,10 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
             [
               "Caducat",
               "Va arribar a la seva data amb sessions sense fer. No es pot cobrar ni reactivar.",
+            ],
+            [
+              "Cancel·lat",
+              "Algú el va anul·lar abans que es gastés cap sessió. No es pot recuperar: si el client el vol, cal vendre-li'n un de nou.",
             ],
           ],
         },

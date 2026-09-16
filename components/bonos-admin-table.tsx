@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
-import { markBonoPaidAction } from "@/app/(admin)/admin/bonos/actions";
+import { markBonoPaidAction, cancelBonoAction } from "@/app/(admin)/admin/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
+import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { cancelBlockFor } from "@/lib/bono-rules";
 import type { BonoListItem } from "@/lib/data/bonos";
 import type { BonoStatus } from "@/types/database";
 
@@ -121,29 +123,58 @@ export function BonosAdminTable({
                     {BONO_STATUS_LABELS[b.status]}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3">
                   {/*
+                    Botons en línia i no un menú de tres punts: hi ha com a
+                    molt dues accions i gairebé mai totes dues, i amagar una
+                    sola opció darrere d'un desplegable són més clics, no
+                    menys.
+
                     Un bo decaigut també es pot cobrar: fins ara el client es
                     plantava al centre amb els diners i no hi havia on
                     anotar-los. Els tres casos (pendent, decaigut recuperable i
-                    decaigut passat de data) els distingeix el botó, que ara
-                    demana confirmació abans de cobrar; el que abans era un
-                    `title` que només veia qui hi passava el ratolí, ara és la
-                    descripció del diàleg.
+                    decaigut passat de data) els distingeix el botó, que demana
+                    confirmació abans de cobrar.
                   */}
-                  {(b.status === "pending_payment" || b.status === "unpaid") && (
-                    <MarkBonoPaidButton
-                      action={markBonoPaidAction}
-                      bonoId={b.id}
-                      clientName={b.clientName}
-                      serviceType={b.serviceType}
-                      price={b.price}
-                      remainingSessions={b.remainingSessions}
-                      totalSessions={b.totalSessions}
-                      status={b.status}
-                      expired={!!b.expiresAt && b.expiresAt < today}
-                    />
-                  )}
+                  <div className="flex justify-end gap-2">
+                    {(b.status === "pending_payment" || b.status === "unpaid") && (
+                      <MarkBonoPaidButton
+                        action={markBonoPaidAction}
+                        bonoId={b.id}
+                        clientName={b.clientName}
+                        serviceType={b.serviceType}
+                        price={b.price}
+                        remainingSessions={b.remainingSessions}
+                        totalSessions={b.totalSessions}
+                        status={b.status}
+                        expired={!!b.expiresAt && b.expiresAt < today}
+                      />
+                    )}
+                    {/*
+                      `isAdmin: true`: aquesta taula és la de l'administració, i
+                      és l'única que pot anul·lar un bo ja cobrat. La regla
+                      sencera la decideix `cancelBlockFor`, no aquesta fila.
+                    */}
+                    {cancelBlockFor(
+                      {
+                        status: b.status,
+                        remainingSessions: b.remainingSessions,
+                        totalSessions: b.totalSessions,
+                        subscriptionId: b.subscriptionId,
+                      },
+                      true,
+                    ) === null && (
+                      <CancelBonoButton
+                        action={cancelBonoAction}
+                        bonoId={b.id}
+                        clientName={b.clientName}
+                        serviceType={b.serviceType}
+                        price={b.price}
+                        totalSessions={b.totalSessions}
+                        status={b.status}
+                      />
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

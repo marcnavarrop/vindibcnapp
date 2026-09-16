@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createBono, markBonoPaid } from "@/lib/data/bonos";
+import { createBono, markBonoPaid, cancelBono } from "@/lib/data/bonos";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType, PaymentMethod } from "@/types/database";
 
@@ -42,6 +42,23 @@ export async function markBonoPaidAction(formData: FormData) {
   const bonoId = String(formData.get("bonoId") ?? "");
   if (!bonoId) return;
   await markBonoPaid(bonoId);
+  revalidatePath("/admin/bonos");
+  revalidatePath("/admin/pagos");
+}
+
+/**
+ * L'admin anul·la un bo. `isAdmin: true` és el que li deixa anul·lar també els
+ * ja cobrats, que al professional li reboten: deixar diners al llibre sense res
+ * que ho compensi és una esmena comptable i és seva.
+ *
+ * El cobrament NO es toca. La devolució, si n'hi ha d'haver, es fa fora de
+ * l'app: `payments.amount` té un CHECK (amount >= 0) i esborrar la fila
+ * trencaria l'històric que la 0016 va decidir conservar.
+ */
+export async function cancelBonoAction(formData: FormData) {
+  const bonoId = String(formData.get("bonoId") ?? "");
+  if (!bonoId) return;
+  await cancelBono(bonoId, { isAdmin: true });
   revalidatePath("/admin/bonos");
   revalidatePath("/admin/pagos");
 }

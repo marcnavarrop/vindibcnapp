@@ -254,7 +254,12 @@
     </ul>
     <div class="warn"><strong>Mentre un professional no tingui cap franja, ningú no li pot reservar res.</strong> És la causa número u de "no em deixa reservar amb ella".</div>
 
-    <h3>1.8 Bons i pagaments → Bons</h3>
+    <h3>1.8 Bons i pagaments → Bons <span class="flag">Nou: anul·lar</span></h3>
+    <ul class="checklist">
+      <li>Botó <strong>"Anul·lar"</strong> a les files que s'hi poden anul·lar. L'admin, a diferència del professional, <strong>sí que pot anul·lar un bo ja cobrat</strong> si està intacte — el quadre avisa que el cobrament segueix al llibre i que la devolució es fa fora de l'app</li>
+      <li>Segueix sense sortir a: bons amb sessions gastades, bons de subscripció, i els estats que no són "actiu" ni "pendent"</li>
+      <li>Un bo anul·lat passa a <strong>"Cancel·lat"</strong> en vermell i es queda sense cap botó</li>
+    </ul>
     <ul class="checklist">
       <li>Un bo "Pendent de pagament" (comprat amb "Pagar al centre") <strong>ja es pot fer servir per reservar a l'instant</strong></li>
       <li><strong>"Marcar com pagat" ja no és un sol clic</strong>: obre un diàleg amb client, servei, sessions i import, i avisa que un cop fet <strong>no es pot desfer des de cap pantalla</strong></li>
@@ -370,10 +375,14 @@
       <li>Filtres per estat a sota: Tots, Pendents de pagament, Decaiguts sense cobrar, Actius. El <strong>comptador taronja de pendents només compta els teus</strong> — comprova que no quadra amb el de l'admin si hi ha pendents d'un company</li>
       <li>Cercador per <strong>nom de client o servei</strong>; el recompte de la dreta segueix el filtre</li>
       <li>Columnes: Client, Servei, Sessions (amb "(N ja consumides)" als pendents), Preu, <strong>Caduca</strong> i Estat</li>
-      <li><strong>"Marcar com pagat" surt NOMÉS a les files dels teus clients.</strong> Posa't a "Tots", busca el bo pendent d'un company i comprova que la seva fila no porta botó</li>
+      <li><strong>"Marcar com pagat" ara surt a TOTES les files pendents</strong>, també a les d'un client d'un company. Posa't a "Tots", busca el bo pendent d'un altre professional i comprova que sí que el pots cobrar (era el contrari fins ara)</li>
+      <li><strong>"Anul·lar"</strong> al costat. Només surt si el bo està <strong>pendent de pagament</strong> i <strong>intacte</strong> (restants = totals). Comprova que NO surt a: un pendent amb sessions gastades, un bo ja actiu, i un bo de subscripció</li>
+      <li>El quadre d'anul·lació d'un pendent diu <strong>"Import (sense cobrar)"</strong>; el d'un de cobrat (només l'admin el veu) avisa que <strong>el cobrament segueix anotat</strong></li>
       <li>El diàleg de confirmació és el mateix que el de l'admin: client, servei, sessions i import abans de cobrar</li>
       <li><strong>Els bons es creen des de la fitxa del client</strong> → pestanya Bons, i només per als clients assignats</li>
       <li>A la fitxa, "Marcar com pagat" ara també surt als <strong>decaiguts</strong> (abans només als pendents). Un decaigut que ja ha passat de data diu <strong>"Només cobrar"</strong>; un que encara no, <strong>"Cobrar i recuperar"</strong></li>
+      <li>Obre la fitxa d'un client d'un company: el segell de dalt a la dreta ja no diu "Només lectura" sinó <strong>"Només consulta · pots cobrar-li bons"</strong>, i a la pestanya Bons hi ha els botons. "+ Afegir bo" segueix sense sortir-hi</li>
+      <li>Si el bo anul·lat portava un <strong>descompte de referit</strong>, comprova a Bons i pagaments → Referits que la recompensa torna a constar <strong>pendent</strong></li>
     </ul>
     <p class="note">Els decaiguts ("Anul·lat per impagament") només apareixen si l'admin té encès <em>Configuració → cancel·lar pendents de pagament</em>. Si està apagat, aquest filtre sortirà sempre buit i és correcte.</p>
 

@@ -4,34 +4,39 @@ import { useMemo, useState } from "react";
 import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
-import { markTrainerBonoPaidAction } from "@/app/(trainer)/trainer/bonos/actions";
+import {
+  markTrainerBonoPaidAction,
+  cancelTrainerBonoAction,
+} from "@/app/(trainer)/trainer/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
+import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { cancelBlockFor } from "@/lib/bono-rules";
 import type { BonoListItem } from "@/lib/data/bonos";
 import type { BonoStatus } from "@/types/database";
 
 /**
  * Els bons del centre, vistos pel professional.
  *
- * POR QUÉ NO ÉS LA TAULA DE L'ADMIN AMB UN INTERRUPTOR
+ * PER QUÈ NO ÉS LA TAULA DE L'ADMIN AMB UN INTERRUPTOR
  *
  * Són dues taules perquè responen dues preguntes diferents. L'admin veu el
- * centre sencer i pot cobrar-ho tot; el professional veu el centre sencer per
- * coordinar-se però només cobra els seus. Encabir les dues a un sol component
+ * centre sencer i pot anul·lar-ho tot, també el que ja s'ha cobrat; el
+ * professional veu el centre sencer, pot cobrar-hi qualsevol bo (0085) però
+ * només anul·lar els que ningú ha pagat. Encabir-les en un sol component
  * demanaria una bandera per cada diferència —el conmutador "Els meus", quines
- * files porten botó, el text de la capçalera— i el resultat seria pitjor de
- * llegir que les dues per separat.
+ * files porten quin botó, el text de la capçalera— i el resultat seria pitjor
+ * de llegir que les dues per separat.
  *
- * El que SÍ que es comparteix és el que havia d'estar compartit: el botó de
- * cobrar amb el seu diàleg (`MarkBonoPaidButton`), que ja feien servir la taula
- * de l'admin i la fitxa del client. El dia que canviï què fa `markBonoPaid`,
- * les tres pantalles ho diran igual.
+ * El que SÍ que es comparteix és el que havia d'estar compartit: els dos botons
+ * amb els seus diàlegs (`MarkBonoPaidButton`, `CancelBonoButton`) i la regla
+ * d'anul·lació (`cancelBlockFor`), que també fa servir el servidor. El dia que
+ * canviï què fan, les tres pantalles ho diran igual.
  *
  * ELS DOS FILTRES SÓN DE LA CASA
  *
  * El conmutador "Els meus / Tots" és el mateix de `TrainerClientsTable` i el
  * filtre per estat és el de `BonosAdminTable`. Es comença per "Els meus"
- * perquè és des d'on es pot fer alguna cosa: la vista de tot el centre és per
- * consultar, i qui la vulgui la té a un clic.
+ * perquè és la feina pròpia; el centre sencer és a un clic.
  */
 
 const STATUS_TONE: Record<
@@ -63,7 +68,11 @@ export function TrainerBonosTable({
   today,
 }: {
   bonos: BonoListItem[];
-  /** Els clients assignats a qui mira. Decideix quines files porten botó. */
+  /**
+   * Els clients assignats a qui mira. Des de la 0085 NO decideix cap permís
+   * —cobrar i anul·lar ja no depenen de l'assignació—: només alimenta el
+   * conmutador "Els meus / Tots", que és una comoditat de lectura.
+   */
   myClientIds: string[];
   /** Dia del CENTRE. Ve del servidor: el navegador pot anar en una altra zona. */
   today: string;
@@ -74,16 +83,36 @@ export function TrainerBonosTable({
 
   const mine = useMemo(() => new Set(myClientIds), [myClientIds]);
 
-  /** Un bo és gestionable si el seu client és meu. La RLS ho torna a mirar. */
+  /**
+   * Cobrar ja no depèn de qui tingui el client assignat (0085): qui té la
+   * persona al davant amb els diners no sempre és qui la té assignada. La RLS
+   * ho torna a mirar amb `bonos_trainer_collect_any`.
+   */
   const canCollect = (b: BonoListItem) =>
-    mine.has(b.clientId) &&
-    (b.status === "pending_payment" || b.status === "unpaid");
+    b.status === "pending_payment" || b.status === "unpaid";
 
-  // El comptador del filtre només compta el que jo puc cobrar: si digués 5 amb
-  // 3 botons a la taula, el número estaria reclamant una feina que no és meva.
+  /**
+   * Anul·lar sí que té sostre: `false` és l'`isAdmin`. Un bo ja cobrat li
+   * reboteja al professional —deixar diners al llibre sense res que ho
+   * compensi és una esmena comptable—, i la regla sencera viu a
+   * `cancelBlockFor`, compartida amb el servidor.
+   */
+  const canCancel = (b: BonoListItem) =>
+    cancelBlockFor(
+      {
+        status: b.status,
+        remainingSessions: b.remainingSessions,
+        totalSessions: b.totalSessions,
+        subscriptionId: b.subscriptionId,
+      },
+      false,
+    ) === null;
+
+  // Ara que es pot cobrar qualsevol bo, el comptador els compta tots: el número
+  // i els botons de la taula tornen a dir el mateix.
   const pendingCount = useMemo(
-    () => bonos.filter((b) => b.status === "pending_payment" && mine.has(b.clientId)).length,
-    [bonos, mine],
+    () => bonos.filter((b) => b.status === "pending_payment").length,
+    [bonos],
   );
 
   const filtered = useMemo(() => {
@@ -200,32 +229,42 @@ export function TrainerBonosTable({
                     {BONO_STATUS_LABELS[b.status]}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3">
                   {/*
-                    El botó només surt als bons dels clients propis. Veure el
-                    bo d'un company és per coordinar-se —la 0005 obre el SELECT
-                    a qualsevol professional a posta—, però cobrar-lo no: la
-                    `bonos_trainer_write` ho comprova a la base amb
-                    `is_trainer_of`, i l'acció de servidor ho torna a mirar
-                    abans de llegir res.
+                    Botons en línia i no un menú de tres punts: hi ha com a molt
+                    dues accions i gairebé mai totes dues. Amagar una sola opció
+                    darrere d'un desplegable són més clics, no menys —i un
+                    desplegable dins d'un `overflow-x-auto` s'hi retalla.
 
-                    A les files alienes es deixa el buit i prou. Un botó apagat
-                    convidaria a insistir-hi, i el motiu —"aquest client no és
-                    teu"— ja el diu la columna Client.
+                    A les files sense cap acció es deixa el buit i prou. Un botó
+                    apagat convidaria a insistir-hi.
                   */}
-                  {canCollect(b) && (
-                    <MarkBonoPaidButton
-                      action={markTrainerBonoPaidAction}
-                      bonoId={b.id}
-                      clientName={b.clientName}
-                      serviceType={b.serviceType}
-                      price={b.price}
-                      remainingSessions={b.remainingSessions}
-                      totalSessions={b.totalSessions}
-                      status={b.status}
-                      expired={!!b.expiresAt && b.expiresAt < today}
-                    />
-                  )}
+                  <div className="flex justify-end gap-2">
+                    {canCollect(b) && (
+                      <MarkBonoPaidButton
+                        action={markTrainerBonoPaidAction}
+                        bonoId={b.id}
+                        clientName={b.clientName}
+                        serviceType={b.serviceType}
+                        price={b.price}
+                        remainingSessions={b.remainingSessions}
+                        totalSessions={b.totalSessions}
+                        status={b.status}
+                        expired={!!b.expiresAt && b.expiresAt < today}
+                      />
+                    )}
+                    {canCancel(b) && (
+                      <CancelBonoButton
+                        action={cancelTrainerBonoAction}
+                        bonoId={b.id}
+                        clientName={b.clientName}
+                        serviceType={b.serviceType}
+                        price={b.price}
+                        totalSessions={b.totalSessions}
+                        status={b.status}
+                      />
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
