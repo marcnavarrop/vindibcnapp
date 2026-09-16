@@ -150,7 +150,7 @@ export function BonosAdminTable({
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
                   Sense bons en aquest filtre.
