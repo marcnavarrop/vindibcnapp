@@ -224,3 +224,40 @@ export async function setSupportTicketStatus(
   // "fet!" que no ha passat.
   if (count === 0) throw new Error("No tens permís per canviar aquest tiquet.");
 }
+
+/**
+ * Quants tiquets hi ha OBERTS, per a la piloteta del botó flotant.
+ *
+ * Compta només `open`, no `open + in_progress`, encara que la safata de
+ * l'admin s'obri filtrada per totes dues. Són dues preguntes diferents: la
+ * piloteta avisa del que encara no ha mirat ningú —és el que justifica
+ * interrompre—, i la pantalla mostra tot el que queda per tancar. Si comptés
+ * també les que ja s'estan resolent, el botó duria un número permanent que
+ * s'aprendria a ignorar.
+ *
+ * Va per compte del servidor i no comptant la llista: en real és un `head`
+ * sense files, i així la piloteta no arrossega les descripcions senceres de
+ * tots els tiquets per ensenyar un número.
+ */
+export async function countOpenSupportTickets(): Promise<number> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const { getViewer } = await import("@/lib/auth");
+    const viewer = await getViewer();
+    return store.support_tickets.filter(
+      (t) =>
+        t.status === "open" &&
+        (viewer?.role === "admin" || t.created_by === (viewer?.id ?? "")),
+    ).length;
+  }
+
+  const supabase = await createClient();
+  // Client de SESSIÓ: la RLS és qui decideix què entra al compte, igual que al
+  // llistat. Amb el de servei, un professional veuria el comptador de tothom.
+  const { count, error } = await supabase
+    .from("support_tickets")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "open");
+  if (error) throw error;
+  return count ?? 0;
+}

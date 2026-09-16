@@ -56,7 +56,14 @@ export async function AppShell({
           El client NO el veu: el suport és un canal de l'equip cap a qui
           desenvolupa, i la RLS ni tan sols el deixaria obrir cap tiquet. */}
       {role !== "client" && (
-        <SupportFab basePath={`/${role}/suport`} />
+        <SupportFab
+          basePath={`/${role}/suport`}
+          // La piloteta amb els tiquets oberts, només per a l'admin: és qui
+          // els resol. Al professional li diria quants dels seus segueixen
+          // oberts, que és una espera i no una feina seva, i no la podria fer
+          // baixar.
+          showOpenCount={role === "admin"}
+        />
       )}
     </div>
   );

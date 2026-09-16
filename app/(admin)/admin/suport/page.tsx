@@ -18,10 +18,14 @@ export default async function AdminSuportPage() {
         l&apos;equip i pots canviar-ne l&apos;estat.
       </p>
 
+      {/* S'obre pels PENDENTS —oberts i en curs—: aquesta pantalla és una
+          safata de feina, i encapçalada pel que ja està resolt no diria el
+          que ha de dir. L'historial sencer és a un clic, al filtre. */}
       <SupportPanel
         tickets={tickets}
         createAction={createTicketAdminAction}
         setStatusAction={setTicketStatusAction}
+        defaultStatus="pending"
       />
     </main>
   );

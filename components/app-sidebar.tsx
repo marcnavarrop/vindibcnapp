@@ -17,6 +17,7 @@ import {
   Package,
   Receipt,
   CircleHelp,
+  LifeBuoy,
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
@@ -54,6 +55,7 @@ const NAV_ICONS: Record<NavIcon, LucideIcon> = {
   catalog: Package,
   billing: Receipt,
   help: CircleHelp,
+  lifebuoy: LifeBuoy,
 };
 
 /**

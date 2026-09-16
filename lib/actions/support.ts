@@ -1,7 +1,10 @@
 "use server";
 
 import { getViewer } from "@/lib/auth";
-import { listMyRecentTickets } from "@/lib/data/support";
+import {
+  countOpenSupportTickets,
+  listMyRecentTickets,
+} from "@/lib/data/support";
 import {
   createTicketCore,
   type SupportFormState,
@@ -45,5 +48,29 @@ export async function listMyRecentTicketsAction(): Promise<SupportTicket[]> {
     return await listMyRecentTickets(viewer.id, 5);
   } catch {
     return [];
+  }
+}
+
+/**
+ * El nombre de tiquets oberts per a la piloteta del botó flotant.
+ *
+ * Només per a l'admin: és ell qui els resol. Al professional la piloteta li
+ * diria quants tiquets seus segueixen oberts, que no és una feina pendent
+ * sinó una espera, i el convertiria en un avís que no pot fer baixar.
+ *
+ * Es demana des del client en muntar-se el botó i no al marc de servidor a
+ * posta: si anés a l'`AppShell`, TOTES les pàgines d'admin esperarien aquest
+ * compte abans de pintar-se. Així la pàgina surt igual de ràpida que abans i
+ * la piloteta apareix un instant després.
+ */
+export async function openTicketCountAction(): Promise<number> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "admin") return 0;
+  try {
+    return await countOpenSupportTickets();
+  } catch {
+    // Mai ha de tombar el marc comú: sense compte, simplement no hi ha
+    // piloteta.
+    return 0;
   }
 }

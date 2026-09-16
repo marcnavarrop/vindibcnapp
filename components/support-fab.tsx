@@ -14,7 +14,9 @@ import {
 import {
   createTicketFromWidgetAction,
   listMyRecentTicketsAction,
+  openTicketCountAction,
 } from "@/lib/actions/support";
+import { SUPPORT_CHANGED, type SupportChangedDetail } from "@/lib/support-events";
 import type { SupportTicket } from "@/lib/data/support";
 import type { SupportStatus } from "@/types/database";
 
@@ -111,15 +113,56 @@ function QuickTicketForm({ onCreated }: { onCreated: () => void }) {
  * amb el marc, cada pantalla de l'app pagaria una consulta que gairebé mai es
  * mira.
  */
-export function SupportFab({ basePath }: { basePath: string }) {
+export function SupportFab({
+  basePath,
+  /**
+   * Si el botó ha de dur la piloteta amb els tiquets oberts. Només l'admin:
+   * és qui els resol. Vegeu `openTicketCountAction`.
+   */
+  showOpenCount = false,
+}: {
+  basePath: string;
+  showOpenCount?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [tickets, setTickets] = useState<SupportTicket[] | null>(null);
   /** Puja a cada obertura; reinicia el formulari via `key`. */
   const [openCount, setOpenCount] = useState(0);
+  /** Tiquets oberts de tot l'equip. `null` mentre no se sap. */
+  const [pending, setPending] = useState<number | null>(null);
+
+  const loadPending = useCallback(() => {
+    if (!showOpenCount) return;
+    openTicketCountAction().then(setPending, () => setPending(null));
+  }, [showOpenCount]);
 
   const load = useCallback(() => {
     listMyRecentTicketsAction().then(setTickets, () => setTickets([]));
-  }, []);
+    // El compte es refresca amb la llista: obrir un tiquet des d'aquí en suma
+    // un, i la piloteta ha de dir-ho sense recarregar la pàgina.
+    loadPending();
+  }, [loadPending]);
+
+  // La piloteta es demana en muntar-se el botó, que viu al marc comú: així ja
+  // hi és abans de tocar res. És una consulta de compte, sense files.
+  useEffect(() => {
+    loadPending();
+  }, [loadPending]);
+
+  // I el número el corregeix la safata quan canvia alguna cosa: resoldre un
+  // tiquet des de `/admin/suport` refresca la PÀGINA, però no el marc on viu
+  // aquest botó, i sense això es quedava reclamant una feina ja feta fins que
+  // algú recarregués. L'avís ja porta el compte, així que no cal tornar a
+  // preguntar-ho al servidor.
+  useEffect(() => {
+    if (!showOpenCount) return;
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent<SupportChangedDetail>).detail;
+      if (typeof detail?.open === "number") setPending(detail.open);
+    };
+    window.addEventListener(SUPPORT_CHANGED, onChange);
+    return () => window.removeEventListener(SUPPORT_CHANGED, onChange);
+  }, [showOpenCount]);
 
   // En obrir, la llista es torna a demanar (i el formulari la refresca ell
   // mateix quan en crea un).
@@ -137,6 +180,9 @@ export function SupportFab({ basePath }: { basePath: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  /** El número de la piloteta, o `null` si no n'hi ha d'haver cap. */
+  const badge = showOpenCount && pending !== null && pending > 0 ? pending : null;
+
   return (
     <>
       {/* ── Botó ──
@@ -151,10 +197,31 @@ export function SupportFab({ basePath }: { basePath: string }) {
           setOpenCount((n) => n + 1);
         }}
         aria-expanded={open}
-        aria-label={open ? "Tancar el suport" : "Obrir el suport"}
+        aria-label={
+          open
+            ? "Tancar el suport"
+            : badge
+              ? `Obrir el suport (${badge} ${badge === 1 ? "tiquet obert" : "tiquets oberts"})`
+              : "Obrir el suport"
+        }
         className={`fixed right-4 bottom-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand-purple text-white shadow-lg transition-colors hover:bg-brand-purple-light focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 sm:right-6 sm:bottom-6 active:opacity-70 ${TAP}`}
       >
         {open ? <CloseIcon /> : <LifebuoyIcon />}
+
+        {/* ── Piloteta ──
+            Amb el panell obert no hi és: allà sota ja es veu la llista, i un
+            número sobre la creu de tancar només faria soroll. El compte ja va
+            a l'`aria-label` del botó, així que aquí sobra per a qui escolta.
+            Va a fora del botó rodó (`-top-1 -right-1`) perquè la icona de
+            dins no li ha de deixar lloc. */}
+        {!open && badge !== null && (
+          <span
+            aria-hidden
+            className="absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-brand-bg bg-brand-orange px-1 text-[11px] font-bold text-white"
+          >
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
       </button>
 
       {open && (

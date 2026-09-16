@@ -100,11 +100,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Moure't per l'app" },
         {
           t: "p",
-          text: "El menú de l'esquerra té nou entrades. Cinc són grups —Persones, Reserves, Bons i pagaments, Catàleg i Facturació—: s'obren i mostren les seves pantalles, que després es repeteixen com a pestanyes a dalt de cada una. Les altres quatre són pantalles soltes: Inici, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt.",
+          text: `El menú de l'esquerra té ${s.modules.comunitat ? "onze" : "deu"} entrades. Cinc són grups —Persones, Reserves, Bons i pagaments, Catàleg i Facturació—: s'obren i mostren les seves pantalles, que després es repeteixen com a pestanyes a dalt de cada una. Les altres ${s.modules.comunitat ? "sis" : "cinc"} són pantalles soltes: Inici, Exercicis, ${s.modules.comunitat ? "Comunitat, " : ""}Configuració, Suport i Ajuda. En un mòbil el menú s'obre amb el botó de dalt.`,
         },
         {
           t: "p",
-          text: "A totes les pantalles hi ha, a més, el botó rodó de suport a baix a la dreta. No és al menú a posta: és el canal cap a qui desenvolupa l'app i s'explica al seu capítol.",
+          text: "A totes les pantalles hi ha, a més, el botó rodó de suport a baix a la dreta: obre un tiquet des d'on siguis, sense perdre el que estaves fent. És la drecera del mateix canal que hi ha al menú, a Suport, i s'explica al seu capítol.",
         },
         {
           t: "note",
@@ -1604,12 +1604,16 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "El botó rodó lila de baix a la dreta hi és a totes les pantalles de la teva àrea. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'equip ni amb els clients.",
+          text: "Dues portes al mateix canal: la pantalla Suport del menú, que és on es fa el seguiment, i el botó rodó lila de baix a la dreta, que hi és a totes les pantalles de la teva àrea per obrir un tiquet sense moure't d'on ets. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'equip ni amb els clients.",
+        },
+        {
+          t: "note",
+          text: "Si hi ha tiquets oberts, el botó rodó porta el número a sobre. Compta els que encara no ha mirat ningú, no els que ja s'estan resolent: per això baixa quan en mous un a «En curs». El professional no el veu —ell reporta, no resol—.",
         },
         { t: "h", text: "Obrir un tiquet" },
         {
           t: "p",
-          text: "El botó obre un panell amb un formulari curt: un títol d'una línia, una categoria i la descripció. Es tanca amb Escape o tocant fora. També hi ha la pantalla completa, amb el llistat sencer i un filtre per estat.",
+          text: "El botó obre un panell amb un formulari curt: un títol d'una línia, una categoria i la descripció. Es tanca amb Escape o tocant fora. El mateix formulari és a dalt de la pantalla Suport, amb «+ Nou tiquet».",
         },
         {
           t: "p",
@@ -1636,6 +1640,32 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         {
           t: "note",
           text: "Aquesta és una de les diferències amb l'àrea del professional: ell veu l'estat dels seus tiquets però no el pot canviar, i només veu els seus. Tu veus els de tot l'equip i en pots moure l'estat amb el desplegable de cada fila.",
+        },
+        { t: "h", text: "La pantalla de seguiment" },
+        {
+          t: "p",
+          text: "Suport, al menú. S'obre pels PENDENTS —els oberts i els que ja estan en curs—, que és el que et queda per tancar. L'historial sencer segueix a un clic: canvia el filtre d'estat a «Tots».",
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              "Les tres pastilles",
+              "Obert, En curs i Resolt amb quants n'hi ha de cada. Tocar-ne una filtra per aquell estat; tornar-la a tocar treu el filtre.",
+            ],
+            [
+              "Els dos desplegables",
+              "Estat i categoria, que es combinen. Els números de les pastilles ja compten només la categoria triada, així que diuen sempre quants en sortiran.",
+            ],
+            [
+              "Cada fila",
+              "Categoria, títol, qui l'ha obert i quan. Les descripcions llargues surten retallades a tres línies amb un «Veure més».",
+            ],
+          ],
+        },
+        {
+          t: "p",
+          text: "Quan un tiquet s'ha mogut alguna vegada, al costat de la data d'obertura hi surt «mogut el…». Serveix per veure d'una passada quant fa que una cosa està aturada en curs.",
         },
       ],
     },
