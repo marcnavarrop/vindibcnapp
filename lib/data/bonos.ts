@@ -87,6 +87,12 @@ export async function sweepExpiredBonos(): Promise<void> {
 
 export type BonoListItem = {
   id: string;
+  /**
+   * De quin client és. El nom no serveix per decidir res: la taula del
+   * professional ha de saber quins bons són dels SEUS clients per ensenyar-hi
+   * el botó de cobrar, i això es compara per id contra `listClients(trainerId)`.
+   */
+  clientId: string;
   clientName: string;
   serviceType: ServiceType;
   totalSessions: number;
@@ -110,6 +116,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
     const store = getStore();
     return store.bonos.map((b) => ({
       id: b.id,
+      clientId: b.client_id,
       clientName: clientName(b.client_id, store),
       serviceType: b.service_type,
       totalSessions: b.total_sessions,
@@ -125,7 +132,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
   const { data, error } = await supabase
     .from("bonos")
     .select(
-      `id, service_type, total_sessions, remaining_sessions, price, status, expires_at,
+      `id, client_id, service_type, total_sessions, remaining_sessions, price, status, expires_at,
        client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
     )
     .order("created_at", { ascending: false });
@@ -133,6 +140,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
 
   type Row = {
     id: string;
+    client_id: string;
     service_type: ServiceType;
     total_sessions: number;
     remaining_sessions: number;
@@ -143,6 +151,7 @@ export async function listBonos(): Promise<BonoListItem[]> {
   };
   return (data as unknown as Row[]).map((r) => ({
     id: r.id,
+    clientId: r.client_id,
     clientName: r.client?.profile?.full_name ?? "—",
     serviceType: r.service_type,
     totalSessions: r.total_sessions,

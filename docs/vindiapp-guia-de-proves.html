@@ -363,12 +363,19 @@
       <li>A la vista de llista, apartat <strong>"Passades"</strong>: hi escriu <strong>la nota de la sessió</strong> (secció 12)</li>
     </ul>
 
-    <h3>3.4 Bons <span class="flag">Nou: ven i cobra</span></h3>
+    <h3>3.4 Bons <span class="flag">Nou: filtra i cobra</span></h3>
     <ul class="checklist">
-      <li>La pantalla "Bons" del menú és <strong>només de consulta</strong>: tots els bons del centre, sense cap botó</li>
+      <li>La pantalla "Bons" del menú <strong>ja no és només de consulta</strong>: segueix ensenyant tots els bons del centre, però ara s'hi pot filtrar i cobrar</li>
+      <li>Conmutador <strong>"Els meus / Tots"</strong> a dalt, igual que a la llista de Clients. <strong>Arrenca a "Els meus"</strong></li>
+      <li>Filtres per estat a sota: Tots, Pendents de pagament, Decaiguts sense cobrar, Actius. El <strong>comptador taronja de pendents només compta els teus</strong> — comprova que no quadra amb el de l'admin si hi ha pendents d'un company</li>
+      <li>Cercador per <strong>nom de client o servei</strong>; el recompte de la dreta segueix el filtre</li>
+      <li>Columnes: Client, Servei, Sessions (amb "(N ja consumides)" als pendents), Preu, <strong>Caduca</strong> i Estat</li>
+      <li><strong>"Marcar com pagat" surt NOMÉS a les files dels teus clients.</strong> Posa't a "Tots", busca el bo pendent d'un company i comprova que la seva fila no porta botó</li>
+      <li>El diàleg de confirmació és el mateix que el de l'admin: client, servei, sessions i import abans de cobrar</li>
       <li><strong>Els bons es creen des de la fitxa del client</strong> → pestanya Bons, i només per als clients assignats</li>
-      <li>Allà mateix hi ha <strong>"Marcar com pagat"</strong> per als pendents de cobrament (amb el mateix diàleg de confirmació que l'admin)</li>
+      <li>A la fitxa, "Marcar com pagat" ara també surt als <strong>decaiguts</strong> (abans només als pendents). Un decaigut que ja ha passat de data diu <strong>"Només cobrar"</strong>; un que encara no, <strong>"Cobrar i recuperar"</strong></li>
     </ul>
+    <p class="note">Els decaiguts ("Anul·lat per impagament") només apareixen si l'admin té encès <em>Configuració → cancel·lar pendents de pagament</em>. Si està apagat, aquest filtre sortirà sempre buit i és correcte.</p>
 
     <h3>3.5 Les meves factures</h3>
     <ul class="checklist">

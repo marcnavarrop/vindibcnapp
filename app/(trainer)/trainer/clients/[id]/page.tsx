@@ -26,6 +26,7 @@ import {
 import { markTrainerBonoPaidAction } from "@/app/(trainer)/trainer/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { toggleClientTagAction } from "@/app/(admin)/admin/etiquetes/actions";
+import { centerToday } from "@/lib/center-time";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
@@ -77,6 +78,9 @@ export default async function TrainerClientDetailPage({
 
   const redirectPath = `/trainer/clients/${id}`;
   const assignedTagIds = new Set(clientTags.map((t) => t.id));
+  // El dia del CENTRE: decideix si un bo decaigut ja ha passat de data, i amb
+  // això quin dels dos textos ensenya el diàleg de cobrament.
+  const today = centerToday();
 
   const tabs = [
     {
@@ -143,7 +147,12 @@ export default async function TrainerClientDetailPage({
                       ? "success"
                       : b.status === "pending_payment"
                         ? "warn"
-                        : "neutral"
+                        : // Decaigut i caducat no són neutrals com "completat":
+                          // hi ha sessions pagades que s'han perdut. Mateix
+                          // criteri que les dues taules de bons.
+                          b.status === "unpaid" || b.status === "expired"
+                          ? "danger"
+                          : "neutral"
                   }
                 >
                   {BONO_STATUS_LABELS[b.status]}
@@ -158,20 +167,30 @@ export default async function TrainerClientDetailPage({
                   activa el bo, anota el pagament i pot reprendre una
                   subscripció, i res d'això es desfà des d'aquí. Sense nom de
                   client a posta: som dins de la seva fitxa.
+
+                  Els DECAIGUTS també, i no hi eren. `markBonoPaid` fa temps
+                  que els accepta i la taula de l'admin ja els oferia, però
+                  aquí la condició s'havia quedat només amb els pendents: un
+                  professional amb el client al davant i els diners a la mà no
+                  tenia cap pantalla on anotar-ho, i havia d'anar a buscar
+                  l'admin. El `expired` va lligat: sense ell el diàleg
+                  prometria recuperar un bo que ja ha passat de data.
                 */}
-                {canManage && b.status === "pending_payment" && (
-                  <span className="ml-auto">
-                    <MarkBonoPaidButton
-                      action={markTrainerBonoPaidAction}
-                      bonoId={b.id}
-                      serviceType={b.serviceType}
-                      price={b.price}
-                      remainingSessions={b.remainingSessions}
-                      totalSessions={b.totalSessions}
-                      status={b.status}
-                    />
-                  </span>
-                )}
+                {canManage &&
+                  (b.status === "pending_payment" || b.status === "unpaid") && (
+                    <span className="ml-auto">
+                      <MarkBonoPaidButton
+                        action={markTrainerBonoPaidAction}
+                        bonoId={b.id}
+                        serviceType={b.serviceType}
+                        price={b.price}
+                        remainingSessions={b.remainingSessions}
+                        totalSessions={b.totalSessions}
+                        status={b.status}
+                        expired={!!b.expiresAt && b.expiresAt < today}
+                      />
+                    </span>
+                  )}
               </Row>
             ))
           )}

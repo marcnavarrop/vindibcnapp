@@ -565,11 +565,25 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Aquesta pantalla és una vista de tots els bons del centre, amb el client, el servei, les sessions consumides sobre el total, el preu i l'estat. Serveix per consultar, no per gestionar: aquí no hi ha cap botó.",
+          text: "Aquesta pantalla és una vista de tots els bons del centre, amb el client, el servei, les sessions consumides sobre el total, el preu, la data de caducitat i l'estat. Des d'aquí pots cobrar els bons dels teus clients assignats; els de la resta els veus per coordinar-te, però no els pots tocar.",
+        },
+        { t: "h", text: "Els dos filtres" },
+        {
+          t: "p",
+          text: "A dalt hi ha el conmutador «Els meus / Tots», igual que a la llista de Clients. Arrenca a «Els meus», que és on pots fer alguna cosa; «Tots» ensenya el centre sencer. A sota, els filtres per estat: Tots, Pendents de pagament, Decaiguts sense cobrar i Actius. El comptador taronja del filtre de pendents només compta ELS TEUS, perquè és la feina que et toca a tu. I el cercador busca per nom de client o per servei.",
+        },
+        { t: "h", text: "Cobrar un bo" },
+        {
+          t: "p",
+          text: "El botó «Marcar com pagat» surt a les files dels teus clients que estiguin pendents de cobrament o decaigudes. A les files d'un company no hi surt res: consultar-les sí, cobrar-les no. No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
         },
         {
           t: "p",
-          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons, i només per als clients que tens assignats. Allà mateix hi tens «Marcar com pagat» per als que estan pendents de cobrament.",
+          text: "Abans de cobrar, un quadre et demana confirmació i et diu exactament què passarà: quin client, quin servei, quantes sessions i quin import. Cobrar activa el bo, anota un pagament en efectiu i, si el bo era el mes d'una subscripció aturada, la torna a posar en marxa. Res d'això es desfà des d'aquí: si t'equivoques de bo, cal avisar l'administració.",
+        },
+        {
+          t: "p",
+          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons, i només per als clients que tens assignats. Allà mateix hi tens el mateix botó de cobrament, amb el mateix quadre de confirmació.",
         },
         { t: "h", text: "Els estats" },
         {
@@ -586,6 +600,14 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
             [
               "Esgotat",
               "S'han consumit totes les sessions. Cancel·lar una reserva seva el pot tornar a activar.",
+            ],
+            [
+              "Anul·lat per impagament",
+              "Va estar massa temps pendent de cobrar i va decaure, i en decaure es van alliberar les seves reserves futures. Encara es pot cobrar: el bo recupera les sessions que li quedaven, però les hores NO tornen i s'han de tornar a demanar. Si a més ja ha passat de data, el botó diu «Només cobrar» i el bo no es recupera.",
+            ],
+            [
+              "Caducat",
+              "Va arribar a la seva data amb sessions sense fer. No es pot cobrar ni reactivar.",
             ],
           ],
         },
