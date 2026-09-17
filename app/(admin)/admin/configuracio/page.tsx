@@ -15,19 +15,31 @@ import {
 import { listTrainersDetailed } from "@/lib/data/trainers";
 import { avatarUrls } from "@/lib/data/avatars";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
+import { PreModeForm } from "@/components/forms/pre-mode-form";
+import { readPreTicket } from "@/lib/pre-mode";
 import { USE_MOCK } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminConfigPage() {
+export default async function AdminConfigPage({
+  searchParams,
+}: {
+  /* `?pre=<codi>` hi arriba quan un salt del mode PRE no ha pogut anar
+     endavant: el motiu s'ensenya a la pestanya on viu l'interruptor, que és
+     d'on ha sortit. */
+  searchParams: Promise<{ pre?: string }>;
+}) {
   const viewer = await getViewer();
-  const [prefs, centerSettings, palette, trainers, centers] = await Promise.all([
-    viewer ? getPreferences(viewer.id) : Promise.resolve(null),
-    getCenterSettings(),
-    getColorPalette(),
-    listTrainersDetailed(),
-    listCenters(),
-  ]);
+  const [prefs, centerSettings, palette, trainers, centers, params, preTicket] =
+    await Promise.all([
+      viewer ? getPreferences(viewer.id) : Promise.resolve(null),
+      getCenterSettings(),
+      getColorPalette(),
+      listTrainersDetailed(),
+      listCenters(),
+      searchParams,
+      readPreTicket(),
+    ]);
   const avatars = await avatarUrls(trainers.map((t) => t.avatarPath));
   const professionals = trainers.map((t) => ({
     id: t.id,
@@ -75,12 +87,34 @@ export default async function AdminConfigPage() {
     ...(!USE_MOCK
       ? [{ label: "Seguretat", content: <ChangePasswordForm /> }]
       : []),
+    /*
+      L'última de totes: és eina de proves, no un ajust del centre. I no cal
+      comprovar aquí que qui ho mira sigui admin —tot /admin ja ho és pel
+      middleware—, que és justament per què l'interruptor viu en aquesta
+      pantalla i no en una de nova.
+    */
+    ...(!USE_MOCK
+      ? [
+          {
+            label: "Mode PRE",
+            content: (
+              <PreModeForm armed={preTicket !== null} error={params.pre} />
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
     <main className="mx-auto max-w-2xl p-6">
       <h1 className="mb-6 text-2xl text-brand-dark">Configuració</h1>
-      <InPageTabs tabs={tabs} />
+      {/* Si venim d'un salt del mode PRE que ha fallat, s'obre directament la
+          pestanya que en dona el motiu: si no, el missatge queda amagat
+          darrere de "Centre" i no el llegeix ningú. */}
+      <InPageTabs
+        tabs={tabs}
+        initial={params.pre ? tabs.findIndex((t) => t.label === "Mode PRE") : 0}
+      />
     </main>
   );
 }

@@ -15,13 +15,23 @@ export type InPageTab = {
 export function InPageTabs({
   tabs,
   ariaLabel,
+  initial = 0,
 }: {
   tabs: InPageTab[];
   /** Nom de la barra per a lectors de pantalla; català per defecte
    *  perquè aquestes pestanyes també surten a admin i professional. */
   ariaLabel?: string;
+  /**
+   * Pestanya oberta d'entrada. Serveix quan qui arriba ve d'una redirecció que
+   * porta un missatge per a una pestanya concreta: sense això el missatge es
+   * pinta, però amagat darrere de la primera, i qui l'havia de llegir no el veu
+   * mai. Fora de rang, torna a la primera.
+   */
+  initial?: number;
 }) {
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(
+    initial >= 0 && initial < tabs.length ? initial : 0,
+  );
 
   return (
     <div>

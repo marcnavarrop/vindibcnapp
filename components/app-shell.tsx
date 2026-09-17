@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { PreModeBanner } from "@/components/pre-mode-banner";
 import { SupportFab } from "@/components/support-fab";
 import { getViewer } from "@/lib/auth";
 import { getCenterSettings } from "@/lib/data/center-settings";
@@ -49,7 +50,14 @@ export async function AppShell({
       />
       {/* En imprimir no hi ha sidebar, així que el contingut no ha de
           deixar-li lloc: sense això el manual sortiria escapçat per la dreta. */}
-      <div className="lg:pl-64 print:pl-0">{children}</div>
+      <div className="lg:pl-64 print:pl-0">
+        {/* El distintiu del mode PRE, a la columna del contingut i no a la
+            pàgina: aquí surt a les tres àrees i no se'n pot quedar cap sense,
+            que és el mateix criteri que el `SupportFab` de sota. Quan el mode
+            està apagat no pinta res. */}
+        <PreModeBanner />
+        {children}
+      </div>
 
       {/* Accés ràpid al suport des de qualsevol pantalla de les àrees internes.
           Va aquí i no a cada pàgina: així no se'n pot quedar cap sense.

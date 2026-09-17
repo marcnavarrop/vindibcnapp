@@ -6,6 +6,10 @@ import { getViewer } from "@/lib/auth";
 import { getClient } from "@/lib/data/clients";
 import { deleteClient } from "@/lib/data/gdpr-delete";
 import { logDataAccess } from "@/lib/data/data-access-log";
+import {
+  PRE_BLOCKED_MESSAGE,
+  preModeBlocksPersonalData,
+} from "@/lib/pre-mode";
 
 export type FormState = { error?: string };
 
@@ -20,6 +24,11 @@ export async function deleteClientAction(
 ): Promise<FormState> {
   const viewer = await getViewer();
   if (!viewer || viewer.role !== "admin") return { error: "No autoritzat." };
+
+  // Mateix fre que a l'exportació, i pel mateix motiu: esborrar dades personals
+  // és irreversible i deixa constància a `data_access_log`. Amb el mode PRE
+  // armat no es fa. Vegeu lib/pre-mode.ts.
+  if (await preModeBlocksPersonalData()) return { error: PRE_BLOCKED_MESSAGE };
 
   const client = await getClient(clientId);
   if (!client) return { error: "Client no trobat." };
