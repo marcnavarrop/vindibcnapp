@@ -475,7 +475,7 @@
     "cancel": "Cancel",
     "back": "Back",
     "occupied": "Taken",
-    "legend": "This shows every free slot at the centre you can book with your passes, in each professional's colour. Other people's sessions appear as «Taken»; you can join groups that still have room, and opening one shows who's already in.",
+    "legend": "This shows every free slot at the centre you can book with your passes, in each professional's colour; groups are all one colour, whoever runs them. Other people's sessions appear as «Taken»; you can join groups that still have room, and opening one shows who's already in.",
     "group": {
       "onList": "You're on the list",
       "fullQueue": "Full · join queue",

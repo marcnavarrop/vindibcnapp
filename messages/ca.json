@@ -475,7 +475,7 @@
     "cancel": "Cancel·lar",
     "back": "Enrere",
     "occupied": "Ocupat",
-    "legend": "Es mostren totes les franges lliures del centre que pots reservar segons els teus bons, amb el color de cada professional. Les sessions d'altres persones apareixen com a «Ocupat»; als grups amb plaça pots apuntar-t'hi, i en obrir-los veus qui ja hi és.",
+    "legend": "Es mostren totes les franges lliures del centre que pots reservar segons els teus bons, amb el color de cada professional; els grups van tots del mateix color, els porti qui els porti. Les sessions d'altres persones apareixen com a «Ocupat»; als grups amb plaça pots apuntar-t'hi, i en obrir-los veus qui ja hi és.",
     "group": {
       "onList": "Ets a la llista",
       "fullQueue": "Complet · fer cua",

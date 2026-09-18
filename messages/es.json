@@ -475,7 +475,7 @@
     "cancel": "Cancelar",
     "back": "Atrás",
     "occupied": "Ocupado",
-    "legend": "Se muestran todas las franjas libres del centro que puedes reservar según tus bonos, con el color de cada profesional. Las sesiones de otras personas aparecen como «Ocupado»; en los grupos con plaza puedes apuntarte, y al abrirlos ves quién está ya.",
+    "legend": "Se muestran todas las franjas libres del centro que puedes reservar según tus bonos, con el color de cada profesional; los grupos van todos del mismo color, los lleve quien los lleve. Las sesiones de otras personas aparecen como «Ocupado»; en los grupos con plaza puedes apuntarte, y al abrirlos ves quién está ya.",
     "group": {
       "onList": "Estás en la lista",
       "fullQueue": "Completo · hacer cola",

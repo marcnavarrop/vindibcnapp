@@ -3,41 +3,31 @@ import { GROUP_CAPACITY } from "@/lib/labels";
 export type OccupancyStatus = "free" | "almost_full" | "full";
 
 /**
- * Semàfor d'ocupació per a grups reduïts.
- *   free        → 1–2/4  (verd): places lliures, convida a apuntar-s'hi
- *   almost_full → 3/4    (ambre): gairebé ple, avís d'urgència
- *   full        → 4/4    (vermell fosc): complet, bloquejat
+ * Com de ple està un grup reduït.
+ *   free        → 1–2/4  places lliures, convida a apuntar-s'hi
+ *   almost_full → 3/4    gairebé ple
+ *   full        → 4/4    complet
+ *
+ * ABANS AIXÒ ERA UN SEMÀFOR DE COLORS, I JA NO HO ÉS
+ *
+ * Cada estat tenia el seu joc de colors —verd, ambre, vermell— i pintava la
+ * fitxa sencera als dos calendaris. Funcionava per dir com de plena estava una
+ * sessió, però tenia un efecte que no es va veure fins que hi va haver grups de
+ * debò: els grups eren l'únic servei sense color propi. Tres grups seguits en
+ * sortien de tres colors, i el color, que a la resta de l'app diu QUÈ és una
+ * sessió, en aquests deia una altra cosa.
+ *
+ * Ara el color d'un grup surt de la paleta de serveis com el de qualsevol altre
+ * (Configuració → Colors → «Grup reduït»), i l'ocupació es llegeix on sempre ha
+ * estat escrita igualment: al comptador «2/4» i a l'etiqueta que l'acompanya
+ * («Gairebé ple», «Complet», «Plaça lliure»). No s'ha perdut cap informació;
+ * ha deixat de dir-se dues vegades i de barallar-se amb el color del servei.
+ *
+ * Per això aquest mòdul ja no exporta cap paleta: el que en queda és la
+ * pregunta, i qui la fa serveix per triar el TEXT, no el color.
  */
 export function getOccupancyStatus(count: number): OccupancyStatus {
   if (count >= GROUP_CAPACITY) return "full";
   if (count >= GROUP_CAPACITY - 1) return "almost_full";
   return "free";
 }
-
-/** Paleta de colors harmoniosa amb la identitat de marca (lila/taronja). */
-export const OCCUPANCY_COLORS: Record<
-  OccupancyStatus,
-  { bg: string; border: string; text: string; badge: string }
-> = {
-  // Verd suau (tonal, no genèric Bootstrap): convida a entrar
-  free: {
-    bg: "#d1fae5",       // emerald-100
-    border: "#10b981",   // emerald-500
-    text: "#065f46",     // emerald-900
-    badge: "#10b981",
-  },
-  // Ambre càlid: avís sense alarmar
-  almost_full: {
-    bg: "#fef3c7",       // amber-100
-    border: "#f59e0b",   // amber-400
-    text: "#78350f",     // amber-900
-    badge: "#f59e0b",
-  },
-  // Vermell fosc / granat — "stop", clarament diferent del lila de marca
-  full: {
-    bg: "#fee2e2",       // red-100
-    border: "#ef4444",   // red-500
-    text: "#7f1d1d",     // red-900
-    badge: "#ef4444",
-  },
-};

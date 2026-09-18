@@ -32,7 +32,7 @@ import { colorOfService, type ColorPalette } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
-import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
+import { getOccupancyStatus } from "@/lib/group-occupancy";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
 
@@ -671,8 +671,16 @@ function ReservationCard({
   palette: ColorPalette;
 }) {
   const isGroup = r.serviceType === "grupo_reducido" && occupancy != null;
+  /**
+   * L'ocupació ja no tenyeix la fitxa, només l'explica.
+   *
+   * Fins ara un grup es pintava amb un semàfor —verd amb places, ambre a 3/4,
+   * vermell ple— i el resultat és que els grups eren l'únic servei que no tenia
+   * color propi: tres grups seguits en sortien de tres colors. El color torna a
+   * dir QUÈ és la sessió, com a la resta de serveis, i quant de plena està ho
+   * segueix dient el text d'aquí sota, que ja hi era: «· 2/4 · Gairebé ple».
+   */
   const status = isGroup ? getOccupancyStatus(occupancy!) : null;
-  const oc = status ? OCCUPANCY_COLORS[status] : null;
   const color = colorOfService(palette, r.serviceType);
   const cancelled = r.status === "cancelled";
 
@@ -680,11 +688,10 @@ function ReservationCard({
     <button
       type="button"
       onClick={onClick}
-      style={
-        oc
-          ? { backgroundColor: oc.bg, borderLeft: `3px solid ${oc.border}` }
-          : { backgroundColor: `${color}1a`, borderLeft: `3px solid ${color}` }
-      }
+      style={{
+        backgroundColor: `${color}1a`,
+        borderLeft: `3px solid ${color}`,
+      }}
       className={clsx(
         "block w-full cursor-pointer rounded-md px-1.5 py-1 text-left text-[11px] leading-tight",
         cancelled && "opacity-50 line-through",
@@ -710,7 +717,7 @@ function ReservationCard({
       </span>
       <span
         className="flex items-center gap-0.5 truncate"
-        style={{ color: oc ? oc.text : color }}
+        style={{ color }}
       >
         <span className="shrink-0">{SVC_ICON[r.serviceType]}</span>
         {SERVICE_LABELS[r.serviceType]}

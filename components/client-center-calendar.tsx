@@ -22,7 +22,7 @@ import {
   SLOT_MINUTES,
 } from "@/lib/availability-slots";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
-import { colorOfPro, type ColorPalette } from "@/lib/colors";
+import { colorOfPro, colorOfService, type ColorPalette } from "@/lib/colors";
 import { Avatar } from "@/components/ui/avatar";
 import type { ServiceType } from "@/types/database";
 import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
@@ -41,7 +41,7 @@ import {
   leaveWaitlistAction,
   type WaitlistState,
 } from "@/app/(client)/client/reservas/waitlist-actions";
-import { getOccupancyStatus, OCCUPANCY_COLORS } from "@/lib/group-occupancy";
+import { getOccupancyStatus } from "@/lib/group-occupancy";
 import { canCancelAt } from "@/lib/cancellation";
 
 /* Els noms dels dies i les abreviatures de servei viuen al diccionari
@@ -672,7 +672,6 @@ export function ClientCenterCalendar({
                   >
                     <div className="flex flex-col gap-1">
                       {items.map((it, idx) => {
-                        const color = colorOfPro(palette, it.trainerId);
                         if (it.kind === "own") {
                           // Verd propi coherent amb el semàfor de grups (#16a34a = green-600)
                           const ownBg = "#dcfce7"; // green-100
@@ -711,8 +710,15 @@ export function ClientCenterCalendar({
                           );
                         }
                         if (it.kind === "group") {
+                          // L'ocupació ja no tenyeix la fitxa, només l'explica:
+                          // el color diu que això és un grup i el text diu quant
+                          // de ple està. Mateix criteri que a l'agenda de
+                          // l'equip.
                           const status = getOccupancyStatus(it.count);
-                          const oc = OCCUPANCY_COLORS[status];
+                          const groupColor = colorOfService(
+                            palette,
+                            "grupo_reducido",
+                          );
                           // Plena però amb cua oberta: la fitxa deixa de ser un
                           // carreró sense sortida i obre el diàleg d'espera.
                           const canWait = waitlistEnabled && it.waitlistable;
@@ -741,8 +747,8 @@ export function ClientCenterCalendar({
                                     : undefined
                               }
                               style={{
-                                backgroundColor: oc.bg,
-                                borderLeft: `3px solid ${oc.border}`,
+                                backgroundColor: `${groupColor}1a`,
+                                borderLeft: `3px solid ${groupColor}`,
                               }}
                               className={clsx(
                                 "block w-full rounded-md px-1.5 py-1 text-left text-[11px] font-bold leading-tight",
@@ -751,14 +757,15 @@ export function ClientCenterCalendar({
                                   : "cursor-not-allowed opacity-80",
                               )}
                             >
-                              <span className="block" style={{ color: oc.text }}>
+                              <span className="block" style={{ color: groupColor }}>
                                 {tb("grupo_reducido")} · {it.count}/
                                 {GROUP_CAPACITY}
                               </span>
-                              <span
-                                className="block font-normal"
-                                style={{ color: oc.text }}
-                              >
+                              {/* L'estat en gris i no en el color del grup: el
+                                  color ja diu què és, i aquesta línia és la que
+                                  diu si hi cabries. Separar-ho evita que tota la
+                                  fitxa sigui una sola taca taronja. */}
+                              <span className="block font-normal text-brand-muted">
                                 {waiting
                                   ? t("group.onList")
                                   : status === "full"
@@ -773,6 +780,26 @@ export function ClientCenterCalendar({
                           );
                         }
                         // free
+                        /**
+                         * El color d'una franja lliure: de qui la té, EXCEPTE
+                         * als grups.
+                         *
+                         * A la resta de serveis el color diu amb qui aniràs, i
+                         * per això és el del professional. En un grup no informa
+                         * de res útil i sí que despista: la mateixa classe
+                         * canviava de color segons qui la porta, i costava
+                         * veure-les com una sola cosa. Un grup és un grup, el
+                         * faci qui el faci; el nom de qui el porta segueix
+                         * escrit a sota de la fitxa.
+                         *
+                         * El color surt de la paleta de serveis que ja existeix
+                         * (Configuració → Colors → «Grup reduït»), de manera que
+                         * es canvia des de la mateixa pantalla que la resta.
+                         */
+                        const color =
+                          it.service === "grupo_reducido"
+                            ? colorOfService(palette, it.service)
+                            : colorOfPro(palette, it.trainerId);
                         return (
                           <button
                             key={`free-${it.trainerId}-${it.service}`}

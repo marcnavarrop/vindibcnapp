@@ -115,12 +115,14 @@ export function ColorsForm({
       <p className="text-sm text-brand-muted">
         Els colors dels calendaris. Els dels serveis pinten les reserves a
         l&apos;agenda de l&apos;equip; els dels professionals, les franges de
-        disponibilitat i el calendari del client.
+        disponibilitat i el calendari del client. L&apos;excepció és el grup
+        reduït: va sempre del seu color de servei als dos calendaris, el porti
+        qui el porti.
       </p>
 
       <Group
         title="Tipus de servei"
-        desc="Color de cada servei a l'agenda de l'equip i a la compra de bons."
+        desc="Color de cada servei a l'agenda de l'equip i a la compra de bons. El de «Grup reduït» mana també al calendari del client."
       >
         {SERVICE_TYPES.map((t) => (
           <ColorRow
@@ -135,7 +137,7 @@ export function ColorsForm({
 
       <Group
         title="Professionals"
-        desc="Color de cada professional al calendari del client i a les capes de disponibilitat."
+        desc="Color de cada professional al calendari del client (excepte els grups) i a les capes de disponibilitat."
       >
         {professionals.length === 0 ? (
           <p className="text-sm text-brand-muted">
