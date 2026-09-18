@@ -12,6 +12,7 @@ import {
   cancelSeries,
   type SeriesRequest,
 } from "@/lib/data/booking-series";
+import { canRepeatInSeries } from "@/lib/group-rules";
 import type { ResolvedOccurrence } from "@/lib/booking-series-core";
 import type { BookingFrequency, ServiceType } from "@/types/database";
 
@@ -22,6 +23,12 @@ import type { BookingFrequency, ServiceType } from "@/types/database";
  * és tota a `confirmSeriesAction`, d'una tacada. Separar-ho vol dir que el
  * client pot recalcular tants cops com vulgui —canviar la freqüència, acceptar
  * alternatives— sense deixar mitja sèrie feta a la base si al final se'n va.
+ *
+ * LES DE GRUP NO HI ENTREN. Una franja de grup són quatre places, i una sèrie
+ * damunt d'una subscripció que es renova sola les deixaria ocupades per sempre
+ * per la mateixa persona. La regla i el perquè viuen a `lib/group-rules.ts`; el
+ * calendari ja no ofereix cap de les dues portes, i aquí es torna a comprovar
+ * perquè amagar un botó no impedeix cridar l'acció.
  */
 
 export type SeriesFormInput = {
@@ -85,6 +92,7 @@ export async function calculateSeriesAction(
 ): Promise<CalculateState> {
   const viewer = await getViewer();
   if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
+  if (!canRepeatInSeries(input.serviceType)) return { errorCode: "badService" };
 
   // Una sèrie sense final seria infinita: es demana com a mínim un dels dos
   // límits, igual que ho exigeix la base de dades.
@@ -119,6 +127,9 @@ export async function confirmSeriesAction(
 ): Promise<ConfirmState> {
   const viewer = await getViewer();
   if (!viewer || viewer.role !== "client") return { errorCode: "unauthorized" };
+  // Es repeteix i no es confia en el càlcul previ: les dues accions s'invoquen
+  // per separat i res no obliga a passar per la primera abans de la segona.
+  if (!canRepeatInSeries(input.serviceType)) return { errorCode: "badService" };
   if (decided.length === 0) return { errorCode: "nothingToConfirm" };
 
   try {

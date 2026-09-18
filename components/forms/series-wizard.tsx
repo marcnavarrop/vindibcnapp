@@ -26,6 +26,7 @@ import {
   confirmSeriesAction,
   type SeriesFormInput,
 } from "@/app/(client)/client/reservas/series-actions";
+import { isSubscriptionOnly } from "@/lib/group-rules";
 import type { BookingFrequency, ServiceType } from "@/types/database";
 
 /**
@@ -114,6 +115,23 @@ export function RecurrenceFields({
   const [showOptions, setShowOptions] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  /**
+   * La subscripció cobreix AQUESTA sèrie?
+   *
+   * `hasSubscription` només diu que en té una de viva, i com que només se'n
+   * poden tenir del servei subscribible, això no serveix per a una sèrie de cap
+   * altre servei: quan aquella subscripció es renovi no arribarà ni una sessió
+   * al bo d'aquesta, i prometre-ho seria mentir a qui llegeix la casella.
+   *
+   * AVUI AIXÒ ÉS SEMPRE FALS, i és la conseqüència directa de la regla nova: el
+   * servei subscribible és el de grup, i les sèries de grup ja no existeixen
+   * (vegeu `lib/group-rules.ts`). La casella d'allargar-se sola, doncs, no surt
+   * mai. S'escriu com a condició i no com un `false` pelat perquè el dia que el
+   * centre obri subscripcions d'un altre servei torni a valer sola, sense que
+   * ningú hagi de recordar que aquí hi havia una constant amagada.
+   */
+  const subscriptionCovers = hasSubscription && isSubscriptionOnly(seed.serviceType);
+
   const input: SeriesFormInput = {
     firstAt: seed.scheduledAt,
     trainerId: seed.trainerId,
@@ -124,9 +142,9 @@ export function RecurrenceFields({
     bookOnlyAvailable: onlyAvailable,
     allowAlternatives: alternatives,
     allowWaitlist: waitlist,
-    // Només té sentit amb subscripció: sense res que la renovi, una sèrie
-    // marcada per allargar-se no s'allargaria mai.
-    autoExtend: hasSubscription && autoExtend,
+    // Només té sentit amb subscripció d'aquest mateix servei: sense res que el
+    // renovi, una sèrie marcada per allargar-se no s'allargaria mai.
+    autoExtend: subscriptionCovers && autoExtend,
   };
 
   function calculate() {
@@ -143,7 +161,7 @@ export function RecurrenceFields({
         occurrences: res.occurrences ?? [],
         bonoRemaining: res.bonoRemaining ?? 0,
         skippedForBono: res.skippedForBono ?? 0,
-        hasSubscription,
+        hasSubscription: subscriptionCovers,
       });
     });
   }
@@ -252,7 +270,7 @@ export function RecurrenceFields({
                 desc={t("addWaitlistDesc")}
               />
             )}
-            {hasSubscription && (
+            {subscriptionCovers && (
               <Check
                 checked={autoExtend}
                 onChange={setAutoExtend}

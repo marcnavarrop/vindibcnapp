@@ -7,8 +7,10 @@ import { Field } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SERVICE_LABELS, SERVICE_TYPES, GROUP_CAPACITY } from "@/lib/labels";
 import { createReservationAction } from "@/app/(admin)/admin/reservas/actions";
+import { canRepeatInSeries } from "@/lib/group-rules";
 import type { ReservationFormData } from "@/lib/data/reservations";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
+import type { ServiceType } from "@/types/database";
 import { TAP } from "@/lib/utils";
 
 export function ReservationForm({
@@ -38,11 +40,31 @@ export function ReservationForm({
   // Cortesia: es regala la sessió. El bo deixa de tenir sentit i el tipus de
   // servei, que amb bo sortia del bo, s'ha de dir a mà.
   const [complimentary, setComplimentary] = useState(false);
+  const [bonoId, setBonoId] = useState("");
+  const [serviceType, setServiceType] = useState<ServiceType | "">("");
 
   const bonos = useMemo(
     () => clients.find((c) => c.id === clientId)?.bonos ?? [],
     [clients, clientId],
   );
+
+  /**
+   * De quin servei és aquesta reserva, vingui d'on vingui.
+   *
+   * Amb bo el diu el bo; amb cortesia el diu el desplegable, perquè llavors no
+   * hi ha bo d'on treure'l. Fa falta saber-ho per una sola cosa: decidir si es
+   * pot repetir cada setmana.
+   */
+  const selectedService: ServiceType | null = complimentary
+    ? serviceType || null
+    : (bonos.find((b) => b.id === bonoId)?.serviceType ?? null);
+
+  // Les de grup no es repeteixen. El mecanisme d'aquí és més petit que el bucle
+  // del client —un nombre acotat de setmanes, decidit pel centre, que no
+  // s'allarga sol— però el motiu de fons és el mateix aforament, i tenir-ne una
+  // que sí i una que no seria una excepció que algú hauria de recordar. La
+  // regla viu a `lib/group-rules.ts` i la comparteixen els tres punts d'entrada.
+  const canRepeat = selectedService === null || canRepeatInSeries(selectedService);
 
   return (
     <form
@@ -88,6 +110,8 @@ export function ReservationForm({
           name="serviceType"
           placeholder="Tria un tipus de servei"
           required
+          value={serviceType}
+          onChange={(e) => setServiceType(e.target.value as ServiceType | "")}
           options={SERVICE_TYPES.map((t) => ({
             value: t,
             label: SERVICE_LABELS[t],
@@ -106,6 +130,8 @@ export function ReservationForm({
           }
           required
           disabled={bonos.length === 0}
+          value={bonoId}
+          onChange={(e) => setBonoId(e.target.value)}
           options={bonos.map((b) => ({
             value: b.id,
             label: `${SERVICE_LABELS[b.serviceType]} · ${b.remaining} sessions disponibles`,
@@ -128,22 +154,35 @@ export function ReservationForm({
         defaultValue={defaultScheduledAt}
       />
 
-      <div>
-        <Field
-          label="Repeticions setmanals"
-          name="repeatWeeks"
-          type="number"
-          min={1}
-          max={52}
-          defaultValue={1}
-        />
-        <p className="mt-1 text-xs text-brand-muted">
-          Amb més d&apos;1, crea una reserva cada setmana a la mateixa hora
-          {complimentary
-            ? "."
-            : " (consumeix una sessió per reserva)."}
+      {/* El camp DESAPAREIX per a les de grup, no es deshabilita: un camp
+          deshabilitat encara s'envia buit i el servidor l'hauria d'interpretar.
+          Sense camp, `repeatWeeks` no arriba i `createReservation` en fa una de
+          sola, que és el que ha de passar. Mateix criteri que el selector de bo
+          quan es marca «Sessió de cortesia». */}
+      {canRepeat ? (
+        <div>
+          <Field
+            label="Repeticions setmanals"
+            name="repeatWeeks"
+            type="number"
+            min={1}
+            max={52}
+            defaultValue={1}
+          />
+          <p className="mt-1 text-xs text-brand-muted">
+            Amb més d&apos;1, crea una reserva cada setmana a la mateixa hora
+            {complimentary
+              ? "."
+              : " (consumeix una sessió per reserva)."}
+          </p>
+        </div>
+      ) : (
+        <p className="rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
+          Les sessions de grup no es poden repetir cada setmana: una franja són{" "}
+          {GROUP_CAPACITY} places i repetir-la en bucle les bloquejaria per a la
+          resta. Si en cal més d&apos;una, es creen d&apos;una en una.
         </p>
-      </div>
+      )}
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
 

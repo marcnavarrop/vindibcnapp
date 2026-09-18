@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
 import { createBono, markBonoPaid, getBonoClientId, cancelBono } from "@/lib/data/bonos";
+import { getClient } from "@/lib/data/clients";
+import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType } from "@/types/database";
 
@@ -37,6 +39,48 @@ export async function createTrainerBonoAction(
     });
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en crear el bo." };
+  }
+
+  revalidatePath(`/trainer/clients/${clientId}`);
+  revalidatePath("/trainer/bonos");
+  redirect(`/trainer/clients/${clientId}`);
+}
+
+/**
+ * El professional subscriu un dels SEUS clients a un paquet de grup, al centre.
+ *
+ * Mateixa alta que fa l'admin i que fa el client: `subscribeAtCenter`. El que
+ * canvia és qui hi pot arribar, i per això la comprovació d'assignació es
+ * repeteix aquí i no es deixa només a la pàgina: crear un bo per a un client
+ * que no és seu ja rebota per RLS, però una subscripció s'escriu amb la clau de
+ * servei —la política de la 0072 només deixa escriure l'admin— i allà no hi
+ * hauria cap segona barrera. La condició és exactament la de
+ * `createTrainerBonoAction`: només els propis.
+ *
+ * Amb targeta no hi ha equivalent. El Checkout demana que el client tecleji la
+ * seva; per aquell camí ha d'entrar ell a /client/bonos.
+ */
+export async function createTrainerGroupSubscriptionAction(
+  clientId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return { error: "No autoritzat." };
+
+  const client = await getClient(clientId);
+  if (!client || client.assignedTrainerId !== viewer.id)
+    return { error: "Aquest client no és teu." };
+
+  const serviceId = String(formData.get("serviceId") ?? "");
+  if (!serviceId) return { error: "Tria un paquet." };
+
+  try {
+    await subscribeAtCenter({ clientId, serviceId });
+  } catch (e) {
+    return {
+      error: e instanceof Error ? e.message : "Error en donar d'alta la subscripció.",
+    };
   }
 
   revalidatePath(`/trainer/clients/${clientId}`);

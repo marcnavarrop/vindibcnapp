@@ -5,7 +5,13 @@ import { BonoForm } from "@/components/forms/bono-form";
 import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
-import { createTrainerBonoAction } from "@/app/(trainer)/trainer/bonos/actions";
+import { getCenterSettings } from "@/lib/data/center-settings";
+import { getLiveSubscription } from "@/lib/data/subscriptions";
+import { centerToday } from "@/lib/center-time";
+import {
+  createTrainerBonoAction,
+  createTrainerGroupSubscriptionAction,
+} from "@/app/(trainer)/trainer/bonos/actions";
 import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +24,11 @@ export default async function NewTrainerBonoPage({
   const { clientId } = await searchParams;
   if (!clientId) redirect("/trainer/clients");
 
-  const [viewer, client, services] = await Promise.all([
+  const [viewer, client, services, settings] = await Promise.all([
     getViewer(),
     getClient(clientId),
     listActiveServices(),
+    getCenterSettings(),
   ]);
   if (!client) notFound();
 
@@ -33,6 +40,14 @@ export default async function NewTrainerBonoPage({
   // Amb clientId, igual que a l'àrea d'admin: el bo és per a aquest client.
   const effectivePricesMap = await getEffectivePrices(services, { clientId });
   const effectivePrices = Object.fromEntries(effectivePricesMap);
+
+  // Mateixa pregunta que a l'àrea d'admin, i pel mateix motiu: l'índex únic de
+  // la 0072 no deixa una segona subscripció viva del mateix servei.
+  const liveSubscription = settings.subscriptionsEnabled
+    ? await getLiveSubscription(client.id)
+    : null;
+
+  const renewalDay = Number(centerToday().slice(8, 10));
 
   return (
       <main className="mx-auto max-w-5xl p-6">
@@ -47,10 +62,14 @@ export default async function NewTrainerBonoPage({
 
         <BonoForm
           action={createTrainerBonoAction.bind(null, clientId)}
+          subscribeAction={createTrainerGroupSubscriptionAction.bind(null, clientId)}
           cancelHref={`/trainer/clients/${clientId}`}
           services={services}
           effectivePrices={effectivePrices}
           showPayment={false}
+          subscriptionsEnabled={settings.subscriptionsEnabled}
+          hasLiveSubscription={liveSubscription !== null}
+          renewalDay={renewalDay}
         />
       </main>
   );

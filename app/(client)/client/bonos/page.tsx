@@ -17,6 +17,7 @@ import { hasOutstandingGiftVouchers } from "@/lib/data/gift-vouchers";
 import { RedeemGiftVoucher } from "@/components/forms/redeem-gift-voucher";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
 import { RouteTabs } from "@/components/ui/route-tabs";
+import { isSubscriptionOnly } from "@/lib/group-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,24 @@ export default async function ComprarBonoPage() {
   const renewalDay = Number(centerToday().slice(8, 10));
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
+  /*
+   * Amb les subscripcions apagades, el grup DESAPAREIX del catàleg de compra.
+   *
+   * No és una tercera regla: és la conseqüència de les altres dues juntes. El
+   * grup només es pot tenir per subscripció, i amb l'interruptor apagat no se'n
+   * pot obrir cap de nova; ensenyar la targeta seria portar-lo a un pas 2 sense
+   * cap botó. Val més que el servei no hi sigui que que hi sigui i no faci res.
+   *
+   * L'interruptor segueix volent dir el que deia —cap subscripció NOVA, les que
+   * ja hi són es renoven igual—, i per això qui ja en té una continua veient les
+   * seves sessions i el seu bloc a /client/bonos/meus. El que desapareix és
+   * l'aparador, no el que ja s'ha venut. A Configuració s'avisa d'això mateix
+   * abans d'apagar-lo.
+   */
+  const buyableServices = settings.subscriptionsEnabled
+    ? services
+    : services.filter((s) => !isSubscriptionOnly(s.serviceType));
+
   return (
     <main className="mx-auto max-w-2xl p-6">
       <h1 className="mb-4 text-2xl text-brand-dark">{t("title")}</h1>
@@ -102,7 +121,7 @@ export default async function ComprarBonoPage() {
       )}
 
       <BuyBonoForm
-        services={services}
+        services={buyableServices}
         palette={palette}
         effectivePrices={effectivePrices}
         pendingReferralReward={pendingReferralReward}

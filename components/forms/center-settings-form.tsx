@@ -342,6 +342,20 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           onChange={setSubscriptions}
         />
 
+        {/* L'avís només surt quan està a punt de passar, i no sempre: un
+            advertiment permanent es deixa de llegir a la tercera visita. */}
+        {!subscriptions && (
+          <p className="rounded-lg border border-brand-orange/40 bg-brand-orange/5 px-3 py-2 text-sm text-brand-charcoal">
+            <strong className="text-brand-orange">
+              Amb això apagat no es pot vendre cap sessió de grup.
+            </strong>{" "}
+            Els bons de grup només existeixen per subscripció: sense
+            subscripcions noves, el grup desapareix de la pantalla de compra del
+            client i tampoc es pot donar d&apos;alta des de la seva fitxa. Qui ja
+            en tingui una continua rebent les seves sessions cada mes.
+          </p>
+        )}
+
         {/* El valor va en un input ocult FORA del fieldset, com el termini de
             cobrament i els mesos dels vals: un fieldset deshabilitat no envia
             els seus camps i el límit es perdria en apagar el toggle. */}

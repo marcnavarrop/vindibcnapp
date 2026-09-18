@@ -585,6 +585,15 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           t: "p",
           text: "Els bons es creen des de la fitxa del client, a la pestanya Bons, i això sí que és només per als clients que tens assignats. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
         },
+        { t: "h", text: "El grup no es ven solt" },
+        {
+          t: "p",
+          text: "Un bo de Grup reduït no es pot crear a mà: el grup només existeix per subscripció mensual. Si tries un paquet de grup a «Nou bo», el formulari canvia sol —desapareixen les sessions i el preu, que els posa el catàleg— i el botó passa a ser «Donar d'alta la subscripció». El que es crea és la quota mensual, amb el bo del primer mes ja emès i pendent de cobrament, com qualsevol altre mes.",
+        },
+        {
+          t: "p",
+          text: "Des d'aquí només pots donar d'alta la que es paga AL CENTRE. La de targeta la demana Stripe i necessita que sigui el client qui tecleja la seva, així que per aquell camí ha d'entrar ell des dels seus bons. Si el client ja té una subscripció de grup viva, no se'n pot obrir una segona i el formulari t'ho diu.",
+        },
         { t: "h", text: "Anul·lar un bo" },
         {
           t: "p",

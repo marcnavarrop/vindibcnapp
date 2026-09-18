@@ -8,6 +8,7 @@ import { getEffectivePrice } from "@/lib/data/promotions";
 import { createPayment } from "@/lib/data/payments";
 import { centerToday } from "@/lib/center-time";
 import { SERVICE_LABELS } from "@/lib/labels";
+import { isSubscriptionOnly } from "@/lib/group-rules";
 import type { GiftVoucherStatus, ServiceType } from "@/types/database";
 
 /**
@@ -420,6 +421,20 @@ export async function quoteGiftVoucher(input: {
     clientId = client.id;
     s = row;
   }
+
+  // Un val de regal no pot ser d'un paquet de grup.
+  //
+  // Sense aquesta línia la regla "el grup només per subscripció" seria
+  // evitable el mateix dia: qualsevol podria comprar-se un val d'un paquet de
+  // grup i bescanviar-se'l ell mateix, i el bo que en surt neix amb
+  // `subscription_id` a null com qualsevol compra solta. És un camí de
+  // cotització a part del dels bons, així que el tall de `quoteBonoPurchase`
+  // no hi arriba i cal repetir-lo aquí.
+  //
+  // Com allà, això NO afecta `createGiftVoucherFromSnapshot`: un val ja pagat
+  // es crea encara que entremig la regla hagi canviat.
+  if (isSubscriptionOnly(s.service_type))
+    throw new Error("Els paquets de grup no es poden regalar: van per subscripció.");
 
   // SENSE clientId, i és una decisió de disseny, no un oblit.
   //

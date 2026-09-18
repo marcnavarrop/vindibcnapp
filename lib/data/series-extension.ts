@@ -9,6 +9,7 @@ import {
 } from "@/lib/center-time";
 import { slotToHHMM } from "@/lib/availability-slots";
 import { nextOccurrence } from "@/lib/booking-series-core";
+import { canRepeatInSeries } from "@/lib/group-rules";
 import {
   applyOccurrences,
   resolveSeries,
@@ -81,6 +82,30 @@ export type ExtensionOutcome = {
 export async function extendSeriesForSubscription(
   subscription: Subscription,
 ): Promise<ExtensionOutcome[]> {
+  // ─── AQUESTA FUNCIÓ JA NO ALLARGA RES, I ÉS EL QUE TOCA ────────────────────
+  //
+  // Una reserva de grup ja no es pot repetir en bucle (vegeu `lib/group-rules.ts`).
+  // Com que les subscripcions NOMÉS existeixen per a 'grupo_reducido' —ho diu
+  // `SUBSCRIBABLE_SERVICE_TYPE` i ho garanteix un check de la 0072—, aquesta
+  // condició es compleix per a totes i cadascuna de les subscripcions que hi
+  // haurà mai. Dit sense eufemismes: la 0074 queda retirada.
+  //
+  // PER QUÈ EL TALL ÉS AQUÍ I NO MÉS AMUNT. El que s'atura és generar
+  // ocurrències NOVES. Tota la resta de la 0074 —les sèries vives, les seves
+  // ocurrències ja reservades, el recompte, la cancel·lació sencera des de «Les
+  // meves sèries»— segueix funcionant igual. Hi ha sèries de grup creades abans
+  // d'aquesta regla amb sessions ja reservades al calendari, i aquelles són
+  // seves: es respecten i s'esgoten soles quan arribin al seu límit. No se'n
+  // cancel·la ni una.
+  //
+  // PER QUÈ NO S'ESBORRA LA MAQUINÀRIA. Perquè el dia que el centre vulgui
+  // subscripcions d'un servei que no sigui de grup, la condició deixarà de
+  // complir-se sola i això tornarà a servir sense haver-ho de reescriure. I
+  // perquè la crida segueix viva als dos camins de renovació (el cron del
+  // centre i el webhook de Stripe): treure-la d'allà seria remenar el pas més
+  // delicat dels dos per no guanyar res.
+  if (!canRepeatInSeries(subscription.serviceType)) return [];
+
   const series = await listSeriesToExtend(
     subscription.clientId,
     subscription.serviceType,

@@ -28,6 +28,7 @@ import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
+import { canRepeatInSeries } from "@/lib/group-rules";
 import { getViewer } from "@/lib/auth";
 import type {
   Database,
@@ -720,6 +721,25 @@ async function createIndividualReservations(
  * Crea una o més reserves a partir d'un bo, consumint una sessió per reserva.
  * Amb `repeatWeeks > 1` crea una reserva cada setmana a la mateixa hora.
  */
+/**
+ * Les de grup no es repeteixen setmana rere setmana.
+ *
+ * El formulari ja no ensenya el camp quan el servei és de grup, però el
+ * `serviceType` real no se sap fins que s'ha llegit el bo, i això passa aquí
+ * dins. Per això la comprovació viu en aquest fitxer i no al parseig del
+ * formulari: és l'únic lloc on els dos camins —amb bo i de cortesia— ja han
+ * resolt de quin servei parlen.
+ *
+ * Llança en comptes de retallar-ho a una de sola en silenci: qui ha enviat 8
+ * setmanes ha de saber que no s'han fet, no descobrir-ho comptant reserves.
+ */
+function assertRepeatable(serviceType: ServiceType, weeks: number): void {
+  if (weeks > 1 && !canRepeatInSeries(serviceType))
+    throw new Error(
+      "Les sessions de grup no es poden repetir cada setmana: s'han de crear d'una en una.",
+    );
+}
+
 export async function createReservation(
   input: ReservationInput,
   repeatWeeks = 1,
@@ -744,6 +764,7 @@ export async function createReservation(
       );
     const clientId = bono ? bono.client_id : input.clientId!;
     const serviceType = bono ? bono.service_type : input.serviceType!;
+    assertRepeatable(serviceType, weeks);
     for (const scheduled_at of dates) {
       // La disponibilitat del professional també mana per aquí. Fins ara aquest
       // camí —el manual, el d'admin i professional— no la mirava gens: podia
@@ -838,6 +859,7 @@ export async function createReservation(
 
   const clientId = bono ? bono.client_id : input.clientId!;
   const serviceType = bono ? bono.service_type : input.serviceType!;
+  assertRepeatable(serviceType, weeks);
 
   // La disponibilitat del professional mana també per aquí. Aquest camí —el
   // manual d'admin i professional— no la mirava gens, i podia col·locar una

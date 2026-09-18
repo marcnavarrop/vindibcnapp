@@ -687,9 +687,9 @@ export function buildClientManual(
               {
                 t: "p",
                 text: T({
-                  ca: `Als bons de Grup reduït, a més de comprar-ne un de solt, pots subscriure-t'hi: reps aquestes mateixes sessions cada mes sense haver de tornar a comprar res. El dia de renovació és el dia del mes en què t'hi dones d'alta, i te'l diem abans de confirmar.`,
-                  es: `En los bonos de Grupo reducido, además de comprar uno suelto, puedes suscribirte: recibes estas mismas sesiones cada mes sin tener que volver a comprar nada. El día de renovación es el día del mes en que te das de alta, y te lo decimos antes de confirmar.`,
-                  en: `With Small group passes, as well as buying one outright you can subscribe: you get those same sessions every month without having to buy anything again. Your renewal day is the day of the month you signed up, and we tell you which it is before you confirm.`,
+                  ca: `Els bons de Grup reduït NOMÉS van per subscripció: no se'n compra un de solt. En triar-lo, les úniques opcions són subscriure't pagant al centre o amb targeta. Reps aquestes sessions cada mes sense haver de tornar a comprar res, i el dia de renovació és el dia del mes en què t'hi dones d'alta, que te'l diem abans de confirmar.`,
+                  es: `Los bonos de Grupo reducido van SOLO por suscripción: no se compra uno suelto. Al elegirlo, las únicas opciones son suscribirte pagando en el centro o con tarjeta. Recibes estas sesiones cada mes sin tener que volver a comprar nada, y el día de renovación es el día del mes en que te das de alta, que te lo decimos antes de confirmar.`,
+                  en: `Small group passes come ONLY as a subscription: there's no one-off purchase. When you pick one, your only options are to subscribe paying at the centre or by card. You get those sessions every month without having to buy anything again, and your renewal day is the day of the month you signed up, which we tell you before you confirm.`,
                 }),
               },
               {
@@ -1248,6 +1248,14 @@ export function buildClientManual(
           }),
         },
         {
+          t: "warn",
+          text: T({
+            ca: "Les sessions de Grup reduït no es poden repetir en bucle, i per això no hi trobaràs cap de les dues portes. Una franja de grup són poques places, i deixar-la reservada mes rere mes per la mateixa persona la tancaria per a la resta. Les de grup es reserven d'una en una.",
+            es: "Las sesiones de Grupo reducido no se pueden repetir en bucle, y por eso no encontrarás ninguna de las dos puertas. Una franja de grupo son pocas plazas, y dejarla reservada mes tras mes por la misma persona la cerraría para el resto. Las de grupo se reservan de una en una.",
+            en: "Small group sessions can't be repeated in a loop, which is why neither way in appears for them. A group slot has only a few places, and leaving it booked month after month by the same person would close it to everyone else. Group sessions are booked one at a time.",
+          }),
+        },
+        {
           t: "ol",
           items: [
             T({
@@ -1336,22 +1344,6 @@ export function buildClientManual(
                   ],
                 ] as [string, string][])
               : []),
-            ...(s.subscriptionsEnabled
-              ? ([
-                  [
-                    T({
-                      ca: "Allargar-la sola cada mes",
-                      es: "Alargarla sola cada mes",
-                      en: "Extending it automatically each month",
-                    }),
-                    T({
-                      ca: "Només surt si tens subscripció. Quan es renovi, es reserven soles les sessions que faltaven seguint el mateix patró. Si aquell mes la franja està ocupada, aquella sessió no es fa: mai se't canvia l'hora sense dir-t'ho.",
-                      es: "Solo sale si tienes suscripción. Cuando se renueve, se reservan solas las sesiones que faltaban siguiendo el mismo patrón. Si ese mes la franja está ocupada, esa sesión no se hace: nunca se te cambia la hora sin decírtelo.",
-                      en: "This only appears if you have a subscription. When it renews, the remaining sessions book themselves following the same pattern. If the slot is taken that month, that session simply doesn't happen: your time is never changed without telling you.",
-                    }),
-                  ],
-                ] as [string, string][])
-              : []),
           ],
         },
         {
@@ -1430,9 +1422,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "A sota hi ha el recompte i, si el bo no arriba per a totes, t'ho diem abans de confirmar: quantes es reserven ara i quantes queden fora. Si tens subscripció, les que no hi caben no es perden, es reservaran quan es renovi.",
-            es: "Abajo está el recuento y, si el bono no llega para todas, te lo decimos antes de confirmar: cuántas se reservan ahora y cuántas quedan fuera. Si tienes suscripción, las que no caben no se pierden, se reservarán cuando se renueve.",
-            en: "Below is the tally and, if the pass doesn't stretch to all of them, we tell you before you confirm: how many are being booked now and how many fall outside. If you have a subscription, the ones that don't fit aren't lost — they'll be booked when it renews.",
+            ca: "A sota hi ha el recompte i, si el bo no arriba per a totes, t'ho diem abans de confirmar: quantes es reserven ara i quantes queden fora. Les que queden fora no es reserven: quan tornis a tenir sessions, les pots afegir tu.",
+            es: "Abajo está el recuento y, si el bono no llega para todas, te lo decimos antes de confirmar: cuántas se reservan ahora y cuántas quedan fuera. Las que quedan fuera no se reservan: cuando vuelvas a tener sesiones, las puedes añadir tú.",
+            en: "Below is the tally and, if the pass doesn't stretch to all of them, we tell you before you confirm: how many are being booked now and how many fall outside. The ones that fall outside aren't booked: when you have sessions again, you can add them yourself.",
           }),
         },
         {

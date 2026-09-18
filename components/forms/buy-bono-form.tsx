@@ -26,7 +26,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { PaymentMethodOption } from "@/components/forms/payment-method-option";
-import { Building2, CreditCard, CalendarSync } from "lucide-react";
+import { Building2, CreditCard } from "lucide-react";
+import { isSubscriptionOnly } from "@/lib/group-rules";
 
 // ─── Component principal ──────────────────────────────────────────────────────
 export function BuyBonoForm({
@@ -91,17 +92,11 @@ export function BuyBonoForm({
    * reservar de seguida. Costava adonar-se que s'havia adquirit res: va
    * confondre fins i tot qui coneix l'app. El pas del mig només explica què
    * passarà; la lògica de negoci no canvia.
+   *
+   * Conserva els quatre valors: "center" i "card" ja no s'assoleixen mai amb un
+   * paquet de grup, però segueixen essent l'únic camí per a la resta de serveis.
    */
   const [confirming, setConfirming] = useState<null | "center" | "card" | "subscription" | "subscriptionCard">(null);
-  /**
-   * El desplegable de la subscripció. NOMÉS controla què es veu.
-   *
-   * `confirming` conserva els seus quatre valors a posta: els diàlegs, les
-   * accions i les dues rutes del servidor ja hi estan lligats, i reduir-los
-   * només per estalviar dos noms hauria tocat codi que avui ja s'ha remenat
-   * prou. Aquí només canvia la presentació.
-   */
-  const [subscribeOpen, setSubscribeOpen] = useState(false);
   /** Condicions acceptades. Es reinicia cada cop que s'obre el diàleg. */
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
@@ -111,6 +106,25 @@ export function BuyBonoForm({
     () => services.find((s) => s.id === serviceId),
     [services, serviceId],
   );
+
+  /**
+   * Aquest servei només es pot tenir per subscripció? (avui, el de grup)
+   *
+   * Es mira el TIPUS triat al pas 1 i no `selected`, perquè el rètol i les
+   * opcions de pagament s'han de decidir encara que el paquet concret trigui un
+   * instant a resoldre's.
+   */
+  const subscriptionOnly = isSubscriptionOnly(serviceType);
+  /**
+   * ...i se li'n pot obrir una de nova ara mateix?
+   *
+   * L'interruptor del centre hi entra per completesa: amb les subscripcions
+   * apagades, /client/bonos ni tan sols ensenya la targeta de grup al pas 1, i
+   * per tant aquí no s'hi arriba. Es deixa perquè aquesta condició és la que ha
+   * de ser certa perquè el botó funcioni, i no la que hagi quedat per
+   * eliminació en una altra pantalla.
+   */
+  const canSubscribe = subscriptionsEnabled && !hasLiveSubscription;
 
   // Estat: subscripció activada. Pantalla pròpia i no la del bo: el que s'acaba
   // de fer no és una compra sinó una que es repetirà sola cada mes, i dir-ho
@@ -188,8 +202,6 @@ export function BuyBonoForm({
           intro={tp("introBono")}
           onSelect={(type) => {
             setServiceType(type);
-            // El desplegable era d'una tria anterior: es replega.
-            setSubscribeOpen(false);
             // Preselecciona el primer paquet d'aquest tipus
             const first = services.find((s) => s.serviceType === type);
             if (first) setServiceId(first.id);
@@ -264,87 +276,91 @@ export function BuyBonoForm({
           {/* Mètode de pagament */}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-              {t("paymentMethod")}
+              {subscriptionOnly ? t("paySubscribeHow") : t("paymentMethod")}
             </span>
 
-            <PaymentMethodOption
-              icon={<Building2 className="h-5 w-5" />}
-              title={t("payCentre")}
-              description={
+            {/* ── Els paquets de grup: NOMÉS subscripció ──────────────────────
+                Les dues opcions de pagament únic no s'amaguen amb una condició
+                afegida al final: senzillament no existeixen per a aquest
+                servei. I les dues maneres de pagar la subscripció pugen al
+                primer nivell, sense la porta intermèdia «Subscriure-m'hi»:
+                aquella porta separava dues decisions —pagar avui o
+                comprometre's cada mes, i com es paga— i aquí ja no n'hi ha cap
+                per prendre. Amb una sola sortida, fer-la prémer dos cops seria
+                cerimònia.
+                La regla es torna a comprovar al servidor (`quoteBonoPurchase` i
+                `quoteSubscription`): aquí es decideix què s'ENSENYA. */}
+            {subscriptionOnly ? (
+              canSubscribe ? (
                 <>
-                  {t("payCentreDesc")}
-                </>
-              }
-              onClick={() => setConfirming("center")}
-            />
-
-            {stripeEnabled && (
-              <PaymentMethodOption
-                icon={<CreditCard className="h-5 w-5" />}
-                title={t("payCard")}
-                description={
-                  <>
-                    {t("payCardDesc")}
-                  </>
-                }
-                onClick={() => setConfirming("card")}
-              />
-            )}
-
-            {/* Només als bons de grup, i només si encara no en té cap de viva.
-                Les tres condicions es tornen a comprovar al servidor: aquí es
-                decideix què s'ENSENYA, no què es permet. */}
-            {subscriptionsEnabled &&
-              !hasLiveSubscription &&
-              serviceType === "grupo_reducido" && (
-                <>
-                  {/* UNA sola porta, i el mètode a dins.
-                      Amb les dues rutes al primer nivell, el selector tenia
-                      quatre caixes i dues deien gairebé el mateix: la decisió
-                      de fons —pagar avui o comprometre's cada mes— quedava
-                      barrejada amb la de com es paga, que és molt més petita.
-                      Ara es prenen en aquest ordre. */}
                   <PaymentMethodOption
                     variant="subscription"
-                    icon={<CalendarSync className="h-5 w-5" />}
-                    title={t("paySubscribe")}
-                    description={<>{t("paySubscribeDesc", { day: renewalDay })}</>}
-                    // Sense targeta només hi ha un camí: desplegar per ensenyar
-                    // una única opció seria fer-li prémer dos cops el mateix.
-                    onClick={() =>
-                      stripeEnabled
-                        ? setSubscribeOpen((v) => !v)
-                        : setConfirming("subscription")
-                    }
+                    icon={<Building2 className="h-5 w-5" />}
+                    title={t("paySubscribeAtCentre")}
+                    description={<>{t("paySubscribeAtCentreDesc")}</>}
+                    onClick={() => setConfirming("subscription")}
                   />
-
-                  {stripeEnabled && subscribeOpen && (
-                    <div className="ml-1 flex flex-col gap-2 border-l-2 border-brand-purple-light/40 pl-4">
-                      <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-                        {t("paySubscribeHow")}
-                      </span>
-                      <PaymentMethodOption
-                        variant="subscription"
-                        icon={<Building2 className="h-5 w-5" />}
-                        title={t("paySubscribeAtCentre")}
-                        description={
-                          <>{t("paySubscribeAtCentreDesc")}</>
-                        }
-                        onClick={() => setConfirming("subscription")}
-                      />
-                      <PaymentMethodOption
-                        variant="subscription"
-                        icon={<CreditCard className="h-5 w-5" />}
-                        title={t("paySubscribeByCard")}
-                        description={
-                          <>{t("paySubscribeByCardDesc")}</>
-                        }
-                        onClick={() => setConfirming("subscriptionCard")}
-                      />
-                    </div>
+                  {stripeEnabled && (
+                    <PaymentMethodOption
+                      variant="subscription"
+                      icon={<CreditCard className="h-5 w-5" />}
+                      title={t("paySubscribeByCard")}
+                      description={<>{t("paySubscribeByCardDesc")}</>}
+                      onClick={() => setConfirming("subscriptionCard")}
+                    />
                   )}
+                  <p className="mt-1 text-xs text-brand-muted">
+                    {t("groupSubscriptionOnly", { day: renewalDay })}
+                  </p>
                 </>
-              )}
+              ) : (
+                /* Sense sortida possible, i abans en quedava una de dolenta: el
+                   bo solt. Val més dir per què no hi ha res que deixar tres
+                   caixes que menteixen. Només passa si ja en té una de viva
+                   —l'índex únic de la 0072 no en deixa una segona—; amb les
+                   subscripcions apagades, el grup ni tan sols arriba al pas 1. */
+                <div className="rounded-xl border border-brand-border bg-brand-bg px-4 py-3 text-sm">
+                  <p className="font-bold text-brand-dark">
+                    {t("groupAlreadySubscribedTitle")}
+                  </p>
+                  <p className="mt-0.5 text-brand-muted">
+                    {t("groupAlreadySubscribedBody")}
+                  </p>
+                  <Link
+                    href="/client/bonos/meus"
+                    className="mt-2 inline-flex text-sm font-bold text-brand-purple underline hover:text-brand-orange"
+                  >
+                    {t("groupAlreadySubscribedCta")}
+                  </Link>
+                </div>
+              )
+            ) : (
+              <>
+                <PaymentMethodOption
+                  icon={<Building2 className="h-5 w-5" />}
+                  title={t("payCentre")}
+                  description={
+                    <>
+                      {t("payCentreDesc")}
+                    </>
+                  }
+                  onClick={() => setConfirming("center")}
+                />
+
+                {stripeEnabled && (
+                  <PaymentMethodOption
+                    icon={<CreditCard className="h-5 w-5" />}
+                    title={t("payCard")}
+                    description={
+                      <>
+                        {t("payCardDesc")}
+                      </>
+                    }
+                    onClick={() => setConfirming("card")}
+                  />
+                )}
+              </>
+            )}
           </div>
 
           {state.errorCode && (

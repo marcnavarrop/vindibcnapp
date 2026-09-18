@@ -35,6 +35,7 @@ import {
   type SeriesSeed,
   type SeriesReviewState,
 } from "@/components/forms/series-wizard";
+import { canRepeatInSeries } from "@/lib/group-rules";
 import {
   joinWaitlistAction,
   leaveWaitlistAction,
@@ -815,6 +816,12 @@ export function ClientCenterCalendar({
         {t("legend")}
       </p>
 
+      {/* Sense `seed` no hi ha repetició possible. És el que tanca LES DUES
+          portes del bucle —la casella «Fer-ho recurrent» d'aquest diàleg i el
+          botó «Repetir en bucle» del de sota— amb una sola regla i sense tocar
+          ni una línia de cap dels dos. Les de grup no en tenen mai: quatre
+          places ocupades en bucle per la mateixa persona és exactament el que
+          no pot passar (vegeu `lib/group-rules.ts`). */}
       {book && (
         <CreateModal
           trainerId={book.trainerId}
@@ -822,12 +829,16 @@ export function ClientCenterCalendar({
           service={book.service}
           slot={book.slot}
           mates={book.mates}
-          seed={{
-            scheduledAt: book.slot.toISOString(),
-            trainerId: book.trainerId,
-            trainerName: trainerName(book.trainerId),
-            serviceType: book.service,
-          }}
+          seed={
+            canRepeatInSeries(book.service)
+              ? {
+                  scheduledAt: book.slot.toISOString(),
+                  trainerId: book.trainerId,
+                  trainerName: trainerName(book.trainerId),
+                  serviceType: book.service,
+                }
+              : undefined
+          }
           remainingSessions={data.bonoSessions[book.service]}
           waitlistEnabled={waitlistEnabled}
           hasSubscription={hasSubscription}
@@ -859,7 +870,7 @@ export function ClientCenterCalendar({
           minCancellationHours={minCancellationHours}
           cancelAction={cancelAction}
           seed={
-            own.trainerId
+            own.trainerId && canRepeatInSeries(own.service)
               ? {
                   scheduledAt: own.slot.toISOString(),
                   trainerId: own.trainerId,

@@ -8,6 +8,7 @@ import { stripeEnabled } from "@/lib/stripe";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listGiftVouchersBought } from "@/lib/data/gift-vouchers";
 import { GiftVoucherForm } from "@/components/forms/gift-voucher-form";
+import { isSubscriptionOnly } from "@/lib/group-rules";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatEur } from "@/lib/labels";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -33,7 +34,14 @@ export default async function RegalsPage() {
     ? getClientByProfile(viewer.id)
     : Promise.resolve(null);
 
-  const services = await servicesPromise;
+  // Els paquets de grup no es regalen: van per subscripció, i una subscripció no
+  // es pot posar a nom d'algú altre. Sense aquest filtre la regla seria evitable
+  // amb un val comprat per a un mateix, així que el catàleg de regals ja no els
+  // ensenya i `quoteGiftVoucher` els rebutja encara que arribin pel camí que
+  // sigui.
+  const services = (await servicesPromise).filter(
+    (s) => !isSubscriptionOnly(s.serviceType),
+  );
   const [effectivePricesMap, palette, client] = await Promise.all([
     // L'idioma va fins al càlcul: l'etiqueta del descompte es formata allà.
     //

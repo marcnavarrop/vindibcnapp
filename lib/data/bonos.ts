@@ -14,7 +14,23 @@ import {
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerToday } from "@/lib/center-time";
 import { cancelBlockFor, CANCEL_BLOCK_LABELS } from "@/lib/bono-rules";
+import { isSubscriptionOnly } from "@/lib/group-rules";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
+
+/**
+ * El bo de grup no es ven solt: la regla sencera i el perquè viuen a
+ * `lib/group-rules.ts`. Aquí només se'n fa complir la meitat que toca aquest
+ * mòdul, i es fa en els DOS naixements d'un bo que passen per ell:
+ * `quoteBonoPurchase` (el client, pagui al centre o amb targeta) i `createBono`
+ * (l'alta manual d'admin i professional).
+ *
+ * NO es comprova a `createPaidBono`, i és a posta: aquell el crida el webhook de
+ * Stripe amb els diners ja cobrats. Un Checkout de grup obert abans que aquesta
+ * regla existís s'ha de complir igualment —negar-s'hi seria quedar-se els diners
+ * sense donar res a canvi—. Mateix criteri que `createGiftVoucherFromSnapshot`.
+ */
+const GROUP_IS_SUBSCRIPTION_ONLY =
+  "Els bons de grup només es poden contractar per subscripció.";
 
 // ─── Caducitat ───────────────────────────────────────────────────────────────
 
@@ -184,6 +200,13 @@ export type BonoInput = {
 
 /** Crea un bono para un cliente (sesiones restantes = totales al comprarlo). */
 export async function createBono(input: BonoInput): Promise<string> {
+  // L'alta manual d'un bo de grup passa per la subscripció, també quan la fa
+  // l'admin o el professional des de la fitxa del client. Es comprova aquí i no
+  // només al formulari: que el desplegable no ho ofereixi no impedeix cridar
+  // l'acció directament.
+  if (isSubscriptionOnly(input.serviceType))
+    throw new Error(GROUP_IS_SUBSCRIPTION_ONLY);
+
   let bonoId: string;
   // Es calcula ARA i es desa: a partir d'aquí el bo ja no depèn de la config.
   const expiresAt = await expiryForNewBono();
@@ -283,7 +306,17 @@ export type BonoPurchaseQuote = {
  * Que el paquet hagi d'estar ACTIU es comprova aquí i no a qui crida: el
  * navegador només envia un `serviceId`, i el preu i les sessions han de sortir
  * sempre del catàleg.
+ *
+ * AL CLIENT SE L'HI POT APUNTAR DE DUES MANERES, i per això `ClientRef`. El
+ * propi client només sap el seu `profileId` —és el que porta la sessió—, mentre
+ * que l'admin i el professional treballen sempre amb el `clientId` de la fitxa
+ * que tenen obert. Resoldre'n un a partir de l'altre a cada cridant seria
+ * escampar la mateixa consulta per mitja app; `clients.profile_id` és
+ * `not null unique` des de la 0001, així que la correspondència existeix sempre
+ * i en els dos sentits.
  */
+export type ClientRef = { profileId: string } | { clientId: string };
+
 export type CatalogueSelection = {
   clientId: string;
   service: {
@@ -296,13 +329,14 @@ export type CatalogueSelection = {
   };
 };
 
-export async function loadClientAndService(input: {
-  profileId: string;
-  serviceId: string;
-}): Promise<CatalogueSelection> {
+export async function loadClientAndService(
+  input: ClientRef & { serviceId: string },
+): Promise<CatalogueSelection> {
   if (USE_MOCK) {
     const store = getStore();
-    const client = store.clients.find((c) => c.profile_id === input.profileId);
+    const client = store.clients.find((c) =>
+      "clientId" in input ? c.id === input.clientId : c.profile_id === input.profileId,
+    );
     if (!client) throw new Error("Client no trobat.");
     const row = store.services.find((x) => x.id === input.serviceId && x.active);
     if (!row) throw new Error("Servei no vàlid.");
@@ -320,10 +354,11 @@ export async function loadClientAndService(input: {
   }
 
   const admin = createAdminClient();
+  const byClientId = "clientId" in input;
   const { data: client, error: cErr } = await admin
     .from("clients")
     .select("id")
-    .eq("profile_id", input.profileId)
+    .eq(byClientId ? "id" : "profile_id", byClientId ? input.clientId : input.profileId)
     .single();
   if (cErr || !client) throw new Error("Client no trobat.");
 
@@ -353,6 +388,17 @@ export async function quoteBonoPurchase(input: {
 }): Promise<BonoPurchaseQuote> {
   const { getEffectivePrice } = await import("@/lib/data/promotions");
   const { clientId, service } = await loadClientAndService(input);
+
+  // Els bons de grup no es venen solts. Aquesta comprovació és l'ESPILL EXACTE
+  // de la de `quoteSubscription`, que rebutja tot el que NO sigui de grup: entre
+  // les dues, cada paquet té una porta i només una.
+  //
+  // Va aquí i no a les dues accions perquè aquesta funció és l'embut per on
+  // passen els dos camins de compra —el bo pendent de pagar i la sessió de
+  // Stripe—. A la pantalla es decideix què s'ensenya; qui rep el `serviceId` és
+  // el servidor i no es pot refiar del que li arribi.
+  if (isSubscriptionOnly(service.serviceType))
+    throw new Error(GROUP_IS_SUBSCRIPTION_ONLY);
 
   // El millor descompte, i només un: l'oferta pública del catàleg o la
   // recompensa personal de referit. No es combinen.

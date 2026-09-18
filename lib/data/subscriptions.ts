@@ -3,7 +3,8 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { loadClientAndService } from "@/lib/data/bonos";
+import { loadClientAndService, type ClientRef } from "@/lib/data/bonos";
+import { SUBSCRIPTION_ONLY_SERVICE } from "@/lib/group-rules";
 import { centerToday } from "@/lib/center-time";
 import { anchorDayFor, renewalAfter } from "@/lib/subscription-cycle";
 import { cycleExpiry, previousDay } from "@/lib/subscription-cycle";
@@ -26,8 +27,17 @@ import type {
  * configurable per variable d'entorn.
  */
 
-/** Només els bons de grup es poden subscriure. Ho diu també un check a la 0072. */
-export const SUBSCRIBABLE_SERVICE_TYPE: ServiceType = "grupo_reducido";
+/**
+ * Només els bons de grup es poden subscriure. Ho diu també un check a la 0072.
+ *
+ * Des que el grup NOMÉS es pot tenir per subscripció, aquesta constant i
+ * `SUBSCRIPTION_ONLY_SERVICE` són les dues cares de la mateixa moneda: l'una diu
+ * què es pot subscriure i l'altra què no es pot comprar de cap altra manera. Es
+ * deriva d'aquella, i no es torna a escriure el literal, perquè el dia que
+ * canviï ho ha de fer una vegada i no dues. El nom es conserva perquè és el que
+ * llegeix qui ve de la 0072.
+ */
+export const SUBSCRIBABLE_SERVICE_TYPE: ServiceType = SUBSCRIPTION_ONLY_SERVICE;
 
 export type Subscription = {
   id: string;
@@ -139,11 +149,18 @@ export type SubscriptionQuote = {
  * Les OFERTES SEGMENTADES sí que hi entren, i per això es passa el `clientId`:
  * el preu que es congela ha de ser el que aquest client veu a la pantalla. És
  * la mateixa crida que fa /client/bonos, i per això dona el mateix número.
+ *
+ * ACCEPTA `profileId` O `clientId` perquè ara la fan servir les dues bandes: el
+ * client que es subscriu ell mateix (només sap el seu profileId, que és el que
+ * porta la sessió) i l'admin o el professional que el subscriuen des de la
+ * fitxa (només tenen el clientId). Duplicar-la per a cada banda voldria dir que
+ * el dia que canviï què es congela a l'alta, una de les dues es quedaria
+ * enrere: el mateix client tindria un preu o un altre segons qui l'hagués
+ * apuntat.
  */
-export async function quoteSubscription(input: {
-  profileId: string;
-  serviceId: string;
-}): Promise<SubscriptionQuote> {
+export async function quoteSubscription(
+  input: ClientRef & { serviceId: string },
+): Promise<SubscriptionQuote> {
   const { getEffectivePrice } = await import("@/lib/data/promotions");
   const { clientId, service } = await loadClientAndService(input);
 

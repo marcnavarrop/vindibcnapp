@@ -9,6 +9,7 @@ import {
   notifySubscriptionRenewed,
 } from "@/lib/data/subscription-notify";
 import { cycleExpiry } from "@/lib/subscription-cycle";
+import type { ClientRef } from "@/lib/data/bonos";
 import {
   createSubscription,
   getCycleBono,
@@ -42,11 +43,24 @@ import {
  *
  * L'interruptor del centre es mira AQUÍ i no només a la pantalla: que el botó
  * no es vegi no impedeix cridar l'acció directament.
+ *
+ * LA CRIDEN TRES BANDES i totes tres amb el mateix resultat: el client que es
+ * subscriu ell mateix (amb el seu `profileId`), i l'admin o el professional que
+ * l'apunten des de la fitxa (amb el `clientId`). Una sola funció perquè el
+ * primer mes d'una subscripció sigui idèntic l'hagi demanat qui l'hagi demanat
+ * —mateix preu congelat, mateixa àncora, mateix bo pendent—: si l'alta del
+ * taulell fos una còpia, tard o d'hora les dues divergirien.
+ *
+ * AMB TARGETA NO HI HA EQUIVALENT PER AL TAULELL, i no és un descuit: el
+ * Checkout de Stripe exigeix que sigui el client qui tecleja la seva targeta.
+ * L'admin i el professional només poden donar d'alta la que es paga al centre;
+ * per a la de targeta, el client entra ell a /client/bonos. És el mateix
+ * criteri que ja segueix `adminChangePriceAction`, que es nega a tocar el preu
+ * d'una subscripció de targeta perquè aquell el governa Stripe.
  */
-export async function subscribeAtCenter(input: {
-  profileId: string;
-  serviceId: string;
-}): Promise<{ subscriptionId: string; bonoId: string }> {
+export async function subscribeAtCenter(
+  input: ClientRef & { serviceId: string },
+): Promise<{ subscriptionId: string; bonoId: string }> {
   const { subscriptionsEnabled } = await getCenterSettings();
   if (!subscriptionsEnabled)
     throw new Error("Les subscripcions no estan disponibles ara mateix.");

@@ -771,13 +771,17 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "La quota mensual dels bons de grup reduït: en comptes de comprar el bo cada vegada, el client paga cada mes i rep les seves sessions. Només els bons de grup es poden subscriure.",
+          text: "La quota mensual dels bons de grup reduït: en comptes de comprar el bo cada vegada, el client paga cada mes i rep les seves sessions. Només els bons de grup es poden subscriure, i des d'ara és també a l'inrevés: un bo de grup NOMÉS es pot tenir per subscripció. No se'n ven cap de solt, ni al client, ni des de la seva fitxa, ni en un val de regal.",
+        },
+        {
+          t: "p",
+          text: "El client s'hi apunta des dels seus bons, pagant al centre o amb targeta. Tu i els professionals també podeu apuntar-l'hi des de «Nou bo» a la fitxa: en triar un paquet de grup, el formulari canvia i el que es crea és la subscripció. Des del taulell només es pot donar d'alta la que es paga AL CENTRE —el pagament amb targeta el demana Stripe i necessita que sigui el client qui tecleja la seva—.",
         },
         {
           t: "p",
           text: s.subscriptionsEnabled
             ? "Ara mateix se'n poden contractar de noves."
-            : "Ara mateix NO se'n poden contractar de noves (Configuració → Centre). Les que ja hi són es continuen renovant cada mes: el centre no pot deixar sense sessions qui ja va dir que sí.",
+            : "Ara mateix NO se'n poden contractar de noves (Configuració → Centre), i com que el grup només va per subscripció, això vol dir que ARA MATEIX NO ES POT VENDRE CAP SESSIÓ DE GRUP: el servei no surt ni a la pantalla de compra del client ni al formulari de la seva fitxa. Les subscripcions que ja hi són es continuen renovant cada mes: el centre no pot deixar sense sessions qui ja va dir que sí.",
         },
         { t: "h", text: "Les dues regles que ho ordenen tot" },
         {
@@ -1522,7 +1526,6 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             "Reprèn les subscripcions congelades a qui avui li tocava despertar-se.",
             "Renova les subscripcions que avui compleixen mes: emet el bo del cicle i n'anota el cobrament. Si el mes no es pot cobrar, la subscripció queda aturada per impagament.",
-            "Estén les sèries de reserves setmanals dels subscriptors cap al mes nou.",
             "Envia els recordatoris de les sessions de demà als clients que els tinguin activats.",
             "Envia el resum diari d'agenda als professionals que el tinguin activat.",
             "Tanca els bons que ja han passat de data i els posa com a caducats.",
