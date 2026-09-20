@@ -48,8 +48,9 @@ export type SeriesFormInput = {
 export type CalculateState = {
   errorCode?: ReservaErrorCode;
   occurrences?: ResolvedOccurrence[];
-  bonoRemaining?: number;
-  /** Ocurrències que no s'han pogut generar perquè el bo s'havia acabat. */
+  /** Sessions del CONJUNT de bons utilitzables, no les d'un de sol. */
+  sessionsRemaining?: number;
+  /** Ocurrències que no s'han pogut generar perquè s'acabaven les sessions. */
   skippedForBono?: number;
 };
 
@@ -106,7 +107,7 @@ export async function calculateSeriesAction(
   }
   return {
     occurrences: plan.occurrences,
-    bonoRemaining: plan.bonoRemaining,
+    sessionsRemaining: plan.sessionsRemaining,
     skippedForBono: plan.skippedForBono,
   };
 }

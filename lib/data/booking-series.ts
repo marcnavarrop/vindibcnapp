@@ -66,8 +66,22 @@ export type SeriesRequest = {
 
 export type SeriesPlan = {
   occurrences: ResolvedOccurrence[];
-  /** Sessions que li queden al bo que es farà servir. */
-  bonoRemaining: number;
+  /**
+   * Sessions disponibles AL CONJUNT dels bons utilitzables d'aquest servei.
+   *
+   * Es deia `bonoRemaining` i era les d'un sol bo, el més antic. El nom
+   * mentia i la xifra també: una sèrie no gasta d'un bo, gasta de la cua
+   * sencera. Vegeu `loadContext`.
+   */
+  sessionsRemaining: number;
+  /**
+   * El primer bo de la cua: el que gastarà la primera reserva.
+   *
+   * NO és el sostre de la sèrie —això ho diu `sessionsRemaining`—. Només
+   * s'escriu com a metadada (`booking_series.bono_id`, `waitlist_entries`);
+   * qui decideix de quin bo surt cada reserva és `createClientReservation`,
+   * que ho torna a mirar a cada una.
+   */
   bonoId: string | null;
   /**
    * Ocurrències que es demanaven i no s'han arribat ni a mirar perquè el bo
@@ -137,11 +151,11 @@ function ownOverlaps(ownAt: Map<number, OwnSlot>, at: Date): boolean {
 export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
   const first = new Date(req.firstAt);
   if (Number.isNaN(first.getTime()))
-    return { occurrences: [], bonoRemaining: 0, bonoId: null, skippedForBono: 0, error: "Data no vàlida." };
+    return { occurrences: [], sessionsRemaining: 0, bonoId: null, skippedForBono: 0, error: "Data no vàlida." };
 
   const ctx = await loadContext(req);
   if (ctx.error)
-    return { occurrences: [], bonoRemaining: 0, bonoId: null, skippedForBono: 0, error: ctx.error };
+    return { occurrences: [], sessionsRemaining: 0, bonoId: null, skippedForBono: 0, error: ctx.error };
 
   // Les dates es generen en hora del CENTRE i es tornen a convertir a
   // instants. Sumar 7×24 h sobre l'instant cru semblaria equivalent, però no
@@ -166,7 +180,7 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
   // comptar per a les següents (dues ocurrències no poden ocupar la mateixa
   // plaça d'un grup).
   const taken = [...ctx.slots];
-  let remaining = ctx.bonoRemaining;
+  let remaining = ctx.sessionsRemaining;
 
   let skippedForBono = 0;
 
@@ -307,7 +321,7 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
 
   return {
     occurrences,
-    bonoRemaining: ctx.bonoRemaining,
+    sessionsRemaining: ctx.sessionsRemaining,
     bonoId: ctx.bonoId,
     skippedForBono,
   };
@@ -391,8 +405,10 @@ function findAlternative(
 
 type Ctx = {
   error?: string;
+  /** El primer bo de la cua. Metadada, no sostre: vegeu `SeriesPlan`. */
   bonoId: string | null;
-  bonoRemaining: number;
+  /** Sessions del CONJUNT de bons utilitzables d'aquest servei. */
+  sessionsRemaining: number;
   clientId: string;
   slots: SlotRow[];
   rules: Awaited<ReturnType<typeof listAllTrainerRulesLite>>;
@@ -433,11 +449,28 @@ type OwnSlot = {
   seriesId: string | null;
 };
 
+/**
+ * Les sessions que el client té DE VERITAT per a aquest servei.
+ *
+ * La suma de tots els bons utilitzables, no les d'un. Una sèrie de vuit
+ * sessions fa vuit crides a `createClientReservation`, i cada una torna a
+ * triar el bo més antic amb sessions: el consum travessa la cua sencera.
+ * Comptar només el primer feia que l'assistent prometés menys del que el
+ * servidor hauria reservat —el bug del bo vell de 2 sessions que amagava el
+ * bo del cicle de la subscripció.
+ *
+ * La sessió extra de la subscripció hi entra sola: és un bo més d'aquest
+ * servei, i per això es va dissenyar com un bo a part i més nou (0073).
+ */
+function sumSessions(bons: { remaining_sessions: number }[]): number {
+  return bons.reduce((total, b) => total + b.remaining_sessions, 0);
+}
+
 /** Tot el que fa falta per resoldre, demanat d'un sol cop. */
 async function loadContext(req: SeriesRequest): Promise<Ctx> {
   const empty: Ctx = {
     bonoId: null,
-    bonoRemaining: 0,
+    sessionsRemaining: 0,
     clientId: "",
     slots: [],
     rules: [],
@@ -474,7 +507,9 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === req.profileId);
     if (!client) return { ...empty, error: "Client no trobat." };
-    const bono = store.bonos
+    // TOTS els bons utilitzables, en ordre de consum. La primera reserva
+    // gastarà del primer; quan s'acabi, la següent seguirà pel de darrere.
+    const bons = store.bonos
       .filter(
         (b) =>
           b.client_id === client.id &&
@@ -483,8 +518,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
           b.remaining_sessions > 0 &&
           !isBonoExpired(b),
       )
-      .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
-    if (!bono)
+      .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at));
+    if (bons.length === 0)
       return { ...empty, error: "No tens cap bo actiu d'aquest tipus amb sessions." };
     const names = new Map(
       store.profiles.filter((p) => p.role === "trainer").map((p) => [p.id, p.full_name ?? "—"]),
@@ -492,8 +527,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     const rules = await listAllTrainerRulesLite();
     const blocks = await listAllBlocksLite();
     return {
-      bonoId: bono.id,
-      bonoRemaining: bono.remaining_sessions,
+      bonoId: bons[0].id,
+      sessionsRemaining: sumSessions(bons),
       clientId: client.id,
       // Reserves + proves actives, com a la branca real: si en simulació el
       // planificador comptés diferent, provar-ho en local no voldria dir res.
@@ -568,16 +603,17 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       listAllBlocksLite(),
     ]);
 
-  const bono = (bonos ?? []).find(
+  // Ja vénen ordenats per `purchased_at`: l'ordre en què es gastaran.
+  const bons = (bonos ?? []).filter(
     (b) => !isBonoExpired({ status: b.status, expires_at: b.expires_at }),
   );
-  if (!bono)
+  if (bons.length === 0)
     return { ...empty, error: "No tens cap bo actiu d'aquest tipus amb sessions." };
 
   const names = new Map((pros ?? []).map((p) => [p.id, p.full_name ?? "—"]));
   return {
-    bonoId: bono.id,
-    bonoRemaining: bono.remaining_sessions,
+    bonoId: bons[0].id,
+    sessionsRemaining: sumSessions(bons),
     clientId: client.id,
     /*
      * Les reserves I les sessions de prova.

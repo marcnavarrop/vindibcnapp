@@ -111,11 +111,24 @@ function isUsableBono(b: {
 }
 
 /**
- * Sessions per servei, mirant el mateix bo que triarà la reserva.
+ * Sessions per servei: la SUMA de TOTS els bons utilitzables d'aquell servei.
  *
- * L'ordre importa: el motor agafa sempre el bo més antic amb sessions, i
- * aquesta xifra ha de ser la d'aquell mateix bo perquè el que diu la pantalla
- * i el que farà el servidor no es contradiguin.
+ * ABANS MIRAVA NOMÉS EL MÉS ANTIC, I AIXÒ ERA EL BUG
+ *
+ * El raonament d'aleshores era bo però es va quedar curt: "el motor agafa el bo
+ * més antic, així que la pantalla ha de dir el d'aquell mateix bo". Cert per a
+ * UNA reserva. Una SÈRIE, però, són N reserves, i `createClientReservation`
+ * torna a triar bo a cada una: quan el vell s'acaba, la següent ja agafa el
+ * següent de la cua tota sola. FIFO no vol dir "un bo", vol dir l'ORDRE en què
+ * s'esgoten.
+ *
+ * Amb un bo vell de 2 sessions al davant, aquesta xifra deia "et queden 2" i
+ * amagava el bo sencer del cicle de la subscripció —i també la sessió extra,
+ * que ja està pagada—, de manera que l'assistent prometia menys del que el
+ * servidor hauria reservat. La xifra honesta és el que el client TÉ.
+ *
+ * La sessió extra hi entra sense dir-ne res: és un bo més del mateix servei
+ * (vegeu `lib/data/subscription-extras.ts`), i sumar-los tots la inclou.
  */
 function sessionsByService(
   rows: {
@@ -123,16 +136,12 @@ function sessionsByService(
     status: BonoStatus;
     remaining_sessions: number;
     expires_at: string | null;
-    purchased_at: string;
   }[],
 ): Partial<Record<ServiceType, number>> {
   const out: Partial<Record<ServiceType, number>> = {};
-  for (const b of [...rows].sort((a, c) =>
-    a.purchased_at.localeCompare(c.purchased_at),
-  )) {
+  for (const b of rows) {
     if (!isUsableBono(b)) continue;
-    if (out[b.service_type] === undefined)
-      out[b.service_type] = b.remaining_sessions;
+    out[b.service_type] = (out[b.service_type] ?? 0) + b.remaining_sessions;
   }
   return out;
 }
@@ -233,7 +242,7 @@ export async function getClientCenterData(
   const [bonoRows, trainerRows, rules, blocks, resRows] = await Promise.all([
     admin
       .from("bonos")
-      .select("service_type, status, remaining_sessions, expires_at, purchased_at")
+      .select("service_type, status, remaining_sessions, expires_at")
       .eq("client_id", client.id),
     admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer"),
     listAllTrainerRulesLite(),

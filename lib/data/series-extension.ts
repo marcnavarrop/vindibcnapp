@@ -168,9 +168,16 @@ async function extendOne(s: SeriesToExtend): Promise<ExtensionOutcome> {
     allowWaitlist: s.allowWaitlist,
   };
 
-  // `resolveSeries` ja talla pel bo: genera fins on arriben les sessions del
-  // mes que s'acaba d'emetre i compta la resta a `skippedForBono`. Aquest mes
-  // reserva el que pot; el que en quedi fora, el mes vinent.
+  // `resolveSeries` ja talla per les sessions: genera fins on arriben les de
+  // TOTS els bons utilitzables —el del mes que s'acaba d'emetre, el que pugui
+  // quedar d'abans i la sessió extra si n'hi ha— i compta la resta a
+  // `skippedForBono`. Aquest mes reserva el que pot; el que en quedi fora, el
+  // mes vinent.
+  //
+  // Comptava només el més antic, i això deixava l'extensió coixa en silenci:
+  // amb un bo vell d'una sessió per gastar, el cron n'allargava UNA en comptes
+  // de les vuit del cicle nou. Es recuperava sol el mes següent, però el
+  // client havia perdut el mes.
   const plan = await resolveSeries(req);
   if (plan.error) return { ...empty, failed: 1 };
 

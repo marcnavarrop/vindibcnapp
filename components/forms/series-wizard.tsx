@@ -56,7 +56,7 @@ export type SeriesReviewState = {
   seed: SeriesSeed;
   input: SeriesFormInput;
   occurrences: ResolvedOccurrence[];
-  bonoRemaining: number;
+  sessionsRemaining: number;
   skippedForBono: number;
   /** El client té subscripció viva: canvia què vol dir que faltin sessions. */
   hasSubscription: boolean;
@@ -170,7 +170,7 @@ export function RecurrenceFields({
         seed,
         input,
         occurrences: res.occurrences ?? [],
-        bonoRemaining: res.bonoRemaining ?? 0,
+        sessionsRemaining: res.sessionsRemaining ?? 0,
         skippedForBono: res.skippedForBono ?? 0,
         hasSubscription: subscriptionCovers,
       });
@@ -451,11 +451,11 @@ export function SeriesReview({
           >
             {review.hasSubscription
               ? t(review.input.autoExtend ? "bonoLimitAutoExtend" : "bonoLimitSubscription", {
-                  remaining: review.bonoRemaining,
+                  remaining: review.sessionsRemaining,
                   skipped: review.skippedForBono,
                 })
               : t("bonoLimit", {
-                  remaining: review.bonoRemaining,
+                  remaining: review.sessionsRemaining,
                   skipped: review.skippedForBono,
                 })}
           </p>
