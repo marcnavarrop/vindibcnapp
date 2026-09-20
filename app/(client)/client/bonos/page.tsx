@@ -6,7 +6,7 @@ import { getPendingReferralReward } from "@/lib/data/referral";
 import { getClientByProfile } from "@/lib/data/clients";
 import { getColorPalette } from "@/lib/data/colors";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { getLiveSubscription } from "@/lib/data/subscriptions";
+import { getAnyLiveSubscription } from "@/lib/data/subscriptions";
 import { centerToday } from "@/lib/center-time";
 import Link from "next/link";
 import { Gift } from "lucide-react";
@@ -17,7 +17,7 @@ import { hasOutstandingGiftVouchers } from "@/lib/data/gift-vouchers";
 import { RedeemGiftVoucher } from "@/components/forms/redeem-gift-voucher";
 import { BuyBonoForm } from "@/components/forms/buy-bono-form";
 import { RouteTabs } from "@/components/ui/route-tabs";
-import { isSubscriptionOnly } from "@/lib/group-rules";
+import { isSubscriptionOnly } from "@/lib/subscription-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +70,7 @@ export default async function ComprarBonoPage() {
   // Només es pregunta si el centre les té obertes.
   const liveSubscription =
     settings.subscriptionsEnabled && client
-      ? await getLiveSubscription(client.id)
+      ? await getAnyLiveSubscription(client.id)
       : null;
 
   // El dia de renovació que se li promet és el d'AVUI al centre, que és el que
@@ -81,12 +81,25 @@ export default async function ComprarBonoPage() {
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   /*
-   * Amb les subscripcions apagades, el grup DESAPAREIX del catàleg de compra.
+   * Amb les subscripcions apagades, els paquets de subscripció DESAPAREIXEN del
+   * catàleg de compra.
    *
-   * No és una tercera regla: és la conseqüència de les altres dues juntes. El
-   * grup només es pot tenir per subscripció, i amb l'interruptor apagat no se'n
-   * pot obrir cap de nova; ensenyar la targeta seria portar-lo a un pas 2 sense
-   * cap botó. Val més que el servei no hi sigui que que hi sigui i no faci res.
+   * No és una tercera regla: és la conseqüència de les altres dues juntes.
+   * Aquests paquets només es poden tenir per subscripció, i amb l'interruptor
+   * apagat no se'n pot obrir cap de nova; ensenyar-los seria portar el client a
+   * un pas 3 sense cap botó. Val més que no hi siguin que que hi siguin i no
+   * facin res.
+   *
+   * EL QUE HA CANVIAT AMB LA 0086: ABANS DESAPAREIXIA EL SERVEI SENCER. Quan la
+   * regla anava per tipus, apagar l'interruptor esborrava 'grup reduït' del pas
+   * 1 i el client ni el veia. Ara el filtre és per PAQUET, així que el servei
+   * segueix sortint amb els paquets que sí es venen solts —avui, la sessió
+   * individual i el bo de 6 sessions— i només s'amaguen les mensualitats. És
+   * més fidel al que el centre ofereix de debò: el grup no deixa d'existir
+   * perquè les subscripcions estiguin tancades.
+   *
+   * Si un servei es queda sense cap paquet comprable, desapareix sol del pas 1:
+   * el pas de tipus es deriva dels paquets que li arriben, no d'una llista fixa.
    *
    * L'interruptor segueix volent dir el que deia —cap subscripció NOVA, les que
    * ja hi són es renoven igual—, i per això qui ja en té una continua veient les
@@ -96,7 +109,7 @@ export default async function ComprarBonoPage() {
    */
   const buyableServices = settings.subscriptionsEnabled
     ? services
-    : services.filter((s) => !isSubscriptionOnly(s.serviceType));
+    : services.filter((s) => !isSubscriptionOnly(s));
 
   return (
     <main className="mx-auto max-w-2xl p-6">

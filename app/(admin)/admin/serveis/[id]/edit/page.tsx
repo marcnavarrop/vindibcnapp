@@ -35,6 +35,7 @@ export default async function EditServicePage({
             price: service.price,
             defaultSessions: service.defaultSessions,
             active: service.active,
+            subscriptionOnly: service.subscriptionOnly,
           }}
         />
       </main>

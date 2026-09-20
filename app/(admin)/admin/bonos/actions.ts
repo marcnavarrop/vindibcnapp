@@ -13,11 +13,16 @@ export async function createBonoAction(
   formData: FormData,
 ): Promise<FormState> {
   const serviceType = formData.get("serviceType") as ServiceType | null;
+  // El desplegable de `BonoForm` sempre ha enviat el paquet triat; fins a la
+  // 0086 ningú el llegia perquè la regla es podia respondre amb el tipus. Ara
+  // `createBono` el necessita per mirar la casella «només per subscripció»,
+  // que va per fila del catàleg i no per servei.
+  const serviceId = String(formData.get("serviceId") ?? "");
   const totalSessions = Number(formData.get("totalSessions"));
   const price = Number(formData.get("price"));
   const rawMethod = String(formData.get("paymentMethod") ?? "cash");
 
-  if (!serviceType) return { error: "Tria un servei." };
+  if (!serviceType || !serviceId) return { error: "Tria un servei." };
   if (!Number.isFinite(totalSessions) || totalSessions <= 0)
     return { error: "El nre. de sessions ha de ser més gran que 0." };
   if (!Number.isFinite(price) || price < 0)
@@ -27,7 +32,14 @@ export async function createBonoAction(
     rawMethod === "card" ? "card" : rawMethod === "cash" ? "cash" : null;
 
   try {
-    await createBono({ clientId, serviceType, totalSessions, price, paymentMethod });
+    await createBono({
+      clientId,
+      serviceType,
+      serviceId,
+      totalSessions,
+      price,
+      paymentMethod,
+    });
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en crear el bo." };
   }

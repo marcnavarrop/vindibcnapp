@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { loadClientAndService, type ClientRef } from "@/lib/data/bonos";
-import { SUBSCRIPTION_ONLY_SERVICE } from "@/lib/group-rules";
+import { isSubscriptionOnly } from "@/lib/subscription-rules";
 import { centerToday } from "@/lib/center-time";
 import { anchorDayFor, renewalAfter } from "@/lib/subscription-cycle";
 import { cycleExpiry, previousDay } from "@/lib/subscription-cycle";
@@ -16,7 +16,7 @@ import type {
 } from "@/types/database";
 
 /**
- * Subscripció mensual als bons de grup (0072).
+ * Subscripció mensual a un paquet del catàleg (0072, generalitzada per la 0086).
  *
  * Aquesta taula és la FONT DE VERITAT del que el client té dret a fer. Stripe,
  * quan es paga amb targeta, només hi posa els diners: si algun dia les dues
@@ -27,17 +27,23 @@ import type {
  * configurable per variable d'entorn.
  */
 
-/**
- * Només els bons de grup es poden subscriure. Ho diu també un check a la 0072.
+/*
+ * JA NO HI HA «EL TIPUS SUBSCRIBIBLE», I PER AIXÒ AQUÍ NO HI HA CAP CONSTANT
  *
- * Des que el grup NOMÉS es pot tenir per subscripció, aquesta constant i
- * `SUBSCRIPTION_ONLY_SERVICE` són les dues cares de la mateixa moneda: l'una diu
- * què es pot subscriure i l'altra què no es pot comprar de cap altra manera. Es
- * deriva d'aquella, i no es torna a escriure el literal, perquè el dia que
- * canviï ho ha de fer una vegada i no dues. El nom es conserva perquè és el que
- * llegeix qui ve de la 0072.
+ * Fins a la 0086 això era `SUBSCRIBABLE_SERVICE_TYPE = 'grupo_reducido'`, i
+ * servia per a dues coses alhora: dir què es podia subscriure i, com a valor
+ * per defecte, dir de quina subscripció parlava qui no ho especificava.
+ *
+ * Les dues han caigut. Què es pot subscriure ho diu ara la casella
+ * `subscription_only` de cada paquet, i pot ser de qualsevol tipus de servei;
+ * i un valor per defecte que apuntés a un tipus concret faria que
+ * `getLiveSubscription(clientId)` mentís en silenci el primer dia que hi hagi
+ * una subscripció de fisioteràpia —retornaria «cap» a algú que en té una—.
+ *
+ * Per això el paràmetre `serviceType` ha perdut el seu default i qui vulgui
+ * «la subscripció viva d'aquest client, sigui del tipus que sigui» ha de
+ * demanar-ho pel seu nom: `getAnyLiveSubscription`.
  */
-export const SUBSCRIBABLE_SERVICE_TYPE: ServiceType = SUBSCRIPTION_ONLY_SERVICE;
 
 export type Subscription = {
   id: string;
@@ -164,8 +170,12 @@ export async function quoteSubscription(
   const { getEffectivePrice } = await import("@/lib/data/promotions");
   const { clientId, service } = await loadClientAndService(input);
 
-  if (service.serviceType !== SUBSCRIBABLE_SERVICE_TYPE)
-    throw new Error("Aquest servei no es pot subscriure.");
+  // L'ESPILL EXACTE de `quoteBonoPurchase`, que rebutja tot el que SÍ porti la
+  // casella: entre les dues, cada paquet té una porta i només una. Des de la
+  // 0086 això ja no es pot deduir del tipus de servei —dins de 'grupo_reducido'
+  // hi ha mensualitats i bons solts—, i per tant es mira la fila.
+  if (!isSubscriptionOnly(service))
+    throw new Error("Aquest paquet no es pot subscriure.");
 
   const ep = await getEffectivePrice(service, { clientId });
 
@@ -212,7 +222,7 @@ const LIVE: SubscriptionStatus[] = ["active", "past_due", "paused"];
  */
 export async function getLiveSubscription(
   clientId: string,
-  serviceType: ServiceType = SUBSCRIBABLE_SERVICE_TYPE,
+  serviceType: ServiceType,
 ): Promise<Subscription | null> {
   if (USE_MOCK) {
     const s = getStore().subscriptions.find(
@@ -275,10 +285,60 @@ export async function profileIdForClient(clientId: string): Promise<string | nul
 /** La subscripció viva d'un perfil, resolent-ne el client pel camí de sobre. */
 export async function getLiveSubscriptionForProfile(
   profileId: string,
-  serviceType: ServiceType = SUBSCRIBABLE_SERVICE_TYPE,
+  serviceType: ServiceType,
 ): Promise<Subscription | null> {
   const clientId = await clientIdForProfile(profileId);
   return clientId ? getLiveSubscription(clientId, serviceType) : null;
+}
+
+/**
+ * La subscripció viva d'un client, sigui del servei que sigui.
+ *
+ * És el que volien de debò les pantalles que abans cridaven
+ * `getLiveSubscription(clientId)` a seques i es quedaven amb el default: la
+ * fitxa del client, /client/bonos, /client/bonos/meus, /client/reservas i les
+ * altes d'admin i professional no pregunten per un tipus concret sinó «aquesta
+ * persona té una subscripció?». Amb un sol tipus subscribible les dues coses
+ * eren la mateixa; ara no, i deixar-ho al default hauria fet que una
+ * subscripció de fisioteràpia no sortís enlloc.
+ *
+ * SEGUEIX RETORNANT-NE UNA I NO UNA LLISTA, i és honest: l'índex
+ * `subscriptions_one_live_per_client` de la 0072 és per `(client_id,
+ * service_type)`, o sigui que ara mateix algú PODRIA tenir-ne una de grup i una
+ * de fisioteràpia alhora. Mentre el centre només marqui paquets d'un tipus això
+ * no passa. El dia que en marqui de dos, aquesta funció és el lloc exacte que
+ * caldrà obrir a llista, i les pantalles que la criden, les que caldrà mirar.
+ * Es diu aquí perquè quedi trobat i no descobert.
+ */
+export async function getAnyLiveSubscription(
+  clientId: string,
+): Promise<Subscription | null> {
+  if (USE_MOCK) {
+    const s = getStore().subscriptions.find(
+      (x) => x.client_id === clientId && LIVE.includes(x.status),
+    );
+    return s ? toSubscription(s as Row) : null;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("subscriptions")
+    .select(COLUMNS)
+    .eq("client_id", clientId)
+    .in("status", LIVE)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toSubscription(data as Row) : null;
+}
+
+/** La subscripció viva d'un perfil, sigui del servei que sigui. */
+export async function getAnyLiveSubscriptionForProfile(
+  profileId: string,
+): Promise<Subscription | null> {
+  const clientId = await clientIdForProfile(profileId);
+  return clientId ? getAnyLiveSubscription(clientId) : null;
 }
 
 export async function getSubscription(id: string): Promise<Subscription | null> {

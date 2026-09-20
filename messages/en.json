@@ -327,9 +327,9 @@
       "paySubscribeByCard": "By card",
       "paySubscribeAtCentreDesc": "You pay in cash at the centre, like any other pass.",
       "paySubscribeByCardDesc": "Charged to your card on its own. You can change it whenever.",
-      "groupSubscriptionOnly": "Small group passes only come as a subscription: on the {day}th of each month you get your sessions, with nothing left to buy again. You can cancel whenever you like.",
-      "groupAlreadySubscribedTitle": "You already have the group subscription",
-      "groupAlreadySubscribedBody": "Your group sessions arrive every month. There's nothing more to buy: if you've run out early, you can ask for an extra one from your passes.",
+      "groupSubscriptionOnly": "This pass only comes as a subscription: on the {day}th of each month you get your sessions, with nothing left to buy again. You can cancel whenever you like.",
+      "groupAlreadySubscribedTitle": "You already have an active subscription",
+      "groupAlreadySubscribedBody": "Your sessions arrive every month. There's nothing more to buy: if you've run out early, you can ask for an extra one from your passes.",
       "groupAlreadySubscribedCta": "See my subscription"
     },
     "mine": {

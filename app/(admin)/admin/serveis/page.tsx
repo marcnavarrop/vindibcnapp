@@ -83,6 +83,16 @@ export default async function ServeisPage() {
                       <Badge tone={s.active ? "success" : "neutral"}>
                         {s.active ? "Actiu" : "Inactiu"}
                       </Badge>
+                      {/*
+                        Només surt quan és certa. Una etiqueta «Es ven solt» a
+                        cada fila normal seria soroll a dotze de catorze; el que
+                        cal veure d'un cop d'ull és QUINS paquets no es venen
+                        solts, sobretot ara que dins d'un mateix servei n'hi ha
+                        dels dos. Sense això, saber-ho obliga a obrir un per un.
+                      */}
+                      {s.subscriptionOnly && (
+                        <Badge tone="info">Només subscripció</Badge>
+                      )}
                       <div className="ml-auto flex items-center gap-3">
                         <Link
                           href={`/admin/serveis/${s.id}/edit`}

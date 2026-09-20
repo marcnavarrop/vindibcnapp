@@ -18,6 +18,7 @@ import {
   type CancelSeriesState,
 } from "@/app/(client)/client/reservas/series-actions";
 import { formatDayHeading, formatTime } from "@/lib/labels";
+import type { ServiceType } from "@/types/database";
 import type { Locale } from "@/lib/i18n/config";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { SeriesSummary } from "@/lib/data/booking-series";
@@ -42,7 +43,7 @@ export function ClientReservasView({
   closingHour,
   series,
   waitlistEnabled,
-  hasSubscription,
+  subscriptionServiceType,
   waitlist,
 }: {
   data: ClientCenterData;
@@ -55,8 +56,14 @@ export function ClientReservasView({
   series: SeriesSummary[];
   /** El centre accepta inscripcions noves a la llista d'espera. */
   waitlistEnabled: boolean;
-  /** El client té subscripció viva de grup (0072). */
-  hasSubscription: boolean;
+  /**
+   * De quin servei és la subscripció viva del client, si en té cap.
+   *
+   * Abans era un booleà. Des de la 0086 un paquet de qualsevol tipus pot anar
+   * per subscripció, així que saber que en té una ja no diu de QUÈ: la sèrie
+   * només s'allarga sola si la subscripció és del mateix servei.
+   */
+  subscriptionServiceType: ServiceType | null;
   /** Les esperes vives del client, per no oferir-li apuntar-s'hi dos cops. */
   waitlist: { id: string; trainerId: string | null; desiredAt: string }[];
 }) {
@@ -108,7 +115,7 @@ export function ClientReservasView({
             onSeriesReady={setReview}
             onDialogOpen={() => setReview(null)}
             waitlistEnabled={waitlistEnabled}
-            hasSubscription={hasSubscription}
+            subscriptionServiceType={subscriptionServiceType}
             waitlist={waitlist}
           />
         </div>

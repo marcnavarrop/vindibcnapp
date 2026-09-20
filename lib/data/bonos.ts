@@ -14,23 +14,28 @@ import {
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerToday } from "@/lib/center-time";
 import { cancelBlockFor, CANCEL_BLOCK_LABELS } from "@/lib/bono-rules";
-import { isSubscriptionOnly } from "@/lib/group-rules";
+import { isSubscriptionOnly } from "@/lib/subscription-rules";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
 
 /**
- * El bo de grup no es ven solt: la regla sencera i el perquè viuen a
- * `lib/group-rules.ts`. Aquí només se'n fa complir la meitat que toca aquest
- * mòdul, i es fa en els DOS naixements d'un bo que passen per ell:
- * `quoteBonoPurchase` (el client, pagui al centre o amb targeta) i `createBono`
- * (l'alta manual d'admin i professional).
+ * Un paquet marcat «només per subscripció» no es ven solt: la regla sencera i
+ * el perquè viuen a `lib/subscription-rules.ts`. Aquí només se'n fa complir la
+ * meitat que toca aquest mòdul, i es fa en els DOS naixements d'un bo que
+ * passen per ell: `quoteBonoPurchase` (el client, pagui al centre o amb
+ * targeta) i `createBono` (l'alta manual d'admin i professional).
  *
  * NO es comprova a `createPaidBono`, i és a posta: aquell el crida el webhook de
- * Stripe amb els diners ja cobrats. Un Checkout de grup obert abans que aquesta
- * regla existís s'ha de complir igualment —negar-s'hi seria quedar-se els diners
- * sense donar res a canvi—. Mateix criteri que `createGiftVoucherFromSnapshot`.
+ * Stripe amb els diners ja cobrats. Un Checkout obert abans que el paquet
+ * quedés marcat s'ha de complir igualment —negar-s'hi seria quedar-se els
+ * diners sense donar res a canvi—. Mateix criteri que
+ * `createGiftVoucherFromSnapshot`.
+ *
+ * El text no anomena el grup: des de la 0086 qualsevol paquet pot dur la
+ * casella, i un missatge que parlés de grups mentiria el primer dia que
+ * l'administració en marqui un de fisioteràpia.
  */
-const GROUP_IS_SUBSCRIPTION_ONLY =
-  "Els bons de grup només es poden contractar per subscripció.";
+const PACKAGE_IS_SUBSCRIPTION_ONLY =
+  "Aquest paquet només es pot contractar per subscripció.";
 
 // ─── Caducitat ───────────────────────────────────────────────────────────────
 
@@ -194,18 +199,64 @@ export type BonoInput = {
   serviceType: ServiceType;
   totalSessions: number;
   price: number;
+  /**
+   * El paquet del catàleg que s'està donant d'alta.
+   *
+   * OBLIGATORI DES DE LA 0086, i el `bo` que en surt SEGUEIX sense guardar-lo:
+   * `bonos` té `service_type` i no `service_id` (0001), i això no canvia aquí.
+   * Serveix només per poder mirar la casella «només per subscripció» abans
+   * d'escriure, que ja no es pot deduir del tipus de servei.
+   *
+   * Els dos formularis que hi arriben ja l'enviaven: el desplegable de
+   * `BonoForm` es diu `serviceId` i el `serviceType` hi viatja en un camp
+   * amagat. L'únic que calia era llegir-lo.
+   */
+  serviceId: string;
   /** Si se indica, registra el cobro del bono con este método. */
   paymentMethod?: PaymentMethod | null;
 };
 
+/**
+ * La casella d'un paquet del catàleg, i res més.
+ *
+ * Deliberadament NO exigeix que el paquet estigui actiu, a diferència de
+ * `loadClientAndService`: aquí no s'està cotitzant res —el preu i les sessions
+ * ja venen decidits des de la fitxa— i desactivar un paquet del catàleg no ha
+ * de trencar una alta manual que l'administració estigui fent a posta. El que
+ * es vol saber és una sola cosa: si aquest paquet es ven solt.
+ *
+ * Un `serviceId` que no existeixi retorna null i per tant NO bloqueja: seria
+ * una alta sense paquet reconeixible, i el que la ha d'aturar és la validació
+ * del formulari, no aquesta regla.
+ */
+async function loadServicePackage(
+  serviceId: string,
+): Promise<{ subscription_only: boolean } | null> {
+  if (USE_MOCK) {
+    const row = getStore().services.find((x) => x.id === serviceId);
+    return row ? { subscription_only: row.subscription_only } : null;
+  }
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("services")
+    .select("subscription_only")
+    .eq("id", serviceId)
+    .maybeSingle();
+  return data ?? null;
+}
+
 /** Crea un bono para un cliente (sesiones restantes = totales al comprarlo). */
 export async function createBono(input: BonoInput): Promise<string> {
-  // L'alta manual d'un bo de grup passa per la subscripció, també quan la fa
-  // l'admin o el professional des de la fitxa del client. Es comprova aquí i no
-  // només al formulari: que el desplegable no ho ofereixi no impedeix cridar
-  // l'acció directament.
-  if (isSubscriptionOnly(input.serviceType))
-    throw new Error(GROUP_IS_SUBSCRIPTION_ONLY);
+  // L'alta manual d'un paquet «només per subscripció» passa per la subscripció,
+  // també quan la fa l'admin o el professional des de la fitxa del client. Es
+  // comprova aquí i no només al formulari: que el desplegable no ho ofereixi no
+  // impedeix cridar l'acció directament.
+  //
+  // Es rellegeix el paquet del catàleg en comptes de refiar-se del que arribi:
+  // qui envia el formulari tria un `serviceId`, i la casella l'ha de dir la
+  // base. Mateix criteri que `loadClientAndService` amb el preu i les sessions.
+  if (isSubscriptionOnly(await loadServicePackage(input.serviceId)))
+    throw new Error(PACKAGE_IS_SUBSCRIPTION_ONLY);
 
   let bonoId: string;
   // Es calcula ARA i es desa: a partir d'aquí el bo ja no depèn de la config.
@@ -326,6 +377,8 @@ export type CatalogueSelection = {
     price: number;
     defaultSessions: number;
     active: boolean;
+    /** Casella del catàleg (0086). Vegeu `lib/subscription-rules.ts`. */
+    subscriptionOnly: boolean;
   };
 };
 
@@ -349,6 +402,7 @@ export async function loadClientAndService(
         price: row.price,
         defaultSessions: row.default_sessions,
         active: row.active,
+        subscriptionOnly: row.subscription_only,
       },
     };
   }
@@ -364,7 +418,7 @@ export async function loadClientAndService(
 
   const { data: row, error: sErr } = await admin
     .from("services")
-    .select("service_type, price, default_sessions, active, name")
+    .select("service_type, price, default_sessions, active, name, subscription_only")
     .eq("id", input.serviceId)
     .single();
   if (sErr || !row || !row.active) throw new Error("Servei no vàlid.");
@@ -378,6 +432,7 @@ export async function loadClientAndService(
       price: row.price,
       defaultSessions: row.default_sessions,
       active: row.active,
+      subscriptionOnly: row.subscription_only,
     },
   };
 }
@@ -389,16 +444,18 @@ export async function quoteBonoPurchase(input: {
   const { getEffectivePrice } = await import("@/lib/data/promotions");
   const { clientId, service } = await loadClientAndService(input);
 
-  // Els bons de grup no es venen solts. Aquesta comprovació és l'ESPILL EXACTE
-  // de la de `quoteSubscription`, que rebutja tot el que NO sigui de grup: entre
-  // les dues, cada paquet té una porta i només una.
+  // Un paquet marcat «només per subscripció» no es ven solt. Aquesta
+  // comprovació és l'ESPILL EXACTE de la de `quoteSubscription`, que rebutja
+  // tot el que NO la porti: entre les dues, cada paquet té una porta i només
+  // una. Des de la 0086 es mira la casella del paquet i no el tipus de servei,
+  // perquè dins d'un mateix tipus hi conviuen els dos règims.
   //
   // Va aquí i no a les dues accions perquè aquesta funció és l'embut per on
   // passen els dos camins de compra —el bo pendent de pagar i la sessió de
   // Stripe—. A la pantalla es decideix què s'ensenya; qui rep el `serviceId` és
   // el servidor i no es pot refiar del que li arribi.
-  if (isSubscriptionOnly(service.serviceType))
-    throw new Error(GROUP_IS_SUBSCRIPTION_ONLY);
+  if (isSubscriptionOnly(service))
+    throw new Error(PACKAGE_IS_SUBSCRIPTION_ONLY);
 
   // El millor descompte, i només un: l'oferta pública del catàleg o la
   // recompensa personal de referit. No es combinen.

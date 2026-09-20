@@ -6,7 +6,7 @@ import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { getLiveSubscription } from "@/lib/data/subscriptions";
+import { getAnyLiveSubscription } from "@/lib/data/subscriptions";
 import { centerToday } from "@/lib/center-time";
 import {
   createTrainerBonoAction,
@@ -44,7 +44,7 @@ export default async function NewTrainerBonoPage({
   // Mateixa pregunta que a l'àrea d'admin, i pel mateix motiu: l'índex únic de
   // la 0072 no deixa una segona subscripció viva del mateix servei.
   const liveSubscription = settings.subscriptionsEnabled
-    ? await getLiveSubscription(client.id)
+    ? await getAnyLiveSubscription(client.id)
     : null;
 
   const renewalDay = Number(centerToday().slice(8, 10));

@@ -26,7 +26,6 @@ import {
   confirmSeriesAction,
   type SeriesFormInput,
 } from "@/app/(client)/client/reservas/series-actions";
-import { isSubscriptionOnly } from "@/lib/group-rules";
 import type { BookingFrequency, ServiceType } from "@/types/database";
 
 /**
@@ -79,7 +78,7 @@ export function RecurrenceFields({
   seed,
   remainingSessions,
   waitlistEnabled = false,
-  hasSubscription = false,
+  subscriptionServiceType = null,
   onReady,
   secondaryAction,
 }: {
@@ -87,11 +86,18 @@ export function RecurrenceFields({
   /** Sessions del bo d'aquest servei, per saber si arribaran. */
   remainingSessions?: number;
   /**
-   * El client té una subscripció viva d'aquest servei (0072). Canvia dues coses:
-   * apareix la casella d'allargar la sèrie sola, i el que falta per sessions
-   * deixa de ser un límit per passar a ser una espera.
+   * De quin servei és la subscripció viva del client, si en té cap (0072/0086).
+   *
+   * Era un booleà fins a la 0086, quan hi havia un sol servei subscribible i
+   * «en té una» ja volia dir «d'aquest». Ara un paquet de qualsevol tipus pot
+   * portar la casella, i per tant cal saber de QUÈ és: si no és del mateix
+   * servei que la sèrie, no hi arribarà ni una sessió.
+   *
+   * Quan coincideix canvia dues coses: apareix la casella d'allargar la sèrie
+   * sola, i el que falta per sessions deixa de ser un límit per passar a ser
+   * una espera.
    */
-  hasSubscription?: boolean;
+  subscriptionServiceType?: ServiceType | null;
   /**
    * El centre accepta inscripcions noves a la cua. Si no, l'opció ni surt;
    * el servidor també la ignora, que és el que de debò la tanca.
@@ -118,19 +124,24 @@ export function RecurrenceFields({
   /**
    * La subscripció cobreix AQUESTA sèrie?
    *
-   * `hasSubscription` només diu que en té una de viva, i com que només se'n
-   * poden tenir del servei subscribible, això no serveix per a una sèrie de cap
-   * altre servei: quan aquella subscripció es renovi no arribarà ni una sessió
-   * al bo d'aquesta, i prometre-ho seria mentir a qui llegeix la casella.
+   * Que el client tingui una subscripció viva no basta: ha de ser DEL MATEIX
+   * servei que la sèrie. Si no ho és, quan aquella subscripció es renovi no
+   * arribarà ni una sessió al bo d'aquesta, i prometre-ho seria mentir a qui
+   * llegeix la casella.
    *
-   * AVUI AIXÒ ÉS SEMPRE FALS, i és la conseqüència directa de la regla nova: el
-   * servei subscribible és el de grup, i les sèries de grup ja no existeixen
-   * (vegeu `lib/group-rules.ts`). La casella d'allargar-se sola, doncs, no surt
-   * mai. S'escriu com a condició i no com un `false` pelat perquè el dia que el
-   * centre obri subscripcions d'un altre servei torni a valer sola, sense que
-   * ningú hagi de recordar que aquí hi havia una constant amagada.
+   * AVUI AIXÒ ÉS SEMPRE FALS, i val la pena entendre per què: les úniques
+   * subscripcions que hi ha són de grup, i una sèrie de grup no es pot crear
+   * —quatre places no aguanten una sèrie eterna, vegeu `lib/series-rules.ts`—,
+   * o sigui que no hi ha cap sèrie amb què coincidir.
+   *
+   * DEIXARÀ DE SER FALS TOT SOL. Des de la 0086 l'administració pot marcar
+   * «només per subscripció» un paquet d'un altre servei des del catàleg, sense
+   * cap desplegament. El primer client que se n'hi subscrigui i tingui una
+   * sèrie d'aquell servei veurà aparèixer la casella. És el comportament
+   * desitjat, i s'escriu com a comparació i no com un `false` pelat perquè
+   * funcioni aquell dia sense que ningú hagi de recordar-ho.
    */
-  const subscriptionCovers = hasSubscription && isSubscriptionOnly(seed.serviceType);
+  const subscriptionCovers = subscriptionServiceType === seed.serviceType;
 
   const input: SeriesFormInput = {
     firstAt: seed.scheduledAt,

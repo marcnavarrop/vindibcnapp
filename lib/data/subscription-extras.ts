@@ -5,7 +5,7 @@ import { getStore, saveStore } from "@/lib/mock/store";
 import { centerToday } from "@/lib/center-time";
 import {
   getCycleState,
-  getLiveSubscriptionForProfile,
+  getAnyLiveSubscriptionForProfile,
   type CycleState,
 } from "@/lib/data/subscriptions";
 import type { SubscriptionExtraResult } from "@/types/database";
@@ -79,7 +79,7 @@ function refusalOf(reason: string): ExtraRefusal {
 export async function claimExtraSession(input: {
   profileId: string;
 }): Promise<ExtraClaim> {
-  const subscription = await getLiveSubscriptionForProfile(input.profileId);
+  const subscription = await getAnyLiveSubscriptionForProfile(input.profileId);
   if (!subscription) return { ok: false, reason: "noSubscription" };
 
   const today = centerToday();

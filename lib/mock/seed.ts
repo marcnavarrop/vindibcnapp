@@ -58,18 +58,27 @@ export const seedReservations: Reservation[] = [
 ];
 
 export const seedServices: Service[] = [
-  { id: "s-epi-1", service_type: "ep_individual", name: "Sessió única", price: 55, default_sessions: 1, active: true, created_at: now },
-  { id: "s-epi-4", service_type: "ep_individual", name: "Bo de 4 sessions", price: 190, default_sessions: 4, active: true, created_at: now },
-  { id: "s-epi-8", service_type: "ep_individual", name: "Bo de 8 sessions", price: 360, default_sessions: 8, active: true, created_at: now },
-  { id: "s-epp-1", service_type: "ep_parejas", name: "Sessió única", price: 65, default_sessions: 1, active: true, created_at: now },
-  { id: "s-epp-4", service_type: "ep_parejas", name: "Bo de 4 sessions", price: 240, default_sessions: 4, active: true, created_at: now },
-  { id: "s-epp-8", service_type: "ep_parejas", name: "Bo de 8 sessions", price: 450, default_sessions: 8, active: true, created_at: now },
-  { id: "s-grp-2", service_type: "grupo_reducido", name: "Bo de 2 sessions", price: 50, default_sessions: 2, active: true, created_at: now },
-  { id: "s-grp-4", service_type: "grupo_reducido", name: "Bo de 4 sessions", price: 80, default_sessions: 4, active: true, created_at: now },
-  { id: "s-grp-8", service_type: "grupo_reducido", name: "Bo de 8 sessions", price: 140, default_sessions: 8, active: true, created_at: now },
-  { id: "s-fis-1", service_type: "fisioterapia", name: "Sessió única", price: 50, default_sessions: 1, active: true, created_at: now },
-  { id: "s-fis-5", service_type: "fisioterapia", name: "Bo de 5 sessions", price: 225, default_sessions: 5, active: true, created_at: now },
-  { id: "s-fis-10", service_type: "fisioterapia", name: "Bo de 10 sessions", price: 420, default_sessions: 10, active: true, created_at: now },
+  { id: "s-epi-1", service_type: "ep_individual", name: "Sessió única", price: 55, default_sessions: 1, active: true, subscription_only: false, created_at: now },
+  { id: "s-epi-4", service_type: "ep_individual", name: "Bo de 4 sessions", price: 190, default_sessions: 4, active: true, subscription_only: false, created_at: now },
+  { id: "s-epi-8", service_type: "ep_individual", name: "Bo de 8 sessions", price: 360, default_sessions: 8, active: true, subscription_only: false, created_at: now },
+  { id: "s-epp-1", service_type: "ep_parejas", name: "Sessió única", price: 65, default_sessions: 1, active: true, subscription_only: false, created_at: now },
+  { id: "s-epp-4", service_type: "ep_parejas", name: "Bo de 4 sessions", price: 240, default_sessions: 4, active: true, subscription_only: false, created_at: now },
+  { id: "s-epp-8", service_type: "ep_parejas", name: "Bo de 8 sessions", price: 450, default_sessions: 8, active: true, subscription_only: false, created_at: now },
+  // ─── Grup reduït: els DOS règims alhora, com a producció ───────────────────
+  //
+  // Aquestes cinc files són el cas que la 0086 va venir a resoldre, i el mock
+  // les porta totes cinc a posta. Amb només les mensualitats, el mode simulació
+  // no arribaria a ensenyar mai un paquet de grup que SÍ es ven solt, i la
+  // barreja dins d'un mateix servei —l'únic motiu pel qual la casella existeix—
+  // no es podria provar sense Supabase.
+  { id: "s-grp-1", service_type: "grupo_reducido", name: "Sessió individual", price: 35, default_sessions: 1, active: true, subscription_only: false, created_at: now },
+  { id: "s-grp-2", service_type: "grupo_reducido", name: "Mensualitat de 2 sessions", price: 50, default_sessions: 2, active: true, subscription_only: true, created_at: now },
+  { id: "s-grp-4", service_type: "grupo_reducido", name: "Mensualitat de 4 sessions", price: 80, default_sessions: 4, active: true, subscription_only: true, created_at: now },
+  { id: "s-grp-6", service_type: "grupo_reducido", name: "Bo de 6 sessions", price: 132, default_sessions: 6, active: true, subscription_only: false, created_at: now },
+  { id: "s-grp-8", service_type: "grupo_reducido", name: "Mensualitat de 8 sessions", price: 140, default_sessions: 8, active: true, subscription_only: true, created_at: now },
+  { id: "s-fis-1", service_type: "fisioterapia", name: "Sessió única", price: 50, default_sessions: 1, active: true, subscription_only: false, created_at: now },
+  { id: "s-fis-5", service_type: "fisioterapia", name: "Bo de 5 sessions", price: 225, default_sessions: 5, active: true, subscription_only: false, created_at: now },
+  { id: "s-fis-10", service_type: "fisioterapia", name: "Bo de 10 sessions", price: 420, default_sessions: 10, active: true, subscription_only: false, created_at: now },
 ];
 
 // Les mateixes que sembra la 0057.

@@ -7,7 +7,7 @@ import { Field } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SERVICE_LABELS, SERVICE_TYPES, GROUP_CAPACITY } from "@/lib/labels";
 import { createReservationAction } from "@/app/(admin)/admin/reservas/actions";
-import { canRepeatInSeries } from "@/lib/group-rules";
+import { canRepeatInSeries } from "@/lib/series-rules";
 import type { ReservationFormData } from "@/lib/data/reservations";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType } from "@/types/database";
@@ -63,7 +63,7 @@ export function ReservationForm({
   // del client —un nombre acotat de setmanes, decidit pel centre, que no
   // s'allarga sol— però el motiu de fons és el mateix aforament, i tenir-ne una
   // que sí i una que no seria una excepció que algú hauria de recordar. La
-  // regla viu a `lib/group-rules.ts` i la comparteixen els tres punts d'entrada.
+  // regla viu a `lib/series-rules.ts` i la comparteixen els tres punts d'entrada.
   const canRepeat = selectedService === null || canRepeatInSeries(selectedService);
 
   return (

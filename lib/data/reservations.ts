@@ -28,7 +28,7 @@ import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
-import { canRepeatInSeries } from "@/lib/group-rules";
+import { canRepeatInSeries } from "@/lib/series-rules";
 import { getViewer } from "@/lib/auth";
 import type {
   Database,

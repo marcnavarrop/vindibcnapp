@@ -12,7 +12,7 @@ import {
   cancelSeries,
   type SeriesRequest,
 } from "@/lib/data/booking-series";
-import { canRepeatInSeries } from "@/lib/group-rules";
+import { canRepeatInSeries } from "@/lib/series-rules";
 import type { ResolvedOccurrence } from "@/lib/booking-series-core";
 import type { BookingFrequency, ServiceType } from "@/types/database";
 
@@ -26,7 +26,7 @@ import type { BookingFrequency, ServiceType } from "@/types/database";
  *
  * LES DE GRUP NO HI ENTREN. Una franja de grup són quatre places, i una sèrie
  * damunt d'una subscripció que es renova sola les deixaria ocupades per sempre
- * per la mateixa persona. La regla i el perquè viuen a `lib/group-rules.ts`; el
+ * per la mateixa persona. La regla i el perquè viuen a `lib/series-rules.ts`; el
  * calendari ja no ofereix cap de les dues portes, i aquí es torna a comprovar
  * perquè amagar un botó no impedeix cridar l'acció.
  */

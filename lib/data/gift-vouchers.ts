@@ -8,7 +8,7 @@ import { getEffectivePrice } from "@/lib/data/promotions";
 import { createPayment } from "@/lib/data/payments";
 import { centerToday } from "@/lib/center-time";
 import { SERVICE_LABELS } from "@/lib/labels";
-import { isSubscriptionOnly } from "@/lib/group-rules";
+import { isSubscriptionOnly } from "@/lib/subscription-rules";
 import type { GiftVoucherStatus, ServiceType } from "@/types/database";
 
 /**
@@ -393,6 +393,7 @@ export async function quoteGiftVoucher(input: {
     price: number;
     default_sessions: number;
     active: boolean;
+    subscription_only: boolean;
   };
 
   if (USE_MOCK) {
@@ -414,7 +415,7 @@ export async function quoteGiftVoucher(input: {
 
     const { data: row } = await admin
       .from("services")
-      .select("id, service_type, name, price, default_sessions, active")
+      .select("id, service_type, name, price, default_sessions, active, subscription_only")
       .eq("id", input.serviceId)
       .maybeSingle();
     if (!row || !row.active) throw new Error("Servei no vàlid.");
@@ -422,19 +423,24 @@ export async function quoteGiftVoucher(input: {
     s = row;
   }
 
-  // Un val de regal no pot ser d'un paquet de grup.
+  // Un val de regal no pot ser d'un paquet marcat «només per subscripció».
   //
-  // Sense aquesta línia la regla "el grup només per subscripció" seria
-  // evitable el mateix dia: qualsevol podria comprar-se un val d'un paquet de
-  // grup i bescanviar-se'l ell mateix, i el bo que en surt neix amb
-  // `subscription_id` a null com qualsevol compra solta. És un camí de
-  // cotització a part del dels bons, així que el tall de `quoteBonoPurchase`
-  // no hi arriba i cal repetir-lo aquí.
+  // Sense aquesta línia la regla seria evitable el mateix dia: qualsevol podria
+  // comprar-se un val d'aquell paquet i bescanviar-se'l ell mateix, i el bo que
+  // en surt neix amb `subscription_id` a null com qualsevol compra solta. És un
+  // camí de cotització a part del dels bons, així que el tall de
+  // `quoteBonoPurchase` no hi arriba i cal repetir-lo aquí.
+  //
+  // Des de la 0086 es mira la casella de la fila i no el tipus de servei: un
+  // 'Bo de 6 sessions' de grup SÍ que es pot regalar, i una 'Mensualitat de 4'
+  // no. Abans les dues coses anaven juntes i no es podia dir una sense l'altra.
   //
   // Com allà, això NO afecta `createGiftVoucherFromSnapshot`: un val ja pagat
   // es crea encara que entremig la regla hagi canviat.
-  if (isSubscriptionOnly(s.service_type))
-    throw new Error("Els paquets de grup no es poden regalar: van per subscripció.");
+  if (isSubscriptionOnly(s))
+    throw new Error(
+      "Aquest paquet no es pot regalar: només es pot tenir per subscripció.",
+    );
 
   // SENSE clientId, i és una decisió de disseny, no un oblit.
   //
@@ -458,6 +464,7 @@ export async function quoteGiftVoucher(input: {
     price: s.price,
     defaultSessions: s.default_sessions,
     active: s.active,
+    subscriptionOnly: s.subscription_only,
   });
 
   return {

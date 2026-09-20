@@ -643,6 +643,8 @@ export interface Database {
           price: number;
           default_sessions: number;
           active: boolean;
+          /** Només per subscripció: no es ven solt (0086). */
+          subscription_only: boolean;
           created_at: string;
         };
         Insert: {
@@ -652,6 +654,7 @@ export interface Database {
           price: number;
           default_sessions?: number;
           active?: boolean;
+          subscription_only?: boolean;
           created_at?: string;
         };
         Update: {
@@ -661,6 +664,7 @@ export interface Database {
           price?: number;
           default_sessions?: number;
           active?: boolean;
+          subscription_only?: boolean;
           created_at?: string;
         };
         Relationships: [];

@@ -5,7 +5,7 @@ import { getClient } from "@/lib/data/clients";
 import { listActiveServices } from "@/lib/data/services";
 import { getEffectivePrices } from "@/lib/data/promotions";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { getLiveSubscription } from "@/lib/data/subscriptions";
+import { getAnyLiveSubscription } from "@/lib/data/subscriptions";
 import { centerToday } from "@/lib/center-time";
 import {
   createBonoAction,
@@ -37,7 +37,7 @@ export default async function NewBonoPage({
   // únic de la 0072, i val més dir-ho abans que ensenyar un error després.
   // Només es pregunta si el centre les té obertes, com a /client/bonos.
   const liveSubscription = settings.subscriptionsEnabled
-    ? await getLiveSubscription(client.id)
+    ? await getAnyLiveSubscription(client.id)
     : null;
 
   // El dia d'alta al centre és el que quedarà d'àncora. Es calcula al servidor

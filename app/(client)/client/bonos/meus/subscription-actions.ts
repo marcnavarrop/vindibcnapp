@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/auth";
-import { getLiveSubscriptionForProfile, updateSubscription } from "@/lib/data/subscriptions";
+import { getAnyLiveSubscriptionForProfile, updateSubscription } from "@/lib/data/subscriptions";
 import {
   openBillingPortal,
   scheduleStripeCancellation,
@@ -30,7 +30,7 @@ export type SubscriptionActionState = {
 async function ownSubscription() {
   const viewer = await getViewer();
   if (!viewer || viewer.role !== "client") return null;
-  return getLiveSubscriptionForProfile(viewer.id);
+  return getAnyLiveSubscriptionForProfile(viewer.id);
 }
 
 /**

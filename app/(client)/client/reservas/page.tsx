@@ -4,7 +4,7 @@ import { getClientCenterData } from "@/lib/data/client-calendar";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
 import { ClientReservasView } from "@/components/client/reservas-view";
-import { getLiveSubscription } from "@/lib/data/subscriptions";
+import { getAnyLiveSubscription } from "@/lib/data/subscriptions";
 import { listActiveSeries } from "@/lib/data/booking-series";
 import { listWaitlistForClient } from "@/lib/data/waitlist";
 import { listPastSessions } from "@/lib/data/session-notes";
@@ -53,9 +53,13 @@ export default async function ClientReservasPage() {
   // La subscripció decideix dues coses a l'assistent: si surt la casella
   // d'allargar la sèrie sola, i si les sessions que falten són un límit o una
   // espera. Només es pregunta si el centre té les subscripcions obertes.
+  //
+  // Es passa EL SERVEI i no un booleà: des de la 0086 la subscripció pot ser de
+  // qualsevol paquet marcat al catàleg, i l'assistent ha de poder comprovar que
+  // és del mateix servei que la sèrie abans de prometre que s'allargarà sola.
   const subscription =
     centerSettings.subscriptionsEnabled && data?.clientId
-      ? await getLiveSubscription(data.clientId)
+      ? await getAnyLiveSubscription(data.clientId)
       : null;
 
   return (
@@ -75,7 +79,7 @@ export default async function ClientReservasPage() {
         closingHour={centerSettings.closingHour}
         series={series}
         waitlistEnabled={centerSettings.waitlistEnabled}
-        hasSubscription={subscription !== null}
+        subscriptionServiceType={subscription?.serviceType ?? null}
         // Només les que encara esperen: una de complerta o donada de baixa ja
         // no ha de bloquejar tornar-s'hi a apuntar.
         waitlist={waitlist

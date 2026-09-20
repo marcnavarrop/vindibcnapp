@@ -687,9 +687,17 @@ export function buildClientManual(
               {
                 t: "p",
                 text: T({
-                  ca: `Els bons de Grup reduït NOMÉS van per subscripció: no se'n compra un de solt. En triar-lo, les úniques opcions són subscriure't pagant al centre o amb targeta. Reps aquestes sessions cada mes sense haver de tornar a comprar res, i el dia de renovació és el dia del mes en què t'hi dones d'alta, que te'l diem abans de confirmar.`,
-                  es: `Los bonos de Grupo reducido van SOLO por suscripción: no se compra uno suelto. Al elegirlo, las únicas opciones son suscribirte pagando en el centro o con tarjeta. Recibes estas sesiones cada mes sin tener que volver a comprar nada, y el día de renovación es el día del mes en que te das de alta, que te lo decimos antes de confirmar.`,
-                  en: `Small group passes come ONLY as a subscription: there's no one-off purchase. When you pick one, your only options are to subscribe paying at the centre or by card. You get those sessions every month without having to buy anything again, and your renewal day is the day of the month you signed up, which we tell you before you confirm.`,
+                  ca: `Alguns paquets NOMÉS van per subscripció: no se'n compra cap de solt. Ho veuràs en triar-lo, perquè les úniques opcions que et sortiran seran subscriure't pagant al centre o amb targeta. Reps aquestes sessions cada mes sense haver de tornar a comprar res, i el dia de renovació és el dia del mes en què t'hi dones d'alta, que te'l diem abans de confirmar.`,
+                  es: `Algunos paquetes van SOLO por suscripción: no se compra ninguno suelto. Lo verás al elegirlo, porque las únicas opciones que te saldrán serán suscribirte pagando en el centro o con tarjeta. Recibes estas sesiones cada mes sin tener que volver a comprar nada, y el día de renovación es el día del mes en que te das de alta, que te lo decimos antes de confirmar.`,
+                  en: `Some passes come ONLY as a subscription: there's no one-off purchase. You'll see it when you pick one, because your only options will be to subscribe paying at the centre or by card. You get those sessions every month without having to buy anything again, and your renewal day is the day of the month you signed up, which we tell you before you confirm.`,
+                }),
+              },
+              {
+                t: "p",
+                text: T({
+                  ca: "Dins d'un mateix servei hi pot haver paquets dels dos tipus. Al Grup reduït, per exemple, les mensualitats van per subscripció i els altres paquets es compren solts com sempre: mira les opcions de pagament que et surten en triar-lo i ho sabràs.",
+                  es: "Dentro de un mismo servicio puede haber paquetes de los dos tipos. En Grupo reducido, por ejemplo, las mensualidades van por suscripción y los demás paquetes se compran sueltos como siempre: mira las opciones de pago que te salen al elegirlo y lo sabrás.",
+                  en: "One service can have both kinds of pass. In Small group, for instance, the monthly ones come as a subscription and the others are bought outright as always: look at the payment options you get when you pick one and you'll know.",
                 }),
               },
               {

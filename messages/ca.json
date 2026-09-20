@@ -327,9 +327,9 @@
       "paySubscribeByCard": "Amb targeta",
       "paySubscribeAtCentreDesc": "El pagues en efectiu al centre, com un bo qualsevol.",
       "paySubscribeByCardDesc": "Es cobra sol a la teva targeta. La pots canviar quan vulguis.",
-      "groupSubscriptionOnly": "Els bons de grup només van per subscripció: cada dia {day} de mes reps les sessions, sense haver de tornar a comprar res. Pots donar-te de baixa quan vulguis.",
-      "groupAlreadySubscribedTitle": "Ja tens la subscripció de grup",
-      "groupAlreadySubscribedBody": "Les sessions de grup et van arribant cada mes. No cal que compris res més: si te n'has quedat sense abans d'hora, des dels teus bons en pots demanar alguna de més.",
+      "groupSubscriptionOnly": "Aquest paquet només va per subscripció: cada dia {day} de mes reps les sessions, sense haver de tornar a comprar res. Pots donar-te de baixa quan vulguis.",
+      "groupAlreadySubscribedTitle": "Ja tens una subscripció activa",
+      "groupAlreadySubscribedBody": "Les sessions et van arribant cada mes. No cal que compris res més: si te n'has quedat sense abans d'hora, des dels teus bons en pots demanar alguna de més.",
       "groupAlreadySubscribedCta": "Veure la meva subscripció"
     },
     "mine": {

@@ -347,12 +347,13 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
         {!subscriptions && (
           <p className="rounded-lg border border-brand-orange/40 bg-brand-orange/5 px-3 py-2 text-sm text-brand-charcoal">
             <strong className="text-brand-orange">
-              Amb això apagat no es pot vendre cap sessió de grup.
+              Amb això apagat, els paquets marcats «Només per subscripció» no es
+              poden vendre.
             </strong>{" "}
-            Els bons de grup només existeixen per subscripció: sense
-            subscripcions noves, el grup desapareix de la pantalla de compra del
-            client i tampoc es pot donar d&apos;alta des de la seva fitxa. Qui ja
-            en tingui una continua rebent les seves sessions cada mes.
+            Desapareixen de la pantalla de compra del client i del formulari de
+            la seva fitxa, perquè no hi hauria cap manera de comprar-los. La
+            resta de paquets del mateix servei es venen amb normalitat. Qui ja
+            tingui una subscripció continua rebent les seves sessions cada mes.
           </p>
         )}
 

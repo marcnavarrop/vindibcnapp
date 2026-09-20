@@ -9,7 +9,7 @@ import {
 } from "@/lib/center-time";
 import { slotToHHMM } from "@/lib/availability-slots";
 import { nextOccurrence } from "@/lib/booking-series-core";
-import { canRepeatInSeries } from "@/lib/group-rules";
+import { canRepeatInSeries } from "@/lib/series-rules";
 import {
   applyOccurrences,
   resolveSeries,
@@ -82,28 +82,44 @@ export type ExtensionOutcome = {
 export async function extendSeriesForSubscription(
   subscription: Subscription,
 ): Promise<ExtensionOutcome[]> {
-  // ─── AQUESTA FUNCIÓ JA NO ALLARGA RES, I ÉS EL QUE TOCA ────────────────────
+  // ─── AVUI AIXÒ NO ALLARGA RES, PERÒ NO ÉS UNA FUNCIÓ MORTA ────────────────
   //
-  // Una reserva de grup ja no es pot repetir en bucle (vegeu `lib/group-rules.ts`).
-  // Com que les subscripcions NOMÉS existeixen per a 'grupo_reducido' —ho diu
-  // `SUBSCRIBABLE_SERVICE_TYPE` i ho garanteix un check de la 0072—, aquesta
-  // condició es compleix per a totes i cadascuna de les subscripcions que hi
-  // haurà mai. Dit sense eufemismes: la 0074 queda retirada.
+  // Una reserva de grup no es pot repetir en bucle, i el motiu és l'aforament:
+  // quatre places no aguanten una sèrie eterna (vegeu `lib/series-rules.ts`).
+  // Com que totes les subscripcions que hi ha ara mateix són de
+  // 'grupo_reducido', la condició falla per a totes i aquest `return` és
+  // l'única sortida que s'executa.
+  //
+  // ABANS AQUÍ HI DEIA QUE «LA 0074 QUEDA RETIRADA». JA NO ÉS VERITAT.
+  //
+  // Ho era mentre les subscripcions estaven clavades a 'grupo_reducido' per un
+  // check de la 0072: si l'únic servei subscribible era el de grup i les sèries
+  // de grup no existien, cap subscripció podria allargar-ne mai cap. La 0086 ha
+  // tret aquell check i ha mogut la decisió a una casella del catàleg. A partir
+  // d'ara, l'administració pot marcar «només per subscripció» un paquet de
+  // fisioteràpia o d'entrenament individual des d'una pantalla, sense migració
+  // ni desplegament —i el primer dia que ho faci, la condició de sobre passarà a
+  // ser certa i AIXÒ TORNARÀ A ALLARGAR SÈRIES TOT SOL.
+  //
+  // Això és el comportament desitjat i no un descuit: una sèrie individual no
+  // bloqueja cap aforament, i que es renovi amb la subscripció és justament el
+  // que la 0074 va venir a fer. Es diu aquí, en veu alta, perquè el canvi
+  // arribarà per una casella i no per un commit, i qui llegeixi aquest fitxer
+  // el dia que passi ha de saber que estava previst.
   //
   // PER QUÈ EL TALL ÉS AQUÍ I NO MÉS AMUNT. El que s'atura és generar
   // ocurrències NOVES. Tota la resta de la 0074 —les sèries vives, les seves
   // ocurrències ja reservades, el recompte, la cancel·lació sencera des de «Les
   // meves sèries»— segueix funcionant igual. Hi ha sèries de grup creades abans
-  // d'aquesta regla amb sessions ja reservades al calendari, i aquelles són
-  // seves: es respecten i s'esgoten soles quan arribin al seu límit. No se'n
-  // cancel·la ni una.
+  // de la regla amb sessions ja reservades al calendari, i aquelles són seves:
+  // es respecten i s'esgoten soles quan arribin al seu límit. No se'n cancel·la
+  // ni una.
   //
-  // PER QUÈ NO S'ESBORRA LA MAQUINÀRIA. Perquè el dia que el centre vulgui
-  // subscripcions d'un servei que no sigui de grup, la condició deixarà de
-  // complir-se sola i això tornarà a servir sense haver-ho de reescriure. I
-  // perquè la crida segueix viva als dos camins de renovació (el cron del
-  // centre i el webhook de Stripe): treure-la d'allà seria remenar el pas més
-  // delicat dels dos per no guanyar res.
+  // PER QUÈ ES MIRA EL TIPUS I NO LA CASELLA DEL PAQUET. Perquè el que decideix
+  // si una sèrie pot allargar-se és si bloqueja places, no com es paga. Un 'Bo
+  // de 6 sessions' de grup no porta la casella i tot i així no es pot repetir;
+  // un paquet individual que la porti, sí. Mirar `subscription_only` aquí seria
+  // tornar a confondre les dues idees que la 0086 ha separat.
   if (!canRepeatInSeries(subscription.serviceType)) return [];
 
   const series = await listSeriesToExtend(

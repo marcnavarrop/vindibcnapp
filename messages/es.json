@@ -327,9 +327,9 @@
       "paySubscribeByCard": "Con tarjeta",
       "paySubscribeAtCentreDesc": "Lo pagas en efectivo en el centro, como un bono cualquiera.",
       "paySubscribeByCardDesc": "Se cobra solo a tu tarjeta. Puedes cambiarla cuando quieras.",
-      "groupSubscriptionOnly": "Los bonos de grupo solo van por suscripción: cada día {day} de mes recibes las sesiones, sin tener que volver a comprar nada. Puedes darte de baja cuando quieras.",
-      "groupAlreadySubscribedTitle": "Ya tienes la suscripción de grupo",
-      "groupAlreadySubscribedBody": "Las sesiones de grupo te van llegando cada mes. No hace falta que compres nada más: si te has quedado sin ellas antes de tiempo, desde tus bonos puedes pedir alguna de más.",
+      "groupSubscriptionOnly": "Este paquete solo va por suscripción: cada día {day} de mes recibes las sesiones, sin tener que volver a comprar nada. Puedes darte de baja cuando quieras.",
+      "groupAlreadySubscribedTitle": "Ya tienes una suscripción activa",
+      "groupAlreadySubscribedBody": "Las sesiones te van llegando cada mes. No hace falta que compres nada más: si te has quedado sin ellas antes de tiempo, desde tus bonos puedes pedir alguna de más.",
       "groupAlreadySubscribedCta": "Ver mi suscripción"
     },
     "mine": {

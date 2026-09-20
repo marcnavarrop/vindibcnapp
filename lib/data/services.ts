@@ -11,6 +11,14 @@ export type Service = {
   price: number;
   defaultSessions: number;
   active: boolean;
+  /**
+   * Aquest paquet només es pot tenir per subscripció (0086).
+   *
+   * Va per PAQUET i no per tipus de servei: dins de 'grupo_reducido' hi ha
+   * mensualitats i bons solts alhora. La regla i el perquè, a
+   * `lib/subscription-rules.ts`.
+   */
+  subscriptionOnly: boolean;
 };
 
 export type ServiceInput = {
@@ -19,6 +27,7 @@ export type ServiceInput = {
   price: number;
   defaultSessions: number;
   active: boolean;
+  subscriptionOnly: boolean;
 };
 
 type Row = {
@@ -28,6 +37,7 @@ type Row = {
   price: number;
   default_sessions: number;
   active: boolean;
+  subscription_only: boolean;
 };
 
 function toService(r: Row): Service {
@@ -38,6 +48,7 @@ function toService(r: Row): Service {
     price: r.price,
     defaultSessions: r.default_sessions,
     active: r.active,
+    subscriptionOnly: r.subscription_only,
   };
 }
 
@@ -57,7 +68,7 @@ export async function listServices(): Promise<Service[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("services")
-    .select("id, service_type, name, price, default_sessions, active")
+    .select("id, service_type, name, price, default_sessions, active, subscription_only")
     .order("service_type", { ascending: true })
     .order("default_sessions", { ascending: true });
   if (error) throw error;
@@ -77,7 +88,7 @@ export async function getService(id: string): Promise<Service | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("services")
-    .select("id, service_type, name, price, default_sessions, active")
+    .select("id, service_type, name, price, default_sessions, active, subscription_only")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -95,6 +106,7 @@ export async function createService(input: ServiceInput): Promise<string> {
       price: input.price,
       default_sessions: input.defaultSessions,
       active: input.active,
+      subscription_only: input.subscriptionOnly,
       created_at: new Date().toISOString(),
     });
     saveStore(store);
@@ -109,6 +121,7 @@ export async function createService(input: ServiceInput): Promise<string> {
       price: input.price,
       default_sessions: input.defaultSessions,
       active: input.active,
+      subscription_only: input.subscriptionOnly,
     })
     .select("id")
     .single();
@@ -129,6 +142,7 @@ export async function updateService(
     s.price = input.price;
     s.default_sessions = input.defaultSessions;
     s.active = input.active;
+    s.subscription_only = input.subscriptionOnly;
     saveStore(store);
     return;
   }
@@ -141,6 +155,7 @@ export async function updateService(
       price: input.price,
       default_sessions: input.defaultSessions,
       active: input.active,
+      subscription_only: input.subscriptionOnly,
     })
     .eq("id", id);
   if (error) throw error;

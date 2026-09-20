@@ -771,17 +771,17 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "La quota mensual dels bons de grup reduït: en comptes de comprar el bo cada vegada, el client paga cada mes i rep les seves sessions. Només els bons de grup es poden subscriure, i des d'ara és també a l'inrevés: un bo de grup NOMÉS es pot tenir per subscripció. No se'n ven cap de solt, ni al client, ni des de la seva fitxa, ni en un val de regal.",
+          text: "La quota mensual d'un paquet: en comptes de comprar el bo cada vegada, el client paga cada mes i rep les seves sessions. Quins paquets van així ho decideixes tu, amb la casella «Només per subscripció» de cada paquet a Catàleg → Serveis. Un paquet marcat no es ven solt de cap manera: ni al client, ni des de la seva fitxa, ni en un val de regal.",
         },
         {
           t: "p",
-          text: "El client s'hi apunta des dels seus bons, pagant al centre o amb targeta. Tu i els professionals també podeu apuntar-l'hi des de «Nou bo» a la fitxa: en triar un paquet de grup, el formulari canvia i el que es crea és la subscripció. Des del taulell només es pot donar d'alta la que es paga AL CENTRE —el pagament amb targeta el demana Stripe i necessita que sigui el client qui tecleja la seva—.",
+          text: "El client s'hi apunta des dels seus bons, pagant al centre o amb targeta. Tu i els professionals també podeu apuntar-l'hi des de «Nou bo» a la fitxa: en triar un paquet marcat, el formulari canvia i el que es crea és la subscripció. Des del taulell només es pot donar d'alta la que es paga AL CENTRE —el pagament amb targeta el demana Stripe i necessita que sigui el client qui tecleja la seva—.",
         },
         {
           t: "p",
           text: s.subscriptionsEnabled
             ? "Ara mateix se'n poden contractar de noves."
-            : "Ara mateix NO se'n poden contractar de noves (Configuració → Centre), i com que el grup només va per subscripció, això vol dir que ARA MATEIX NO ES POT VENDRE CAP SESSIÓ DE GRUP: el servei no surt ni a la pantalla de compra del client ni al formulari de la seva fitxa. Les subscripcions que ja hi són es continuen renovant cada mes: el centre no pot deixar sense sessions qui ja va dir que sí.",
+            : "Ara mateix NO se'n poden contractar de noves (Configuració → Centre). Els paquets marcats com a «Només per subscripció» desapareixen de la pantalla de compra del client i del formulari de la seva fitxa, perquè no hi hauria cap manera de comprar-los. Els altres paquets del mateix servei segueixen venent-se amb normalitat: apagar l'interruptor ja no deixa el Grup reduït sense res, com passava abans que la casella fos per paquet. Les subscripcions que ja hi són es continuen renovant cada mes: el centre no pot deixar sense sessions qui ja va dir que sí.",
         },
         { t: "h", text: "Les dues regles que ho ordenen tot" },
         {
@@ -986,6 +986,31 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         {
           t: "p",
           text: "Quatre coses: el tipus de servei al qual pertany, un nom, un preu i quantes sessions porta per defecte. El nom és el que veurà el client quan compri.",
+        },
+        { t: "h", text: "«Només per subscripció»" },
+        {
+          t: "p",
+          text: "La casella que decideix si un paquet es pot comprar d'una tapada o només amb la quota mensual. Marcada, aquell paquet deixa de vendre's per QUATRE camins alhora —el bo pagat al centre, el de targeta, l'alta manual des de la fitxa d'un client i el val de regal— i només queda la subscripció.",
+        },
+        {
+          t: "p",
+          text: "VA PER PAQUET I NO PER SERVEI, que és tota la gràcia. Dins del Grup reduït pots tenir les mensualitats marcades i, al costat, un bo de 6 sessions i una sessió individual que es venen solts com qualsevol altre. Abans això no es podia: o anava per subscripció tot el servei, o res.",
+        },
+        {
+          t: "note",
+          text: "A la llista de paquets, els marcats porten l'etiqueta «Només subscripció». Els que no en porten es venen solts.",
+        },
+        {
+          t: "warn",
+          text: "Un paquet d'UNA sola sessió no es pot marcar: el que la subscripció renova cada mes és un bo, i un bo d'una sessió no ho és. El formulari t'ho dirà si ho proves.",
+        },
+        {
+          t: "p",
+          text: "Desmarcar-la no toca les subscripcions que ja hi ha: continuen renovant-se igual. El que canvia és que, a partir d'aquell moment, aquell paquet també es podrà comprar solt.",
+        },
+        {
+          t: "note",
+          text: "Aquesta casella NO diu res de l'aforament ni de les sessions repetides. Que una reserva de grup no es pugui repetir en bucle és perquè un grup té places comptades, i això va pel tipus de servei: passa igual amb un paquet de grup marcat que amb un que no ho estigui.",
         },
         {
           t: "note",

@@ -27,7 +27,7 @@ import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { PaymentMethodOption } from "@/components/forms/payment-method-option";
 import { Building2, CreditCard } from "lucide-react";
-import { isSubscriptionOnly } from "@/lib/group-rules";
+import { isSubscriptionOnly } from "@/lib/subscription-rules";
 
 // ─── Component principal ──────────────────────────────────────────────────────
 export function BuyBonoForm({
@@ -108,20 +108,31 @@ export function BuyBonoForm({
   );
 
   /**
-   * Aquest servei només es pot tenir per subscripció? (avui, el de grup)
+   * Aquest PAQUET només es pot tenir per subscripció?
    *
-   * Es mira el TIPUS triat al pas 1 i no `selected`, perquè el rètol i les
-   * opcions de pagament s'han de decidir encara que el paquet concret trigui un
-   * instant a resoldre's.
+   * ES MIRA `selected` I NO EL TIPUS DEL PAS 1, I ÉS EL CANVI DE LA 0086.
+   *
+   * Abans la resposta es podia donar al pas 1, perquè la regla anava per tipus
+   * de servei: triar «grup reduït» ja decidia el rètol i les opcions de
+   * pagament, passés el que passés al pas 2. Ara dins d'un mateix tipus hi
+   * conviuen els dos règims —les mensualitats de grup van per subscripció, el
+   * bo de 6 sessions i la sessió individual es venen solts—, i la pregunta
+   * NOMÉS es pot respondre quan hi ha un paquet triat.
+   *
+   * No hi ha el «instant a resoldre's» que preocupava abans: el pas 1
+   * preselecciona el primer paquet del tipus en el mateix gest que canvia de
+   * pas, així que quan aquest bloc es pinta `selected` ja hi és. Si per alguna
+   * raó no hi fos, `isSubscriptionOnly(undefined)` és false i el client veuria
+   * les opcions de compra normals —i el servidor el pararia igualment.
    */
-  const subscriptionOnly = isSubscriptionOnly(serviceType);
+  const subscriptionOnly = isSubscriptionOnly(selected);
   /**
    * ...i se li'n pot obrir una de nova ara mateix?
    *
    * L'interruptor del centre hi entra per completesa: amb les subscripcions
-   * apagades, /client/bonos ni tan sols ensenya la targeta de grup al pas 1, i
-   * per tant aquí no s'hi arriba. Es deixa perquè aquesta condició és la que ha
-   * de ser certa perquè el botó funcioni, i no la que hagi quedat per
+   * apagades, /client/bonos ni tan sols deixa arribar aquests paquets al pas 2,
+   * i per tant aquí no s'hi arriba. Es deixa perquè aquesta condició és la que
+   * ha de ser certa perquè el botó funcioni, i no la que hagi quedat per
    * eliminació en una altra pantalla.
    */
   const canSubscribe = subscriptionsEnabled && !hasLiveSubscription;
@@ -279,10 +290,12 @@ export function BuyBonoForm({
               {subscriptionOnly ? t("paySubscribeHow") : t("paymentMethod")}
             </span>
 
-            {/* ── Els paquets de grup: NOMÉS subscripció ──────────────────────
+            {/* ── Els paquets marcats: NOMÉS subscripció ──────────────────────
                 Les dues opcions de pagament únic no s'amaguen amb una condició
                 afegida al final: senzillament no existeixen per a aquest
-                servei. I les dues maneres de pagar la subscripció pugen al
+                paquet. Des de la 0086 això es decideix paquet a paquet, de
+                manera que dins d'un mateix servei el client pot veure aquest
+                bloc en un i les opcions de compra normals en un altre. I les dues maneres de pagar la subscripció pugen al
                 primer nivell, sense la porta intermèdia «Subscriure-m'hi»:
                 aquella porta separava dues decisions —pagar avui o
                 comprometre's cada mes, i com es paga— i aquí ja no n'hi ha cap
@@ -318,7 +331,8 @@ export function BuyBonoForm({
                    bo solt. Val més dir per què no hi ha res que deixar tres
                    caixes que menteixen. Només passa si ja en té una de viva
                    —l'índex únic de la 0072 no en deixa una segona—; amb les
-                   subscripcions apagades, el grup ni tan sols arriba al pas 1. */
+                   subscripcions apagades, aquests paquets ni tan sols arriben
+                   al pas 2. */
                 <div className="rounded-xl border border-brand-border bg-brand-bg px-4 py-3 text-sm">
                   <p className="font-bold text-brand-dark">
                     {t("groupAlreadySubscribedTitle")}

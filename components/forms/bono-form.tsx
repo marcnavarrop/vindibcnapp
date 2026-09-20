@@ -6,7 +6,7 @@ import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { formatEur, SERVICE_LABELS } from "@/lib/labels";
-import { isSubscriptionOnly } from "@/lib/group-rules";
+import { isSubscriptionOnly } from "@/lib/subscription-rules";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
@@ -19,17 +19,22 @@ import { TAP } from "@/lib/utils";
  * sota depèn del que es triï:
  *
  *   · Un paquet normal  → sessions, preu i cobrament. L'alta de sempre.
- *   · Un paquet de grup → l'alta d'una SUBSCRIPCIÓ al centre, sense cap camp
- *                         editable: el grup no es ven solt (`lib/group-rules.ts`).
+ *   · Un paquet marcat → l'alta d'una SUBSCRIPCIÓ al centre, sense cap camp
+ *                         editable: no es ven solt (`lib/subscription-rules.ts`).
  *
  * ELS CAMPS NO S'AMAGUEN AMB CSS, DEIXEN D'EXISTIR. És el mateix criteri que la
  * casella «Sessió de cortesia» al formulari de reserva, i pel mateix motiu: un
  * camp amagat continua enviant-se, i un preu o un nombre de sessions residuals
  * arribarien a una acció que no els espera. Sense camps no hi ha res a ignorar.
  *
- * Els paquets de grup NO es treuen del desplegable. Treure'ls faria pensar que
- * el centre no en té; deixar-los i canviar el que surt a sota explica la regla
- * al moment exacte en què importa.
+ * Els paquets de subscripció NO es treuen del desplegable. Treure'ls faria
+ * pensar que el centre no en té; deixar-los i canviar el que surt a sota explica
+ * la regla al moment exacte en què importa.
+ *
+ * DES DE LA 0086 LA CARA DEPÈN DEL PAQUET I NO DEL TIPUS. Dins de 'grupo
+ * reduït' hi conviuen les mensualitats (que van per subscripció) i els bons
+ * solts com el de 6 sessions (que no), així que triar dos paquets del mateix
+ * tipus pot ensenyar dues coses diferents. És el que ha de passar.
  */
 export function BonoForm({
   action,
@@ -44,7 +49,7 @@ export function BonoForm({
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   /**
-   * L'alta de subscripció al centre, per als paquets de grup. Una acció a part
+   * L'alta de subscripció al centre, per als paquets marcats. Una acció a part
    * i no un camp del mateix formulari: el que es crea és una altra cosa —una
    * fila a `subscriptions` i el bo del primer mes— i el servidor no ha de
    * desxifrar quina de les dues volia qui ha premut.
@@ -80,7 +85,7 @@ export function BonoForm({
     [services, serviceId],
   );
 
-  const subscriptionOnly = isSubscriptionOnly(selected?.serviceType);
+  const subscriptionOnly = isSubscriptionOnly(selected);
   const canSubscribe =
     subscriptionOnly && !!subscribeAction && subscriptionsEnabled && !hasLiveSubscription;
 
@@ -155,13 +160,14 @@ export function BonoForm({
             <p className="text-sm text-error">
               Les subscripcions estan desactivades (Configuració → Centre).
               Mentre ho estiguin no se&apos;n pot donar d&apos;alta cap de nova,
-              i per tant tampoc es poden vendre sessions de grup.
+              i per tant aquest paquet no es pot vendre. Els paquets que no van
+              per subscripció es venen igual.
             </p>
           )}
           {subscriptionsEnabled && hasLiveSubscription && (
             <p className="text-sm text-error">
-              Aquest client ja té una subscripció de grup viva. Se&apos;n
-              gestiona des de Bons → Subscripcions.
+              Aquest client ja té una subscripció viva. Se&apos;n gestiona des
+              de Bons → Subscripcions.
             </p>
           )}
         </>

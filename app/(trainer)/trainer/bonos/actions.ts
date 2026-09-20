@@ -20,10 +20,13 @@ export async function createTrainerBonoAction(
   formData: FormData,
 ): Promise<FormState> {
   const serviceType = formData.get("serviceType") as ServiceType | null;
+  // Mateix motiu que a l'acció d'admin: `createBono` mira la casella del
+  // paquet, i des de la 0086 això no es pot deduir del tipus de servei.
+  const serviceId = String(formData.get("serviceId") ?? "");
   const totalSessions = Number(formData.get("totalSessions"));
   const price = Number(formData.get("price"));
 
-  if (!serviceType) return { error: "Tria un servei." };
+  if (!serviceType || !serviceId) return { error: "Tria un servei." };
   if (!Number.isFinite(totalSessions) || totalSessions <= 0)
     return { error: "El nre. de sessions ha de ser més gran que 0." };
   if (!Number.isFinite(price) || price < 0)
@@ -33,6 +36,7 @@ export async function createTrainerBonoAction(
     await createBono({
       clientId,
       serviceType,
+      serviceId,
       totalSessions,
       price,
       paymentMethod: null,

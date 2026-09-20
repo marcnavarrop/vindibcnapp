@@ -54,7 +54,7 @@ export default async function AdminSubscriptionsPage() {
       <main className="mx-auto max-w-6xl p-6">
         <h1 className="mb-1 text-2xl text-brand-dark">Subscripcions</h1>
         <p className="mb-6 text-sm text-brand-muted">
-          La quota mensual dels bons de grup. Cada client es renova el dia del
+          La quota mensual dels paquets marcats «Només per subscripció». Cada client es renova el dia del
           mes en què es va donar d&apos;alta, i el preu li queda congelat des
           d&apos;aquell dia.
           {!settings.subscriptionsEnabled && (

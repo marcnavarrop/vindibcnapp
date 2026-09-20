@@ -35,7 +35,7 @@ import {
   type SeriesSeed,
   type SeriesReviewState,
 } from "@/components/forms/series-wizard";
-import { canRepeatInSeries } from "@/lib/group-rules";
+import { canRepeatInSeries } from "@/lib/series-rules";
 import {
   joinWaitlistAction,
   leaveWaitlistAction,
@@ -176,7 +176,7 @@ export function ClientCenterCalendar({
   onSeriesReady,
   onDialogOpen,
   waitlistEnabled = false,
-  hasSubscription = false,
+  subscriptionServiceType = null,
   waitlist = [],
 }: {
   data: ClientCenterData;
@@ -184,8 +184,8 @@ export function ClientCenterCalendar({
   cancelAction: CancelAction;
   /** El centre accepta inscripcions noves a la cua. */
   waitlistEnabled?: boolean;
-  /** El client té subscripció viva d'aquest servei (0072). */
-  hasSubscription?: boolean;
+  /** De quin servei és la subscripció viva del client, si en té (0072/0086). */
+  subscriptionServiceType?: ServiceType | null;
   /** Les esperes VIVES del client, per no oferir-li apuntar-s'hi dos cops. */
   waitlist?: { id: string; trainerId: string | null; desiredAt: string }[];
   /**
@@ -848,7 +848,7 @@ export function ClientCenterCalendar({
           botó «Repetir en bucle» del de sota— amb una sola regla i sense tocar
           ni una línia de cap dels dos. Les de grup no en tenen mai: quatre
           places ocupades en bucle per la mateixa persona és exactament el que
-          no pot passar (vegeu `lib/group-rules.ts`). */}
+          no pot passar (vegeu `lib/series-rules.ts`). */}
       {book && (
         <CreateModal
           trainerId={book.trainerId}
@@ -868,7 +868,7 @@ export function ClientCenterCalendar({
           }
           remainingSessions={data.bonoSessions[book.service]}
           waitlistEnabled={waitlistEnabled}
-          hasSubscription={hasSubscription}
+          subscriptionServiceType={subscriptionServiceType}
           onSeriesReady={
             onSeriesReady
               ? (review) => {
@@ -908,7 +908,7 @@ export function ClientCenterCalendar({
           }
           remainingSessions={data.bonoSessions[own.service]}
           waitlistEnabled={waitlistEnabled}
-          hasSubscription={hasSubscription}
+          subscriptionServiceType={subscriptionServiceType}
           onSeriesReady={
             onSeriesReady
               ? (review) => {
@@ -1111,7 +1111,7 @@ function CreateModal({
   seed,
   remainingSessions,
   waitlistEnabled,
-  hasSubscription,
+  subscriptionServiceType,
   onSeriesReady,
   action,
   onClose,
@@ -1128,7 +1128,7 @@ function CreateModal({
   remainingSessions?: number;
   waitlistEnabled?: boolean;
   /** El client té subscripció viva d'aquest servei (0072). */
-  hasSubscription?: boolean;
+  subscriptionServiceType?: ServiceType | null;
   onSeriesReady?: (review: SeriesReviewState) => void;
   action: CreateAction;
   onClose: () => void;
@@ -1219,7 +1219,7 @@ function CreateModal({
           seed={seed}
           remainingSessions={remainingSessions}
           waitlistEnabled={waitlistEnabled}
-          hasSubscription={hasSubscription}
+          subscriptionServiceType={subscriptionServiceType}
           onReady={onSeriesReady}
           secondaryAction={
             <button
@@ -1274,7 +1274,7 @@ function OwnModal({
   seed,
   remainingSessions,
   waitlistEnabled,
-  hasSubscription,
+  subscriptionServiceType,
   onSeriesReady,
   onClose,
 }: {
@@ -1291,7 +1291,7 @@ function OwnModal({
   remainingSessions?: number;
   waitlistEnabled?: boolean;
   /** El client té subscripció viva d'aquest servei (0072). */
-  hasSubscription?: boolean;
+  subscriptionServiceType?: ServiceType | null;
   onSeriesReady?: (review: SeriesReviewState) => void;
   onClose: () => void;
 }) {
@@ -1369,7 +1369,7 @@ function OwnModal({
           seed={seed}
           remainingSessions={remainingSessions}
           waitlistEnabled={waitlistEnabled}
-          hasSubscription={hasSubscription}
+          subscriptionServiceType={subscriptionServiceType}
           onReady={onSeriesReady}
           secondaryAction={
             <button
