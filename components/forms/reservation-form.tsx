@@ -19,6 +19,7 @@ export function ReservationForm({
   action = createReservationAction,
   cancelHref,
   defaultScheduledAt,
+  defaultTrainerId,
 }: {
   clients: ReservationFormData["clients"];
   trainers: ReservationFormData["trainers"];
@@ -34,6 +35,20 @@ export function ReservationForm({
   cancelHref: string;
   /** Valor inicial de data i hora (YYYY-MM-DDTHH:mm), p. ej. desde el calendario. */
   defaultScheduledAt?: string;
+  /**
+   * Professional ja triat pel context: la franja del calendari quan n'assenyala
+   * un de sol, o un mateix a l'àrea del professional.
+   *
+   * ES PRESELECCIONA, NO S'AMAGA
+   *
+   * El camp segueix sent visible i canviable. Amagar-lo trencaria els tres
+   * casos on de debò cal triar —«+ Nova reserva» sense franja, una franja amb
+   * dos professionals disponibles, i una franja fora de la disponibilitat de
+   * tothom—, i bloquejar-lo impediria esmenar un clic tort. El que sobrava no
+   * era el camp: era haver de tornar a DECIDIR una cosa ja decidida. Amb el
+   * valor posat, deixa de ser una decisió i passa a ser una confirmació.
+   */
+  defaultTrainerId?: string;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
   const [clientId, setClientId] = useState("");
@@ -143,6 +158,12 @@ export function ReservationForm({
         label="Professional"
         name="trainerId"
         placeholder="Sense assignar"
+        // Només si de debò és un dels professionals de la llista: això pot
+        // arribar de la URL, i un valor inventat deixaria el desplegable
+        // ensenyant la primera opció com si algú l'hagués triada.
+        defaultValue={
+          trainers.some((t) => t.id === defaultTrainerId) ? defaultTrainerId : ""
+        }
         options={trainers.map((t) => ({ value: t.id, label: t.name }))}
       />
 

@@ -40,6 +40,18 @@ export default async function NewTrainerReservationPage({
             action={createTrainerReservationAction}
             cancelHref="/trainer/reservas"
             defaultScheduledAt={at}
+            /*
+             * Ell mateix, sempre, vingui o no d'una franja.
+             *
+             * A la seva agenda no hi ha capes de diversos professionals
+             * (`showCalendarFilters` és només de l'admin): una franja d'aquí
+             * només pot voler dir "jo". I encara que entri per «Nova reserva»
+             * sense franja, el professional que té sentit és ell. Fins ara el
+             * desplegable li sortia buit i amb el company a dins, de manera que
+             * havia de triar-se a si mateix d'una llista que li oferia
+             * assignar-la a un altre.
+             */
+            defaultTrainerId={viewer?.id}
           />
         )}
       </main>

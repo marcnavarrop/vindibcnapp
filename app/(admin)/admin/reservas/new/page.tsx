@@ -8,9 +8,9 @@ export const dynamic = "force-dynamic";
 export default async function NewReservationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ at?: string }>;
+  searchParams: Promise<{ at?: string; trainer?: string }>;
 }) {
-  const { at } = await searchParams;
+  const { at, trainer } = await searchParams;
   const { clients, trainers } = await getReservationFormData();
 
   return (
@@ -28,6 +28,9 @@ export default async function NewReservationPage({
           trainers={trainers}
           cancelHref="/admin/reservas"
           defaultScheduledAt={at}
+          // El calendari només l'envia quan la franja assenyala un sol
+          // professional; la resta de vegades no arriba i el camp surt buit.
+          defaultTrainerId={trainer}
         />
       </main>
   );

@@ -332,12 +332,6 @@ export function WeeklyCalendar({
                 const cellDate = new Date(d);
                 cellDate.setHours(0, slot * SLOT_MINUTES, 0, 0);
                 const cellSlot = slot;
-                const goNew = () =>
-                  router.push(
-                    `${newReservationBase}?at=${encodeURIComponent(
-                      toLocalInput(cellDate),
-                    )}`,
-                  );
                 const inAvailability =
                   !isCovered &&
                   availability &&
@@ -373,6 +367,25 @@ export function WeeklyCalendar({
                 // Fins a 2 hi caben nom i servei escrits; de 3 en amunt
                 // només un recompte (veure FreeSlotChip).
                 const compactFree = freeHere.length === 2;
+                /*
+                 * Obre el formulari amb el que aquesta franja ja diu.
+                 *
+                 * L'hora sempre. El professional NOMÉS si la franja n'assenyala
+                 * un i prou: si n'hi ha dos disponibles, la cel·la és un sol
+                 * botó i no hi ha manera de saber en quin dels xips s'ha clicat,
+                 * i endevinar-ho seria pitjor que preguntar. Amb zero tampoc hi
+                 * ha res a dir.
+                 *
+                 * Abans no viatjava mai, i l'admin havia de tornar a triar el
+                 * professional que acabava de clicar. Pitjor encara: el valor
+                 * per defecte del desplegable és «Sense assignar», o sigui que
+                 * qui no el tocava es quedava una reserva sense ningú.
+                 */
+                const goNew = () => {
+                  const params = new URLSearchParams({ at: toLocalInput(cellDate) });
+                  if (freeHere.length === 1) params.set("trainer", freeHere[0].trainerId);
+                  router.push(`${newReservationBase}?${params}`);
+                };
                 return (
                   <div
                     key={dayIdx}

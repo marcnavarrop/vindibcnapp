@@ -18,6 +18,9 @@ import {
   isInstantBlocked,
   rangesOverlap,
   sessionEndIso,
+  hourToSlot,
+  slotsFor,
+  slotToHHMM,
 } from "@/lib/availability-slots";
 // Només la variant de simulació: als camins reals les proves les compta la
 // funció de Postgres que reserva (book_group_slot / book_individual_slot),
@@ -41,17 +44,50 @@ import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 /**
  * Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio.
  *
- * Amb `trainerId` nul no hi ha res a comprovar: una reserva sense professional
- * assignat no trepitja l'horari de ningú. Abans el tipus era `string` i qui
- * cridava des del camí manual —on el professional és opcional— no podia
- * fer-ho sense rodejos; per això aquell camí no comprovava res.
+ * SENSE PROFESSIONAL ES COMPROVA L'HORARI DEL CENTRE, NO RES
+ *
+ * Deia que amb `trainerId` nul "no hi ha res a comprovar", i era mig cert: no
+ * trepitja l'horari de ningú. Però "de ningú" es va llegir com "de res", i
+ * «Sense assignar» —que és el valor per DEFECTE del desplegable— es saltava
+ * tota validació d'hora. Una reserva a les tres de la matinada entrava sense
+ * dir res.
+ *
+ * Amb professional mana la seva disponibilitat, que és la regla concreta i
+ * escrita a mà. Sense professional no hi ha cap regla d'aquestes, i l'única
+ * cosa que queda per comprovar és l'horari del CENTRE: de l'obertura al
+ * tancament, i amb la sessió sencera a dins.
+ *
+ * Es fa NOMÉS en aquest cas i no per a tothom. Les regles de disponibilitat
+ * no estan acotades per l'horari del centre (`parseCommon` mira l'ordre i la
+ * durada mínima, res més), o sigui que aplicar-lo a tothom podria rebutjar una
+ * regla escrita a posta. La idea es llegeix així: tota reserva es comprova
+ * contra un horari, i quin horari depèn de si hi ha professional.
+ *
+ * L'aritmètica és la mateixa que fa servir `booking-series.ts` per acotar les
+ * alternatives —l'última entrada possible és el tancament menys una sessió—
+ * perquè les dues bandes diguin el mateix.
  */
 async function assertWithinAvailability(
   trainerId: string | null,
   when: Date,
   serviceType: ServiceType,
 ): Promise<void> {
-  if (!trainerId) return;
+  if (!trainerId) {
+    const { openingHour, closingHour } = await getCenterSettings();
+    const primer = hourToSlot(openingHour);
+    // L'última entrada que hi cap sencera: el tancament menys una sessió.
+    const ultim = hourToSlot(closingHour) - slotsFor(SESSION_DURATION_MINUTES);
+    // En hora del CENTRE. Amb els getters locals del procés, a Vercel —que va
+    // en UTC— una sessió de les 10 d'aquí es comprovaria contra les 8.
+    const slot = centerSlot(when);
+    if (slot < primer || slot > ultim)
+      throw new Error(
+        `Sense professional assignat, la reserva ha de ser dins de l'horari del ` +
+          `centre: de ${slotToHHMM(primer)} a ${slotToHHMM(hourToSlot(closingHour))} ` +
+          `(l'última entrada és a les ${slotToHHMM(ultim)}).`,
+      );
+    return;
+  }
   const [rules, blocks] = await Promise.all([
     listAvailabilityLite(trainerId),
     listBlocksLite(trainerId),
