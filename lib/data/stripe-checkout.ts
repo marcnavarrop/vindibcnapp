@@ -2,7 +2,12 @@ import "server-only";
 import type Stripe from "stripe";
 import { getStripe, siteOrigin, toCents, fromCents, STRIPE_MIN_CENTS } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { quoteBonoPurchase, createPaidBono } from "@/lib/data/bonos";
+import {
+  quoteBonoPurchase,
+  createPaidBono,
+  getPayableBono,
+  markBonoPaid,
+} from "@/lib/data/bonos";
 import {
   createSubscription,
   getLiveSubscription,
@@ -66,6 +71,16 @@ const KIND_BONO = "bono";
 const KIND_VOUCHER = "gift_voucher";
 const KIND_SUBSCRIPTION = "subscription";
 const KIND_EXTRA = "bono_extra";
+/**
+ * Pagar amb targeta un bo que JA EXISTEIX i està pendent.
+ *
+ * Els altres tres kinds creen el que s'ha comprat quan Stripe confirma. Aquest
+ * no: el bo ja hi és —l'ha fet néixer el camí de «pagar al centre» o la
+ * renovació automàtica de la 0088— i el que fa el webhook és ADOPTAR-LO,
+ * passant-lo a 'active'. Per això porta el `bonoId` a les metadades i no la
+ * fotografia del paquet: la fotografia ja és a la fila del bo.
+ */
+const KIND_BONO_PENDING = "bono_pending";
 
 type CheckoutMetadata = Record<string, string>;
 
@@ -144,6 +159,8 @@ export async function startBonoCheckout(input: {
   profileId: string;
   serviceId: string;
   email: string | null;
+  /** La casella de «renovar-lo sol» de la compra (0088). */
+  autoRenew?: boolean;
 }): Promise<CheckoutStart> {
   const quote = await quoteBonoPurchase({
     profileId: input.profileId,
@@ -163,11 +180,54 @@ export async function startBonoCheckout(input: {
       totalSessions: String(quote.totalSessions),
       packageName: meta(quote.packageName, 200),
       referralRewardId: quote.referralRewardId ?? "",
+      // Viatja amb la resta de la fotografia, pel mateix motiu: torna dins de
+      // l'esdeveniment SIGNAT i el navegador no la pot tocar pel camí.
+      autoRenew: input.autoRenew ? "1" : "",
     },
     successPath: "/client/bonos/confirmacio",
     cancelPath: "/client/bonos",
     customerEmail: input.email,
     clientReferenceId: quote.clientId,
+  });
+}
+
+/**
+ * Sessió de Checkout per pagar un bo pendent que ja existeix.
+ *
+ * QUI DIU QUANT ES COBRA ÉS LA FILA DEL BO, NO EL CATÀLEG
+ *
+ * El bo ja porta el preu amb què es va crear, i és el que s'ha de cobrar encara
+ * que el catàleg hagi pujat de preu entremig: el compromís es va adquirir quan
+ * el bo va néixer. Mateix criteri que la fotografia congelada de la 0072.
+ *
+ * La propietat es comprova AQUÍ i no només a la pantalla: qui obre la sessió
+ * ha de ser l'amo del bo, o qualsevol podria posar-se a pagar bons d'altri
+ * —que seria un regal, però també una manera d'activar-los sense permís.
+ */
+export async function startPendingBonoCheckout(input: {
+  profileId: string;
+  bonoId: string;
+  email: string | null;
+}): Promise<CheckoutStart> {
+  const bono = await getPayableBono(input.profileId, input.bonoId);
+  if (!bono) return { error: "Aquest bo no es pot pagar." };
+
+  return createSession({
+    amountEuros: bono.price,
+    productName: bono.packageName,
+    productDescription: `${SERVICE_LABELS[bono.serviceType]} · ${bono.totalSessions} sessions`,
+    metadata: {
+      kind: KIND_BONO_PENDING,
+      profileId: input.profileId,
+      clientId: bono.clientId,
+      bonoId: bono.id,
+      serviceType: bono.serviceType,
+      totalSessions: String(bono.totalSessions),
+    },
+    successPath: "/client/bonos/confirmacio",
+    cancelPath: "/client/bonos/meus",
+    customerEmail: input.email,
+    clientReferenceId: bono.clientId,
   });
 }
 
@@ -445,6 +505,8 @@ export async function fulfillCheckoutSession(
     return fulfillGiftVoucher(session.id, m, paid, paymentIntentId);
   if (m.kind === KIND_EXTRA)
     return fulfillExtraBono(session.id, m, paid, paymentIntentId);
+  if (m.kind === KIND_BONO_PENDING)
+    return fulfillPendingBono(session.id, m, paymentIntentId);
 
   return { status: "ignored", reason: `kind=${m.kind ?? "(cap)"}` };
 }
@@ -462,10 +524,50 @@ async function fulfillBono(
     price: paid,
     stripeCheckoutSessionId: sessionId,
     stripePaymentId: paymentIntentId,
+    // De les METADADES i no del catàleg (0088), igual que la resta de la
+    // fotografia: el que s'ha cobrat s'ha de poder lliurar encara que el
+    // paquet hagi canviat mentre el client pagava.
+    serviceId: m.serviceId || null,
+    autoRenew: m.autoRenew === "1",
     referralRewardId: m.referralRewardId || null,
   });
 
   return { status: created ? "created" : "duplicate", kind: KIND_BONO, id };
+}
+
+/**
+ * Adopta un bo pendent que acaba de pagar-se amb targeta.
+ *
+ * NO CREA RES, I AQUÍ ESTÀ TOTA LA GRÀCIA
+ *
+ * La regla de la casa és que prémer «pagar amb targeta» no crea res i que el bo
+ * neix al webhook. Per a un bo que JA existia, aplicar-la al peu de la lletra en
+ * crearia un segon i el client acabaria amb dos. Així que aquest camí
+ * actualitza el que hi havia.
+ *
+ * La idempotència no la dona l'índex de `stripe_checkout_session_id` —seria la
+ * mateixa fila i el mateix valor, no hi hauria xoc— sinó el filtre d'estat de
+ * `markBonoPaid`: només troba el bo si encara està per cobrar. Un webhook
+ * repetit no hi troba res a fer i el registre del pagament tampoc es duplica,
+ * perquè `createSystemPayment` va per l'índex de `stripe_payment_id`.
+ */
+async function fulfillPendingBono(
+  sessionId: string,
+  m: CheckoutMetadata,
+  paymentIntentId: string | null,
+): Promise<Fulfilment> {
+  try {
+    await markBonoPaid(m.bonoId, {
+      method: "card",
+      stripePaymentId: paymentIntentId,
+      stripeCheckoutSessionId: sessionId,
+    });
+    return { status: "created", kind: KIND_BONO_PENDING, id: m.bonoId };
+  } catch {
+    // `markBonoPaid` llança si el bo ja no es pot cobrar, que és exactament el
+    // que passa en un reintent del webhook. No és cap error a reportar.
+    return { status: "duplicate", kind: KIND_BONO_PENDING, id: m.bonoId };
+  }
 }
 
 async function fulfillGiftVoucher(

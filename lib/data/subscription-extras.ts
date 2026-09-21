@@ -188,6 +188,13 @@ function claimInMock(args: ClaimArgs): SubscriptionExtraResult {
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
+  // El mirall en simulació de `claim_subscription_extra` (0073), que a la base
+  // insereix des de SQL. `service_id` es queda a NULL a posta i no és cap
+  // oblit: un extra neix amb `is_subscription_extra = true`, pertany a una
+  // subscripció, i la constraint `bonos_auto_renew_not_subscription` (0088) ja
+  // impedeix que pugui auto-renovar-se. Desar-hi el paquet seria desar una
+  // dada que no llegirà ningú, i obligaria a tocar una funció amb advisory
+  // lock per res.
   store.bonos.push({
     id,
     client_id: sub.client_id,
@@ -204,6 +211,9 @@ function claimInMock(args: ClaimArgs): SubscriptionExtraResult {
     subscription_id: sub.id,
     subscription_cycle_start: args.p_cycle_start,
     is_subscription_extra: true,
+    service_id: null,
+    auto_renew: false,
+    renewed_from_bono_id: null,
     stripe_invoice_id: null,
     created_at: now,
   });

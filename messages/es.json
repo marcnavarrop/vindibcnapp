@@ -331,7 +331,9 @@
       "groupSubscriptionOnly": "Este paquete solo va por suscripción: cada día {day} de mes recibes las sesiones, sin tener que volver a comprar nada. Puedes darte de baja cuando quieras.",
       "groupAlreadySubscribedTitle": "Ya tienes una suscripción activa",
       "groupAlreadySubscribedBody": "Las sesiones te van llegando cada mes. No hace falta que compres nada más: si te has quedado sin ellas antes de tiempo, desde tus bonos puedes pedir alguna de más.",
-      "groupAlreadySubscribedCta": "Ver mi suscripción"
+      "groupAlreadySubscribedCta": "Ver mi suscripción",
+      "autoRenewLabel": "Renovarlo solo cuando se acabe",
+      "autoRenewHelp": "Al gastar la última sesión te prepararemos un bono nuevo pendiente de pago y te avisaremos por correo. No se cobra nada solo: tendrás que pagarlo tú."
     },
     "mine": {
       "title": "Mis bonos",
@@ -379,7 +381,18 @@
       "close": "Cerrar",
       "subscriptionPaused": "El centro ha congelado tu suscripción. No tienes que pagar nada mientras esté así, y el tiempo parado no lo pierdes: al reanudarla, la renovación se retrasa los mismos días.",
       "subscriptionPausedUntil": "Se reanudará el {date}.",
-      "subscriptionPausedOpen": "Se reanudará cuando el centro lo decida."
+      "subscriptionPausedOpen": "Se reanudará cuando el centro lo decida.",
+      "autoRenewLabel": "Renovarlo solo cuando se acabe",
+      "autoRenewOn": "Cuando gastes la última sesión te prepararemos un bono nuevo, pendiente de pago. No se cobra nada solo.",
+      "autoRenewOff": "Al acabarse no pasará nada: tendrás que comprar uno nuevo tú.",
+      "autoRenewNoPackage": "Este bono es anterior al cambio y no sabemos de qué paquete salió.",
+      "autoRenewFromGift": "Los bonos que vienen de un vale de regalo no se renuevan.",
+      "autoRenewFromSubscription": "Este bono ya lo renueva tu suscripción cada mes.",
+      "autoRenewHasSubscription": "Ya tienes una suscripción de este servicio que te renueva sola.",
+      "autoRenewNotSellable": "Este paquete ya no se vende suelto.",
+      "autoRenewFailed": "No se ha podido guardar. Inténtalo de nuevo.",
+      "payByCard": "Pagar con tarjeta",
+      "payPending": "Abriendo el pago…"
     },
     "confirmed": {
       "title": "Pago confirmado",
@@ -798,6 +811,10 @@
           "label": "Bono a punto de caducar",
           "description": "Unos días antes de que caduque un bono con sesiones sin hacer."
         },
+        "bono_auto_renewed": {
+          "label": "Bono renovado automáticamente",
+          "description": "Cuando un bono con renovación activada se agota y nace uno nuevo pendiente de pago."
+        },
         "bono_unpaid_cancelled": {
           "label": "Bono anulado por impago",
           "description": "Si un bono pendiente de pago decae y se cancelan las sesiones reservadas."
@@ -958,6 +975,7 @@
       "service": "Servicio",
       "trainer": "Profesional",
       "remaining": "Sesiones sin hacer",
+      "sessions": "Sesiones del bono nuevo",
       "expiresOn": "Caduca el",
       "cancelled": "Sesiones canceladas",
       "gift": "Regalo",
@@ -1005,6 +1023,14 @@
       "intro": "Te queda solo 1 sesión en tu bono de {service}.",
       "cta": "Renovar mi bono",
       "outro": "Renuévalo cuando quieras para no quedarte sin sesiones."
+    },
+    "bonoAutoRenewed": {
+      "subject": "Tienes un bono nuevo esperando pago · VindiBCN",
+      "heading": "Tu bono se ha agotado y hay uno nuevo listo",
+      "intro": "Habías pedido que tu bono de {service} se renovara solo. Acabas de gastar su última sesión, así que te hemos preparado un «{package}» nuevo por {price} €.",
+      "warn": "Todavía NO está pagado. Hasta que no lo pagues —con tarjeta o en el centro— no contará como comprado.",
+      "cta": "Ver mi bono y pagarlo",
+      "outro": "Si ya no lo quieres, no hagas nada: un bono sin pagar no te compromete a nada."
     },
     "bonoExpiringSoon": {
       "subject": "Tu bono caduca pronto · VindiBCN",

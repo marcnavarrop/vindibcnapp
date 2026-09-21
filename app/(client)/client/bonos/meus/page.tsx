@@ -6,6 +6,7 @@ import { formatEur, formatDate } from "@/lib/labels";
 import { getCycleState, getAnyLiveSubscription } from "@/lib/data/subscriptions";
 import { stripeEnabled } from "@/lib/stripe";
 import { SubscriptionManage } from "@/components/forms/subscription-manage";
+import { BonoRowActions } from "@/components/client/bono-row-actions";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -173,7 +174,8 @@ export default async function ClientBonosPage() {
               <Empty>{t("mine.empty")}</Empty>
             ) : (
               client.bonos.map((b) => (
-                <Row key={b.id}>
+                <div key={b.id} className="flex flex-col">
+                <Row>
                   <span className="font-bold text-brand-dark">
                     {tl(b.serviceType)}
                   </span>
@@ -193,6 +195,10 @@ export default async function ClientBonosPage() {
                     {tb(b.status)}
                   </Badge>
                 </Row>
+                {/* Sota la fila i no dins: la fila és una graella d'una línia i
+                    l'interruptor necessita dues. */}
+                <BonoRowActions bono={b} stripeOn={stripeEnabled()} />
+                </div>
               ))
             )}
           </Panel>

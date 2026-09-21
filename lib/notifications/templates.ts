@@ -472,6 +472,32 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "bono_auto_renewed": {
+      const t = i.ns("emails.bonoAutoRenewed");
+      subject = t("subject");
+      block = {
+        heading: t("heading"),
+        intro: [
+          hola,
+          t("intro", {
+            service: service ?? "",
+            package: d.packageName ?? "",
+            sessions: d.sessions ?? "",
+            price: d.price ?? "",
+          }),
+        ],
+        details: rows([
+          [tl("service"), service],
+          [tl("sessions"), d.sessions],
+        ]),
+        // El que de debò ha de quedar clar: encara no està pagat. Va al cos i
+        // no només a l'assumpte, que és el que es llegeix de passada.
+        cta: { label: t("cta"), url: appLink("/client/bonos/meus") },
+        outro: [t("warn"), t("outro")],
+        footer: "client",
+      };
+      break;
+    }
     case "bono_expiring_soon": {
       const t = i.ns("emails.bonoExpiringSoon");
       subject = t("subject");

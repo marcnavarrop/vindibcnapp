@@ -331,7 +331,9 @@
       "groupSubscriptionOnly": "This pass only comes as a subscription: on the {day}th of each month you get your sessions, with nothing left to buy again. You can cancel whenever you like.",
       "groupAlreadySubscribedTitle": "You already have an active subscription",
       "groupAlreadySubscribedBody": "Your sessions arrive every month. There's nothing more to buy: if you've run out early, you can ask for an extra one from your passes.",
-      "groupAlreadySubscribedCta": "See my subscription"
+      "groupAlreadySubscribedCta": "See my subscription",
+      "autoRenewLabel": "Renew it on its own when it runs out",
+      "autoRenewHelp": "When you use the last session we will set up a new unpaid package and email you. Nothing is charged automatically: you pay it yourself."
     },
     "mine": {
       "title": "My passes",
@@ -379,7 +381,18 @@
       "close": "Close",
       "subscriptionPaused": "The centre has put your subscription on hold. You pay nothing while it is, and you don't lose the time: when it resumes, your renewal moves back by the same number of days.",
       "subscriptionPausedUntil": "It will resume on {date}.",
-      "subscriptionPausedOpen": "It will resume when the centre decides."
+      "subscriptionPausedOpen": "It will resume when the centre decides.",
+      "autoRenewLabel": "Renew it on its own when it runs out",
+      "autoRenewOn": "When you use the last session we will set up a new unpaid package for you. Nothing is charged automatically.",
+      "autoRenewOff": "Nothing will happen when it runs out: you will have to buy a new one yourself.",
+      "autoRenewNoPackage": "This package predates the change and we do not know which one it came from.",
+      "autoRenewFromGift": "Packages from a gift voucher are not renewed.",
+      "autoRenewFromSubscription": "Your subscription already renews this one every month.",
+      "autoRenewHasSubscription": "You already have a subscription for this service that renews on its own.",
+      "autoRenewNotSellable": "This package is no longer sold on its own.",
+      "autoRenewFailed": "Could not save. Please try again.",
+      "payByCard": "Pay by card",
+      "payPending": "Opening payment…"
     },
     "confirmed": {
       "title": "Payment confirmed",
@@ -798,6 +811,10 @@
           "label": "Package expiring soon",
           "description": "A few days before a package with unused sessions expires."
         },
+        "bono_auto_renewed": {
+          "label": "Package renewed automatically",
+          "description": "When a package with renewal switched on runs out and a new unpaid one is created."
+        },
         "bono_unpaid_cancelled": {
           "label": "Package cancelled for non-payment",
           "description": "If an unpaid package lapses and its booked sessions are cancelled."
@@ -958,6 +975,7 @@
       "service": "Service",
       "trainer": "Professional",
       "remaining": "Unused sessions",
+      "sessions": "Sessions in the new package",
       "expiresOn": "Expires on",
       "cancelled": "Cancelled sessions",
       "gift": "Gift",
@@ -1005,6 +1023,14 @@
       "intro": "You have just 1 session left on your {service} package.",
       "cta": "Renew my package",
       "outro": "Renew it whenever you like so you don't run out of sessions."
+    },
+    "bonoAutoRenewed": {
+      "subject": "A new package is waiting for payment · VindiBCN",
+      "heading": "Your package ran out and a new one is ready",
+      "intro": "You asked for your {service} package to renew on its own. You have just used its last session, so we have set up a new “{package}” for €{price}.",
+      "warn": "It is NOT paid yet. Until you pay it — by card or at the centre — it will not count as purchased.",
+      "cta": "See my package and pay it",
+      "outro": "If you no longer want it, do nothing: an unpaid package commits you to nothing."
     },
     "bonoExpiringSoon": {
       "subject": "Your package expires soon · VindiBCN",

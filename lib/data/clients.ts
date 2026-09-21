@@ -26,6 +26,26 @@ export type ClientListItem = {
   remainingSessions: number;
 };
 
+/**
+ * Per què aquest bo no pot dur renovació automàtica, mirant NOMÉS la fila.
+ *
+ * La quarta porta —que el client ja tingui subscripció viva d'aquest servei—
+ * no es pot respondre des d'aquí i la comprova `setBonoAutoRenew` en desar. La
+ * pantalla, doncs, pot oferir l'interruptor i rebre un no: és el mateix
+ * criteri que segueix tota la casa, que qui mana és el servidor i no el que
+ * s'hagi pintat.
+ */
+function autoRenewBlockOf(b: {
+  service_id?: string | null;
+  gift_voucher_id?: string | null;
+  subscription_id?: string | null;
+}): "noPackage" | "fromGift" | "fromSubscription" | null {
+  if (b.subscription_id) return "fromSubscription";
+  if (b.gift_voucher_id) return "fromGift";
+  if (!b.service_id) return "noPackage";
+  return null;
+}
+
 export type ClientBono = {
   id: string;
   serviceType: ServiceType;
@@ -40,6 +60,20 @@ export type ClientBono = {
    * d'anul·lar-lo: donar-se de baixa té el seu camí (`cancelBlockFor`).
    */
   subscriptionId: string | null;
+  /** Renovació automàtica demanada pel client (0088). */
+  autoRenew: boolean;
+  /**
+   * Què impedeix encendre-li la renovació, si és que hi ha res.
+   *
+   * Es resol AQUÍ i no a la pantalla perquè depèn de coses que la pantalla no
+   * té: d'on va sortir el bo i si el client ja té subscripció d'aquest servei.
+   * La pantalla només ha de saber si pinta l'interruptor i què hi diu.
+   */
+  autoRenewBlock:
+    | "noPackage"
+    | "fromGift"
+    | "fromSubscription"
+    | null;
 };
 
 export type ClientReservation = {
@@ -186,6 +220,8 @@ function buildDetail(clientId: string): ClientDetail | null {
         status: b.status,
         expiresAt: b.expires_at ?? null,
         subscriptionId: b.subscription_id ?? null,
+        autoRenew: b.auto_renew ?? false,
+        autoRenewBlock: autoRenewBlockOf(b),
       })),
     reservations: store.reservations
       .filter((r) => r.client_id === clientId)
@@ -237,6 +273,9 @@ type DetailRow = {
     price: number;
     status: BonoStatus;
     subscription_id: string | null;
+    service_id: string | null;
+    gift_voucher_id: string | null;
+    auto_renew: boolean;
   }[];
   reservations: {
     id: string;
@@ -265,7 +304,7 @@ async function fetchClientDetail(
       `id, profile_id, assigned_trainer_id, clinical_notes, general_notes,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
-       bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at, subscription_id),
+       bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at, subscription_id, service_id, gift_voucher_id, auto_renew),
        reservations(id, scheduled_at, service_type, status, trainer_id, trainer:profiles!reservations_trainer_id_fkey(full_name, avatar_path)),
        payments(id, amount, method, paid_at)`,
     )
@@ -297,6 +336,8 @@ async function fetchClientDetail(
       status: b.status,
       expiresAt: b.expires_at ?? null,
       subscriptionId: b.subscription_id ?? null,
+      autoRenew: b.auto_renew ?? false,
+      autoRenewBlock: autoRenewBlockOf(b),
     })),
     reservations: row.reservations
       .slice()

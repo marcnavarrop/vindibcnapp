@@ -271,6 +271,9 @@ export interface Database {
           subscription_cycle_start: string | null;
           is_subscription_extra: boolean;
           stripe_invoice_id: string | null;
+          service_id: string | null;
+          auto_renew: boolean;
+          renewed_from_bono_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -290,6 +293,9 @@ export interface Database {
           subscription_cycle_start?: string | null;
           is_subscription_extra?: boolean;
           stripe_invoice_id?: string | null;
+          service_id?: string | null;
+          auto_renew?: boolean;
+          renewed_from_bono_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -309,6 +315,9 @@ export interface Database {
           subscription_cycle_start?: string | null;
           is_subscription_extra?: boolean;
           stripe_invoice_id?: string | null;
+          service_id?: string | null;
+          auto_renew?: boolean;
+          renewed_from_bono_id?: string | null;
           created_at?: string;
         };
         Relationships: [];

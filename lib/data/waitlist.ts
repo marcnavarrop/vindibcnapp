@@ -9,6 +9,7 @@ import {
 } from "@/lib/data/reservations";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
+import { afterBonoConsumed } from "@/lib/data/bono-consumption";
 import { sessionEndIso } from "@/lib/availability-slots";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
@@ -376,6 +377,10 @@ export async function promoteFromWaitlist(freed: {
       // serialitza per franja amb un advisory lock, compta també les sessions
       // de prova i reclama la sessió del bo dins de la mateixa transacció.
       let createdId: string;
+      // Quantes sessions li queden al bo després d'aquesta. Les dues funcions
+      // el tornen; fins ara es llençava, i per això aquest camí no avisava mai
+      // ni de bo baix ni de res.
+      let restantDespres: number | null = null;
 
       if (c.service_type === "grupo_reducido") {
         const { data: res, error: gErr } = await admin.rpc("book_group_slot", {
@@ -397,6 +402,7 @@ export async function promoteFromWaitlist(freed: {
           return { promoted: false, reason: "La franja segueix plena." };
         }
         createdId = res.id;
+        restantDespres = typeof res.remaining === "number" ? res.remaining : null;
       } else {
         // Serveis individuals: `book_individual_slot` (0084), el mirall de la
         // de grup i amb el MATEIX pany. Aquest camí feia el mateix ball que
@@ -422,6 +428,7 @@ export async function promoteFromWaitlist(freed: {
           return { promoted: false, reason: "La franja segueix plena." };
         }
         createdId = res.id;
+        restantDespres = typeof res.remaining === "number" ? res.remaining : null;
       }
 
       // `eq("status","waiting")` tanca la cursa: si dues cancel·lacions
@@ -444,6 +451,16 @@ export async function promoteFromWaitlist(freed: {
       }
 
       await notifyPromotion(c.client_id, freed, createdId);
+      // El cinquè camí que gasta una sessió, i l'únic que fins ara no ho deia
+      // a ningú. Va DESPRÉS de marcar l'entrada: si la cursa l'hagués guanyat
+      // l'altra, la reserva s'ha desfet i aquí no s'hi arriba.
+      if (restantDespres !== null)
+        await afterBonoConsumed({
+          bonoId: bono.id,
+          clientId: c.client_id,
+          serviceType: c.service_type,
+          remaining: restantDespres,
+        });
       return { promoted: true, clientId: c.client_id, reservationId: createdId };
     }
 
@@ -527,6 +544,12 @@ async function promoteMock(
     c.fulfilled_reservation_id = id;
     saveStore(store);
     await notifyPromotion(c.client_id, freed, id);
+    await afterBonoConsumed({
+      bonoId: bono.id,
+      clientId: c.client_id,
+      serviceType: c.service_type,
+      remaining: bono.remaining_sessions,
+    });
     return { promoted: true, clientId: c.client_id, reservationId: id };
   }
   return { promoted: false, reason: "Cap candidat podia agafar-la." };

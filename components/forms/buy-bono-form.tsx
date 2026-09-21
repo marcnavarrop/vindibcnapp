@@ -284,6 +284,29 @@ export function BuyBonoForm({
             );
           })()}
 
+          {/*
+            Renovar-lo sol quan s'acabi.
+            NOMÉS si no és subscripció: aquells ja es renoven cada mes, i la
+            constraint `bonos_auto_renew_not_subscription` (0088) ho rebutjaria.
+            Va dins del mateix <form>, així que les dues sortides de pagament
+            —al centre i amb targeta— la reben sense duplicar res.
+          */}
+          {!subscriptionOnly && (
+            <label className="flex items-start gap-2 rounded-xl border border-brand-border bg-white px-4 py-3 text-sm text-brand-charcoal">
+              <input
+                type="checkbox"
+                name="autoRenew"
+                className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
+              />
+              <span>
+                <span className="font-bold">{t("autoRenewLabel")}</span>
+                <span className="block text-xs text-brand-muted">
+                  {t("autoRenewHelp")}
+                </span>
+              </span>
+            </label>
+          )}
+
           {/* Mètode de pagament */}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">

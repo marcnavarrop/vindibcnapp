@@ -30,6 +30,7 @@ import { mockActiveHoldsAt } from "@/lib/data/trial-bookings";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
+import { afterBonoConsumed } from "@/lib/data/bono-consumption";
 import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { canRepeatInSeries } from "@/lib/series-rules";
 import { getViewer } from "@/lib/auth";
@@ -222,29 +223,6 @@ async function notifyTrainerBooking(
       whenIso: info.scheduledAt,
       serviceType: info.serviceType,
     },
-  });
-}
-
-/**
- * Avisa el client que el bo se li acaba (best-effort). El llindar el configura
- * l'admin (bonoLowThreshold); abans era fix a 1 sessió.
- *
- * Es dispara només en CREUAR el llindar, no cada vegada que hi és per sota:
- * si no, cada reserva a partir d'aquí repetiria l'avís.
- */
-async function notifyBonoLowIfNeeded(
-  clientId: string,
-  serviceType: ServiceType,
-  remaining: number,
-): Promise<void> {
-  const { bonoLowThreshold } = await getCenterSettings();
-  if (remaining !== bonoLowThreshold) return;
-  const c = await clientContact(clientId);
-  if (!c) return;
-  await notify({
-    type: "bono_low",
-    recipient: c,
-    data: { name: c.name ?? "", serviceType },
   });
 }
 
@@ -858,11 +836,12 @@ export async function createReservation(
     });
     // L'avís de "et queden poques sessions" només té sentit si hi ha bo.
     if (bono)
-      await notifyBonoLowIfNeeded(
+      await afterBonoConsumed({
+        bonoId: bono.id,
         clientId,
         serviceType,
-        bono.remaining_sessions,
-      );
+        remaining: bono.remaining_sessions,
+      });
     return;
   }
 
@@ -946,7 +925,12 @@ export async function createReservation(
   });
   // Sense bo no hi ha cap comptador que pugui anar baix.
   if (bono && remaining !== null)
-    await notifyBonoLowIfNeeded(clientId, serviceType, remaining);
+    await afterBonoConsumed({
+      bonoId: bono.id,
+      clientId,
+      serviceType,
+      remaining,
+    });
 }
 
 
@@ -1183,7 +1167,12 @@ export async function createClientReservation(
       serviceType,
       trainerName,
     });
-    await notifyBonoLowIfNeeded(client.id, serviceType, bono.remaining_sessions);
+    await afterBonoConsumed({
+      bonoId: bono.id,
+      clientId: client.id,
+      serviceType,
+      remaining: bono.remaining_sessions,
+    });
     // L'acció l'ha fet el client → avisa el professional de la nova reserva.
     const clientName =
       store.profiles.find((p) => p.id === input.profileId)?.full_name ?? null;
@@ -1309,7 +1298,12 @@ export async function createClientReservation(
     serviceType,
     trainerName: trainer?.name ?? null,
   });
-  await notifyBonoLowIfNeeded(client.id, serviceType, nextRemaining);
+  await afterBonoConsumed({
+    bonoId: bono.id,
+    clientId: client.id,
+    serviceType,
+    remaining: nextRemaining,
+  });
   // L'acció l'ha fet el client → avisa el professional de la nova reserva.
   const me = await getProfileContact(input.profileId);
   await notifyTrainerBooking(trainerId, "trainer_booking_received", {

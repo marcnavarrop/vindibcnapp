@@ -331,7 +331,9 @@
       "groupSubscriptionOnly": "Aquest paquet només va per subscripció: cada dia {day} de mes reps les sessions, sense haver de tornar a comprar res. Pots donar-te de baixa quan vulguis.",
       "groupAlreadySubscribedTitle": "Ja tens una subscripció activa",
       "groupAlreadySubscribedBody": "Les sessions et van arribant cada mes. No cal que compris res més: si te n'has quedat sense abans d'hora, des dels teus bons en pots demanar alguna de més.",
-      "groupAlreadySubscribedCta": "Veure la meva subscripció"
+      "groupAlreadySubscribedCta": "Veure la meva subscripció",
+      "autoRenewLabel": "Renovar-lo sol quan s'acabi",
+      "autoRenewHelp": "En gastar l'última sessió et prepararem un bo nou pendent de pagar, i t'avisarem per correu. No es cobra res sol: l'hauràs de pagar tu."
     },
     "mine": {
       "title": "Els meus bons",
@@ -379,7 +381,18 @@
       "close": "Tancar",
       "subscriptionPaused": "El centre ha congelat la teva subscripció. No has de pagar res mentre estigui així, i el temps aturat no el perds: en reprendre-la, la renovació es retarda els mateixos dies.",
       "subscriptionPausedUntil": "Es reprendrà el {date}.",
-      "subscriptionPausedOpen": "Es reprendrà quan el centre ho decideixi."
+      "subscriptionPausedOpen": "Es reprendrà quan el centre ho decideixi.",
+      "autoRenewLabel": "Renovar-lo sol quan s'acabi",
+      "autoRenewOn": "Quan gastis l'última sessió et prepararem un bo nou, pendent de pagar. No es cobra res sol.",
+      "autoRenewOff": "En acabar-se no passarà res: hauràs de comprar-ne un de nou tu.",
+      "autoRenewNoPackage": "Aquest bo és anterior al canvi i no sabem de quin paquet va sortir.",
+      "autoRenewFromGift": "Els bons que vénen d'un val de regal no es renoven.",
+      "autoRenewFromSubscription": "Aquest bo ja el renova la teva subscripció cada mes.",
+      "autoRenewHasSubscription": "Ja tens una subscripció d'aquest servei que et renova sola.",
+      "autoRenewNotSellable": "Aquest paquet ja no es ven solt.",
+      "autoRenewFailed": "No s'ha pogut desar. Torna-ho a provar.",
+      "payByCard": "Pagar amb targeta",
+      "payPending": "Obrint el pagament…"
     },
     "confirmed": {
       "title": "Pagament confirmat",
@@ -798,6 +811,10 @@
           "label": "Bo a punt de caducar",
           "description": "Uns dies abans que caduqui un bo amb sessions sense fer."
         },
+        "bono_auto_renewed": {
+          "label": "Bo renovat automàticament",
+          "description": "Quan un bo amb renovació activada s'esgota i en neix un de nou pendent de pagar."
+        },
         "bono_unpaid_cancelled": {
           "label": "Bo anul·lat per impagament",
           "description": "Si un bo pendent de pagament decau i es cancel·len les sessions reservades."
@@ -958,6 +975,7 @@
       "service": "Servei",
       "trainer": "Professional",
       "remaining": "Sessions sense fer",
+      "sessions": "Sessions del bo nou",
       "expiresOn": "Caduca el",
       "cancelled": "Sessions cancel·lades",
       "gift": "Regal",
@@ -1005,6 +1023,14 @@
       "intro": "Et queda només 1 sessió al teu bo de {service}.",
       "cta": "Renovar el meu bo",
       "outro": "Renova'l quan vulguis per no quedar-te sense sessions."
+    },
+    "bonoAutoRenewed": {
+      "subject": "Tens un bo nou esperant pagament · VindiBCN",
+      "heading": "El teu bo s'ha esgotat i n'hi ha un de nou a punt",
+      "intro": "Havies demanat que el teu bo de {service} es renovés sol. Acabes de gastar-ne l'última sessió, així que t'hem preparat un «{package}» nou per {price} €.",
+      "warn": "Encara NO està pagat. Fins que no el paguis —amb targeta o al centre— no comptarà com a comprat.",
+      "cta": "Veure el meu bo i pagar-lo",
+      "outro": "Si ja no el vols, no facis res: un bo sense pagar no et compromet a res."
     },
     "bonoExpiringSoon": {
       "subject": "El teu bo caduca aviat · VindiBCN",

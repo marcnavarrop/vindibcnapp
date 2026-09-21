@@ -14,6 +14,7 @@ import {
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerToday } from "@/lib/center-time";
 import { cancelBlockFor, CANCEL_BLOCK_LABELS } from "@/lib/bono-rules";
+import { SERVICE_LABELS } from "@/lib/labels";
 import { isSubscriptionOnly } from "@/lib/subscription-rules";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
 
@@ -202,10 +203,12 @@ export type BonoInput = {
   /**
    * El paquet del catàleg que s'està donant d'alta.
    *
-   * OBLIGATORI DES DE LA 0086, i el `bo` que en surt SEGUEIX sense guardar-lo:
-   * `bonos` té `service_type` i no `service_id` (0001), i això no canvia aquí.
-   * Serveix només per poder mirar la casella «només per subscripció» abans
-   * d'escriure, que ja no es pot deduir del tipus de servei.
+   * OBLIGATORI DES DE LA 0086, per poder mirar la casella «només per
+   * subscripció» abans d'escriure, que ja no es pot deduir del tipus de servei.
+   *
+   * I DES DE LA 0088 TAMBÉ ES DESA. Abans es llegia i es llençava, perquè
+   * `bonos` només tenia `service_type` (0001); ara la fila guarda de quin
+   * paquet ve, que és el que permet tornar-lo a vendre quan s'esgoti.
    *
    * Els dos formularis que hi arriben ja l'enviaven: el desplegable de
    * `BonoForm` es diu `serviceId` i el `serviceType` hi viatja en un camp
@@ -231,15 +234,17 @@ export type BonoInput = {
  */
 async function loadServicePackage(
   serviceId: string,
-): Promise<{ subscription_only: boolean } | null> {
+): Promise<{ subscription_only: boolean; active: boolean } | null> {
   if (USE_MOCK) {
     const row = getStore().services.find((x) => x.id === serviceId);
-    return row ? { subscription_only: row.subscription_only } : null;
+    return row
+      ? { subscription_only: row.subscription_only, active: row.active }
+      : null;
   }
   const admin = createAdminClient();
   const { data } = await admin
     .from("services")
-    .select("subscription_only")
+    .select("subscription_only, active")
     .eq("id", serviceId)
     .maybeSingle();
   return data ?? null;
@@ -283,6 +288,11 @@ export async function createBono(input: BonoInput): Promise<string> {
       subscription_cycle_start: null,
       is_subscription_extra: false,
       stripe_invoice_id: null,
+      // D'on ha sortit aquest bo al catàleg (0088). Sense això no es pot
+      // renovar: no sabríem quin paquet tornar a vendre.
+      service_id: input.serviceId,
+      auto_renew: false,
+      renewed_from_bono_id: null,
       created_at: now,
     });
     saveStore(store);
@@ -298,6 +308,7 @@ export async function createBono(input: BonoInput): Promise<string> {
         price: input.price,
         status: "active",
         expires_at: expiresAt,
+        service_id: input.serviceId,
       })
       .select("id")
       .single();
@@ -495,6 +506,16 @@ export async function quoteBonoPurchase(input: {
 export async function createPendingBono(input: {
   profileId: string;
   serviceId: string;
+  /**
+   * Que es renovi sol quan s'acabi (0088). Ve de la casella de la compra.
+   *
+   * No cal comprovar aquí que el client no tingui subscripció viva: un paquet
+   * subscribible no arriba a aquesta funció —`quoteBonoPurchase` el rebutja— i
+   * si algun dia arribés, la constraint `bonos_auto_renew_not_subscription`
+   * només mira que el bo no vingui d'una subscripció, que aquest no en ve.
+   * L'exclusivitat fina la governa l'interruptor de «Els meus bons».
+   */
+  autoRenew?: boolean;
 }): Promise<string> {
   // La caducitat es compta des de la COMPRA, no des del pagament: un bo
   // pendent de pagar ja té la seva data des del primer moment.
@@ -521,6 +542,11 @@ export async function createPendingBono(input: {
       subscription_cycle_start: null,
       is_subscription_extra: false,
       stripe_invoice_id: null,
+      // D'on ha sortit aquest bo al catàleg (0088). Sense això no es pot
+      // renovar: no sabríem quin paquet tornar a vendre.
+      service_id: input.serviceId,
+      auto_renew: input.autoRenew === true,
+      renewed_from_bono_id: null,
       status: "pending_payment",
       purchased_at: now,
       created_at: now,
@@ -538,6 +564,8 @@ export async function createPendingBono(input: {
         price: quote.finalPrice,
         status: "pending_payment",
         expires_at: expiresAt,
+        service_id: input.serviceId,
+        auto_renew: input.autoRenew === true,
       })
       .select("id")
       .single();
@@ -572,6 +600,15 @@ export async function createPaidBono(input: {
   stripeCheckoutSessionId: string;
   stripePaymentId: string | null;
   referralRewardId: string | null;
+  /**
+   * Paquet del catàleg (0088). Surt de les METADADES de la sessió, no d'una
+   * consulta: el que s'ha venut s'ha de poder lliurar encara que entremig el
+   * centre hagi tocat el catàleg, i és el mateix criteri que ja segueix la
+   * resta de la fotografia que viatja amb la sessió.
+   */
+  serviceId: string | null;
+  /** Que es renovi sol quan s'acabi (0088). Ve de les metadades de la sessió. */
+  autoRenew?: boolean;
 }): Promise<{ id: string; created: boolean }> {
   const expiresAt = await expiryForNewBono();
   const admin = createAdminClient();
@@ -587,6 +624,10 @@ export async function createPaidBono(input: {
       status: "active",
       expires_at: expiresAt,
       stripe_checkout_session_id: input.stripeCheckoutSessionId,
+      service_id: input.serviceId,
+      // Sense paquet no es pot renovar, i la constraint de la 0088 ho
+      // rebutjaria: val més no demanar-ho que fer petar el webhook.
+      auto_renew: input.autoRenew === true && input.serviceId !== null,
     })
     .select("id")
     .single();
@@ -632,6 +673,219 @@ export async function createPaidBono(input: {
   await maybeGenerateReferralRewards(input.clientId);
 
   return { id: bonoId, created };
+}
+
+/**
+ * Per què un bo concret NO pot dur renovació automàtica. Null = sí que pot.
+ *
+ * Són codis i no frases: això corre al servidor i la pantalla del client es
+ * llegeix en tres idiomes.
+ */
+export type AutoRenewBlock =
+  | "notYours"
+  | "noPackage"
+  | "fromGift"
+  | "fromSubscription"
+  | "hasSubscription"
+  | "notSellable";
+
+/**
+ * Activa o desactiva la renovació automàtica d'un bo.
+ *
+ * QUI DECIDEIX ÉS QUI PAGA
+ *
+ * Per això rep el `profileId` de la sessió i comprova que el bo sigui seu. No
+ * hi ha cap camí equivalent per a l'admin ni per al professional, i és
+ * deliberat: un compromís de despesa recurrent no l'ha de poder contraure algú
+ * altre des de l'alta manual.
+ *
+ * LES QUATRE PORTES TANCADES
+ *
+ * · Sense `service_id` no se sap quin paquet tornar a vendre (bons anteriors a
+ *   la 0088). La constraint `bonos_auto_renew_needs_service` ho remataria.
+ * · Un bo vingut d'un VAL DE REGAL no es renova: qui el va rebre no va triar
+ *   comprometre's a res, i renovar un regal a compte seu seria una sorpresa
+ *   desagradable.
+ * · Un bo emès per una SUBSCRIPCIÓ ja es renova sol cada mes. Ho remata la
+ *   constraint `bonos_auto_renew_not_subscription`.
+ * · I si el client té una subscripció VIVA d'aquest servei, tampoc: li
+ *   arribarien bons per dues vies. Aquesta és la meitat de la regla que cap
+ *   check de fila pot expressar, i per això es comprova aquí.
+ *
+ * La cinquena, que el paquet encara es pugui vendre solt, es mira en ACTIVAR
+ * però no en desactivar: si el centre el retira, qui ho tingui encès ha de
+ * poder apagar-ho igualment.
+ */
+export async function setBonoAutoRenew(input: {
+  profileId: string;
+  bonoId: string;
+  on: boolean;
+}): Promise<{ ok: true } | { ok: false; reason: AutoRenewBlock }> {
+  const b = await loadOwnBono(input.profileId, input.bonoId);
+  if (!b) return { ok: false, reason: "notYours" };
+
+  if (input.on) {
+    if (!b.serviceId) return { ok: false, reason: "noPackage" };
+    if (b.giftVoucherId) return { ok: false, reason: "fromGift" };
+    if (b.subscriptionId) return { ok: false, reason: "fromSubscription" };
+
+    const pkg = await loadServicePackage(b.serviceId);
+    if (!pkg || !pkg.active || isSubscriptionOnly(pkg))
+      return { ok: false, reason: "notSellable" };
+
+    const { getLiveSubscriptionForProfile } = await import(
+      "@/lib/data/subscriptions"
+    );
+    if (await getLiveSubscriptionForProfile(input.profileId, b.serviceType))
+      return { ok: false, reason: "hasSubscription" };
+  }
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const row = store.bonos.find((x) => x.id === input.bonoId);
+    if (!row) return { ok: false, reason: "notYours" };
+    row.auto_renew = input.on;
+    saveStore(store);
+    return { ok: true };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("bonos")
+    .update({ auto_renew: input.on })
+    .eq("id", input.bonoId)
+    .eq("client_id", b.clientId);
+  if (error) return { ok: false, reason: "notSellable" };
+  return { ok: true };
+}
+
+/** El bo, només si és d'aquest perfil. */
+async function loadOwnBono(
+  profileId: string,
+  bonoId: string,
+): Promise<{
+  clientId: string;
+  serviceType: ServiceType;
+  serviceId: string | null;
+  giftVoucherId: string | null;
+  subscriptionId: string | null;
+} | null> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.profile_id === profileId);
+    const b = store.bonos.find((x) => x.id === bonoId);
+    if (!client || !b || b.client_id !== client.id) return null;
+    return {
+      clientId: b.client_id,
+      serviceType: b.service_type,
+      serviceId: b.service_id ?? null,
+      giftVoucherId: b.gift_voucher_id ?? null,
+      subscriptionId: b.subscription_id ?? null,
+    };
+  }
+  const admin = createAdminClient();
+  const { data: client } = await admin
+    .from("clients")
+    .select("id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (!client) return null;
+  const { data: b } = await admin
+    .from("bonos")
+    .select("client_id, service_type, service_id, gift_voucher_id, subscription_id")
+    .eq("id", bonoId)
+    .eq("client_id", client.id)
+    .maybeSingle();
+  if (!b) return null;
+  return {
+    clientId: b.client_id,
+    serviceType: b.service_type,
+    serviceId: b.service_id,
+    giftVoucherId: b.gift_voucher_id,
+    subscriptionId: b.subscription_id,
+  };
+}
+
+/**
+ * El bo pendent que AQUEST client pot pagar, amb el que fa falta per cobrar-lo.
+ *
+ * Torna null si no existeix, si no és seu o si no està per cobrar. Les tres
+ * respostes es fonen en una de sola a posta: qui pregunta per un bo d'altri no
+ * ha de poder distingir «no existeix» de «no és teu».
+ *
+ * El nom del paquet surt del catàleg si encara hi és, i si no, es construeix
+ * amb el que sap el bo. No es depèn que el paquet segueixi viu: el que s'ha de
+ * cobrar és el que el bo diu, no el que digui avui el catàleg.
+ */
+export async function getPayableBono(
+  profileId: string,
+  bonoId: string,
+): Promise<{
+  id: string;
+  clientId: string;
+  serviceType: ServiceType;
+  totalSessions: number;
+  price: number;
+  packageName: string;
+} | null> {
+  const fallbackName = (t: ServiceType, n: number) =>
+    `${SERVICE_LABELS[t]} · ${n} sessions`;
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.profile_id === profileId);
+    if (!client) return null;
+    const b = store.bonos.find((x) => x.id === bonoId);
+    if (!b || b.client_id !== client.id || !COLLECTABLE.includes(b.status))
+      return null;
+    const name =
+      store.services.find((x) => x.id === b.service_id)?.name ??
+      fallbackName(b.service_type, b.total_sessions);
+    return {
+      id: b.id,
+      clientId: b.client_id,
+      serviceType: b.service_type,
+      totalSessions: b.total_sessions,
+      price: b.price,
+      packageName: name,
+    };
+  }
+
+  const admin = createAdminClient();
+  const { data: client } = await admin
+    .from("clients")
+    .select("id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (!client) return null;
+
+  const { data: b } = await admin
+    .from("bonos")
+    .select("id, client_id, service_type, total_sessions, price, status, service_id")
+    .eq("id", bonoId)
+    .eq("client_id", client.id)
+    .in("status", COLLECTABLE)
+    .maybeSingle();
+  if (!b) return null;
+
+  let name = fallbackName(b.service_type, b.total_sessions);
+  if (b.service_id) {
+    const { data: svc } = await admin
+      .from("services")
+      .select("name")
+      .eq("id", b.service_id)
+      .maybeSingle();
+    if (svc?.name) name = svc.name;
+  }
+
+  return {
+    id: b.id,
+    clientId: b.client_id,
+    serviceType: b.service_type,
+    totalSessions: b.total_sessions,
+    price: b.price,
+    packageName: name,
+  };
 }
 
 /**
@@ -713,7 +967,27 @@ const COLLECTABLE: BonoStatus[] = ["pending_payment", "unpaid"];
  * altre. El bo recupera les sessions que li quedaven; les hores, s'han de
  * tornar a demanar. La pantalla ho diu abans de cobrar.
  */
-export async function markBonoPaid(bonoId: string): Promise<void> {
+/**
+ * Com s'ha cobrat el bo.
+ *
+ * Per defecte, en efectiu al centre: és el que feia aquesta funció des de
+ * sempre i el que fan els botons d'admin i professional, que no li passen res.
+ *
+ * Amb targeta hi arriba des del webhook de Stripe, i llavors porta els dos
+ * identificadors: el del pagament —que és el que fa el registre IDEMPOTENT, per
+ * l'índex de la 0054— i el de la sessió, que es desa al bo perquè la pantalla
+ * de tornada el pugui trobar.
+ */
+export type BonoPayment = {
+  method: PaymentMethod;
+  stripePaymentId?: string | null;
+  stripeCheckoutSessionId?: string | null;
+};
+
+export async function markBonoPaid(
+  bonoId: string,
+  payment: BonoPayment = { method: "cash" },
+): Promise<void> {
   if (USE_MOCK) {
     const store = getStore();
     const bono = store.bonos.find((b) => b.id === bonoId);
@@ -722,14 +996,10 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
       throw new Error("Aquest bo no es pot cobrar.");
 
     bono.status = "active";
+    if (payment.stripeCheckoutSessionId)
+      bono.stripe_checkout_session_id = payment.stripeCheckoutSessionId;
     saveStore(store);
-    await createPayment({
-      clientId: bono.client_id,
-      bonoId: bono.id,
-      amount: bono.price,
-      method: "cash",
-      concept: bonoConcept(bono.service_type, bono.total_sessions),
-    });
+    await recordBonoPayment(bono, payment);
     // Genera les recompenses de referit només quan el pagament es confirma.
     // És idempotent: no duplica si ja existeixen per aquest referit.
     await maybeGenerateReferralRewards(bono.client_id);
@@ -749,24 +1019,56 @@ export async function markBonoPaid(bonoId: string): Promise<void> {
 
   const { error: uErr } = await supabase
     .from("bonos")
-    .update({ status: "active" })
+    .update({
+      status: "active",
+      ...(payment.stripeCheckoutSessionId
+        ? { stripe_checkout_session_id: payment.stripeCheckoutSessionId }
+        : {}),
+    })
     .eq("id", bonoId)
     // El mateix filtre que la comprovació de sobre, però a la consulta: si dos
     // cobraments arriben alhora, només un troba el bo per cobrar.
     .in("status", COLLECTABLE);
   if (uErr) throw uErr;
 
-  await createPayment({
-    clientId: bono.client_id,
-    bonoId: bono.id,
-    amount: bono.price,
-    method: "cash",
-    concept: bonoConcept(bono.service_type, bono.total_sessions),
-  });
+  await recordBonoPayment(bono, payment);
   // Generate referral rewards if this is the first paid bono for this client
   // (maybeGenerateReferralRewards is idempotent — safe to call unconditionally)
   await maybeGenerateReferralRewards(bono.client_id);
   await resumeSubscription(bonoId);
+}
+
+/**
+ * Anota el cobrament del bo, pel camí que toqui.
+ *
+ * Amb targeta va per `createSystemPayment`, que l'índex únic de
+ * `stripe_payment_id` (0054) fa idempotent: si el webhook arriba dos cops, el
+ * segon no anota res i no passa res. En efectiu, per `createPayment` de tota la
+ * vida, que és el que ha fet una persona al taulell.
+ */
+async function recordBonoPayment(
+  bono: {
+    id: string;
+    client_id: string;
+    price: number;
+    service_type: ServiceType;
+    total_sessions: number;
+  },
+  payment: BonoPayment,
+): Promise<void> {
+  const common = {
+    clientId: bono.client_id,
+    bonoId: bono.id,
+    amount: bono.price,
+    concept: bonoConcept(bono.service_type, bono.total_sessions),
+  };
+  if (payment.method === "card")
+    await createSystemPayment({
+      ...common,
+      method: "card",
+      stripePaymentId: payment.stripePaymentId ?? null,
+    });
+  else await createPayment({ ...common, method: "cash" });
 }
 
 /**

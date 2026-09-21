@@ -791,6 +791,12 @@ export async function issueCycleBono(input: {
       subscription_cycle_start: cycleStart,
       is_subscription_extra: false,
       stripe_invoice_id: input.stripeInvoiceId ?? null,
+      // El paquet subscrit (0088). Es desa per traçabilitat; `auto_renew` no
+      // s'hi pot activar mai: la subscripció ja el renova cada mes, i la
+      // constraint `bonos_auto_renew_not_subscription` ho impedeix.
+      service_id: sub.serviceId,
+      auto_renew: false,
+      renewed_from_bono_id: null,
       created_at: now,
     });
     saveStore(store);
@@ -812,6 +818,8 @@ export async function issueCycleBono(input: {
       subscription_cycle_start: cycleStart,
       is_subscription_extra: false,
       stripe_invoice_id: input.stripeInvoiceId ?? null,
+      // Vegeu la branca de simulació: traçabilitat, mai auto-renovació.
+      service_id: sub.serviceId,
     })
     .select("id")
     .single();

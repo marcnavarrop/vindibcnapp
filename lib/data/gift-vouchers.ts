@@ -810,6 +810,12 @@ export async function redeemGiftVoucher(input: {
       subscription_id: null,
       subscription_cycle_start: null,
       is_subscription_extra: false,
+      // El paquet del qual venia el val (0088). El bo el guarda, però NO podrà
+      // auto-renovar-se: un regal no és un compromís de despesa de qui el rep,
+      // i qui l'activa ha de ser qui paga. Ho talla `canOptInToAutoRenew`.
+      service_id: v.service_id,
+      auto_renew: false,
+      renewed_from_bono_id: null,
       stripe_invoice_id: null,
       created_at: now,
     });
@@ -837,7 +843,7 @@ export async function redeemGiftVoucher(input: {
 
   const { data: v } = await admin
     .from("gift_vouchers")
-    .select("id, status, expires_at, service_type, total_sessions, price, package_name, buyer_client_id")
+    .select("id, status, expires_at, service_type, total_sessions, price, package_name, buyer_client_id, service_id")
     .eq("code", code)
     .maybeSingle();
   if (!v) return { ok: false, code: "not_found" };
@@ -859,6 +865,9 @@ export async function redeemGiftVoucher(input: {
       status: "active",
       expires_at: null,
       gift_voucher_id: v.id,
+      // Vegeu el comentari de la branca de simulació: es desa, però un bo
+      // vingut de regal no es pot marcar per auto-renovació.
+      service_id: v.service_id,
     })
     .select("id")
     .single();

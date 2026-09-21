@@ -34,7 +34,11 @@ export async function createPendingBonoAction(
   if (!serviceId) return { errorCode: "errorService" };
 
   try {
-    await createPendingBono({ profileId: viewer.id, serviceId });
+    await createPendingBono({
+      profileId: viewer.id,
+      serviceId,
+      autoRenew: formData.get("autoRenew") === "on",
+    });
   } catch (e) {
     console.error("[bonos] no s'ha pogut crear el bo:", e);
     return { errorCode: "errorCreate" };
@@ -80,6 +84,7 @@ export async function startBonoCheckoutAction(
       profileId: viewer.id,
       serviceId,
       email: viewer.email || null,
+      autoRenew: formData.get("autoRenew") === "on",
     });
   } catch (e) {
     console.error("[bonos] no s'ha pogut obrir el pagament:", e);
