@@ -27,6 +27,7 @@ import { Wordmark } from "@/components/wordmark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { USE_MOCK } from "@/lib/config";
 import { SPECIALTY_LABELS } from "@/lib/labels";
+import { CommunityBadge } from "@/components/community-badge";
 import {
   NAV_GROUPS,
   isNavGroup,
@@ -274,6 +275,14 @@ function SidebarContent({
                   }
                   icon={entry.icon}
                   active={active}
+                  /* Només al client i només a Comunitat: és l'única pantalla
+                     amb coses que arriben soles i que es poden perdre de
+                     vista. El component es demana el número ell mateix. */
+                  badge={
+                    role === "client" && entry.href === "/client/comunitat" ? (
+                      <CommunityBadge />
+                    ) : undefined
+                  }
                 />
               </li>
             );
@@ -318,11 +327,14 @@ function NavLink({
   label,
   icon,
   active,
+  badge,
 }: {
   href: string;
   label: React.ReactNode;
   icon?: NavIcon;
   active: boolean;
+  /** Piloteta a la dreta de l'entrada. Avui només Comunitat en porta. */
+  badge?: React.ReactNode;
 }) {
   const Icon = icon ? NAV_ICONS[icon] : null;
   return (
@@ -350,6 +362,9 @@ function NavLink({
         />
       )}
       {label}
+      {/* `ml-auto` i no un `justify-between` al contenidor: el text ha de
+          seguir enganxat a la icona quan no hi ha piloteta. */}
+      {badge && <span className="ml-auto">{badge}</span>}
     </Link>
   );
 }

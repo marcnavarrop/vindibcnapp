@@ -7,6 +7,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
 import { PollCard } from "@/components/poll-card";
 import { assertModuleEnabled } from "@/lib/data/module-guard";
+import { CommunitySeenMarker } from "@/components/community-seen-marker";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,10 @@ export default async function ClientComunitatPage() {
 
   return (
     <main className="mx-auto max-w-5xl p-6">
+      {/* No pinta res: marca la comunitat com a vista i apaga la piloteta del
+          menú. Va aquí, al cos de la pàgina, i no dins de cap targeta: votar
+          en remunta una i l'avís no arribaria a sortir. */}
+      <CommunitySeenMarker />
       <h1 className="mb-1 text-2xl text-brand-dark">{t("title")}</h1>
       <p className="mb-6 text-sm text-brand-muted">{t("intro")}</p>
 
