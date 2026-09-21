@@ -250,6 +250,38 @@ async function loadServicePackage(
   return data ?? null;
 }
 
+/**
+ * La renovació demanada a la compra, però només si aquest client la pot tenir.
+ *
+ * L'EXCLUSIVITAT AMB LA SUBSCRIPCIÓ ES COMPROVA ALS TRES NAIXEMENTS
+ *
+ * Les dues constraints de la 0088 cobreixen el que cap d'elles pot: que el bo
+ * no vingui d'una subscripció i que sàpiga de quin paquet ve. La tercera
+ * meitat de la regla —que el CLIENT no tingui ja subscripció viva d'aquest
+ * servei— mira una altra taula i no cap en cap check de fila.
+ *
+ * Fins ara només la mirava l'interruptor d'«Els meus bons», i per això la
+ * compra amb la casella marcada s'hi colava: el client es quedava amb dues
+ * vies emetent bons del mateix servei.
+ *
+ * Es RETALLA en silenci i no es rebutja la compra sencera: el client volia el
+ * bo, i negar-li la venda per una casella seria desproporcionat. Que no se li
+ * ofereixi és feina de la pantalla, que amaga la casella quan la subscripció
+ * és d'aquest mateix servei; això d'aquí és la xarxa de sota, per si arriba
+ * igualment.
+ */
+async function autoRenewAllowed(
+  clientId: string,
+  serviceType: ServiceType,
+  wanted: boolean | undefined,
+): Promise<boolean> {
+  if (wanted !== true) return false;
+  // Import dinàmic per trencar el cicle: `subscriptions.ts` ja importa d'aquí.
+  // Mateix recurs que `resumeSubscription` i `quoteBonoPurchase`.
+  const { getLiveSubscription } = await import("@/lib/data/subscriptions");
+  return (await getLiveSubscription(clientId, serviceType)) === null;
+}
+
 /** Crea un bono para un cliente (sesiones restantes = totales al comprarlo). */
 export async function createBono(input: BonoInput): Promise<string> {
   // L'alta manual d'un paquet «només per subscripció» passa per la subscripció,
@@ -521,6 +553,11 @@ export async function createPendingBono(input: {
   // pendent de pagar ja té la seva data des del primer moment.
   const expiresAt = await expiryForNewBono();
   const quote = await quoteBonoPurchase(input);
+  const autoRenew = await autoRenewAllowed(
+    quote.clientId,
+    quote.serviceType,
+    input.autoRenew,
+  );
 
   let id: string;
   if (USE_MOCK) {
@@ -545,7 +582,7 @@ export async function createPendingBono(input: {
       // D'on ha sortit aquest bo al catàleg (0088). Sense això no es pot
       // renovar: no sabríem quin paquet tornar a vendre.
       service_id: input.serviceId,
-      auto_renew: input.autoRenew === true,
+      auto_renew: autoRenew,
       renewed_from_bono_id: null,
       status: "pending_payment",
       purchased_at: now,
@@ -565,7 +602,7 @@ export async function createPendingBono(input: {
         status: "pending_payment",
         expires_at: expiresAt,
         service_id: input.serviceId,
-        auto_renew: input.autoRenew === true,
+        auto_renew: autoRenew,
       })
       .select("id")
       .single();
@@ -611,6 +648,15 @@ export async function createPaidBono(input: {
   autoRenew?: boolean;
 }): Promise<{ id: string; created: boolean }> {
   const expiresAt = await expiryForNewBono();
+  // Sense paquet no es pot renovar i la constraint de la 0088 ho rebutjaria,
+  // així que val més no demanar-ho que fer petar el webhook.
+  const autoRenew =
+    input.serviceId !== null &&
+    (await autoRenewAllowed(
+      input.clientId,
+      input.serviceType,
+      input.autoRenew,
+    ));
   const admin = createAdminClient();
 
   const { data, error } = await admin
@@ -625,9 +671,7 @@ export async function createPaidBono(input: {
       expires_at: expiresAt,
       stripe_checkout_session_id: input.stripeCheckoutSessionId,
       service_id: input.serviceId,
-      // Sense paquet no es pot renovar, i la constraint de la 0088 ho
-      // rebutjaria: val més no demanar-ho que fer petar el webhook.
-      auto_renew: input.autoRenew === true && input.serviceId !== null,
+      auto_renew: autoRenew,
     })
     .select("id")
     .single();

@@ -38,6 +38,7 @@ export function BuyBonoForm({
   stripeEnabled = false,
   subscriptionsEnabled = false,
   hasLiveSubscription = false,
+  subscriptionServiceType = null,
   renewalDay,
 }: {
   services: Service[];
@@ -51,6 +52,16 @@ export function BuyBonoForm({
   subscriptionsEnabled?: boolean;
   /** Ja en té una de viva: no se n'ofereix una segona. */
   hasLiveSubscription?: boolean;
+  /**
+   * De quin SERVEI és la subscripció viva, si en té cap.
+   *
+   * No és el mateix que `hasLiveSubscription`, que diu si en té una de
+   * qualsevol servei. L'exclusivitat amb la renovació automàtica és per
+   * SERVEI: amb subscripció de fisioteràpia es pot renovar sol un bo
+   * d'individual, i tenir-ho en compte estalvia amagar una casella que sí que
+   * es podia marcar.
+   */
+  subscriptionServiceType?: ServiceType | null;
   /**
    * Dia del mes en què se li renovaria, que és el d'avui al centre. Arriba del
    * servidor perquè el navegador pot anar en una altra zona horària, i el dia
@@ -136,6 +147,14 @@ export function BuyBonoForm({
    * eliminació en una altra pantalla.
    */
   const canSubscribe = subscriptionsEnabled && !hasLiveSubscription;
+  /*
+   * La casella de renovar-lo sol no s'ofereix si ja té subscripció d'AQUEST
+   * servei: li arribarien bons per dues vies. El servidor ho retalla igualment
+   * (`autoRenewAllowed`), però ensenyar una casella que no farà res seria
+   * prometre el que no es compleix.
+   */
+  const subscriptionCoversThis =
+    selected != null && subscriptionServiceType === selected.serviceType;
 
   // Estat: subscripció activada. Pantalla pròpia i no la del bo: el que s'acaba
   // de fer no és una compra sinó una que es repetirà sola cada mes, i dir-ho
@@ -291,7 +310,7 @@ export function BuyBonoForm({
             Va dins del mateix <form>, així que les dues sortides de pagament
             —al centre i amb targeta— la reben sense duplicar res.
           */}
-          {!subscriptionOnly && (
+          {!subscriptionOnly && !subscriptionCoversThis && (
             <label className="flex items-start gap-2 rounded-xl border border-brand-border bg-white px-4 py-3 text-sm text-brand-charcoal">
               <input
                 type="checkbox"

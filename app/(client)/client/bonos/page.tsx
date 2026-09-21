@@ -141,6 +141,7 @@ export default async function ComprarBonoPage() {
         stripeEnabled={stripeEnabled()}
         subscriptionsEnabled={settings.subscriptionsEnabled}
         hasLiveSubscription={liveSubscription !== null}
+        subscriptionServiceType={liveSubscription?.serviceType ?? null}
         renewalDay={renewalDay}
       />
 
