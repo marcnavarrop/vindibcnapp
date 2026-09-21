@@ -7,6 +7,7 @@ import { getCycleState, getAnyLiveSubscription } from "@/lib/data/subscriptions"
 import { stripeEnabled } from "@/lib/stripe";
 import { SubscriptionManage } from "@/components/forms/subscription-manage";
 import { BonoRowActions } from "@/components/client/bono-row-actions";
+import { BonosSeenMarker } from "@/components/bonos-seen-marker";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -40,6 +41,9 @@ export default async function ClientBonosPage() {
   return (
     <main className="mx-auto max-w-5xl p-6">
       <h1 className="mb-4 text-2xl text-brand-dark">{t("title")}</h1>
+      {/* No pinta res: silencia la piloteta de «Bons» mentre s'és aquí, que
+          és l'única pantalla on els bons pendents es veuen i es poden pagar. */}
+      <BonosSeenMarker />
       <RouteTabs tabs={BONO_TABS} />
 
       {!client ? (

@@ -28,6 +28,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { USE_MOCK } from "@/lib/config";
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import { CommunityBadge } from "@/components/community-badge";
+import { BonosBadge } from "@/components/bonos-badge";
 import {
   NAV_GROUPS,
   isNavGroup,
@@ -275,12 +276,16 @@ function SidebarContent({
                   }
                   icon={entry.icon}
                   active={active}
-                  /* Només al client i només a Comunitat: és l'única pantalla
-                     amb coses que arriben soles i que es poden perdre de
-                     vista. El component es demana el número ell mateix. */
+                  /* Només al client, i només a les dues pantalles on hi pot
+                     arribar alguna cosa sola que es pot perdre de vista: el
+                     tauler de comunitat i els bons que queden per pagar. Cada
+                     component es demana el seu número ell mateix. */
                   badge={
-                    role === "client" && entry.href === "/client/comunitat" ? (
+                    role !== "client" ? undefined : entry.href ===
+                      "/client/comunitat" ? (
                       <CommunityBadge />
+                    ) : entry.href === "/client/bonos" ? (
+                      <BonosBadge />
                     ) : undefined
                   }
                 />

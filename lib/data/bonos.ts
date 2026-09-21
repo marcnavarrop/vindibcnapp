@@ -720,6 +720,42 @@ export async function createPaidBono(input: {
 }
 
 /**
+ * Quants bons té aquest client per pagar: pendents i decaiguts per impagament.
+ *
+ * Són els mateixos estats que pot cobrar el taulell (`COLLECTABLE`), i no és
+ * casualitat: el que el client ha de veure és exactament el que algú li pot
+ * cobrar. Un bo 'unpaid' hi entra tot i haver decaigut, perquè encara es pot
+ * pagar i recuperar.
+ *
+ * Es compta sense baixar cap fila: la piloteta del menú només vol el número.
+ */
+export async function countCollectableBonos(profileId: string): Promise<number> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.profile_id === profileId);
+    if (!client) return 0;
+    return store.bonos.filter(
+      (b) => b.client_id === client.id && COLLECTABLE.includes(b.status),
+    ).length;
+  }
+
+  const admin = createAdminClient();
+  const { data: client } = await admin
+    .from("clients")
+    .select("id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (!client) return 0;
+
+  const { count } = await admin
+    .from("bonos")
+    .select("id", { count: "exact", head: true })
+    .eq("client_id", client.id)
+    .in("status", COLLECTABLE);
+  return count ?? 0;
+}
+
+/**
  * Per què un bo concret NO pot dur renovació automàtica. Null = sí que pot.
  *
  * Són codis i no frases: això corre al servidor i la pantalla del client es
