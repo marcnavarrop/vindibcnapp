@@ -103,6 +103,15 @@ function toLocalInput(d: Date): string {
   )}:${pad(d.getMinutes())}`;
 }
 
+/** Un professional lliure en una cel·la, amb els serveis que hi ofereix. */
+type FreeLayer = {
+  trainerId: string;
+  name: string;
+  color: string;
+  rules: TrainerRuleLite[];
+  services: ServiceType[];
+};
+
 /** Quantes files de mitja hora ocupa una sessió. Avui, dues. */
 const SLOTS_PER_SESSION = slotsFor(SESSION_DURATION_MINUTES);
 
@@ -247,6 +256,46 @@ export function WeeklyCalendar({
     };
   }, [reservations, trials, weekStart, weekEnd, openingHour, closingHour]);
 
+  /**
+   * Qui està lliure a cada (dia, slot), amb quins serveis.
+   *
+   * Es calcula d'un cop i no cel·la a cel·la perquè cada cel·la necessita
+   * MIRAR L'ANTERIOR: així és com se sap si un tram COMENÇA aquí o si ve de la
+   * fila de dalt. Amb la graella de mitja hora, una banda de 09:00 a 13:00
+   * ocupa vuit files, i repetir-hi el xip sencer a cadascuna la feia semblar
+   * vuit franges soltes duplicades. És el que va reportar en Raul.
+   *
+   * Les files tapades per una reserva que va començar abans no compten: allà
+   * no hi ha res a oferir, i tractar-les com a buides fa que la disponibilitat
+   * de després es llegeixi com un tram nou, que és el que és.
+   */
+  const freeIndex = useMemo(() => {
+    const m = new Map<string, FreeLayer[]>();
+    if (!availabilityLayers || availabilityLayers.length === 0) return m;
+    for (let dayIdx = 0; dayIdx < days.length; dayIdx++) {
+      for (const slot of slots) {
+        if (covered.has(`${dayIdx}-${slot}`)) continue;
+        const at = new Date(days[dayIdx]);
+        at.setHours(0, slot * SLOT_MINUTES, 0, 0);
+        const here = availabilityLayers
+          .map((l) => {
+            const svc = offeredServices(
+              l.rules,
+              layerBlocks,
+              l.trainerId,
+              at,
+              slot,
+              SESSION_DURATION_MINUTES,
+            );
+            return { ...l, services: SERVICE_TYPES.filter((st) => svc.has(st)) };
+          })
+          .filter((l) => l.services.length > 0);
+        if (here.length > 0) m.set(`${dayIdx}-${slot}`, here);
+      }
+    }
+    return m;
+  }, [availabilityLayers, layerBlocks, days, slots, covered]);
+
   const monthLabel = new Intl.DateTimeFormat("ca-ES", {
     month: "long",
     year: "numeric",
@@ -321,8 +370,19 @@ export function WeeklyCalendar({
                 isOnTheHour(slot) ? "border-brand-border/30" : "border-brand-border",
               )}
             >
+              {/* L'hora segueix sent la unitat que es LLEGEIX —en punt, en
+                  negreta— però la mitja hora ja no va muda. Dues files amb el
+                  mateix contingut i una sola etiqueta es llegien com "dues
+                  franges a la mateixa hora"; amb l'etiqueta fluixa al costat
+                  es veu que són les 09:00 i les 09:30. */}
               <div className="px-1 py-2 text-right text-xs font-bold text-brand-muted">
-                {isOnTheHour(slot) ? slotToHHMM(slot) : ""}
+                {isOnTheHour(slot) ? (
+                  slotToHHMM(slot)
+                ) : (
+                  <span className="text-[10px] font-normal text-brand-muted/50">
+                    {slotToHHMM(slot)}
+                  </span>
+                )}
               </div>
               {days.map((d, dayIdx) => {
                 const items = cells.get(`${dayIdx}-${slot}`) ?? [];
@@ -351,22 +411,36 @@ export function WeeklyCalendar({
                 // (vacances, baixa) el treu encara que la regla setmanal hi sigui.
                 // offeredServices ja té en compte les regles I els bloquejos
                 // temporals: si torna buit, aquest professional no hi és.
-                const freeHere = (isCovered ? [] : (availabilityLayers ?? []))
-                  .map((l) => {
-                    const svc = offeredServices(
-                      l.rules,
-                      layerBlocks,
-                      l.trainerId,
-                      cellDate,
-                      cellSlot,
-                      SESSION_DURATION_MINUTES,
-                    );
-                    return { ...l, services: SERVICE_TYPES.filter((st) => svc.has(st)) };
-                  })
-                  .filter((l) => l.services.length > 0);
+                /*
+                 * Qui hi és lliure, i quins d'ells COMENCEN aquí.
+                 *
+                 * El criteri és "el tram comença en aquesta fila", i no "és
+                 * hora en punt". La drecera d'anar per l'hora en punt és molt
+                 * més simple —no cal mirar la fila de dalt— i és INCORRECTA
+                 * justament al cas que va fer néixer les mitges hores: una
+                 * regla que comença a les 9:30 arrencaria amb una barra de
+                 * continuació sense nom. Es descarta a posta.
+                 *
+                 * Un professional continua si a la fila anterior ja hi era amb
+                 * ELS MATEIXOS serveis. Si els serveis canvien, és un tram nou
+                 * i torna a dur nom: no és el mateix seguir oferint individual
+                 * que passar a oferir grup.
+                 */
+                const freeHere = freeIndex.get(`${dayIdx}-${slot}`) ?? [];
+                const freePrev = freeIndex.get(`${dayIdx}-${slot - 1}`) ?? [];
+                const sameAsPrev = (l: FreeLayer) =>
+                  freePrev.some(
+                    (p) =>
+                      p.trainerId === l.trainerId &&
+                      p.services.join() === l.services.join(),
+                  );
+                const startsHere = freeHere.filter((l) => !sameAsPrev(l));
+                const continuesHere = freeHere.some(sameAsPrev);
                 // Fins a 2 hi caben nom i servei escrits; de 3 en amunt
-                // només un recompte (veure FreeSlotChip).
-                const compactFree = freeHere.length === 2;
+                // només un recompte (veure FreeSlotChip). Es compta sobre els
+                // que COMENCEN: el comptador segueix el mateix criteri que el
+                // xip i no es repeteix a les files de continuació.
+                const compactFree = startsHere.length === 2;
                 /*
                  * Obre el formulari amb el que aquesta franja ja diu.
                  *
@@ -404,12 +478,24 @@ export function WeeklyCalendar({
                       // Cada fila és mitja hora, així que l'alçada és la meitat
                       // llarga d'abans i no la meitat justa: un xip de reserva
                       // ha de seguir cabent-hi sense estrènyer-se.
-                      freeHere.length > 0 ? "min-h-[3rem]" : "min-h-[2.25rem]",
+                      startsHere.length > 0 ? "min-h-[3rem]" : "min-h-[2.25rem]",
                       // La segona meitat d'una sessió. Sense tenyir-la semblaria
                       // una franja lliure just sota d'una d'ocupada, i el que
                       // hi ha és la mateixa sessió continuant.
                       isCovered && "bg-brand-bg/60",
                       inAvailability && "bg-emerald-400/10 ring-1 ring-inset ring-emerald-300/40",
+                      // La continuació d'un tram de disponibilitat: el mateix
+                      // tenyit que fa servir la vista del professional, que és
+                      // on això ja es llegia bé. NO és el gris de `isCovered`:
+                      // aquell diu "aquí no hi cap res" i aquest diu "segueix
+                      // havent-hi lloc", i la cel·la segueix sent reservable.
+                      // Es tenyeix SEMPRE que hi hagi continuació, encara que
+                      // algú comenci aquí: si no, una cel·la mixta —la Fisio
+                      // Demo entrant a les 10:00 mentre els altres dos
+                      // segueixen— sortia en blanc i partia la banda en dos.
+                      // El xip del que comença es dibuixa a sobre del tenyit.
+                      continuesHere &&
+                        "bg-emerald-400/10 ring-1 ring-inset ring-emerald-300/40",
                     )}
                     aria-label={
                       isCovered
@@ -459,10 +545,15 @@ export function WeeklyCalendar({
                       ))}
                       {/* Disponibilitat lliure: sempre DESOTA les reserves,
                           que continuen sent el primer que es llegeix. */}
-                      {freeHere.length > 2 ? (
-                        <FreeSlotCount layers={freeHere} />
+                      {/* Només els que COMENCEN el tram aquí. Els que venen de
+                          la fila de dalt es diuen amb el tenyit de la cel·la i
+                          prou: repetir-los era el bug de les "franges
+                          duplicades". El comptador de "N lliures" segueix el
+                          mateix criteri i tampoc es repeteix. */}
+                      {startsHere.length > 2 ? (
+                        <FreeSlotCount layers={startsHere} />
                       ) : (
-                        freeHere.map((l) => (
+                        startsHere.map((l) => (
                           <FreeSlotChip
                             key={l.trainerId}
                             name={l.name}
