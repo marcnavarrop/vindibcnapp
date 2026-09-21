@@ -246,6 +246,7 @@
     "changeService": "Cambiar servicio",
     "from": "Desde",
     "bestPrice": "Mejor precio",
+    "subscriptionOnly": "Suscripción mensual",
     "sessions": "{count, plural, one {# sesión} other {# sesiones}}"
   },
   "awaiting": {

@@ -246,6 +246,7 @@
     "changeService": "Canviar servei",
     "from": "Des de",
     "bestPrice": "Millor preu",
+    "subscriptionOnly": "Subscripció mensual",
     "sessions": "{count, plural, one {# sessió} other {# sessions}}"
   },
   "awaiting": {

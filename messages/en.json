@@ -246,6 +246,7 @@
     "changeService": "Change service",
     "from": "From",
     "bestPrice": "Best price",
+    "subscriptionOnly": "Monthly subscription",
     "sessions": "{count, plural, one {# session} other {# sessions}}"
   },
   "awaiting": {

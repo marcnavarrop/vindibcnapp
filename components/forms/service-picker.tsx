@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { formatEur } from "@/lib/labels";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import { PriceDisplay } from "@/components/ui/price-display";
+import { Badge } from "@/components/ui/badge";
+import { isSubscriptionOnly } from "@/lib/subscription-rules";
 import type { Service } from "@/lib/data/services";
 import type { EffectivePrice } from "@/lib/data/promotions";
 import type { ServiceType } from "@/types/database";
@@ -329,9 +331,37 @@ export function PackageStep({
 
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-brand-dark">{pkg.name}</p>
-                <p className="mt-0.5 text-xs text-brand-muted">
-                  {t("sessions", { count: pkg.defaultSessions })}
-                </p>
+                {/*
+                  QUE AIXÒ ÉS UNA QUOTA MENSUAL, DIT A LA TARGETA
+
+                  Des de la 0086 el règim va per PAQUET, no per tipus de
+                  servei, i dins d'un mateix servei els dos surten barrejats
+                  sense cap ordre que es pugui deduir: avui, al grup reduït,
+                  van solt, quota, quota, solt, quota. L'única pista era que el
+                  nom comencés per "Mensualitat", que és una convenció de noms i
+                  no cap garantia. Sense distintiu, el client no se n'assabentava
+                  fins al pas de pagament, quan ja havia triat.
+
+                  VA AQUÍ I NO COM A PÍNDOLA FLOTANT
+
+                  La cantonada de dalt a la dreta ja és del "Millor preu", i no
+                  és un xoc hipotètic: la 'Mensualitat de 8 sessions' és alhora
+                  el millor preu per sessió del seu servei, o sigui que les dues
+                  coincideixen a la mateixa targeta el primer dia. Aquí, a
+                  més, cau en l'ordre natural de lectura: què és, quantes
+                  sessions, quant val.
+
+                  Als vals de regal aquest distintiu no es veurà mai: allà els
+                  paquets de subscripció es filtren abans d'arribar-hi.
+                */}
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {isSubscriptionOnly(pkg) && (
+                    <Badge tone="info">{t("subscriptionOnly")}</Badge>
+                  )}
+                  <p className="text-xs text-brand-muted">
+                    {t("sessions", { count: pkg.defaultSessions })}
+                  </p>
+                </div>
               </div>
 
               <div className="flex flex-shrink-0 flex-col items-end gap-0.5">

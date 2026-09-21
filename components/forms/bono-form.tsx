@@ -130,9 +130,15 @@ export function BonoForm({
           const priceLabel = ep?.hasDiscount
             ? `${formatEur(ep.finalPrice)} (${ep.discountLabel})`
             : formatEur(s.price);
+          // Un <select> natiu no admet cap píndola, així que la marca va al
+          // text. Sense ella, qui dona d'alta un bo a mà recorria la llista a
+          // cegues i no descobria que aquell paquet era una quota mensual fins
+          // que el triava i sortia el bloc de sota. En català fix, com tota
+          // l'àrea d'admin i professional.
+          const subs = isSubscriptionOnly(s) ? " · Només subscripció" : "";
           return {
             value: s.id,
-            label: `${SERVICE_LABELS[s.serviceType]} · ${s.name} · ${s.defaultSessions} sess. · ${priceLabel}`,
+            label: `${SERVICE_LABELS[s.serviceType]} · ${s.name} · ${s.defaultSessions} sess. · ${priceLabel}${subs}`,
           };
         })}
       />
@@ -142,7 +148,7 @@ export function BonoForm({
           <div className="rounded-xl border border-brand-purple/30 bg-brand-purple/5 px-4 py-3 text-sm">
             <p className="font-bold text-brand-purple">Això és una subscripció</p>
             <p className="mt-1 text-brand-charcoal">
-              Els bons de grup no es venen solts. El que es dona d&apos;alta aquí
+              Aquest paquet no es ven solt. El que es dona d&apos;alta aquí
               és la quota mensual: el client rep {selected?.defaultSessions}{" "}
               sessions ara i unes altres tantes cada mes
               {renewalDay ? `, el dia ${renewalDay}` : ""}, per{" "}
