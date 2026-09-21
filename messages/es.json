@@ -1018,9 +1018,9 @@
       "outro": "Si no puedes asistir, cancélala cuanto antes desde tu área para que otra persona la pueda aprovechar."
     },
     "bonoLow": {
-      "subject": "Te queda 1 sesión en el bono · VindiBCN",
+      "subject": "{remaining, plural, one {Te queda # sesión en el bono} other {Te quedan # sesiones en el bono}} · VindiBCN",
       "heading": "Tu bono se está acabando",
-      "intro": "Te queda solo 1 sesión en tu bono de {service}.",
+      "intro": "{remaining, plural, one {Te queda solo # sesión} other {Te quedan solo # sesiones}} en tu bono de {service}.",
       "cta": "Renovar mi bono",
       "outro": "Renuévalo cuando quieras para no quedarte sin sesiones."
     },

@@ -50,23 +50,65 @@ async function clientContact(clientId: string) {
   return data ? await getProfileContact(data.profile_id) : null;
 }
 
+/** Aquest bo porta demanada la renovació automàtica? Es mira per clau primària. */
+async function isAutoRenew(bonoId: string): Promise<boolean> {
+  if (USE_MOCK)
+    return getStore().bonos.find((b) => b.id === bonoId)?.auto_renew === true;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("bonos")
+    .select("auto_renew")
+    .eq("id", bonoId)
+    .maybeSingle();
+  return data?.auto_renew === true;
+}
+
 /**
  * Avisa el client que el bo se li acaba (best-effort). El llindar el configura
  * l'admin; es dispara només en CREUAR-LO, no cada vegada que hi és per sota.
+ *
+ * AMB RENOVACIÓ DEMANADA NO S'AVISA
+ *
+ * A qui ja sap que en tindrà un de nou, dir-li «se t'acaba» és soroll: el CTA
+ * d'aquest correu és literalment «Renovar el meu bo», que és la feina que
+ * justament no haurà de fer. Se n'assabentarà a zero, amb el correu de la
+ * renovació.
+ *
+ * Es mira DESPRÉS del llindar i no abans, i importa: així la consulta corre un
+ * cop per vida del bo —quan es creua— i no a cada reserva.
+ *
+ * No hi ha cap dubte de QUIN bo es mira. El `bonoId` és el que acaba de
+ * descomptar la reserva, el que va triar el FIFO, i es consulta per clau
+ * primària: amb cinc bons del mateix servei no s'hi val a endevinar, i aquí no
+ * cal.
+ *
+ * EL QUE ES PERD, I ESTÀ ACCEPTAT
+ *
+ * Si després la renovació no es pot fer —el paquet s'ha retirat del catàleg o
+ * s'ha marcat «només per subscripció»—, `renewExhaustedBono` ho registra al
+ * log i no avisa el client de res. Amb aquesta supressió, aquell client es
+ * queda sense bo i sense cap correu. És una decisió presa a consciència per a
+ * aquesta tanda. Queda anotat com a seguiment un avís de «no s'ha pogut
+ * renovar» que ho tancaria; mentre no hi sigui, l'únic rastre és el
+ * `console.error` de `renewExhaustedBono`.
  */
-async function notifyBonoLowIfNeeded(
-  clientId: string,
-  serviceType: ServiceType,
-  remaining: number,
-): Promise<void> {
+async function notifyBonoLowIfNeeded(input: Consumed): Promise<void> {
   const { bonoLowThreshold } = await getCenterSettings();
-  if (remaining !== bonoLowThreshold) return;
-  const c = await clientContact(clientId);
+  if (input.remaining !== bonoLowThreshold) return;
+  if (await isAutoRenew(input.bonoId)) return;
+
+  const c = await clientContact(input.clientId);
   if (!c) return;
   await notify({
     type: "bono_low",
     recipient: c,
-    data: { name: c.name ?? "", serviceType },
+    data: {
+      name: c.name ?? "",
+      serviceType: input.serviceType,
+      // El llindar el tria l'admin i pot ser qualsevol número: el correu deia
+      // «et queda 1 sessió» amb l'1 escrit a mà, i amb el llindar a 3 mentia.
+      remaining: String(input.remaining),
+    },
   });
 }
 
@@ -79,11 +121,7 @@ async function notifyBonoLowIfNeeded(
  */
 export async function afterBonoConsumed(input: Consumed): Promise<void> {
   try {
-    await notifyBonoLowIfNeeded(
-      input.clientId,
-      input.serviceType,
-      input.remaining,
-    );
+    await notifyBonoLowIfNeeded(input);
   } catch (e) {
     console.error("[bo] avís de bo baix:", (e as Error).message);
   }

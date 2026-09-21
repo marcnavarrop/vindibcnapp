@@ -462,10 +462,13 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
     }
     case "bono_low": {
       const t = i.ns("emails.bonoLow");
-      subject = t("subject");
+      // El llindar el tria l'admin: el número ha de viatjar fins al text, que
+      // abans duia un «1» escrit a mà i mentia amb qualsevol altre valor.
+      const queden = Number(d.remaining ?? 1);
+      subject = t("subject", { remaining: queden });
       block = {
         heading: t("heading"),
-        intro: [hola, t("intro", { service: service ?? "" })],
+        intro: [hola, t("intro", { service: service ?? "", remaining: queden })],
         cta: { label: t("cta"), url: appLink("/client/bonos") },
         outro: [t("outro")],
         footer: "client",

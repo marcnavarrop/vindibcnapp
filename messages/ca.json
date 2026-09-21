@@ -1018,9 +1018,9 @@
       "outro": "Si no hi pots assistir, cancel·la-la com abans millor des de la teva àrea perquè una altra persona la pugui aprofitar."
     },
     "bonoLow": {
-      "subject": "Et queda 1 sessió al bo · VindiBCN",
+      "subject": "{remaining, plural, one {Et queda # sessió al bo} other {Et queden # sessions al bo}} · VindiBCN",
       "heading": "El teu bo s'està acabant",
-      "intro": "Et queda només 1 sessió al teu bo de {service}.",
+      "intro": "{remaining, plural, one {Et queda només # sessió} other {Et queden només # sessions}} al teu bo de {service}.",
       "cta": "Renovar el meu bo",
       "outro": "Renova'l quan vulguis per no quedar-te sense sessions."
     },

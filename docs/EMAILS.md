@@ -33,7 +33,8 @@ dependemos del envío de emails de Supabase.
 | `session_reminder` | cliente | ❌ (opt-in) |
 | `trial_request` | entrenador del hueco + `CENTER_EMAIL` | ❌ (opt-in) |
 | `trial_status` | visitante de la prueba | ✅ |
-| `bono_low` | cliente (al quedar 1 sesión) | ❌ |
+| `bono_low` | cliente (al cruzar el umbral configurable; **no** si el bono tiene `auto_renew`) | ❌ |
+| `bono_auto_renewed` | cliente (bono agotado con renovación pedida: nace uno pendiente) | ✅ siempre |
 | `community` | clientes/entrenadores que lo activen | ❌ |
 | `trainer_booking_received` / `trainer_booking_cancelled` | entrenador (solo si la acción la hace el **cliente**) | ✅ |
 | `trainer_daily_agenda` | entrenador (opt-in) | ❌ |

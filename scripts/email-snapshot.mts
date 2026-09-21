@@ -88,7 +88,8 @@ const DATA: Record<NotificationEventType, Record<string, string>> = {
   session_reminder: { name: "Ana Ferrer", ...WHENS, ...FISIO, trainer: "Jordi Roca" },
   trial_request: { name: "Laia Puig", visitorName: "Marta Gil", ...WHENS, phone: "600111222", email: "marta@example.com" },
   trial_status: { name: "Marta Gil", ...WHENS, status: "confirmed" },
-  bono_low: { name: "Ana Ferrer", ...INDIV },
+  // Amb el llindar a 3, per veure que el text el respecta i no diu "1".
+  bono_low: { name: "Ana Ferrer", ...INDIV, remaining: "3" },
   bono_expiring_soon: { name: "Ana Ferrer", ...INDIV, remaining: "3", when: `el ${EXPIRES}`, expiresAt: EXPIRES, expiresIso: EXPIRES_ISO },
   bono_auto_renewed: { name: "Ana Ferrer", ...INDIV, packageName: "Bo de 4 sessions", sessions: "4", price: "190" },
   bono_unpaid_cancelled: { name: "Ana Ferrer", ...INDIV, cancelled: "2" },

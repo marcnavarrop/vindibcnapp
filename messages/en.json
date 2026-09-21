@@ -1018,9 +1018,9 @@
       "outro": "If you can't make it, cancel as early as you can from your area so someone else can take the slot."
     },
     "bonoLow": {
-      "subject": "1 session left on your package · VindiBCN",
+      "subject": "{remaining, plural, one {# session left on your package} other {# sessions left on your package}} · VindiBCN",
       "heading": "Your package is running out",
-      "intro": "You have just 1 session left on your {service} package.",
+      "intro": "{remaining, plural, one {You have just # session left} other {You have just # sessions left}} on your {service} package.",
       "cta": "Renew my package",
       "outro": "Renew it whenever you like so you don't run out of sessions."
     },
