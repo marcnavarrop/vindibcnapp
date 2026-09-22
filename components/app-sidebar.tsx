@@ -29,6 +29,7 @@ import { USE_MOCK } from "@/lib/config";
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import { CommunityBadge } from "@/components/community-badge";
 import { BonosBadge } from "@/components/bonos-badge";
+import type { ClientBadgeCounts } from "@/lib/data/client-badges";
 import {
   NAV_GROUPS,
   isNavGroup,
@@ -100,6 +101,7 @@ export function AppSidebar({
   email = "",
   avatarUrl = null,
   modules = ALL_MODULES_ON,
+  badges = null,
 }: {
   role: Role;
   specialty?: Specialty | null;
@@ -109,6 +111,15 @@ export function AppSidebar({
   avatarUrl?: string | null;
   /** Mòduls actius; els desactivats no surten al menú. */
   modules?: ModuleFlags;
+  /**
+   * Els números de les piloteta, calculats al servidor per `AppShell`. `null`
+   * a l'àrea d'admin i de professional, que no en tenen cap.
+   *
+   * Arriben com a valor de SORTIDA i no com a estat: aquest component no es
+   * desmunta en navegar, així que la prop es llegeix un cop per càrrega i a
+   * partir d'aquí mana el magatzem compartit. Vegeu `lib/badge-store`.
+   */
+  badges?: ClientBadgeCounts | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -130,6 +141,7 @@ export function AppSidebar({
           avatarUrl={avatarUrl}
           pathname={pathname}
           modules={modules}
+          badges={badges}
         />
       </aside>
 
@@ -195,6 +207,7 @@ export function AppSidebar({
               avatarUrl={avatarUrl}
               pathname={pathname}
               modules={modules}
+              badges={badges}
             />
           </div>
         </div>
@@ -211,6 +224,7 @@ function SidebarContent({
   avatarUrl,
   pathname,
   modules,
+  badges,
 }: {
   role: Role;
   specialty: Specialty | null;
@@ -221,6 +235,7 @@ function SidebarContent({
   translated?: boolean;
   pathname: string;
   modules: ModuleFlags;
+  badges: ClientBadgeCounts | null;
 }) {
   return (
     <div className="flex h-full flex-col gap-4 p-4">
@@ -278,14 +293,15 @@ function SidebarContent({
                   active={active}
                   /* Només al client, i només a les dues pantalles on hi pot
                      arribar alguna cosa sola que es pot perdre de vista: el
-                     tauler de comunitat i els bons que queden per pagar. Cada
-                     component es demana el seu número ell mateix. */
+                     tauler de comunitat i els bons que queden per pagar. El
+                     número de sortida el calcula `AppShell` al servidor, així
+                     que ja ve pintat dins de l'HTML. */
                   badge={
-                    role !== "client" ? undefined : entry.href ===
+                    !badges ? undefined : entry.href ===
                       "/client/comunitat" ? (
-                      <CommunityBadge />
+                      <CommunityBadge initial={badges.community} />
                     ) : entry.href === "/client/bonos" ? (
-                      <BonosBadge />
+                      <BonosBadge initial={badges.bonos} />
                     ) : undefined
                   }
                 />

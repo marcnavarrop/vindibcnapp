@@ -472,7 +472,9 @@
     "openMenu": "Open menu",
     "sectionTabs": "Section navigation",
     "closeMenu": "Close menu",
-    "areaLabel": "Client area"
+    "areaLabel": "Client area",
+    "badgeCommunity": "{count, plural, one {# update} other {# updates}}",
+    "badgeBonos": "{count, plural, one {# pass to pay} other {# passes to pay}}"
   },
   "reservas": {
     "title": "Bookings",

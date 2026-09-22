@@ -728,29 +728,24 @@ export async function createPaidBono(input: {
  * pagar i recuperar.
  *
  * Es compta sense baixar cap fila: la piloteta del menú només vol el número.
+ *
+ * REP EL `clientId` JA RESOLT, I NO EL PERFIL
+ *
+ * Abans buscava ella mateixa la fila del client a partir del perfil. Ara la hi
+ * dona qui crida (`getClientBadgeCounts`), que la necessita igualment per al
+ * recompte de comunitat: entre les dues es buscava dos cops el mateix.
  */
-export async function countCollectableBonos(profileId: string): Promise<number> {
+export async function countCollectableBonos(clientId: string): Promise<number> {
   if (USE_MOCK) {
-    const store = getStore();
-    const client = store.clients.find((c) => c.profile_id === profileId);
-    if (!client) return 0;
-    return store.bonos.filter(
-      (b) => b.client_id === client.id && COLLECTABLE.includes(b.status),
+    return getStore().bonos.filter(
+      (b) => b.client_id === clientId && COLLECTABLE.includes(b.status),
     ).length;
   }
 
-  const admin = createAdminClient();
-  const { data: client } = await admin
-    .from("clients")
-    .select("id")
-    .eq("profile_id", profileId)
-    .maybeSingle();
-  if (!client) return 0;
-
-  const { count } = await admin
+  const { count } = await createAdminClient()
     .from("bonos")
     .select("id", { count: "exact", head: true })
-    .eq("client_id", client.id)
+    .eq("client_id", clientId)
     .in("status", COLLECTABLE);
   return count ?? 0;
 }

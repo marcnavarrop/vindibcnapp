@@ -37,16 +37,23 @@ function pollIsLive(p: { active: boolean; closes_at: string | null }, today: str
  * convertiria la piloteta en un recordatori insistent, que és el pop-up
  * obligatori que es va descartar. Per això aquí no es mira `poll_responses`.
  */
-export async function countUnreadCommunity(clientId: string): Promise<number> {
+export async function countUnreadCommunity(
+  clientId: string,
+  /**
+   * L'alta del client, que és el tall quan encara no ha mirat mai la
+   * comunitat. La hi dona qui crida perquè ja la porta de la mateixa consulta
+   * amb què ha resolt el `clientId`: demanar-la aquí tornaria a llegir la fila
+   * de `clients` que acaba de passar per davant.
+   */
+  clientCreatedAt: string,
+): Promise<number> {
   const today = centerToday();
 
   if (USE_MOCK) {
     const store = getStore();
-    const client = store.clients.find((c) => c.id === clientId);
-    if (!client) return 0;
     const seen =
       store.community_seen.find((r) => r.client_id === clientId)?.seen_at ??
-      client.created_at;
+      clientCreatedAt;
     const anuncis = store.announcements.filter((a) => a.created_at > seen).length;
     const enquestes = store.polls.filter(
       (p) => p.created_at > seen && pollIsLive(p, today),
@@ -56,15 +63,12 @@ export async function countUnreadCommunity(clientId: string): Promise<number> {
 
   const supabase = await createClient();
 
-  const [{ data: row }, { data: client }] = await Promise.all([
-    supabase
-      .from("community_seen")
-      .select("seen_at")
-      .eq("client_id", clientId)
-      .maybeSingle(),
-    supabase.from("clients").select("created_at").eq("id", clientId).maybeSingle(),
-  ]);
-  const seen = row?.seen_at ?? client?.created_at;
+  const { data: row } = await supabase
+    .from("community_seen")
+    .select("seen_at")
+    .eq("client_id", clientId)
+    .maybeSingle();
+  const seen = row?.seen_at ?? clientCreatedAt;
   if (!seen) return 0;
 
   // `head: true` amb `count: exact`: no baixa ni una fila, només el número.

@@ -472,7 +472,9 @@
     "openMenu": "Abrir menú",
     "sectionTabs": "Navegación de sección",
     "closeMenu": "Cerrar menú",
-    "areaLabel": "Área cliente"
+    "areaLabel": "Área cliente",
+    "badgeCommunity": "{count, plural, one {# novedad} other {# novedades}}",
+    "badgeBonos": "{count, plural, one {# bono por pagar} other {# bonos por pagar}}"
   },
   "reservas": {
     "title": "Reservas",

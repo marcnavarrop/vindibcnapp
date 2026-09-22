@@ -5,6 +5,7 @@ import { getViewer } from "@/lib/auth";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { avatarUrl } from "@/lib/data/avatars";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getClientBadgeCounts } from "@/lib/data/client-badges";
 import { USE_MOCK } from "@/lib/config";
 import type { Role } from "@/lib/nav";
 
@@ -28,15 +29,40 @@ export async function AppShell({
   // La foto del propi usuari per al sidebar. Es llegeix aquí i no a getViewer
   // perquè getViewer va per capçaleres del middleware al camí ràpid i no
   // toca la base de dades.
-  let avatar: string | null = null;
-  if (viewer && !USE_MOCK) {
+  async function ownAvatar(): Promise<string | null> {
+    if (!viewer || USE_MOCK) return null;
     const { data } = await createAdminClient()
       .from("profiles")
       .select("avatar_path")
       .eq("id", viewer.id)
       .maybeSingle();
-    avatar = await avatarUrl(data?.avatar_path ?? null);
+    return avatarUrl(data?.avatar_path ?? null);
   }
+
+  /*
+   * Els números de les piloteta del menú, calculats AQUÍ i no dins de cada
+   * piloteta en muntar-se.
+   *
+   * Abans cadascuna es demanava el seu amb una Server Action i el número
+   * apareixia 999 ms després que la pantalla. Baixant-lo com a prop ja ve
+   * dins de l'HTML i es pinta al primer frame. No reprodueix el problema del
+   * número ranci —el que ens va mossegar dues vegades avui— perquè la piloteta
+   * NOMÉS el fa servir per al valor de sortida: a partir d'aquí mana el
+   * magatzem compartit, que actualitzen els avisos de sempre.
+   *
+   * NOMÉS PER AL CLIENT
+   *
+   * L'admin i el professional no tenen cap piloteta al menú (la seva és la del
+   * botó de suport, que se la segueix demanant ella) i no han de pagar ni una
+   * consulta per una cosa que no veuran. Per això va condicionat al rol i no
+   * "per si de cas".
+   */
+  const [avatar, badges] = await Promise.all([
+    ownAvatar(),
+    role === "client" && viewer
+      ? getClientBadgeCounts(viewer.id, settings.modules)
+      : Promise.resolve(null),
+  ]);
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -47,6 +73,7 @@ export async function AppShell({
         email={viewer?.email ?? ""}
         avatarUrl={avatar}
         modules={settings.modules}
+        badges={badges}
       />
       {/* En imprimir no hi ha sidebar, així que el contingut no ha de
           deixar-li lloc: sense això el manual sortiria escapçat per la dreta. */}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { pendingBonoCountAction } from "@/lib/actions/bonos";
+import { useTranslations } from "next-intl";
+import { NavBadge } from "@/components/ui/nav-badge";
+import { useBadgeEvent } from "@/lib/badge-store";
 import { BONOS_SEEN, type BonosSeenDetail } from "@/lib/bono-events";
 
 /**
@@ -11,8 +12,9 @@ import { BONOS_SEEN, type BonosSeenDetail } from "@/lib/bono-events";
  * impagament—, que són els mateixos que pot cobrar el taulell. Els bons nascuts
  * de la renovació automàtica hi entren sols: neixen 'pending_payment'.
  *
- * ES DEMANA EL NÚMERO ELLA MATEIXA, com la de comunitat i per la mateixa raó:
- * `AppShell` és el layout i no es torna a renderitzar en navegar.
+ * EL NÚMERO DE SORTIDA VE DEL SERVIDOR, com la de comunitat i per la mateixa
+ * raó: dins de l'HTML es pinta al primer frame, i la prop només és el valor de
+ * sortida del magatzem compartit, no l'estat de la piloteta.
  *
  * I S'APAGA SENSE RECARREGAR en entrar a «Els meus bons», escoltant
  * `vindi:bonos-seen`.
@@ -20,40 +22,32 @@ import { BONOS_SEEN, type BonosSeenDetail } from "@/lib/bono-events";
  * L'APAGADA ÉS D'AQUESTA SESSIÓ, NO PERMANENT
  *
  * A diferència de la de comunitat, aquí no es desa cap marca a la base: el
- * número es torna a comptar al següent muntatge del menú. És deliberat. Un
- * anunci llegit ja no és nou; un bo sense pagar SEGUEIX sense pagar per molt
- * que l'hagis mirat, i una piloteta que s'apagués per sempre diria que no deus
- * res quan sí que deus. Silenciar-la mentre hi ets és cortesia; oblidar-ho
+ * número es torna a comptar a la següent càrrega de la pàgina. És deliberat.
+ * Un anunci llegit ja no és nou; un bo sense pagar SEGUEIX sense pagar per
+ * molt que l'hagis mirat, i una piloteta que s'apagués per sempre diria que no
+ * deus res quan sí que deus. Silenciar-la mentre hi ets és cortesia; oblidar-ho
  * seria mentir.
+ *
+ * I ARA SÍ QUE SE SILENCIA DEL TOT MENTRE HI ETS
+ *
+ * Abans no ho aconseguia en mòbil: del menú n'hi ha dues còpies muntades
+ * —l'`<aside>` amagat i el calaix lliscant—, i la del calaix es tornava a
+ * demanar el número en obrir-se, o sigui que ressuscitava una piloteta que
+ * l'altra ja havia apagat. Amb el magatzem compartit les dues diuen el mateix,
+ * que és el que aquest comentari ja prometia.
  */
-export function BonosBadge() {
-  /** `null` mentre no se sap. Amb 0 no es pinta res. */
-  const [pending, setPending] = useState<number | null>(null);
+export function BonosBadge({ initial }: { initial: number }) {
+  const t = useTranslations("nav");
 
-  useEffect(() => {
-    pendingBonoCountAction().then(setPending, () => setPending(null));
-  }, []);
-
-  useEffect(() => {
-    const onSeen = (e: Event) => {
-      const detail = (e as CustomEvent<BonosSeenDetail>).detail;
-      if (typeof detail?.pending === "number" && detail.pending >= 0)
-        setPending(detail.pending);
-    };
-    window.addEventListener(BONOS_SEEN, onSeen);
-    return () => window.removeEventListener(BONOS_SEEN, onSeen);
-  }, []);
-
-  if (pending === null || pending <= 0) return null;
+  useBadgeEvent<BonosSeenDetail>(BONOS_SEEN, "bonos", (detail) => detail?.pending);
 
   return (
-    <span
-      // Taronja de marca sobre el lila del menú, com la de comunitat: és el
-      // contrast que ja fa servir la vora de l'entrada activa.
-      className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange px-1.5 text-[11px] font-bold text-white"
-      aria-label={`${pending} ${pending === 1 ? "bo per pagar" : "bons per pagar"}`}
-    >
-      {pending > 9 ? "9+" : pending}
-    </span>
+    <NavBadge
+      badgeKey="bonos"
+      initial={initial}
+      // Traduïda, com la resta del menú del client: fins ara deia "bons per
+      // pagar" en català a qui tenia l'app en anglès o en castellà.
+      label={(count) => t("badgeBonos", { count })}
+    />
   );
 }
