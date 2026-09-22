@@ -28,10 +28,32 @@ export function BonoRowActions({
 }) {
   const t = useTranslations("bonos.mine");
 
+  const potPagar = bono.status === "pending_payment" && stripeOn;
+  // Si hi ha alguna cosa a dir sobre la renovació: l'interruptor, o el motiu
+  // pel qual no n'hi ha. Els bons anteriors a la 0088 no diuen res, i llavors
+  // el bloc sencer desapareix en comptes de deixar un buit amb marges.
+  const diuAlgunaCosaDeRenovacio = bono.autoRenewBlock !== "noPackage";
+  if (!potPagar && !diuAlgunaCosaDeRenovacio) return null;
+
   return (
-    <div className="mt-2 flex flex-col gap-2 border-t border-brand-border/60 pt-2">
+    /*
+     * `px-5` PERQUÈ ÉS EL MATEIX QUE `Row`
+     *
+     * Sense ell, la nota i el botó queien enganxats a la vora del panell,
+     * vint píxels a l'esquerra del nom del bo a què pertanyen: el botó
+     * «Pagar amb targeta» semblava flotar entre dos bons i no es veia de qui
+     * era. Amb el mateix sagnat, cau just sota el seu.
+     *
+     * I SENSE `border-t`
+     *
+     * N'hi havia un que separava el bo de la seva PRÒPIA nota i el seu propi
+     * botó, i empenyia el bloc òpticament cap a la fila de sota. La única
+     * ratlla que hi ha d'haver aquí ja la dibuixa el `divide-y` del `Panel`, i
+     * va ENTRE bons. El `-mt-1` acaba d'enganxar el bloc a la seva fila.
+     */
+    <div className="-mt-1 flex flex-col gap-2 px-5 pb-3">
       <AutoRenewToggle bono={bono} />
-      {bono.status === "pending_payment" && stripeOn && (
+      {potPagar && (
         <PayByCard bonoId={bono.id} label={t("payByCard")} pending={t("payPending")} />
       )}
     </div>
@@ -60,18 +82,25 @@ function AutoRenewToggle({ bono }: { bono: ClientBono }) {
     if (typeof state.on === "boolean") setOn(state.on);
   }, [state.on]);
 
-  // Un bo que per la seva naturalesa no es pot renovar no ensenya interruptor:
-  // ensenya per què. Un botó apagat que no es pot encendre és pitjor que una
-  // frase que ho explica.
+  /*
+   * Un bo anterior a la 0088 no ensenya RES: ni interruptor ni explicació.
+   *
+   * Duia una nota dient que no sabem de quin paquet va sortir, i era veritat
+   * però no servia de res: el client no hi pot fer res, no ho ha demanat mai,
+   * i repetida a cada bo antic ocupava més que els propis bons. Els altres dos
+   * motius sí que s'expliquen, perquè responen una pregunta que el client es
+   * pot fer de debò —«i el meu regal?», «i la meva subscripció?»— i surten un
+   * cop, no a tota la llista.
+   */
+  if (bono.autoRenewBlock === "noPackage") return null;
+
   if (bono.autoRenewBlock)
     return (
       <p className="text-xs text-brand-muted">
         {t(
-          bono.autoRenewBlock === "noPackage"
-            ? "autoRenewNoPackage"
-            : bono.autoRenewBlock === "fromGift"
-              ? "autoRenewFromGift"
-              : "autoRenewFromSubscription",
+          bono.autoRenewBlock === "fromGift"
+            ? "autoRenewFromGift"
+            : "autoRenewFromSubscription",
         )}
       </p>
     );

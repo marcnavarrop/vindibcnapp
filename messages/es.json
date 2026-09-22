@@ -385,7 +385,6 @@
       "autoRenewLabel": "Renovarlo solo cuando se acabe",
       "autoRenewOn": "Cuando gastes la última sesión te prepararemos un bono nuevo, pendiente de pago. No se cobra nada solo.",
       "autoRenewOff": "Al acabarse no pasará nada: tendrás que comprar uno nuevo tú.",
-      "autoRenewNoPackage": "Este bono es anterior al cambio y no sabemos de qué paquete salió.",
       "autoRenewFromGift": "Los bonos que vienen de un vale de regalo no se renuevan.",
       "autoRenewFromSubscription": "Este bono ya lo renueva tu suscripción cada mes.",
       "autoRenewHasSubscription": "Ya tienes una suscripción de este servicio que te renueva sola.",

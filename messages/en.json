@@ -385,7 +385,6 @@
       "autoRenewLabel": "Renew it on its own when it runs out",
       "autoRenewOn": "When you use the last session we will set up a new unpaid package for you. Nothing is charged automatically.",
       "autoRenewOff": "Nothing will happen when it runs out: you will have to buy a new one yourself.",
-      "autoRenewNoPackage": "This package predates the change and we do not know which one it came from.",
       "autoRenewFromGift": "Packages from a gift voucher are not renewed.",
       "autoRenewFromSubscription": "Your subscription already renews this one every month.",
       "autoRenewHasSubscription": "You already have a subscription for this service that renews on its own.",

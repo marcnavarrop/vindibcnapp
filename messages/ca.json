@@ -385,7 +385,6 @@
       "autoRenewLabel": "Renovar-lo sol quan s'acabi",
       "autoRenewOn": "Quan gastis l'última sessió et prepararem un bo nou, pendent de pagar. No es cobra res sol.",
       "autoRenewOff": "En acabar-se no passarà res: hauràs de comprar-ne un de nou tu.",
-      "autoRenewNoPackage": "Aquest bo és anterior al canvi i no sabem de quin paquet va sortir.",
       "autoRenewFromGift": "Els bons que vénen d'un val de regal no es renoven.",
       "autoRenewFromSubscription": "Aquest bo ja el renova la teva subscripció cada mes.",
       "autoRenewHasSubscription": "Ja tens una subscripció d'aquest servei que et renova sola.",
