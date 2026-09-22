@@ -29,6 +29,7 @@ import { USE_MOCK } from "@/lib/config";
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import { CommunityBadge } from "@/components/community-badge";
 import { BonosBadge } from "@/components/bonos-badge";
+import { ExercisesBadge } from "@/components/exercises-badge";
 import type { ClientBadgeCounts } from "@/lib/data/client-badges";
 import {
   NAV_GROUPS,
@@ -291,17 +292,20 @@ function SidebarContent({
                   }
                   icon={entry.icon}
                   active={active}
-                  /* Només al client, i només a les dues pantalles on hi pot
+                  /* Només al client, i només a les pantalles on hi pot
                      arribar alguna cosa sola que es pot perdre de vista: el
-                     tauler de comunitat i els bons que queden per pagar. El
-                     número de sortida el calcula `AppShell` al servidor, així
-                     que ja ve pintat dins de l'HTML. */
+                     tauler de comunitat, els bons que queden per pagar i els
+                     exercicis que li acaben d'assignar. El número de sortida
+                     el calcula `AppShell` al servidor, així que ja ve pintat
+                     dins de l'HTML. */
                   badge={
                     !badges ? undefined : entry.href ===
                       "/client/comunitat" ? (
                       <CommunityBadge initial={badges.community} />
                     ) : entry.href === "/client/bonos" ? (
                       <BonosBadge initial={badges.bonos} />
+                    ) : entry.href === "/client/exercicis" ? (
+                      <ExercisesBadge initial={badges.exercicis} />
                     ) : undefined
                   }
                 />

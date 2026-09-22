@@ -35,7 +35,7 @@ import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
  */
 
 /** Quina piloteta. Afegir-ne una és afegir una clau aquí. */
-export type BadgeKey = "community" | "bonos";
+export type BadgeKey = "community" | "bonos" | "exercicis";
 
 const values = new Map<BadgeKey, number>();
 const subscribers = new Map<BadgeKey, Set<() => void>>();

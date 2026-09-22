@@ -377,6 +377,38 @@ export async function getClientByProfile(
   return fetchClientDetail("profile_id", profileId);
 }
 
+/** Qui és aquest client, reduït al mínim: l'id i quan es va donar d'alta. */
+export type ClientRef = { id: string; createdAt: string };
+
+/**
+ * El client d'un perfil, sense baixar-li la fitxa.
+ *
+ * `getClientByProfile` torna la fitxa SENCERA —bons, reserves amb el seu
+ * professional, i pagaments— amb un sol `select` encadenat. Per a qui només
+ * necessita saber QUIN client és, això és pagar una consulta grossa per dues
+ * columnes, i es feia a cada càrrega de pantalla del client.
+ *
+ * L'`created_at` hi va perquè és el tall de les piloteta quan encara no s'ha
+ * mirat res: qui el demana el vol gairebé sempre alhora que l'id, i demanar-lo
+ * a part tornaria a llegir la mateixa fila.
+ */
+export async function getClientRefByProfile(
+  profileId: string,
+): Promise<ClientRef | null> {
+  if (USE_MOCK) {
+    const client = getStore().clients.find((c) => c.profile_id === profileId);
+    return client ? { id: client.id, createdAt: client.created_at } : null;
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("clients")
+    .select("id, created_at")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  return data ? { id: data.id, createdAt: data.created_at } : null;
+}
+
 /** Entrenadores disponibles para asignar (para los selects de formularios). */
 export async function listTrainers(): Promise<{ id: string; name: string }[]> {
   if (USE_MOCK) {

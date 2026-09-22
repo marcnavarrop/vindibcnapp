@@ -474,7 +474,8 @@
     "closeMenu": "Cerrar menú",
     "areaLabel": "Área cliente",
     "badgeCommunity": "{count, plural, one {# novedad} other {# novedades}}",
-    "badgeBonos": "{count, plural, one {# bono por pagar} other {# bonos por pagar}}"
+    "badgeBonos": "{count, plural, one {# bono por pagar} other {# bonos por pagar}}",
+    "badgeExercicis": "{count, plural, one {# ejercicio nuevo} other {# ejercicios nuevos}}"
   },
   "reservas": {
     "title": "Reservas",

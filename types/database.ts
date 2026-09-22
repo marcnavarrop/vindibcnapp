@@ -1389,6 +1389,21 @@ export interface Database {
         };
         Relationships: [];
       };
+      exercises_seen: {
+        Row: {
+          client_id: string;
+          seen_at: string;
+        };
+        Insert: {
+          client_id: string;
+          seen_at?: string;
+        };
+        Update: {
+          client_id?: string;
+          seen_at?: string;
+        };
+        Relationships: [];
+      };
       poll_responses: {
         Row: {
           id: string;

@@ -474,7 +474,8 @@
     "closeMenu": "Close menu",
     "areaLabel": "Client area",
     "badgeCommunity": "{count, plural, one {# update} other {# updates}}",
-    "badgeBonos": "{count, plural, one {# pass to pay} other {# passes to pay}}"
+    "badgeBonos": "{count, plural, one {# pass to pay} other {# passes to pay}}",
+    "badgeExercicis": "{count, plural, one {# new exercise} other {# new exercises}}"
   },
   "reservas": {
     "title": "Bookings",

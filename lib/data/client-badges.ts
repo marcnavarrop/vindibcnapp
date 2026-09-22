@@ -1,9 +1,8 @@
 import "server-only";
-import { USE_MOCK } from "@/lib/config";
-import { createClient } from "@/lib/supabase/server";
-import { getStore } from "@/lib/mock/store";
+import { getClientRefByProfile } from "@/lib/data/clients";
 import { countUnreadCommunity } from "@/lib/data/community-seen";
 import { countCollectableBonos } from "@/lib/data/bonos";
+import { countUnreadExercises } from "@/lib/data/exercises-seen";
 import type { ModuleFlags } from "@/lib/nav";
 
 /**
@@ -36,27 +35,11 @@ export type ClientBadgeCounts = {
   community: number;
   /** Bons que li queden per pagar. */
   bonos: number;
+  /** Exercicis que li han assignat i encara no ha mirat. */
+  exercicis: number;
 };
 
-const NONE: ClientBadgeCounts = { community: 0, bonos: 0 };
-
-/** La fila del client reduïda al que necessiten els dos recomptes. */
-async function clientRef(
-  profileId: string,
-): Promise<{ id: string; createdAt: string } | null> {
-  if (USE_MOCK) {
-    const client = getStore().clients.find((c) => c.profile_id === profileId);
-    return client ? { id: client.id, createdAt: client.created_at } : null;
-  }
-
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("clients")
-    .select("id, created_at")
-    .eq("profile_id", profileId)
-    .maybeSingle();
-  return data ? { id: data.id, createdAt: data.created_at } : null;
-}
+const NONE: ClientBadgeCounts = { community: 0, bonos: 0, exercicis: 0 };
 
 /**
  * Els dos números, o zeros si alguna cosa falla.
@@ -76,17 +59,19 @@ export async function getClientBadgeCounts(
   modules: ModuleFlags,
 ): Promise<ClientBadgeCounts> {
   try {
-    const client = await clientRef(profileId);
+    const client = await getClientRefByProfile(profileId);
     if (!client) return NONE;
 
-    const [community, bonos] = await Promise.all([
+    const [community, bonos, exercicis] = await Promise.all([
       modules.comunitat
         ? countUnreadCommunity(client.id, client.createdAt)
         : Promise.resolve(0),
       countCollectableBonos(client.id),
+      // Sense mòdul que la pugui apagar: Exercicis hi és sempre.
+      countUnreadExercises(client.id, client.createdAt),
     ]);
 
-    return { community, bonos };
+    return { community, bonos, exercicis };
   } catch {
     return NONE;
   }

@@ -68,6 +68,7 @@ export type Store = {
   poll_options: Tables["poll_options"]["Row"][];
   poll_responses: Tables["poll_responses"]["Row"][];
   community_seen: Tables["community_seen"]["Row"][];
+  exercises_seen: Tables["exercises_seen"]["Row"][];
   gift_vouchers: Tables["gift_vouchers"]["Row"][];
   subscriptions: Tables["subscriptions"]["Row"][];
   booking_series: Tables["booking_series"]["Row"][];
@@ -131,6 +132,11 @@ function fromSeed(): Store {
     poll_responses: structuredClone(seedPollResponses),
     // Ningú ha mirat encara la comunitat: el tall serà l'alta de cada client.
     community_seen: [],
+    // Buit, i tot i així la piloteta d'exercicis comença apagada: l'únic
+    // exercici de la llavor s'assigna amb la MATEIXA marca de temps que l'alta
+    // del client, i només compta el que és posterior. Surt igual que a
+    // producció, on qui ho aconsegueix és la sembra de la 0089.
+    exercises_seen: [],
     professional_colors: [],
     // Mateixa llavor que la migració 0046: els colors que ja feia servir el codi.
     service_type_colors: [

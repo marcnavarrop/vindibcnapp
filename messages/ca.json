@@ -474,7 +474,8 @@
     "closeMenu": "Tancar menú",
     "areaLabel": "Àrea client",
     "badgeCommunity": "{count, plural, one {# novetat} other {# novetats}}",
-    "badgeBonos": "{count, plural, one {# bo per pagar} other {# bons per pagar}}"
+    "badgeBonos": "{count, plural, one {# bo per pagar} other {# bons per pagar}}",
+    "badgeExercicis": "{count, plural, one {# exercici nou} other {# exercicis nous}}"
   },
   "reservas": {
     "title": "Reserves",

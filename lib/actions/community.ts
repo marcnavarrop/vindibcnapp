@@ -1,7 +1,7 @@
 "use server";
 
 import { getViewer } from "@/lib/auth";
-import { getClientByProfile } from "@/lib/data/clients";
+import { getClientRefByProfile } from "@/lib/data/clients";
 import { markCommunitySeen } from "@/lib/data/community-seen";
 
 /**
@@ -32,7 +32,10 @@ export async function markCommunitySeenAction(): Promise<number> {
     const viewer = await getViewer();
     if (!viewer || viewer.role !== "client") return 0;
 
-    const client = await getClientByProfile(viewer.id);
+    // La fitxa sencera no cal: d'aquí només en surt l'id. Abans passava per
+    // `getClientByProfile`, que baixa bons, reserves i pagaments per llegir
+    // una columna.
+    const client = await getClientRefByProfile(viewer.id);
     if (!client) return 0;
 
     await markCommunitySeen(client.id);

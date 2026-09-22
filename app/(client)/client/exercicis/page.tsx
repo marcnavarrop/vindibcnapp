@@ -5,6 +5,7 @@ import { listExercises } from "@/lib/data/exercises";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { ClientExerciseLibrary } from "@/components/exercise-library";
 import { AssignedExercises } from "@/components/client/assigned-exercises";
+import { ExercisesSeenMarker } from "@/components/exercises-seen-marker";
 import { listExerciseCategories } from "@/lib/data/exercise-categories";
 import { getTranslations } from "next-intl/server";
 
@@ -41,6 +42,12 @@ export default async function ClientExercicisPage() {
 
   return (
     <main className="mx-auto max-w-5xl p-6">
+      {/* Apaga la piloteta del menú. Va aquí, a la pàgina, i no dins de
+          `AssignedExercises`: aquella es remunta en desplegar una targeta o en
+          apuntar-hi progrés, i l'avís l'ha de llançar alguna cosa que duri tota
+          l'estada. No pinta res. */}
+      <ExercisesSeenMarker />
+
       <h1 className="mb-1 text-2xl text-brand-dark">{t("title")}</h1>
       <p className="mb-6 text-sm text-brand-muted">{t("intro")}</p>
 
