@@ -82,15 +82,12 @@ async function isAutoRenew(bonoId: string): Promise<boolean> {
  * primària: amb cinc bons del mateix servei no s'hi val a endevinar, i aquí no
  * cal.
  *
- * EL QUE ES PERD, I ESTÀ ACCEPTAT
+ * SI LA RENOVACIÓ DESPRÉS FALLA, NO ÉS PAS SILENCI
  *
- * Si després la renovació no es pot fer —el paquet s'ha retirat del catàleg o
- * s'ha marcat «només per subscripció»—, `renewExhaustedBono` ho registra al
- * log i no avisa el client de res. Amb aquesta supressió, aquell client es
- * queda sense bo i sense cap correu. És una decisió presa a consciència per a
- * aquesta tanda. Queda anotat com a seguiment un avís de «no s'ha pogut
- * renovar» que ho tancaria; mentre no hi sigui, l'únic rastre és el
- * `console.error` de `renewExhaustedBono`.
+ * Si el paquet s'ha retirat del catàleg o s'ha marcat «només per subscripció»,
+ * `renewExhaustedBono` no pot crear el bo nou, però tampoc deixa aquell client
+ * sense cap avís: envia `bono_renewal_failed`. La supressió d'aquí només
+ * evita el soroll de DOS correus quan la renovació sí que sortirà bé.
  */
 async function notifyBonoLowIfNeeded(input: Consumed): Promise<void> {
   const { bonoLowThreshold } = await getCenterSettings();
@@ -164,9 +161,19 @@ async function renewExhaustedBono(bonoId: string): Promise<void> {
 
   const paquet = await loadPackage(vell.serviceId);
   if (!paquet) {
-    console.error(
-      `[bo] ${bonoId} demanava renovació però el paquet ${vell.serviceId} ja no es pot vendre solt.`,
-    );
+    const c = await clientContact(vell.clientId);
+    if (c) {
+      await notify(
+        {
+          type: "bono_renewal_failed",
+          recipient: c,
+          data: { name: c.name ?? "", serviceType: vell.serviceType },
+        },
+        // Obligatori: mateix criteri que bono_auto_renewed. Es queda sense
+        // sessions i sense cap bo nou en camí, i no ho pot veure enlloc.
+        { ignorePreferences: true },
+      );
+    }
     return;
   }
 

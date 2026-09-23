@@ -817,6 +817,10 @@
           "label": "Package renewed automatically",
           "description": "When a package with renewal switched on runs out and a new unpaid one is created."
         },
+        "bono_renewal_failed": {
+          "label": "Package could not be renewed",
+          "description": "When a package with renewal switched on runs out and it can no longer be purchased."
+        },
         "bono_unpaid_cancelled": {
           "label": "Package cancelled for non-payment",
           "description": "If an unpaid package lapses and its booked sessions are cancelled."
@@ -1033,6 +1037,13 @@
       "warn": "It is NOT paid yet. Until you pay it — by card or at the centre — it will not count as purchased.",
       "cta": "See my package and pay it",
       "outro": "If you no longer want it, do nothing: an unpaid package commits you to nothing."
+    },
+    "bonoRenewalFailed": {
+      "subject": "Your {service} package could not be renewed · VindiBCN",
+      "heading": "Your package ran out and we could not renew it",
+      "intro": "You asked for your {service} package to renew on its own, but that package is no longer available in the current catalogue, so we could not create a new one for you.",
+      "cta": "See the available packages",
+      "outro": "You can choose a new package from today's catalogue whenever you like."
     },
     "bonoExpiringSoon": {
       "subject": "Your package expires soon · VindiBCN",

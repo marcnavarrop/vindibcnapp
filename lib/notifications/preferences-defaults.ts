@@ -29,6 +29,10 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // Sempre: hi ha un bo nou esperant que el paguin, i el client no ha premut
   // res per crear-lo. Deixar-lo apagable seria poder cobrar per sorpresa.
   bono_auto_renewed_email: true,
+  // Sempre (ALWAYS_SENT_EVENTS): la renovació que havia demanat no s'ha pogut
+  // fer i no hi ha cap bo nou esperant-lo. Sense aquest avís es queda sense
+  // sessions pensant que ja li arriba un de nou.
+  bono_renewal_failed_email: true,
   // Sempre (ALWAYS_SENT_EVENTS): li han cancel·lat sessions ja reservades.
   bono_unpaid_cancelled_email: true,
   community_email: false,
@@ -111,6 +115,10 @@ export type AlwaysSentEvent =
   // demanat fa setmanes, en comprar l'anterior. Si es pogués apagar, li
   // naixeria un compromís de pagament sense assabentar-se'n.
   | "bono_auto_renewed"
+  // La renovació demanada ha fallat (paquet retirat o només per subscripció)
+  // i no naixerà cap bo nou: mateix criteri que `bono_auto_renewed`, és
+  // l'única manera que té el client de saber-ho.
+  | "bono_renewal_failed"
   // Coses ja consumades que el client no pot veure a l'app.
   | "reservation_cancelled"
   | "bono_unpaid_cancelled"
@@ -129,6 +137,7 @@ export const ALWAYS_SENT_EVENTS: AlwaysSentEvent[] = [
   "subscription_paused",
   "subscription_resumed",
   "bono_auto_renewed",
+  "bono_renewal_failed",
   "reservation_cancelled",
   "bono_unpaid_cancelled",
   "waitlist_fulfilled",

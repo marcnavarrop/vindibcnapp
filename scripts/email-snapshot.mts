@@ -92,6 +92,7 @@ const DATA: Record<NotificationEventType, Record<string, string>> = {
   bono_low: { name: "Ana Ferrer", ...INDIV, remaining: "3" },
   bono_expiring_soon: { name: "Ana Ferrer", ...INDIV, remaining: "3", when: `el ${EXPIRES}`, expiresAt: EXPIRES, expiresIso: EXPIRES_ISO },
   bono_auto_renewed: { name: "Ana Ferrer", ...INDIV, packageName: "Bo de 4 sessions", sessions: "4", price: "190" },
+  bono_renewal_failed: { name: "Ana Ferrer", ...INDIV },
   bono_unpaid_cancelled: { name: "Ana Ferrer", ...INDIV, cancelled: "2" },
   community: { name: "Ana Ferrer", title: "Nou grup de mobilitat", body: "Comencem els dimarts a les 18 h." },
   trainer_booking_received: { name: "Laia Puig", client: "Ana Ferrer", ...WHENS, ...GRUP },

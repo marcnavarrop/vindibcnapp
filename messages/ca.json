@@ -817,6 +817,10 @@
           "label": "Bo renovat automàticament",
           "description": "Quan un bo amb renovació activada s'esgota i en neix un de nou pendent de pagar."
         },
+        "bono_renewal_failed": {
+          "label": "No s'ha pogut renovar el bo",
+          "description": "Quan un bo amb renovació activada s'esgota i el paquet ja no es pot comprar."
+        },
         "bono_unpaid_cancelled": {
           "label": "Bo anul·lat per impagament",
           "description": "Si un bo pendent de pagament decau i es cancel·len les sessions reservades."
@@ -1033,6 +1037,13 @@
       "warn": "Encara NO està pagat. Fins que no el paguis —amb targeta o al centre— no comptarà com a comprat.",
       "cta": "Veure el meu bo i pagar-lo",
       "outro": "Si ja no el vols, no facis res: un bo sense pagar no et compromet a res."
+    },
+    "bonoRenewalFailed": {
+      "subject": "El teu bo de {service} no s'ha pogut renovar · VindiBCN",
+      "heading": "El teu bo s'ha esgotat i no l'hem pogut renovar",
+      "intro": "Havies demanat que el teu bo de {service} es renovés sol, però el paquet ja no està disponible al catàleg actual, així que no hem pogut crear-te'n un de nou.",
+      "cta": "Veure els bons disponibles",
+      "outro": "Pots triar un bo nou del catàleg d'avui quan vulguis."
     },
     "bonoExpiringSoon": {
       "subject": "El teu bo caduca aviat · VindiBCN",

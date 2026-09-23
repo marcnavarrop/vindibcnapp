@@ -501,6 +501,18 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "bono_renewal_failed": {
+      const t = i.ns("emails.bonoRenewalFailed");
+      subject = t("subject", { service: service ?? "" });
+      block = {
+        heading: t("heading"),
+        intro: [hola, t("intro", { service: service ?? "" })],
+        cta: { label: t("cta"), url: appLink("/client/bonos") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
     case "bono_expiring_soon": {
       const t = i.ns("emails.bonoExpiringSoon");
       subject = t("subject");

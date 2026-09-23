@@ -27,6 +27,7 @@ export type NotificationEventType =
   | "bono_low"
   | "bono_expiring_soon"
   | "bono_auto_renewed"
+  | "bono_renewal_failed"
   | "bono_unpaid_cancelled"
   | "community"
   // Avisos que rep el professional com a dueño de la seva agenda:
@@ -148,6 +149,11 @@ export const EVENT_META: Record<
     audience: ["client"],
     group: "general",
   },
+  bono_renewal_failed: {
+    ...CLIENT_EVENT_TEXT.bono_renewal_failed,
+    audience: ["client"],
+    group: "general",
+  },
   bono_unpaid_cancelled: {
     ...CLIENT_EVENT_TEXT.bono_unpaid_cancelled,
     audience: ["client"],
@@ -260,6 +266,7 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "bono_low",
   "bono_expiring_soon",
   "bono_auto_renewed",
+  "bono_renewal_failed",
   "bono_unpaid_cancelled",
   "subscription_renewed",
   "subscription_payment_failed",

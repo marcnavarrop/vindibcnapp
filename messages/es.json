@@ -817,6 +817,10 @@
           "label": "Bono renovado automáticamente",
           "description": "Cuando un bono con renovación activada se agota y nace uno nuevo pendiente de pago."
         },
+        "bono_renewal_failed": {
+          "label": "No se ha podido renovar el bono",
+          "description": "Cuando un bono con renovación activada se agota y el paquete ya no se puede comprar."
+        },
         "bono_unpaid_cancelled": {
           "label": "Bono anulado por impago",
           "description": "Si un bono pendiente de pago decae y se cancelan las sesiones reservadas."
@@ -1033,6 +1037,13 @@
       "warn": "Todavía NO está pagado. Hasta que no lo pagues —con tarjeta o en el centro— no contará como comprado.",
       "cta": "Ver mi bono y pagarlo",
       "outro": "Si ya no lo quieres, no hagas nada: un bono sin pagar no te compromete a nada."
+    },
+    "bonoRenewalFailed": {
+      "subject": "Tu bono de {service} no se ha podido renovar · VindiBCN",
+      "heading": "Tu bono se ha agotado y no hemos podido renovarlo",
+      "intro": "Habías pedido que tu bono de {service} se renovara solo, pero el paquete ya no está disponible en el catálogo actual, así que no hemos podido crearte uno nuevo.",
+      "cta": "Ver los bonos disponibles",
+      "outro": "Puedes elegir un bono nuevo del catálogo de hoy cuando quieras."
     },
     "bonoExpiringSoon": {
       "subject": "Tu bono caduca pronto · VindiBCN",
