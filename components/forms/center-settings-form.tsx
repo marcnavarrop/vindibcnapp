@@ -193,17 +193,8 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
 
       <Group
         title="Bons"
-        desc="Quan avisem el client que se li acaba el bo, quant temps és vàlid i què passa si no es cobra."
+        desc="Quant temps és vàlid un bo i què passa si no es cobra."
       >
-        <NumField
-          name="bonoLowThreshold"
-          label="Llindar de bo a punt d'esgotar-se"
-          help="Sessions restants que disparen l'avís al client i que fan aparèixer el bo al panell de l'admin."
-          unit="sessions"
-          min={0}
-          max={50}
-          defaultValue={settings.bonoLowThreshold}
-        />
         <NumField
           name="bonoExpiryMonths"
           label="Caducitat dels bons"
@@ -316,8 +307,8 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
       </Group>
 
       <Group
-        title="Notificacions"
-        desc="A quina hora surten els avisos automàtics del dia."
+        title="Avisos automàtics"
+        desc="Quan i a quina hora surten els avisos automàtics als clients."
       >
         <NumField
           name="reminderHourLocal"
@@ -328,15 +319,24 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
           max={23}
           defaultValue={settings.reminderHourLocal}
         />
+        <NumField
+          name="bonoLowThreshold"
+          label="Llindar de bo a punt d'esgotar-se"
+          help="Sessions restants que disparen l'avís al client i que fan aparèixer el bo al panell de l'admin."
+          unit="sessions"
+          min={0}
+          max={50}
+          defaultValue={settings.bonoLowThreshold}
+        />
       </Group>
 
       <Group
         title="Subscripcions"
-        desc="La quota mensual dels bons de grup: qui la té, se li renova sol cada mes el dia que es va donar d'alta."
+        desc="La quota mensual d'un paquet: qui la té, se li renova sol cada mes el dia que es va donar d'alta."
       >
         <Toggle
           name="subscriptionsEnabled"
-          title="Permetre subscriure's als bons de grup"
+          title="Permetre subscriure's a un paquet"
           desc="El client pot contractar una quota mensual en comptes de comprar el bo cada vegada. Es renova el dia del mes en què es va donar d'alta i el preu li queda congelat des d'aquell dia. Si ho desactives no se n'hi podrà apuntar cap de nou, però les que ja hi són continuaran renovant-se: el centre no pot deixar sense sessions qui ja va dir que sí."
           checked={subscriptions}
           onChange={setSubscriptions}
