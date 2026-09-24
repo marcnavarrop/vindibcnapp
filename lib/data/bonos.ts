@@ -720,34 +720,79 @@ export async function createPaidBono(input: {
 }
 
 /**
- * Quants bons té aquest client per pagar: pendents i decaiguts per impagament.
+ * El criteri ÚNIC de «bo per cobrar ara mateix», per a totes les piloteta.
  *
- * Són els mateixos estats que pot cobrar el taulell (`COLLECTABLE`), i no és
- * casualitat: el que el client ha de veure és exactament el que algú li pot
- * cobrar. Un bo 'unpaid' hi entra tot i haver decaigut, perquè encara es pot
- * pagar i recuperar.
+ * Un bo compta si està en un estat COBRABLE (`COLLECTABLE`: pendent o decaigut
+ * per impagament) i no ha caducat. Els 'pending_payment' amb la data passada
+ * NO hi compten: `listBonos` els escombra a 'expired' abans de llegir, o sigui
+ * que ni la taula de l'equip ni «Els meus bons» del client els ensenyen com a
+ * cobrables. Aquí no s'escombra —això corre dins del layout, i el layout no ha
+ * d'escriure res—, però es filtra igual. Els 'unpaid' no caduquen (no són
+ * `USABLE`), per això passen sempre.
  *
- * Es compta sense baixar cap fila: la piloteta del menú només vol el número.
+ * UNA SOLA FUNCIÓ, I NO DUES CÒPIES DEL FILTRE
  *
- * REP EL `clientId` JA RESOLT, I NO EL PERFIL
+ * La del client i la de l'equip abans tenien cadascuna el seu, i la del client
+ * no filtrava els caducats: podia comptar un bo que el client ja no veia per
+ * pagar. Ara les dues passen per aquí, i el que canvia entre elles és només
+ * l'abast (un client o tot el centre) i amb quin client de Supabase es
+ * pregunta. El filtre existeix en dues formes —la de la simulació i la de la
+ * consulta— però totes dues viuen en aquesta mateixa funció, una sota l'altra.
  *
- * Abans buscava ella mateixa la fila del client a partir del perfil. Ara la hi
- * dona qui crida (`getClientBadgeCounts`), que la necessita igualment per al
- * recompte de comunitat: entre les dues es buscava dos cops el mateix.
+ * Es compta sense baixar cap fila: les piloteta només volen el número.
  */
-export async function countCollectableBonos(clientId: string): Promise<number> {
+async function countCollectableNow(scope: {
+  /** Només els bons d'aquest client. Sense, tot el centre. */
+  clientId?: string;
+  /**
+   * Qui pregunta a Supabase: vegeu el comentari de cada crida. És una funció
+   * perquè en simulació no se n'ha de crear cap.
+   */
+  supabase: () =>
+    | ReturnType<typeof createClient>
+    | ReturnType<typeof createAdminClient>;
+}): Promise<number> {
+  const today = centerToday();
+
   if (USE_MOCK) {
     return getStore().bonos.filter(
-      (b) => b.client_id === clientId && COLLECTABLE.includes(b.status),
+      (b) =>
+        (scope.clientId === undefined || b.client_id === scope.clientId) &&
+        COLLECTABLE.includes(b.status) &&
+        !isBonoExpired({ status: b.status, expires_at: b.expires_at ?? null }, today),
     ).length;
   }
 
-  const { count } = await createAdminClient()
+  const supabase = await scope.supabase();
+  let query = supabase
     .from("bonos")
     .select("id", { count: "exact", head: true })
-    .eq("client_id", clientId)
-    .in("status", COLLECTABLE);
+    .in("status", COLLECTABLE)
+    .or(`status.eq.unpaid,expires_at.is.null,expires_at.gte.${today}`);
+  if (scope.clientId !== undefined) query = query.eq("client_id", scope.clientId);
+  const { count, error } = await query;
+  if (error) throw error;
   return count ?? 0;
+}
+
+/**
+ * Quants bons té aquest client per pagar: la piloteta de «Bons» del client.
+ *
+ * Són els mateixos que pot cobrar el taulell, i no és casualitat: el que el
+ * client ha de veure és exactament el que algú li pot cobrar. El criteri és
+ * `countCollectableNow`, el mateix que el de l'equip.
+ *
+ * Amb la clau de servei, com sempre: l'abast ja el fixa el `clientId`, que
+ * resol qui crida (`getClientBadgeCounts`) a partir de la sessió.
+ *
+ * Si la consulta falla, zero —sense piloteta—, que és el que ja passava abans:
+ * no s'ha d'endur les altres dues piloteta que es compten al mateix temps.
+ */
+export async function countCollectableBonos(clientId: string): Promise<number> {
+  return countCollectableNow({
+    clientId,
+    supabase: createAdminClient,
+  }).catch(() => 0);
 }
 
 /**
@@ -764,34 +809,11 @@ export async function countCollectableBonos(clientId: string): Promise<number> {
  * visibilitat, el número del menú i el de la taula no poden discrepar. La
  * `bonos_select` de la 0005 inclou `is_trainer()`, o sigui que el professional
  * hi veu tots els bons del centre i el recompte no es queda curt.
- *
- * ELS CADUCATS NO HI COMPTEN, ENCARA QUE LA BASE NO HO SÀPIGUI
- *
- * `listBonos` passa l'escombrat abans de llegir, i un 'pending_payment' amb la
- * data passada hi surt ja 'expired'. Aquí no s'escombra —això corre dins del
- * layout, i el layout no ha d'escriure res—, però es filtra igual: sense el
- * filtre, el primer frame comptaria un bo que la taula ja no ensenya. Els
- * 'unpaid' no caduquen (no són `USABLE`), per això passen sempre.
  */
 export async function countCenterCollectableBonos(): Promise<number> {
-  const today = centerToday();
-
-  if (USE_MOCK) {
-    return getStore().bonos.filter(
-      (b) =>
-        COLLECTABLE.includes(b.status) &&
-        !isBonoExpired({ status: b.status, expires_at: b.expires_at ?? null }, today),
-    ).length;
-  }
-
-  const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("bonos")
-    .select("id", { count: "exact", head: true })
-    .in("status", COLLECTABLE)
-    .or(`status.eq.unpaid,expires_at.is.null,expires_at.gte.${today}`);
-  if (error) throw error;
-  return count ?? 0;
+  return countCollectableNow({
+    supabase: createClient,
+  });
 }
 
 /**
