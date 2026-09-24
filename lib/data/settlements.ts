@@ -1,12 +1,11 @@
 import "server-only";
+import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SERVICE_TYPES } from "@/lib/labels";
 import { centerToday } from "@/lib/center-time";
 import { completedSessions, shiftDay } from "@/lib/data/completed-sessions";
 import type { ServiceType, SettlementBreakdownLine } from "@/types/database";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 // ─── Tipus ───────────────────────────────────────────────────────────────────
 
