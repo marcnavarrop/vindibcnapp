@@ -82,6 +82,27 @@ export type IndividualBookingResult =
   | { ok: true; id: string; remaining: number | null }
   | { ok: false; reason: "taken" | "no_sessions" };
 
+/** Resultat de `cancel_reservation` (0091). */
+export type CancelReservationResult =
+  | {
+      ok: true;
+      actor: "admin" | "trainer" | "client";
+      reservation_id: string;
+      client_id: string;
+      bono_id: string | null;
+      trainer_id: string | null;
+      scheduled_at: string;
+      service_type: ServiceType;
+      refunded: boolean;
+      bono_expired: boolean;
+    }
+  | {
+      ok: false;
+      reason: "not_found" | "forbidden" | "not_booked" | "past" | "too_late";
+      /** Només amb 'too_late': el marge del centre. */
+      hours?: number;
+    };
+
 /** Una fila de `cancel_reservations_by_center` (0090). */
 export type CenterCancellationRow = {
   reservation_id: string;
@@ -545,6 +566,8 @@ export interface Database {
           created_at: string;
           fulfilled_at: string | null;
           fulfilled_reservation_id: string | null;
+          /** La va tancar el centre en tancar disponibilitat (0091). */
+          cancelled_by_center: boolean;
         };
         Insert: {
           id?: string;
@@ -559,6 +582,7 @@ export interface Database {
           created_at?: string;
           fulfilled_at?: string | null;
           fulfilled_reservation_id?: string | null;
+          cancelled_by_center?: boolean;
         };
         Update: Partial<{
           id: string;
@@ -573,6 +597,7 @@ export interface Database {
           created_at: string;
           fulfilled_at: string | null;
           fulfilled_reservation_id: string | null;
+          cancelled_by_center: boolean;
         }>;
         Relationships: [];
       };
@@ -1830,6 +1855,19 @@ export interface Database {
        * retorna les files que ha canviat ella. Cal una sessió d'usuari (admin,
        * o el professional sobre la seva agenda): amb la clau de servei s'hi nega.
        */
+      /**
+       * Cancel·lació NORMAL d'una reserva (0091): reserva + sessió al bo en
+       * una sola transacció, amb el permís a dins (admin; professional sobre
+       * els seus clients o la seva agenda; client, les seves i fora del marge).
+       */
+      cancel_reservation: {
+        Args: {
+          p_id: string;
+          /** Dia del CENTRE, per dir si el bo ja ha caducat. */
+          p_today: string;
+        };
+        Returns: CancelReservationResult;
+      };
       cancel_reservations_by_center: {
         Args: {
           p_trainer_id: string;

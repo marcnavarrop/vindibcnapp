@@ -113,7 +113,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "El que et distingeix del professional" },
         {
           t: "p",
-          text: "Un professional gestiona els seus clients i consulta la resta. Tu no tens aquesta frontera: pots crear, editar i esborrar sobre qualsevol persona del centre. Hi ha, en canvi, tres coses que ell fa i tu no: escriure la nota d'una sessió (és de qui la va donar; tu la llegeixes), tenir agenda pròpia i tenir clients assignats.",
+          text: "Un professional gestiona els seus clients i consulta la resta; l'única excepció és que pot cancel·lar qualsevol reserva de la seva pròpia agenda, encara que el client sigui d'un company. Tu no tens aquesta frontera: pots crear, editar i esborrar sobre qualsevol persona del centre. Hi ha, en canvi, tres coses que ell fa i tu no: escriure la nota d'una sessió (és de qui la va donar; tu la llegeixes), tenir agenda pròpia i tenir clients assignats.",
         },
         { t: "h", text: "Coses que només pots fer tu" },
         {

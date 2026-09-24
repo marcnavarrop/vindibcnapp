@@ -24,8 +24,14 @@ import {
   type ColorPalette,
 } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
+import type { ReservationActionState } from "@/lib/reservation-action-state";
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
+/** Cancel·lar i marcar feta: tornen si s'ha fet i, si no, per què. */
+type StatefulReservationAction = (
+  prev: ReservationActionState,
+  formData: FormData,
+) => Promise<ReservationActionState>;
 
 const NO_FILTER = "";
 
@@ -39,6 +45,7 @@ export function ReservationsView({
   trainers,
   nowISO,
   manageableIds,
+  cancellableIds,
   notes,
   noteableIds,
   newReservationBase,
@@ -63,13 +70,19 @@ export function ReservationsView({
   trainers: { id: string; name: string }[];
   nowISO: string;
   manageableIds?: string[];
+  /**
+   * Les que es poden CANCEL·LAR, si és una llista diferent de `manageableIds`:
+   * el professional pot cancel·lar les de la seva agenda encara que el client
+   * sigui d'un company (0091). Sense, les mateixes que `manageableIds`.
+   */
+  cancellableIds?: string[];
   /** Notes de sessió llegibles i, a part, de quines es pot escriure. Vegeu
    *  `ReservationsAgenda`: són dues llistes diferents a posta. */
   notes?: Record<string, SessionNote>;
   noteableIds?: string[];
   newReservationBase: string;
-  cancelAction: ReservationAction;
-  completeAction: ReservationAction;
+  cancelAction: StatefulReservationAction;
+  completeAction: StatefulReservationAction;
   rescheduleAction: ReservationAction;
   /** Compatibilitat amb l'ús des de l'admin (sense selector de companys). */
   availability?: AvailabilityRuleLite[];
@@ -456,6 +469,9 @@ export function ReservationsView({
           layerBlocks={allBlocks ?? []}
           reservations={filteredReservations}
           manageableIds={manageableIds ?? reservations.map((r) => r.id)}
+          cancellableIds={
+            cancellableIds ?? manageableIds ?? reservations.map((r) => r.id)
+          }
           newReservationBase={newReservationBase}
           cancelAction={cancelAction}
           completeAction={completeAction}
@@ -475,8 +491,14 @@ export function ReservationsView({
           trainers={trainers}
           nowISO={nowISO}
           manageableIds={manageableIds}
+          cancellableIds={cancellableIds}
           notes={notes}
           noteableIds={noteableIds}
+          // Les accions de l'àrea on s'és, per props. Abans la llista
+          // importava les de l'ADMIN també a l'àrea del professional, i
+          // revalidava /admin: la llista del professional no es refrescava.
+          cancelAction={cancelAction}
+          completeAction={completeAction}
         />
       )}
     </div>

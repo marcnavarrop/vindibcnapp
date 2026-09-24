@@ -493,6 +493,7 @@ async function closeWaitlistEntries(ids: string[]): Promise<number> {
     for (const w of store.waitlist_entries)
       if (ids.includes(w.id) && w.status === "waiting") {
         w.status = "cancelled";
+        w.cancelled_by_center = true;
         n++;
       }
     saveStore(store);
@@ -500,7 +501,9 @@ async function closeWaitlistEntries(ids: string[]): Promise<number> {
   }
   const { data, error } = await createAdminClient()
     .from("waitlist_entries")
-    .update({ status: "cancelled" })
+    // Marcada com a tancada pel CENTRE (0091): una sèrie no la compta com a
+    // ocurrència col·locada, igual que les reserves amb `cancelled_by_center`.
+    .update({ status: "cancelled", cancelled_by_center: true })
     .in("id", ids)
     .eq("status", "waiting")
     .select("id");

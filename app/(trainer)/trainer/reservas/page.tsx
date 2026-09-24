@@ -60,6 +60,14 @@ export default async function TrainerReservasPage() {
     .filter((r) => myClientIds.has(r.clientId))
     .map((r) => r.id);
 
+  // Cancel·lar arriba més lluny que la resta (0091): també les reserves de la
+  // SEVA agenda, encara que el client sigui d'un company. Qui fa la sessió és
+  // qui sap si la podrà fer. Marcar-les fetes o reprogramar-les, no: això
+  // segueix essent dels clients propis.
+  const cancellableIds = reservations
+    .filter((r) => myClientIds.has(r.clientId) || r.trainerId === trainerId)
+    .map((r) => r.id);
+
   // LES NOTES VAN PER UNA ALTRA LLISTA, i la diferència és tot el sentit de la
   // funció: `manageableIds` són les reserves dels MEUS CLIENTS —hi puc marcar
   // "Fet" encara que la sessió la donés un company—, i això són les que vaig
@@ -96,8 +104,9 @@ export default async function TrainerReservasPage() {
           <div>
             <h1 className="text-2xl text-brand-dark">Reserves</h1>
             <p className="mt-1 text-sm text-brand-muted">
-              Veus l&apos;agenda completa del centre; només pots gestionar les
-              dels teus clients.
+              Veus l&apos;agenda completa del centre. Gestiones les reserves
+              dels teus clients, i pots cancel·lar també qualsevol de la teva
+              agenda.
             </p>
           </div>
           <Link
@@ -114,6 +123,7 @@ export default async function TrainerReservasPage() {
           trainers={trainers}
           nowISO={nowISO}
           manageableIds={manageableIds}
+          cancellableIds={cancellableIds}
           notes={notes}
           noteableIds={noteableIds}
           newReservationBase="/trainer/reservas/new"
