@@ -1194,6 +1194,14 @@ export function buildClientManual(
             en: `Bookings can be cancelled up to ${s.minCancellationHours} h beforehand. Past that point the button disappears and the app explains why. If you have an emergency, talk to the centre (${CONTACTE_CENTRE}): the cancellation policy belongs to the centre, not to the app.`,
           }),
         },
+        {
+          t: "note",
+          text: T({
+            ca: "Si és el centre qui ha d'anul·lar una sessió teva —per exemple, perquè el professional no hi serà—, rebràs un correu que t'ho diu i la sessió torna al teu bo per reservar-ne una altra. Si aquell bo ja havia caducat, la sessió hi torna però no la podràs fer servir, i el correu t'ho diu tal com és. Si era una sessió de cortesia, no hi ha res a retornar.",
+            es: "Si es el centro quien tiene que anular una sesión tuya —por ejemplo, porque el profesional no estará—, recibirás un correo que te lo dice y la sesión vuelve a tu bono para reservar otra. Si ese bono ya había caducado, la sesión vuelve pero no podrás usarla, y el correo te lo dice tal cual. Si era una sesión de cortesía, no hay nada que devolver.",
+            en: "If it's the centre that has to call off one of your sessions —for example, because the professional won't be there—, you'll get an email saying so and the session goes back onto your pass so you can book another. If that pass had already expired, the session goes back but you won't be able to use it, and the email tells you so plainly. If it was a complimentary session, there's nothing to return.",
+          }),
+        },
         ...(s.waitlistEnabled
           ? ([
               {
@@ -1207,9 +1215,9 @@ export function buildClientManual(
               {
                 t: "p",
                 text: T({
-                  ca: "Quan una sessió de grup està plena no és un carreró sense sortida: pots apuntar-te a la llista d'espera. Si algú cancel·la, la plaça passa a ser teva automàticament, es fa la reserva sola, es descompta la sessió del bo i t'avisem per correu.",
-                  es: "Cuando una sesión de grupo está llena no es un callejón sin salida: puedes apuntarte a la lista de espera. Si alguien cancela, la plaza pasa a ser tuya automáticamente, se hace la reserva sola, se descuenta la sesión del bono y te avisamos por correo.",
-                  en: "A full group session isn't a dead end: you can join the waiting list. If someone cancels, the space becomes yours automatically, the booking makes itself, the session comes off your pass and we email you.",
+                  ca: "Quan una sessió de grup està plena no és un carreró sense sortida: pots apuntar-te a la llista d'espera. Si algú cancel·la, la plaça passa a ser teva automàticament, es fa la reserva sola, es descompta la sessió del bo i t'avisem per correu. Si el centre tanca aquella hora —per exemple, per unes vacances del professional—, ja no hi haurà cap plaça a donar: no hi entraràs, i la teva espera es pot tancar.",
+                  es: "Cuando una sesión de grupo está llena no es un callejón sin salida: puedes apuntarte a la lista de espera. Si alguien cancela, la plaza pasa a ser tuya automáticamente, se hace la reserva sola, se descuenta la sesión del bono y te avisamos por correo. Si el centro cierra esa hora —por ejemplo, por unas vacaciones del profesional—, ya no habrá ninguna plaza que dar: no entrarás, y tu espera se puede cerrar.",
+                  en: "A full group session isn't a dead end: you can join the waiting list. If someone cancels, the space becomes yours automatically, the booking makes itself, the session comes off your pass and we email you. If the centre closes that hour —for example, while the professional is on holiday—, there's no longer a space to give: you won't get in, and your wait may be closed.",
                 }),
               },
               {
@@ -1345,9 +1353,9 @@ export function buildClientManual(
                       en: "Join the waiting list if there's no space",
                     }),
                     T({
-                      ca: "Les dates plenes no es descarten: t'apuntem a la cua i, si algú cancel·la, la plaça és teva.",
-                      es: "Las fechas llenas no se descartan: te apuntamos a la cola y, si alguien cancela, la plaza es tuya.",
-                      en: "Full dates aren't dropped: we put you in the queue and, if someone cancels, the space is yours.",
+                      ca: "Les dates plenes no es descarten: t'apuntem a la cua i, si algú cancel·la, la plaça és teva. Només les plenes: si aquell dia el professional no hi és, no hi ha cap cua on apuntar-te.",
+                      es: "Las fechas llenas no se descartan: te apuntamos a la cola y, si alguien cancela, la plaza es tuya. Solo las llenas: si ese día el profesional no está, no hay ninguna cola donde apuntarte.",
+                      en: "Full dates aren't dropped: we put you in the queue and, if someone cancels, the space is yours. Only full ones: if the professional isn't there that day, there's no queue to join.",
                     }),
                   ],
                 ] as [string, string][])
@@ -1457,6 +1465,14 @@ export function buildClientManual(
             ca: `Cancel·lar la sèrie anul·la totes les sessions futures d'aquella sèrie i les torna al teu bo. Les que ja siguin a menys de ${s.minCancellationHours} h es queden com estaven, i l'app et diu quantes n'han quedat.`,
             es: `Cancelar la serie anula todas las sesiones futuras de esa serie y las devuelve a tu bono. Las que ya estén a menos de ${s.minCancellationHours} h se quedan como estaban, y la app te dice cuántas han quedado.`,
             en: `Cancelling the series calls off every future session in it and returns them to your pass. Any that are already within ${s.minCancellationHours} h stay as they were, and the app tells you how many those are.`,
+          }),
+        },
+        {
+          t: "note",
+          text: T({
+            ca: "Si el centre t'ha d'anul·lar una sessió de la sèrie, la sèrie continua amb les altres. I si la teva sèrie s'allarga sola amb la subscripció, aquella sessió no se't descompta de les que vas demanar.",
+            es: "Si el centro te tiene que anular una sesión de la serie, la serie sigue con las demás. Y si tu serie se alarga sola con la suscripción, esa sesión no se te descuenta de las que pediste.",
+            en: "If the centre has to call off one of your series sessions, the series carries on with the rest. And if your series extends itself with your subscription, that session isn't taken off the number you asked for.",
           }),
         },
         {
@@ -2527,9 +2543,9 @@ export function buildClientManual(
                       en: "Waiting list",
                     }),
                     T({
-                      ca: "La cua d'una sessió de grup plena. Si algú cancel·la, la plaça passa al primer de la cua i la reserva es fa sola.",
-                      es: "La cola de una sesión de grupo llena. Si alguien cancela, la plaza pasa al primero de la cola y la reserva se hace sola.",
-                      en: "The queue for a full group session. If someone cancels, the space goes to whoever is first in the queue and the booking makes itself.",
+                      ca: "La cua d'una sessió de grup plena. Si algú cancel·la, la plaça passa al primer de la cua i la reserva es fa sola, sempre que la sessió segueixi en peu.",
+                      es: "La cola de una sesión de grupo llena. Si alguien cancela, la plaza pasa al primero de la cola y la reserva se hace sola, siempre que la sesión siga en pie.",
+                      en: "The queue for a full group session. If someone cancels, the space goes to whoever is first in the queue and the booking makes itself, as long as the session is still going ahead.",
                     }),
                   ],
                 ] as [string, string][])
