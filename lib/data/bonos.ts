@@ -751,6 +751,50 @@ export async function countCollectableBonos(clientId: string): Promise<number> {
 }
 
 /**
+ * Quants bons de TOT el centre queden per cobrar: la cua de feina del taulell.
+ *
+ * És la piloteta de «Bons» al menú de l'admin i del professional. Des de la
+ * 0085 qualsevol professional pot cobrar qualsevol bo, així que el número és el
+ * mateix per a tots dos: el que hi ha pendent, sigui de qui sigui el client.
+ *
+ * AMB EL CLIENT DE SESSIÓ, NO AMB EL DE SERVEI
+ *
+ * És el mateix client que fa servir `listBonos`, que és d'on la taula treu el
+ * número amb què després corregeix la piloteta. Comptats amb la mateixa
+ * visibilitat, el número del menú i el de la taula no poden discrepar. La
+ * `bonos_select` de la 0005 inclou `is_trainer()`, o sigui que el professional
+ * hi veu tots els bons del centre i el recompte no es queda curt.
+ *
+ * ELS CADUCATS NO HI COMPTEN, ENCARA QUE LA BASE NO HO SÀPIGUI
+ *
+ * `listBonos` passa l'escombrat abans de llegir, i un 'pending_payment' amb la
+ * data passada hi surt ja 'expired'. Aquí no s'escombra —això corre dins del
+ * layout, i el layout no ha d'escriure res—, però es filtra igual: sense el
+ * filtre, el primer frame comptaria un bo que la taula ja no ensenya. Els
+ * 'unpaid' no caduquen (no són `USABLE`), per això passen sempre.
+ */
+export async function countCenterCollectableBonos(): Promise<number> {
+  const today = centerToday();
+
+  if (USE_MOCK) {
+    return getStore().bonos.filter(
+      (b) =>
+        COLLECTABLE.includes(b.status) &&
+        !isBonoExpired({ status: b.status, expires_at: b.expires_at ?? null }, today),
+    ).length;
+  }
+
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("bonos")
+    .select("id", { count: "exact", head: true })
+    .in("status", COLLECTABLE)
+    .or(`status.eq.unpaid,expires_at.is.null,expires_at.gte.${today}`);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
  * Per què un bo concret NO pot dur renovació automàtica. Null = sí que pot.
  *
  * Són codis i no frases: això corre al servidor i la pantalla del client es

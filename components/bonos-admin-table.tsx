@@ -7,6 +7,7 @@ import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib
 import { markBonoPaidAction, cancelBonoAction } from "@/app/(admin)/admin/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { cancelBlockFor } from "@/lib/bono-rules";
 import type { BonoListItem } from "@/lib/data/bonos";
 import type { BonoStatus } from "@/types/database";
@@ -44,10 +45,20 @@ export function BonosAdminTable({
 }) {
   const [filter, setFilter] = useState<Filter>("all");
 
-  const pendingCount = useMemo(
-    () => bonos.filter((b) => b.status === "pending_payment").length,
-    [bonos],
-  );
+  /*
+   * Els comptadors dels filtres, un per cada estat COBRABLE. Sumen el mateix
+   * que la piloteta del menú —«Pendents» + «Decaiguts»—, i cadascun diu les
+   * files que ensenya el seu filtre. Abans només es comptaven els pendents, i
+   * el menú i la pàgina haurien dit dos números diferents.
+   *
+   * Sobre `bonos` sencer, no sobre el filtrat: la cua és la de tot el centre.
+   */
+  const counts = useMemo(() => {
+    const c = { pending_payment: 0, unpaid: 0 };
+    for (const b of bonos)
+      if (b.status === "pending_payment" || b.status === "unpaid") c[b.status]++;
+    return c;
+  }, [bonos]);
   const filtered = useMemo(
     () => (filter === "all" ? bonos : bonos.filter((b) => b.status === filter)),
     [bonos, filter],
@@ -55,6 +66,9 @@ export function BonosAdminTable({
 
   return (
     <div>
+      {/* La piloteta del menú es posa al dia amb el que ensenya aquesta taula,
+          en entrar-hi i cada cop que un cobrament o una anul·lació la repinta. */}
+      <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
       <div className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5">
         {FILTERS.map((f) => (
           <button
@@ -70,11 +84,12 @@ export function BonosAdminTable({
             )}
           >
             {f.label}
-            {f.key === "pending_payment" && pendingCount > 0 && (
-              <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
-                {pendingCount}
-              </span>
-            )}
+            {(f.key === "pending_payment" || f.key === "unpaid") &&
+              counts[f.key] > 0 && (
+                <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+                  {counts[f.key]}
+                </span>
+              )}
           </button>
         ))}
       </div>

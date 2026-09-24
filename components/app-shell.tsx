@@ -6,6 +6,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { avatarUrl } from "@/lib/data/avatars";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getClientBadgeCounts } from "@/lib/data/client-badges";
+import { countCenterCollectableBonos } from "@/lib/data/bonos";
 import { USE_MOCK } from "@/lib/config";
 import type { Role } from "@/lib/nav";
 
@@ -50,17 +51,25 @@ export async function AppShell({
    * NOMÉS el fa servir per al valor de sortida: a partir d'aquí mana el
    * magatzem compartit, que actualitzen els avisos de sempre.
    *
-   * NOMÉS PER AL CLIENT
+   * CADA ÀREA PAGA NOMÉS EL QUE VEU
    *
-   * L'admin i el professional no tenen cap piloteta al menú (la seva és la del
-   * botó de suport, que se la segueix demanant ella) i no han de pagar ni una
-   * consulta per una cosa que no veuran. Per això va condicionat al rol i no
-   * "per si de cas".
+   * El client, els seus tres números. L'admin i el professional, un de sol:
+   * quants bons del centre queden per cobrar (la cua de feina del taulell, que
+   * des de la 0085 és la mateixa per als dos). És un `count` sense files i va en
+   * paral·lel amb la foto. Condicionat al rol i no "per si de cas": el client
+   * no paga la consulta de l'equip, ni l'equip la del client.
+   *
+   * Si el recompte falla, sense piloteta: el que hi ha en joc és una bola de 20
+   * píxels, i no s'ha d'endur el layout sencer. Mateix criteri que
+   * `getClientBadgeCounts`.
    */
-  const [avatar, badges] = await Promise.all([
+  const [avatar, badges, staffBonos] = await Promise.all([
     ownAvatar(),
     role === "client" && viewer
       ? getClientBadgeCounts(viewer.id, settings.modules)
+      : Promise.resolve(null),
+    role !== "client" && viewer
+      ? countCenterCollectableBonos().catch(() => 0)
       : Promise.resolve(null),
   ]);
 
@@ -74,6 +83,7 @@ export async function AppShell({
         avatarUrl={avatar}
         modules={settings.modules}
         badges={badges}
+        staffBonos={staffBonos}
       />
       {/* En imprimir no hi ha sidebar, així que el contingut no ha de
           deixar-li lloc: sense això el manual sortiria escapçat per la dreta. */}

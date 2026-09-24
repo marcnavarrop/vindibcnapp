@@ -10,6 +10,7 @@ import {
 } from "@/app/(trainer)/trainer/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { cancelBlockFor } from "@/lib/bono-rules";
 import type { BonoListItem } from "@/lib/data/bonos";
 import type { BonoStatus } from "@/types/database";
@@ -108,12 +109,20 @@ export function TrainerBonosTable({
       false,
     ) === null;
 
-  // Ara que es pot cobrar qualsevol bo, el comptador els compta tots: el número
-  // i els botons de la taula tornen a dir el mateix.
-  const pendingCount = useMemo(
-    () => bonos.filter((b) => b.status === "pending_payment").length,
-    [bonos],
-  );
+  /*
+   * Els comptadors dels filtres, un per cada estat COBRABLE. Sumen el mateix
+   * que la piloteta del menú —«Pendents» + «Decaiguts»—, i cadascun diu les
+   * files que ensenya el seu filtre. Abans només es comptaven els pendents, i
+   * el menú i la pàgina haurien dit dos números diferents.
+   *
+   * Sobre `bonos` sencer, no sobre el filtrat: la cua és la de tot el centre.
+   */
+  const counts = useMemo(() => {
+    const c = { pending_payment: 0, unpaid: 0 };
+    for (const b of bonos)
+      if (b.status === "pending_payment" || b.status === "unpaid") c[b.status]++;
+    return c;
+  }, [bonos]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -130,6 +139,9 @@ export function TrainerBonosTable({
 
   return (
     <div>
+      {/* La piloteta del menú es posa al dia amb el que ensenya aquesta taula,
+          en entrar-hi i cada cop que un cobrament o una anul·lació la repinta. */}
+      <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
           {(["mine", "all"] as const).map((s) => (
@@ -176,11 +188,12 @@ export function TrainerBonosTable({
             )}
           >
             {f.label}
-            {f.key === "pending_payment" && pendingCount > 0 && (
-              <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
-                {pendingCount}
-              </span>
-            )}
+            {(f.key === "pending_payment" || f.key === "unpaid") &&
+              counts[f.key] > 0 && (
+                <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+                  {counts[f.key]}
+                </span>
+              )}
           </button>
         ))}
       </div>
