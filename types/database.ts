@@ -82,6 +82,21 @@ export type IndividualBookingResult =
   | { ok: true; id: string; remaining: number | null }
   | { ok: false; reason: "taken" | "no_sessions" };
 
+/** Una fila de `cancel_reservations_by_center` (0090). */
+export type CenterCancellationRow = {
+  reservation_id: string;
+  client_id: string;
+  bono_id: string | null;
+  trainer_id: string;
+  series_id: string | null;
+  scheduled_at: string;
+  service_type: ServiceType;
+  /** Hi havia bo i s'hi ha tornat la sessió. False = cortesia. */
+  refunded: boolean;
+  /** El bo ja ha caducat: la sessió hi torna però no es podrà fer servir. */
+  bono_expired: boolean;
+};
+
 /**
  * Estat d'una subscripció mensual (0072).
  *
@@ -575,6 +590,8 @@ export interface Database {
           status: ReservationStatus;
           series_id: string | null;
           is_complimentary: boolean;
+          /** La va cancel·lar el centre en tancar disponibilitat (0090). */
+          cancelled_by_center: boolean;
           created_at: string;
         };
         Insert: {
@@ -588,6 +605,7 @@ export interface Database {
           status?: ReservationStatus;
           series_id?: string | null;
           is_complimentary?: boolean;
+          cancelled_by_center?: boolean;
           created_at?: string;
         };
         Update: {
@@ -601,6 +619,7 @@ export interface Database {
           status?: ReservationStatus;
           series_id?: string | null;
           is_complimentary?: boolean;
+          cancelled_by_center?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -1804,6 +1823,21 @@ export interface Database {
           p_duration_minutes?: number;
         };
         Returns: IndividualBookingResult;
+      };
+      /**
+       * Cancel·la reserves en nom del centre en tancar disponibilitat (0090).
+       * Una sola transacció: reserves + sessions als bons. Idempotent: només
+       * retorna les files que ha canviat ella. Cal una sessió d'usuari (admin,
+       * o el professional sobre la seva agenda): amb la clau de servei s'hi nega.
+       */
+      cancel_reservations_by_center: {
+        Args: {
+          p_trainer_id: string;
+          p_ids: string[];
+          /** Dia del CENTRE, per dir si el bo ja ha caducat. */
+          p_today: string;
+        };
+        Returns: CenterCancellationRow[];
       };
       /**
        * Reclama una sessió extra del cicle en curs (0073). Serialitza per

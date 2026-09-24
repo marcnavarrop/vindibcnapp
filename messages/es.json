@@ -1014,7 +1014,12 @@
       "heading": "Se ha cancelado una reserva",
       "intro": "Te informamos de que esta sesión ha quedado anulada:",
       "cta": "Reservar otra sesión",
-      "outro": "Si ha sido un error, contacta con el centro o vuelve a reservar cuando quieras."
+      "outro": "Si ha sido un error, contacta con el centro o vuelve a reservar cuando quieras.",
+      "introByCenter": "El centro ha tenido que anular esta sesión porque el profesional no estará disponible:",
+      "refundBono": "Te hemos devuelto la sesión al bono: puedes usarla para reservar otra hora.",
+      "refundExpired": "La sesión se ha devuelto a tu bono, pero ese bono ya ha caducado, así que no podrás usarla para reservar. Si tienes cualquier duda, habla con el centro.",
+      "refundNone": "Era una sesión de cortesía, así que no hay ninguna sesión que devolver.",
+      "outroByCenter": "Sentimos las molestias. Si tienes cualquier duda, contacta con el centro."
     },
     "sessionReminder": {
       "subject": "Recordatorio: tienes sesión mañana · VindiBCN",

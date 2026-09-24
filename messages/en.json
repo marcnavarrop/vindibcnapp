@@ -1014,7 +1014,12 @@
       "heading": "A booking has been cancelled",
       "intro": "We're letting you know this session has been cancelled:",
       "cta": "Book another session",
-      "outro": "If this was a mistake, get in touch with the centre or book again whenever you like."
+      "outro": "If this was a mistake, get in touch with the centre or book again whenever you like.",
+      "introByCenter": "The centre has had to cancel this session because the professional won't be available:",
+      "refundBono": "We've returned the session to your pass, so you can use it to book another time.",
+      "refundExpired": "The session has been returned to your pass, but that pass has already expired, so you won't be able to use it to book. If you have any questions, please talk to the centre.",
+      "refundNone": "It was a complimentary session, so there is no session to return.",
+      "outroByCenter": "Sorry for the inconvenience. If you have any questions, get in touch with the centre."
     },
     "sessionReminder": {
       "subject": "Reminder: you have a session tomorrow · VindiBCN",

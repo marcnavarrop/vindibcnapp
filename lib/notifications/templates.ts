@@ -378,15 +378,35 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
     case "reservation_cancelled": {
       const t = i.ns("emails.reservationCancelled");
       subject = t("subject");
+      /*
+       * Quan l'ha cancel·lat el CENTRE (0090) el correu ho diu, i diu què ha
+       * passat amb la sessió sense prometre res que no sigui cert:
+       *   · bono    → ha tornat al bo i la pot fer servir;
+       *   · expired → ha tornat a un bo ja caducat: NO es podrà fer servir, i
+       *               no se li fa creure el contrari;
+       *   · none    → era de cortesia, no hi havia res a tornar.
+       * Sense `byCenter` és el correu de sempre.
+       */
+      const byCenter = d.byCenter === "1";
+      const refundLine =
+        d.refund === "bono"
+          ? t("refundBono")
+          : d.refund === "expired"
+            ? t("refundExpired")
+            : d.refund === "none"
+              ? t("refundNone")
+              : null;
       block = {
         heading: t("heading"),
-        intro: [hola, t("intro")],
+        intro: [hola, byCenter ? t("introByCenter") : t("intro")],
         details: rows([
           [tl("when"), when],
           [tl("service"), service],
         ]),
         cta: { label: t("cta"), url: appLink("/client/reservas") },
-        outro: [t("outro")],
+        outro: byCenter
+          ? [...(refundLine ? [refundLine] : []), t("outroByCenter")]
+          : [t("outro")],
         footer: "client",
       };
       break;

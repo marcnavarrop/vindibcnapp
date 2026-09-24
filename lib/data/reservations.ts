@@ -15,7 +15,7 @@ import { listAvailabilityLite } from "@/lib/data/availability";
 import { listBlocksLite } from "@/lib/data/availability-blocks";
 import {
   isServiceAvailableOn,
-  isInstantBlocked,
+  isRangeBlocked,
   rangesOverlap,
   sessionEndIso,
   hourToSlot,
@@ -39,6 +39,7 @@ import type {
   ServiceType,
   ReservationStatus,
   BonoStatus,
+  CenterCancellationRow,
 } from "@/types/database";
 import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 
@@ -113,7 +114,18 @@ async function assertWithinAvailability(
 
   // Els bloquejos són instants absoluts: es comparen amb el `when` real, sense
   // passar per toLocalDate (si no, es desplaçarien una o dues hores).
-  if (isInstantBlocked(blocks, when))
+  //
+  // Per SOLAPAMENT amb la sessió sencera, no només a l'instant d'inici. Abans
+  // una sessió de 12:00 a 13:00 es podia reservar amb un bloqueig des de les
+  // 12:30, i el calendari del client —que ja mirava el solapament— no l'oferia.
+  // És el mateix criteri que `isSessionCovered`.
+  if (
+    isRangeBlocked(
+      blocks,
+      when.getTime(),
+      when.getTime() + SESSION_DURATION_MINUTES * 60_000,
+    )
+  )
     throw new Error(
       "Aquest professional té un bloqueig de disponibilitat en aquesta franja.",
     );
@@ -175,6 +187,13 @@ async function notifyReservation(
     scheduledAt: string;
     serviceType: ServiceType;
     trainerName?: string | null;
+    /** L'ha cancel·lada el centre en tancar disponibilitat (0090). */
+    byCenter?: boolean;
+    /**
+     * Què ha passat amb la sessió: tornada al bo, tornada a un bo ja caducat
+     * (no es podrà fer servir, i el correu no ho promet), o cap (cortesia).
+     */
+    refund?: "bono" | "expired" | "none";
   },
 ): Promise<void> {
   const c = await clientContact(clientId);
@@ -189,6 +208,8 @@ async function notifyReservation(
         whenIso: info.scheduledAt,
         serviceType: info.serviceType,
         ...(info.trainerName ? { trainer: info.trainerName } : {}),
+        ...(info.byCenter ? { byCenter: "1" } : {}),
+        ...(info.refund ? { refund: info.refund } : {}),
       },
     },
     /*
@@ -809,6 +830,7 @@ export async function createReservation(
         status: "booked",
         series_id: null,
         is_complimentary: !bono,
+        cancelled_by_center: false,
         created_at: new Date().toISOString(),
       });
     }
@@ -990,11 +1012,31 @@ export async function cancelReservation(id: string): Promise<void> {
   if (error || !r) throw new Error("Reserva no trobada.");
   if (r.status !== "booked") return;
 
-  const { error: uErr } = await supabase
+  // `.select()` i no només l'error: una fila que la RLS no deixa tocar NO dona
+  // error, dona ZERO files. Abans això passava de llarg, i darrere venien la
+  // sessió al bo (que tampoc s'escrivia) i el correu de «reserva cancel·lada»
+  // d'una reserva que seguia reservada. Ara, si no s'ha cancel·lat, no es diu
+  // a ningú que s'ha cancel·lat.
+  //
+  // El cas que ho feia possible: la RLS d'escriptura del professional és
+  // `is_trainer_of(client_id)` —el seu client ASSIGNAT—, i a la seva agenda hi
+  // pot haver clients d'un altre. Deduït del codi, no confirmat a producció
+  // (quan es va provar no hi havia cap cas). Aquest control no depèn de quina
+  // sigui la RLS: val tant si aquell cas existeix com si no.
+  //
+  // `eq("status","booked")` a més tanca la cursa amb una altra cancel·lació:
+  // si l'altra ha guanyat, aquí no hi ha res a tornar ni a avisar.
+  const { data: changed, error: uErr } = await supabase
     .from("reservations")
     .update({ status: "cancelled" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("status", "booked")
+    .select("id");
   if (uErr) throw uErr;
+  if (!changed || changed.length === 0)
+    throw new Error(
+      "No s'ha pogut cancel·lar la reserva: o no tens permís sobre aquesta reserva o ja no estava reservada. No s'ha avisat el client.",
+    );
 
   if (r.bono_id) await restoreBonoSession(supabase, r.bono_id);
   await notifyReservation(r.client_id, "reservation_cancelled", {
@@ -1006,6 +1048,92 @@ export async function cancelReservation(id: string): Promise<void> {
     scheduled_at: r.scheduled_at,
     service_type: r.service_type,
   });
+}
+
+/**
+ * Cancel·la reserves en nom del CENTRE, en tancar disponibilitat.
+ *
+ * Tres diferències amb `cancelReservation`, i les tres són el motiu d'existir:
+ *
+ *   1. Una sola transacció a la base (`cancel_reservations_by_center`, 0090):
+ *      reserves i sessions als bons van juntes o no van. Mai no queda una
+ *      reserva cancel·lada amb la sessió sense tornar.
+ *   2. El permís el mira la funció: l'admin, o el professional sobre la seva
+ *      agenda encara que el client estigui assignat a un altre. Amb el client
+ *      de SESSIÓ, perquè el permís és qui crida.
+ *   3. NO es promociona ningú de la llista d'espera. La franja no s'ha alliberat:
+ *      ha deixat d'existir.
+ *
+ * Els correus surten només per a les files que la funció torna, que són les que
+ * ha canviat ella: repetir la crida no n'envia cap de duplicat.
+ */
+export async function cancelReservationsByCenter(
+  trainerId: string,
+  ids: string[],
+): Promise<CenterCancellationRow[]> {
+  if (ids.length === 0) return [];
+  const today = centerToday();
+  let rows: CenterCancellationRow[];
+
+  if (USE_MOCK) {
+    // El mirall de la funció de la 0090, sense el permís (el mock no té
+    // usuaris de debò; el decideix l'acció).
+    const store = getStore();
+    const nowIso = new Date().toISOString();
+    rows = [];
+    for (const r of store.reservations) {
+      if (
+        !ids.includes(r.id) ||
+        r.trainer_id !== trainerId ||
+        r.status !== "booked" ||
+        r.scheduled_at <= nowIso
+      )
+        continue;
+      r.status = "cancelled";
+      r.cancelled_by_center = true;
+      let expired = false;
+      if (r.bono_id) {
+        const b = store.bonos.find((x) => x.id === r.bono_id);
+        if (b) {
+          b.remaining_sessions = Math.min(b.remaining_sessions + 1, b.total_sessions);
+          if (b.status === "completed") b.status = "active";
+          expired = b.status === "expired" || (!!b.expires_at && b.expires_at < today);
+        }
+      }
+      rows.push({
+        reservation_id: r.id,
+        client_id: r.client_id,
+        bono_id: r.bono_id,
+        trainer_id: trainerId,
+        series_id: r.series_id,
+        scheduled_at: r.scheduled_at,
+        service_type: r.service_type,
+        refunded: !!r.bono_id,
+        bono_expired: expired,
+      });
+    }
+    saveStore(store);
+  } else {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("cancel_reservations_by_center", {
+      p_trainer_id: trainerId,
+      p_ids: ids,
+      p_today: today,
+    });
+    if (error) throw error;
+    rows = (data ?? []) as CenterCancellationRow[];
+  }
+
+  for (const row of rows)
+    await notifyReservation(row.client_id, "reservation_cancelled", {
+      reservationId: row.reservation_id,
+      scheduledAt: row.scheduled_at,
+      serviceType: row.service_type,
+      byCenter: true,
+      refund: !row.refunded ? "none" : row.bono_expired ? "expired" : "bono",
+    });
+
+  return rows;
 }
 
 /** Marca una reserva reservada como realizada. */
@@ -1153,6 +1281,7 @@ export async function createClientReservation(
       status: "booked",
       series_id: null,
       is_complimentary: false,
+      cancelled_by_center: false,
       created_at: new Date().toISOString(),
     });
     bono.remaining_sessions -= 1;

@@ -11,7 +11,20 @@ import { centerToday } from "@/lib/center-time";
 import {
   createAvailabilityRules,
   updateAvailabilityRule,
+  deleteAvailabilityRule,
+  getAvailabilityRule,
 } from "@/lib/data/availability";
+import {
+  previewOrphans,
+  orphanCount,
+  cancelOrphans,
+  selectionFromForm,
+  mayManage,
+  actingTrainerId,
+  outcomeSummary,
+  type Actor,
+  type Orphans,
+} from "@/lib/data/availability-orphans";
 import type { ServiceType } from "@/types/database";
 
 /**
@@ -39,7 +52,19 @@ import type { ServiceType } from "@/types/database";
  * per això es fa complir aquí.
  */
 
-export type AvailabilityFormState = { error?: string; ok?: boolean };
+export type AvailabilityFormState = {
+  error?: string;
+  ok?: boolean;
+  /**
+   * El canvi deixaria reserves (o proves, o esperes) fora de la disponibilitat.
+   * NO s'ha desat res: la pantalla les ensenya i espera la confirmació.
+   */
+  pending?: { orphans: Orphans };
+  /** Què s'ha cancel·lat en confirmar. */
+  notice?: string;
+  /** El canvi s'ha desat, però alguna cancel·lació no ha anat bé. */
+  warning?: string;
+};
 
 /** Errors de validació, per distingir-los dels que venen de la base. */
 class InvalidInput extends Error {}
@@ -160,16 +185,107 @@ export async function submitAvailabilityRules(
   }
 }
 
-/** Edició d'una franja concreta. Els dies no es toquen: la regla ja té el seu. */
+/** Si l'usuari ja ha vist la llista i ha dit «Desar i cancel·lar les marcades». */
+const isConfirmation = (fd: FormData) => fd.get("confirmOrphans") === "1";
+
+/**
+ * Desa el canvi i, si venia confirmat, cancel·la el que s'ha marcat.
+ *
+ * L'ORDRE ÉS AQUEST A POSTA. Primer el canvi, després les cancel·lacions: si
+ * aquestes fallen, queda el que hi havia avui (disponibilitat canviada i
+ * reserves encara reservades, visibles al plafó per tornar-ho a provar). A
+ * l'inrevés, un canvi que fallés deixaria reserves cancel·lades per res.
+ */
+async function saveThenCancel(
+  save: () => Promise<void>,
+  trainerId: string,
+  actor: Actor,
+  fd: FormData,
+): Promise<AvailabilityFormState> {
+  await save();
+  if (!isConfirmation(fd)) return { ok: true };
+  const { notice, warning } = outcomeSummary(
+    await cancelOrphans(trainerId, actingTrainerId(actor), selectionFromForm(fd)),
+  );
+  return {
+    ok: true,
+    ...(notice ? { notice } : {}),
+    ...(warning ? { warning: `El canvi s'ha desat. ${warning}` } : {}),
+  };
+}
+
+/**
+ * Edició d'una franja concreta: hores, serveis i vigència. Els dies no es
+ * toquen: la regla ja té el seu.
+ *
+ * Retallar-la, treure-li un servei o escurçar-ne la vigència pot deixar
+ * reserves sense on caure. Si és així, NO es desa: torna la llista i la
+ * pantalla demana què fer-ne.
+ */
 export async function submitAvailabilityUpdate(
   fd: FormData,
+  actor: Actor,
 ): Promise<AvailabilityFormState> {
   try {
     const id = String(fd.get("id") ?? "").trim();
     if (!id) throw new InvalidInput("Falta la franja que s'està editant.");
-    await updateAvailabilityRule(id, parseCommon(fd));
-    return { ok: true };
+    const input = parseCommon(fd);
+
+    const rule = await getAvailabilityRule(id);
+    if (!rule || !mayManage(actor, rule.trainerId))
+      throw new InvalidInput("Aquesta franja no existeix o no és teva.");
+
+    if (!isConfirmation(fd)) {
+      const orphans = await previewOrphans(rule.trainerId, (now) => ({
+        rules: now.rules.map((r) => (r.id === id ? { ...r, ...input } : r)),
+        blocks: now.blocks,
+      }));
+      if (orphanCount(orphans) > 0) return { pending: { orphans } };
+    }
+
+    return await saveThenCancel(
+      () => updateAvailabilityRule(id, input),
+      rule.trainerId,
+      actor,
+      fd,
+    );
   } catch (e) {
     return toState(e, "No s'ha pogut desar la franja.");
+  }
+}
+
+/**
+ * Esborrar una franja. Abans era un formulari sense estat que esborrava a
+ * l'instant, i les reserves que hi queien es quedaven reservades sense que
+ * ningú ho sabés. Ara passa pel mateix pas de confirmació que l'edició.
+ */
+export async function submitAvailabilityDelete(
+  fd: FormData,
+  actor: Actor,
+): Promise<AvailabilityFormState> {
+  try {
+    const id = String(fd.get("id") ?? "").trim();
+    if (!id) throw new InvalidInput("Falta la franja que s'ha d'esborrar.");
+
+    const rule = await getAvailabilityRule(id);
+    if (!rule || !mayManage(actor, rule.trainerId))
+      throw new InvalidInput("Aquesta franja no existeix o no és teva.");
+
+    if (!isConfirmation(fd)) {
+      const orphans = await previewOrphans(rule.trainerId, (now) => ({
+        rules: now.rules.filter((r) => r.id !== id),
+        blocks: now.blocks,
+      }));
+      if (orphanCount(orphans) > 0) return { pending: { orphans } };
+    }
+
+    return await saveThenCancel(
+      () => deleteAvailabilityRule(id),
+      rule.trainerId,
+      actor,
+      fd,
+    );
+  } catch (e) {
+    return toState(e, "No s'ha pogut esborrar la franja.");
   }
 }

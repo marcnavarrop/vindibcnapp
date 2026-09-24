@@ -5,23 +5,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { slotHasRoom, createClientReservation, cancelClientReservation } from "@/lib/data/reservations";
+import { isSessionCovered } from "@/lib/availability-coverage";
 import { fetchAllActiveHolds } from "@/lib/data/trial-bookings";
 import { addToWaitlist, slotKeyOf } from "@/lib/data/waitlist";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import {
-  isServiceAvailableOn,
   rangesOverlap,
   slotToHHMM,
   hourToSlot,
   slotsFor,
-  isInstantBlocked,
   blocksOf,
 } from "@/lib/availability-slots";
 import {
   centerDateStr,
   centerSlot,
-  centerWeekday,
   centerLocalToInstant,
   centerToday,
 } from "@/lib/center-time";
@@ -300,8 +298,13 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
       }
     }
 
-    // 4. Llista d'espera.
-    if (req.allowWaitlist) {
+    // 4. Llista d'espera, NOMÉS si la franja existeix. Una espera serveix per
+    //    entrar quan algú deixa lloc; si el professional no hi té
+    //    disponibilitat —vacances, una franja esborrada— no hi haurà mai lloc
+    //    que deixar, i l'espera quedaria penjada per sempre. Abans s'hi
+    //    apuntava igualment, també quan era l'allargament automàtic qui ho feia.
+    const offered = ctx.offers(req.trainerId, when, req.serviceType);
+    if (req.allowWaitlist && offered) {
       occurrences.push({
         requestedAt: iso,
         requestedTrainerId: req.trainerId,
@@ -315,7 +318,9 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
       requestedAt: iso,
       requestedTrainerId: req.trainerId,
       status: "sense_places",
-      note: "Sense places ni alternativa.",
+      note: offered
+        ? "Sense places ni alternativa."
+        : "El professional no té disponibilitat a aquesta hora.",
     });
   }
 
@@ -489,17 +494,18 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       rules: Awaited<ReturnType<typeof listAllTrainerRulesLite>>,
       blocks: Awaited<ReturnType<typeof listAllBlocksLite>>,
     ) =>
-    (trainerId: string, at: Date, service: ServiceType) => {
-      if (isInstantBlocked(blocksOf(blocks, trainerId), at)) return false;
-      return isServiceAvailableOn(
+    (trainerId: string, at: Date, service: ServiceType) =>
+      // El predicat compartit (`isSessionCovered`): regla que ofereix el servei
+      // i cap bloqueig que toqui la sessió SENCERA. Abans el bloqueig es mirava
+      // només a l'instant d'inici i una sessió de 12:00 passava amb un
+      // bloqueig des de les 12:30.
+      isSessionCovered(
         rules.filter((r) => r.trainerId === trainerId),
-        centerDateStr(at),
-        centerWeekday(at),
-        centerSlot(at),
-        service,
+        blocksOf(blocks, trainerId),
+        at.toISOString(),
         SESSION_DURATION_MINUTES,
+        service,
       );
-    };
 
   const settings = await getCenterSettings();
 

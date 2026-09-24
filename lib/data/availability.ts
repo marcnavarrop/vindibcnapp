@@ -146,6 +146,54 @@ export async function listAllTrainerRulesLite(): Promise<TrainerRuleLite[]> {
   return (data ?? []).map((r) => ({ trainerId: r.trainer_id, ...toLite(r) }));
 }
 
+/**
+ * Una regla concreta, per saber de QUI és abans de tocar-la.
+ *
+ * Les vies que tanquen disponibilitat ensenyen les reserves que el canvi deixa
+ * orfes, i aquesta llista porta noms de clients: un professional no pot veure
+ * la d'una agenda que no és seva. La RLS de la 0013 ja li impedeix editar-la,
+ * però la llista es llegeix abans d'editar res, i per això cal saber-ho aquí.
+ */
+export async function getAvailabilityRule(
+  id: string,
+): Promise<AvailabilityRule | null> {
+  if (USE_MOCK) {
+    const r = getStore().availability_rules.find((x) => x.id === id);
+    return r
+      ? {
+          id: r.id,
+          trainerId: r.trainer_id,
+          weekday: r.weekday,
+          startTime: hhmm(r.start_time),
+          endTime: hhmm(r.end_time),
+          validFrom: r.valid_from,
+          validUntil: r.valid_until,
+          serviceTypes: r.service_types ?? [],
+        }
+      : null;
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("availability_rules")
+    .select(
+      "id, trainer_id, weekday, start_time, end_time, valid_from, valid_until, service_types",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: data.id,
+    trainerId: data.trainer_id,
+    weekday: data.weekday,
+    startTime: hhmm(data.start_time),
+    endTime: hhmm(data.end_time),
+    validFrom: data.valid_from,
+    validUntil: data.valid_until,
+    serviceTypes: data.service_types ?? [],
+  };
+}
+
 export type CreateAvailabilityInput = {
   trainerId: string;
   weekdays: number[];

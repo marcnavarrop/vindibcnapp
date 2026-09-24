@@ -2,10 +2,9 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { SERVICE_LABELS } from "@/lib/labels";
+import { OrphansConfirm } from "@/components/orphans-confirm";
 import type { AvailabilityBlock } from "@/lib/data/availability-blocks";
 import type { BlockFormState } from "@/lib/data/availability-block-submit";
-import type { ServiceType } from "@/types/database";
 import { TAP } from "@/lib/utils";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -33,16 +32,6 @@ function fmtRange(startIso: string, endIso: string): string {
   return sameDay
     ? `${date.format(s)}, ${time.format(s)}–${time.format(e)}`
     : `${date.format(s)} ${time.format(s)} → ${date.format(e)} ${time.format(e)}`;
-}
-
-function fmtWhen(iso: string): string {
-  return new Intl.DateTimeFormat("ca-ES", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
 }
 
 export function AvailabilityBlocksManager({
@@ -83,7 +72,9 @@ export function AvailabilityBlocksManager({
   });
 
   const nowMs = Date.now();
-  const affected = state.pending?.affected ?? [];
+  // «Tornar enrere» amaga la llista sense crear res.
+  const [dismissed, setDismissed] = useState<BlockFormState["pending"]>();
+  const pending = state.pending && state.pending !== dismissed ? state.pending : null;
 
   return (
     <section className="mt-10">
@@ -265,57 +256,33 @@ export function AvailabilityBlocksManager({
           />
         </div>
 
-        {/* ── Reserves afectades: confirmació explícita ── */}
-        {state.pending && (
-          <div className="mb-4 rounded-xl border border-brand-orange/40 bg-brand-orange/5 p-4">
-            <p className="text-sm font-bold text-brand-dark">
-              {affected.length === 1
-                ? "Hi ha 1 reserva dins d'aquest bloqueig"
-                : `Hi ha ${affected.length} reserves dins d'aquest bloqueig`}
-            </p>
-            <p className="mt-1 mb-3 text-xs text-brand-muted">
-              El bloqueig es crearà igualment. Marca les que vulguis cancel·lar
-              ara: es retornarà la sessió al bo i s&apos;avisarà el client per
-              correu. Les que no marquis es mantindran reservades.
-            </p>
-
+        {/* ── Compromisos afectats: confirmació explícita ── */}
+        {pending && (
+          <div className="mb-4">
             {/* Es reenvien perquè la confirmació no depengui dels camps de dalt. */}
-            <input type="hidden" name="confirmStartAt" value={state.pending.startAt} />
-            <input type="hidden" name="confirmEndAt" value={state.pending.endAt} />
-
-            <ul className="mb-3 space-y-2">
-              {affected.map((r) => (
-                <li key={r.id}>
-                  <label className="flex items-start gap-2 text-sm text-brand-charcoal">
-                    <input
-                      type="checkbox"
-                      name="cancelIds"
-                      value={r.id}
-                      className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
-                    />
-                    <span>
-                      <span className="font-bold text-brand-dark">
-                        {r.clientName}
-                      </span>{" "}
-                      · {fmtWhen(r.scheduledAt)} ·{" "}
-                      {SERVICE_LABELS[r.serviceType as ServiceType] ??
-                        r.serviceType}
-                    </span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <input type="hidden" name="confirmStartAt" value={pending.startAt} />
+            <input type="hidden" name="confirmEndAt" value={pending.endAt} />
+            <OrphansConfirm
+              orphans={pending.orphans}
+              what="Aquest bloqueig"
+              onBack={() => setDismissed(state.pending)}
+            />
           </div>
         )}
 
         {state.error && <p className="mb-3 text-sm text-error">{state.error}</p>}
         {state.ok && (
-          <p className="mb-3 text-sm text-success">Bloqueig creat.</p>
+          <p className="mb-3 text-sm text-success">
+            Bloqueig creat.{state.notice ? ` ${state.notice}` : ""}
+          </p>
+        )}
+        {state.warning && (
+          <p role="alert" className="mb-3 text-sm text-error">
+            {state.warning}
+          </p>
         )}
 
-        <SubmitButton>
-          {state.pending ? "Confirmar bloqueig" : "Crear bloqueig"}
-        </SubmitButton>
+        {!pending && <SubmitButton>Crear bloqueig</SubmitButton>}
       </form>
     </section>
   );

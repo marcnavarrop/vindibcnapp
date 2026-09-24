@@ -1,4 +1,5 @@
 import "server-only";
+import { isSessionOffered } from "@/lib/data/availability-check";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
@@ -293,6 +294,28 @@ export async function promoteFromWaitlist(freed: {
   try {
     const { date, time } = slotKeyOf(freed.scheduledAt);
 
+    // La franja ha de SEGUIR EXISTINT. Una plaça que s'allibera perquè el
+    // professional ha tancat la franja —un bloqueig de vacances, una regla
+    // esborrada— no és una plaça lliure: no hi ha ningú per fer la sessió. Fins
+    // ara això no es mirava i qui era a la cua hi entrava, amb la sessió
+    // descomptada i un correu de «tens plaça» per a una hora que ja no existia.
+    // Reproduït en simulació. Va aquí, a l'entrada, perquè hi passen TOTS els
+    // camins que alliberen places: cancel·lacions de l'equip i del client i
+    // l'escombrat d'impagats.
+    if (
+      freed.trainerId &&
+      !(await isSessionOffered(
+        freed.trainerId,
+        freed.scheduledAt,
+        SESSION_DURATION_MINUTES,
+        freed.serviceType,
+      ))
+    )
+      return {
+        promoted: false,
+        reason: "La franja ja no és dins de la disponibilitat del professional.",
+      };
+
     if (USE_MOCK) return promoteMock(freed, date, time);
 
     const admin = createAdminClient();
@@ -534,6 +557,7 @@ async function promoteMock(
       status: "booked",
       series_id: null,
       is_complimentary: false,
+      cancelled_by_center: false,
       created_at: new Date().toISOString(),
     });
     bono.remaining_sessions -= 1;
