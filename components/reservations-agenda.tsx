@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { CancelReservationConfirm } from "@/components/cancel-reservation-confirm";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -266,7 +267,7 @@ function Section({
                     {r.trainerName && (
                       <span className="text-brand-muted">· {r.trainerName}</span>
                     )}
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
                       <Badge tone={STATUS_TONE[r.status]}>
                         {RESERVATION_STATUS_LABELS[r.status]}
                       </Badge>
@@ -324,7 +325,7 @@ function ReservationActions({
   const busy = cancelling || completing;
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-end gap-1">
         {canComplete && (
           <form action={complete}>
             <input type="hidden" name="id" value={id} />
@@ -337,16 +338,13 @@ function ReservationActions({
             </button>
           </form>
         )}
-        <form action={cancel}>
-          <input type="hidden" name="id" value={id} />
-          <button
-            type="submit"
-            disabled={busy}
-            className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10 disabled:opacity-60 ${TAP}`}
-          >
-            {cancelling ? "Cancel·lant…" : "Cancel·lar"}
-          </button>
-        </form>
+        <CancelReservationConfirm
+          id={id}
+          action={cancel}
+          pending={cancelling}
+          disabled={busy}
+          compact
+        />
       </div>
       {error && (
         <p role="alert" className="max-w-xs text-right text-xs text-error">

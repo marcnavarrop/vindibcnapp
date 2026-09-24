@@ -409,7 +409,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
             ],
             [
               "Cancel·lar",
-              "Anul·la la sessió i TORNA la sessió al bo. Si el bo ja s'havia donat per acabat, es reactiva.",
+              "Anul·la la sessió i TORNA la sessió al bo. Si el bo ja s'havia donat per acabat, es reactiva. El primer toc només pregunta: fins que no confirmes amb «Sí, cancel·la» no passa res. Igual a la fitxa que a la vista de llista.",
             ],
           ],
         },

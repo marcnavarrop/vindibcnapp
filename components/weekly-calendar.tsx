@@ -20,7 +20,6 @@ import {
   slotToHHMM,
   slotsFor,
   SLOT_MINUTES,
-  offeredServices,
   type AvailabilityRuleLite,
   type AvailabilityBlockLite,
   type TrainerRuleLite,
@@ -36,6 +35,8 @@ import type { ServiceType } from "@/types/database";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { getOccupancyStatus } from "@/lib/group-occupancy";
+import { freeServicesAt, occupancyFromSessions } from "@/lib/free-slots";
+import { CancelReservationConfirm } from "@/components/cancel-reservation-confirm";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
 
@@ -130,6 +131,7 @@ export function WeeklyCalendar({
   availabilityLayers,
   layerBlocks = [],
   trials = [],
+  occupancyReservations,
   manageableTrialIds = [],
   acceptTrialAction,
   rejectTrialAction,
@@ -172,6 +174,12 @@ export function WeeklyCalendar({
   layerBlocks?: TrainerBlockLite[];
   /** Sessions de prova (pending/confirmed) per pintar diferenciades. */
   trials?: TrialHoldItem[];
+  /**
+   * TOTES les reserves de la finestra, sense els filtres de vista. Els forats
+   * lliures es calculen contra aquestes: si l'admin filtra per servei, les
+   * reserves amagades segueixen ocupant. Sense, les que es pinten.
+   */
+  occupancyReservations?: ReservationListItem[];
   manageableTrialIds?: string[];
   acceptTrialAction?: ReservationAction;
   rejectTrialAction?: ReservationAction;
@@ -286,6 +294,29 @@ export function WeeklyCalendar({
    * no hi ha res a oferir, i tractar-les com a buides fa que la disponibilitat
    * de després es llegeixi com un tram nou, que és el que és.
    */
+  // Qui ocupa cada franja: les reserves vives i les proves actives. Els forats
+  // "lliures" es calculen contra això amb la mateixa regla que el servidor
+  // (lib/free-slots.ts). Abans només es miraven regles i bloquejos, i un
+  // professional sortia lliure a l'hora exacta que tenia una sessió.
+  const occupancy = useMemo(
+    () =>
+      occupancyFromSessions([
+        ...(occupancyReservations ?? reservations)
+          .filter((r) => r.status === "booked")
+          .map((r) => ({
+            trainerId: r.trainerId,
+            scheduledAt: r.scheduledAt,
+            serviceType: r.serviceType,
+          })),
+        ...trials.map((t) => ({
+          trainerId: t.trainerId,
+          scheduledAt: t.scheduledAt,
+          serviceType: t.serviceType,
+        })),
+      ]),
+    [occupancyReservations, reservations, trials],
+  );
+
   const freeIndex = useMemo(() => {
     const m = new Map<string, FreeLayer[]>();
     if (!availabilityLayers || availabilityLayers.length === 0) return m;
@@ -296,14 +327,15 @@ export function WeeklyCalendar({
         at.setHours(0, slot * SLOT_MINUTES, 0, 0);
         const here = availabilityLayers
           .map((l) => {
-            const svc = offeredServices(
-              l.rules,
-              layerBlocks,
-              l.trainerId,
-              at,
+            const svc = freeServicesAt({
+              rules: l.rules,
+              blocks: layerBlocks,
+              trainerId: l.trainerId,
+              date: at,
               slot,
-              SESSION_DURATION_MINUTES,
-            );
+              durationMinutes: SESSION_DURATION_MINUTES,
+              occupancy,
+            });
             return { ...l, services: SERVICE_TYPES.filter((st) => svc.has(st)) };
           })
           .filter((l) => l.services.length > 0);
@@ -311,7 +343,7 @@ export function WeeklyCalendar({
       }
     }
     return m;
-  }, [availabilityLayers, layerBlocks, days, slots, covered]);
+  }, [availabilityLayers, layerBlocks, days, slots, covered, occupancy]);
 
   const monthLabel = new Intl.DateTimeFormat("ca-ES", {
     month: "long",
@@ -346,7 +378,7 @@ export function WeeklyCalendar({
       <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
         <div className="min-w-[56rem]">
           {/* Cabecera de días */}
-          <div className="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-brand-border">
+          <div className="grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))] border-b border-brand-border">
             <div className="bg-brand-bg" />
             {days.map((d, i) => {
               const isToday =
@@ -383,7 +415,7 @@ export function WeeklyCalendar({
             <div
               key={slot}
               className={clsx(
-                "grid grid-cols-[3.5rem_repeat(7,1fr)] border-b last:border-0",
+                "grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))] border-b last:border-0",
                 isOnTheHour(slot) ? "border-brand-border/30" : "border-brand-border",
               )}
             >
@@ -426,8 +458,8 @@ export function WeeklyCalendar({
                   );
                 // Qui té aquesta franja disponible. Un bloqueig temporal
                 // (vacances, baixa) el treu encara que la regla setmanal hi sigui.
-                // offeredServices ja té en compte les regles I els bloquejos
-                // temporals: si torna buit, aquest professional no hi és.
+                // freeServicesAt hi posa regles, bloquejos I reserves (la regla
+                // del servidor): si torna buit, aquest professional no hi és.
                 /*
                  * Qui hi és lliure, i quins d'ells COMENCEN aquí.
                  *
@@ -943,31 +975,6 @@ function FreeSlotCount({
   );
 }
 
-function CancelReservationForm({
-  id,
-  action,
-  pending,
-  disabled,
-}: {
-  id: string;
-  action: (formData: FormData) => void;
-  pending: boolean;
-  disabled: boolean;
-}) {
-  return (
-    <form action={action} className="flex-1">
-      <input type="hidden" name="id" value={id} />
-      <button
-        type="submit"
-        disabled={disabled}
-        className={`w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 disabled:opacity-60 ${TAP_SURFACE}`}
-      >
-        {pending ? "Cancel·lant…" : "Cancel·lar"}
-      </button>
-    </form>
-  );
-}
-
 function ActionError({ message }: { message: string }) {
   return (
     <p role="alert" className="mt-2 text-sm text-error">
@@ -1110,7 +1117,9 @@ function ReservationModal({
                   {completing ? "Marcant…" : "Marcar feta"}
                 </button>
               </form>
-              <CancelReservationForm
+            </div>
+            <div className="mt-2">
+              <CancelReservationConfirm
                 id={r.id}
                 action={cancel}
                 pending={cancelling}
@@ -1133,7 +1142,7 @@ function ReservationModal({
               cancel·lar.
             </p>
             <div className="mt-2 flex">
-              <CancelReservationForm
+              <CancelReservationConfirm
                 id={r.id}
                 action={cancel}
                 pending={cancelling}

@@ -230,6 +230,7 @@
       <li>Filtra per <strong>professional</strong>, per <strong>client</strong> i per <strong>tipus de servei</strong> — combinables, amb "Netejar filtres"</li>
       <li>Color de la targeta = tipus de servei (es canvia a Configuració → Colors)</li>
       <li><strong>"Mostrar disponibilitat"</strong>: ombreja les franges lliures amb el color de <strong>cada persona</strong>, i es poden encendre i apagar un per un</li>
+      <li>«Lliure» vol dir lliure de debò: una hora on ja hi ha una sessió, o una que comença a la segona mitja hora (una reserva a les 10:30 treu les 10:00), <strong>no</strong> surt ombrejada; un grup amb plaça surt només com a grup. El mateix val per al calendari del client i per a /prova (<code>npm run free:check</code>)</li>
       <li>L'admin gestiona QUALSEVOL reserva de qualsevol professional, sense cadenat mai</li>
       <li>Les reserves cancel·lades desapareixen del calendari en viu (segueixen a l'historial)</li>
       <li>A la vista de llista, les sessions passades porten <strong>la nota del professional</strong> si n'hi ha (secció 12)</li>
@@ -242,7 +243,7 @@
       <li>El desplegable de bo <strong>només ensenya bons amb sessions disponibles</strong>. Si surt buit, ven-li'n un abans</li>
       <li><strong>Casella "Sessió de cortesia"</strong>: en marcar-la desapareix el selector de bo i has de dir el tipus de servei (secció 8.3)</li>
       <li><strong>"Repeticions setmanals"</strong>: fins a 52 reserves, una per setmana, a la mateixa hora</li>
-      <li>Prova les tres accions sobre una reserva: <strong>Cancel·lar</strong> (retorna la sessió al bo + avisa el client + cedeix la plaça a la llista d'espera), <strong>Completar</strong> (és el que la fa comptar a liquidacions i bonus) i <strong>Reprogramar</strong> (canvia dia i hora sense tocar el bo)</li>
+      <li>Prova les tres accions sobre una reserva: <strong>Cancel·lar</strong> (demana confirmació, a la fitxa i a la llista; «No, torna» no fa res; «Sí, cancel·la» retorna la sessió al bo + avisa el client + cedeix la plaça a la llista d'espera), <strong>Completar</strong> (és el que la fa comptar a liquidacions i bonus) i <strong>Reprogramar</strong> (canvia dia i hora sense tocar el bo)</li>
     </ul>
     <div class="warn"><strong>Una sessió que va passar i ningú no va marcar com a completada no es paga.</strong> És la causa número u de "la liquidació no em quadra" (secció 2.2).</div>
 
@@ -371,6 +372,7 @@
       <li><strong>Multicheck de companys</strong> (si l'admin ho ha activat a Configuració): desmarcat per defecte, marca'n un o diversos per veure les seves reserves superposades</li>
       <li>Checkbox <strong>"Mostrar la meva disponibilitat"</strong>: ombreig verd suau, on/off</li>
       <li>Clica una franja buida per reservar, una reserva pròpia per gestionar-la</li>
+      <li><strong>Cancel·lar</strong> demana confirmació, tant a la fitxa com a la vista de llista: el primer toc només pregunta i diu què passarà; «No, torna» ho deixa tot igual</li>
       <li>Pot crear <strong>sessions de cortesia</strong> i <strong>repeticions setmanals</strong>, igual que l'admin</li>
       <li>A la vista de llista, apartat <strong>"Passades"</strong>: hi escriu <strong>la nota de la sessió</strong> (secció 12)</li>
       <li>Navegació igual que a l'admin: setmana a l'adreça, "Avui", i la llista de 30 dies amb "Veure'n més"</li>

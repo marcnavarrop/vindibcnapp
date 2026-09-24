@@ -495,7 +495,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "La capa de disponibilitat" },
         {
           t: "p",
-          text: "«Mostrar disponibilitat» ombreja les franges lliures de cada professional amb el SEU color (el de la persona, no el del servei), i pots encendre i apagar-los un per un. Serveix per veure d'un cop on hi ha hores obertes que ningú no ha agafat. Els professionals que no tenen cap regla definida no hi surten.",
+          text: "«Mostrar disponibilitat» ombreja les franges lliures de cada professional amb el SEU color (el de la persona, no el del servei), i pots encendre i apagar-los un per un. Serveix per veure d'un cop on hi ha hores obertes que ningú no ha agafat. «Lliure» vol dir el mateix que per al servidor en crear la reserva: si una sessió o una prova es trepitja amb l'hora sencera, no hi surt —tampoc si comença a la segona mitja hora—, i una sessió de grup amb plaça només hi surt com a grup. Els professionals que no tenen cap regla definida no hi surten.",
         },
         { t: "h", text: "Les notes de sessió" },
         {
@@ -548,7 +548,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Cancel·lar",
-              "Retorna la sessió al bo, avisa el client per correu i, si era una sessió de grup amb llista d'espera, la plaça passa automàticament a qui esperava. Només si la franja segueix dins de la disponibilitat del professional: a una franja tancada no hi entra ningú.",
+              "Retorna la sessió al bo, avisa el client per correu i, si era una sessió de grup amb llista d'espera, la plaça passa automàticament a qui esperava. Només si la franja segueix dins de la disponibilitat del professional: a una franja tancada no hi entra ningú. El primer toc només pregunta: fins que no confirmes amb «Sí, cancel·la» no passa res, tant a la fitxa com a la vista de llista.",
             ],
             [
               "Completar",

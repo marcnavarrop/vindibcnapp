@@ -28,6 +28,7 @@ import {
 // dins del seu pany. Comptar-les també aquí seria una segona opinió sense
 // autoritat.
 import { mockActiveHoldsAt } from "@/lib/data/trial-bookings";
+import { hasRoom } from "@/lib/free-slots";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
@@ -259,12 +260,9 @@ export function slotHasRoom(
   existing: { service_type: ServiceType }[],
   newService: ServiceType,
 ): boolean {
-  if (newService === "grupo_reducido")
-    return (
-      !existing.some((e) => e.service_type !== "grupo_reducido") &&
-      existing.length < GROUP_CAPACITY
-    );
-  return existing.length === 0;
+  // La regla viu a lib/free-slots.ts perquè les pantalles que ofereixen forats
+  // facin servir exactament la mateixa: el que diuen lliure és el que aquí passa.
+  return hasRoom(existing.map((e) => ({ serviceType: e.service_type })), newService);
 }
 
 function assertSlotFree(

@@ -481,6 +481,7 @@ export function ReservationsView({
           availabilityLayers={availabilityLayers}
           layerBlocks={allBlocks ?? []}
           reservations={filteredReservations}
+          occupancyReservations={reservations}
           manageableIds={manageableIds ?? reservations.map((r) => r.id)}
           cancellableIds={
             cancellableIds ?? manageableIds ?? reservations.map((r) => r.id)

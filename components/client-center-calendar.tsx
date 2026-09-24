@@ -13,7 +13,6 @@ import { intlLocale, type Locale } from "@/lib/i18n/config";
 import {
   weekdayOf,
   localDateStr,
-  offeredServices,
   hourToSlot,
   localSlotOf,
   isOnTheHour,
@@ -42,6 +41,7 @@ import {
   type WaitlistState,
 } from "@/app/(client)/client/reservas/waitlist-actions";
 import { getOccupancyStatus } from "@/lib/group-occupancy";
+import { freeServicesAt, occupancyFromSessions } from "@/lib/free-slots";
 import { canCancelAt } from "@/lib/cancellation";
 
 /* Els noms dels dies i les abreviatures de servei viuen al diccionari
@@ -293,6 +293,22 @@ export function ClientCenterCalendar({
     return { resIndex: m, coveredIndex: cov };
   }, [reservations]);
 
+  // Qui ocupa cada franja: com al servidor, només les reserves 'booked'. Les
+  // proves actives ja arriben com a reserves 'booked'.
+  const occupancy = useMemo(
+    () =>
+      occupancyFromSessions(
+        reservations
+          .filter((r) => r.status === "booked")
+          .map((r) => ({
+            trainerId: r.trainerId,
+            scheduledAt: r.scheduledAt,
+            serviceType: r.serviceType,
+          })),
+      ),
+    [reservations],
+  );
+
   // Días visibles.
   const days = useMemo(() => {
     if (view === "week") {
@@ -364,14 +380,20 @@ export function ClientCenterCalendar({
       const groupHere = resHere.filter(
         (r) => r.serviceType === "grupo_reducido",
       );
-      const offered = offeredServices(
+      // El que s'hi pot reservar de NOU, amb la regla del servidor
+      // (lib/free-slots.ts): regles, bloquejos i tot el que es trepitja amb
+      // l'hora sencera. Abans només es mirava la regla, i una sessió que
+      // començava a la segona mitja hora (dissabte 10:30) deixava les 10:00
+      // "lliures" per a un servidor que després deia que no.
+      const offered = freeServicesAt({
         rules,
         blocks,
-        t.id,
-        cellDate,
+        trainerId: t.id,
+        date: cellDate,
         slot,
-        SESSION_DURATION_MINUTES,
-      );
+        durationMinutes: SESSION_DURATION_MINUTES,
+        occupancy,
+      });
 
       // Els noms només existeixen a les reserves de grup: el servidor no els
       // envia per a cap altre servei (vegeu `mateName` a client-calendar.ts).
