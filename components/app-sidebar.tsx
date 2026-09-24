@@ -30,6 +30,7 @@ import { SPECIALTY_LABELS } from "@/lib/labels";
 import { CommunityBadge } from "@/components/community-badge";
 import { BonosBadge } from "@/components/bonos-badge";
 import { ExercisesBadge } from "@/components/exercises-badge";
+import { StaffBonosBadge } from "@/components/staff-bonos-badge";
 import type { ClientBadgeCounts } from "@/lib/data/client-badges";
 import {
   NAV_GROUPS,
@@ -103,6 +104,7 @@ export function AppSidebar({
   avatarUrl = null,
   modules = ALL_MODULES_ON,
   badges = null,
+  staffBonos = null,
 }: {
   role: Role;
   specialty?: Specialty | null;
@@ -121,6 +123,12 @@ export function AppSidebar({
    * partir d'aquí mana el magatzem compartit. Vegeu `lib/badge-store`.
    */
   badges?: ClientBadgeCounts | null;
+  /**
+   * Bons del centre per cobrar, per a la piloteta de «Bons» de l'admin i del
+   * professional. `null` a l'àrea de client. Mateixa regla de sortida que
+   * `badges`.
+   */
+  staffBonos?: number | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -143,6 +151,7 @@ export function AppSidebar({
           pathname={pathname}
           modules={modules}
           badges={badges}
+          staffBonos={staffBonos}
         />
       </aside>
 
@@ -209,6 +218,7 @@ export function AppSidebar({
               pathname={pathname}
               modules={modules}
               badges={badges}
+              staffBonos={staffBonos}
             />
           </div>
         </div>
@@ -226,6 +236,7 @@ function SidebarContent({
   pathname,
   modules,
   badges,
+  staffBonos,
 }: {
   role: Role;
   specialty: Specialty | null;
@@ -237,7 +248,21 @@ function SidebarContent({
   pathname: string;
   modules: ModuleFlags;
   badges: ClientBadgeCounts | null;
+  staffBonos: number | null;
 }) {
+  /*
+   * On va la piloteta de bons per cobrar de l'equip: a l'entrada que porta a la
+   * llista de bons. A l'admin és la capçalera del grup «Bons i pagaments», que
+   * al menú és una sola entrada i porta al primer fill, `/admin/bonos`; les
+   * altres pestanyes del grup no hi tenen res a veure i no en porten. Al
+   * professional, «Bons» és una entrada solta.
+   */
+  const staffBadgeFor = (href: string) =>
+    staffBonos !== null &&
+    (href === "/admin/bonos" || href === "/trainer/bonos") ? (
+      <StaffBonosBadge initial={staffBonos} />
+    ) : undefined;
+
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <Link href={HOME_PATH[role]} className="px-2 pt-2">
@@ -265,6 +290,7 @@ function SidebarContent({
                     label={entry.label}
                     icon={entry.icon}
                     active={active}
+                    badge={staffBadgeFor(entry.children[0].href)}
                   />
                 </li>
               );
@@ -299,7 +325,7 @@ function SidebarContent({
                      el calcula `AppShell` al servidor, així que ja ve pintat
                      dins de l'HTML. */
                   badge={
-                    !badges ? undefined : entry.href ===
+                    !badges ? staffBadgeFor(entry.href) : entry.href ===
                       "/client/comunitat" ? (
                       <CommunityBadge initial={badges.community} />
                     ) : entry.href === "/client/bonos" ? (
@@ -358,7 +384,7 @@ function NavLink({
   label: React.ReactNode;
   icon?: NavIcon;
   active: boolean;
-  /** Piloteta a la dreta de l'entrada. Avui només Comunitat en porta. */
+  /** Piloteta a la dreta de l'entrada, si en porta. */
   badge?: React.ReactNode;
 }) {
   const Icon = icon ? NAV_ICONS[icon] : null;

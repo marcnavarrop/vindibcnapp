@@ -30,6 +30,8 @@ import {
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
 import { cancelBlockFor } from "@/lib/bono-rules";
+import { countCenterCollectableBonos } from "@/lib/data/bonos";
+import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { toggleClientTagAction } from "@/app/(admin)/admin/etiquetes/actions";
 import { centerToday } from "@/lib/center-time";
 import {
@@ -61,6 +63,7 @@ export default async function TrainerClientDetailPage({
     trainers,
     allTags,
     clientTags,
+    centerCollectable,
   ] = await Promise.all([
     getViewer(),
     getClient(id),
@@ -71,6 +74,9 @@ export default async function TrainerClientDetailPage({
     listTrainers(),
     listClientTags(),
     listTagsOfClient(id),
+    // Per a la piloteta de «Bons» del menú: vegeu l'anunciador de sota. Si
+    // falla, no s'anuncia res —millor el número d'abans que un zero inventat.
+    countCenterCollectableBonos().catch(() => null),
   ]);
   if (!client) notFound();
 
@@ -391,6 +397,17 @@ export default async function TrainerClientDetailPage({
 
       {needsHealthConsent && <HealthConsentWarning />}
 
+      {/*
+        Aquí també es cobra i s'anul·la, i la piloteta del menú ho ha de saber.
+        No n'hi ha prou amb el `revalidatePath` de l'acció: sí que torna a pintar
+        el layout amb el número nou, però si abans s'havia passat per Bons el
+        magatzem ja té valor i mana ell —comprovat: es quedava amb el d'abans—.
+        Aquesta pàgina només veu els bons d'un client, per això el número del
+        centre es compta a part: una consulta `count`, només aquí.
+      */}
+      {centerCollectable !== null && (
+        <CollectableBonosAnnouncer count={centerCollectable} />
+      )}
       <InPageTabs tabs={tabs} />
     </main>
   );

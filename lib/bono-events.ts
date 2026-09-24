@@ -24,3 +24,31 @@ export function announceBonosSeen(pending: number): void {
     new CustomEvent<BonosSeenDetail>(BONOS_SEEN, { detail: { pending } }),
   );
 }
+
+/**
+ * Avís de quants bons de TOT el centre queden per cobrar: la piloteta de
+ * «Bons» de l'admin i del professional.
+ *
+ * NO ÉS UN «JA HO HE VIST», I PER AIXÒ ÉS UN ALTRE AVÍS
+ *
+ * Per al client, la piloteta és un recordatori i se silencia mentre és a
+ * «Els meus bons». Per a l'equip és una cua de feina, com la de suport: ha de
+ * dir sempre el número de debò, i només baixa quan algú cobra o anul·la.
+ *
+ * El llança `CollectableBonosAnnouncer`, que viu a la TAULA de bons i no a la
+ * fila: en cobrar amb el filtre «Pendents», la fila desapareix en el mateix
+ * render i el seu efecte no s'arribaria a executar mai. La lliçó de suport.
+ */
+export const BONOS_COLLECTABLE = "vindi:bonos-collectable";
+
+export type BonosCollectableDetail = { collectable: number };
+
+/** Diu quants bons del centre queden per cobrar ara mateix. */
+export function announceBonosCollectable(collectable: number): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<BonosCollectableDetail>(BONOS_COLLECTABLE, {
+      detail: { collectable },
+    }),
+  );
+}
