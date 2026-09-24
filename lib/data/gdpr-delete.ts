@@ -56,6 +56,11 @@ export async function deleteClient(
     store.reservations = store.reservations.filter(
       (r) => r.client_id !== clientId,
     );
+    // L'`on delete cascade` de la 0079: la nota se'n va amb la reserva.
+    const keptReservations = new Set(store.reservations.map((r) => r.id));
+    store.session_notes = store.session_notes.filter((n) =>
+      keptReservations.has(n.reservation_id),
+    );
     const ceIds = new Set(
       store.client_exercises.filter((ce) => ce.client_id === clientId).map((ce) => ce.id),
     );

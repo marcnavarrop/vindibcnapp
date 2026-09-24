@@ -14,12 +14,11 @@ import type { Locale } from "@/lib/i18n/config";
 export const dynamic = "force-dynamic";
 
 export default async function ClientBonosPage() {
-  const [t, tl, tb, tpm, tp, tsub, viewer] = await Promise.all([
+  const [t, tl, tb, tpm, tsub, viewer] = await Promise.all([
     getTranslations("bonos"),
     getTranslations("labels.service"),
     getTranslations("labels.bonoStatus"),
     getTranslations("labels.paymentMethod"),
-    getTranslations("picker"),
     getTranslations("labels.subscriptionStatus"),
     getViewer(),
   ]);

@@ -6,7 +6,6 @@ import {
   getSubscription,
   updateSubscription,
 } from "@/lib/data/subscriptions";
-import { notifySubscriptionCancelled } from "@/lib/data/subscription-notify";
 import { scheduleStripeCancellation } from "@/lib/data/stripe-checkout";
 import { centerToday } from "@/lib/center-time";
 import {
@@ -103,19 +102,6 @@ export async function adminChangePriceAction(
   revalidatePath("/admin/subscripcions");
   return { ok: `Preu actualitzat. S'aplicarà a partir del ${sub.nextRenewalOn ?? centerToday()}.` };
 }
-
-/** Avisa el client d'una baixa ja consumada. Serveix per reenviar-lo. */
-export async function adminNotifyCancelledAction(
-  _prev: AdminSubscriptionState,
-  fd: FormData,
-): Promise<AdminSubscriptionState> {
-  if (!(await admin())) return { error: "No autoritzat." };
-  const sub = await getSubscription(String(fd.get("subscriptionId") ?? ""));
-  if (!sub) return { error: "Subscripció no trobada." };
-  await notifySubscriptionCancelled(sub);
-  return { ok: "Avís enviat (si el client el té activat)." };
-}
-
 
 // ─── Congelar i reprendre ───────────────────────────────────────────────────
 

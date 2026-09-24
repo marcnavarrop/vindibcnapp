@@ -599,7 +599,8 @@
       "noteTitle": "Nota de la sesión",
       "with": "con {name}",
       "by": "{name} · {date}",
-      "noNote": "Sin nota."
+      "noNote": "Sin nota.",
+      "limited": "Las últimas {count} sesiones."
     }
   },
   "wizard": {
@@ -902,7 +903,8 @@
         "wrongPassword": "La contraseña no es correcta.",
         "noAccount": "No se ha podido identificar tu cuenta.",
         "tooSoon": "Acabas de pedirlo. Espera unos minutos antes de volver a intentarlo.",
-        "failed": "No se ha podido pedir el cambio de correo."
+        "failed": "No se ha podido pedir el cambio de correo.",
+        "demo": "No disponible en modo demostración: el cambio de correo necesita la cuenta real."
       }
     }
   },

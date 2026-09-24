@@ -51,7 +51,10 @@ export type EmailChangeError =
   | "wrongPassword"
   | "noAccount"
   | "tooSoon"
-  | "failed";
+  | "failed"
+  // Mode demo: no hi ha compte real per comprovar la contrasenya ni per
+  // canviar-li el correu. Es diu tal qual, no com un error.
+  | "demo";
 
 export type PendingEmailChange = { newEmail: string; requestedAt: string };
 
@@ -110,7 +113,7 @@ export async function requestEmailChange(input: {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return "invalid";
   if (newEmail === currentEmail) return "same";
   if (!input.password) return "wrongPassword";
-  if (USE_MOCK) return "failed";
+  if (USE_MOCK) return "demo";
 
   if (!(await passwordIsCorrect(currentEmail, input.password)))
     return "wrongPassword";

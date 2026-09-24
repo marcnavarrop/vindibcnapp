@@ -38,7 +38,6 @@ import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
   RESERVATION_STATUS_LABELS,
-  PAYMENT_METHOD_LABELS,
   formatEur,
   formatDate,
 } from "@/lib/labels";

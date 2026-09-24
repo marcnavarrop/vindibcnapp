@@ -599,7 +599,8 @@
       "noteTitle": "Session note",
       "with": "with {name}",
       "by": "{name} · {date}",
-      "noNote": "No note."
+      "noNote": "No note.",
+      "limited": "Your last {count} sessions."
     }
   },
   "wizard": {
@@ -902,7 +903,8 @@
         "wrongPassword": "That password is not correct.",
         "noAccount": "We couldn't identify your account.",
         "tooSoon": "You just asked for this. Wait a few minutes before trying again.",
-        "failed": "We couldn't request the email change."
+        "failed": "We couldn't request the email change.",
+        "demo": "Not available in demo mode: changing your email needs the real account."
       }
     }
   },

@@ -599,7 +599,8 @@
       "noteTitle": "Nota de la sessió",
       "with": "amb {name}",
       "by": "{name} · {date}",
-      "noNote": "Sense nota."
+      "noNote": "Sense nota.",
+      "limited": "Les darreres {count} sessions."
     }
   },
   "wizard": {
@@ -902,7 +903,8 @@
         "wrongPassword": "La contrasenya no és correcta.",
         "noAccount": "No s'ha pogut identificar el teu compte.",
         "tooSoon": "Fa un moment que ho has demanat. Espera uns minuts abans de tornar-ho a provar.",
-        "failed": "No s'ha pogut demanar el canvi de correu."
+        "failed": "No s'ha pogut demanar el canvi de correu.",
+        "demo": "No disponible en mode demostració: el canvi de correu necessita el compte real."
       }
     }
   },

@@ -3,7 +3,6 @@ import { getViewer } from "@/lib/auth";
 import { getClient } from "@/lib/data/clients";
 import { resendInvite } from "@/lib/notifications/auth-emails";
 import { notify, getProfileContact } from "@/lib/notifications";
-import { appLink } from "@/lib/notifications/brand";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { USE_MOCK, CENTER_TZ } from "@/lib/config";
 import { getStore } from "@/lib/mock/store";
