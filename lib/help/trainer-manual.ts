@@ -394,7 +394,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Reprogramar, marcar feta, cancel·lar" },
         {
           t: "p",
-          text: "Tocant una reserva al calendari s'obre la seva fitxa amb tres accions, sempre que sigui d'un client teu:",
+          text: "Tocant una reserva al calendari s'obre la seva fitxa: al mòbil, una fulla que puja des de baix; a l'ordinador, un plafó a la dreta que deixa veure el calendari al costat. Hi tens el telèfon del client (amb «Copiar»), el bo del qual surt la sessió amb les que li queden i quan caduca, la posició dins de la sèrie si en forma part, la propera sessió que té reservada i l'enllaç a la seva fitxa; aquestes dades es demanen en obrir-la i tarden un moment a sortir. «Afegir al calendari» només surt a les sessions que encara han de passar. Si el client és teu, hi ha tres accions:",
         },
         {
           t: "dl",
@@ -466,7 +466,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Cada sessió ja feta pot portar una nota: com ha anat, què s'ha treballat, què cal recordar per a la propera. Surt a la vista de llista de Reserves, a l'apartat «Passades», sota la reserva. A les properes no hi és, perquè parla d'una cosa que encara no ha passat.",
+          text: "Cada sessió ja feta pot portar una nota: com ha anat, què s'ha treballat, què cal recordar per a la propera. Surt a la fitxa de la reserva, tocant-la al calendari, i a la vista de llista de Reserves, a l'apartat «Passades», sota la reserva. Es pot escriure des de tots dos llocs. A les properes no hi és, perquè parla d'una cosa que encara no ha passat.",
         },
         { t: "h", text: "Qui l'escriu" },
         {

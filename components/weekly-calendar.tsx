@@ -1,12 +1,11 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import {
   SERVICE_LABELS,
-  RESERVATION_STATUS_LABELS,
   GROUP_CAPACITY,
   SERVICE_TYPES,
   SESSION_DURATION_MINUTES,
@@ -25,18 +24,16 @@ import {
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
-import { Badge } from "@/components/ui/badge";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type { AgendaNav } from "@/lib/agenda-window";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
-import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
-import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { getOccupancyStatus } from "@/lib/group-occupancy";
 import { freeServicesAt, occupancyFromSessions } from "@/lib/free-slots";
-import { CancelReservationConfirm } from "@/components/cancel-reservation-confirm";
+import { ReservationSheet, LockIcon } from "@/components/reservation-sheet";
+import type { SessionNote } from "@/lib/data/session-notes";
 
 // Franja horaria por defecto del centro (se amplía si hay reservas fuera).
 
@@ -138,6 +135,9 @@ export function WeeklyCalendar({
   openingHour = 7,
   closingHour = 22,
   palette,
+  notes,
+  noteableIds,
+  clientBase,
 }: {
   /** La setmana que es pinta i els enllaços per canviar-ne (vegeu `agendaWindow`). */
   nav: AgendaNav;
@@ -188,12 +188,22 @@ export function WeeklyCalendar({
   /** Horari del centre (configurable per l'admin). */
   openingHour?: number;
   closingHour?: number;
+  /** Notes de les sessions passades de la finestra (les que la RLS deixa veure). */
+  notes?: Record<string, SessionNote>;
+  /**
+   * Les reserves on qui mira pot ESCRIURE la nota: les que va donar ell. L'admin
+   * no en passa cap: llegeix les notes, no les escriu.
+   */
+  noteableIds?: string[];
+  /** On és la fitxa del client en aquesta àrea (/admin/clients o /trainer/clients). */
+  clientBase: string;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<ReservationListItem | null>(null);
   const [selectedTrial, setSelectedTrial] = useState<TrialHoldItem | null>(null);
 
   const manageable = useMemo(() => new Set(manageableIds), [manageableIds]);
+  const noteable = useMemo(() => new Set(noteableIds ?? []), [noteableIds]);
   const cancellable = useMemo(
     () => new Set(cancellableIds ?? manageableIds),
     [cancellableIds, manageableIds],
@@ -627,7 +637,7 @@ export function WeeklyCalendar({
       </p>
 
       {selected && (
-        <ReservationModal
+        <ReservationSheet
           r={selected}
           palette={palette}
           canManage={manageable.has(selected.id)}
@@ -635,6 +645,9 @@ export function WeeklyCalendar({
           cancelAction={cancelAction}
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}
+          note={notes?.[selected.id] ?? null}
+          canWriteNote={noteable.has(selected.id)}
+          clientHref={`${clientBase}/${selected.clientId}`}
           onClose={() => setSelected(null)}
         />
       )}
@@ -972,226 +985,5 @@ function FreeSlotCount({
         {layers.length} lliures
       </span>
     </div>
-  );
-}
-
-function ActionError({ message }: { message: string }) {
-  return (
-    <p role="alert" className="mt-2 text-sm text-error">
-      {message}
-    </p>
-  );
-}
-
-function ReservationModal({
-  r,
-  canManage,
-  canCancel,
-  cancelAction,
-  completeAction,
-  rescheduleAction,
-  onClose,
-  palette,
-}: {
-  r: ReservationListItem;
-  palette: ColorPalette;
-  canManage: boolean;
-  /** Pot cancel·lar-la encara que no la pugui gestionar (la seva agenda). */
-  canCancel: boolean;
-  cancelAction: StatefulReservationAction;
-  completeAction: StatefulReservationAction;
-  rescheduleAction: ReservationAction;
-  onClose: () => void;
-}) {
-  const router = useRouter();
-  /*
-   * L'ÈXIT ES DIU QUAN EL SERVIDOR HO DIU, no en enviar el formulari.
-   *
-   * Abans era un `onSubmit={() => setDone(...)}`: la pantalla deia «Reserva
-   * cancel·lada» abans de saber res, i si el servidor fallava ho seguia dient
-   * —reproduït en desenvolupament i en producció, amb la reserva encara al
-   * calendari—. Ara `done` surt de la resposta, i l'error es pinta aquí mateix.
-   */
-  const [cancelState, cancel, cancelling] = useActionState(cancelAction, {});
-  const [completeState, complete, completing] = useActionState(completeAction, {});
-  const done = cancelState.ok ? "cancelled" : completeState.ok ? "completed" : null;
-  const error = cancelState.error ?? completeState.error ?? null;
-  const busy = cancelling || completing;
-
-  if (done) {
-    const close = () => { router.refresh(); onClose(); };
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={close}>
-        <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl bg-white p-8 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <AnimatedFeedback type={done === "cancelled" ? "cancel" : "success"} />
-          <h2 className="text-xl font-bold text-brand-dark">
-            {done === "cancelled" ? "Reserva cancel·lada" : "Reserva marcada com feta"}
-          </h2>
-          <button type="button" onClick={close} className={`mt-2 w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}>
-            Tancar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const when = new Intl.DateTimeFormat("ca-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(r.scheduledAt));
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div
-          className="mb-3 h-1.5 w-12 rounded-full"
-          style={{ backgroundColor: colorOfService(palette, r.serviceType) }}
-        />
-        <div className="flex items-start justify-between gap-2">
-          <h2 className="text-lg font-bold text-brand-dark">{r.clientName}</h2>
-          {/* Aquí sí, sencer: al detall hi ha espai i és on l'admin ve a
-              entendre què és aquesta reserva. */}
-          {r.isComplimentary && <Badge tone="warn">Cortesia</Badge>}
-        </div>
-        <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
-        <dl className="mt-4 flex flex-col gap-2 text-sm">
-          <Field label="Servei" value={SERVICE_LABELS[r.serviceType]} />
-          <Field label="Estat" value={RESERVATION_STATUS_LABELS[r.status]} />
-          {r.trainerName && <Field label="Professional" value={r.trainerName} />}
-        </dl>
-
-        {canManage && (
-          <div className="mt-4">
-            <AddToCalendarButton
-              serviceType={r.serviceType}
-              otherPartyName={r.clientName}
-              scheduledAt={r.scheduledAt}
-            />
-          </div>
-        )}
-
-        {canManage ? (
-          r.status === "booked" ? (
-            <>
-            <form
-              action={rescheduleAction}
-              className="mt-5 flex flex-col gap-2 rounded-lg bg-brand-bg p-3"
-            >
-              <label className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-                Reprogramar
-              </label>
-              <input type="hidden" name="id" value={r.id} />
-              <div className="flex items-center gap-2">
-                <input
-                  type="datetime-local"
-                  name="scheduledAt"
-                  required
-                  defaultValue={toLocalInput(new Date(r.scheduledAt))}
-                  className="flex-1 rounded-lg border border-brand-border bg-white px-2 py-1.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
-                />
-                <button
-                  type="submit"
-                  className={`rounded-lg bg-brand-orange px-3 py-1.5 text-sm font-bold text-white hover:opacity-90 ${TAP}`}
-                >
-                  Desar
-                </button>
-              </div>
-            </form>
-            <div className="mt-2 flex items-center gap-2">
-              <form action={complete} className="flex-1">
-                <input type="hidden" name="id" value={r.id} />
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className={`w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60 ${TAP_SURFACE}`}
-                >
-                  {completing ? "Marcant…" : "Marcar feta"}
-                </button>
-              </form>
-            </div>
-            <div className="mt-2">
-              <CancelReservationConfirm
-                id={r.id}
-                action={cancel}
-                pending={cancelling}
-                disabled={busy}
-              />
-            </div>
-            {error && <ActionError message={error} />}
-            </>
-          ) : (
-            <p className="mt-5 text-sm text-brand-muted">
-              Aquesta reserva ja està {RESERVATION_STATUS_LABELS[r.status].toLowerCase()}.
-            </p>
-          )
-        ) : canCancel && r.status === "booked" ? (
-          <>
-            {/* La seva agenda, però no el seu client (0091): la pot cancel·lar,
-                no marcar feta ni reprogramar. */}
-            <p className="mt-5 flex items-center gap-2 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-              <LockIcon /> No és el teu client, però és de la teva agenda: la pots
-              cancel·lar.
-            </p>
-            <div className="mt-2 flex">
-              <CancelReservationConfirm
-                id={r.id}
-                action={cancel}
-                pending={cancelling}
-                disabled={busy}
-              />
-            </div>
-            {error && <ActionError message={error} />}
-          </>
-        ) : (
-          <p className="mt-5 flex items-center gap-2 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-            <LockIcon /> No és el teu client: només lectura.
-          </p>
-        )}
-
-        <button
-          type="button"
-          onClick={onClose}
-          className={`mt-3 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
-        >
-          Tancar
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <dt className="text-brand-muted">{label}</dt>
-      <dd className="font-bold text-brand-dark">{value}</dd>
-    </div>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      className="inline-block shrink-0 text-brand-muted"
-      aria-label="Bloquejada"
-    >
-      <rect x="3" y="11" width="18" height="11" rx="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
   );
 }
