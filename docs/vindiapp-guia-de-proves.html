@@ -244,12 +244,17 @@
     </ul>
     <div class="warn"><strong>Una sessió que va passar i ningú no va marcar com a completada no es paga.</strong> És la causa número u de "la liquidació no em quadra" (secció 2.2).</div>
 
-    <h3>1.7 Reserves → Disponibilitat</h3>
+    <h3>1.7 Reserves → Disponibilitat <span class="flag">Nou: reserves fora</span></h3>
     <ul class="checklist">
       <li>Regles setmanals: diversos dies alhora + franja + data d'inici (fi opcional) + <strong>quins serveis s'hi ofereixen</strong></li>
       <li>Una franja <strong>sense cap servei marcat no la pot fer servir ningú</strong> — prova-ho</li>
-      <li><strong>Bloquejos temporals</strong>: vacances, baixes o una tarda puntual, com a dia complet o amb hora exacta, amb motiu opcional. Un bloqueig <strong>guanya sempre</strong> a l'horari setmanal</li>
-      <li>Si el bloqueig cau sobre reserves ja fetes, la pantalla t'atura i te les ensenya: <strong>el bloqueig es crea igualment</strong>, tu tries quines cancel·les (les marcades retornen la sessió al bo i avisen el client)</li>
+      <li><strong>Bloquejos temporals</strong>: vacances, baixes o una tarda puntual, com a dia complet o amb hora exacta, amb motiu opcional. Un bloqueig <strong>guanya sempre</strong> a l'horari setmanal. <strong>Per a unes vacances es fa un bloqueig</strong>, no s'esborren les franges</li>
+      <li>Un bloqueig tapa per <strong>solapament</strong>: una sessió de 12:00 a 13:00 queda sota un bloqueig que comenci a les 12:30</li>
+      <li>Esborra una franja, retalla-la, treu-li un servei, escurça-ne la vigència o crea un bloqueig <strong>sobre reserves ja fetes</strong>: la pantalla t'atura i les llista (amb les proves i les esperes d'aquelles hores), <strong>totes marcades</strong>, i <strong>encara no s'ha desat res</strong></li>
+      <li>«<strong>Tornar enrere</strong>» no desa res. «<strong>Desar i cancel·lar les marcades</strong>» desa el canvi i cancel·la les marcades: la sessió torna al bo i el client rep un correu que diu que ha estat el centre. Les desmarcades es queden reservades</li>
+      <li>Si <strong>una altra franja segueix cobrint</strong> aquella hora i servei, la reserva <strong>no surt a la llista</strong></li>
+      <li>Mira les etiquetes de cada fila: <strong>cortesia</strong> (res a retornar), <strong>bo caducat</strong> (la sessió torna però no es podrà fer servir: comprova que el correu no prometi el contrari) i <strong>de sèrie</strong></li>
+      <li>El plafó «<strong>Reserves fora de la disponibilitat</strong>» surt a dalt només si n'hi ha, amb les caselles <strong>desmarcades</strong>, i des d'allà també es poden cancel·lar</li>
       <li>Comprova que <strong>un bloqueig que ja ha començat no es pot esborrar</strong>, i un futur sí</li>
     </ul>
     <div class="warn"><strong>Mentre un professional no tingui cap franja, ningú no li pot reservar res.</strong> És la causa número u de "no em deixa reservar amb ella".</div>
@@ -596,6 +601,7 @@
       <li>Amb una sessió de grup <strong>plena</strong>, el client s'hi pot apuntar (si el centre ho té activat)</li>
       <li>Mentre hi és, <strong>la franja li surt marcada</strong> i des d'allà mateix se'n pot donar de baixa</li>
       <li>Cancel·la una plaça d'aquella sessió (des de l'admin o des d'un altre client) i comprova que <strong>la reserva es fa sola</strong> per al primer de la cua, es descompta la sessió del seu bo i <strong>li arriba el correu</strong></li>
+      <li>Ara al revés: bloqueja aquella hora al professional i cancel·la una plaça. <strong>No ha d'entrar ningú de la cua</strong>: la franja ja no existeix</li>
       <li>Aquest avís <strong>no es pot desactivar</strong>: la reserva es fa sense que ell premi res</li>
       <li>Desactiva la llista d'espera a Configuració i comprova que <strong>no s'hi apunta ningú nou però els que ja hi eren segueixen entrant</strong></li>
       <li>L'aforament de grup el garanteix la base de dades: <strong>prova a reservar la darrera plaça des de dues finestres alhora</strong> — només una ha de passar</li>

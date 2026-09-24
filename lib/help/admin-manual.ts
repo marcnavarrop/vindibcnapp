@@ -544,7 +544,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Cancel·lar",
-              "Retorna la sessió al bo, avisa el client per correu i, si era una sessió de grup amb llista d'espera, la plaça passa automàticament a qui esperava.",
+              "Retorna la sessió al bo, avisa el client per correu i, si era una sessió de grup amb llista d'espera, la plaça passa automàticament a qui esperava. Només si la franja segueix dins de la disponibilitat del professional: a una franja tancada no hi entra ningú.",
             ],
             [
               "Completar",
@@ -576,7 +576,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         {
           t: "p",
           text: s.waitlistEnabled
-            ? `Quan una sessió de grup arriba a ${s.groupCapacity} persones, el client es pot apuntar a la cua. No hi ha pantalla per gestionar-la: funciona sola. Si algú cancel·la —tant si ho fa ell com si ho fas tu—, la plaça passa al primer de la fila i se l'avisa per correu.`
+            ? `Quan una sessió de grup arriba a ${s.groupCapacity} persones, el client es pot apuntar a la cua. No hi ha pantalla per gestionar-la: funciona sola. Si algú cancel·la —tant si ho fa ell com si ho fas tu—, la plaça passa al primer de la fila i se l'avisa per correu. Si la franja ja no existeix —un bloqueig, una franja esborrada—, no hi entra ningú: les esperes d'aquella hora surten al pas de confirmació de Disponibilitat, on es poden tancar.`
             : `La llista d'espera està desactivada: quan una sessió de grup arriba a ${s.groupCapacity} persones, el client ja no s'hi pot apuntar. Els qui ja hi eren, però, continuen entrant quan s'allibera una plaça.`,
         },
       ],
@@ -608,6 +608,15 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "Els serveis marcats per defecte surten de l'especialitat de la persona, però els pots canviar. Una franja sense cap servei marcat no la pot fer servir ningú.",
         },
+        {
+          t: "p",
+          text: "Cada franja es pot editar —hores, serveis i vigència— o esborrar. Si el canvi deixa reserves sense on caure, la pantalla t'atura abans de desar: ho explica «Quan un canvi deixa reserves fora», més avall.",
+        },
+        { t: "h", text: "Per a unes vacances, un bloqueig" },
+        {
+          t: "warn",
+          text: "Si un professional se'n va de vacances o està de baixa, crea-li un bloqueig. No li esborris les franges setmanals: l'horari desapareix del tot, s'ha de tornar a crear a mà quan torna i, mentrestant, les reserves que hi queien s'han de resoldre igualment. Un bloqueig tapa l'horari els dies que toca i, quan s'acaba, l'horari torna sol.",
+        },
         { t: "h", text: "Els bloquejos temporals" },
         {
           t: "p",
@@ -615,16 +624,69 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "Un bloqueig guanya sempre a l'horari setmanal. No cal esborrar la franja: es tapa i prou, i quan el bloqueig s'acaba torna sola.",
-        },
-        { t: "h", text: "Què passa amb les reserves que hi havia a dins" },
-        {
-          t: "p",
-          text: "Si el bloqueig cau sobre reserves ja fetes, la pantalla t'atura i te les ensenya una per una abans de crear-lo. El bloqueig es crearà igualment; el que decideixes és quines cancel·les: les que marquis retornen la sessió al bo i avisen el client, i les que no, es queden reservades.",
+          text: "Un bloqueig guanya sempre a l'horari setmanal. No cal esborrar la franja: es tapa i prou, i quan el bloqueig s'acaba torna sola. Tapa qualsevol sessió que toqui, encara que només sigui un tros: una sessió de 12:00 a 13:00 queda sota un bloqueig que comenci a les 12:30.",
         },
         {
           t: "note",
           text: "Un bloqueig que ja ha començat no es pot esborrar. Els que encara no han arribat, sí.",
+        },
+        { t: "h", text: "Quan un canvi deixa reserves fora" },
+        {
+          t: "p",
+          text:
+            "Esborrar una franja, retallar-la, treure-li un servei, escurçar-ne la vigència o crear un bloqueig pot deixar compromisos sense on caure. Abans de desar res, la pantalla t'atura i te'ls llista: les reserves" +
+            (s.modules.sessionsProva ? ", les sessions de prova" : "") +
+            " i les esperes de la llista d'espera d'aquelles franges. Tots surten marcats. Fins que no tries, no s'ha desat res.",
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              "«Desar i cancel·lar les marcades»",
+              "Desa el canvi i cancel·la el que està marcat. Cada reserva torna la sessió al bo i el client rep un correu que diu que ha estat el centre" +
+                (s.modules.sessionsProva
+                  ? "; cada sessió de prova s'anul·la i se n'avisa qui la va demanar"
+                  : "") +
+                "; cada espera es tanca.",
+            ],
+            [
+              "Desmarcar",
+              "El que desmarquis es desa igualment però es queda tal com està: la reserva segueix reservada, fora de l'horari, i passa al plafó «Reserves fora de la disponibilitat».",
+            ],
+            [
+              "«Tornar enrere»",
+              "No desa res. El formulari es queda com estava.",
+            ],
+          ],
+        },
+        {
+          t: "p",
+          text: "Cada fila et diu què passarà abans de decidir:",
+        },
+        {
+          t: "ul",
+          items: [
+            "Cortesia: no hi ha cap sessió a retornar.",
+            "Bo caducat: la sessió hi torna, però el bo ja no serveix per reservar. El correu al client ho diu així, sense prometre-li que la podrà fer servir.",
+            "De sèrie: la sèrie continua, i aquesta sessió no compta per al seu total.",
+          ],
+        },
+        {
+          t: "note",
+          text: "Si una altra franja del mateix professional segueix cobrint aquella hora i aquell servei, la reserva no surt a la llista: no ha quedat fora de res.",
+        },
+        {
+          t: "note",
+          text: "Qui era a la llista d'espera no entra a una franja que s'ha tancat. La cua només avança quan es cancel·la una sessió d'una franja que segueix existint.",
+        },
+        { t: "h", text: "Reserves fora de la disponibilitat" },
+        {
+          t: "p",
+          text: "Dalt de tot de la pantalla, i només si n'hi ha, surt el plafó «Reserves fora de la disponibilitat» del professional triat: tot el que ara mateix cau fora del seu horari o sota un bloqueig. Hi surt el que es va decidir mantenir, el que ja era fora d'abans i el que una cancel·lació que ha fallat ha deixat reservat.",
+        },
+        {
+          t: "p",
+          text: "Aquí les caselles surten desmarcades, al revés que en desar un canvi: el que hi ha al plafó sovint hi és a posta. Marca el que vulguis cancel·lar i prem «Cancel·lar les marcades»; passa exactament el mateix que al pas de confirmació.",
         },
       ],
     },
@@ -1749,8 +1811,8 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
               "No: una reserva que ja no existeix no la pot veure enlloc.",
             ],
             [
-              "Crear un bloqueig i marcar reserves per cancel·lar",
-              "Cada client afectat.",
+              "Tancar disponibilitat (un bloqueig, o esborrar o retallar una franja) i cancel·lar les reserves marcades",
+              "Cada client afectat, amb un correu que diu que ha estat el centre i què passa amb la sessió.",
               "No",
             ],
             ...(s.modules.sessionsProva
