@@ -1,8 +1,7 @@
 import "server-only";
+import { USE_MOCK } from "@/lib/config";
 import { slotOf, slotToHour } from "@/lib/availability-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export type CenterSettings = {
   minCancellationHours: number;

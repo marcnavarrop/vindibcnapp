@@ -1,4 +1,5 @@
 import "server-only";
+import { USE_MOCK } from "@/lib/config";
 import { centerToday } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -12,8 +13,6 @@ import type {
   PromotionScope,
   ServiceType,
 } from "@/types/database";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 // ─── Tipus ───────────────────────────────────────────────────────────────────
 

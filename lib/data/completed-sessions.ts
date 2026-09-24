@@ -1,4 +1,5 @@
 import "server-only";
+import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { centerLocalToInstant, centerDateStr } from "@/lib/center-time";
 import type { ServiceType } from "@/types/database";
@@ -28,8 +29,6 @@ import type { ServiceType } from "@/types/database";
  * període equivocat; al bonus, on els trams són progressius i el període és
  * anual, això podia canviar l'import final.
  */
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export type CompletedSession = {
   /** Dia natural del centre (YYYY-MM-DD): el que decideix quina tarifa/pes s'aplica. */
