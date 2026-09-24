@@ -1,6 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  actionError,
+  type ReservationActionState,
+} from "@/lib/reservation-action-state";
 import { redirect } from "next/navigation";
 import {
   createReservation,
@@ -33,17 +37,39 @@ export async function createReservationAction(
   redirect("/admin/reservas");
 }
 
-export async function cancelReservationAction(formData: FormData) {
+/**
+ * Cancel·la una reserva. Torna l'estat en comptes de llançar: la pantalla
+ * espera la resposta per dir si s'ha fet (vegeu `lib/reservation-action-state`).
+ */
+export async function cancelReservationAction(
+  _prev: ReservationActionState,
+  formData: FormData,
+): Promise<ReservationActionState> {
   const id = String(formData.get("id") ?? "");
-  if (id) await cancelReservation(id);
+  if (!id) return { error: "Falta la reserva." };
+  try {
+    await cancelReservation(id);
+  } catch (e) {
+    return actionError(e, "No s'ha pogut cancel·lar la reserva.");
+  }
   revalidatePath("/admin/reservas");
   revalidatePath("/admin/bonos");
+  return { ok: true };
 }
 
-export async function completeReservationAction(formData: FormData) {
+export async function completeReservationAction(
+  _prev: ReservationActionState,
+  formData: FormData,
+): Promise<ReservationActionState> {
   const id = String(formData.get("id") ?? "");
-  if (id) await completeReservation(id);
+  if (!id) return { error: "Falta la reserva." };
+  try {
+    await completeReservation(id);
+  } catch (e) {
+    return actionError(e, "No s'ha pogut marcar com a feta.");
+  }
   revalidatePath("/admin/reservas");
+  return { ok: true };
 }
 
 export async function rescheduleReservationAction(formData: FormData) {

@@ -40,6 +40,7 @@ import type {
   ReservationStatus,
   BonoStatus,
   CenterCancellationRow,
+  CancelReservationResult,
 } from "@/types/database";
 import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 
@@ -245,31 +246,6 @@ async function notifyTrainerBooking(
       serviceType: info.serviceType,
     },
   });
-}
-
-/**
- * Devuelve una sesión a su bono (al cancelar una reserva) y reactiva el bono si
- * estaba completado. Compartida entre la cancelación de trainer/admin y la del
- * cliente; funciona con cualquier cliente de Supabase (user-scoped o admin).
- */
-async function restoreBonoSession(supabase: DB, bonoId: string): Promise<void> {
-  const { data: bono } = await supabase
-    .from("bonos")
-    .select("remaining_sessions, total_sessions, status")
-    .eq("id", bonoId)
-    .single();
-  if (!bono) return;
-  const remaining = Math.min(
-    bono.remaining_sessions + 1,
-    bono.total_sessions,
-  );
-  await supabase
-    .from("bonos")
-    .update({
-      remaining_sessions: remaining,
-      ...(bono.status === "completed" ? { status: "active" as const } : {}),
-    })
-    .eq("id", bonoId);
 }
 
 /**
@@ -976,77 +952,113 @@ async function afterCancel(r: {
   });
 }
 
-/** Cancela una reserva reservada y devuelve la sesión a su bono. */
-export async function cancelReservation(id: string): Promise<void> {
-  if (USE_MOCK) {
-    const store = getStore();
-    const r = store.reservations.find((x) => x.id === id);
-    if (!r) throw new Error("Reserva no trobada.");
-    if (r.status !== "booked") return;
-    r.status = "cancelled";
-    if (r.bono_id) {
-      const bono = store.bonos.find((b) => b.id === r.bono_id);
-      if (bono) {
-        bono.remaining_sessions = Math.min(
-          bono.remaining_sessions + 1,
-          bono.total_sessions,
-        );
-        if (bono.status === "completed") bono.status = "active";
-      }
-    }
-    saveStore(store);
-    await notifyReservation(r.client_id, "reservation_cancelled", {
-      scheduledAt: r.scheduled_at,
-      serviceType: r.service_type,
+/**
+ * Una cancel·lació NORMAL, a la base: `cancel_reservation` (0091).
+ *
+ * Reserva i sessió al bo van en una sola transacció, amb la fila bloquejada des
+ * que es mira fins que es cancel·la. Abans eren dos UPDATE des d'aquí: si el
+ * segon fallava, la reserva quedava cancel·lada i la sessió perduda; tornar-la
+ * era llegir-i-escriure, i dues cancel·lacions del mateix bo alhora en podien
+ * perdre una. El permís el decideix la funció amb la sessió de qui crida.
+ *
+ * Al mock, el seu mirall. `asClient` hi fa les comprovacions que a la base fa
+ * `owns_client` i el marge de cancel·lació; sense, és l'equip i no en té cap.
+ */
+async function cancelOne(
+  id: string,
+  asClient?: { profileId: string },
+): Promise<CancelReservationResult> {
+  const today = centerToday();
+  if (!USE_MOCK) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("cancel_reservation", {
+      p_id: id,
+      p_today: today,
     });
-    await afterCancel(r);
-    return;
+    if (error) throw error;
+    return data as CancelReservationResult;
   }
 
-  const supabase = await createClient();
-  const { data: r, error } = await supabase
-    .from("reservations")
-    .select("id, status, bono_id, client_id, scheduled_at, service_type, trainer_id")
-    .eq("id", id)
-    .single();
-  if (error || !r) throw new Error("Reserva no trobada.");
-  if (r.status !== "booked") return;
-
-  // `.select()` i no només l'error: una fila que la RLS no deixa tocar NO dona
-  // error, dona ZERO files. Abans això passava de llarg, i darrere venien la
-  // sessió al bo (que tampoc s'escrivia) i el correu de «reserva cancel·lada»
-  // d'una reserva que seguia reservada. Ara, si no s'ha cancel·lat, no es diu
-  // a ningú que s'ha cancel·lat.
-  //
-  // El cas que ho feia possible: la RLS d'escriptura del professional és
-  // `is_trainer_of(client_id)` —el seu client ASSIGNAT—, i a la seva agenda hi
-  // pot haver clients d'un altre. Deduït del codi, no confirmat a producció
-  // (quan es va provar no hi havia cap cas). Aquest control no depèn de quina
-  // sigui la RLS: val tant si aquell cas existeix com si no.
-  //
-  // `eq("status","booked")` a més tanca la cursa amb una altra cancel·lació:
-  // si l'altra ha guanyat, aquí no hi ha res a tornar ni a avisar.
-  const { data: changed, error: uErr } = await supabase
-    .from("reservations")
-    .update({ status: "cancelled" })
-    .eq("id", id)
-    .eq("status", "booked")
-    .select("id");
-  if (uErr) throw uErr;
-  if (!changed || changed.length === 0)
-    throw new Error(
-      "No s'ha pogut cancel·lar la reserva: o no tens permís sobre aquesta reserva o ja no estava reservada. No s'ha avisat el client.",
-    );
-
-  if (r.bono_id) await restoreBonoSession(supabase, r.bono_id);
-  await notifyReservation(r.client_id, "reservation_cancelled", {
-    scheduledAt: r.scheduled_at,
-    serviceType: r.service_type,
-  });
-  await afterCancel({
+  const store = getStore();
+  const r = store.reservations.find((x) => x.id === id);
+  if (!r) return { ok: false, reason: "not_found" };
+  if (asClient) {
+    const owner = store.clients.find((c) => c.id === r.client_id);
+    if (!owner || owner.profile_id !== asClient.profileId)
+      return { ok: false, reason: "forbidden" };
+  }
+  if (r.status !== "booked") return { ok: false, reason: "not_booked" };
+  if (asClient) {
+    if (new Date(r.scheduled_at).getTime() <= Date.now())
+      return { ok: false, reason: "past" };
+    const { minCancellationHours } = await getCenterSettings();
+    if (!canCancelAt(r.scheduled_at, minCancellationHours))
+      return { ok: false, reason: "too_late", hours: minCancellationHours };
+  }
+  r.status = "cancelled";
+  let expired = false;
+  if (r.bono_id) {
+    const bono = store.bonos.find((b) => b.id === r.bono_id);
+    if (bono) {
+      bono.remaining_sessions = Math.min(
+        bono.remaining_sessions + 1,
+        bono.total_sessions,
+      );
+      if (bono.status === "completed") bono.status = "active";
+      expired =
+        bono.status === "expired" || (!!bono.expires_at && bono.expires_at < today);
+    }
+  }
+  saveStore(store);
+  return {
+    ok: true,
+    actor: asClient ? "client" : "admin",
+    reservation_id: r.id,
+    client_id: r.client_id,
+    bono_id: r.bono_id,
     trainer_id: r.trainer_id,
     scheduled_at: r.scheduled_at,
     service_type: r.service_type,
+    refunded: !!r.bono_id,
+    bono_expired: expired,
+  };
+}
+
+/** El que es diu a l'equip quan la base no ha cancel·lat res. */
+const TEAM_CANCEL_ERROR: Record<"not_found" | "forbidden" | "past" | "too_late", string> = {
+  not_found: "Aquesta reserva ja no existeix. No s'ha avisat ningú.",
+  forbidden:
+    "No pots cancel·lar aquesta reserva: no és de la teva agenda ni d'un client teu. No s'ha avisat ningú.",
+  // Aquests dos només s'apliquen al client; si mai arribessin aquí, que es digui.
+  past: "No es pot cancel·lar una sessió passada.",
+  too_late: "Ja és massa a prop per cancel·lar-la.",
+};
+
+/**
+ * Cancel·la una reserva des de l'EQUIP (admin o professional) i torna la
+ * sessió al bo.
+ *
+ * El correu al client i la promoció de la cua van DESPRÉS, i només si la base
+ * ha cancel·lat de debò. Si no, error clar i ningú no rep res: és el control
+ * de la 0090 («zero files → error, sense correu»), ara amb un motiu concret.
+ * Una reserva que ja no estava reservada no és cap error —algú altre l'ha
+ * cancel·lat abans—: no es fa res i no s'avisa ningú, com sempre.
+ */
+export async function cancelReservation(id: string): Promise<void> {
+  const res = await cancelOne(id);
+  if (!res.ok) {
+    if (res.reason === "not_booked") return;
+    throw new Error(TEAM_CANCEL_ERROR[res.reason]);
+  }
+  await notifyReservation(res.client_id, "reservation_cancelled", {
+    reservationId: res.reservation_id,
+    scheduledAt: res.scheduled_at,
+    serviceType: res.service_type,
+  });
+  await afterCancel({
+    trainer_id: res.trainer_id,
+    scheduled_at: res.scheduled_at,
+    service_type: res.service_type,
   });
 }
 
@@ -1142,19 +1154,27 @@ export async function completeReservation(id: string): Promise<void> {
     const store = getStore();
     const r = store.reservations.find((x) => x.id === id);
     if (!r) throw new Error("Reserva no trobada.");
-    if (r.status === "booked") r.status = "completed";
+    if (r.status !== "booked") throw new Error(NOT_COMPLETED);
+    r.status = "completed";
     saveStore(store);
     return;
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  // `.select()`: una fila que la RLS no deixa tocar no dona error, dona zero
+  // files. Sense això la pantalla deia «marcada com feta» i no ho estava.
+  const { data, error } = await supabase
     .from("reservations")
     .update({ status: "completed" })
     .eq("id", id)
-    .eq("status", "booked");
+    .eq("status", "booked")
+    .select("id");
   if (error) throw error;
+  if (!data || data.length === 0) throw new Error(NOT_COMPLETED);
 }
+
+const NOT_COMPLETED =
+  "No s'ha pogut marcar com a feta: o ja no estava reservada, o no és d'un client teu.";
 
 /** Reprograma una reserva (cambia la fecha/hora). Solo si está reservada. */
 export async function rescheduleReservation(
@@ -1442,95 +1462,52 @@ export async function createClientReservation(
   });
 }
 
-/** Cancelación de una reserva por el propio cliente (futura y 'booked'). */
+/**
+ * El CLIENT cancel·la una reserva seva i la sessió torna al bo.
+ *
+ * Passa per la mateixa funció que l'equip (`cancel_reservation`, 0091), que
+ * comprova a la base que la reserva sigui seva, futura i fora del marge de
+ * cancel·lació, i ho fa tot en una transacció. Abans ho feia aquí amb la clau de
+ * servei: dos UPDATE separats, i el de la reserva no filtrava per 'booked', o
+ * sigui que dues cancel·lacions alhora de la mateixa reserva podien tornar la
+ * sessió dues vegades.
+ *
+ * `profileId` és qui ha entrat. A la base el permís el dona la sessió; al mock,
+ * que no en té, aquest paràmetre.
+ */
 export async function cancelClientReservation(
   profileId: string,
   reservationId: string,
 ): Promise<void> {
-  if (USE_MOCK) {
-    const store = getStore();
-    const r = store.reservations.find((x) => x.id === reservationId);
-    if (!r) throw new Error("Reserva no trobada.");
-    const client = store.clients.find((c) => c.id === r.client_id);
-    if (!client || client.profile_id !== profileId)
-      throw new Error("Aquesta reserva no és teva.");
-    if (r.status !== "booked")
-      throw new Error("Només pots cancel·lar reserves actives.");
-    if (new Date(r.scheduled_at).getTime() <= Date.now())
-      throw new Error("No pots cancel·lar una sessió passada.");
-    const { getCenterSettings } = await import("@/lib/data/center-settings");
-    const settings = await getCenterSettings();
-    if (!canCancelAt(r.scheduled_at, settings.minCancellationHours))
-      throw new TooLateToCancelError(settings.minCancellationHours);
-    r.status = "cancelled";
-    if (r.bono_id) {
-      const bono = store.bonos.find((b) => b.id === r.bono_id);
-      if (bono) {
-        bono.remaining_sessions = Math.min(
-          bono.remaining_sessions + 1,
-          bono.total_sessions,
-        );
-        if (bono.status === "completed") bono.status = "active";
-      }
+  const res = await cancelOne(reservationId, { profileId });
+  if (!res.ok) {
+    switch (res.reason) {
+      case "too_late":
+        throw new TooLateToCancelError(res.hours ?? 0);
+      case "past":
+        throw new Error("No pots cancel·lar una sessió passada.");
+      case "not_booked":
+        throw new Error("Només pots cancel·lar reserves actives.");
+      case "forbidden":
+        throw new Error("Aquesta reserva no és teva.");
+      default:
+        throw new Error("Reserva no trobada.");
     }
-    saveStore(store);
-    // L'acció l'ha fet el client → avisa el professional de la cancel·lació.
-    if (r.trainer_id) {
-      const clientName =
-        store.profiles.find((p) => p.id === client.profile_id)?.full_name ?? null;
-      await notifyTrainerBooking(r.trainer_id, "trainer_booking_cancelled", {
-        clientName,
-        scheduledAt: r.scheduled_at,
-        serviceType: r.service_type,
-      });
-    }
-    await afterCancel(r);
-    return;
   }
 
-  const admin = createAdminClient();
-  const { data: r, error } = await admin
-    .from("reservations")
-    .select(
-      `id, status, scheduled_at, service_type, trainer_id, bono_id,
-       client:clients!reservations_client_id_fkey(profile_id, profile:profiles!clients_profile_id_fkey(full_name))`,
-    )
-    .eq("id", reservationId)
-    .single();
-  if (error || !r) throw new Error("Reserva no trobada.");
-  const owner = (
-    r as unknown as {
-      client: { profile_id: string; profile: { full_name: string | null } | null } | null;
-    }
-  ).client;
-  if (!owner || owner.profile_id !== profileId)
-    throw new Error("Aquesta reserva no és teva.");
-  if (r.status !== "booked")
-    throw new Error("Només pots cancel·lar reserves actives.");
-  if (new Date(r.scheduled_at).getTime() <= Date.now())
-    throw new Error("No pots cancel·lar una sessió passada.");
-  const { getCenterSettings } = await import("@/lib/data/center-settings");
-  const settings = await getCenterSettings();
-  if (!canCancelAt(r.scheduled_at, settings.minCancellationHours))
-    throw new TooLateToCancelError(settings.minCancellationHours);
-
-  const { error: uErr } = await admin
-    .from("reservations")
-    .update({ status: "cancelled" })
-    .eq("id", reservationId);
-  if (uErr) throw uErr;
-  if (r.bono_id) await restoreBonoSession(admin, r.bono_id);
   // L'acció l'ha fet el client → avisa el professional de la cancel·lació.
-  if (r.trainer_id)
-    await notifyTrainerBooking(r.trainer_id, "trainer_booking_cancelled", {
-      clientName: owner.profile?.full_name ?? null,
-      scheduledAt: r.scheduled_at,
-      serviceType: r.service_type,
+  if (res.trainer_id) {
+    const client = await clientContact(res.client_id);
+    await notifyTrainerBooking(res.trainer_id, "trainer_booking_cancelled", {
+      clientName: client?.name ?? null,
+      scheduledAt: res.scheduled_at,
+      serviceType: res.service_type,
     });
+  }
   await afterCancel({
-    trainer_id: r.trainer_id,
-    scheduled_at: r.scheduled_at,
-    service_type: r.service_type,
+    trainer_id: res.trainer_id,
+    scheduled_at: res.scheduled_at,
+    service_type: res.service_type,
   });
 }
 

@@ -74,6 +74,7 @@ export async function addToWaitlist(input: WaitlistEntryInput): Promise<string> 
       created_at: new Date().toISOString(),
       fulfilled_at: null,
       fulfilled_reservation_id: null,
+      cancelled_by_center: false,
     });
     saveStore(store);
     return id;

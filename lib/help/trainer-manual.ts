@@ -336,7 +336,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         {
           t: "note",
           text: s.trainersSeeColleaguesReservations
-            ? "Veus l'agenda de tot el centre per poder-te coordinar, però només pots gestionar les reserves dels teus clients. Les altres es miren i prou."
+            ? "Veus l'agenda de tot el centre per poder-te coordinar. Gestiones les reserves dels teus clients, i a més pots cancel·lar qualsevol reserva de la teva agenda encara que el client sigui d'un company. Les dels companys es miren i prou."
             : "Al calendari només hi surten les teves reserves: el centre té desactivada la vista de les dels companys.",
         },
       ],
@@ -419,7 +419,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Pots marcar «Fet» o cancel·lar una sessió d'un client teu encara que la sessió la donés un company —passa quan es cobreix una baixa—. El que no pots és escriure'n la nota: això és de qui la va fer.",
+          text: "Pots marcar «Fet» o cancel·lar una sessió d'un client teu encara que la sessió la donés un company —passa quan es cobreix una baixa—. El que no pots és escriure'n la nota: això és de qui la va fer. I al revés: una sessió de la TEVA agenda la pots cancel·lar encara que el client sigui d'un company, perquè qui la fa ets tu; marcar-la feta o reprogramar-la, en canvi, és de qui el té assignat.",
         },
       ],
     },

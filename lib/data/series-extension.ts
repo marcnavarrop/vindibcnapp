@@ -217,6 +217,25 @@ function nextAfter(iso: string, frequency: BookingFrequency): string {
   ).toISOString();
 }
 
+/**
+ * L'última ocurrència col·locada: d'on continua el patró.
+ *
+ * Compten les reserves i TAMBÉ les esperes, en qualsevol estat. Abans només les
+ * reserves: si les últimes ocurrències havien anat a la cua, l'allargament
+ * tornava a començar des de la darrera reserva i reprovava les mateixes dates.
+ * Amb una espera tancada pel centre (0091) això volia dir tornar a intentar,
+ * mes rere mes, una franja tancada, i la sèrie no arribava mai al seu total.
+ */
+function lastPlaced(
+  reservationStarts: string[],
+  waits: { desired_date: string; desired_time: string }[],
+): string | null {
+  const waitStarts = waits.map((w) =>
+    centerLocalToInstant(w.desired_date, String(w.desired_time).slice(0, 5)).toISOString(),
+  );
+  return [...reservationStarts, ...waitStarts].sort().at(-1) ?? null;
+}
+
 // ─── Lectura ────────────────────────────────────────────────────────────────
 
 async function listSeriesToExtend(
@@ -240,10 +259,10 @@ async function listSeriesToExtend(
       .map((s) => {
         const res = store.reservations.filter((r) => r.series_id === s.id);
         const waits = store.waitlist_entries.filter((w) => w.series_id === s.id);
-        const lastAt = res
-          .map((r) => r.scheduled_at)
-          .sort()
-          .at(-1);
+        const lastAt = lastPlaced(
+          res.map((r) => r.scheduled_at),
+          waits,
+        );
         return {
           id: s.id,
           clientId,
@@ -258,8 +277,12 @@ async function listSeriesToExtend(
           firstAt: s.first_at,
           // Les que ha cancel·lat el CENTRE no compten (0090): una sèrie de
           // deu en fa deu encara que el centre n'hagi hagut d'anul·lar dues.
-          // Sí que compten per a `lastAt`: el patró continua després d'elles.
-          placed: res.filter((r) => !r.cancelled_by_center).length + waits.length,
+          // Sí que compten per a `lastAt`, reserves i esperes: el patró
+          // continua després d'elles.
+          // Les esperes que ha tancat el centre tampoc (0091).
+          placed:
+            res.filter((r) => !r.cancelled_by_center).length +
+            waits.filter((w) => !w.cancelled_by_center).length,
           lastAt: lastAt ?? null,
         };
       });
@@ -291,15 +314,18 @@ async function listSeriesToExtend(
       .from("reservations")
       .select("series_id, scheduled_at, cancelled_by_center")
       .in("series_id", ids),
-    admin.from("waitlist_entries").select("series_id").in("series_id", ids),
+    admin
+      .from("waitlist_entries")
+      .select("series_id, cancelled_by_center, desired_date, desired_time")
+      .in("series_id", ids),
   ]);
 
   return series.map((s) => {
     const mine = (res ?? []).filter((r) => r.series_id === s.id);
-    const lastAt = mine
-      .map((r) => r.scheduled_at)
-      .sort()
-      .at(-1);
+    const lastAt = lastPlaced(
+      mine.map((r) => r.scheduled_at),
+      (waits ?? []).filter((w) => w.series_id === s.id),
+    );
     return {
       id: s.id,
       clientId,
@@ -312,11 +338,13 @@ async function listSeriesToExtend(
       bookOnlyAvailable: s.book_only_available,
       allowWaitlist: s.allow_waitlist,
       firstAt: s.first_at,
-      // Mateix criteri que al mock: les cancel·lades pel centre no gasten
-      // ocurrències de la sèrie (0090), però sí que marquen on va el patró.
+      // Mateix criteri que al mock: les reserves cancel·lades pel centre (0090)
+      // i les esperes que ha tancat (0091) no gasten ocurrències de la sèrie.
+      // Les reserves sí que marquen on va el patró.
       placed:
         mine.filter((r) => !r.cancelled_by_center).length +
-        (waits ?? []).filter((w) => w.series_id === s.id).length,
+        (waits ?? []).filter((w) => w.series_id === s.id && !w.cancelled_by_center)
+          .length,
       lastAt: lastAt ?? null,
     };
   });

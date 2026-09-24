@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import {
@@ -27,6 +27,7 @@ import {
 } from "@/lib/availability-slots";
 import { Badge } from "@/components/ui/badge";
 import type { ReservationListItem } from "@/lib/data/reservations";
+import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
@@ -82,6 +83,11 @@ const DAY_NAMES = [
 ];
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
+/** Cancel·lar i marcar feta: la pantalla n'espera la resposta. */
+type StatefulReservationAction = (
+  prev: ReservationActionState,
+  formData: FormData,
+) => Promise<ReservationActionState>;
 
 function startOfWeek(ref: Date): Date {
   const d = new Date(ref);
@@ -118,6 +124,7 @@ const SLOTS_PER_SESSION = slotsFor(SESSION_DURATION_MINUTES);
 export function WeeklyCalendar({
   reservations,
   manageableIds,
+  cancellableIds,
   newReservationBase,
   cancelAction,
   completeAction,
@@ -136,10 +143,17 @@ export function WeeklyCalendar({
 }: {
   reservations: ReservationListItem[];
   manageableIds: string[];
+  /**
+   * Les que qui mira pot CANCEL·LAR. És més ampla que `manageableIds` per al
+   * professional: les de la seva agenda també, encara que el client sigui d'un
+   * company (0091). Marcar-les fetes o reprogramar-les, no. Sense llista, les
+   * mateixes que `manageableIds`.
+   */
+  cancellableIds?: string[];
   /** Ruta del formulario de nueva reserva (se le añade ?at=ISO). */
   newReservationBase: string;
-  cancelAction: ReservationAction;
-  completeAction: ReservationAction;
+  cancelAction: StatefulReservationAction;
+  completeAction: StatefulReservationAction;
   rescheduleAction: ReservationAction;
   /** Si se pasa, sombrea las franjas dentro de la disponibilidad declarada. */
   availability?: AvailabilityRuleLite[];
@@ -175,6 +189,10 @@ export function WeeklyCalendar({
   const [selectedTrial, setSelectedTrial] = useState<TrialHoldItem | null>(null);
 
   const manageable = useMemo(() => new Set(manageableIds), [manageableIds]);
+  const cancellable = useMemo(
+    () => new Set(cancellableIds ?? manageableIds),
+    [cancellableIds, manageableIds],
+  );
   const manageableTrials = useMemo(
     () => new Set(manageableTrialIds),
     [manageableTrialIds],
@@ -582,6 +600,7 @@ export function WeeklyCalendar({
           r={selected}
           palette={palette}
           canManage={manageable.has(selected.id)}
+          canCancel={cancellable.has(selected.id)}
           cancelAction={cancelAction}
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}
@@ -925,9 +944,43 @@ function FreeSlotCount({
   );
 }
 
+function CancelReservationForm({
+  id,
+  action,
+  pending,
+  disabled,
+}: {
+  id: string;
+  action: (formData: FormData) => void;
+  pending: boolean;
+  disabled: boolean;
+}) {
+  return (
+    <form action={action} className="flex-1">
+      <input type="hidden" name="id" value={id} />
+      <button
+        type="submit"
+        disabled={disabled}
+        className={`w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 disabled:opacity-60 ${TAP_SURFACE}`}
+      >
+        {pending ? "Cancel·lant…" : "Cancel·lar"}
+      </button>
+    </form>
+  );
+}
+
+function ActionError({ message }: { message: string }) {
+  return (
+    <p role="alert" className="mt-2 text-sm text-error">
+      {message}
+    </p>
+  );
+}
+
 function ReservationModal({
   r,
   canManage,
+  canCancel,
   cancelAction,
   completeAction,
   rescheduleAction,
@@ -937,13 +990,27 @@ function ReservationModal({
   r: ReservationListItem;
   palette: ColorPalette;
   canManage: boolean;
-  cancelAction: ReservationAction;
-  completeAction: ReservationAction;
+  /** Pot cancel·lar-la encara que no la pugui gestionar (la seva agenda). */
+  canCancel: boolean;
+  cancelAction: StatefulReservationAction;
+  completeAction: StatefulReservationAction;
   rescheduleAction: ReservationAction;
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [done, setDone] = useState<"cancelled" | "completed" | null>(null);
+  /*
+   * L'ÈXIT ES DIU QUAN EL SERVIDOR HO DIU, no en enviar el formulari.
+   *
+   * Abans era un `onSubmit={() => setDone(...)}`: la pantalla deia «Reserva
+   * cancel·lada» abans de saber res, i si el servidor fallava ho seguia dient
+   * —reproduït en desenvolupament i en producció, amb la reserva encara al
+   * calendari—. Ara `done` surt de la resposta, i l'error es pinta aquí mateix.
+   */
+  const [cancelState, cancel, cancelling] = useActionState(cancelAction, {});
+  const [completeState, complete, completing] = useActionState(completeAction, {});
+  const done = cancelState.ok ? "cancelled" : completeState.ok ? "completed" : null;
+  const error = cancelState.error ?? completeState.error ?? null;
+  const busy = cancelling || completing;
 
   if (done) {
     const close = () => { router.refresh(); onClose(); };
@@ -1034,31 +1101,48 @@ function ReservationModal({
               </div>
             </form>
             <div className="mt-2 flex items-center gap-2">
-              <form action={completeAction} className="flex-1" onSubmit={() => setDone("completed")}>
+              <form action={complete} className="flex-1">
                 <input type="hidden" name="id" value={r.id} />
                 <button
                   type="submit"
-                  className={`w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light ${TAP_SURFACE}`}
+                  disabled={busy}
+                  className={`w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60 ${TAP_SURFACE}`}
                 >
-                  Marcar feta
+                  {completing ? "Marcant…" : "Marcar feta"}
                 </button>
               </form>
-              <form action={cancelAction} className="flex-1" onSubmit={() => setDone("cancelled")}>
-                <input type="hidden" name="id" value={r.id} />
-                <button
-                  type="submit"
-                  className={`w-full rounded-lg border border-brand-border px-3 py-2 text-sm font-bold text-error hover:bg-error/10 ${TAP_SURFACE}`}
-                >
-                  Cancel·lar
-                </button>
-              </form>
+              <CancelReservationForm
+                id={r.id}
+                action={cancel}
+                pending={cancelling}
+                disabled={busy}
+              />
             </div>
+            {error && <ActionError message={error} />}
             </>
           ) : (
             <p className="mt-5 text-sm text-brand-muted">
               Aquesta reserva ja està {RESERVATION_STATUS_LABELS[r.status].toLowerCase()}.
             </p>
           )
+        ) : canCancel && r.status === "booked" ? (
+          <>
+            {/* La seva agenda, però no el seu client (0091): la pot cancel·lar,
+                no marcar feta ni reprogramar. */}
+            <p className="mt-5 flex items-center gap-2 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
+              <LockIcon /> No és el teu client, però és de la teva agenda: la pots
+              cancel·lar.
+            </p>
+            <div className="mt-2 flex">
+              <CancelReservationForm
+                id={r.id}
+                action={cancel}
+                pending={cancelling}
+                disabled={busy}
+              />
+            </div>
+            {error && <ActionError message={error} />}
+          </>
         ) : (
           <p className="mt-5 flex items-center gap-2 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
             <LockIcon /> No és el teu client: només lectura.

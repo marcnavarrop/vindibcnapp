@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   SERVICE_LABELS,
@@ -9,10 +9,7 @@ import {
   formatDayHeading,
   dayKey,
 } from "@/lib/labels";
-import {
-  cancelReservationAction,
-  completeReservationAction,
-} from "@/app/(admin)/admin/reservas/actions";
+import type { ReservationActionState } from "@/lib/reservation-action-state";
 import { SessionNotePanel } from "@/components/session-note-panel";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { SessionNote } from "@/lib/data/session-notes";
@@ -26,6 +23,18 @@ const STATUS_TONE: Record<ReservationStatus, "info" | "success" | "danger"> = {
 };
 
 type DayGroup = { day: string; items: ReservationListItem[] };
+
+/** Cancel·lar i marcar feta: tornen si s'ha fet i, si no, per què. */
+type StatefulReservationAction = (
+  prev: ReservationActionState,
+  formData: FormData,
+) => Promise<ReservationActionState>;
+
+/** El que necessiten els botons d'una fila. */
+type RowActions = {
+  cancelAction: StatefulReservationAction;
+  completeAction: StatefulReservationAction;
+};
 
 function groupByDay(items: ReservationListItem[]): DayGroup[] {
   const map = new Map<string, ReservationListItem[]>();
@@ -41,8 +50,11 @@ export function ReservationsAgenda({
   trainers,
   nowISO,
   manageableIds,
+  cancellableIds,
   notes,
   noteableIds,
+  cancelAction,
+  completeAction,
 }: {
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
@@ -52,6 +64,19 @@ export function ReservationsAgenda({
    * gestión (Fet/Cancel·lar). Si se omite, todas son gestionables (admin).
    */
   manageableIds?: string[];
+  /**
+   * Les que es poden CANCEL·LAR si és una llista diferent (el professional: la
+   * seva agenda, encara que el client sigui d'un company). Sense, les mateixes
+   * que `manageableIds`.
+   */
+  cancellableIds?: string[];
+  /**
+   * Les accions de l'àrea on s'és. Abans s'importaven les de l'ADMIN aquí
+   * dins, també a l'àrea del professional, i revalidaven /admin: la seva
+   * llista no es refrescava després de cancel·lar.
+   */
+  cancelAction: StatefulReservationAction;
+  completeAction: StatefulReservationAction;
   /** Les notes que qui mira POT llegir, per id de reserva. La RLS ja ha filtrat. */
   notes?: Record<string, SessionNote>;
   /**
@@ -73,6 +98,14 @@ export function ReservationsAgenda({
     () => (manageableIds ? new Set(manageableIds) : null),
     [manageableIds],
   );
+  const cancellable = useMemo(
+    () => {
+      const ids = cancellableIds ?? manageableIds;
+      return ids ? new Set(ids) : null;
+    },
+    [cancellableIds, manageableIds],
+  );
+  const actions: RowActions = { cancelAction, completeAction };
   // Sense llista, ningú escriu. El contrari de `manageable`, que sense llista
   // ho obre tot: allà l'absència vol dir "admin"; aquí, "no és teva".
   const noteable = useMemo(() => new Set(noteableIds ?? []), [noteableIds]);
@@ -134,6 +167,8 @@ export function ReservationsAgenda({
         groups={upcoming}
         emptyLabel="No hi ha reserves properes."
         canManage={(id) => !manageable || manageable.has(id)}
+        canCancel={(id) => !cancellable || cancellable.has(id)}
+        actions={actions}
       />
       {/* La nota només surt a "Passades": parla de com ha anat la sessió, i
           d'una que no ha començat encara no hi ha res a dir. El servidor ho
@@ -144,6 +179,8 @@ export function ReservationsAgenda({
         groups={past}
         emptyLabel="No hi ha reserves passades."
         canManage={(id) => !manageable || manageable.has(id)}
+        canCancel={(id) => !cancellable || cancellable.has(id)}
+        actions={actions}
         notes={notes}
         canWriteNote={(id) => noteable.has(id)}
       />
@@ -156,6 +193,8 @@ function Section({
   groups,
   emptyLabel,
   canManage,
+  canCancel,
+  actions,
   notes,
   canWriteNote,
 }: {
@@ -163,6 +202,8 @@ function Section({
   groups: DayGroup[];
   emptyLabel: string;
   canManage: (id: string) => boolean;
+  canCancel: (id: string) => boolean;
+  actions: RowActions;
   notes?: Record<string, SessionNote>;
   canWriteNote?: (id: string) => boolean;
 }) {
@@ -203,9 +244,14 @@ function Section({
                       <Badge tone={STATUS_TONE[r.status]}>
                         {RESERVATION_STATUS_LABELS[r.status]}
                       </Badge>
-                      {r.status === "booked" && canManage(r.id) && (
-                        <ReservationActions id={r.id} />
-                      )}
+                      {r.status === "booked" &&
+                        (canManage(r.id) || canCancel(r.id)) && (
+                          <ReservationActions
+                            id={r.id}
+                            canComplete={canManage(r.id)}
+                            {...actions}
+                          />
+                        )}
                     </div>
                   </div>
                   {(notes || canWriteNote) && r.status !== "cancelled" && (
@@ -226,27 +272,52 @@ function Section({
   );
 }
 
-function ReservationActions({ id }: { id: string }) {
+/**
+ * Els botons d'una fila. Cada fila té el seu estat —un hook no es pot cridar
+ * dins d'un `.map()`— i espera la resposta: si el servidor diu que no, el motiu
+ * surt aquí mateix en comptes de perdre's.
+ */
+function ReservationActions({
+  id,
+  canComplete,
+  cancelAction,
+  completeAction,
+}: { id: string; canComplete: boolean } & RowActions) {
+  const [cancelState, cancel, cancelling] = useActionState(cancelAction, {});
+  const [completeState, complete, completing] = useActionState(completeAction, {});
+  const error = cancelState.error ?? completeState.error ?? null;
+  const busy = cancelling || completing;
   return (
-    <div className="flex items-center gap-1">
-      <form action={completeReservationAction}>
-        <input type="hidden" name="id" value={id} />
-        <button
-          type="submit"
-          className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-success hover:bg-success/10 ${TAP}`}
-        >
-          Fet
-        </button>
-      </form>
-      <form action={cancelReservationAction}>
-        <input type="hidden" name="id" value={id} />
-        <button
-          type="submit"
-          className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10 ${TAP}`}
-        >
-          Cancel·lar
-        </button>
-      </form>
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-1">
+        {canComplete && (
+          <form action={complete}>
+            <input type="hidden" name="id" value={id} />
+            <button
+              type="submit"
+              disabled={busy}
+              className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-success hover:bg-success/10 disabled:opacity-60 ${TAP}`}
+            >
+              {completing ? "…" : "Fet"}
+            </button>
+          </form>
+        )}
+        <form action={cancel}>
+          <input type="hidden" name="id" value={id} />
+          <button
+            type="submit"
+            disabled={busy}
+            className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10 disabled:opacity-60 ${TAP}`}
+          >
+            {cancelling ? "Cancel·lant…" : "Cancel·lar"}
+          </button>
+        </form>
+      </div>
+      {error && (
+        <p role="alert" className="max-w-xs text-right text-xs text-error">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -12,6 +12,10 @@ import { parseReservationForm } from "@/lib/data/reservation-input";
 import { acceptTrial, rejectTrial } from "@/lib/data/trial-bookings";
 import { datetimeLocalToInstant } from "@/lib/center-time";
 import { getViewer } from "@/lib/auth";
+import {
+  actionError,
+  type ReservationActionState,
+} from "@/lib/reservation-action-state";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
 /**
@@ -41,19 +45,41 @@ export async function createTrainerReservationAction(
   redirect("/trainer/reservas");
 }
 
-/** Cancela una reserva (RLS: solo de sus clientes asignados). */
-export async function cancelTrainerReservationAction(formData: FormData) {
+/**
+ * Cancel·la una reserva: les dels seus clients assignats i qualsevol de la seva
+ * agenda (0091). Qui ho decideix és `cancel_reservation`, a la base. Torna
+ * l'estat en comptes de llançar: la pantalla espera la resposta.
+ */
+export async function cancelTrainerReservationAction(
+  _prev: ReservationActionState,
+  formData: FormData,
+): Promise<ReservationActionState> {
   const id = String(formData.get("id") ?? "");
-  if (id) await cancelReservation(id);
+  if (!id) return { error: "Falta la reserva." };
+  try {
+    await cancelReservation(id);
+  } catch (e) {
+    return actionError(e, "No s'ha pogut cancel·lar la reserva.");
+  }
   revalidatePath("/trainer/reservas");
   revalidatePath("/trainer/bonos");
+  return { ok: true };
 }
 
-/** Marca una reserva como realizada (RLS: solo de sus clientes asignados). */
-export async function completeTrainerReservationAction(formData: FormData) {
+/** Marca una reserva com a feta (RLS: només dels seus clients assignats). */
+export async function completeTrainerReservationAction(
+  _prev: ReservationActionState,
+  formData: FormData,
+): Promise<ReservationActionState> {
   const id = String(formData.get("id") ?? "");
-  if (id) await completeReservation(id);
+  if (!id) return { error: "Falta la reserva." };
+  try {
+    await completeReservation(id);
+  } catch (e) {
+    return actionError(e, "No s'ha pogut marcar com a feta.");
+  }
   revalidatePath("/trainer/reservas");
+  return { ok: true };
 }
 
 /** Reprograma una reserva propia (RLS: solo de sus clientes asignados). */
