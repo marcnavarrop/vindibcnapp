@@ -8,14 +8,10 @@ import { intlLocale, type Locale } from "@/lib/i18n/config";
 import { clsx, TAP } from "@/lib/utils";
 import {
   weekdayOf,
-  localDateStr,
-  isSlotBlocked,
   hourToSlot,
-  slotsFor,
   isOnTheHour,
   slotToHHMM,
   SLOT_MINUTES,
-  blocksOf,
   type TrainerRuleLite,
   type TrainerBlockLite,
 } from "@/lib/availability-slots";
@@ -26,6 +22,7 @@ import {
 } from "@/lib/data/trial-bookings.constants";
 // (valor compartit sense `server-only`, segur en un client component)
 import type { PublicTrialData } from "@/lib/data/trial-bookings";
+import { freeServicesAt, occupancyFromSlotKeys, type OccupancyLookup } from "@/lib/free-slots";
 import type { TrialFormState } from "@/app/prova/actions";
 
 const HOUR = 60 * 60 * 1000;
@@ -59,36 +56,34 @@ const toLocalInput = (d: Date) =>
     d.getHours(),
   )}:${pad(d.getMinutes())}`;
 
-/** ¿Algun entrenador ofereix la prova en aquesta franja i està lliure? */
+/**
+ * ¿Algun entrenador ofereix la prova en aquesta franja i està lliure?
+ *
+ * La regla és la de totes les pantalles (lib/free-slots.ts). Aquí l'ocupació
+ * surt de `busy`, els slots ocupats que envia el servidor: la pàgina és pública
+ * i no en rep res més.
+ */
 function slotIsFree(
   rules: TrainerRuleLite[],
-  busy: Set<string>,
+  occupancy: OccupancyLookup,
   blocks: TrainerBlockLite[],
   date: Date,
   slot: number,
 ): boolean {
-  const wd = weekdayOf(date);
-  const day = localDateStr(date);
-  const ocupa = slotsFor(TRIAL_DURATION);
-  for (const r of rules) {
-    if (r.weekday !== wd) continue;
-    if (day < r.validFrom) continue;
-    if (r.validUntil && day > r.validUntil) continue;
-    // La prova ha de cabre sencera dins de la regla.
-    if (slot < r.startSlot || slot + ocupa > r.endSlot) continue;
-    if (!r.serviceTypes.includes(TRIAL_SERVICE)) continue;
-    // Cap dels slots que ocuparia pot estar pres. `busy` ja ve del servidor
-    // amb tots els slots de cada sessió marcats, però la prova també en dura
-    // dos: si el segon xoca, la franja no serveix.
-    let xoca = false;
-    for (let i = 0; i < ocupa; i++)
-      if (busy.has(`${r.trainerId}|${day}|${slot + i}`)) xoca = true;
-    if (xoca) continue;
-    // Vacances o absències: la regla setmanal hi és, però aquell dia no.
-    if (isSlotBlocked(blocksOf(blocks, r.trainerId), date, slot, TRIAL_DURATION))
-      continue;
-    return true; // hi ha com a mínim un entrenador lliure
-  }
+  const trainerIds = new Set(rules.map((r) => r.trainerId));
+  for (const trainerId of trainerIds)
+    if (
+      freeServicesAt({
+        rules,
+        blocks,
+        trainerId,
+        date,
+        slot,
+        durationMinutes: TRIAL_DURATION,
+        occupancy,
+      }).has(TRIAL_SERVICE)
+    )
+      return true; // hi ha com a mínim un entrenador lliure
   return false;
 }
 
@@ -115,7 +110,10 @@ export function TrialCalendar({
     if (typeof window !== "undefined" && window.innerWidth < 768) setView("day");
   }, []);
 
-  const busy = useMemo(() => new Set(data.busy), [data.busy]);
+  const occupancy = useMemo(
+    () => occupancyFromSlotKeys(new Set(data.busy)),
+    [data.busy],
+  );
   const rules = data.rules;
   const blocks = data.blocks;
 
@@ -246,7 +244,7 @@ export function TrialCalendar({
                 const bookable =
                   ms >= minMs &&
                   ms <= maxMs &&
-                  slotIsFree(rules, busy, blocks, cellDate, slot);
+                  slotIsFree(rules, occupancy, blocks, cellDate, slot);
                 return (
                   <div
                     key={dayIdx}
