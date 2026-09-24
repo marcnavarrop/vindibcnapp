@@ -256,7 +256,10 @@ async function listSeriesToExtend(
           bookOnlyAvailable: s.book_only_available,
           allowWaitlist: s.allow_waitlist,
           firstAt: s.first_at,
-          placed: res.length + waits.length,
+          // Les que ha cancel·lat el CENTRE no compten (0090): una sèrie de
+          // deu en fa deu encara que el centre n'hagi hagut d'anul·lar dues.
+          // Sí que compten per a `lastAt`: el patró continua després d'elles.
+          placed: res.filter((r) => !r.cancelled_by_center).length + waits.length,
           lastAt: lastAt ?? null,
         };
       });
@@ -284,7 +287,10 @@ async function listSeriesToExtend(
 
   const ids = series.map((s) => s.id);
   const [{ data: res }, { data: waits }] = await Promise.all([
-    admin.from("reservations").select("series_id, scheduled_at").in("series_id", ids),
+    admin
+      .from("reservations")
+      .select("series_id, scheduled_at, cancelled_by_center")
+      .in("series_id", ids),
     admin.from("waitlist_entries").select("series_id").in("series_id", ids),
   ]);
 
@@ -306,7 +312,11 @@ async function listSeriesToExtend(
       bookOnlyAvailable: s.book_only_available,
       allowWaitlist: s.allow_waitlist,
       firstAt: s.first_at,
-      placed: mine.length + (waits ?? []).filter((w) => w.series_id === s.id).length,
+      // Mateix criteri que al mock: les cancel·lades pel centre no gasten
+      // ocurrències de la sèrie (0090), però sí que marquen on va el patró.
+      placed:
+        mine.filter((r) => !r.cancelled_by_center).length +
+        (waits ?? []).filter((w) => w.series_id === s.id).length,
       lastAt: lastAt ?? null,
     };
   });

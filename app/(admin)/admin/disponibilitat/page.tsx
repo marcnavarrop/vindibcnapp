@@ -13,12 +13,15 @@ import { listAvailabilityRules } from "@/lib/data/availability";
 import { listUpcomingBlocks } from "@/lib/data/availability-blocks";
 import { AvailabilityManager } from "@/components/availability-manager";
 import { AvailabilityBlocksManager } from "@/components/availability-blocks-manager";
+import { OrphansPanel } from "@/components/orphans-panel";
+import { findOrphans, NO_ORPHANS } from "@/lib/data/availability-orphans";
 import {
   createAvailabilityAdminAction,
   updateAvailabilityAdminAction,
   deleteAvailabilityAdminAction,
   createBlockAdminAction,
   deleteBlockAdminAction,
+  cancelOrphansAdminAction,
 } from "@/app/(admin)/admin/disponibilitat/actions";
 import { TAP, clsx } from "@/lib/utils";
 
@@ -34,12 +37,13 @@ export default async function AdminDisponibilitatPage({
   const selected =
     trainers.find((t) => t.id === selectedId) ?? trainers[0] ?? null;
   const centerSettings = await getCenterSettings();
-  const [rules, blocks] = selected
+  const [rules, blocks, orphans] = selected
     ? await Promise.all([
         listAvailabilityRules(selected.id),
         listUpcomingBlocks(selected.id),
+        findOrphans(selected.id),
       ])
-    : [[], []];
+    : [[], [], NO_ORPHANS];
   const todayStr = centerToday();
 
   return (
@@ -76,7 +80,19 @@ export default async function AdminDisponibilitatPage({
           </div>
 
           {selected && (
+            <OrphansPanel
+              // Un plafó per professional: canviar de pestanya no ha d'arrossegar
+              // el missatge de l'anterior.
+              key={selected.id}
+              orphans={orphans}
+              action={cancelOrphansAdminAction.bind(null, selected.id)}
+              own={false}
+            />
+          )}
+
+          {selected && (
             <AvailabilityManager
+              key={selected.id}
               rules={rules}
               todayStr={todayStr}
               specialty={selected.specialty}
@@ -88,6 +104,7 @@ export default async function AdminDisponibilitatPage({
 
           {selected && (
             <AvailabilityBlocksManager
+              key={selected.id}
               blocks={blocks}
               openingHour={centerSettings.openingHour}
               closingHour={centerSettings.closingHour}

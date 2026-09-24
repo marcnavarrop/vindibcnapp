@@ -198,11 +198,30 @@ export function isSlotBlocked(
 ): boolean {
   const start = new Date(date);
   start.setHours(0, slot * SLOT_MINUTES, 0, 0);
-  const end = new Date(start.getTime() + durationMinutes * 60_000);
+  return isRangeBlocked(
+    blocks,
+    start.getTime(),
+    start.getTime() + durationMinutes * 60_000,
+  );
+}
+
+/**
+ * ¿El rang d'instants [startMs, endMs) solapa algun bloqueig?
+ *
+ * El nucli de `isSlotBlocked`, sense llegir cap rellotge local: és la variant
+ * que pot fer servir el SERVIDOR, on el procés va en UTC i una data del centre
+ * no es pot reconstruir amb `setHours`. Els bloquejos ja són instants absoluts,
+ * així que aquí no cal cap conversió de zona.
+ */
+export function isRangeBlocked(
+  blocks: AvailabilityBlockLite[],
+  startMs: number,
+  endMs: number,
+): boolean {
   return blocks.some((b) =>
     rangesOverlap(
-      start.getTime(),
-      end.getTime(),
+      startMs,
+      endMs,
       new Date(b.startAt).getTime(),
       new Date(b.endAt).getTime(),
     ),

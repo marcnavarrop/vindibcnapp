@@ -15,7 +15,7 @@ import { CENTER_EMAIL } from "@/lib/email";
 import { notify, getProfileContact } from "@/lib/notifications";
 import {
   isServiceAvailableOn,
-  isInstantBlocked,
+  isRangeBlocked,
   blocksOf,
   rangesOverlap,
   slotsFor,
@@ -362,7 +362,8 @@ function pickTrainer(
     if (!isFree(trainerId)) continue;
     // Un bloqueig temporal el treu del sorteig encara que tingui regla. Els
     // bloquejos són instants absoluts: es comparen amb el `when` real.
-    if (isInstantBlocked(blocksOf(blocks, trainerId), when)) continue;
+    // Per SOLAPAMENT amb la prova sencera, no només a l'instant d'inici.
+    if (isRangeBlocked(blocksOf(blocks, trainerId), when.getTime(), when.getTime() + TRIAL_DURATION_MINUTES * 60_000)) continue;
     const trainerRules = rules.filter((r) => r.trainerId === trainerId);
     if (
       isServiceAvailableOn(
@@ -496,7 +497,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
     for (const tid of new Set(rules.map((r) => r.trainerId))) {
       const trainerRules = rules.filter((r) => r.trainerId === tid);
       if (
-        !isInstantBlocked(blocksOf(allBlocks, tid), when) &&
+        !isRangeBlocked(blocksOf(allBlocks, tid), when.getTime(), when.getTime() + TRIAL_DURATION_MINUTES * 60_000) &&
         isServiceAvailableOn(
           trainerRules,
           centerDateStr(when),

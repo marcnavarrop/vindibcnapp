@@ -132,20 +132,28 @@ else console.log(`  ✓ desada com ${laia.start_time}–${laia.end_time}, dia ${
 // ───────────────── L'edició valida igual ─────────────────
 
 console.log("8. L'edició passa pel mateix sedàs");
+// L'edició demana QUI la fa (la franja és de Laia, i actua ella): des de la
+// 0090 es mira abans de llegir les reserves que el canvi deixaria orfes.
+const comLaia = { role: "trainer" as const, id: TRAINER };
 if (laia) {
   const mal = await submitAvailabilityUpdate(
     fd({ id: laia.id, startTime: "09:15", endTime: "10:15" }),
+    comLaia,
   );
   if (mal.ok) fail("editar a 09:15 s'havia de rebutjar");
   else console.log(`  ✓ editar fora de graella → "${mal.error}"`);
 
   const be = await submitAvailabilityUpdate(
     fd({ id: laia.id, startTime: "10:00", endTime: "11:30" }),
+    comLaia,
   );
   if (!be.ok) fail(`editar a 10:00–11:30 s'havia d'acceptar i diu "${be.error}"`);
   else console.log("  ✓ editar a 10:00–11:30");
 
-  const senseId = await submitAvailabilityUpdate(fd({ startTime: "10:00", endTime: "11:00" }));
+  const senseId = await submitAvailabilityUpdate(
+    fd({ startTime: "10:00", endTime: "11:00" }),
+    comLaia,
+  );
   if (senseId.ok) fail("editar sense id s'havia de rebutjar");
   else console.log(`  ✓ editar sense id → "${senseId.error}"`);
 }

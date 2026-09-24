@@ -11,12 +11,15 @@ import { listAvailabilityRules } from "@/lib/data/availability";
 import { listUpcomingBlocks } from "@/lib/data/availability-blocks";
 import { AvailabilityManager } from "@/components/availability-manager";
 import { AvailabilityBlocksManager } from "@/components/availability-blocks-manager";
+import { OrphansPanel } from "@/components/orphans-panel";
+import { findOrphans, NO_ORPHANS } from "@/lib/data/availability-orphans";
 import {
   createAvailabilityTrainerAction,
   updateAvailabilityTrainerAction,
   deleteAvailabilityTrainerAction,
   createBlockTrainerAction,
   deleteBlockTrainerAction,
+  cancelOrphansTrainerAction,
 } from "@/app/(trainer)/trainer/disponibilitat/actions";
 
 export const dynamic = "force-dynamic";
@@ -24,12 +27,13 @@ export const dynamic = "force-dynamic";
 export default async function TrainerDisponibilitatPage() {
   const viewer = await getViewer();
   const centerSettings = await getCenterSettings();
-  const [rules, blocks] = viewer
+  const [rules, blocks, orphans] = viewer
     ? await Promise.all([
         listAvailabilityRules(viewer.id),
         listUpcomingBlocks(viewer.id),
+        findOrphans(viewer.id),
       ])
-    : [[], []];
+    : [[], [], NO_ORPHANS];
   const todayStr = centerToday();
 
   return (
@@ -41,6 +45,12 @@ export default async function TrainerDisponibilitatPage() {
         Defineix els teus horaris. Els clients només podran reservar dins
         d&apos;aquestes franjes.
       </p>
+
+      <OrphansPanel
+        orphans={orphans}
+        action={cancelOrphansTrainerAction}
+        own
+      />
 
       <AvailabilityManager
         rules={rules}

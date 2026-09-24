@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
+import { OrphansConfirm } from "@/components/orphans-confirm";
 import {
   WEEKDAY_SHORT,
   WEEKDAY_LONG,
@@ -17,9 +18,6 @@ type Action = (
   prev: AvailabilityFormState,
   formData: FormData,
 ) => Promise<AvailabilityFormState>;
-
-/** Acció sense estat: només l'esborrat, que no té res a validar. */
-type PlainAction = (formData: FormData) => void | Promise<void>;
 
 /** El missatge d'error del servidor, amb el mateix aspecte que als bloquejos. */
 function FormError({ state }: { state: AvailabilityFormState }) {
@@ -79,16 +77,23 @@ function EditRuleForm({
   rule: r,
   updateAction,
   onDone,
+  onCancel,
 }: {
   rule: AvailabilityRule;
   updateAction: Action;
-  onDone: () => void;
+  /** Desat. Porta el resum del que s'ha cancel·lat, si s'ha cancel·lat res. */
+  onDone: (result: AvailabilityFormState) => void;
+  onCancel: () => void;
 }) {
   const [state, action] = useActionState(updateAction, {});
+  // «Tornar enrere» amaga la llista sense desar: es recorda QUINA llista s'ha
+  // descartat, perquè un nou intent en torni a portar una altra.
+  const [dismissed, setDismissed] = useState<AvailabilityFormState["pending"]>();
+  const pending = state.pending && state.pending !== dismissed ? state.pending : null;
 
   useEffect(() => {
-    if (state.ok) onDone();
-  }, [state.ok, onDone]);
+    if (state.ok) onDone(state);
+  }, [state, onDone]);
 
   return (
     <form action={action} className="flex flex-wrap items-end gap-3 px-5 py-3">
@@ -136,21 +141,29 @@ function EditRuleForm({
       <div className="w-full">
         <FormError state={state} />
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          className={`rounded-md bg-brand-purple px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
-        >
-          Desar
-        </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark ${TAP}`}
-        >
-          Cancel·lar
-        </button>
-      </div>
+      {pending ? (
+        <OrphansConfirm
+          orphans={pending.orphans}
+          what="Aquest canvi"
+          onBack={() => setDismissed(state.pending)}
+        />
+      ) : (
+        <div className="flex items-center gap-2">
+          <button
+            type="submit"
+            className={`rounded-md bg-brand-purple px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
+          >
+            Desar
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-dark ${TAP}`}
+          >
+            Cancel·lar
+          </button>
+        </div>
+      )}
     </form>
   );
 }
@@ -168,10 +181,40 @@ export function AvailabilityManager({
   specialty: Specialty | null;
   createAction: Action;
   updateAction: Action;
-  deleteAction: PlainAction;
+  deleteAction: Action;
 }) {
   const [createState, create] = useActionState(createAction, {});
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  /*
+   * L'esborrat té UN sol estat, aquí, i no un per fila. La fila d'una franja
+   * esborrada desapareix en el mateix render en què arriba la resposta, i el
+   * que s'hi hagués de pintar —«3 reserves cancel·lades»— es perdria amb ella.
+   * El gestor sobreviu. Qui s'està esborrant es recorda a `deletingId`.
+   */
+  const [deleteState, del] = useActionState(deleteAction, {});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [dismissedDelete, setDismissedDelete] =
+    useState<AvailabilityFormState["pending"]>();
+  const deletePending =
+    deleteState.pending && deleteState.pending !== dismissedDelete
+      ? deleteState.pending
+      : null;
+
+  // El resultat de l'última edició, que es tanca en desar-se.
+  const [editResult, setEditResult] = useState<AvailabilityFormState | null>(null);
+  // Quina de les dues ha parlat l'última: el missatge d'un esborrat d'abans no
+  // s'ha de quedar enganxat després d'una edició.
+  const [last, setLast] = useState<"edit" | "delete" | null>(null);
+  const onEditDone = useCallback((res: AvailabilityFormState) => {
+    setEditResult(res);
+    setLast("edit");
+    setEditingId(null);
+  }, []);
+  const onEditCancel = useCallback(() => setEditingId(null), []);
+
+  const result =
+    last === "delete" ? (deleteState.ok ? deleteState : null) : editResult;
 
   const byDay = WEEKDAY_LONG.map((label, wd) => ({
     wd,
@@ -256,6 +299,17 @@ export function AvailabilityManager({
         </div>
       </form>
 
+      {result?.notice && (
+        <p role="status" className="text-sm text-success">
+          {result.notice}
+        </p>
+      )}
+      {result?.warning && (
+        <p role="alert" className="text-sm text-error">
+          {result.warning}
+        </p>
+      )}
+
       {/* Reglas agrupadas por día */}
       {byDay.length === 0 ? (
         <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
@@ -279,13 +333,21 @@ export function AvailabilityManager({
                       key={r.id}
                       rule={r}
                       updateAction={updateAction}
-                      onDone={() => setEditingId(null)}
+                      onDone={onEditDone}
+                      onCancel={onEditCancel}
                     />
                   ) : (
-                    <div
+                    <form
                       key={r.id}
-                      className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-sm"
+                      action={del}
+                      onSubmit={() => {
+                        setDeletingId(r.id);
+                        setLast("delete");
+                      }}
+                      className="px-5 py-3 text-sm"
                     >
+                    <input type="hidden" name="id" value={r.id} />
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                       <span className="font-bold text-brand-dark">
                         {r.startTime} – {r.endTime}
                       </span>
@@ -317,17 +379,31 @@ export function AvailabilityManager({
                         >
                           Editar
                         </button>
-                        <form action={deleteAction}>
-                          <input type="hidden" name="id" value={r.id} />
+                        {!(deletePending && deletingId === r.id) && (
                           <button
                             type="submit"
                             className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
                           >
                             Eliminar
                           </button>
-                        </form>
+                        )}
                       </div>
                     </div>
+                    {deletingId === r.id && deleteState.error && (
+                      <p role="alert" className="mt-2 text-sm text-error">
+                        {deleteState.error}
+                      </p>
+                    )}
+                    {deletePending && deletingId === r.id && (
+                      <div className="mt-3">
+                        <OrphansConfirm
+                          orphans={deletePending.orphans}
+                          what="Esborrar aquesta franja"
+                          onBack={() => setDismissedDelete(deleteState.pending)}
+                        />
+                      </div>
+                    )}
+                    </form>
                   ),
                 )}
               </div>
