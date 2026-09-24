@@ -9,7 +9,8 @@ const TABS = [
 ];
 import { ReservationsView } from "@/components/reservations-view";
 import { getNotesForReservations } from "@/lib/data/session-notes";
-import { listReservations } from "@/lib/data/reservations";
+import { listReservationsInRange } from "@/lib/data/reservations";
+import { agendaWindow } from "@/lib/agenda-window";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
@@ -28,12 +29,18 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function ReservasPage() {
+export default async function ReservasPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // Només la setmana del calendari o els dies de la llista: vegeu `agendaWindow`.
+  const { nav, from, to } = agendaWindow("/admin/reservas", await searchParams);
   const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, palette] =
     await Promise.all([
-      listReservations(),
+      listReservationsInRange({ from, to }),
       listTrainers(),
-      listActiveTrialHolds(),
+      listActiveTrialHolds({ from, to }),
       getCenterSettings(),
       // Per a la capa opcional de disponibilitat del calendari.
       listAllTrainerRulesLite(),
@@ -46,11 +53,10 @@ export default async function ReservasPage() {
   // desviació deliberada del patró `*_admin_write` que documenta la 0079, i
   // aquí és només cosmètica: encara que el formulari sortís, la policy no
   // deixaria desar res.
-  const notes = Object.fromEntries(
-    await getNotesForReservations(
-      reservations.filter((r) => r.scheduledAt <= nowISO).map((r) => r.id),
-    ),
+  const { notes: noteMap, failed: notesFailed } = await getNotesForReservations(
+    reservations.filter((r) => r.scheduledAt <= nowISO).map((r) => r.id),
   );
+  const notes = Object.fromEntries(noteMap);
 
   return (
     <>
@@ -75,6 +81,8 @@ export default async function ReservasPage() {
         </div>
 
         <ReservationsView
+          nav={nav}
+          notesFailed={notesFailed}
           palette={palette}
           reservations={reservations}
           trainers={trainers}

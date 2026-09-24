@@ -1,6 +1,9 @@
 import { getViewer } from "@/lib/auth";
 import { listClients } from "@/lib/data/clients";
-import { listReservations } from "@/lib/data/reservations";
+import {
+  listUpcomingReservations,
+  type ReservationListItem,
+} from "@/lib/data/reservations";
 import { listAnnouncements } from "@/lib/data/announcements";
 import { getTrainerDashboard } from "@/lib/data/dashboard";
 import { pendingTrialAttention } from "@/lib/data/trial-attention";
@@ -19,6 +22,37 @@ import { formatLongDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
+/*
+ * Quantes en porta cada pestanya de "Properes reserves".
+ *
+ * Viuen aquí i no al component: aquell és "use client", i una constant
+ * importada d'un mòdul de client a un de servidor no arriba com a número sinó
+ * com a referència de client. El límit hauria quedat buit.
+ */
+const UPCOMING_MINE = 6;
+const UPCOMING_ALL = 15;
+
+/**
+ * Les pròximes reserves: les seves i les del centre, ja retallades a les que
+ * es pinten. Abans arribava al navegador TOT l'històric del centre.
+ */
+async function upcoming(trainerId: string): Promise<{
+  mine: ReservationListItem[];
+  all: ReservationListItem[];
+  failed: boolean;
+}> {
+  try {
+    const [mine, all] = await Promise.all([
+      listUpcomingReservations({ limit: UPCOMING_MINE, trainerId }),
+      listUpcomingReservations({ limit: UPCOMING_ALL }),
+    ]);
+    return { mine, all, failed: false };
+  } catch (e) {
+    console.error("[inici professional] properes reserves:", e instanceof Error ? e.message : e);
+    return { mine: [], all: [], failed: true };
+  }
+}
+
 /**
  * Àrea del professional. El middleware garanteix el rol 'trainer'.
  * Veu tots els clients per coordinar-se; gestiona només els seus.
@@ -27,10 +61,10 @@ export default async function TrainerHome() {
   const viewer = await getViewer();
   const trainerId = viewer?.id ?? "";
 
-  const [clients, allReservations, announcements, kpi, trials] =
+  const [clients, next, announcements, kpi, trials] =
     await Promise.all([
       listClients(trainerId),
-      listReservations(), // totes les del centre, per al toggle Els meus / Tots
+      upcoming(trainerId), // les seves i les del centre, per al toggle Els meus / Tots
       listAnnouncements(),
       getTrainerDashboard(trainerId),
       // Lectura pura: obrir l'inici no ha d'escriure res.
@@ -54,8 +88,10 @@ export default async function TrainerHome() {
       <Attention trials={trials} />
 
       <TrainerUpcomingReservations
-        reservations={allReservations}
+        mine={next.mine}
+        all={next.all}
         myId={trainerId}
+        failed={next.failed}
       />
 
       {/* No renderitza res si aquest professional no té bonus actiu. */}
@@ -63,7 +99,10 @@ export default async function TrainerHome() {
 
       {/* El detall que abans vivia dins de la targeta de bons baixos. */}
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <LowBonosCard bonos={kpi.lowBonos} clientHrefBase="/trainer/clients" />
+        {/* Si ha fallat, la targeta de dalt ja ho diu; una llista buida no. */}
+        {!kpi.failed.includes("lowBonos") && (
+          <LowBonosCard bonos={kpi.lowBonos} clientHrefBase="/trainer/clients" />
+        )}
         <MyClients clients={clients} />
       </div>
 

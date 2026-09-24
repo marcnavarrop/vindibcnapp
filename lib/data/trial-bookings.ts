@@ -10,6 +10,8 @@ import {
   centerDateStr,
   centerWeekday,
   centerSlot,
+  centerDayStart,
+  centerToday,
 } from "@/lib/center-time";
 import { CENTER_EMAIL } from "@/lib/email";
 import { notify, getProfileContact } from "@/lib/notifications";
@@ -212,10 +214,13 @@ export async function fetchAllActiveHolds(
   admin: DB,
 ): Promise<{ trainer_id: string | null; scheduled_at: string; service_type: ServiceType }[]> {
   const now = new Date().toISOString();
+  // Només des d'avui: una prova 'confirmed' de fa mesos no ocupa res, i sense
+  // aquest filtre la llista creixia amb tota la història.
   const { data } = await admin
     .from("trial_bookings")
     .select("trainer_id, scheduled_at, service_type, status, expires_at")
-    .in("status", ["pending", "confirmed"]);
+    .in("status", ["pending", "confirmed"])
+    .gte("scheduled_at", centerDayStart(centerToday()).toISOString());
   return (data ?? [])
     .filter((t) => t.status === "confirmed" || t.expires_at >= now)
     .map((t) => ({
@@ -280,24 +285,35 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
   if (USE_MOCK) {
     const store = getStore();
     const now = Date.now();
+    // Mateixa finestra que la consulta real: des d'avui.
+    const since = centerDayStart(centerToday()).toISOString();
     for (const r of store.reservations)
-      if (r.status === "booked") addBusy(r.trainer_id, r.scheduled_at);
+      if (r.status === "booked" && r.scheduled_at >= since)
+        addBusy(r.trainer_id, r.scheduled_at);
     for (const t of store.trial_bookings)
-      if (isActiveHold(t, now)) addBusy(t.trainer_id, t.scheduled_at);
+      if (isActiveHold(t, now) && t.scheduled_at >= since)
+        addBusy(t.trainer_id, t.scheduled_at);
     return { rules, busy: [...busy], blocks: blocksOfRules(allBlocks, rules) };
   }
 
   const admin = createAdminClient();
   await sweepExpiredReal(admin);
+  // Des de la mitjanit d'avui al centre: /prova no ofereix res del passat, i
+  // les reserves 'booked' que ningú marca com a fetes s'hi quedarien per
+  // sempre. Sense el filtre, amb el tall de la base a 1000 files, la pàgina
+  // hauria ensenyat lliures franges que no ho són.
+  const since = centerDayStart(centerToday()).toISOString();
   const [res, trials] = await Promise.all([
     admin
       .from("reservations")
       .select("trainer_id, scheduled_at")
-      .eq("status", "booked"),
+      .eq("status", "booked")
+      .gte("scheduled_at", since),
     admin
       .from("trial_bookings")
       .select("trainer_id, scheduled_at, status, expires_at")
-      .in("status", ["pending", "confirmed"]),
+      .in("status", ["pending", "confirmed"])
+      .gte("scheduled_at", since),
   ]);
   const nowISO = new Date().toISOString();
   for (const r of res.data ?? []) addBusy(r.trainer_id, r.scheduled_at);
@@ -750,6 +766,65 @@ export async function listTrialBookings(
   }));
 }
 
+/**
+ * UNA prova, per id.
+ *
+ * Abans qui en volia una cridava `listTrialBookings()` —TOTES les de la
+ * història, en ordre ascendent— i hi feia `.find(id)`. Amb el tall de la base
+ * a 1000 files, les més noves haurien caigut les primeres: ni l'avís al
+ * visitant ni l'alta com a client haurien trobat la seva prova.
+ */
+async function getTrialBooking(id: string): Promise<TrialBookingItem | null> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const t = store.trial_bookings.find((x) => x.id === id);
+    if (!t) return null;
+    const trainerName = t.trainer_id
+      ? (store.profiles.find((p) => p.id === t.trainer_id)?.full_name ?? null)
+      : null;
+    return {
+      id: t.id,
+      fullName: t.full_name,
+      email: t.email,
+      phone: t.phone,
+      trainerId: t.trainer_id,
+      trainerName,
+      scheduledAt: t.scheduled_at,
+      serviceType: t.service_type,
+      status: t.status,
+      expiresAt: t.expires_at,
+      convertedClientId: t.converted_client_id,
+      createdAt: t.created_at,
+    };
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("trial_bookings")
+    .select(
+      "id, full_name, email, phone, trainer_id, scheduled_at, service_type, status, expires_at, converted_client_id, created_at, trainer:profiles!trial_bookings_trainer_id_fkey(full_name)",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const t = data as unknown as TrialRow & { trainer: { full_name: string | null } | null };
+  return {
+    id: t.id,
+    fullName: t.full_name,
+    email: t.email,
+    phone: t.phone,
+    trainerId: t.trainer_id,
+    trainerName: t.trainer?.full_name ?? null,
+    scheduledAt: t.scheduled_at,
+    serviceType: t.service_type,
+    status: t.status,
+    expiresAt: t.expires_at,
+    convertedClientId: t.converted_client_id,
+    createdAt: t.created_at,
+  };
+}
+
 /** Proves actives (pending viva/confirmed) per pintar als calendaris interns. */
 export type TrialHoldItem = {
   id: string;
@@ -761,21 +836,65 @@ export type TrialHoldItem = {
   status: TrialStatus; // 'pending' | 'confirmed'
 };
 
-export async function listActiveTrialHolds(
-  trainerId?: string,
-): Promise<TrialHoldItem[]> {
-  const all = await listTrialBookings(trainerId);
-  return all
-    .filter((t) => t.status === "pending" || t.status === "confirmed")
-    .map((t) => ({
-      id: t.id,
-      fullName: t.fullName,
-      phone: t.phone,
-      trainerId: t.trainerId,
-      scheduledAt: t.scheduledAt,
-      serviceType: t.serviceType,
-      status: t.status,
-    }));
+export async function listActiveTrialHolds(input: {
+  /**
+   * Finestra `[from, to)`, la mateixa que la de les reserves de la pantalla.
+   * Sense `to`, fins on n'hi hagi: el calendari del client mira endavant sense
+   * límit, i les proves futures no s'acumulen com l'històric.
+   */
+  from: Date;
+  to?: Date;
+  trainerId?: string;
+}): Promise<TrialHoldItem[]> {
+  const from = input.from.toISOString();
+  const to = input.to?.toISOString();
+  if (USE_MOCK) {
+    const store = getStore();
+    if (sweepExpiredMock(store)) saveStore(store);
+    return store.trial_bookings
+      .filter(
+        (t) =>
+          (t.status === "pending" || t.status === "confirmed") &&
+          (!input.trainerId || t.trainer_id === input.trainerId) &&
+          t.scheduled_at >= from &&
+          (!to || t.scheduled_at < to),
+      )
+      .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
+      .map((t) => ({
+        id: t.id,
+        fullName: t.full_name,
+        phone: t.phone,
+        trainerId: t.trainer_id,
+        scheduledAt: t.scheduled_at,
+        serviceType: t.service_type,
+        status: t.status,
+      }));
+  }
+
+  // Abans passava per `listTrialBookings()`, que porta TOTES les proves de la
+  // història i les filtra després: amb el tall de la base, les més noves
+  // haurien caigut les primeres. Ara la finestra i l'estat van a la consulta.
+  const admin = createAdminClient();
+  await sweepExpiredReal(admin);
+  let query = admin
+    .from("trial_bookings")
+    .select("id, full_name, phone, trainer_id, scheduled_at, service_type, status")
+    .in("status", ["pending", "confirmed"])
+    .gte("scheduled_at", from)
+    .order("scheduled_at", { ascending: true });
+  if (to) query = query.lt("scheduled_at", to);
+  if (input.trainerId) query = query.eq("trainer_id", input.trainerId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map((t) => ({
+    id: t.id,
+    fullName: t.full_name,
+    phone: t.phone,
+    trainerId: t.trainer_id,
+    scheduledAt: t.scheduled_at,
+    serviceType: t.service_type,
+    status: t.status,
+  }));
 }
 
 /** Comprova (real/mock) que qui actua pot gestionar la prova. */
@@ -818,7 +937,7 @@ async function updateTrialStatus(
 
 /** Notifica el visitant del canvi d'estat de la seva prova (trial_status). */
 async function notifyTrialStatus(id: string, status: "confirmed" | "rejected"): Promise<void> {
-  const t = (await listTrialBookings()).find((x) => x.id === id);
+  const t = await getTrialBooking(id);
   if (!t) return;
   await notify(
     {
@@ -878,8 +997,7 @@ export async function markTrialConverted(id: string, clientId: string): Promise<
 export async function getTrialForConversion(
   id: string,
 ): Promise<{ fullName: string; email: string; phone: string; trainerId: string | null } | null> {
-  const items = await listTrialBookings();
-  const t = items.find((x) => x.id === id);
+  const t = await getTrialBooking(id);
   if (!t) return null;
   return { fullName: t.fullName, email: t.email, phone: t.phone, trainerId: t.trainerId };
 }

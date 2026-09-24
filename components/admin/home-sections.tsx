@@ -3,14 +3,19 @@ import Link from "next/link";
 import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
 import { AttentionPanel, AttentionRow } from "@/components/ui/attention";
 import { countdownLabel } from "@/lib/data/trial-attention";
-import { pct1 } from "@/components/ui/kpi";
+import {
+  pct1,
+  KpiFailedNotice,
+  KPI_FAILED_VALUE,
+  KPI_FAILED_HINT,
+} from "@/components/ui/kpi";
 import {
   SERVICE_LABELS,
   formatDate,
   formatEur,
   formatTime,
 } from "@/lib/labels";
-import type { AdminDashboard } from "@/lib/data/dashboard";
+import type { AdminDashboard, DashboardPart } from "@/lib/data/dashboard";
 import { Badge } from "@/components/ui/badge";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { AdminAttention } from "@/lib/data/admin-attention";
@@ -63,6 +68,8 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
   } = d;
 
   const cards: {
+    /** De quina consulta surt: si ha fallat, la targeta ho diu. */
+    part: DashboardPart;
     icon: IconName;
     label: string;
     value: string;
@@ -71,6 +78,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
     warn?: boolean;
   }[] = [
     {
+      part: "revenue",
       icon: "euro",
       label: "Ingressos del mes",
       value: formatEur(revenue.current),
@@ -88,6 +96,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
       href: "/admin/pagos",
     },
     {
+      part: "pendingBonos",
       icon: "ticket",
       label: "Pendent de cobrament",
       value: formatEur(pendingBonos.total),
@@ -100,6 +109,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
       warn: pendingBonos.count > 0,
     },
     {
+      part: "lowBonos",
       icon: "ticket",
       label: "Bons a punt d'esgotar-se",
       value: String(lowBonos.length),
@@ -113,6 +123,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
       warn: lowBonos.length > 0,
     },
     {
+      part: "sessions",
       icon: "calendar",
       label: "Sessions",
       value: String(sessions.today),
@@ -120,6 +131,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
       href: "/admin/reservas",
     },
     {
+      part: "occupancy",
       icon: "chart",
       label: "Ocupació setmanal",
       value: occupancy.slots > 0 ? `${pct1(occupancy.pct)}%` : "—",
@@ -135,6 +147,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
     ...(trialConversion
       ? [
           {
+            part: "trials" as DashboardPart,
             icon: "user" as IconName,
             label: "Conversió de proves",
             value:
@@ -151,8 +164,18 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
       : []),
   ];
 
+  // Una part que ha fallat no ensenya un zero que sembli cert: guionet i avís.
+  const failed = new Set(d.failed);
+  for (const c of cards)
+    if (failed.has(c.part)) {
+      c.value = KPI_FAILED_VALUE;
+      c.hint = <span className="text-error">{KPI_FAILED_HINT}</span>;
+      c.warn = false;
+    }
+
   return (
     <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <KpiFailedNotice count={cards.filter((c) => failed.has(c.part)).length} />
       {cards.map((c) => {
         const body = (
           <div
@@ -254,8 +277,11 @@ const firstName = (name: string | null) => (name ?? "").split(" ")[0] || "—";
  */
 export function TodayAtCentre({
   reservations,
+  failed,
 }: {
   reservations: ReservationListItem[];
+  /** La consulta ha fallat: es diu, en comptes de "avui no hi ha res". */
+  failed?: boolean;
 }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
@@ -271,7 +297,11 @@ export function TodayAtCentre({
         </Link>
       </div>
 
-      {reservations.length === 0 ? (
+      {failed ? (
+        <p role="alert" className="px-5 py-6 text-sm text-error">
+          No s&apos;han pogut carregar les sessions d&apos;avui.
+        </p>
+      ) : reservations.length === 0 ? (
         <p className="px-5 py-6 text-sm text-brand-muted">
           Avui no hi ha cap sessió programada.
         </p>
@@ -320,6 +350,8 @@ export function TodayAtCentre({
  * que es mira amb calma, no d'un cop d'ull.
  */
 export function OccupancyByTrainer({ d }: { d: AdminDashboard }) {
+  // Si ha fallat, la targeta de dalt ja ho diu; unes barres a zero no.
+  if (d.failed.includes("occupancy")) return null;
   if (d.occupancy.perTrainer.length === 0) return null;
   return (
     <section className="rounded-2xl border border-brand-border bg-white p-5">

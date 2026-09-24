@@ -334,6 +334,10 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           text: "El conmutador de dalt canvia a la vista de llista, partida en «Properes» i «Passades», amb filtres per professional i per estat. És la vista bona per repassar el que ja ha passat: la nota de cada sessió només es pinta a «Passades».",
         },
         {
+          t: "p",
+          text: "La llista s'obre amb trenta dies cap a cada banda: els trenta pròxims a «Properes» i els trenta darrers a «Passades». Sota de cadascuna, «Veure'n més» n'afegeix trenta més, fins a un any. La setmana del calendari, la vista i els dies de la llista queden a l'adreça de la pàgina: si la guardes o la comparteixes, s'obre on eres.",
+        },
+        {
           t: "note",
           text: s.trainersSeeColleaguesReservations
             ? "Veus l'agenda de tot el centre per poder-te coordinar. Gestiones les reserves dels teus clients, i a més pots cancel·lar qualsevol reserva de la teva agenda encara que el client sigui d'un company. Les dels companys es miren i prou."

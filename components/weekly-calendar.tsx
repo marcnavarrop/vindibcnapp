@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import {
   SERVICE_LABELS,
@@ -28,6 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
+import type { AgendaNav } from "@/lib/agenda-window";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
@@ -89,13 +91,6 @@ type StatefulReservationAction = (
   formData: FormData,
 ) => Promise<ReservationActionState>;
 
-function startOfWeek(ref: Date): Date {
-  const d = new Date(ref);
-  d.setHours(0, 0, 0, 0);
-  const dow = (d.getDay() + 6) % 7; // Lunes = 0
-  d.setDate(d.getDate() - dow);
-  return d;
-}
 function addDays(d: Date, n: number): Date {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
@@ -122,6 +117,7 @@ type FreeLayer = {
 const SLOTS_PER_SESSION = slotsFor(SESSION_DURATION_MINUTES);
 
 export function WeeklyCalendar({
+  nav,
   reservations,
   manageableIds,
   cancellableIds,
@@ -141,6 +137,8 @@ export function WeeklyCalendar({
   closingHour = 22,
   palette,
 }: {
+  /** La setmana que es pinta i els enllaços per canviar-ne (vegeu `agendaWindow`). */
+  nav: AgendaNav;
   reservations: ReservationListItem[];
   manageableIds: string[];
   /**
@@ -184,7 +182,6 @@ export function WeeklyCalendar({
   closingHour?: number;
 }) {
   const router = useRouter();
-  const [weekOffset, setWeekOffset] = useState(0);
   const [selected, setSelected] = useState<ReservationListItem | null>(null);
   const [selectedTrial, setSelectedTrial] = useState<TrialHoldItem | null>(null);
 
@@ -198,10 +195,12 @@ export function WeeklyCalendar({
     [manageableTrialIds],
   );
 
-  const weekStart = useMemo(
-    () => addDays(startOfWeek(new Date()), weekOffset * 7),
-    [weekOffset],
-  );
+  // El dilluns el diu la URL (dia del centre); es pinta a mitjanit del
+  // navegador, com abans feia `startOfWeek(new Date())`.
+  const weekStart = useMemo(() => {
+    const [y, m, d] = nav.weekStart.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }, [nav.weekStart]);
   const weekEnd = useMemo(() => addDays(weekStart, 7), [weekStart]);
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -324,17 +323,17 @@ export function WeeklyCalendar({
       {/* Navegación de semana */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <NavButton label="Setmana anterior" onClick={() => setWeekOffset((w) => w - 1)}>
+          <NavButton label="Setmana anterior" href={nav.href.prevWeek}>
             ‹
           </NavButton>
-          <button
-            type="button"
-            onClick={() => setWeekOffset(0)}
+          <Link
+            href={nav.href.today}
+            aria-current={nav.isCurrentWeek ? "page" : undefined}
             className={`rounded-lg border border-brand-border bg-white px-3 py-1.5 text-sm font-bold text-brand-charcoal hover:bg-brand-bg ${TAP}`}
           >
             Avui
-          </button>
-          <NavButton label="Setmana següent" onClick={() => setWeekOffset((w) => w + 1)}>
+          </Link>
+          <NavButton label="Setmana següent" href={nav.href.nextWeek}>
             ›
           </NavButton>
         </div>
@@ -759,24 +758,24 @@ function TrialModal({
   );
 }
 
+/** Un enllaç, no un botó: cada setmana es demana al servidor (vegeu `agendaWindow`). */
 function NavButton({
   label,
-  onClick,
+  href,
   children,
 }: {
   label: string;
-  onClick: () => void;
+  href: string;
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Link
+      href={href}
       aria-label={label}
       className={`flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg ${TAP}`}
     >
       {children}
-    </button>
+    </Link>
   );
 }
 
