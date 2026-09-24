@@ -22,6 +22,7 @@ import {
   centerSlot,
   centerLocalToInstant,
   centerToday,
+  centerDayStart,
 } from "@/lib/center-time";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import {
@@ -509,6 +510,12 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
 
   const settings = await getCenterSettings();
 
+  // Des d'avui: les ocurrències d'una sèrie són totes futures. Abans es
+  // portaven TOTES les reserves 'booked' de la història —les que ningú marca
+  // com a fetes s'hi queden per sempre—, i amb el tall de la base a 1000 files
+  // el planificador hauria vist lliures forats que no ho són.
+  const since = centerDayStart(centerToday()).toISOString();
+
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === req.profileId);
@@ -540,7 +547,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       // planificador comptés diferent, provar-ho en local no voldria dir res.
       slots: [
         ...store.reservations
-          .filter((r) => r.status === "booked")
+          .filter((r) => r.status === "booked" && r.scheduled_at >= since)
           .map((r) => ({
             trainer_id: r.trainer_id,
             scheduled_at: r.scheduled_at,
@@ -549,8 +556,9 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
         ...store.trial_bookings
           .filter(
             (t) =>
-              t.status === "confirmed" ||
-              (t.status === "pending" && t.expires_at >= new Date().toISOString()),
+              t.scheduled_at >= since &&
+              (t.status === "confirmed" ||
+                (t.status === "pending" && t.expires_at >= new Date().toISOString())),
           )
           .map((t) => ({
             trainer_id: t.trainer_id,
@@ -568,7 +576,12 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       minBookingMs: settings.minBookingHours * 3600_000,
       ownAt: new Map(
         store.reservations
-          .filter((r) => r.client_id === client.id && r.status === "booked")
+          .filter(
+            (r) =>
+              r.client_id === client.id &&
+              r.status === "booked" &&
+              r.scheduled_at >= since,
+          )
           .map((r) => [
             new Date(r.scheduled_at).getTime(),
             {
@@ -602,7 +615,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       admin
         .from("reservations")
         .select("trainer_id, scheduled_at, service_type, client_id, series_id")
-        .eq("status", "booked"),
+        .eq("status", "booked")
+        .gte("scheduled_at", since),
       fetchAllActiveHolds(admin),
       admin.from("profiles").select("id, full_name").eq("role", "trainer"),
       listAllTrainerRulesLite(),

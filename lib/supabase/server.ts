@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database";
+import { rowCapFetch } from "@/lib/supabase/row-cap";
 
 /**
  * Cliente de Supabase para el servidor (Server Components, Route Handlers,
@@ -15,6 +16,8 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Avisa als logs si una lectura arriba al sostre de files (row-cap.ts).
+      global: { fetch: rowCapFetch },
       cookies: {
         getAll() {
           return cookieStore.getAll();

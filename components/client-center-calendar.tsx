@@ -214,6 +214,9 @@ export function ClientCenterCalendar({
   const locale = useLocale() as Locale;
   const [view, setView] = useState<"day" | "week">("week");
   const [offset, setOffset] = useState(0); // en días (día) o semanas (semana)
+  // Fins on es pot anar enrere: la setmana d'avui. En setmanes, zero; en dies,
+  // fins al dilluns d'aquesta setmana.
+  const minOffset = view === "week" ? 0 : -((new Date().getDay() + 6) % 7);
   const [serviceFilter, setServiceFilter] = useState<ServiceType | "all">(
     "all",
   );
@@ -584,9 +587,13 @@ export function ClientCenterCalendar({
       {/* Navegación */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
+          {/* No es va més enrere de la setmana d'avui: el calendari és per
+              reservar, i l'historial és a "Sessions passades". El servidor
+              tampoc no porta res d'abans (vegeu `getClientCenterData`). */}
           <NavBtn
             label={t("prev")}
-            onClick={() => setOffset((o) => o - 1)}
+            disabled={offset <= minOffset}
+            onClick={() => setOffset((o) => Math.max(minOffset, o - 1))}
           >
             ‹
           </NavBtn>
@@ -1468,18 +1475,21 @@ function Field({ label, value }: { label: string; value: string }) {
 function NavBtn({
   label,
   onClick,
+  disabled,
   children,
 }: {
   label: string;
   onClick: () => void;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg active:opacity-70 ${TAP}`}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-brand-border bg-white text-lg font-bold text-brand-charcoal hover:bg-brand-bg active:opacity-70 disabled:cursor-not-allowed disabled:opacity-40 ${TAP}`}
     >
       {children}
     </button>

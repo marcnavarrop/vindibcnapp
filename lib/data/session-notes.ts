@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { USE_MOCK } from "@/lib/config";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { getViewer, type Viewer } from "@/lib/auth";
+import { mockFails } from "@/lib/mock/faults";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
 /**
@@ -116,21 +117,44 @@ async function resolveNames(ids: (string | null)[]): Promise<Map<string, string>
   return out;
 }
 
+/** Quants ids van en cada consulta de notes. Cent són uns 4 kB d'URL. */
+const NOTES_BATCH = 100;
+
+export type NotesResult = {
+  notes: Map<string, SessionNote>;
+  /**
+   * Alguna consulta ha fallat. Llavors `notes` porta les que sí que s'han pogut
+   * llegir, i qui pinta ho ha de dir: si no, una nota que no surt per un error
+   * no es distingeix d'una sessió que no en té.
+   */
+  failed: boolean;
+};
+
 /**
- * Les notes d'un grapat de reserves, en una sola consulta.
+ * Les notes d'un grapat de reserves.
  *
  * Torna NOMÉS les que qui pregunta pot llegir: la resta simplement no hi són.
  * Les pantalles no han de filtrar res, i per això reben un `Map` i no una
  * llista amb forats.
+ *
+ * Els ids viatgen a la URL (`?reservation_id=in.(...)`), i per això van en
+ * lots: amb centenars d'ids la petició podia passar del que el camí fins a la
+ * base accepta, i com que l'error no es mirava, les notes desapareixien sense
+ * avís. Ara cada lot té el seu sostre i un error es registra i es diu.
  */
 export async function getNotesForReservations(
   reservationIds: string[],
-): Promise<Map<string, SessionNote>> {
+): Promise<NotesResult> {
   const out = new Map<string, SessionNote>();
-  if (reservationIds.length === 0) return out;
+  if (reservationIds.length === 0) return { notes: out, failed: false };
 
-  let rows: NoteRow[];
+  let rows: NoteRow[] = [];
   let names: Map<string, string>;
+  let failed = false;
+  if (USE_MOCK && mockFails("notes")) {
+    console.error("[notes] no s'han pogut llegir les notes de sessió: error simulat");
+    return { notes: out, failed: true };
+  }
   if (USE_MOCK) {
     const store = getStore();
     const viewer = await getViewer();
@@ -143,11 +167,22 @@ export async function getNotesForReservations(
     names = mockNames(store, rows.map((r) => r.author_id));
   } else {
     const supabase = await createClient();
-    const { data } = await supabase
-      .from("session_notes")
-      .select(SELECT)
-      .in("reservation_id", reservationIds);
-    rows = (data ?? []) as unknown as NoteRow[];
+    const batches: string[][] = [];
+    for (let i = 0; i < reservationIds.length; i += NOTES_BATCH)
+      batches.push(reservationIds.slice(i, i + NOTES_BATCH));
+    const results = await Promise.all(
+      batches.map((ids) =>
+        supabase.from("session_notes").select(SELECT).in("reservation_id", ids),
+      ),
+    );
+    for (const { data, error } of results) {
+      if (error) {
+        failed = true;
+        console.error("[notes] no s'han pogut llegir les notes de sessió:", error.message);
+        continue;
+      }
+      rows.push(...((data ?? []) as unknown as NoteRow[]));
+    }
     names = await resolveNames(rows.map((r) => r.author_id));
   }
   for (const r of rows) {
@@ -160,7 +195,7 @@ export async function getNotesForReservations(
       updatedAt: r.updated_at,
     });
   }
-  return out;
+  return { notes: out, failed };
 }
 
 /**
@@ -268,7 +303,7 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
       )
       .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))
       .slice(0, PAST_SESSIONS_LIMIT);
-    const notes = await getNotesForReservations(list.map((r) => r.id));
+    const { notes } = await getNotesForReservations(list.map((r) => r.id));
     return list.map((r) => ({
       id: r.id,
       scheduledAt: r.scheduled_at,
@@ -298,7 +333,9 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
     trainer_id: string | null;
   }[];
 
-  const [notes, trainerNames] = await Promise.all([
+  // Si les notes fallen, l'error ja queda registrat a `getNotesForReservations`
+  // i la llista de sessions surt igual.
+  const [{ notes }, trainerNames] = await Promise.all([
     getNotesForReservations(list.map((r) => r.id)),
     resolveNames(list.map((r) => r.trainer_id)),
   ]);

@@ -1010,9 +1010,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: `Es pot mirar per dia o per setmana —al mòbil s'obre per dia— i moure't endavant i endarrere amb les fletxes. L'horari que es mostra va de les ${hhmm(s.openingHour)} a les ${hhmm(s.closingHour)}, que és l'horari del centre.`,
-            es: `Se puede mirar por día o por semana —en el móvil se abre por día— y moverte adelante y atrás con las flechas. El horario que se muestra va de las ${hhmm(s.openingHour)} a las ${hhmm(s.closingHour)}, que es el horario del centro.`,
-            en: `You can view it by day or by week —on a phone it opens by day— and move back and forth with the arrows. The hours shown run from ${hhmm(s.openingHour)} to ${hhmm(s.closingHour)}, which is the centre's opening time.`,
+            ca: `Es pot mirar per dia o per setmana —al mòbil s'obre per dia— i moure't amb les fletxes: endavant tant com vulguis, i enrere fins a la setmana d'avui. Les sessions que ja has fet són més avall, a «Sessions passades». L'horari que es mostra va de les ${hhmm(s.openingHour)} a les ${hhmm(s.closingHour)}, que és l'horari del centre.`,
+            es: `Se puede mirar por día o por semana —en el móvil se abre por día— y moverte con las flechas: hacia delante todo lo que quieras, y hacia atrás hasta la semana actual. Las sesiones que ya has hecho están más abajo, en «Sesiones pasadas». El horario que se muestra va de las ${hhmm(s.openingHour)} a las ${hhmm(s.closingHour)}, que es el horario del centro.`,
+            en: `You can view it by day or by week —on a phone it opens by day— and move with the arrows: forward as far as you like, and back as far as the current week. The sessions you've already done are further down, under «Past sessions». The hours shown run from ${hhmm(s.openingHour)} to ${hhmm(s.closingHour)}, which is the centre's opening time.`,
           }),
         },
         {

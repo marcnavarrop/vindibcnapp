@@ -2,13 +2,18 @@ import { TAP, TAP_SURFACE } from "@/lib/utils";
 import Link from "next/link";
 import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
 import { AttentionPanel, AttentionRow } from "@/components/ui/attention";
-import { pct1 } from "@/components/ui/kpi";
+import {
+  pct1,
+  KpiFailedNotice,
+  KPI_FAILED_VALUE,
+  KPI_FAILED_HINT,
+} from "@/components/ui/kpi";
 import { formatDate } from "@/lib/labels";
 import {
   countdownLabel,
   type TrialAttentionItem,
 } from "@/lib/data/trial-attention";
-import type { TrainerDashboard } from "@/lib/data/dashboard";
+import type { TrainerDashboard, DashboardPart } from "@/lib/data/dashboard";
 import type { ClientListItem } from "@/lib/data/clients";
 
 /**
@@ -54,6 +59,8 @@ export function Header({
  */
 export function KpiRow({ d }: { d: TrainerDashboard }) {
   const cards: {
+    /** De quina consulta surt: si ha fallat, la targeta ho diu. */
+    part: DashboardPart;
     icon: IconName;
     label: string;
     value: string;
@@ -61,6 +68,7 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
     href: string;
   }[] = [
     {
+      part: "sessions",
       icon: "calendar",
       label: "Sessions",
       value: String(d.sessions.today),
@@ -68,6 +76,7 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       href: "/trainer/reservas",
     },
     {
+      part: "clients",
       icon: "user",
       label: "Els teus clients",
       value: String(d.clients),
@@ -75,6 +84,7 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       href: "/trainer/clients",
     },
     {
+      part: "lowBonos",
       icon: "ticket",
       label: "Bons a punt d'esgotar-se",
       value: String(d.lowBonos.length),
@@ -87,6 +97,7 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       href: "/trainer/bonos",
     },
     {
+      part: "occupancy",
       icon: "chart",
       label: "Ocupació setmanal",
       value: d.occupancy.slots > 0 ? `${pct1(d.occupancy.pct)}%` : "—",
@@ -98,10 +109,20 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
     },
   ];
 
+  // Una part que ha fallat no ensenya un zero que sembli cert: guionet i avís.
+  const failed = new Set(d.failed);
+  for (const c of cards)
+    if (failed.has(c.part)) {
+      c.value = KPI_FAILED_VALUE;
+      c.hint = KPI_FAILED_HINT;
+    }
+
   return (
     <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <KpiFailedNotice count={cards.filter((c) => failed.has(c.part)).length} />
       {cards.map((c) => {
-        const warn = c.label.startsWith("Bons") && d.lowBonos.length > 0;
+        const warn =
+          !failed.has(c.part) && c.label.startsWith("Bons") && d.lowBonos.length > 0;
         return (
           <Link key={c.label} href={c.href} className={`block h-full ${TAP_SURFACE}`}>
             {/*
@@ -134,7 +155,11 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
                 <p className="text-2xl leading-tight font-bold text-brand-dark">
                   {c.value}
                 </p>
-                <p className="text-xs leading-tight text-balance text-brand-muted">
+                <p
+                  className={`text-xs leading-tight text-balance ${
+                    failed.has(c.part) ? "text-error" : "text-brand-muted"
+                  }`}
+                >
                   {c.hint}
                 </p>
               </div>

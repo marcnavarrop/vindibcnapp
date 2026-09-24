@@ -120,3 +120,45 @@ export function datetimeLocalToInstant(value: string): Date | null {
     return null;
   }
 }
+
+// ─── Dies i setmanes del centre, com a text ─────────────────────────────────
+//
+// Les finestres de les consultes (la setmana de l'agenda, "avui", els trenta
+// dies de la llista) es pensen en dies del CENTRE i es passen a instants només
+// en el moment de preguntar a la base. Treballar amb "YYYY-MM-DD" fins aquí
+// evita que un Date amb la zona del procés s'hi coli pel mig.
+
+/** Suma `n` dies a una data "YYYY-MM-DD". Aritmètica de calendari, sense zona. */
+export function addDaysStr(day: string, n: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+}
+
+/** El dilluns de la setmana que conté `day` (per defecte, avui al centre). */
+export function centerWeekStart(day: string = centerToday()): string {
+  const weekday = (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
+  return addDaysStr(day, -weekday);
+}
+
+/** La mitjanit del centre d'un dia, com a instant real. */
+export function centerDayStart(day: string): Date {
+  return centerLocalToInstant(day, "00:00");
+}
+
+/**
+ * Llegeix un paràmetre `?setmana=` i en torna el dilluns.
+ *
+ * Qualsevol dia serveix (es porta al dilluns de la seva setmana), i el que no
+ * és una data de debò torna la setmana d'avui: un enllaç mal copiat ha d'obrir
+ * l'agenda, no una pàgina d'error.
+ */
+export function parseWeekParam(value: string | string[] | undefined): string {
+  const v = Array.isArray(value) ? value[0] : value;
+  if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return centerWeekStart();
+  const d = new Date(`${v}T00:00:00Z`);
+  // "2026-02-31" el Date el passa al març: si no torna igual, no era una data.
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v)
+    return centerWeekStart();
+  return centerWeekStart(v);
+}

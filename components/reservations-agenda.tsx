@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   SERVICE_LABELS,
@@ -15,6 +16,7 @@ import type { ReservationListItem } from "@/lib/data/reservations";
 import type { SessionNote } from "@/lib/data/session-notes";
 import type { ReservationStatus } from "@/types/database";
 import { TAP } from "@/lib/utils";
+import type { AgendaNav } from "@/lib/agenda-window";
 
 const STATUS_TONE: Record<ReservationStatus, "info" | "success" | "danger"> = {
   booked: "info",
@@ -46,6 +48,8 @@ function groupByDay(items: ReservationListItem[]): DayGroup[] {
 }
 
 export function ReservationsAgenda({
+  nav,
+  notesFailed,
   reservations,
   trainers,
   nowISO,
@@ -56,6 +60,14 @@ export function ReservationsAgenda({
   cancelAction,
   completeAction,
 }: {
+  /** Quants dies porta la llista cap a cada banda, i com demanar-ne més. */
+  nav: AgendaNav;
+  /**
+   * Les notes no s'han pogut carregar. Es diu a la pantalla: una nota que no
+   * surt perquè ha fallat la consulta s'ha de poder distingir d'una sessió
+   * que no en té.
+   */
+  notesFailed?: boolean;
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
   nowISO: string;
@@ -163,9 +175,10 @@ export function ReservationsAgenda({
       </div>
 
       <Section
-        title="Properes"
+        title={`Properes · ${nav.ahead} dies`}
         groups={upcoming}
-        emptyLabel="No hi ha reserves properes."
+        emptyLabel={`No hi ha reserves en els pròxims ${nav.ahead} dies.`}
+        moreHref={nav.href.moreAhead}
         canManage={(id) => !manageable || manageable.has(id)}
         canCancel={(id) => !cancellable || cancellable.has(id)}
         actions={actions}
@@ -174,10 +187,20 @@ export function ReservationsAgenda({
           d'una que no ha començat encara no hi ha res a dir. El servidor ho
           torna a comprovar (`sessionHasStarted`), això és perquè no surti el
           formulari on no toca. */}
+      {notesFailed && (
+        <p
+          role="alert"
+          className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error"
+        >
+          No s&apos;han pogut carregar les notes de sessió. Les reserves són
+          aquestes, però ara mateix no es pot veure quines tenen nota.
+        </p>
+      )}
       <Section
-        title="Passades"
+        title={`Passades · ${nav.back} dies`}
         groups={past}
-        emptyLabel="No hi ha reserves passades."
+        emptyLabel={`No hi ha reserves en els darrers ${nav.back} dies.`}
+        moreHref={nav.href.moreBack}
         canManage={(id) => !manageable || manageable.has(id)}
         canCancel={(id) => !cancellable || cancellable.has(id)}
         actions={actions}
@@ -192,6 +215,7 @@ function Section({
   title,
   groups,
   emptyLabel,
+  moreHref,
   canManage,
   canCancel,
   actions,
@@ -201,6 +225,8 @@ function Section({
   title: string;
   groups: DayGroup[];
   emptyLabel: string;
+  /** Amplia la finestra 30 dies més (per URL). Null al sostre d'un any. */
+  moreHref: string | null;
   canManage: (id: string) => boolean;
   canCancel: (id: string) => boolean;
   actions: RowActions;
@@ -267,6 +293,15 @@ function Section({
             </div>
           ))}
         </div>
+      )}
+      {moreHref && (
+        <Link
+          href={moreHref}
+          scroll={false}
+          className={`mt-3 inline-block text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+        >
+          Veure&apos;n més (30 dies)
+        </Link>
       )}
     </section>
   );

@@ -475,6 +475,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           text: `Totes les reserves del centre, de tots els professionals. Es veu de dues maneres, amb el selector de dalt: Calendari —una graella de la setmana, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}, amb una fila per cada mitja hora— o Llista.`,
         },
         {
+          t: "p",
+          text: "Al calendari, les fletxes canvien de setmana i «Avui» torna a l'actual. La Llista s'obre amb trenta dies cap a cada banda: els trenta pròxims a «Properes» i els trenta darrers a «Passades». Sota de cadascuna, «Veure'n més» n'afegeix trenta més, fins a un any. La setmana, la vista i els dies queden a l'adreça de la pàgina: si la guardes o la comparteixes, s'obre on eres.",
+        },
+        {
           t: "note",
           text: "Al calendari només les files en punt porten l'hora escrita; la línia del mig parteix l'hora en dues. I com que una sessió dura una hora, n'ocupa dues files: la segona surt ombrejada i no s'hi pot clicar, perquè no és un forat lliure sinó la mateixa sessió continuant.",
         },

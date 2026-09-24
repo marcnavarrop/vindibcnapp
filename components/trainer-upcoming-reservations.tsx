@@ -1,31 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { SERVICE_LABELS, RESERVATION_STATUS_LABELS, formatDate } from "@/lib/labels";
 import type { ReservationListItem } from "@/lib/data/reservations";
 
-const MAX_ALL = 15;
-
+/**
+ * Les pròximes reserves, les seves i les del centre.
+ *
+ * Arriben ja retallades i ordenades del servidor, una llista per pestanya (el
+ * quantes el decideix la pàgina, `app/(trainer)/trainer/page.tsx`).
+ * Abans arribava TOT l'històric del centre al navegador i es filtrava aquí.
+ */
 export function TrainerUpcomingReservations({
-  reservations,
+  mine,
+  all,
   myId,
+  failed,
 }: {
-  reservations: ReservationListItem[];
+  mine: ReservationListItem[];
   myId: string;
+  all: ReservationListItem[];
+  /** La consulta ha fallat: es diu, en comptes de "no hi ha reserves". */
+  failed?: boolean;
 }) {
   const [scope, setScope] = useState<"mine" | "all">("mine");
-  const nowISO = new Date().toISOString();
-
-  const upcoming = useMemo(() => {
-    const future = reservations
-      .filter((r) => r.status === "booked" && r.scheduledAt >= nowISO)
-      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
-    if (scope === "mine") return future.filter((r) => r.trainerId === myId).slice(0, 6);
-    return future.slice(0, MAX_ALL);
-  }, [reservations, scope, myId, nowISO]);
+  const upcoming = scope === "mine" ? mine : all;
 
   return (
     <section className="rounded-2xl border border-brand-border bg-white">
@@ -54,7 +56,11 @@ export function TrainerUpcomingReservations({
       </div>
 
       <div className="divide-y divide-brand-border">
-        {upcoming.length === 0 ? (
+        {failed ? (
+          <p role="alert" className="px-5 py-3 text-sm text-error">
+            No s&apos;han pogut carregar les properes reserves.
+          </p>
+        ) : upcoming.length === 0 ? (
           <p className="px-5 py-3 text-sm text-brand-muted">
             No hi ha reserves properes.
           </p>

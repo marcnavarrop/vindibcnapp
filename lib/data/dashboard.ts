@@ -30,7 +30,11 @@ import {
   centerDateStr,
   centerSlot,
   centerLocalToInstant,
+  centerWeekStart,
+  centerDayStart,
+  addDaysStr,
 } from "@/lib/center-time";
+import { mockFails } from "@/lib/mock/faults";
 import type { BonoStatus, ServiceType, TrialStatus } from "@/types/database";
 
 // ─────────────────────── Tipus de sortida ───────────────────────
@@ -77,6 +81,8 @@ export type AdminDashboard = {
    * obligui a mirar-ho abans de llegir el percentatge.
    */
   trialConversion: { converted: number; total: number; pct: number | null } | null;
+  /** Parts que no s'han pogut carregar: la targeta ho diu en comptes de posar-hi un zero. */
+  failed: DashboardPart[];
 };
 
 // ─────────────────────── Dades crues ───────────────────────
@@ -98,17 +104,35 @@ type RawReservation = {
   scheduledAt: string;
   status: string;
 };
-type RawTrial = { status: TrialStatus; convertedClientId: string | null };
+/** Proves fetes i, d'aquestes, convertides: dos recomptes, no files. */
+type RawTrials = { happened: number; converted: number };
+
+/**
+ * Les parts del tauler, per dir QUINA ha fallat.
+ *
+ * Abans cada consulta feia `(res.data ?? [])` sense mirar l'error, i una
+ * consulta que fallava donava zeros que semblaven certs: "0 € aquest mes".
+ * Ara una part que falla es registra, arriba aquí, i la targeta ho diu.
+ */
+export type DashboardPart =
+  | "revenue"
+  | "pendingBonos"
+  | "lowBonos"
+  | "sessions"
+  | "occupancy"
+  | "trials"
+  | "clients";
 
 type Raw = {
   payments: RawPayment[];
   bonos: RawBono[];
   reservations: RawReservation[];
-  trials: RawTrial[];
+  trials: RawTrials;
   clientNames: Map<string, string>;
   trainerNames: Map<string, string>;
   rules: TrainerRuleLite[];
   blocks: TrainerBlockLite[];
+  failed: Set<DashboardPart>;
 };
 
 const MONTHS = [
@@ -121,10 +145,53 @@ const COUNTS_AS_SESSION = (status: string) =>
   status === "booked" || status === "completed";
 
 /** Proves que realment van arribar a fer-se (base de la conversió). */
+const TRIAL_HAPPENED_STATUSES: TrialStatus[] = ["confirmed", "completed"];
 const TRIAL_HAPPENED = (status: TrialStatus) =>
-  status === "confirmed" || status === "completed";
+  TRIAL_HAPPENED_STATUSES.includes(status);
 
-async function gather(): Promise<Raw> {
+/**
+ * La finestra que el tauler mira, en instants reals.
+ *
+ * - `monthsFrom`: l'1 del mes ANTERIOR, per als ingressos (aquest mes i el
+ *   passat, per comparar).
+ * - `weekFrom`/`weekTo`: la setmana en curs, de dilluns a dilluns. "Avui" hi
+ *   és a dins sempre.
+ *
+ * Abans es portava tot l'històric i es filtrava aquí; amb el tall de la base a
+ * 1000 files, el tauler hauria acabat comptant una mostra qualsevol.
+ */
+function dashboardWindow(now: Date) {
+  const today = centerDateStr(now);
+  const monday = centerWeekStart(today);
+  const [y, m] = today.split("-").map(Number);
+  const prevY = m === 1 ? y - 1 : y;
+  const prevM = m === 1 ? 12 : m - 1;
+  const monthsFrom = `${prevY}-${String(prevM).padStart(2, "0")}-01`;
+  return {
+    monthsFrom: centerDayStart(monthsFrom),
+    weekFrom: centerDayStart(monday),
+    weekTo: centerDayStart(addDaysStr(monday, 7)),
+  };
+}
+
+/** Registra l'error d'una part i la marca com a fallida. */
+function noteFailure(
+  failed: Set<DashboardPart>,
+  parts: DashboardPart[],
+  what: string,
+  error: { message: string } | null | undefined,
+): boolean {
+  if (!error) return false;
+  console.error(`[tauler] ${what}: ${error.message}`);
+  for (const p of parts) failed.add(p);
+  return true;
+}
+
+async function gather(lowThreshold: number): Promise<Raw> {
+  const now = new Date();
+  const win = dashboardWindow(now);
+  const failed = new Set<DashboardPart>();
+
   if (USE_MOCK) {
     const [rules, blocks] = await Promise.all([
       listAllTrainerRulesLite(),
@@ -140,33 +207,60 @@ async function gather(): Promise<Raw> {
     for (const p of store.profiles.filter((x) => x.role === "trainer"))
       trainerNames.set(p.id, p.full_name ?? "—");
 
+    // Mateixes finestres que la consulta real, perquè el mode demo digui el
+    // mateix que diria la base.
+    const monthsFrom = win.monthsFrom.toISOString();
+    const weekFrom = win.weekFrom.toISOString();
+    const weekTo = win.weekTo.toISOString();
+    const fail = (part: string, parts: DashboardPart[]) =>
+      mockFails(part) &&
+      noteFailure(failed, parts, `${part} (simulat)`, { message: "error simulat" });
+
+    const payments = fail("payments", ["revenue"])
+      ? []
+      : store.payments
+          .filter((p) => p.paid_at >= monthsFrom)
+          .map((p) => ({ amount: p.amount, paidAt: p.paid_at }));
+    const toRaw = (b: (typeof store.bonos)[number]): RawBono => ({
+      id: b.id,
+      clientId: b.client_id,
+      price: b.price,
+      status: b.status,
+      remaining: b.remaining_sessions,
+      serviceType: b.service_type,
+      expiresAt: b.expires_at,
+    });
+    const pending = fail("bonos", ["pendingBonos", "lowBonos"])
+      ? []
+      : store.bonos.filter((b) => b.status === "pending_payment").map(toRaw);
+    const low = failed.has("lowBonos")
+      ? []
+      : store.bonos
+          .filter((b) => b.status === "active" && b.remaining_sessions <= lowThreshold)
+          .map(toRaw);
+    const reservations = fail("reservations", ["sessions", "occupancy"])
+      ? []
+      : store.reservations
+          .filter((r) => r.scheduled_at >= weekFrom && r.scheduled_at < weekTo)
+          .map((r) => ({ trainerId: r.trainer_id, scheduledAt: r.scheduled_at, status: r.status }));
+    const happened = store.trial_bookings.filter((t) => TRIAL_HAPPENED(t.status));
+    const trials = fail("trials", ["trials"])
+      ? { happened: 0, converted: 0 }
+      : {
+          happened: happened.length,
+          converted: happened.filter((t) => t.converted_client_id).length,
+        };
+
     return {
-      payments: store.payments.map((p) => ({
-        amount: p.amount,
-        paidAt: p.paid_at,
-      })),
-      bonos: store.bonos.map((b) => ({
-        id: b.id,
-        clientId: b.client_id,
-        price: b.price,
-        status: b.status,
-        remaining: b.remaining_sessions,
-        serviceType: b.service_type,
-        expiresAt: b.expires_at,
-      })),
-      reservations: store.reservations.map((r) => ({
-        trainerId: r.trainer_id,
-        scheduledAt: r.scheduled_at,
-        status: r.status,
-      })),
-      trials: store.trial_bookings.map((t) => ({
-        status: t.status,
-        convertedClientId: t.converted_client_id,
-      })),
+      payments,
+      bonos: [...pending, ...low],
+      reservations,
+      trials,
       clientNames,
       trainerNames,
       rules,
       blocks,
+      failed,
     };
   }
 
@@ -175,28 +269,75 @@ async function gather(): Promise<Raw> {
   // Només construeix el client (llegeix cookies): no és cap viatge de xarxa.
   const admin = await createClient();
 
-  // Les VUIT consultes són independents entre si, així que van totes alhora.
-  // Abans les regles i els bloquejos s'esperaven a part, i les altres sis no
-  // arrencaven fins que aquelles dues havien tornat: un viatge de xarxa de més.
-  const [rules, blocks, pay, bon, res, tri, cli, tra] = await Promise.all([
-    listAllTrainerRulesLite(),
-    listAllBlocksLite(),
-    admin.from("payments").select("amount, paid_at"),
-    admin.from("bonos").select("id, client_id, price, status, remaining_sessions, service_type, expires_at"),
-    admin.from("reservations").select("trainer_id, scheduled_at, status"),
-    admin.from("trial_bookings").select("status, converted_client_id"),
-    admin
-      .from("clients")
-      .select("id, profile:profiles!clients_profile_id_fkey(full_name)"),
-    admin.from("profiles").select("id, full_name").eq("role", "trainer"),
-  ]);
+  // El nom del client ve DINS de la consulta de bons: només calen els dels
+  // bons que surten a la targeta, i abans es portaven tots els clients del
+  // centre per trobar-ne uns quants.
+  const BONO_SELECT = `id, client_id, price, status, remaining_sessions, service_type, expires_at,
+     client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`;
 
-  const clientNames = new Map<string, string>();
-  for (const c of (cli.data ?? []) as unknown as Array<{
+  // Totes independents: van alhora.
+  const [rules, blocks, pay, pend, low, res, triHappened, triConverted, tra] =
+    await Promise.all([
+      listAllTrainerRulesLite(),
+      listAllBlocksLite(),
+      admin.from("payments").select("amount, paid_at").gte("paid_at", win.monthsFrom.toISOString()),
+      admin.from("bonos").select(BONO_SELECT).eq("status", "pending_payment"),
+      admin
+        .from("bonos")
+        .select(BONO_SELECT)
+        .eq("status", "active")
+        .lte("remaining_sessions", lowThreshold),
+      admin
+        .from("reservations")
+        .select("trainer_id, scheduled_at, status")
+        .gte("scheduled_at", win.weekFrom.toISOString())
+        .lt("scheduled_at", win.weekTo.toISOString()),
+      admin
+        .from("trial_bookings")
+        .select("id", { count: "exact", head: true })
+        .in("status", TRIAL_HAPPENED_STATUSES),
+      admin
+        .from("trial_bookings")
+        .select("id", { count: "exact", head: true })
+        .in("status", TRIAL_HAPPENED_STATUSES)
+        .not("converted_client_id", "is", null),
+      admin.from("profiles").select("id, full_name").eq("role", "trainer"),
+    ]);
+
+  noteFailure(failed, ["revenue"], "pagaments", pay.error);
+  noteFailure(failed, ["pendingBonos"], "bons pendents", pend.error);
+  noteFailure(failed, ["lowBonos"], "bons baixos", low.error);
+  noteFailure(failed, ["sessions", "occupancy"], "reserves de la setmana", res.error);
+  noteFailure(failed, ["trials"], "proves fetes", triHappened.error);
+  noteFailure(failed, ["trials"], "proves convertides", triConverted.error);
+  noteFailure(failed, ["occupancy"], "professionals", tra.error);
+
+  type BonoRow = {
     id: string;
-    profile: { full_name: string | null } | null;
-  }>)
-    clientNames.set(c.id, c.profile?.full_name ?? "—");
+    client_id: string;
+    price: number;
+    status: BonoStatus;
+    remaining_sessions: number;
+    service_type: ServiceType;
+    expires_at: string | null;
+    client: { profile: { full_name: string | null } | null } | null;
+  };
+  const clientNames = new Map<string, string>();
+  const bonos = [
+    ...((pend.data ?? []) as unknown as BonoRow[]),
+    ...((low.data ?? []) as unknown as BonoRow[]),
+  ].map((b) => {
+    clientNames.set(b.client_id, b.client?.profile?.full_name ?? "—");
+    return {
+      id: b.id,
+      clientId: b.client_id,
+      price: b.price,
+      status: b.status,
+      remaining: b.remaining_sessions,
+      serviceType: b.service_type,
+      expiresAt: b.expires_at,
+    };
+  });
 
   const trainerNames = new Map<string, string>();
   for (const t of tra.data ?? []) trainerNames.set(t.id, t.full_name ?? "—");
@@ -206,28 +347,21 @@ async function gather(): Promise<Raw> {
       amount: p.amount,
       paidAt: p.paid_at,
     })),
-    bonos: (bon.data ?? []).map((b) => ({
-      id: b.id,
-      clientId: b.client_id,
-      price: b.price,
-      status: b.status,
-      remaining: b.remaining_sessions,
-      serviceType: b.service_type,
-      expiresAt: b.expires_at,
-    })),
+    bonos,
     reservations: (res.data ?? []).map((r) => ({
       trainerId: r.trainer_id,
       scheduledAt: r.scheduled_at,
       status: r.status,
     })),
-    trials: (tri.data ?? []).map((t) => ({
-      status: t.status,
-      convertedClientId: t.converted_client_id,
-    })),
+    trials: {
+      happened: triHappened.count ?? 0,
+      converted: triConverted.count ?? 0,
+    },
     clientNames,
     trainerNames,
     rules,
     blocks,
+    failed,
   };
 }
 
@@ -285,8 +419,9 @@ function occupancyOf(
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboard> {
-  // Les dades i la configuració són independents: van alhora.
-  const [raw, settings] = await Promise.all([gather(), getCenterSettings()]);
+  // El llindar dels bons baixos va a la consulta: primer la configuració.
+  const settings = await getCenterSettings();
+  const raw = await gather(settings.bonoLowThreshold);
   const now = new Date();
 
   // ── 1. Ingressos del mes (pagaments reals, mai bonos pendents) ──
@@ -396,8 +531,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   perTrainer.sort((a, b) => b.pct - a.pct);
 
   // ── 6. Conversió de sessions de prova ──
-  const happened = raw.trials.filter((t) => TRIAL_HAPPENED(t.status));
-  const converted = happened.filter((t) => t.convertedClientId).length;
+  const { happened, converted } = raw.trials;
 
   return {
     revenue: {
@@ -422,10 +556,11 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
     trialConversion: settings.modules.sessionsProva
       ? {
           converted,
-          total: happened.length,
-          pct: happened.length > 0 ? (converted / happened.length) * 100 : null,
+          total: happened,
+          pct: happened > 0 ? (converted / happened) * 100 : null,
         }
       : null,
+    failed: [...raw.failed],
   };
 }
 
@@ -439,6 +574,8 @@ export type TrainerDashboard = {
   /** Bons dels SEUS clients assignats per sota del llindar del centre. */
   lowBonos: LowBono[];
   occupancy: { slots: number; booked: number; pct: number };
+  /** Parts que no s'han pogut carregar (vegeu `DashboardPart`). */
+  failed: DashboardPart[];
 };
 
 type RawTrainer = {
@@ -448,6 +585,7 @@ type RawTrainer = {
   clientCount: number;
   rules: AvailabilityRuleLite[];
   blocks: AvailabilityBlockLite[];
+  failed: Set<DashboardPart>;
 };
 
 /**
@@ -455,8 +593,18 @@ type RawTrainer = {
  * la RLS li deixa llegir reserves i bons de tot el centre per coordinar-se,
  * així que si el filtre no és a la consulta, el tauler li ensenyaria números
  * dels companys sense que res ho impedeixi.
+ *
+ * I només el que es pinta: la seva setmana, els seus bons actius per sota del
+ * llindar i el RECOMPTE dels seus clients. Abans eren tota la seva història,
+ * tots els bons dels seus clients i la llista sencera dels clients per comptar-los.
  */
-async function gatherTrainer(trainerId: string): Promise<RawTrainer> {
+async function gatherTrainer(
+  trainerId: string,
+  lowThreshold: number,
+): Promise<RawTrainer> {
+  const win = dashboardWindow(new Date());
+  const failed = new Set<DashboardPart>();
+
   if (USE_MOCK) {
     const [rules, blocks] = await Promise.all([
       listAvailabilityLite(trainerId),
@@ -472,39 +620,61 @@ async function gatherTrainer(trainerId: string): Promise<RawTrainer> {
       const p = store.profiles.find((x) => x.id === c.profile_id);
       clientNames.set(c.id, p?.full_name ?? "—");
     }
+    const weekFrom = win.weekFrom.toISOString();
+    const weekTo = win.weekTo.toISOString();
+    const fail = (part: string, parts: DashboardPart[]) =>
+      mockFails(part) &&
+      noteFailure(failed, parts, `${part} (simulat)`, { message: "error simulat" });
 
     return {
-      reservations: store.reservations
-        .filter((r) => r.trainer_id === trainerId)
-        .map((r) => ({ scheduledAt: r.scheduled_at, status: r.status })),
-      bonos: store.bonos
-        .filter((b) => myClientIds.has(b.client_id))
-        .map((b) => ({
-          id: b.id,
-          clientId: b.client_id,
-          price: b.price,
-          status: b.status,
-          remaining: b.remaining_sessions,
-          serviceType: b.service_type,
-          expiresAt: b.expires_at,
-        })),
+      reservations: fail("reservations", ["sessions", "occupancy"])
+        ? []
+        : store.reservations
+            .filter(
+              (r) =>
+                r.trainer_id === trainerId &&
+                r.scheduled_at >= weekFrom &&
+                r.scheduled_at < weekTo,
+            )
+            .map((r) => ({ scheduledAt: r.scheduled_at, status: r.status })),
+      bonos: fail("bonos", ["lowBonos"])
+        ? []
+        : store.bonos
+            .filter(
+              (b) =>
+                myClientIds.has(b.client_id) &&
+                b.status === "active" &&
+                b.remaining_sessions <= lowThreshold,
+            )
+            .map((b) => ({
+              id: b.id,
+              clientId: b.client_id,
+              price: b.price,
+              status: b.status,
+              remaining: b.remaining_sessions,
+              serviceType: b.service_type,
+              expiresAt: b.expires_at,
+            })),
       clientNames,
-      clientCount: myClients.length,
+      clientCount: fail("clients", ["clients"]) ? 0 : myClients.length,
       rules,
       blocks,
+      failed,
     };
   }
 
   const supabase = await createClient();
 
-  // Les cinc consultes són independents: totes alhora.
+  // Totes independents: van alhora.
   const [rules, blocks, res, bon, cli] = await Promise.all([
     listAvailabilityLite(trainerId),
     listBlocksLite(trainerId),
     supabase
       .from("reservations")
       .select("scheduled_at, status")
-      .eq("trainer_id", trainerId),
+      .eq("trainer_id", trainerId)
+      .gte("scheduled_at", win.weekFrom.toISOString())
+      .lt("scheduled_at", win.weekTo.toISOString()),
     // !inner perquè el filtre és sobre el client, no sobre el bo: sense join
     // intern, PostgREST tornaria també els bons dels clients d'altres.
     supabase
@@ -514,9 +684,18 @@ async function gatherTrainer(trainerId: string): Promise<RawTrainer> {
          client:clients!inner(assigned_trainer_id,
            profile:profiles!clients_profile_id_fkey(full_name))`,
       )
-      .eq("client.assigned_trainer_id", trainerId),
-    supabase.from("clients").select("id").eq("assigned_trainer_id", trainerId),
+      .eq("client.assigned_trainer_id", trainerId)
+      .eq("status", "active")
+      .lte("remaining_sessions", lowThreshold),
+    supabase
+      .from("clients")
+      .select("id", { count: "exact", head: true })
+      .eq("assigned_trainer_id", trainerId),
   ]);
+
+  noteFailure(failed, ["sessions", "occupancy"], "reserves de la setmana", res.error);
+  noteFailure(failed, ["lowBonos"], "bons baixos", bon.error);
+  noteFailure(failed, ["clients"], "clients assignats", cli.error);
 
   type BonoRow = {
     id: string;
@@ -550,9 +729,10 @@ async function gatherTrainer(trainerId: string): Promise<RawTrainer> {
     })),
     bonos,
     clientNames,
-    clientCount: (cli.data ?? []).length,
+    clientCount: cli.count ?? 0,
     rules,
     blocks,
+    failed,
   };
 }
 
@@ -566,6 +746,7 @@ export async function getTrainerDashboard(
       clients: 0,
       lowBonos: [],
       occupancy: { slots: 0, booked: 0, pct: 0 },
+      failed: [],
     };
 
   /*
@@ -575,10 +756,9 @@ export async function getTrainerDashboard(
    * l'escombrada peresosa de caducitats: obrir l'inici escrivia a la base.
    * Ara viuen a "Atenció immediata", que les llegeix amb una consulta pura.
    */
-  const [raw, settings] = await Promise.all([
-    gatherTrainer(trainerId),
-    getCenterSettings(),
-  ]);
+  // El llindar dels bons baixos va a la consulta: primer la configuració.
+  const settings = await getCenterSettings();
+  const raw = await gatherTrainer(trainerId, settings.bonoLowThreshold);
   const now = new Date();
 
   // ── Sessions d'avui / aquesta setmana ──
@@ -634,5 +814,6 @@ export async function getTrainerDashboard(
     clients: raw.clientCount,
     lowBonos,
     occupancy,
+    failed: [...raw.failed],
   };
 }

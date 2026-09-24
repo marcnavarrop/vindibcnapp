@@ -1,4 +1,5 @@
 import "server-only";
+import { addDaysStr, centerDayStart, centerWeekStart } from "@/lib/center-time";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
@@ -154,6 +155,16 @@ function sessionsByService(
 export async function getClientCenterData(
   profileId: string,
 ): Promise<ClientCenterData> {
+  // DES DE LA SETMANA D'AVUI, i endavant. El calendari del client és per
+  // reservar; mirar enrere és cosa de "Sessions passades". Abans es portaven
+  // TOTES les reserves de la història del centre —les 'booked' que ningú marca
+  // com a fetes s'hi queden per sempre—, i amb el tall de la base a 1000 files
+  // el calendari hauria perdut franges ocupades, i fins i tot les reserves del
+  // mateix client. Un dia de marge: el navegador pinta la setmana en la seva
+  // hora, i aquesta finestra és en la del centre.
+  const windowFrom = centerDayStart(addDaysStr(centerWeekStart(), -1));
+  const fromISO = windowFrom.toISOString();
+
   // Les proves 'pending'/'confirmed' ocupen el forat: es mostren com a
   // reserves anònimes ('booked', isOwn=false) perquè el client no pugui
   // reservar-hi a sobre ni deduir de qui són.
@@ -161,7 +172,7 @@ export async function getClientCenterData(
   // S'engega aquí però NO s'espera encara: no depèn de res del client, així
   // que ha de viatjar en paral·lel amb la consulta de `clients` en comptes
   // d'encadenar-s'hi (eren dos viatges de xarxa seguits).
-  const holdsPromise = listActiveTrialHolds();
+  const holdsPromise = listActiveTrialHolds({ from: windowFrom });
   const toHoldReservations = (
     holds: Awaited<typeof holdsPromise>,
   ): CenterReservation[] =>
@@ -199,7 +210,7 @@ export async function getClientCenterData(
       serviceTypes: r.service_types ?? [],
     }));
     const reservations = store.reservations
-      .filter((r) => r.status !== "cancelled")
+      .filter((r) => r.status !== "cancelled" && r.scheduled_at >= fromISO)
       .map((r) => {
         const c = store.clients.find((x) => x.id === r.client_id);
         const name = store.profiles.find((p) => p.id === c?.profile_id)?.full_name;
@@ -257,7 +268,8 @@ export async function getClientCenterData(
         `id, client_id, trainer_id, scheduled_at, service_type, status,
          client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
       )
-      .neq("status", "cancelled"),
+      .neq("status", "cancelled")
+      .gte("scheduled_at", fromISO),
   ]);
 
   const bonoSessions = sessionsByService(bonoRows.data ?? []);

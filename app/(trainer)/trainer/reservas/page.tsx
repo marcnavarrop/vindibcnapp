@@ -8,7 +8,8 @@ const TABS = [
 ];
 import { getViewer } from "@/lib/auth";
 import { ReservationsView } from "@/components/reservations-view";
-import { listReservations } from "@/lib/data/reservations";
+import { listReservationsInRange } from "@/lib/data/reservations";
+import { agendaWindow } from "@/lib/agenda-window";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listClients, listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
@@ -26,11 +27,27 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function TrainerReservasPage() {
-  const viewer = await getViewer();
+export default async function TrainerReservasPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [viewer, params, centerSettings] = await Promise.all([
+    getViewer(),
+    searchParams,
+    getCenterSettings(),
+  ]);
   const trainerId = viewer?.id;
 
-  // Todas las reservas (coordinación) + las de MIS clientes (gestionables).
+  // Només la setmana del calendari o els dies de la llista: vegeu `agendaWindow`.
+  const { nav, from, to } = agendaWindow("/trainer/reservas", params);
+
+  // Si l'ajust de centre amaga les dels companys, el filtre va A LA CONSULTA:
+  // abans es portava tot el centre i es retallava després.
+  const onlyMine = !centerSettings.trainersSeColleaguesReservations;
+  const agendaOf = onlyMine ? (trainerId ?? "") : undefined;
+
+  // Les reserves de la finestra (coordinació) + les de MIS clientes (gestionables).
   const [
     reservations,
     trainers,
@@ -38,16 +55,14 @@ export default async function TrainerReservasPage() {
     allAvailability,
     allBlocks,
     trials,
-    centerSettings,
     palette,
   ] = await Promise.all([
-      listReservations(),
+      listReservationsInRange({ from, to, trainerId: agendaOf }),
       listTrainers(),
       trainerId ? listClients(trainerId) : Promise.resolve([]),
       listAllTrainerRulesLite(),
       listAllBlocksLite(),
-      listActiveTrialHolds(),
-      getCenterSettings(),
+      listActiveTrialHolds({ from, to }),
       getColorPalette(),
     ]);
   // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
@@ -80,21 +95,12 @@ export default async function TrainerReservasPage() {
     .filter((r) => r.trainerId === trainerId)
     .map((r) => r.id);
 
-  // Si l'ajust de centre ho desactiva, el trainer només veu les seves pròpies reserves.
-  const visibleReservations =
-    centerSettings.trainersSeColleaguesReservations
-      ? reservations
-      : reservations.filter((r) => r.trainerId === trainerId);
-
   // Només les passades: són les úniques on la nota té sentit i on es pinta.
   const nowISO = new Date().toISOString();
-  const notes = Object.fromEntries(
-    await getNotesForReservations(
-      visibleReservations
-        .filter((r) => r.scheduledAt <= nowISO)
-        .map((r) => r.id),
-    ),
+  const { notes: noteMap, failed: notesFailed } = await getNotesForReservations(
+    reservations.filter((r) => r.scheduledAt <= nowISO).map((r) => r.id),
   );
+  const notes = Object.fromEntries(noteMap);
 
   return (
     <>
@@ -118,8 +124,10 @@ export default async function TrainerReservasPage() {
         </div>
 
         <ReservationsView
+          nav={nav}
+          notesFailed={notesFailed}
           palette={palette}
-          reservations={visibleReservations}
+          reservations={reservations}
           trainers={trainers}
           nowISO={nowISO}
           manageableIds={manageableIds}

@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
+import { mockFails } from "@/lib/mock/faults";
 import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
 import { listBlocksLite } from "@/lib/data/availability-blocks";
@@ -378,30 +379,56 @@ function nameOfProfile(profileId: string | null, store: Store): string | null {
 }
 
 /**
- * Reservas. Si se pasa `trainerId`, solo las de ese entrenador (área trainer).
+ * Com es demanen les reserves per a les pantalles de l'equip.
+ *
+ * NO HI HA "TOTES". Abans `listReservations()` portava tot l'històric del
+ * centre, i la base talla cada resposta a `SUPABASE_MAX_ROWS` (1000) sense
+ * dir-ho: en ordre ascendent, el que hauria desaparegut primer són les
+ * reserves més noves, les futures incloses. Ara qui crida ha de dir quina
+ * finestra vol (`from`/`to`) o quantes en vol (`limit`).
  */
-export async function listReservations(
-  trainerId?: string,
-): Promise<ReservationListItem[]> {
+type ReservationQuery = {
+  /** Inici inclòs (instant real). */
+  from?: Date;
+  /** Final exclòs (instant real). */
+  to?: Date;
+  /** Només les d'aquesta agenda. */
+  trainerId?: string;
+  /** Només aquest estat. */
+  status?: ReservationStatus;
+  /** Quantes, com a molt, en ordre de data. */
+  limit?: number;
+};
+
+async function queryReservations(q: ReservationQuery): Promise<ReservationListItem[]> {
+  if (mockFails("reservations")) throw new Error("error simulat (MOCK_FAIL=reservations)");
   if (USE_MOCK) {
     const store = getStore();
-    return store.reservations
-      .filter((r) => !trainerId || r.trainer_id === trainerId)
+    const from = q.from?.toISOString();
+    const to = q.to?.toISOString();
+    const list = store.reservations
+      .filter(
+        (r) =>
+          (!q.trainerId || r.trainer_id === q.trainerId) &&
+          (!q.status || r.status === q.status) &&
+          (!from || r.scheduled_at >= from) &&
+          (!to || r.scheduled_at < to),
+      )
       .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
-      .map((r) => ({
-        id: r.id,
-        clientId: r.client_id,
-        clientName: nameOfClient(r.client_id, store),
-        trainerId: r.trainer_id,
-        trainerName: nameOfProfile(r.trainer_id, store),
-        scheduledAt: r.scheduled_at,
-        serviceType: r.service_type,
-        status: r.status,
-        isComplimentary: r.is_complimentary,
-      }));
+      .slice(0, q.limit ?? Infinity);
+    return list.map((r) => ({
+      id: r.id,
+      clientId: r.client_id,
+      clientName: nameOfClient(r.client_id, store),
+      trainerId: r.trainer_id,
+      trainerName: nameOfProfile(r.trainer_id, store),
+      scheduledAt: r.scheduled_at,
+      serviceType: r.service_type,
+      status: r.status,
+      isComplimentary: r.is_complimentary,
+    }));
   }
 
-  // ── Backend real (verificar al conectar Supabase). ──
   const supabase = await createClient();
   let query = supabase
     .from("reservations")
@@ -411,7 +438,11 @@ export async function listReservations(
        trainer:profiles!reservations_trainer_id_fkey(full_name)`,
     )
     .order("scheduled_at", { ascending: true });
-  if (trainerId) query = query.eq("trainer_id", trainerId);
+  if (q.from) query = query.gte("scheduled_at", q.from.toISOString());
+  if (q.to) query = query.lt("scheduled_at", q.to.toISOString());
+  if (q.trainerId) query = query.eq("trainer_id", q.trainerId);
+  if (q.status) query = query.eq("status", q.status);
+  if (q.limit) query = query.limit(q.limit);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -438,6 +469,32 @@ export async function listReservations(
     status: r.status,
     isComplimentary: r.is_complimentary,
   }));
+}
+
+/**
+ * Les reserves d'una finestra de temps: `[from, to)`. Si es passa `trainerId`,
+ * només les d'aquella agenda — i el filtre va A LA CONSULTA, no després, perquè
+ * la finestra sigui la mateixa per a qui només veu la seva.
+ */
+export async function listReservationsInRange(input: {
+  from: Date;
+  to: Date;
+  trainerId?: string;
+}): Promise<ReservationListItem[]> {
+  return queryReservations(input);
+}
+
+/** Les pròximes reserves actives, com a molt `limit`. Per a l'inici del professional. */
+export async function listUpcomingReservations(input: {
+  limit: number;
+  trainerId?: string;
+}): Promise<ReservationListItem[]> {
+  return queryReservations({
+    from: new Date(),
+    status: "booked",
+    limit: input.limit,
+    trainerId: input.trainerId,
+  });
 }
 
 // ─────────────────────────── Escritura ───────────────────────────

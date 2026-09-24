@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
@@ -25,6 +26,7 @@ import {
 } from "@/lib/colors";
 import type { ServiceType } from "@/types/database";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
+import type { AgendaNav } from "@/lib/agenda-window";
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
 /** Cancel·lar i marcar feta: tornen si s'ha fet i, si no, per què. */
@@ -39,8 +41,15 @@ const NO_FILTER = "";
  * Conmutador entre la lista (Properes/Passades) y el calendario semanal.
  * La lista conserva los filtros por entrenador/estado; el calendario aporta la
  * vista de agenda semanal. Ambos comparten datos y permisos (manageableIds).
+ *
+ * QUINA VISTA I QUINA FINESTRA HO DIU LA URL (`nav`): el servidor només porta
+ * les reserves de la setmana del calendari o dels dies de la llista, i canviar
+ * de vista o de setmana és un enllaç que les torna a demanar. Els filtres i
+ * els companys triats són estat del navegador i sobreviuen a la navegació.
  */
 export function ReservationsView({
+  nav,
+  notesFailed,
   reservations,
   trainers,
   nowISO,
@@ -66,6 +75,9 @@ export function ReservationsView({
   closingHour,
   palette,
 }: {
+  nav: AgendaNav;
+  /** La consulta de notes ha fallat: la llista ho diu (vegeu `ReservationsAgenda`). */
+  notesFailed?: boolean;
   reservations: ReservationListItem[];
   trainers: { id: string; name: string }[];
   nowISO: string;
@@ -106,7 +118,7 @@ export function ReservationsView({
   /** Mostra el selector de companys (quan el centre ho permet). */
   showColleagueSelector?: boolean;
 }) {
-  const [view, setView] = useState<"calendar" | "list">("calendar");
+  const view = nav.view;
   const [showOwnAvail, setShowOwnAvail] = useState(true);
   const [selectedColleagues, setSelectedColleagues] = useState<Set<string>>(new Set());
 
@@ -227,10 +239,10 @@ export function ReservationsView({
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
           {(["calendar", "list"] as const).map((v) => (
-            <button
+            <Link
               key={v}
-              type="button"
-              onClick={() => setView(v)}
+              href={v === "calendar" ? nav.href.calendar : nav.href.list}
+              aria-current={view === v ? "page" : undefined}
               className={clsx(
                 "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
                 view === v
@@ -240,7 +252,7 @@ export function ReservationsView({
               )}
             >
               {v === "calendar" ? "Calendari" : "Llista"}
-            </button>
+            </Link>
           ))}
         </div>
 
@@ -464,6 +476,7 @@ export function ReservationsView({
 
       {view === "calendar" ? (
         <WeeklyCalendar
+          nav={nav}
           palette={palette}
           availabilityLayers={availabilityLayers}
           layerBlocks={allBlocks ?? []}
@@ -487,6 +500,8 @@ export function ReservationsView({
         />
       ) : (
         <ReservationsAgenda
+          nav={nav}
+          notesFailed={notesFailed}
           reservations={reservations}
           trainers={trainers}
           nowISO={nowISO}
