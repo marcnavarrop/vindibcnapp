@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { USE_MOCK } from "@/lib/config";
+import { getStore } from "@/lib/mock/store";
 import { saveSessionNote, deleteSessionNote } from "@/lib/data/session-notes";
 
 export type NoteState = { error?: string; ok?: boolean };
@@ -21,12 +23,17 @@ export type NoteState = { error?: string; ok?: boolean };
  * l'hauria feta inabastable per un descuit.
  */
 async function sessionHasStarted(reservationId: string): Promise<boolean> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("reservations")
-    .select("scheduled_at, status")
-    .eq("id", reservationId)
-    .maybeSingle();
+  let data: { scheduled_at: string; status: string } | null;
+  if (USE_MOCK) {
+    data = getStore().reservations.find((r) => r.id === reservationId) ?? null;
+  } else {
+    const supabase = await createClient();
+    ({ data } = await supabase
+      .from("reservations")
+      .select("scheduled_at, status")
+      .eq("id", reservationId)
+      .maybeSingle());
+  }
   if (!data || data.status === "cancelled") return false;
   return new Date(data.scheduled_at).getTime() <= Date.now();
 }

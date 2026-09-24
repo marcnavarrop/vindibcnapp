@@ -7,7 +7,7 @@ import { ClientReservasView } from "@/components/client/reservas-view";
 import { getAnyLiveSubscription } from "@/lib/data/subscriptions";
 import { listActiveSeries } from "@/lib/data/booking-series";
 import { listWaitlistForClient } from "@/lib/data/waitlist";
-import { listPastSessions } from "@/lib/data/session-notes";
+import { listPastSessions, PAST_SESSIONS_LIMIT } from "@/lib/data/session-notes";
 import { PastSessions } from "@/components/client/past-sessions";
 import {
   createOwnReservationAction,
@@ -90,7 +90,7 @@ export default async function ClientReservasPage() {
       {/* Sota el calendari, no dins: reservar i mirar enrere són dues coses
           diferents i el calendari ja té prou feina. */}
       <div className="mt-6">
-        <PastSessions sessions={pastSessions} />
+        <PastSessions sessions={pastSessions} limit={PAST_SESSIONS_LIMIT} />
       </div>
     </main>
   );

@@ -5,7 +5,6 @@ import { TAP } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK, MOCK_ROLE_COOKIE } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
@@ -100,6 +99,11 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
     let navigating = false;
 
     try {
+      // Import dinàmic a propòsit, com a `sign-out-button`: amb un import
+      // estàtic, @supabase/supabase-js (~65 kB) entrava a la càrrega inicial
+      // d'aquesta pantalla, la primera que veu tothom. Així es descarrega en
+      // prémer el botó.
+      const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       const { data, error: signInError } =
         await supabase.auth.signInWithPassword({ email, password });

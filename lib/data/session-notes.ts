@@ -2,7 +2,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { USE_MOCK } from "@/lib/config";
-import { getStore } from "@/lib/mock/store";
+import { getStore, saveStore, type Store } from "@/lib/mock/store";
+import { getViewer, type Viewer } from "@/lib/auth";
 import type { ServiceType, ReservationStatus } from "@/types/database";
 
 /**
@@ -67,6 +68,36 @@ type NoteRow = {
 
 const SELECT = "reservation_id, body, author_id, created_at, updated_at";
 
+// ─── Mode demo ──────────────────────────────────────────────────────────────
+//
+// Al magatzem simulat no hi ha RLS, i aquí és la RLS qui ho decideix tot. Així
+// que les dues policies de la 0079 es copien a mà, i NOMÉS per al mode demo:
+// si algun dia canvien, s'han de canviar totes dues bandes.
+
+/** El professional d'AQUELLA reserva: `is_session_trainer` de la 0079. */
+function mockIsSessionTrainer(store: Store, viewer: Viewer, reservationId: string): boolean {
+  const r = store.reservations.find((x) => x.id === reservationId);
+  return !!r && r.trainer_id === viewer.id;
+}
+
+/** `session_notes_select`: l'admin, el professional de la sessió i el seu client. */
+function mockCanRead(store: Store, viewer: Viewer, reservationId: string): boolean {
+  if (viewer.role === "admin") return true;
+  if (mockIsSessionTrainer(store, viewer, reservationId)) return true;
+  const r = store.reservations.find((x) => x.id === reservationId);
+  const client = r && store.clients.find((c) => c.id === r.client_id);
+  return !!client && client.profile_id === viewer.id;
+}
+
+function mockNames(store: Store, ids: (string | null)[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const id of ids) {
+    const name = id ? store.profiles.find((p) => p.id === id)?.full_name : null;
+    if (id && name) out.set(id, name);
+  }
+  return out;
+}
+
 /**
  * Els noms de qui surt a la pantalla, per id. Amb la clau de servei i NOMÉS per
  * a ids que ja han passat la RLS (vegeu la capçalera). Torna un `Map` buit si
@@ -97,16 +128,28 @@ export async function getNotesForReservations(
 ): Promise<Map<string, SessionNote>> {
   const out = new Map<string, SessionNote>();
   if (reservationIds.length === 0) return out;
-  if (USE_MOCK) return out;
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("session_notes")
-    .select(SELECT)
-    .in("reservation_id", reservationIds);
-
-  const rows = (data ?? []) as unknown as NoteRow[];
-  const names = await resolveNames(rows.map((r) => r.author_id));
+  let rows: NoteRow[];
+  let names: Map<string, string>;
+  if (USE_MOCK) {
+    const store = getStore();
+    const viewer = await getViewer();
+    const wanted = new Set(reservationIds);
+    rows = viewer
+      ? store.session_notes.filter(
+          (n) => wanted.has(n.reservation_id) && mockCanRead(store, viewer, n.reservation_id),
+        )
+      : [];
+    names = mockNames(store, rows.map((r) => r.author_id));
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("session_notes")
+      .select(SELECT)
+      .in("reservation_id", reservationIds);
+    rows = (data ?? []) as unknown as NoteRow[];
+    names = await resolveNames(rows.map((r) => r.author_id));
+  }
   for (const r of rows) {
     out.set(r.reservation_id, {
       reservationId: r.reservation_id,
@@ -133,7 +176,38 @@ export async function saveSessionNote(input: {
 }): Promise<"empty" | "denied" | null> {
   const body = input.body.trim();
   if (!body) return "empty";
-  if (USE_MOCK) return "denied";
+
+  if (USE_MOCK) {
+    // `session_notes_trainer_write`: el professional d'aquella sessió, i
+    // signant amb el seu propi nom.
+    const store = getStore();
+    const viewer = await getViewer();
+    if (
+      !viewer ||
+      !mockIsSessionTrainer(store, viewer, input.reservationId) ||
+      input.authorId !== viewer.id
+    )
+      return "denied";
+    const now = new Date().toISOString();
+    const existing = store.session_notes.find(
+      (n) => n.reservation_id === input.reservationId,
+    );
+    if (existing) {
+      existing.author_id = input.authorId;
+      existing.body = body;
+      existing.updated_at = now;
+    } else {
+      store.session_notes.push({
+        reservation_id: input.reservationId,
+        author_id: input.authorId,
+        body,
+        created_at: now,
+        updated_at: now,
+      });
+    }
+    saveStore(store);
+    return null;
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.from("session_notes").upsert(
@@ -149,13 +223,32 @@ export async function saveSessionNote(input: {
 
 /** Esborra la nota d'una sessió. La RLS decideix si es pot. */
 export async function deleteSessionNote(reservationId: string): Promise<void> {
-  if (USE_MOCK) return;
+  if (USE_MOCK) {
+    // Com la RLS: si no és el professional de la sessió, no s'esborra res i
+    // tampoc no hi ha error.
+    const store = getStore();
+    const viewer = await getViewer();
+    if (!viewer || !mockIsSessionTrainer(store, viewer, reservationId)) return;
+    store.session_notes = store.session_notes.filter(
+      (n) => n.reservation_id !== reservationId,
+    );
+    saveStore(store);
+    return;
+  }
   const supabase = await createClient();
   await supabase.from("session_notes").delete().eq("reservation_id", reservationId);
 }
 
 /**
- * Les sessions ja passades d'un client, amb la seva nota.
+ * Quantes sessions passades es porten com a molt. Sense sostre, la llista (i
+ * la consulta de notes, que viatja amb tots els ids a la URL) creixeria amb
+ * cada setmana de client; cent són uns dos anys a una sessió per setmana.
+ */
+export const PAST_SESSIONS_LIMIT = 100;
+
+/**
+ * Les sessions ja passades d'un client, amb la seva nota. Les més recents,
+ * fins a `PAST_SESSIONS_LIMIT`.
  *
  * Consulta a part i amb la sessió del client, no dins de `getClientCenterData`:
  * aquella porta les reserves de TOT el centre per pintar el calendari i les
@@ -166,7 +259,7 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
   if (USE_MOCK) {
     const store = getStore();
     const now = Date.now();
-    return store.reservations
+    const list = store.reservations
       .filter(
         (r) =>
           r.client_id === clientId &&
@@ -174,15 +267,17 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
           new Date(r.scheduled_at).getTime() <= now,
       )
       .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))
-      .map((r) => ({
-        id: r.id,
-        scheduledAt: r.scheduled_at,
-        serviceType: r.service_type,
-        status: r.status,
-        trainerName:
-          store.profiles.find((p) => p.id === r.trainer_id)?.full_name ?? null,
-        note: null,
-      }));
+      .slice(0, PAST_SESSIONS_LIMIT);
+    const notes = await getNotesForReservations(list.map((r) => r.id));
+    return list.map((r) => ({
+      id: r.id,
+      scheduledAt: r.scheduled_at,
+      serviceType: r.service_type,
+      status: r.status,
+      trainerName:
+        store.profiles.find((p) => p.id === r.trainer_id)?.full_name ?? null,
+      note: notes.get(r.id) ?? null,
+    }));
   }
 
   const supabase = await createClient();
@@ -192,7 +287,8 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
     .eq("client_id", clientId)
     .neq("status", "cancelled")
     .lte("scheduled_at", new Date().toISOString())
-    .order("scheduled_at", { ascending: false });
+    .order("scheduled_at", { ascending: false })
+    .limit(PAST_SESSIONS_LIMIT);
 
   const list = (rows ?? []) as unknown as {
     id: string;

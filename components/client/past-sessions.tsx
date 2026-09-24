@@ -16,7 +16,14 @@ import type { Locale } from "@/lib/i18n/config";
  * mateix criteri que els anuncis de la comunitat. El que sí que va en els tres
  * idiomes és tot el que l'envolta.
  */
-export function PastSessions({ sessions }: { sessions: PastSession[] }) {
+export function PastSessions({
+  sessions,
+  limit,
+}: {
+  sessions: PastSession[];
+  /** El sostre de `listPastSessions`: si s'hi arriba, es diu que n'hi pot haver més. */
+  limit: number;
+}) {
   const t = useTranslations("reservas.pastSessions");
   const tl = useTranslations("labels.service");
   const locale = useLocale() as Locale;
@@ -63,6 +70,11 @@ export function PastSessions({ sessions }: { sessions: PastSession[] }) {
               )}
             </div>
           ))}
+          {sessions.length >= limit && (
+            <p className="px-5 py-3 text-xs text-brand-muted">
+              {t("limited", { count: limit })}
+            </p>
+          )}
         </div>
       )}
     </section>

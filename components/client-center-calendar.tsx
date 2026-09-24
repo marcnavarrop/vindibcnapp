@@ -117,11 +117,6 @@ const addDays = (d: Date, n: number) => {
   x.setDate(x.getDate() + n);
   return x;
 };
-const pad = (n: number) => String(n).padStart(2, "0");
-const toLocalInput = (d: Date) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours(),
-  )}:${pad(d.getMinutes())}`;
 
 /** Un elemento a pintar en una celda (chip). */
 type CellItem =
@@ -1305,7 +1300,6 @@ function OwnModal({
   const [recurrent, setRecurrent] = useState(false);
   useEffect(() => {
     if (state.ok) setCancelled(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
   const canCancel = canCancelAt(scheduledAt, minCancellationHours);
 

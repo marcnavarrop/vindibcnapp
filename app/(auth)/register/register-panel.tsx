@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { TAP } from "@/lib/utils";
 import { useTranslations, useLocale } from "next-intl";
-import { createClient } from "@/lib/supabase/client";
 import { USE_MOCK } from "@/lib/config";
 import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { Button } from "@/components/ui/button";
@@ -130,6 +129,11 @@ export function RegisterPanel() {
         return;
       }
 
+      // Import dinàmic a propòsit, com a `sign-out-button`: amb un import
+      // estàtic, @supabase/supabase-js (~65 kB) entrava a la càrrega inicial
+      // d'aquesta pantalla, la primera que veu tothom. Així es descarrega en
+      // prémer el botó.
+      const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,

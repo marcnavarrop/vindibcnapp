@@ -9,8 +9,6 @@ import {
 } from "@/app/actions/client-notification-actions";
 import { TAP } from "@/lib/utils";
 
-type ButtonState = { loading: boolean; result: NotificationActionResult | null };
-
 function NotifButton({
   label,
   description,
