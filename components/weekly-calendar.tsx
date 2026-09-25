@@ -41,7 +41,7 @@ import type { SessionNote } from "@/lib/data/session-notes";
 const firstName = (name: string) => name.split(" ").slice(0, 2).join(" ");
 
 /** Icones de servei (SVG inline). */
-const SVC_ICON: Record<ServiceType, React.ReactNode> = {
+export const SVC_ICON: Record<ServiceType, React.ReactNode> = {
   ep_individual: (
     <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>
       <circle cx="5" cy="3.5" r="2" /><path d="M1 10c0-3.5 8-3.5 8 0z" />
@@ -665,7 +665,7 @@ export function WeeklyCalendar({
   );
 }
 
-const TRIAL_COLOR = "#ff6d17"; // taronja de marca per a les proves
+export const TRIAL_COLOR = "#ff6d17"; // taronja de marca per a les proves
 
 function TrialCard({
   t,
@@ -702,7 +702,7 @@ function TrialCard({
   );
 }
 
-function TrialModal({
+export function TrialModal({
   t,
   canManage,
   acceptAction,

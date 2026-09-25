@@ -306,27 +306,39 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: `La pantalla de Reserves té dues vistes del mateix: el calendari setmanal, que és la que s'obre, i la llista. Les hores que es pinten són l'horari del centre, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}.`,
+          text: "La pantalla de Reserves té dues vistes del mateix: el calendari, que és la que s'obre, i la llista.",
         },
-        { t: "h", text: "El calendari setmanal" },
+        { t: "h", text: "El calendari" },
         {
           t: "p",
-          text: "Set columnes i una fila per cada mitja hora. Només les files en punt porten l'hora escrita; la línia del mig, més fluixa, parteix l'hora en dues. Les fletxes de dalt mouen la setmana i el botó del mig torna a l'actual. Cada reserva és una peça de color; les de grup reduït porten al costat quanta gent hi ha apuntada sobre l'aforament.",
+          text: "Al mòbil s'obre en avui i ensenya tres dies; a l'ordinador, la setmana. Les fletxes de dalt mouen els dies (o la setmana) i «Avui» hi torna. Els dies que es veuen queden a l'adreça de la pàgina, així que un enllaç desat obre els mateixos. La fila dels dies es queda enganxada a dalt en baixar.",
         },
         {
           t: "p",
-          text: "Tocar un forat buit obre el formulari de nova reserva amb el dia i l'hora ja posats. Tocar una reserva obre la seva fitxa, amb el que hi puguis fer.",
+          text: `Només surt el que té alguna cosa. Dissabte i diumenge desapareixen si no hi tens res, i les hores van de la primera a l'última amb disponibilitat o sessions: un tram de dues hores o més sense jornada (el migdia, per exemple) es plega en una banda fina que diu «fora de la jornada». «Mostrar-ho tot» ensenya la setmana sencera i l'horari del centre, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}.`,
         },
         {
-          t: "note",
-          text: "Una sessió dura una hora i per tant ocupa DUES files. La segona surt ombrejada i no s'hi pot clicar: no és un forat lliure, és la mateixa sessió continuant.",
+          t: "p",
+          text: "Cada sessió és un bloc a escala: una hora és un sol bloc, amb l'hora, el nom i el servei. Un grup és una sola targeta amb quanta gent hi ha sobre l'aforament i els noms; tocant-la surten tots i, de cada un, la seva fitxa. El que ja ha passat surt atenuat, i una línia taronja marca l'hora d'ara.",
         },
-        { t: "h", text: "La capa de disponibilitat" },
+        {
+          t: "p",
+          text: "Quan diverses coses coincideixen a la mateixa hora, la columna es reparteix: dues, meitat i meitat, amb la inicial i la icona del servei; tres o més, la teva es queda a la vista i la resta s'agrupa en «+N», que obre la llista d'aquella hora. Res no es talla: el que no hi cap es resumeix, i tot es pot tocar.",
+        },
+        { t: "h", text: "Els forats lliures" },
+        {
+          t: "p",
+          text: "«Mostrar els meus forats lliures» pinta en verd les hores on es pot reservar de debò una sessió nova amb tu, i diu quins serveis hi caben. No és el teu horari: una hora de la teva disponibilitat on ja hi ha una sessió, una prova o un bloqueig no hi surt, i un grup amb places tampoc (ja té la seva targeta). És la mateixa regla que aplica el servidor en crear la reserva.",
+        },
+        {
+          t: "p",
+          text: "Tocar un forat lliure obre el formulari de nova reserva amb el dia, l'hora i tu com a professional ja posats; l'hora és la de la mitja hora on has tocat. Per crear-ne una fora dels forats, «+ Nova reserva». Tocar una sessió obre la seva fitxa, amb el que hi puguis fer.",
+        },
         {
           t: "p",
           text: s.trainersSeeColleaguesReservations
-            ? "«Mostrar la meva disponibilitat» ombreja les franges on has dit que hi ets. Al costat hi ha el selector de companys: pots afegir la disponibilitat d'altres professionals a sobre per veure d'un cop qui té forat aquella tarda. Els bloquejos temporals tapen l'ombrejat, així que una setmana de vacances d'un company es veu de seguida."
-            : "«Mostrar la meva disponibilitat» ombreja les franges on has dit que hi ets, i els teus bloquejos temporals hi apareixen tapats. El centre té desactivada la vista de les reserves dels companys, així que al calendari només hi surten les teves.",
+            ? "El selector «Companys» afegeix les reserves dels professionals que hi marquis, amb un cadenat: es miren i prou (llevat de les de la teva agenda, que pots cancel·lar)."
+            : "El centre té desactivada la vista de les reserves dels companys, així que al calendari només hi surten les teves.",
         },
         { t: "h", text: "La llista" },
         {
@@ -441,7 +453,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Com et surten" },
         {
           t: "p",
-          text: "Les que cauen a la teva disponibilitat te surten a dos llocs: a «Atenció immediata» de l'Inici i al calendari, marcades com a franja bloquejada. Tocant-les hi tens les dades de qui la demana i dos botons, «Acceptar» i «Rebutjar».",
+          text: "Les que cauen a la teva disponibilitat te surten a dos llocs: a «Atenció immediata» de l'Inici i al calendari, com una targeta taronja amb «PROVA». Tocant-les hi tens les dades de qui la demana i dos botons, «Acceptar» i «Rebutjar».",
         },
         {
           t: "warn",

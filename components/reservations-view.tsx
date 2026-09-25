@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
+import { TrainerGrid } from "@/components/trainer-grid";
 import {
   SERVICE_LABELS,
   SERVICE_TYPES,
@@ -72,6 +73,7 @@ export function ReservationsView({
   rejectTrialAction,
   showCalendarFilters,
   showColleagueSelector,
+  calendar = "week",
   openingHour,
   closingHour,
   palette,
@@ -120,6 +122,12 @@ export function ReservationsView({
   showCalendarFilters?: boolean;
   /** Mostra el selector de companys (quan el centre ho permet). */
   showColleagueSelector?: boolean;
+  /**
+   * Quin calendari. `"trainer"` és la rejilla nova del professional
+   * (`TrainerGrid`); sense, el setmanal de sempre, que és el de l'admin. La tria
+   * és a la pàgina de cada rol, no en un interruptor que es pugui oblidar.
+   */
+  calendar?: "week" | "trainer";
 }) {
   const view = nav.view;
   const [showOwnAvail, setShowOwnAvail] = useState(true);
@@ -269,7 +277,11 @@ export function ReservationsView({
               onChange={(e) => setShowOwnAvail(e.target.checked)}
               className="h-3.5 w-3.5 accent-brand-purple"
             />
-            <span className="text-brand-muted">Mostrar la meva disponibilitat</span>
+            <span className="text-brand-muted">
+              {calendar === "trainer"
+                ? "Mostrar els meus forats lliures"
+                : "Mostrar la meva disponibilitat"}
+            </span>
           </label>
         )}
       </div>
@@ -477,7 +489,38 @@ export function ReservationsView({
         </div>
       )}
 
-      {view === "calendar" ? (
+      {view === "calendar" && calendar === "trainer" && myTrainerId ? (
+        <TrainerGrid
+          nav={nav}
+          palette={palette}
+          reservations={filteredReservations}
+          occupancyReservations={reservations}
+          // Les proves: les pròpies i les dels companys triats, com les reserves.
+          trials={(trials ?? []).filter(
+            (t) =>
+              t.trainerId === myTrainerId ||
+              (!!t.trainerId && selectedColleagues.has(t.trainerId)),
+          )}
+          myTrainerId={myTrainerId}
+          rules={(allAvailability ?? []).filter((r) => r.trainerId === myTrainerId)}
+          blocks={allBlocks ?? []}
+          showFree={showOwnAvail}
+          manageableIds={manageableIds ?? []}
+          cancellableIds={cancellableIds ?? manageableIds ?? []}
+          noteableIds={noteableIds ?? []}
+          notes={notes}
+          clientBase={clientBase}
+          newReservationBase={newReservationBase}
+          cancelAction={cancelAction}
+          completeAction={completeAction}
+          rescheduleAction={rescheduleAction}
+          manageableTrialIds={manageableTrialIds ?? []}
+          acceptTrialAction={acceptTrialAction}
+          rejectTrialAction={rejectTrialAction}
+          openingHour={openingHour ?? 7}
+          closingHour={closingHour ?? 22}
+        />
+      ) : view === "calendar" ? (
         <WeeklyCalendar
           nav={nav}
           palette={palette}

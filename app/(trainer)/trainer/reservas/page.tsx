@@ -105,7 +105,7 @@ export default async function TrainerReservasPage({
   return (
     <>
       <GroupTabs tabs={TABS} />
-      <main className="mx-auto max-w-5xl p-6">
+      <main className="mx-auto max-w-5xl p-4 md:p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl text-brand-dark">Reserves</h1>
@@ -147,6 +147,7 @@ export default async function TrainerReservasPage({
           acceptTrialAction={acceptTrialTrainerAction}
           rejectTrialAction={rejectTrialTrainerAction}
           showColleagueSelector={centerSettings.trainersSeColleaguesReservations}
+          calendar="trainer"
           openingHour={centerSettings.openingHour}
           closingHour={centerSettings.closingHour}
         />
