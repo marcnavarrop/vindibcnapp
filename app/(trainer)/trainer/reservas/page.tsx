@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TAP } from "@/lib/utils";
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { SupportInlineButton } from "@/components/support-inline-button";
 
 const TABS = [
   { href: "/trainer/reservas", label: "Reserves" },
@@ -13,7 +14,9 @@ import { agendaWindow } from "@/lib/agenda-window";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listClients, listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
-import { listAllBlocksLite } from "@/lib/data/availability-blocks";
+import { listAllBlocksLite, listOwnBlocksInRange } from "@/lib/data/availability-blocks";
+import { countWaitingForTrainer } from "@/lib/data/waitlist";
+import { centerDateStr } from "@/lib/center-time";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
 import { getNotesForReservations } from "@/lib/data/session-notes";
@@ -65,6 +68,20 @@ export default async function TrainerReservasPage({
       listActiveTrialHolds({ from, to }),
       getColorPalette(),
     ]);
+  // Per a les senyals de la rejilla: els SEUS bloquejos amb el motiu, i quanta
+  // gent espera plaça a les seves sessions (només el recompte). Si el recompte
+  // falla, la rejilla es pinta igual, sense el «+N en espera».
+  const [ownBlocks, waiting] = trainerId
+    ? await Promise.all([
+        listOwnBlocksInRange({ trainerId, from, to }),
+        countWaitingForTrainer({
+          trainerId,
+          fromDay: centerDateStr(from),
+          toDay: centerDateStr(to),
+        }).catch(() => []),
+      ])
+    : [[], []];
+
   // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
   const manageableTrialIds = trials
     .filter((t) => t.trainerId === trainerId)
@@ -105,22 +122,27 @@ export default async function TrainerReservasPage({
   return (
     <>
       <GroupTabs tabs={TABS} />
-      <main className="mx-auto max-w-5xl p-4 md:p-6">
-        <div className="mb-6 flex items-center justify-between gap-4">
+      <main className="mx-auto max-w-5xl px-4 pt-3 pb-6 md:p-6">
+        {/* Al mòbil, una sola fila: el calendari ha de començar tan amunt com
+            es pugui. La descripció només a l'ordinador (també és al manual). */}
+        <div className="mb-3 flex items-center justify-between gap-2 md:mb-6 md:gap-4">
           <div>
             <h1 className="text-2xl text-brand-dark">Reserves</h1>
-            <p className="mt-1 text-sm text-brand-muted">
+            <p className="mt-1 hidden text-sm text-brand-muted md:block">
               Veus l&apos;agenda completa del centre. Gestiones les reserves
               dels teus clients, i pots cancel·lar també qualsevol de la teva
               agenda.
             </p>
           </div>
-          <Link
-            href="/trainer/reservas/new"
-            className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
-          >
-            + Nova reserva
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <SupportInlineButton />
+            <Link
+              href="/trainer/reservas/new"
+              className={`inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark md:h-10 ${TAP}`}
+            >
+              + Nova<span className="hidden sm:inline">&nbsp;reserva</span>
+            </Link>
+          </div>
         </div>
 
         <ReservationsView
@@ -148,6 +170,8 @@ export default async function TrainerReservasPage({
           rejectTrialAction={rejectTrialTrainerAction}
           showColleagueSelector={centerSettings.trainersSeColleaguesReservations}
           calendar="trainer"
+          ownBlocks={ownBlocks}
+          waiting={waiting}
           openingHour={centerSettings.openingHour}
           closingHour={centerSettings.closingHour}
         />

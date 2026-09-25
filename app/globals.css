@@ -42,6 +42,12 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+/* Una pàgina que porta el seu propi botó de suport (`SupportInlineButton`)
+   no vol el flotant a sobre del contingut: s'amaga NOMÉS allà. */
+body:has([data-support-inline]) [data-support-fab] {
+  display: none;
+}
+
 /* Titulares con la serif de marca */
 h1,
 h2,

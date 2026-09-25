@@ -34,3 +34,10 @@ export function announceSupportChange(open: number): void {
     }),
   );
 }
+
+/**
+ * Obre el panell de suport des d'un botó que no és el flotant (vegeu
+ * `SupportInlineButton`). Mateix motiu que l'avís de dalt: els dos botons no
+ * comparteixen cap pare.
+ */
+export const OPEN_SUPPORT_EVENT = "vindi:open-support";

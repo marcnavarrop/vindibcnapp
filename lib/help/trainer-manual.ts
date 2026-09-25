@@ -67,7 +67,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Moure't per l'app" },
         {
           t: "p",
-          text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat com a pestanya germana), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt. A més a més, a totes les pantalles hi ha el botó rodó de suport a baix a la dreta, que s'explica al seu capítol.",
+          text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat com a pestanya germana), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt. A més a més, a totes les pantalles hi ha el botó rodó de suport a baix a la dreta (a Reserves, el botó «Suport» de dalt), que s'explica al seu capítol.",
         },
         {
           t: "note",
@@ -324,6 +324,28 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         {
           t: "p",
           text: "Quan diverses coses coincideixen a la mateixa hora, la columna es reparteix: dues, meitat i meitat, amb la inicial i la icona del servei; tres o més, la teva es queda a la vista i la resta s'agrupa en «+N», que obre la llista d'aquella hora. Res no es talla: el que no hi cap es resumeix, i tot es pot tocar.",
+        },
+        { t: "h", text: "Les senyals" },
+        {
+          t: "dl",
+          items: [
+            [
+              "Per marcar",
+              "Vora taronja i l'etiqueta «Per marcar»: la sessió ja ha passat, segueix com a reservada i la pots marcar tu. No s'atenua com la resta del passat, perquè és feina pendent. Es resol a la seva fitxa amb «Marcar feta» (o cancel·lant-la, si no es va fer).",
+            ],
+            [
+              "Bloquejat",
+              "Una franja ratllada amb el motiu («Bloquejat · Metge») és un bloqueig temporal teu: aquelles hores no s'hi pot reservar res, i per això no hi surt cap forat lliure. Es gestionen a Disponibilitat.",
+            ],
+            [
+              "↻",
+              "La sessió forma part d'una sèrie (una reserva que es repeteix cada setmana). A la seva fitxa hi ha la posició dins de la sèrie.",
+            ],
+            [
+              "+N en espera",
+              "En un grup ple teu, quanta gent espera plaça a la llista d'espera. Només el número: qui són no surt aquí. Si algú cancel·la, la plaça passa sola al primer de la cua.",
+            ],
+          ],
         },
         { t: "h", text: "Els forats lliures" },
         {
@@ -779,7 +801,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "El botó rodó lila de baix a la dreta hi és a totes les pantalles de la teva àrea. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'administració del centre ni amb els clients.",
+          text: "El botó rodó lila de baix a la dreta hi és a totes les pantalles de la teva àrea, menys a Reserves: allà taparia el calendari, i en el seu lloc hi ha el botó «Suport» al costat de «+ Nova reserva», que obre el mateix. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'administració del centre ni amb els clients.",
         },
         { t: "h", text: "Obrir un tiquet" },
         {

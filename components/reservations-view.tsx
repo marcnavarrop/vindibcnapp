@@ -6,6 +6,7 @@ import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import { TrainerGrid } from "@/components/trainer-grid";
+import type { OwnBlock } from "@/lib/data/availability-blocks";
 import {
   SERVICE_LABELS,
   SERVICE_TYPES,
@@ -74,6 +75,8 @@ export function ReservationsView({
   showCalendarFilters,
   showColleagueSelector,
   calendar = "week",
+  ownBlocks,
+  waiting,
   openingHour,
   closingHour,
   palette,
@@ -128,6 +131,10 @@ export function ReservationsView({
    * és a la pàgina de cada rol, no en un interruptor que es pugui oblidar.
    */
   calendar?: "week" | "trainer";
+  /** Rejilla del professional: els seus bloquejos, amb el motiu. */
+  ownBlocks?: OwnBlock[];
+  /** Rejilla del professional: gent en espera per sessió (instant ISO). */
+  waiting?: { at: string; count: number }[];
 }) {
   const view = nav.view;
   const [showOwnAvail, setShowOwnAvail] = useState(true);
@@ -247,7 +254,14 @@ export function ReservationsView({
   return (
     <div>
       {/* ── Barra superior: vista + disponibilitat (trainer) ───────────────── */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div
+        className={clsx(
+          "flex flex-wrap items-center",
+          // La del professional, compacta al mòbil: el calendari ha de
+          // començar amunt. La de l'admin es queda com era.
+          calendar === "trainer" ? "mb-2 gap-2 md:mb-4 md:gap-3" : "mb-4 gap-3",
+        )}
+      >
         <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
           {(["calendar", "list"] as const).map((v) => (
             <Link
@@ -278,9 +292,14 @@ export function ReservationsView({
               className="h-3.5 w-3.5 accent-brand-purple"
             />
             <span className="text-brand-muted">
-              {calendar === "trainer"
-                ? "Mostrar els meus forats lliures"
-                : "Mostrar la meva disponibilitat"}
+              {calendar === "trainer" ? (
+                <>
+                  <span className="md:hidden">Forats lliures</span>
+                  <span className="hidden md:inline">Mostrar els meus forats lliures</span>
+                </>
+              ) : (
+                "Mostrar la meva disponibilitat"
+              )}
             </span>
           </label>
         )}
@@ -288,7 +307,12 @@ export function ReservationsView({
 
       {/* ── Selector de companys (trainer amb permís) ─────────────────────── */}
       {showColleagueSelector && view === "calendar" && colleagues.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-brand-border bg-white px-3 py-2.5">
+        <div
+          className={clsx(
+            "flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-brand-border bg-white px-3",
+            calendar === "trainer" ? "mb-2 py-1.5 md:mb-4 md:py-2.5" : "mb-4 py-2.5",
+          )}
+        >
           <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
             Companys
           </span>
@@ -504,6 +528,8 @@ export function ReservationsView({
           myTrainerId={myTrainerId}
           rules={(allAvailability ?? []).filter((r) => r.trainerId === myTrainerId)}
           blocks={allBlocks ?? []}
+          ownBlocks={ownBlocks ?? []}
+          waiting={waiting ?? []}
           showFree={showOwnAvail}
           manageableIds={manageableIds ?? []}
           cancellableIds={cancellableIds ?? manageableIds ?? []}

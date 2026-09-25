@@ -16,7 +16,11 @@ import {
   listMyRecentTicketsAction,
   openTicketCountAction,
 } from "@/lib/actions/support";
-import { SUPPORT_CHANGED, type SupportChangedDetail } from "@/lib/support-events";
+import {
+  OPEN_SUPPORT_EVENT,
+  SUPPORT_CHANGED,
+  type SupportChangedDetail,
+} from "@/lib/support-events";
 import type { SupportTicket } from "@/lib/data/support";
 import type { SupportStatus } from "@/types/database";
 
@@ -180,6 +184,22 @@ export function SupportFab({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  /*
+   * Obrir des de fora. Una pàgina amb molt contingut tàctil a baix a la dreta
+   * (la rejilla del professional) no vol el botó flotant a sobre: hi posa el
+   * seu, marcat amb `data-support-inline`, que llança aquest esdeveniment, i el
+   * CSS (globals.css) amaga el flotant NOMÉS en aquella pàgina. El panell és
+   * el mateix; la resta de pantalles no canvien.
+   */
+  useEffect(() => {
+    const onOpen = () => {
+      setOpen(true);
+      setOpenCount((n) => n + 1);
+    };
+    window.addEventListener(OPEN_SUPPORT_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_SUPPORT_EVENT, onOpen);
+  }, []);
+
   /** El número de la piloteta, o `null` si no n'hi ha d'haver cap. */
   const badge = showOpenCount && pending !== null && pending > 0 ? pending : null;
 
@@ -192,6 +212,7 @@ export function SupportFab({
           dreta i no els tapa ni en mòbil, on el menú és un calaix. */}
       <button
         type="button"
+        data-support-fab
         onClick={() => {
           setOpen((v) => !v);
           setOpenCount((n) => n + 1);
