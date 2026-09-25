@@ -497,10 +497,19 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "«Mostrar disponibilitat» ombreja les franges lliures de cada professional amb el SEU color (el de la persona, no el del servei), i pots encendre i apagar-los un per un. Serveix per veure d'un cop on hi ha hores obertes que ningú no ha agafat. «Lliure» vol dir el mateix que per al servidor en crear la reserva: si una sessió o una prova es trepitja amb l'hora sencera, no hi surt —tampoc si comença a la segona mitja hora—, i una sessió de grup amb plaça només hi surt com a grup. Els professionals que no tenen cap regla definida no hi surten.",
         },
+        { t: "h", text: "La fitxa d'una reserva" },
+        {
+          t: "p",
+          text: "Tocant una reserva al calendari s'obre la seva fitxa: al mòbil, una fulla que puja des de baix; a l'ordinador, un plafó a la dreta que deixa veure el calendari al costat. A més del servei, l'estat i el professional, hi surt el telèfon del client (amb «Copiar»), el bo del qual surt la sessió amb les que li queden i quan caduca, la posició dins de la sèrie si en forma part, la propera sessió que té reservada i l'enllaç a la seva fitxa. Aquestes dades es demanen en obrir-la, així que tarden un moment a sortir.",
+        },
+        {
+          t: "p",
+          text: "Des d'allà mateix es reprograma, es marca feta o es cancel·la. «Afegir al calendari» només surt a les sessions que encara han de passar.",
+        },
         { t: "h", text: "Les notes de sessió" },
         {
           t: "p",
-          text: "Les sessions ja passades porten la nota que hi va escriure el professional que la va donar. Tu les LLEGEIXES; no n'escrius cap. No és una limitació de la pantalla: encara que sortís el formulari, la base de dades no deixaria desar-la. La nota és de qui va fer la sessió.",
+          text: "Les sessions ja passades porten la nota que hi va escriure el professional que la va donar: la veus a la vista de llista, a «Passades», i a la fitxa de la reserva. Tu les LLEGEIXES; no n'escrius cap. No és una limitació de la pantalla: encara que sortís el formulari, la base de dades no deixaria desar-la. La nota és de qui va fer la sessió.",
         },
         {
           t: "note",

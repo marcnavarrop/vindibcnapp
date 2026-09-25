@@ -130,6 +130,7 @@ export default async function TrainerReservasPage({
           reservations={reservations}
           trainers={trainers}
           nowISO={nowISO}
+          clientBase="/trainer/clients"
           manageableIds={manageableIds}
           cancellableIds={cancellableIds}
           notes={notes}

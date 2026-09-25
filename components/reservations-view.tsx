@@ -57,6 +57,7 @@ export function ReservationsView({
   cancellableIds,
   notes,
   noteableIds,
+  clientBase,
   newReservationBase,
   cancelAction,
   completeAction,
@@ -92,6 +93,8 @@ export function ReservationsView({
    *  `ReservationsAgenda`: són dues llistes diferents a posta. */
   notes?: Record<string, SessionNote>;
   noteableIds?: string[];
+  /** On és la fitxa del client en aquesta àrea: la fitxa de la reserva hi enllaça. */
+  clientBase: string;
   newReservationBase: string;
   cancelAction: StatefulReservationAction;
   completeAction: StatefulReservationAction;
@@ -498,6 +501,9 @@ export function ReservationsView({
           manageableTrialIds={manageableTrialIds}
           acceptTrialAction={acceptTrialAction}
           rejectTrialAction={rejectTrialAction}
+          notes={notes}
+          noteableIds={noteableIds}
+          clientBase={clientBase}
         />
       ) : (
         <ReservationsAgenda

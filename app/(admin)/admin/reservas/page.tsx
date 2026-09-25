@@ -87,6 +87,7 @@ export default async function ReservasPage({
           reservations={reservations}
           trainers={trainers}
           nowISO={nowISO}
+          clientBase="/admin/clients"
           notes={notes}
           newReservationBase="/admin/reservas/new"
           openingHour={centerSettings.openingHour}

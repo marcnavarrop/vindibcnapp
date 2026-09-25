@@ -243,6 +243,10 @@
       <li>El desplegable de bo <strong>només ensenya bons amb sessions disponibles</strong>. Si surt buit, ven-li'n un abans</li>
       <li><strong>Casella "Sessió de cortesia"</strong>: en marcar-la desapareix el selector de bo i has de dir el tipus de servei (secció 8.3)</li>
       <li><strong>"Repeticions setmanals"</strong>: fins a 52 reserves, una per setmana, a la mateixa hora</li>
+      <li><strong>La fitxa d'una reserva</strong>: al mòbil puja des de baix (tota l'amplada); a l'ordinador és un plafó a la dreta i el calendari es veu al costat. Tanca amb «Tancar», tocant fora o amb Esc</li>
+      <li>La fitxa ensenya, en obrir-se: <strong>telèfon</strong> amb «Copiar» (copia el número), <strong>bo</strong> amb les sessions restants i la caducitat (o «Cortesia» / «Sense bo»), <strong>sèrie</strong> («Sessió 2 de 3») si en forma part, <strong>propera sessió</strong> reservada del client (després d'aquesta i d'ara) i l'enllaç <strong>«Fitxa del client»</strong> a <code>/admin/clients/…</code></li>
+      <li>«Afegir al calendari» <strong>no</strong> surt a les sessions passades. A les passades hi ha la nota: l'admin la <strong>llegeix</strong> però no té «+ Nota» ni «Editar la nota»</li>
+      <li>A 375 px, el botó «Desar» de Reprogramar queda <strong>dins</strong> de la caixa</li>
       <li>Prova les tres accions sobre una reserva: <strong>Cancel·lar</strong> (demana confirmació, a la fitxa i a la llista; «No, torna» no fa res; «Sí, cancel·la» retorna la sessió al bo + avisa el client + cedeix la plaça a la llista d'espera), <strong>Completar</strong> (és el que la fa comptar a liquidacions i bonus) i <strong>Reprogramar</strong> (canvia dia i hora sense tocar el bo)</li>
     </ul>
     <div class="warn"><strong>Una sessió que va passar i ningú no va marcar com a completada no es paga.</strong> És la causa número u de "la liquidació no em quadra" (secció 2.2).</div>
@@ -371,10 +375,12 @@
     <ul class="checklist">
       <li><strong>Multicheck de companys</strong> (si l'admin ho ha activat a Configuració): desmarcat per defecte, marca'n un o diversos per veure les seves reserves superposades</li>
       <li>Checkbox <strong>"Mostrar la meva disponibilitat"</strong>: ombreig verd suau, on/off</li>
-      <li>Clica una franja buida per reservar, una reserva pròpia per gestionar-la</li>
+      <li>Clica una franja buida per reservar, una reserva per obrir-ne <strong>la fitxa</strong> (fulla inferior al mòbil, plafó a la dreta a l'ordinador), amb telèfon, bo, sèrie, propera sessió i enllaç a <code>/trainer/clients/…</code></li>
+      <li>Permisos a la fitxa: d'un company amb client d'un company → <strong>només lectura</strong> (però amb telèfon i bo, com a la fitxa del client); de la teva agenda amb client d'un company → <strong>només cancel·lar</strong>; client teu a l'agenda d'un company → la gestiones, però <strong>no n'escrius la nota</strong> (ni la llegeixes)</li>
+      <li>Sessió passada que vas donar tu: «+ Nota de la sessió» a la mateixa fitxa; en desar, la nota hi surt i el formulari es tanca. Sense «Afegir al calendari»</li>
       <li><strong>Cancel·lar</strong> demana confirmació, tant a la fitxa com a la vista de llista: el primer toc només pregunta i diu què passarà; «No, torna» ho deixa tot igual</li>
       <li>Pot crear <strong>sessions de cortesia</strong> i <strong>repeticions setmanals</strong>, igual que l'admin</li>
-      <li>A la vista de llista, apartat <strong>"Passades"</strong>: hi escriu <strong>la nota de la sessió</strong> (secció 12)</li>
+      <li>A la vista de llista, apartat <strong>"Passades"</strong>, o a la fitxa d'una sessió passada: hi escriu <strong>la nota de la sessió</strong> (secció 12)</li>
       <li>Navegació igual que a l'admin: setmana a l'adreça, "Avui", i la llista de 30 dies amb "Veure'n més"</li>
     </ul>
 

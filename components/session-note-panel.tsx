@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { formatDate } from "@/lib/labels";
@@ -31,16 +31,26 @@ export function SessionNotePanel({
   reservationId,
   note,
   canEdit,
+  closeOnSave = false,
 }: {
   reservationId: string;
   note: SessionNote | null;
   canEdit: boolean;
+  /**
+   * Tanca el formulari quan el servidor diu que s'ha desat. A la fitxa de la
+   * reserva, perquè s'hi vegi la nota desada; la llista es queda com era.
+   */
+  closeOnSave?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(
     saveSessionNoteAction,
     {} as NoteState,
   );
+
+  useEffect(() => {
+    if (closeOnSave && state.ok) setOpen(false);
+  }, [closeOnSave, state]);
 
   // Ni nota ni permís per escriure-la: no hi ha res a ensenyar.
   if (!note && !canEdit) return null;
