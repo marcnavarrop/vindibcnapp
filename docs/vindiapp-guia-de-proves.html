@@ -374,14 +374,19 @@
     <h3>3.3 Reserves</h3>
     <ul class="checklist">
       <li><strong>Multicheck de companys</strong> (si l'admin ho ha activat a Configuració): desmarcat per defecte, marca'n un o diversos per veure les seves reserves superposades</li>
-      <li>Checkbox <strong>"Mostrar la meva disponibilitat"</strong>: ombreig verd suau, on/off</li>
-      <li>Clica una franja buida per reservar, una reserva per obrir-ne <strong>la fitxa</strong> (fulla inferior al mòbil, plafó a la dreta a l'ordinador), amb telèfon, bo, sèrie, propera sessió i enllaç a <code>/trainer/clients/…</code></li>
+      <li><strong>La rejilla nova</strong> (només el professional; l'admin segueix amb el calendari setmanal de sempre). Al <strong>mòbil</strong> obre en avui amb <strong>tres dies</strong> i salta el cap de setmana buit; les fletxes mouen la finestra i la deixen a l'adreça (<code>?dia=</code>). A l'<strong>ordinador</strong>, la setmana (<code>?setmana=</code>). La fila dels dies es queda enganxada en baixar</li>
+      <li>Només surt el que té alguna cosa: dissabte/diumenge fora si estan buits; hores de la primera a l'última amb disponibilitat o sessions, i els trams buits de 2 h o més plegats en una banda <strong>«fora de la jornada»</strong>. <strong>«Mostrar-ho tot»</strong> ho torna a ensenyar tot (setmana sencera i horari del centre)</li>
+      <li>Una sessió d'una hora és <strong>un sol bloc</strong> (80 px); un grup és <strong>una targeta</strong> amb «Grup 3/4» i els noms (al mòbil, dos i «+N»). El passat surt atenuat i una <strong>línia taronja</strong> marca ara (amb l'hora a la columna d'hores)</li>
+      <li>Densitat (prova-ho a 375 px amb dos companys marcats i coses a la mateixa hora): dues coses → meitat i meitat amb inicials; tres o més → la teva es queda i la resta va a <strong>«+N»</strong>, que obre la llista d'aquella hora. Cap botó de menys de 44 px ni cap text tallat</li>
+      <li>Checkbox <strong>"Mostrar els meus forats lliures"</strong>: el verd ja <strong>no és l'horari</strong>, és el que es pot reservar de debò, amb els serveis que hi caben (Ind · Par · Grup). Una hora amb sessió, prova o bloqueig no hi surt; un grup amb places tampoc</li>
+      <li>Tocar un forat lliure obre el formulari amb el <strong>dia, l'hora (la mitja hora tocada) i el professional</strong> ja posats. Fora dels forats, «+ Nova reserva»</li>
+      <li>Clica una reserva per obrir-ne <strong>la fitxa</strong> (fulla inferior al mòbil, plafó a la dreta a l'ordinador), amb telèfon, bo, sèrie, propera sessió i enllaç a <code>/trainer/clients/…</code></li>
       <li>Permisos a la fitxa: d'un company amb client d'un company → <strong>només lectura</strong> (però amb telèfon i bo, com a la fitxa del client); de la teva agenda amb client d'un company → <strong>només cancel·lar</strong>; client teu a l'agenda d'un company → la gestiones, però <strong>no n'escrius la nota</strong> (ni la llegeixes)</li>
       <li>Sessió passada que vas donar tu: «+ Nota de la sessió» a la mateixa fitxa; en desar, la nota hi surt i el formulari es tanca. Sense «Afegir al calendari»</li>
       <li><strong>Cancel·lar</strong> demana confirmació, tant a la fitxa com a la vista de llista: el primer toc només pregunta i diu què passarà; «No, torna» ho deixa tot igual</li>
       <li>Pot crear <strong>sessions de cortesia</strong> i <strong>repeticions setmanals</strong>, igual que l'admin</li>
       <li>A la vista de llista, apartat <strong>"Passades"</strong>, o a la fitxa d'una sessió passada: hi escriu <strong>la nota de la sessió</strong> (secció 12)</li>
-      <li>Navegació igual que a l'admin: setmana a l'adreça, "Avui", i la llista de 30 dies amb "Veure'n més"</li>
+      <li>La llista, igual que a l'admin: 30 dies amb "Veure'n més"</li>
     </ul>
 
     <h3>3.4 Bons <span class="flag">Nou: filtra i cobra</span></h3>

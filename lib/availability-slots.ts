@@ -276,7 +276,7 @@ export function localSlotOf(date: Date): number {
 }
 
 /** ¿La regla `r` rige el día `day` (día de la semana `wd`)? */
-function ruleApplies(
+export function ruleApplies(
   r: AvailabilityRuleLite,
   day: string,
   wd: number,

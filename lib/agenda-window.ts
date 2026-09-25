@@ -15,6 +15,10 @@ import {
  *
  *   ?setmana=2026-09-21   la setmana del calendari (qualsevol dia serveix: es
  *                         porta al dilluns). Sense, la d'avui.
+ *   ?dia=2026-09-25       el primer dia de la finestra de 3 dies del mòbil (la
+ *                         rejilla del professional). Sense, avui; i si només hi
+ *                         ha `setmana`, el dilluns d'aquella setmana. Amb `dia`
+ *                         i sense `setmana`, la setmana és la del dia.
  *   ?vista=llista         la llista en comptes del calendari.
  *   ?enrere=60            dies enrere de la llista (per defecte 30).
  *   ?endavant=60          dies endavant de la llista (per defecte 30).
@@ -39,6 +43,16 @@ export type AgendaNav = {
   ahead: number;
   /** És la setmana d'avui? Per no oferir "Avui" on ja s'és. */
   isCurrentWeek: boolean;
+  /**
+   * Primer dia de la finestra del mòbil (YYYY-MM-DD). La finestra salta el cap
+   * de setmana buit, així que els dies que es veuen els decideix la rejilla:
+   * aquí només es carreguen prou dies perquè en tingui.
+   */
+  dayStart: string;
+  /** Avui, en dia del centre: la rejilla hi obre i hi posa la línia d'ara. */
+  today: string;
+  /** Ruta de la pàgina, per construir els enllaços de la finestra del mòbil. */
+  basePath: string;
   href: {
     calendar: string;
     list: string;
@@ -87,7 +101,13 @@ export function agendaWindow(basePath: string, params: Params): AgendaWindow {
   const view: AgendaView = first(params.vista) === "llista" ? "list" : "calendar";
   const today = centerToday();
   const currentWeek = centerWeekStart(today);
-  const weekStart = parseWeekParam(params.setmana);
+  const dia = parseDayParam(params.dia);
+  // Amb `dia` i sense `setmana`, la setmana és la del dia: l'escriptori i el
+  // mòbil miren el mateix tros de calendari.
+  const weekStart =
+    dia && !first(params.setmana) ? centerWeekStart(dia) : parseWeekParam(params.setmana);
+  const dayStart =
+    dia ?? (weekStart === currentWeek ? today : weekStart);
   const back = daysParam(params.enrere);
   const ahead = daysParam(params.endavant);
 
@@ -101,6 +121,9 @@ export function agendaWindow(basePath: string, params: Params): AgendaWindow {
     back,
     ahead,
     isCurrentWeek: weekStart === currentWeek,
+    dayStart,
+    today,
+    basePath,
     href: {
       calendar: href(basePath, { setmana: weekParam }),
       list: href(basePath, { vista: "list", enrere: back, endavant: ahead }),
@@ -131,9 +154,25 @@ export function agendaWindow(basePath: string, params: Params): AgendaWindow {
   // fet), i la finestra és en la del centre. Un dia de marge a cada banda fa
   // que qui l'obri des d'una altra zona no perdi les sessions de les vores; el
   // calendari ja descarta el que queda fora de la seva setmana.
+  //
+  // La finestra del mòbil pot sortir de la setmana (dv, dl, dt): es carrega la
+  // unió de totes dues. Deu dies des de `dayStart` n'hi ha de sobres per trobar
+  // tres dies que es vegin, encara que se salti un cap de setmana.
+  const from = weekStart < dayStart ? weekStart : dayStart;
+  const weekEnd = addDaysStr(weekStart, 8);
+  const dayEnd = addDaysStr(dayStart, 10);
   return {
     nav,
-    from: centerDayStart(addDaysStr(weekStart, -1)),
-    to: centerDayStart(addDaysStr(weekStart, 8)),
+    from: centerDayStart(addDaysStr(from, -1)),
+    to: centerDayStart(weekEnd > dayEnd ? weekEnd : dayEnd),
   };
+}
+
+/** `?dia=`: una data de debò o res (un enllaç mal copiat obre avui). */
+function parseDayParam(value: string | string[] | undefined): string | null {
+  const v = first(value);
+  if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+  const d = new Date(`${v}T00:00:00Z`);
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) return null;
+  return v;
 }
