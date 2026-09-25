@@ -35,6 +35,7 @@ import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import type { SessionNote } from "@/lib/data/session-notes";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type { AgendaNav } from "@/lib/agenda-window";
+import type { OwnBlock } from "@/lib/data/availability-blocks";
 import type { ServiceType } from "@/types/database";
 
 /*
@@ -132,6 +133,10 @@ type DayInfo = {
   entries: Entry[];
   rules: TrainerRuleLite[];
   free: FreeRun[];
+  /** Els bloquejos propis d'aquest dia, en slots amb decimals, amb el motiu. */
+  blocks: { from: number; to: number; reason: string | null }[];
+  /** Gent en espera per sessió pròpia: instant (ms) → quants. */
+  waiting: Map<number, number>;
 };
 
 export function TrainerGrid({
@@ -142,6 +147,8 @@ export function TrainerGrid({
   myTrainerId,
   rules,
   blocks,
+  ownBlocks,
+  waiting,
   showFree,
   manageableIds,
   cancellableIds,
@@ -169,6 +176,10 @@ export function TrainerGrid({
   /** Les regles de disponibilitat PRÒPIES. */
   rules: TrainerRuleLite[];
   blocks: TrainerBlockLite[];
+  /** Els bloquejos PROPIS amb el motiu (els dels companys no el porten). */
+  ownBlocks: OwnBlock[];
+  /** Quanta gent espera plaça a cada sessió pròpia (instant ISO). */
+  waiting: { at: string; count: number }[];
   showFree: boolean;
   manageableIds: string[];
   cancellableIds: string[];
@@ -206,6 +217,10 @@ export function TrainerGrid({
   }, []);
 
   const manageable = useMemo(() => new Set(manageableIds), [manageableIds]);
+  const waitingByMs = useMemo(
+    () => new Map(waiting.map((w) => [new Date(w.at).getTime(), w.count])),
+    [waiting],
+  );
   const cancellable = useMemo(() => new Set(cancellableIds), [cancellableIds]);
   const noteable = useMemo(() => new Set(noteableIds), [noteableIds]);
   const manageableTrials = useMemo(() => new Set(manageableTrialIds), [manageableTrialIds]);
@@ -310,7 +325,27 @@ export function TrainerGrid({
         f.to = Math.min(f.lastStart + 2, next);
       });
     }
-    return { date, key, entries: entriesByDay.get(key) ?? [], rules: dayRules, free };
+    // Els bloquejos propis, retallats al dia.
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = addDays(dayStart, 1);
+    const dayBlocks = ownBlocks
+      .map((b) => ({ s: new Date(b.startAt), e: new Date(b.endAt), reason: b.reason }))
+      .filter((b) => b.s < dayEnd && b.e > dayStart)
+      .map((b) => ({
+        from: b.s <= dayStart ? 0 : slotFloat(b.s),
+        to: b.e >= dayEnd ? 48 : slotFloat(b.e),
+        reason: b.reason,
+      }));
+    return {
+      date,
+      key,
+      entries: entriesByDay.get(key) ?? [],
+      rules: dayRules,
+      free,
+      blocks: dayBlocks,
+      waiting: waitingByMs,
+    };
   };
   const hasSomething = (d: Date) => {
     const i = info(d);
@@ -351,7 +386,11 @@ export function TrainerGrid({
     else if (e.kind === "trial") setSelectedTrial(e.t);
     else
       setList({
-        title: `Grup · ${hhmm(e.start)} · ${e.list.length}/${GROUP_CAPACITY}`,
+        title: `Grup · ${hhmm(e.start)} · ${e.list.length}/${GROUP_CAPACITY}${
+          e.own && waitingByMs.get(e.start.getTime())
+            ? ` · +${waitingByMs.get(e.start.getTime())} en espera`
+            : ""
+        }`,
         entries: e.list.map((r) => ({
           kind: "res" as const,
           id: r.id,
@@ -734,6 +773,34 @@ function DayColumn({
         />
       )}
 
+      {/* Bloquejos propis: ratllats i amb el motiu. No es toquen: no hi ha res
+          a fer-hi des d'aquí (es gestionen a Disponibilitat). */}
+      {d.blocks.map((bl) => {
+        const from = Math.max(bl.from, v.from);
+        const to = Math.min(bl.to, v.to);
+        if (to <= from) return null;
+        const top = v.y(from);
+        const height = v.y(to) - top;
+        const text = bl.reason ? `Bloquejat · ${bl.reason}` : "Bloquejat";
+        return (
+          <div
+            key={`block-${bl.from}`}
+            data-block={d.key}
+            role="note"
+            aria-label={`${text}, de ${slotToHHMM(Math.floor(bl.from))} a ${slotToHHMM(Math.ceil(bl.to) % 48)}`}
+            title={text}
+            className="pointer-events-none absolute inset-x-0.5 rounded-md border border-brand-muted/30 bg-[repeating-linear-gradient(135deg,rgba(100,34,99,0.10),rgba(100,34,99,0.10)_5px,transparent_5px,transparent_10px)] px-1.5 py-1"
+            style={{ top: top + 1, height: Math.max(height - 2, 4) }}
+          >
+            {height >= 24 && (
+              <span className="inline-block rounded bg-white/90 px-1 text-xs font-bold text-brand-dark">
+                {text}
+              </span>
+            )}
+          </div>
+        );
+      })}
+
       {/* Forats lliures, amb els serveis que hi caben */}
       {d.free.map((f) => {
         const b = box(f.from, f.to);
@@ -804,12 +871,27 @@ function DayColumn({
         const e = byId.get(p.id)!;
         const b = box(slotFloat(e.start), slotFloat(e.end) || 48);
         const past = now ? e.end.getTime() <= now.getTime() : false;
+        // «Per marcar»: ja ha passat, segueix reservada i la pots marcar tu.
+        const toMark =
+          past &&
+          (e.kind === "res"
+            ? e.r.status === "booked" && manageable.has(e.r.id)
+            : e.kind === "group"
+              ? e.list.some((r) => r.status === "booked" && manageable.has(r.id))
+              : false);
+        const series =
+          e.kind === "res" ? !!e.r.seriesId : e.kind === "group" ? e.list.some((r) => !!r.seriesId) : false;
+        const waitingN =
+          e.kind === "group" && e.own && !past ? (d.waiting.get(e.start.getTime()) ?? 0) : 0;
         return (
           <EntryCard
             key={e.id}
             e={e}
             level={p.level}
             past={past}
+            toMark={toMark}
+            series={series}
+            waiting={waitingN}
             palette={palette}
             locked={e.kind === "res" ? !manageable.has(e.r.id) : e.kind === "group" ? !manageable.has(e.list[0].id) : !e.own}
             style={{ ...b, ...lanes(p) }}
@@ -835,6 +917,9 @@ function EntryCard({
   e,
   level,
   past,
+  toMark = false,
+  series = false,
+  waiting = 0,
   palette,
   locked,
   style,
@@ -843,6 +928,12 @@ function EntryCard({
   e: Entry;
   level: 1 | 2 | 3;
   past: boolean;
+  /** Passada, reservada encara i la pots marcar: vora taronja i «Per marcar». */
+  toMark?: boolean;
+  /** Forma part d'una sèrie: ↻. */
+  series?: boolean;
+  /** Gent a la llista d'espera d'aquest grup. */
+  waiting?: number;
   palette: ColorPalette;
   locked: boolean;
   style: React.CSSProperties;
@@ -888,10 +979,17 @@ function EntryCard({
   const service: ServiceType = e.kind === "res" ? e.r.serviceType : "grupo_reducido";
   const color = colorOfService(palette, service);
   const trainer = e.kind === "res" ? e.r.trainerName : e.list[0].trainerName;
+  const tight = toMark || waiting > 0;
+  const extra = [
+    series ? "sèrie" : "",
+    toMark ? "per marcar" : "",
+    waiting ? `${waiting} en espera` : "",
+  ].filter(Boolean);
   const label =
-    e.kind === "res"
+    (e.kind === "res"
       ? `${time} · ${e.r.clientName} · ${SERVICE_LABELS[service]}${trainer ? ` · ${trainer}` : ""}`
-      : `${time} · Grup ${e.list.length}/${GROUP_CAPACITY}: ${e.list.map((r) => r.clientName).join(", ")}`;
+      : `${time} · Grup ${e.list.length}/${GROUP_CAPACITY}: ${e.list.map((r) => r.clientName).join(", ")}`) +
+    (extra.length ? ` · ${extra.join(" · ")}` : "");
 
   return (
     <button
@@ -899,9 +997,12 @@ function EntryCard({
       onClick={onClick}
       data-entry={e.id}
       aria-label={label}
+      data-to-mark={toMark || undefined}
       className={clsx(
         "absolute z-10 flex flex-col items-start gap-0.5 rounded-md px-1.5 py-1 text-left text-xs leading-tight",
-        past && "opacity-60",
+        // El que està per marcar no s'atenua: és feina pendent, no història.
+        past && !toMark && "opacity-60",
+        toMark && "ring-2 ring-brand-orange ring-inset",
         TAP_SURFACE,
       )}
       style={{ ...style, backgroundColor: `${color}1f`, borderLeft: `3px solid ${color}` }}
@@ -910,6 +1011,7 @@ function EntryCard({
         <>
           <span className="flex items-center gap-0.5 font-bold text-brand-dark">
             {e.kind === "res" ? initials(e.r.clientName) : `${e.list.length}/${GROUP_CAPACITY}`}
+            {series && <span aria-hidden>↻</span>}
             {locked && <LockIcon />}
           </span>
           <span style={{ color }}>{SVC_ICON[service]}</span>
@@ -918,6 +1020,12 @@ function EntryCard({
         <>
           <span className="flex items-center gap-1 text-brand-muted">
             {time}
+            {tight && e.kind === "res" && <span style={{ color }}>{SVC_ICON[service]}</span>}
+            {series && (
+              <span aria-hidden title="Sèrie" className="font-bold text-brand-purple">
+                ↻
+              </span>
+            )}
             {locked && <LockIcon />}
           </span>
           {e.kind === "res" ? (
@@ -931,13 +1039,23 @@ function EntryCard({
             </span>
           ) : (
             <span className="font-bold text-brand-dark">
-              <GroupNames list={e.list} />
+              <GroupNames list={e.list} crowded={toMark || waiting > 0} />
             </span>
           )}
-          <span className="flex items-center gap-0.5" style={{ color }}>
-            {SVC_ICON[service]}
-            {e.kind === "group" ? `Grup ${e.list.length}/${GROUP_CAPACITY}` : SHORT[service]}
-          </span>
+          {/* Amb una senyal a sota, el servei d'una sessió individual puja a la
+              línia de l'hora (només la icona): així la targeta no passa de
+              quatre línies i res no es talla. */}
+          {!(tight && e.kind === "res") && (
+            <span className="flex items-center gap-0.5" style={{ color }}>
+              {SVC_ICON[service]}
+              {e.kind === "group" ? `Grup ${e.list.length}/${GROUP_CAPACITY}` : SHORT[service]}
+            </span>
+          )}
+          {toMark ? (
+            <span className="rounded bg-brand-orange px-1 font-bold text-white">Per marcar</span>
+          ) : waiting > 0 ? (
+            <span className="font-bold text-brand-orange-dark">+{waiting} en espera</span>
+          ) : null}
         </>
       )}
     </button>
@@ -948,15 +1066,21 @@ function EntryCard({
  * Els noms d'un grup. A l'escriptori hi caben tots; al mòbil, dos i «+N»:
  * mai un nom tallat a mitges. La llista sencera, en tocar la targeta.
  */
-function GroupNames({ list }: { list: ReservationListItem[] }) {
+function GroupNames({ list, crowded }: { list: ReservationListItem[]; crowded: boolean }) {
   const first = list.map((r) => r.clientName.split(/\s+/)[0]);
+  // Quants noms hi caben en UNA línia sense tallar-ne cap. Amb una línia de
+  // més a la targeta («Per marcar», «+2 en espera»), al mòbil no n'hi cap cap:
+  // la targeta diu «Grup 4/4» i en tocar-la surten tots.
+  const shown = (n: number) => (
+    <>
+      {first.slice(0, n).join(", ")}
+      {first.length > n && ` +${first.length - n}`}
+    </>
+  );
   return (
     <>
-      <span className="md:hidden">
-        {first.slice(0, 2).join(", ")}
-        {first.length > 2 && ` +${first.length - 2}`}
-      </span>
-      <span className="hidden md:inline">{first.join(", ")}</span>
+      {!crowded && <span className="md:hidden">{shown(2)}</span>}
+      <span className="hidden md:inline">{crowded ? shown(2) : first.join(", ")}</span>
     </>
   );
 }

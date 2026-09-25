@@ -189,3 +189,38 @@ export async function deleteAvailabilityBlock(id: string): Promise<void> {
     .eq("id", id);
   if (error) throw error;
 }
+
+/** Un bloqueig propi amb el seu motiu, per pintar-lo a la rejilla. */
+export type OwnBlock = { startAt: string; endAt: string; reason: string | null };
+
+/**
+ * Els bloquejos d'UN professional que toquen una finestra, amb el motiu.
+ *
+ * Va a part de `listAllBlocksLite` a posta: aquella llista arriba a pantalles
+ * públiques (/prova) i a la del client, on el motiu («Metge») no hi té res a
+ * fer. Aquesta només la demana la pàgina del mateix professional.
+ */
+export async function listOwnBlocksInRange(input: {
+  trainerId: string;
+  from: Date;
+  to: Date;
+}): Promise<OwnBlock[]> {
+  const from = input.from.toISOString();
+  const to = input.to.toISOString();
+  if (USE_MOCK) {
+    return getStore()
+      .availability_blocks.filter(
+        (b) => b.trainer_id === input.trainerId && b.start_at < to && b.end_at > from,
+      )
+      .map((b) => ({ startAt: b.start_at, endAt: b.end_at, reason: b.reason ?? null }));
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("availability_blocks")
+    .select("start_at, end_at, reason")
+    .eq("trainer_id", input.trainerId)
+    .lt("start_at", to)
+    .gt("end_at", from);
+  if (error) throw error;
+  return (data ?? []).map((b) => ({ startAt: b.start_at, endAt: b.end_at, reason: b.reason ?? null }));
+}

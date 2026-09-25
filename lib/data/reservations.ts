@@ -363,6 +363,8 @@ export type ReservationListItem = {
    * arribar-li al client per accident.
    */
   isComplimentary: boolean;
+  /** La sèrie de la qual forma part (0049), si n'és d'una. La rejilla hi posa ↻. */
+  seriesId?: string | null;
 };
 
 function nameOfClient(clientId: string, store: Store): string {
@@ -424,6 +426,7 @@ async function queryReservations(q: ReservationQuery): Promise<ReservationListIt
       serviceType: r.service_type,
       status: r.status,
       isComplimentary: r.is_complimentary,
+      seriesId: r.series_id,
     }));
   }
 
@@ -431,7 +434,7 @@ async function queryReservations(q: ReservationQuery): Promise<ReservationListIt
   let query = supabase
     .from("reservations")
     .select(
-      `id, client_id, scheduled_at, service_type, status, trainer_id, is_complimentary,
+      `id, client_id, scheduled_at, service_type, status, trainer_id, is_complimentary, series_id,
        client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name)),
        trainer:profiles!reservations_trainer_id_fkey(full_name)`,
     )
@@ -453,6 +456,7 @@ async function queryReservations(q: ReservationQuery): Promise<ReservationListIt
     status: ReservationStatus;
     trainer_id: string | null;
     is_complimentary: boolean;
+    series_id: string | null;
     client: { profile: { full_name: string | null } | null } | null;
     trainer: { full_name: string | null } | null;
   };
@@ -466,6 +470,7 @@ async function queryReservations(q: ReservationQuery): Promise<ReservationListIt
     serviceType: r.service_type,
     status: r.status,
     isComplimentary: r.is_complimentary,
+    seriesId: r.series_id,
   }));
 }
 

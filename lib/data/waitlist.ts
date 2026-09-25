@@ -696,3 +696,44 @@ export async function cancelWaitlistEntry(
     .eq("client_id", clientId)
     .eq("status", "waiting");
 }
+
+/**
+ * Quanta gent espera plaça a cada sessió de l'agenda d'un professional, en una
+ * finestra de dies (del centre). Per al «+N en espera» de la seva rejilla.
+ *
+ * Va amb la clau de servei perquè `waitlist_select` (0049) només deixa llegir
+ * a l'admin i al client, i el que surt d'aquí és NOMÉS un recompte per sessió
+ * de la seva agenda: ni noms ni cap altra dada de qui espera.
+ */
+export async function countWaitingForTrainer(input: {
+  trainerId: string;
+  fromDay: string;
+  toDay: string;
+}): Promise<{ at: string; count: number }[]> {
+  let rows: { desired_date: string; desired_time: string }[];
+  if (USE_MOCK) {
+    rows = getStore().waitlist_entries.filter(
+      (w) =>
+        w.trainer_id === input.trainerId &&
+        w.status === "waiting" &&
+        w.desired_date >= input.fromDay &&
+        w.desired_date <= input.toDay,
+    );
+  } else {
+    const { data, error } = await createAdminClient()
+      .from("waitlist_entries")
+      .select("desired_date, desired_time")
+      .eq("trainer_id", input.trainerId)
+      .eq("status", "waiting")
+      .gte("desired_date", input.fromDay)
+      .lte("desired_date", input.toDay);
+    if (error) throw error;
+    rows = data ?? [];
+  }
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    const at = centerLocalToInstant(r.desired_date, r.desired_time.slice(0, 5)).toISOString();
+    counts.set(at, (counts.get(at) ?? 0) + 1);
+  }
+  return [...counts].map(([at, count]) => ({ at, count }));
+}
