@@ -6,6 +6,8 @@ import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import { TrainerGrid } from "@/components/trainer-grid";
+import { AdminGrid } from "@/components/admin-grid";
+import type { CenterBlock } from "@/lib/data/availability-blocks";
 import type { OwnBlock } from "@/lib/data/availability-blocks";
 import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
 import {
@@ -78,6 +80,7 @@ export function ReservationsView({
   showCalendarFilters,
   showColleagueSelector,
   calendar = "week",
+  centerBlocks,
   ownBlocks,
   waiting,
   createFromSlotAction,
@@ -135,7 +138,9 @@ export function ReservationsView({
    * (`TrainerGrid`); sense, el setmanal de sempre, que és el de l'admin. La tria
    * és a la pàgina de cada rol, no en un interruptor que es pugui oblidar.
    */
-  calendar?: "week" | "trainer";
+  calendar?: "week" | "trainer" | "admin";
+  /** Agenda de l'admin: els bloquejos de tots, amb el motiu. */
+  centerBlocks?: CenterBlock[];
   /** Rejilla del professional: els seus bloquejos, amb el motiu. */
   ownBlocks?: OwnBlock[];
   /** Rejilla del professional: gent en espera per sessió (instant ISO). */
@@ -296,9 +301,9 @@ export function ReservationsView({
       <div
         className={clsx(
           "flex flex-wrap items-center",
-          // La del professional, compacta al mòbil: el calendari ha de
-          // començar amunt. La de l'admin es queda com era.
-          calendar === "trainer" ? "mb-2 gap-2 md:mb-4 md:gap-3" : "mb-4 gap-3",
+          // Les rejilles noves, compactes al mòbil: el calendari ha de
+          // començar amunt.
+          calendar === "trainer" || calendar === "admin" ? "mb-2 gap-2 md:mb-4 md:gap-3" : "mb-4 gap-3",
         )}
       >
         <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
@@ -599,6 +604,27 @@ export function ReservationsView({
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}
           manageableTrialIds={manageableTrialIds ?? []}
+          acceptTrialAction={acceptTrialAction}
+          rejectTrialAction={rejectTrialAction}
+          openingHour={openingHour ?? 7}
+          closingHour={closingHour ?? 22}
+        />
+      ) : view === "calendar" && calendar === "admin" ? (
+        <AdminGrid
+          nav={nav}
+          palette={palette}
+          reservations={reservations}
+          trials={trials ?? []}
+          trainers={trainers}
+          rules={allAvailability ?? []}
+          blocks={allBlocks ?? []}
+          centerBlocks={centerBlocks ?? []}
+          notes={notes}
+          clientBase={clientBase}
+          newReservationBase={newReservationBase}
+          cancelAction={cancelAction}
+          completeAction={completeAction}
+          rescheduleAction={rescheduleAction}
           acceptTrialAction={acceptTrialAction}
           rejectTrialAction={rejectTrialAction}
           openingHour={openingHour ?? 7}

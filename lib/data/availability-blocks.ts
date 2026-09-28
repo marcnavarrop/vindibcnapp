@@ -3,6 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
+import { getViewer } from "@/lib/auth";
 import type {
   AvailabilityBlockLite,
   TrainerBlockLite,
@@ -223,4 +224,43 @@ export async function listOwnBlocksInRange(input: {
     .gt("end_at", from);
   if (error) throw error;
   return (data ?? []).map((b) => ({ startAt: b.start_at, endAt: b.end_at, reason: b.reason ?? null }));
+}
+
+export type CenterBlock = OwnBlock & { trainerId: string };
+
+/**
+ * Els bloquejos de TOTS els professionals que toquen una finestra, amb el
+ * motiu. Només per a l'agenda de l'admin.
+ *
+ * Com `listOwnBlocksInRange`, va a part de `listAllBlocksLite` a posta: aquella
+ * alimenta /prova i el calendari del client, on el motiu no hi té res a fer.
+ * Aquesta la demana només la pàgina de l'admin, i ho torna a comprovar aquí:
+ * si algú la cridés des d'una altra pantalla, no en trauria res.
+ */
+export async function listBlocksForAdmin(input: {
+  from: Date;
+  to: Date;
+}): Promise<CenterBlock[]> {
+  const viewer = await getViewer();
+  if (viewer?.role !== "admin") return [];
+  const from = input.from.toISOString();
+  const to = input.to.toISOString();
+  if (USE_MOCK) {
+    return getStore()
+      .availability_blocks.filter((b) => b.start_at < to && b.end_at > from)
+      .map((b) => ({ trainerId: b.trainer_id, startAt: b.start_at, endAt: b.end_at, reason: b.reason ?? null }));
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("availability_blocks")
+    .select("trainer_id, start_at, end_at, reason")
+    .lt("start_at", to)
+    .gt("end_at", from);
+  if (error) throw error;
+  return (data ?? []).map((b) => ({
+    trainerId: b.trainer_id,
+    startAt: b.start_at,
+    endAt: b.end_at,
+    reason: b.reason ?? null,
+  }));
 }

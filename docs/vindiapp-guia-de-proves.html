@@ -222,31 +222,39 @@
       <li>Comprova que <strong>no hi ha botó d'esborrar</strong>: si algú plega, se li buida la disponibilitat</li>
     </ul>
 
-    <h3>1.5 Reserves → Reserves</h3>
+    <h3>1.5 Reserves → Reserves <span class="flag">Nou: un dia per professional</span></h3>
     <ul class="checklist">
       <li>Dues vistes amb el selector de dalt: <strong>Calendari</strong> i <strong>Llista</strong></li>
-      <li>Calendari: les fletxes canvien de setmana i <strong>"Avui"</strong> torna a l'actual. La setmana queda a l'adreça (<code>?setmana=</code>): copia-la en una altra pestanya i s'obre la mateixa</li>
-      <li>Llista: <strong>30 dies cap a cada banda</strong>. "Veure'n més" sota "Properes" o "Passades" n'afegeix 30 més (fins a un any). Els filtres no es perden en canviar de setmana ni en ampliar</li>
-      <li>Filtra per <strong>professional</strong>, per <strong>client</strong> i per <strong>tipus de servei</strong> — combinables, amb "Netejar filtres"</li>
+      <li>Calendari: <strong>un dia, una columna per professional</strong>. Les fletxes canvien de dia i <strong>"Avui"</strong> torna al d'avui. El dia queda a l'adreça (<code>?dia=</code>): copia-la en una altra pestanya i s'obre el mateix</li>
+      <li>Al capdamunt de cada columna: el color i el nom, i quantes sessions té (un guionet si té horari però cap sessió; «sense horari» si aquell dia no en té)</li>
+      <li><strong>A 375 px</strong>: tres columnes alhora. Amb quatre o més professionals, les fletxes ‹ › del costat de «Filtres» mouen la finestra d'un en un («1–3 de 4», «2–4 de 4»); la de la dreta es desactiva al final. La rejilla comença just sota aquesta fila, i el botó de suport és a dalt, al costat de «+ Nova» (no tapa la columna de la dreta)</li>
+      <li><strong>A 1280 px</strong>: tots els professionals encesos, un al costat de l'altre, i els filtres sempre a la vista</li>
+      <li>Filtres (al mòbil, plegats dins de «Filtres · 4/4»): un botó per professional que apaga o encén la seva columna, un selector de <strong>servei</strong> (amaga les sessions i els forats dels altres serveis) i un camp per <strong>buscar un client</strong> (sense accents: «nuria» troba «Núria»). Apaga'n un i tria un servei, recarrega: <strong>segueixen igual</strong> (en aquest navegador). El resum del botó ho diu («3/4 · Fisioteràpia»)</li>
+      <li>Forats «Lliure» reals de cada professional, amb els serveis que s'hi poden fer: dins del seu horari, sense bloqueig i sense cap sessió o prova que els trepitgi (el mateix criteri que <code>npm run free:check</code>). Tocar-ne un porta a «Nova reserva» amb <strong>el professional, el dia i l'hora</strong> del lloc on has tocat ja posats</li>
+      <li>Els <strong>bloquejos de tothom</strong> surten ratllats <strong>amb el motiu</strong> (només l'admin el veu)</li>
+      <li>Un <strong>grup</strong> és una sola targeta amb els noms i l'ocupació (<code>3/4</code>); tocant-la surt la llista dels apuntats</li>
+      <li>Les sessions passades que segueixen reservades surten <strong>«Per marcar»</strong> (vora taronja)</li>
+      <li>Les sol·licituds de prova pendents surten a la columna del seu professional i s'accepten o rebutgen <strong>tocant-les</strong></li>
+      <li>«Mostrar-ho tot» ensenya l'horari sencer del centre; sense, només les hores amb alguna cosa</li>
+      <li><strong>Error #418</strong>: amb el navegador en hora de Madrid i reserves al dia, la consola ha d'estar <strong>neta</strong> (abans, l'agenda de l'admin donava «Minified React error #418»)</li>
+      <li>Llista: <strong>30 dies cap a cada banda</strong>, igual que abans. "Veure'n més" sota "Properes" o "Passades" n'afegeix 30 més (fins a un any)</li>
       <li>Color de la targeta = tipus de servei (es canvia a Configuració → Colors)</li>
-      <li><strong>"Mostrar disponibilitat"</strong>: ombreja les franges lliures amb el color de <strong>cada persona</strong>, i es poden encendre i apagar un per un</li>
-      <li>«Lliure» vol dir lliure de debò: una hora on ja hi ha una sessió, o una que comença a la segona mitja hora (una reserva a les 10:30 treu les 10:00), <strong>no</strong> surt ombrejada; un grup amb plaça surt només com a grup. El mateix val per al calendari del client i per a /prova (<code>npm run free:check</code>)</li>
       <li>L'admin gestiona QUALSEVOL reserva de qualsevol professional, sense cadenat mai</li>
       <li>Les reserves cancel·lades desapareixen del calendari en viu (segueixen a l'historial)</li>
       <li>A la vista de llista, les sessions passades porten <strong>la nota del professional</strong> si n'hi ha (secció 12)</li>
-      <li>Les sol·licituds de prova pendents surten al calendari i s'accepten o rebutgen <strong>tocant-les</strong>, sense anar a la seva pantalla</li>
+      <li><strong>El professional no canvia</strong>: /trainer/reservas (setmana, dia, llista, fitxa, grups, crear des d'un forat, companys) és idèntic a abans</li>
     </ul>
 
     <h3>1.6 Reserves → Crear i gestionar</h3>
     <ul class="checklist">
-      <li>"+ Nova reserva", o tocant un forat del calendari (arriba amb el dia i l'hora ja posats)</li>
+      <li>"+ Nova reserva", o tocant un forat lliure del calendari (arriba amb el professional, el dia i l'hora ja posats)</li>
       <li>El desplegable de bo <strong>només ensenya bons amb sessions disponibles</strong>. Si surt buit, ven-li'n un abans</li>
       <li><strong>Casella "Sessió de cortesia"</strong>: en marcar-la desapareix el selector de bo i has de dir el tipus de servei (secció 8.3)</li>
       <li><strong>"Repeticions setmanals"</strong>: fins a 52 reserves, una per setmana, a la mateixa hora</li>
       <li><strong>La fitxa d'una reserva</strong>: al mòbil puja des de baix (tota l'amplada); a l'ordinador és un plafó a la dreta i el calendari es veu al costat. Tanca amb «Tancar», tocant fora o amb Esc</li>
       <li>La fitxa ensenya, en obrir-se: <strong>telèfon</strong> amb «Copiar» (copia el número), <strong>bo</strong> amb les sessions restants i la caducitat (o «Cortesia» / «Sense bo»), <strong>sèrie</strong> («Sessió 2 de 3») si en forma part, <strong>propera sessió</strong> reservada del client (després d'aquesta i d'ara) i l'enllaç <strong>«Fitxa del client»</strong> a <code>/admin/clients/…</code></li>
       <li>«Afegir al calendari» <strong>no</strong> surt a les sessions passades. A les passades hi ha la nota: l'admin la <strong>llegeix</strong> però no té «+ Nota» ni «Editar la nota»</li>
-      <li>A 375 px, el botó «Desar» de Reprogramar queda <strong>dins</strong> de la caixa</li>
+      <li>Reprogramar des de la fitxa del calendari: <strong>«Canviar l'hora»</strong> ofereix només les hores vàlides d'aquell professional (dia a dia), com al professional. Només una reserva <strong>sense professional</strong> (columna «Sense professional») segueix amb el camp de data i hora; a 375 px, el seu «Desar» queda <strong>dins</strong> de la caixa</li>
       <li>Prova les tres accions sobre una reserva: <strong>Cancel·lar</strong> (demana confirmació, a la fitxa i a la llista; «No, torna» no fa res; «Sí, cancel·la» retorna la sessió al bo + avisa el client + cedeix la plaça a la llista d'espera), <strong>Completar</strong> (és el que la fa comptar a liquidacions i bonus) i <strong>Reprogramar</strong> (canvia dia i hora sense tocar el bo). Prova també de moure-la a una hora <strong>ocupada</strong>, a sobre d'un <strong>grup</strong>, dins d'un <strong>bloqueig</strong> o al <strong>passat</strong>: la fitxa ha de dir per què no en línia (abans la pàgina petava) i la reserva s'ha de quedar on era. Moure una plaça d'un grup ple fa entrar el primer de la llista d'espera a l'hora d'abans. El client rep el correu «Hem canviat l'hora de la teva sessió» amb l'hora nova i la d'abans, en el seu idioma (i, si és d'una sèrie, que només canvia aquesta); si la reprogramació falla, no rep res</li>
     </ul>
     <div class="warn"><strong>Una sessió que va passar i ningú no va marcar com a completada no es paga.</strong> És la causa número u de "la liquidació no em quadra" (secció 2.2).</div>
@@ -666,7 +674,7 @@
         <tr><td>Color de la targeta</td><td>Per <strong>tipus de servei</strong></td><td>Per <strong>professional</strong></td></tr>
         <tr><td>Reserva pròpia</td><td>—</td><td>Verd + check ✓ (surt sempre, encara que filtris)</td></tr>
         <tr><td>Nom del professional</td><td>Nom + primer cognom</td><td>Nom de pila</td></tr>
-        <tr><td>Capa de disponibilitat</td><td>Ombrejat amb el <strong>color de cada persona</strong>, encès/apagat un per un</td><td>—</td></tr>
+        <tr><td>Forats lliures</td><td>Targetes «Lliure» amb els serveis possibles. Admin: a la columna de cada professional</td><td>—</td></tr>
         <tr><td>Reserves de companys</td><td>Multicheck opcional, amb cadenat</td><td>"Ocupat" (sense noms)</td></tr>
         <tr><td>Sessions de grup</td><td>Pastilla del servei</td><td>Comptador <code>2/4</code> amb semàfor; noms només en obrir-la</td></tr>
         <tr><td>Sessions de cortesia</td><td>Etiqueta "Cortesia"</td><td>Una sessió seva més</td></tr>

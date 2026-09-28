@@ -6,7 +6,7 @@ import { CENTER_TZ } from "@/lib/config";
 import { SERVICE_LABELS } from "@/lib/labels";
 import { ReservationSheet } from "@/components/reservation-sheet";
 import { SessionNotePanel } from "@/components/session-note-panel";
-import { TrialModal } from "@/components/weekly-calendar";
+import { TrialModal } from "@/components/agenda-pieces";
 import type { ColorPalette } from "@/lib/colors";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type { InboxReservation, TrainerInbox } from "@/lib/data/trainer-inbox";

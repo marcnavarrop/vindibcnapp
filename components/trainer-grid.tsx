@@ -18,7 +18,7 @@ import {
   type TrainerBlockLite,
   type TrainerRuleLite,
 } from "@/lib/availability-slots";
-import { freeServicesAt, occupancyFromSessions } from "@/lib/free-slots";
+import { freeServicesAt, occupancyFromSessions, type OccupancyLookup } from "@/lib/free-slots";
 import {
   SLOT_PX,
   placeByDensity,
@@ -28,7 +28,7 @@ import {
 } from "@/lib/trainer-grid-layout";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import { ReservationSheet, LockIcon } from "@/components/reservation-sheet";
-import { SVC_ICON, TRIAL_COLOR, TrialModal } from "@/components/weekly-calendar";
+import { SVC_ICON, TRIAL_COLOR, TrialModal } from "@/components/agenda-pieces";
 import { CreateSlotSheet } from "@/components/create-slot-sheet";
 import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
 import type { ReservationListItem } from "@/lib/data/reservations";
@@ -107,7 +107,7 @@ function initials(name: string): string {
 }
 
 /** Una cosa que ocupa temps en una columna. */
-type Entry =
+export type Entry =
   | { kind: "res"; id: string; start: Date; end: Date; own: boolean; r: ReservationListItem }
   | {
       kind: "group";
@@ -120,13 +120,13 @@ type Entry =
   | { kind: "trial"; id: string; start: Date; end: Date; own: boolean; t: TrialHoldItem };
 
 /** Un tram de forats lliures seguits amb els mateixos serveis. */
-type FreeRun = { from: number; to: number; lastStart: number; services: ServiceType[] };
+export type FreeRun = { from: number; to: number; lastStart: number; services: ServiceType[] };
 
 /**
  * Una marca del carril dels companys: una sessió seva (o prova, o grup) o un
  * tram seu de forats lliures. En slots amb decimals, com la resta.
  */
-type RailMark = {
+export type RailMark = {
   trainerId: string;
   from: number;
   to: number;
@@ -135,9 +135,17 @@ type RailMark = {
   services?: ServiceType[];
 };
 
-type DayInfo = {
+export type DayInfo = {
   date: Date;
+  /** La columna: el dia (professional) o el professional (admin). */
   key: string;
+  /** El dia, YYYY-MM-DD: per saber si és avui o ja ha passat. */
+  dateKey: string;
+  /**
+   * La capçalera de la columna. Sense, la del dia (dl 29 · 2 sessions); l'admin
+   * hi posa el professional.
+   */
+  head?: React.ReactNode;
   /** Les PRÒPIES: les úniques que es reparteixen l'amplada del dia. */
   entries: Entry[];
   /** Les dels companys encesos, al carril de la dreta. */
@@ -149,6 +157,63 @@ type DayInfo = {
   /** Gent en espera per sessió pròpia: instant (ms) → quants. */
   waiting: Map<number, number>;
 };
+
+/**
+ * Els trams de forats lliures d'un professional un dia: les hores de la seva
+ * disponibilitat on es pot reservar de debò (`freeServicesAt`, la regla del
+ * servidor), agrupades quan els serveis coincideixen. La fan servir la rejilla
+ * del professional (els seus i els dels companys) i la de l'admin (cada
+ * columna).
+ */
+export function freeRunsOf(input: {
+  trainerId: string;
+  rules: TrainerRuleLite[];
+  blocks: TrainerBlockLite[];
+  occupancy: OccupancyLookup;
+  date: Date;
+  key: string;
+  wd: number;
+  now: Date | null;
+}): FreeRun[] {
+  const { trainerId, rules: trainerRules, blocks, occupancy, date, key, wd, now } = input;
+  const free: FreeRun[] = [];
+  if (!now) return free;
+  const starts: { slot: number; services: ServiceType[] }[] = [];
+  for (const r of trainerRules.filter((x) => x.trainerId === trainerId && ruleApplies(x, key, wd)))
+    for (let slot = r.startSlot; slot < r.endSlot; slot++) {
+      const at = new Date(date);
+      at.setHours(0, slot * 30, 0, 0);
+      if (at.getTime() <= now.getTime()) continue;
+      // Un grup amb plaça no és "lliure": ja té la seva targeta amb 2/4.
+      if (occupancy(trainerId, at, SESSION_DURATION_MINUTES).length) continue;
+      const svc = freeServicesAt({
+        rules: trainerRules,
+        blocks,
+        trainerId,
+        date,
+        slot,
+        durationMinutes: SESSION_DURATION_MINUTES,
+        occupancy,
+      });
+      if (svc.size) starts.push({ slot, services: SERVICE_TYPES.filter((x) => svc.has(x)) });
+    }
+  const uniq = [...new Map(starts.map((x) => [x.slot, x])).values()].sort((a, b) => a.slot - b.slot);
+  for (const x of uniq) {
+    const last = free[free.length - 1];
+    if (last && last.lastStart === x.slot - 1 && last.services.join() === x.services.join()) {
+      last.lastStart = x.slot;
+    } else {
+      free.push({ from: x.slot, to: x.slot, lastStart: x.slot, services: x.services });
+    }
+  }
+  // Fins on arriba cada tram: la sessió que hi comenci més tard acaba una
+  // hora després, sense trepitjar el tram següent.
+  free.forEach((f, i) => {
+    const next = free[i + 1]?.from ?? Infinity;
+    f.to = Math.min(f.lastStart + 2, next);
+  });
+  return free;
+}
 
 export function TrainerGrid({
   nav,
@@ -316,50 +381,8 @@ export function TrainerGrid({
     return m;
   }, [reservations, trials, myTrainerId]);
 
-  /**
-   * Els trams de forats lliures d'un professional un dia: les hores de la seva
-   * disponibilitat on es pot reservar de debò (`freeServicesAt`, la regla del
-   * servidor), agrupades quan els serveis coincideixen.
-   */
-  const freeRunsFor = (trainerId: string, trainerRules: TrainerRuleLite[], date: Date, key: string, wd: number): FreeRun[] => {
-    const free: FreeRun[] = [];
-    if (!now) return free;
-    const starts: { slot: number; services: ServiceType[] }[] = [];
-    for (const r of trainerRules.filter((x) => x.trainerId === trainerId && ruleApplies(x, key, wd)))
-      for (let slot = r.startSlot; slot < r.endSlot; slot++) {
-        const at = new Date(date);
-        at.setHours(0, slot * 30, 0, 0);
-        if (at.getTime() <= now.getTime()) continue;
-        // Un grup amb plaça no és "lliure": ja té la seva targeta amb 2/4.
-        if (occupancy(trainerId, at, SESSION_DURATION_MINUTES).length) continue;
-        const svc = freeServicesAt({
-          rules: trainerRules,
-          blocks,
-          trainerId,
-          date,
-          slot,
-          durationMinutes: SESSION_DURATION_MINUTES,
-          occupancy,
-        });
-        if (svc.size) starts.push({ slot, services: SERVICE_TYPES.filter((x) => svc.has(x)) });
-      }
-    const uniq = [...new Map(starts.map((x) => [x.slot, x])).values()].sort((a, b) => a.slot - b.slot);
-    for (const x of uniq) {
-      const last = free[free.length - 1];
-      if (last && last.lastStart === x.slot - 1 && last.services.join() === x.services.join()) {
-        last.lastStart = x.slot;
-      } else {
-        free.push({ from: x.slot, to: x.slot, lastStart: x.slot, services: x.services });
-      }
-    }
-    // Fins on arriba cada tram: la sessió que hi comenci més tard acaba una
-    // hora després, sense trepitjar el tram següent.
-    free.forEach((f, i) => {
-      const next = free[i + 1]?.from ?? Infinity;
-      f.to = Math.min(f.lastStart + 2, next);
-    });
-    return free;
-  };
+  const freeRunsFor = (trainerId: string, trainerRules: TrainerRuleLite[], date: Date, key: string, wd: number): FreeRun[] =>
+    freeRunsOf({ trainerId, rules: trainerRules, blocks, occupancy, date, key, wd, now });
 
   const info = (date: Date): DayInfo => {
     const key = localDateStr(date);
@@ -396,6 +419,7 @@ export function TrainerGrid({
     return {
       date,
       key,
+      dateKey: key,
       entries: all.filter((e) => e.own || !colleagues.length),
       rail,
       rules: dayRules,
@@ -621,7 +645,7 @@ export function TrainerGrid({
   );
 }
 
-function GridPlaceholder() {
+export function GridPlaceholder() {
   return (
     <div
       aria-busy="true"
@@ -630,7 +654,7 @@ function GridPlaceholder() {
   );
 }
 
-function NavLink({
+export function NavLink({
   label,
   href,
   children,
@@ -650,8 +674,9 @@ function NavLink({
   );
 }
 
-function Grid({
+export function Grid({
   days,
+  columns,
   now,
   info,
   showAll,
@@ -666,9 +691,12 @@ function Grid({
   colleagues,
   onRail,
 }: {
-  days: Date[];
+  /** Una columna per dia (professional)… */
+  days?: Date[];
+  /** …o les columnes ja fetes (admin: una per professional, el mateix dia). */
+  columns?: DayInfo[];
   now: Date | null;
-  info: (d: Date) => DayInfo;
+  info?: (d: Date) => DayInfo;
   showAll: boolean;
   openingHour: number;
   closingHour: number;
@@ -677,11 +705,11 @@ function Grid({
   todayKey: string;
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
-  onNew: (at: Date, services: ServiceType[]) => void;
+  onNew: (at: Date, services: ServiceType[], column: string) => void;
   colleagues: { id: string; name: string; color: string }[];
   onRail: (title: string, marks: RailMark[]) => void;
 }) {
-  const dayInfos = days.map(info);
+  const dayInfos = columns ?? (days && info ? days.map(info) : []);
 
   // Els slots on passa alguna cosa en algun dels dies que es veuen.
   const active = new Set<number>();
@@ -697,11 +725,11 @@ function Grid({
     for (const m of d.rail) for (let s = Math.floor(m.from); s < Math.ceil(m.to); s++) active.add(s);
   }
   const v = verticalLayout(active, hourToSlot(openingHour), hourToSlot(closingHour), showAll);
-  const cols = `3rem repeat(${days.length}, minmax(0, 1fr))`;
+  const cols = `3rem repeat(${dayInfos.length}, minmax(0, 1fr))`;
   const nowSlot = now ? slotFloat(now) : -1;
   // La línia d'ara només si avui és un dels dies que es veuen.
   const nowVisible =
-    now && dayInfos.some((d) => d.key === todayKey) && nowSlot >= v.from && nowSlot <= v.to;
+    now && dayInfos.some((d) => d.dateKey === todayKey) && nowSlot >= v.from && nowSlot <= v.to;
 
   return (
     <div className="rounded-xl border border-brand-border bg-white">
@@ -713,9 +741,15 @@ function Grid({
       >
         <div />
         {dayInfos.map((d) => {
-          const isToday = d.key === todayKey;
-          const past = d.key < todayKey;
+          const isToday = d.dateKey === todayKey;
+          const past = d.dateKey < todayKey;
           const own = d.entries.filter((e) => e.own && e.kind !== "trial").length;
+          if (d.head)
+            return (
+              <div key={d.key} data-day={d.key} className="min-w-0 border-l border-brand-border px-1 py-2 text-center">
+                {d.head}
+              </div>
+            );
           return (
             <div
               key={d.key}
@@ -799,8 +833,8 @@ function Grid({
             d={d}
             v={v}
             now={now}
-            isToday={d.key === todayKey}
-            isPast={d.key < todayKey}
+            isToday={d.dateKey === todayKey}
+            isPast={d.dateKey < todayKey}
             palette={palette}
             manageable={manageable}
             onOpen={onOpen}
@@ -838,7 +872,7 @@ function DayColumn({
   manageable: Set<string>;
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
-  onNew: (at: Date, services: ServiceType[]) => void;
+  onNew: (at: Date, services: ServiceType[], column: string) => void;
   colleagues: { id: string; name: string; color: string }[];
   onRail: (title: string, marks: RailMark[]) => void;
 }) {
@@ -938,7 +972,8 @@ function DayColumn({
               const k = Math.min(Math.floor((e.clientY - rect.top) / SLOT_PX), f.lastStart - f.from);
               const at = new Date(startAt);
               at.setMinutes(at.getMinutes() + Math.max(0, k) * 30);
-              onNew(at, f.services);
+              // La columna va darrere: a l'admin, és el professional del forat.
+              onNew(at, f.services, d.key);
             }}
             className={clsx(
               "absolute inset-x-0.5 flex flex-col items-start gap-0.5 rounded-md border border-dashed px-1.5 py-1 text-left",
@@ -1210,7 +1245,7 @@ function GroupNames({ list, crowded }: { list: ReservationListItem[]; crowded: b
  * La llista d'una hora plena (el «+N») o d'un grup. Mateixa forma que la fitxa:
  * fulla al mòbil, plafó a l'escriptori. Cada fila obre la seva fitxa.
  */
-function EntryListSheet({
+export function EntryListSheet({
   title,
   entries,
   palette,
