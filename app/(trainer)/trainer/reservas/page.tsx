@@ -20,6 +20,8 @@ import { centerDateStr } from "@/lib/center-time";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
 import { getNotesForReservations } from "@/lib/data/session-notes";
+import { getTrainerInbox } from "@/lib/data/trainer-inbox";
+import { CalFerTray } from "@/components/cal-fer-tray";
 import {
   cancelTrainerReservationAction,
   completeTrainerReservationAction,
@@ -84,6 +86,15 @@ export default async function TrainerReservasPage({
       ])
     : [[], []];
 
+  // «Cal fer»: el que té pendent, acotat als últims dies (vegeu trainer-inbox).
+  // Si falla, l'agenda es pinta igual i es diu en una línia.
+  const inbox = trainerId
+    ? await getTrainerInbox({
+        trainerId,
+        trials: centerSettings.modules.sessionsProva,
+      }).catch(() => null)
+    : null;
+
   // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
   const manageableTrialIds = trials
     .filter((t) => t.trainerId === trainerId)
@@ -146,6 +157,25 @@ export default async function TrainerReservasPage({
             </Link>
           </div>
         </div>
+
+        {inbox ? (
+          <CalFerTray
+            inbox={inbox}
+            palette={palette}
+            clientBase="/trainer/clients"
+            cancelAction={cancelTrainerReservationAction}
+            completeAction={completeTrainerReservationAction}
+            rescheduleAction={rescheduleTrainerReservationAction}
+            acceptTrialAction={acceptTrialTrainerAction}
+            rejectTrialAction={rejectTrialTrainerAction}
+          />
+        ) : (
+          trainerId && (
+            <p role="status" className="mb-3 text-sm text-error">
+              No s&apos;ha pogut carregar «Cal fer». L&apos;agenda és al dia.
+            </p>
+          )
+        )}
 
         <ReservationsView
           nav={nav}
