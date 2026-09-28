@@ -187,6 +187,14 @@
       <li><strong>Quatre accions ràpides</strong>: Nou client, Nova reserva, Bons pendents, Vals de regal</li>
       <li><strong>"El que espera resposta"</strong>: sol·licituds de prova pendents amb compte enrere, vals de regal per cobrar, recompenses de referit per aplicar. <strong>Si no hi ha res de les tres coses, la secció no es pinta</strong> (comprova-ho també)</li>
       <li>"Avui al centre": les sessions del dia de tot l'equip. Les de cortesia porten l'etiqueta <strong>"Cortesia"</strong></li>
+      <li><strong>L'estat de l'agenda</strong> <span class="flag">Nou</span>, tres targetes sota «Avui al centre»:
+        <ul>
+          <li><strong>Sense marcar</strong>: sessions passades encara reservades dels últims 30 dies, per professional (primer qui en té més), amb les tres més recents de cadascú. Deixa'n una sense marcar de fa més de 30 dies: no hi ha de sortir. Toca'n una: l'agenda s'obre aquell dia amb la <strong>columna del professional marcada</strong> (al mòbil, la finestra de tres s'hi posa; si l'havies apagat als filtres, torna a sortir)</li>
+          <li><strong>Fora de disponibilitat</strong>: el mateix número que el plafó «Reserves fora de la disponibilitat» de cada professional (tanca una franja amb una reserva a dins i mira que hi surti). «Revisar» porta a la Disponibilitat d'aquell professional</li>
+          <li><strong>Grups amb espera</strong>: d'aquí a diumenge, els grups amb gent a la cua: dia i hora, professional, «4/4», «+2 en espera» i els noms per ordre. Toca'n un: l'agenda d'aquell dia amb la seva columna</li>
+          <li>Si una lectura falla, <strong>la seva targeta ho diu i no ensenya cap número</strong>; les altres surten igual (en mode demo: <code>MOCK_FAIL=unmarked</code>, <code>orphans</code> o <code>waitlist</code>)</li>
+        </ul>
+      </li>
       <li>Ocupació per professional: qui no té cap disponibilitat definida <strong>no hi surt</strong> (no és un 0 %, és una divisió per zero)</li>
       <li>Amb producció "buida", tot surt a zero o amb guionet, sense errors</li>
     </ul>

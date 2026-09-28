@@ -433,7 +433,13 @@ export function AdminGrid({
       dateKey: dayKey,
       head: (
         <>
-          <div className="flex items-center justify-center gap-1 text-sm font-bold text-brand-dark">
+          <div
+            className={clsx(
+              "flex items-center justify-center gap-1 rounded text-sm font-bold text-brand-dark",
+              focusPro === p.id && "bg-brand-purple/10 ring-2 ring-brand-purple",
+            )}
+            data-focused={focusPro === p.id || undefined}
+          >
             <span aria-hidden className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
             <span className="truncate md:hidden">{first}</span>
             <span className="hidden truncate md:inline">{p.name}</span>
@@ -458,6 +464,27 @@ export function AdminGrid({
   };
 
   // Mòbil: tres alhora, amb una finestra que es mou.
+  /*
+   * `?pro=…` sense `forat` (els enllaços de l'inici): la columna d'aquell
+   * professional ha de sortir, encara que estigués apagat, i al mòbil la
+   * finestra de tres s'hi posa. La capçalera queda marcada.
+   */
+  const focusPro = !wantAt && wantPro && pros.some((p) => p.id === wantPro) ? wantPro : null;
+  useEffect(() => {
+    if (!loaded || !focusPro) return;
+    if (hidden.has(focusPro))
+      setHidden((prev) => {
+        const next = new Set(prev);
+        next.delete(focusPro);
+        return next;
+      });
+    const shown = pros.filter((p) => p.id === focusPro || !hidden.has(p.id));
+    const i = shown.findIndex((p) => p.id === focusPro);
+    setStart(Math.max(0, Math.min(i, shown.length - MOBILE_COLUMNS)));
+    // Només en arribar amb l'enllaç (i un cop llegida la memòria del navegador).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, focusPro]);
+
   const maxStart = Math.max(0, visible.length - MOBILE_COLUMNS);
   const from = Math.min(start, maxStart);
   const mobileCols = visible.slice(from, from + MOBILE_COLUMNS).map(column);
