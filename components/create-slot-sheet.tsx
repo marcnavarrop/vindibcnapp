@@ -145,7 +145,7 @@ export function CreateSlotSheet({
             <button
               type="button"
               onClick={close}
-              className={`mt-2 w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
+              className={`mt-2 min-h-11 w-full rounded-lg md:min-h-0 border border-brand-border px-4 py-2.5 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
             >
               Tancar
             </button>
@@ -289,17 +289,19 @@ export function CreateSlotSheet({
               </p>
             )}
 
+            {/* «Crear» i «Tancar», de 44 px al mòbil com la resta de botons que es
+                toquen amb el dit; a l'ordinador, la mida de sempre. */}
             <button
               type="submit"
               disabled={!canCreate}
-              className={`w-full rounded-lg bg-brand-purple px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-50 ${TAP_SURFACE}`}
+              className={`min-h-11 w-full rounded-lg bg-brand-purple md:min-h-0 px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-50 ${TAP_SURFACE}`}
             >
               {creating ? "Creant…" : group ? "Apuntar-hi" : "Crear"}
             </button>
             <button
               type="button"
               onClick={close}
-              className={`w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
+              className={`min-h-11 w-full rounded-lg px-3 py-2 text-sm md:min-h-0 font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
             >
               Tancar
             </button>

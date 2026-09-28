@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TAP, clsx } from "@/lib/utils";
 import { GROUP_CAPACITY, SERVICE_LABELS, SERVICE_TYPES, SESSION_DURATION_MINUTES } from "@/lib/labels";
@@ -22,6 +23,7 @@ import {
   Grid,
   GridPlaceholder,
   NavLink,
+  FREE_COLOR,
   freeRunsOf,
   type DayInfo,
   type Entry,
@@ -50,6 +52,10 @@ import type { ServiceType } from "@/types/database";
  *     i l'hora; el client es busca al servidor entre tots els del centre.
  *   · Un grup amb places ofereix «Apuntar-hi un client» (qualsevol), i diu qui
  *     espera plaça, amb el nom i per ordre.
+ *   · A dalt, la tira de la setmana (dl–dv): l'ocupació de cada professional,
+ *     els grups plens i qui espera, i un toc per anar a aquell dia.
+ *   · Cada columna diu el «Pròxim forat» del professional en les dues setmanes
+ *     vinents; tocant-lo, s'hi va i s'obre la fulla de crear.
  *
  * Només al navegador, com la del professional: l'hora de cada sessió és la del
  * navegador, i pintar-la al servidor (en UTC) donava l'error #418.
@@ -74,6 +80,9 @@ const longDayFmt = new Intl.DateTimeFormat("ca-ES", {
   day: "numeric",
   month: "long",
 });
+/** Fins on busca «Pròxim forat»: avui i els tretze dies següents. */
+const NEXT_FREE_DAYS = 14;
+const stripDayFmt = new Intl.DateTimeFormat("ca-ES", { weekday: "short", day: "numeric" });
 const shortDayFmt = new Intl.DateTimeFormat("ca-ES", {
   weekday: "short",
   day: "numeric",
@@ -143,6 +152,8 @@ export function AdminGrid({
   openingHour: number;
   closingHour: number;
 }) {
+  const router = useRouter();
+  const params = useSearchParams();
   const [selected, setSelected] = useState<ReservationListItem | null>(null);
   const [selectedTrial, setSelectedTrial] = useState<TrialHoldItem | null>(null);
   const [list, setList] = useState<{
@@ -282,6 +293,122 @@ export function AdminGrid({
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = addDays(dayStart, 1);
 
+  const trainerOf = (id: string | null) => trainers.find((t) => t.id === id) ?? null;
+  // «Pròxim forat»: el primer inici lliure de cada professional d'avui a
+  // tretze dies, amb el filtre de servei si n'hi ha. Surt dels mateixos forats
+  // reals que pinta la rejilla (`freeRunsOf`), i per això el servidor carrega
+  // les reserves d'aquestes dues setmanes (vegeu la pàgina).
+  const nextFree = useMemo(() => {
+    const m = new Map<string, { at: Date; services: ServiceType[] } | null>();
+    if (!now) return m;
+    const base = new Date(now);
+    base.setHours(0, 0, 0, 0);
+    for (const t of trainers) {
+      let found: { at: Date; services: ServiceType[] } | null = null;
+      for (let i = 0; i < NEXT_FREE_DAYS && !found; i++) {
+        const d = addDays(base, i);
+        const run = freeRunsOf({
+          trainerId: t.id,
+          rules,
+          blocks,
+          occupancy,
+          date: d,
+          key: localDateStr(d),
+          wd: weekdayOf(d),
+          now,
+        }).find((f) => !service || f.services.includes(service));
+        if (run) {
+          const at = new Date(d);
+          at.setHours(0, run.from * 30, 0, 0);
+          found = { at, services: service ? [service] : run.services };
+        }
+      }
+      m.set(t.id, found);
+    }
+    return m;
+  }, [now, trainers, rules, blocks, occupancy, service]);
+
+  // Tocar «Pròxim forat»: si és el dia que es veu, la fulla de crear; si no,
+  // s'hi va, i la fulla s'obre en arribar (`?forat=…&pro=…`).
+  const goNextFree = (proId: string) => {
+    const nf = nextFree.get(proId);
+    const pro = trainerOf(proId);
+    if (!nf || !pro) return;
+    if (localDateStr(nf.at) === dayKey) setCreating({ at: nf.at, services: nf.services, trainer: pro });
+    else
+      router.push(
+        `${nav.basePath}?dia=${localDateStr(nf.at)}&forat=${encodeURIComponent(nf.at.toISOString())}&pro=${encodeURIComponent(proId)}`,
+      );
+  };
+  const wantAt = params.get("forat");
+  const wantPro = params.get("pro");
+  useEffect(() => {
+    if (!now || !wantAt || !wantPro) return;
+    const at = new Date(wantAt);
+    const pro = trainers.find((t) => t.id === wantPro);
+    // Es neteja l'adreça: recarregar no ha de tornar a obrir la fulla.
+    router.replace(`${nav.basePath}?dia=${dayKey}`, { scroll: false });
+    if (!pro || Number.isNaN(at.getTime())) return;
+    const services =
+      freeRunsOf({ trainerId: pro.id, rules, blocks, occupancy, date: parseDay(dayKey), key: dayKey, wd: weekdayOf(parseDay(dayKey)), now })
+        .find((f) => f.from <= slotFloat(at) && slotFloat(at) <= f.lastStart)?.services ?? [];
+    if (services.length) setCreating({ at, services: service && services.includes(service) ? [service] : services, trainer: pro });
+    // Només en arribar amb els paràmetres.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [now === null, wantAt, wantPro]);
+
+  /*
+   * LA TIRA DE LA SETMANA (dl–dv). Per a cada dia i cada professional encès,
+   * quina part del seu horari ja no és lliure: dels inicis de mitja hora dins
+   * del seu horari (sense comptar els bloquejats), quants ja no surten com a
+   * forat. I del dia sencer, quants grups són plens i quanta gent espera.
+   */
+  const weekStart = parseDay(nav.weekStart);
+  const strip = useMemo(() => {
+    if (!now) return [];
+    const epoch = new Date(0); // el dia sencer, també el que ja ha passat
+    const shown = visible.filter((p) => p.id !== NONE);
+    return Array.from({ length: 5 }, (_, i) => {
+      const d = addDays(weekStart, i);
+      const key = localDateStr(d);
+      const w = weekdayOf(d);
+      const pros = shown.map((p) => {
+        const starts = new Set<number>();
+        for (const r of rules)
+          if (r.trainerId === p.id && ruleApplies(r, key, w))
+            for (let slot = r.startSlot; slot < r.endSlot; slot++) {
+              const at = new Date(d);
+              at.setHours(0, slot * 30, 0, 0);
+              const end = at.getTime() + SESSION_DURATION_MINUTES * 60_000;
+              const blocked = blocks.some(
+                (b) => b.trainerId === p.id && new Date(b.startAt).getTime() < end && new Date(b.endAt).getTime() > at.getTime(),
+              );
+              if (!blocked) starts.add(slot);
+            }
+        const free = freeRunsOf({ trainerId: p.id, rules, blocks, occupancy, date: d, key, wd: w, now: epoch })
+          .reduce((n, f) => n + (f.lastStart - f.from + 1), 0);
+        return { id: p.id, name: p.name, pct: starts.size ? Math.max(0, Math.min(1, 1 - free / starts.size)) : null };
+      });
+      const groups = new Map<string, number>();
+      for (const r of reservations)
+        if (
+          r.status !== "cancelled" &&
+          r.serviceType === "grupo_reducido" &&
+          r.trainerId &&
+          shown.some((p) => p.id === r.trainerId) &&
+          localDateStr(new Date(r.scheduledAt)) === key
+        )
+          groups.set(`${r.trainerId}|${r.scheduledAt}`, (groups.get(`${r.trainerId}|${r.scheduledAt}`) ?? 0) + 1);
+      const full = [...groups.values()].filter((n) => n >= GROUP_CAPACITY).length;
+      const waitingN = waiting
+        .filter((x) => shown.some((p) => p.id === x.trainerId) && localDateStr(new Date(x.at)) === key)
+        .reduce((n, x) => n + x.names.length, 0);
+      return { date: d, key, pros, full, waiting: waitingN };
+    });
+    // `weekStart` es deriva de `nav.weekStart`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [now === null, nav.weekStart, visible.map((p) => p.id).join(), rules, blocks, occupancy, reservations, waiting]);
+
   const column = (p: { id: string; name: string }): DayInfo => {
     const entries = (byPro.get(p.id) ?? []).filter(keep);
     const proRules = rules.filter((r) => r.trainerId === p.id && ruleApplies(r, dayKey, wd));
@@ -314,6 +441,7 @@ export function AdminGrid({
           <div className="mt-0.5 text-xs text-brand-muted">
             {sessions === 0 ? (proRules.length ? "—" : "sense horari") : `${sessions} ${sessions === 1 ? "sessió" : "ses."}`}
           </div>
+          {p.id !== NONE && <NextFreeButton next={nextFree.get(p.id) ?? null} today={nav.today} onGo={() => goNextFree(p.id)} />}
         </>
       ),
       entries,
@@ -335,7 +463,6 @@ export function AdminGrid({
   const mobileCols = visible.slice(from, from + MOBILE_COLUMNS).map(column);
   const desktopCols = visible.map(column);
 
-  const trainerOf = (id: string | null) => trainers.find((t) => t.id === id) ?? null;
   const open = (e: Entry) => {
     if (e.kind === "res") setSelected(e.r);
     else if (e.kind === "trial") setSelectedTrial(e.t);
@@ -432,6 +559,70 @@ export function AdminGrid({
         {dayNav}
         <div className="hidden md:block">{showAllButton}</div>
       </div>
+
+      {/* ── La tira de la setmana ─────────────────────────────────────────── */}
+      {strip.length > 0 && (
+        <nav aria-label="Setmana" className="mb-2 grid grid-cols-5 gap-1 md:mb-3 md:gap-2" data-week-strip>
+          {strip.map((d) => {
+            const summary = [
+              d.full ? `${d.full} ${d.full === 1 ? "ple" : "plens"}` : "",
+              d.waiting ? `${d.waiting} en espera` : "",
+            ].filter(Boolean);
+            const label = `${longDayFmt.format(d.date)}. ${d.pros
+              .map((p) => `${p.name}: ${p.pct === null ? "sense horari" : `${Math.round(p.pct * 100)} % ocupat`}`)
+              .join(", ")}${summary.length ? `. ${summary.join(", ")}` : ""}`;
+            return (
+              <Link
+                key={d.key}
+                href={`${nav.basePath}?dia=${d.key}`}
+                aria-current={d.key === dayKey ? "date" : undefined}
+                aria-label={label}
+                data-strip-day={d.key}
+                className={clsx(
+                  "flex min-h-11 min-w-0 flex-col gap-0.5 rounded-lg border bg-white px-1.5 py-1 hover:bg-brand-bg md:gap-1 md:py-1.5",
+                  d.key === dayKey ? "border-brand-purple ring-1 ring-brand-purple" : "border-brand-border",
+                  TAP,
+                )}
+              >
+                <span
+                  className={clsx(
+                    "text-xs font-bold first-letter:uppercase",
+                    d.key === nav.today ? "text-brand-purple" : "text-brand-dark",
+                  )}
+                >
+                  {stripDayFmt.format(d.date)}
+                </span>
+                <span className="flex flex-col gap-0.5" aria-hidden>
+                  {d.pros.map((p) => (
+                    <span key={p.id} className="block h-1 overflow-hidden rounded-full bg-brand-bg" data-strip-bar={p.id}>
+                      {p.pct !== null && (
+                        <span
+                          className="block h-full rounded-full"
+                          style={{ width: `${Math.round(p.pct * 100)}%`, backgroundColor: colorOfPro(palette, p.id) }}
+                        />
+                      )}
+                    </span>
+                  ))}
+                </span>
+                <span className="min-w-0 truncate text-[10px] leading-tight text-brand-muted md:text-xs" data-strip-summary>
+                  {summary.length ? (
+                    <>
+                      {/* Al mòbil la casella és estreta: la llarga, a l'ordinador. */}
+                      <span className="flex flex-col md:hidden">
+                        {d.full > 0 && <span>{`${d.full} ${d.full === 1 ? "ple" : "plens"}`}</span>}
+                        {d.waiting > 0 && <span>{`+${d.waiting} esp.`}</span>}
+                      </span>
+                      <span className="hidden md:inline">{summary.join(" · ")}</span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       {/* ── Mòbil: el botó dels filtres i la finestra de tres ─────────────── */}
       <div className="mb-2 flex items-center gap-2 md:hidden">
@@ -636,5 +827,41 @@ function NoneVisible() {
     <p className="rounded-xl border border-brand-border bg-white p-6 text-center text-sm text-brand-muted">
       No hi ha cap professional encès. Toca un nom de dalt per veure&apos;n l&apos;agenda.
     </p>
+  );
+}
+
+const nextFmt = new Intl.DateTimeFormat("ca-ES", { weekday: "short", day: "numeric" });
+
+/** El «Pròxim forat» d'una columna: quan és, i un toc per anar-hi. */
+function NextFreeButton({
+  next,
+  today,
+  onGo,
+}: {
+  next: { at: Date; services: ServiceType[] } | null;
+  today: string;
+  onGo: () => void;
+}) {
+  if (!next)
+    return (
+      <p className="mt-1 text-[11px] leading-tight text-brand-muted" data-next-free="">
+        Cap forat en {NEXT_FREE_DAYS} dies
+      </p>
+    );
+  const when = `${localDateStr(next.at) === today ? "avui" : nextFmt.format(next.at)} · ${hhmm(next.at)}`;
+  return (
+    <button
+      type="button"
+      onClick={onGo}
+      data-next-free={next.at.toISOString()}
+      aria-label={`Pròxim forat: ${when}`}
+      className={`mt-1 flex min-h-11 w-full flex-col items-center justify-center rounded-md border border-dashed px-1 text-[11px] leading-tight text-brand-dark hover:bg-emerald-50 active:bg-emerald-100 ${TAP}`}
+      style={{ borderColor: `${FREE_COLOR}80`, backgroundColor: `${FREE_COLOR}0d` }}
+    >
+      <span className="font-bold" style={{ color: FREE_COLOR }}>
+        Pròxim forat
+      </span>
+      <span className="truncate">{when}</span>
+    </button>
   );
 }

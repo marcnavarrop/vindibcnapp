@@ -189,7 +189,6 @@ export default async function TrainerReservasPage({
           cancellableIds={cancellableIds}
           notes={notes}
           noteableIds={noteableIds}
-          newReservationBase="/trainer/reservas/new"
           cancelAction={cancelTrainerReservationAction}
           completeAction={completeTrainerReservationAction}
           rescheduleAction={rescheduleTrainerReservationAction}

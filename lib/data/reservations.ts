@@ -32,7 +32,7 @@ import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { afterBonoConsumed } from "@/lib/data/bono-consumption";
-import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
+import { GROUP_CAPACITY, SESSION_DURATION_MINUTES, formatDate } from "@/lib/labels";
 import { canRepeatInSeries } from "@/lib/series-rules";
 import { getViewer } from "@/lib/auth";
 import { toLocale, type Locale } from "@/lib/i18n/config";
@@ -753,6 +753,22 @@ function assertRepeatable(serviceType: ServiceType, weeks: number): void {
     );
 }
 
+/**
+ * El bo que arriba del formulari ha de poder-se fer servir: actiu o pendent de
+ * pagament, i sense haver passat la data de caducitat. És el mateix criteri de
+ * la resta de camins (la reserva del client, les sèries, la llista d'espera i
+ * la fulla del forat, que el trien ells mateixos). El formulari «+ Nova
+ * reserva» ja no els ofereix, però el `bonoId` ve del navegador: sense aquesta
+ * comprovació, qui manipulés el desplegable reservava amb un bo caducat, o amb
+ * un de ja marcat com a caducat.
+ */
+function assertBonoUsable(b: { status: BonoStatus; expires_at: string | null }): void {
+  if (b.status !== "active" && b.status !== "pending_payment")
+    throw new Error("Aquest bo ja no es pot fer servir.");
+  if (isBonoExpired(b))
+    throw new Error(`Aquest bo va caducar el ${formatDate(b.expires_at!)}: ja no es pot fer servir.`);
+}
+
 export async function createReservation(
   input: ReservationInput,
   repeatWeeks = 1,
@@ -771,6 +787,7 @@ export async function createReservation(
       ? store.bonos.find((b) => b.id === input.bonoId)
       : null;
     if (input.bonoId && !bono) throw new Error("Bo no trobat.");
+    if (bono) assertBonoUsable(bono);
     if (bono && bono.remaining_sessions < weeks)
       throw new Error(
         `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
@@ -859,16 +876,18 @@ export async function createReservation(
     service_type: ServiceType;
     remaining_sessions: number;
     status: BonoStatus;
+    expires_at: string | null;
     first_reservation_at: string | null;
   } | null = null;
 
   if (input.bonoId) {
     const { data, error: bErr } = await supabase
       .from("bonos")
-      .select("id, client_id, service_type, remaining_sessions, status, first_reservation_at")
+      .select("id, client_id, service_type, remaining_sessions, status, expires_at, first_reservation_at")
       .eq("id", input.bonoId)
       .single();
     if (bErr || !data) throw new Error("Bo no trobat.");
+    assertBonoUsable(data);
     if (data.remaining_sessions < weeks)
       throw new Error(
         `Aquest bo només té ${data.remaining_sessions} sessions disponibles.`,

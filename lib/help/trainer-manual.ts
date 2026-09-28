@@ -472,7 +472,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
             ],
             [
               "Bo",
-              "Quin bo paga la sessió. Al costat de cada opció hi ha quantes sessions li queden. Se'n descompta una en crear la reserva, no quan la sessió es fa.",
+              "Quin bo paga la sessió. Només hi surten els que es poden fer servir: actius o pendents de pagament, amb sessions i sense haver passat la data de caducitat. Al costat de cada opció hi ha quantes sessions li queden. Se'n descompta una en crear la reserva, no quan la sessió es fa.",
             ],
             [
               "Professional",
