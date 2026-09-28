@@ -82,6 +82,23 @@ export type IndividualBookingResult =
   | { ok: true; id: string; remaining: number | null }
   | { ok: false; reason: "taken" | "no_sessions" };
 
+/** Resultat de `reschedule_reservation` (0093). */
+export type RescheduleReservationResult =
+  | {
+      ok: true;
+      id: string;
+      client_id: string;
+      trainer_id: string | null;
+      service_type: ServiceType;
+      /** L'hora d'on surt: la llista d'espera d'aquella franja es mira després. */
+      old_scheduled_at: string;
+      scheduled_at: string;
+    }
+  | {
+      ok: false;
+      reason: "not_found" | "not_booked" | "past" | "same" | "taken" | "full";
+    };
+
 /** Resultat de `cancel_reservation` (0091). */
 export type CancelReservationResult =
   | {
@@ -1860,6 +1877,15 @@ export interface Database {
        * una sola transacció, amb el permís a dins (admin; professional sobre
        * els seus clients o la seva agenda; client, les seves i fora del marge).
        */
+      reschedule_reservation: {
+        Args: {
+          p_id: string;
+          p_scheduled_at: string;
+          /** L'aforament del grup (GROUP_CAPACITY), com a book_group_slot. */
+          p_capacity: number;
+        };
+        Returns: RescheduleReservationResult;
+      };
       cancel_reservation: {
         Args: {
           p_id: string;

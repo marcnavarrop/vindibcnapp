@@ -5,6 +5,10 @@ import {
   getReservationDetail,
   type ReservationDetail,
 } from "@/lib/data/reservation-detail";
+import {
+  getRescheduleOptionsData,
+  type RescheduleOptionsData,
+} from "@/lib/data/reschedule-options";
 
 export type ReservationDetailResult =
   | { ok: true; detail: ReservationDetail }
@@ -28,5 +32,29 @@ export async function getReservationDetailAction(
     return { ok: true, detail };
   } catch {
     return { ok: false, error: "No s'han pogut carregar les dades de la reserva." };
+  }
+}
+
+export type RescheduleOptionsResult =
+  | { ok: true; data: RescheduleOptionsData }
+  | { ok: false; error: string };
+
+/**
+ * Les peces per dir on es pot moure una reserva (vegeu
+ * `lib/data/reschedule-options.ts`). Només per a l'equip; moure-la de debò ho
+ * torna a comprovar tot el servidor.
+ */
+export async function getRescheduleOptionsAction(
+  id: string,
+): Promise<RescheduleOptionsResult> {
+  const viewer = await getViewer();
+  if (!viewer || (viewer.role !== "admin" && viewer.role !== "trainer"))
+    return { ok: false, error: "No tens permís per moure aquesta reserva." };
+  try {
+    const data = await getRescheduleOptionsData(id);
+    if (!data) return { ok: false, error: "Aquesta reserva ja no es pot moure." };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, error: "No s'han pogut carregar les hores lliures." };
   }
 }

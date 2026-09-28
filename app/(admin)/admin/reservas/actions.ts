@@ -72,11 +72,23 @@ export async function completeReservationAction(
   return { ok: true };
 }
 
-export async function rescheduleReservationAction(formData: FormData) {
+export async function rescheduleReservationAction(
+  _prev: ReservationActionState,
+  formData: FormData,
+): Promise<ReservationActionState> {
   const id = String(formData.get("id") ?? "");
+  // Dues maneres d'arribar: un inici triat de la llista (ISO, rejilla del
+  // professional) o el camp de data i hora (en hora del centre).
+  const iso = String(formData.get("scheduledAtIso") ?? "");
   const raw = String(formData.get("scheduledAt") ?? "");
-  const date = datetimeLocalToInstant(raw);
-  if (!id || !date) return;
-  await rescheduleReservation(id, date.toISOString());
+  const date = iso ? new Date(iso) : datetimeLocalToInstant(raw);
+  if (!id) return { error: "Falta la reserva." };
+  if (!date || Number.isNaN(date.getTime())) return { error: "Tria una data i una hora." };
+  try {
+    await rescheduleReservation(id, date.toISOString());
+  } catch (e) {
+    return actionError(e, "No s'ha pogut reprogramar la reserva.");
+  }
   revalidatePath("/admin/reservas");
+  return { ok: true };
 }

@@ -565,7 +565,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Reprogramar",
-              "Canvia el dia i l'hora sense tocar el bo. Només funciona sobre una reserva encara reservada.",
+              "Mou la sessió a una altra hora sense tocar el bo (no se'n gasta una altra ni es torna l'antiga); si és d'una sèrie, es mou només aquesta. Només funciona sobre una reserva encara reservada, i la nova hora ha de ser futura i estar lliure de debò: dins de la disponibilitat del professional, sense bloqueigs, sense una altra sessió o prova a sobre i, si és d'un grup, amb places. Si no ho està, la fitxa diu per què i la sessió es queda on era. Si era una plaça d'un grup ple, la plaça de l'hora d'abans passa al primer de la llista d'espera. El client no rep cap avís del canvi.",
             ],
           ],
         },

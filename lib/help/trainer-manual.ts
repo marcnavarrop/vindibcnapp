@@ -354,7 +354,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Tocar un forat lliure obre el formulari de nova reserva amb el dia, l'hora i tu com a professional ja posats; l'hora és la de la mitja hora on has tocat. Per crear-ne una fora dels forats, «+ Nova reserva». Tocar una sessió obre la seva fitxa, amb el que hi puguis fer.",
+          text: "Tocar un forat lliure obre la fulla de crear-hi una reserva (al mòbil puja des de baix; a l'ordinador, un plafó a la dreta), amb el dia i l'hora de la mitja hora on has tocat. S'explica al capítol «Crear i gestionar reserves». Per crear-ne una fora dels forats, «+ Nova reserva». Tocar una sessió obre la seva fitxa, amb el que hi puguis fer.",
         },
         {
           t: "p",
@@ -385,10 +385,36 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       id: "crear-reserves",
       title: "Crear i gestionar reserves",
       blocks: [
-        { t: "h", text: "Una reserva nova" },
+        { t: "h", text: "Crear sobre un forat del calendari" },
         {
           t: "p",
-          text: "Des de «+ Nova reserva», des d'un forat del calendari o des de la fitxa del client. El formulari demana, per ordre:",
+          text: "Tocant un forat lliure s'obre una fulla sense cap camp de data: el dia i l'hora són els del forat. Hi tries tres coses:",
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              "Servei",
+              "Només surten els que hi caben de debò en aquell forat (els mateixos que diu el calendari).",
+            ],
+            [
+              "Client",
+              "Només els teus clients assignats, que són els únics per als quals pots reservar. Al costat de cada nom hi ha les sessions que li queden del bo d'aquell servei, o «sense bo». En triar-lo, la fulla diu de quin bo sortirà la sessió: el més antic que es pot fer servir. Si no en té cap, t'ho diu abans de crear, i el botó no s'activa si no marques «Sessió de cortesia».",
+            ],
+            [
+              "Sessió de cortesia",
+              "Marcada, la sessió es regala: no descompta res de cap bo.",
+            ],
+          ],
+        },
+        {
+          t: "p",
+          text: "En un grup teu amb places, toca la targeta del grup i «Apuntar-hi un client»: la persona entra al grup que ja hi ha, a la mateixa hora; no se'n crea un altre. Si mentre tens la fulla oberta algú agafa el forat, en prémer Crear la fulla t'ho diu i no es crea res.",
+        },
+        { t: "h", text: "Una reserva nova des del formulari" },
+        {
+          t: "p",
+          text: "Des de «+ Nova reserva» o des de la fitxa del client. El formulari demana, per ordre:",
         },
         {
           t: "dl",
@@ -435,7 +461,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Reprogramar",
-              "Canvia el dia i l'hora sense tocar el bo. La sessió ja estava descomptada i ho segueix estant.",
+              "Mou la sessió a una altra hora sense tocar el bo: la sessió ja estava descomptada i ho segueix estant; no se'n gasta una altra ni es torna l'antiga. A la fitxa, «Canviar l'hora» ensenya només els inicis on hi cap de debò en els pròxims 14 dies: primer el dia, després l'hora. La seva hora actual i les del costat compten com a lliures. Si la sessió és d'una sèrie, es mou només aquesta. Si mentrestant algú ha agafat l'hora, t'ho diu i la sessió es queda on era. Si era una plaça d'un grup ple, la plaça que queda a l'hora d'abans passa al primer de la llista d'espera, com quan algú cancel·la. El client no rep cap avís del canvi.",
             ],
             [
               "Marcar feta",
