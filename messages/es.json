@@ -798,6 +798,10 @@
           "label": "Reserva cancelada",
           "description": "Cuando se anula una reserva tuya."
         },
+        "reservation_rescheduled": {
+          "label": "Cambio de hora de una reserva",
+          "description": "Cuando el centro mueve una sesión tuya a otra hora."
+        },
         "session_reminder": {
           "label": "Recordatorio de sesión",
           "description": "Un aviso el día antes de cada sesión."
@@ -980,6 +984,8 @@
     "greetingPlain": "Hola,",
     "labels": {
       "when": "Fecha y hora",
+      "newWhen": "Nueva hora",
+      "oldWhen": "Antes era",
       "service": "Servicio",
       "trainer": "Profesional",
       "remaining": "Sesiones sin hacer",
@@ -1022,6 +1028,14 @@
       "refundExpired": "La sesión se ha devuelto a tu bono, pero ese bono ya ha caducado, así que no podrás usarla para reservar. Si tienes cualquier duda, habla con el centro.",
       "refundNone": "Era una sesión de cortesía, así que no hay ninguna sesión que devolver.",
       "outroByCenter": "Sentimos las molestias. Si tienes cualquier duda, contacta con el centro."
+    },
+    "reservationRescheduled": {
+      "subject": "Hemos cambiado la hora de tu sesión · VindiBCN",
+      "heading": "Tu sesión ha cambiado de hora",
+      "intro": "El centro ha movido una sesión tuya. Esta es la nueva hora:",
+      "series": "Esta sesión es de una serie: solo cambia esta. El resto de sesiones de la serie se quedan como estaban.",
+      "cta": "Ver mis reservas",
+      "outro": "Sigue siendo la misma reserva: no has gastado ninguna sesión más del bono. Si la nueva hora no te va bien, contacta con el centro."
     },
     "sessionReminder": {
       "subject": "Recordatorio: tienes sesión mañana · VindiBCN",

@@ -30,6 +30,7 @@ dependemos del envío de emails de Supabase.
 | Evento | Destinatario | Default email |
 |---|---|---|
 | `reservation_confirmed` / `reservation_cancelled` | cliente | ✅ |
+| `reservation_rescheduled` | cliente (solo cuando el **equipo** le cambia la hora; el cliente no puede reprogramar) | ✅ siempre |
 | `session_reminder` | cliente | ❌ (opt-in) |
 | `trial_request` | entrenador del hueco + `CENTER_EMAIL` | ❌ (opt-in) |
 | `trial_status` | visitante de la prueba | ✅ |
@@ -39,6 +40,23 @@ dependemos del envío de emails de Supabase.
 | `trainer_booking_received` / `trainer_booking_cancelled` | entrenador (solo si la acción la hace el **cliente**) | ✅ |
 | `trainer_daily_agenda` | entrenador (opt-in) | ❌ |
 | `new_client_registered` | admins con la pref + `CENTER_EMAIL` | ✅ |
+
+### Cambio de hora (`reservation_rescheduled`)
+
+- **Obligatorio** (`ALWAYS_SENT_EVENTS`), por el mismo criterio que la
+  cancelación: la reserva nueva se ve en la app, pero que la hora de antes ya no
+  es suya no lo dice en ningún sitio, y quien la tenía apuntada se presentaría.
+  Sin columna en `notification_preferences` ni casilla en Configuració.
+- Lo envía `rescheduleReservation` (`lib/data/reservations.ts`) **solo si
+  `reschedule_reservation` (0093) devuelve `ok:true`**, fuera de la transacción,
+  como el de cancelación; si la función rechaza el movimiento, no sale nada.
+- Lleva la hora nueva y la antigua, el servicio y el profesional, en el idioma
+  del cliente (ca/es/en). Si la sesión es de una serie, añade que solo cambia
+  esa sesión.
+- Solo lo disparan el admin y el profesional del cliente (`assertMayBookFor`);
+  no existe ningún camino para que el cliente reprograme su propia reserva, así
+  que nunca se le avisa de un cambio suyo.
+- Snapshot: `reservation_rescheduled` y `reservation_rescheduled__serie`.
 
 - Preferencias en `notification_preferences` (migraciones **0019**, **0020**,
   **0021**), fila creada por trigger al crear cada `profile`. UI en Configuració
@@ -241,6 +259,7 @@ Con la arquitectura actual, Supabase **no envía emails**:
   `trainer_daily_agenda`).
 - **0021** — columnas del aviso de nuevo cliente (`new_client_registered_*`).
 - **0077** — trigger que sincroniza `profiles.email` cuando cambia el de Auth.
+- **0093** — `reschedule_reservation`: tras su `ok:true` sale `reservation_rescheduled`.
 - **0078** — `email_change_requests` (RLS cerrada: sin políticas, sólo la clave
   de servicio).
 

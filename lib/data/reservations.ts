@@ -36,6 +36,7 @@ import { afterBonoConsumed } from "@/lib/data/bono-consumption";
 import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { canRepeatInSeries } from "@/lib/series-rules";
 import { getViewer } from "@/lib/auth";
+import { toLocale, type Locale } from "@/lib/i18n/config";
 import type {
   RescheduleReservationResult,
   Database,
@@ -144,6 +145,12 @@ type Contact = {
   email: string | null;
   phone: string | null;
   name: string | null;
+  /**
+   * L'idioma del client (`profiles.preferred_language`), com el que torna
+   * `getProfileContact` als clients. Sense, les plantilles —ja traduïdes—
+   * sortien sempre en català.
+   */
+  locale: Locale;
 };
 
 /** Contacte del client (perfil) a partir del client_id. */
@@ -158,20 +165,26 @@ async function clientContact(clientId: string): Promise<Contact | null> {
       email: p?.email ?? null,
       phone: p?.phone ?? null,
       name: p?.full_name ?? null,
+      locale: toLocale(p?.preferred_language),
     };
   }
   const admin = createAdminClient();
   const { data } = await admin
     .from("clients")
     .select(
-      "profile_id, profile:profiles!clients_profile_id_fkey(email, phone, full_name)",
+      "profile_id, profile:profiles!clients_profile_id_fkey(email, phone, full_name, preferred_language)",
     )
     .eq("id", clientId)
     .maybeSingle();
   if (!data) return null;
   const p = (
     data as unknown as {
-      profile: { email: string | null; phone: string | null; full_name: string | null } | null;
+      profile: {
+        email: string | null;
+        phone: string | null;
+        full_name: string | null;
+        preferred_language: string | null;
+      } | null;
     }
   ).profile;
   return {
@@ -179,6 +192,7 @@ async function clientContact(clientId: string): Promise<Contact | null> {
     email: p?.email ?? null,
     phone: p?.phone ?? null,
     name: p?.full_name ?? null,
+    locale: toLocale(p?.preferred_language),
   };
 }
 
@@ -1275,7 +1289,12 @@ const RESCHEDULE_ERROR: Record<
  * fora de la transacció com a `cancel_reservation`, la llista d'espera de l'hora
  * antiga: si era una plaça de grup, allà hi ha quedat lloc.
  *
- * El client NO rep cap avís del canvi: avui no hi ha cap esdeveniment per a això.
+ * El client rep SEMPRE un correu amb l'hora nova i l'antiga
+ * (`reservation_rescheduled`, obligatori com la cancel·lació), només si la
+ * funció ha mogut la reserva de debò i fora de la transacció. No hi ha cap camí
+ * perquè el client es reprogrami ell mateix —`assertMayBookFor` només deixa
+ * passar l'admin i el professional del client—, així que el correu sempre avisa
+ * d'un canvi que ha fet algú altre.
  */
 export async function rescheduleReservation(
   id: string,
@@ -1290,13 +1309,14 @@ export async function rescheduleReservation(
     client_id: string;
     trainer_id: string | null;
     service_type: ServiceType;
+    series_id: string | null;
   } | null;
   if (USE_MOCK) {
     current = getStore().reservations.find((x) => x.id === id) ?? null;
   } else {
     const { data, error } = await createAdminClient()
       .from("reservations")
-      .select("client_id, trainer_id, service_type")
+      .select("client_id, trainer_id, service_type, series_id")
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
@@ -1325,6 +1345,18 @@ export async function rescheduleReservation(
   }
   if (!res.ok) throw new Error(RESCHEDULE_ERROR[res.reason]);
 
+  // Ja s'ha mogut: ara, fora de la transacció, el correu (best-effort, com
+  // tots) i la cua de l'hora antiga.
+  await notifyRescheduled({
+    reservationId: res.id,
+    clientId: res.client_id,
+    trainerId: res.trainer_id,
+    serviceType: res.service_type,
+    oldScheduledAt: res.old_scheduled_at,
+    scheduledAt: res.scheduled_at,
+    inSeries: !!current.series_id,
+  });
+
   // L'hora d'on ha sortit: si era una plaça de grup, hi entra el primer de la
   // cua (amb la comprovació de disponibilitat de sempre). Mai llança.
   await afterCancel({
@@ -1332,6 +1364,44 @@ export async function rescheduleReservation(
     scheduled_at: res.old_scheduled_at,
     service_type: res.service_type,
   });
+}
+
+/**
+ * Avisa el client que l'equip li ha canviat l'hora d'una sessió.
+ *
+ * OBLIGATORI (`ALWAYS_SENT_EVENTS`), pel mateix criteri que la cancel·lació: la
+ * reserva nova es veu a l'app, però que la d'abans ja no hi és no ho diu enlloc,
+ * i qui la tenia al cap s'hi presentaria. Porta les dues hores, el servei, el
+ * professional i, si és d'una sèrie, que només canvia aquesta sessió.
+ */
+async function notifyRescheduled(info: {
+  reservationId: string;
+  clientId: string;
+  trainerId: string | null;
+  serviceType: ServiceType;
+  oldScheduledAt: string;
+  scheduledAt: string;
+  inSeries: boolean;
+}): Promise<void> {
+  const c = await clientContact(info.clientId);
+  if (!c) return;
+  const trainer = info.trainerId ? await getProfileContact(info.trainerId) : null;
+  await notify(
+    {
+      type: "reservation_rescheduled",
+      recipient: c,
+      relatedId: info.reservationId,
+      data: {
+        name: c.name ?? "",
+        whenIso: info.scheduledAt,
+        oldWhenIso: info.oldScheduledAt,
+        serviceType: info.serviceType,
+        ...(trainer?.name ? { trainer: trainer.name } : {}),
+        ...(info.inSeries ? { series: "1" } : {}),
+      },
+    },
+    { ignorePreferences: true },
+  );
 }
 
 /** El mirall de `reschedule_reservation` (0093) al mock. */

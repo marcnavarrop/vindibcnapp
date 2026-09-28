@@ -461,7 +461,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Reprogramar",
-              "Mou la sessió a una altra hora sense tocar el bo: la sessió ja estava descomptada i ho segueix estant; no se'n gasta una altra ni es torna l'antiga. A la fitxa, «Canviar l'hora» ensenya només els inicis on hi cap de debò en els pròxims 14 dies: primer el dia, després l'hora. La seva hora actual i les del costat compten com a lliures. Si la sessió és d'una sèrie, es mou només aquesta. Si mentrestant algú ha agafat l'hora, t'ho diu i la sessió es queda on era. Si era una plaça d'un grup ple, la plaça que queda a l'hora d'abans passa al primer de la llista d'espera, com quan algú cancel·la. El client no rep cap avís del canvi.",
+              "Mou la sessió a una altra hora sense tocar el bo: la sessió ja estava descomptada i ho segueix estant; no se'n gasta una altra ni es torna l'antiga. A la fitxa, «Canviar l'hora» ensenya només els inicis on hi cap de debò en els pròxims 14 dies: primer el dia, després l'hora. La seva hora actual i les del costat compten com a lliures. Si la sessió és d'una sèrie, es mou només aquesta. Si mentrestant algú ha agafat l'hora, t'ho diu i la sessió es queda on era. Si era una plaça d'un grup ple, la plaça que queda a l'hora d'abans passa al primer de la llista d'espera, com quan algú cancel·la. El client rep sempre un correu amb l'hora nova i la d'abans (si és d'una sèrie, li diu que només canvia aquesta); no es pot desactivar, igual que el de cancel·lació.",
             ],
             [
               "Marcar feta",

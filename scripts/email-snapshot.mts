@@ -85,6 +85,8 @@ const recFor = (type: NotificationEventType) => ({
 const DATA: Record<NotificationEventType, Record<string, string>> = {
   reservation_confirmed: { name: "Ana Ferrer", ...WHENS, ...GRUP, trainer: "Laia Puig" },
   reservation_cancelled: { name: "Ana Ferrer", ...WHENS, ...INDIV },
+  // L'hora nova és la compartida; l'antiga, el dia abans a la mateixa hora.
+  reservation_rescheduled: { name: "Ana Ferrer", ...WHENS, oldWhenIso: "2026-03-13T09:00:00.000Z", ...INDIV, trainer: "Laia Puig" },
   session_reminder: { name: "Ana Ferrer", ...WHENS, ...FISIO, trainer: "Jordi Roca" },
   trial_request: { name: "Laia Puig", visitorName: "Marta Gil", ...WHENS, phone: "600111222", email: "marta@example.com" },
   trial_status: { name: "Marta Gil", ...WHENS, status: "confirmed" },
@@ -130,6 +132,8 @@ for (const type of TYPES) {
 }
 // `trial_status` té dues cares; la de rebuig també s'ha de vigilar.
 save("trial_status__rejected", renderEmail({ type: "trial_status", recipient: recFor("trial_status"), data: { ...DATA.trial_status, status: "rejected" } }));
+// La reprogramació d'una sessió de sèrie afegeix que només canvia aquesta.
+save("reservation_rescheduled__serie", renderEmail({ type: "reservation_rescheduled", recipient: recFor("reservation_rescheduled"), data: { ...DATA.reservation_rescheduled, series: "1" } }));
 // I l'agenda buida, que canvia el text d'entrada.
 save("trainer_daily_agenda__buida", renderEmail({ type: "trainer_daily_agenda", recipient: recFor("trainer_daily_agenda"), data: { name: "Laia Puig", sessions: "[]" } }));
 
@@ -137,4 +141,4 @@ save("auth_invite", renderInviteEmail({ name: "Ana Ferrer", url: "https://exempl
 save("auth_recovery", renderRecoveryEmail({ name: "Ana Ferrer", url: "https://exemple/auth/update-password?token_hash=x&type=recovery" }));
 save("auth_welcome", renderWelcomeEmail({ name: "Ana Ferrer", url: "https://exemple/client", locale: LOCALE ?? null }));
 
-console.log(`${TYPES.length + 5} correus escrits a ${out}`);
+console.log(`${TYPES.length + 6} correus escrits a ${out}`);

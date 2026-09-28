@@ -798,6 +798,10 @@
           "label": "Booking cancelled",
           "description": "When one of your bookings is cancelled."
         },
+        "reservation_rescheduled": {
+          "label": "Booking time changed",
+          "description": "When the centre moves one of your sessions to another time."
+        },
         "session_reminder": {
           "label": "Session reminder",
           "description": "A reminder the day before each session."
@@ -980,6 +984,8 @@
     "greetingPlain": "Hi,",
     "labels": {
       "when": "Date and time",
+      "newWhen": "New time",
+      "oldWhen": "Previously",
       "service": "Service",
       "trainer": "Professional",
       "remaining": "Unused sessions",
@@ -1022,6 +1028,14 @@
       "refundExpired": "The session has been returned to your pass, but that pass has already expired, so you won't be able to use it to book. If you have any questions, please talk to the centre.",
       "refundNone": "It was a complimentary session, so there is no session to return.",
       "outroByCenter": "Sorry for the inconvenience. If you have any questions, get in touch with the centre."
+    },
+    "reservationRescheduled": {
+      "subject": "We've changed the time of your session · VindiBCN",
+      "heading": "Your session has a new time",
+      "intro": "The centre has moved one of your sessions. This is the new time:",
+      "series": "This session is part of a series: only this one changes. The other sessions in the series stay as they were.",
+      "cta": "See my bookings",
+      "outro": "It's still the same booking: no extra session has been used from your pass. If the new time doesn't suit you, get in touch with the centre."
     },
     "sessionReminder": {
       "subject": "Reminder: you have a session tomorrow · VindiBCN",
