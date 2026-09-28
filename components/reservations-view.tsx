@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import { ReservationsAgenda } from "@/components/reservations-agenda";
@@ -39,6 +39,8 @@ type StatefulReservationAction = (
 ) => Promise<ReservationActionState>;
 
 const NO_FILTER = "";
+/** On es recorden els companys triats a la rejilla del professional. */
+const COLLEAGUES_KEY = "vindi.trainer.companys";
 
 /**
  * Conmutador entre la lista (Properes/Passades) y el calendario semanal.
@@ -145,6 +147,37 @@ export function ReservationsView({
   const view = nav.view;
   const [showOwnAvail, setShowOwnAvail] = useState(true);
   const [selectedColleagues, setSelectedColleagues] = useState<Set<string>>(new Set());
+  /*
+   * ELS COMPANYS TRIATS ES RECORDEN AL NAVEGADOR. Apagats per defecte; qui
+   * n'encén un el troba encès la propera vegada, en aquest navegador. Es llegeix
+   * després de muntar (el servidor no ho sap) i qualsevol error del navegador
+   * —mode privat, emmagatzematge blocat— vol dir simplement «cap».
+   */
+  const [colleaguesLoaded, setColleaguesLoaded] = useState(false);
+  useEffect(() => {
+    if (!showColleagueSelector) return;
+    try {
+      const raw = window.localStorage.getItem(COLLEAGUES_KEY);
+      const ids = raw ? (JSON.parse(raw) as unknown) : [];
+      if (Array.isArray(ids)) {
+        const known = new Set(trainers.map((t) => t.id));
+        setSelectedColleagues(new Set(ids.filter((x): x is string => typeof x === "string" && known.has(x))));
+      }
+    } catch {
+      // Sense memòria: es queden apagats.
+    }
+    setColleaguesLoaded(true);
+    // Només en muntar: després mana el que es toca.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!colleaguesLoaded) return;
+    try {
+      window.localStorage.setItem(COLLEAGUES_KEY, JSON.stringify([...selectedColleagues]));
+    } catch {
+      // Sense memòria: funciona igual, però no es recordarà.
+    }
+  }, [selectedColleagues, colleaguesLoaded]);
 
   // ── Filtres del calendari d'admin ──────────────────────────────────────────
   // Capa de disponibilitat de l'admin, encesa en obrir: saber qui té hores
@@ -337,6 +370,14 @@ export function ReservationsView({
                 }
                 className="h-3.5 w-3.5 accent-brand-purple"
               />
+              {calendar === "trainer" && (
+                // El color amb què surt al carril de la rejilla.
+                <span
+                  aria-hidden
+                  className="inline-block h-2.5 w-2.5 rounded-sm"
+                  style={{ backgroundColor: colorOfPro(palette, t.id) }}
+                />
+              )}
               <span className="text-brand-charcoal">{t.name}</span>
             </label>
           ))}
@@ -537,6 +578,12 @@ export function ReservationsView({
           )}
           myTrainerId={myTrainerId}
           rules={(allAvailability ?? []).filter((r) => r.trainerId === myTrainerId)}
+          // Els companys encesos, amb el seu color i les seves regles: al
+          // carril de la dreta hi van les seves sessions i els seus forats.
+          colleagues={colleagues
+            .filter((t) => selectedColleagues.has(t.id))
+            .map((t) => ({ id: t.id, name: t.name, color: colorOfPro(palette, t.id) }))}
+          colleagueRules={(allAvailability ?? []).filter((r) => selectedColleagues.has(r.trainerId))}
           blocks={allBlocks ?? []}
           createFromSlotAction={createFromSlotAction}
           loadBookableClients={loadBookableClients}
