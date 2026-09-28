@@ -798,6 +798,10 @@
           "label": "Reserva cancel·lada",
           "description": "Quan s'anul·la una reserva teva."
         },
+        "reservation_rescheduled": {
+          "label": "Canvi d'hora d'una reserva",
+          "description": "Quan el centre mou una sessió teva a una altra hora."
+        },
         "session_reminder": {
           "label": "Recordatori de sessió",
           "description": "Un avís el dia abans de cada sessió."
@@ -980,6 +984,8 @@
     "greetingPlain": "Hola,",
     "labels": {
       "when": "Data i hora",
+      "newWhen": "Hora nova",
+      "oldWhen": "Abans era",
       "service": "Servei",
       "trainer": "Professional",
       "remaining": "Sessions sense fer",
@@ -1022,6 +1028,14 @@
       "refundExpired": "La sessió s'ha retornat al teu bo, però aquest bo ja ha caducat, així que no la podràs fer servir per reservar. Si en tens cap dubte, parla amb el centre.",
       "refundNone": "Era una sessió de cortesia, així que no hi ha cap sessió a retornar.",
       "outroByCenter": "Sentim les molèsties. Si tens cap dubte, contacta amb el centre."
+    },
+    "reservationRescheduled": {
+      "subject": "Hem canviat l'hora de la teva sessió · VindiBCN",
+      "heading": "La teva sessió ha canviat d'hora",
+      "intro": "El centre ha mogut una sessió teva. Aquesta és l'hora nova:",
+      "series": "Aquesta sessió és d'una sèrie: només canvia aquesta. La resta de sessions de la sèrie es queden com eren.",
+      "cta": "Veure les meves reserves",
+      "outro": "Continua sent la mateixa reserva: no has gastat cap sessió més del bo. Si l'hora nova no et va bé, contacta amb el centre."
     },
     "sessionReminder": {
       "subject": "Recordatori: tens sessió demà · VindiBCN",

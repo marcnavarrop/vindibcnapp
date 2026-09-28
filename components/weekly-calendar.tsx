@@ -154,7 +154,7 @@ export function WeeklyCalendar({
   newReservationBase: string;
   cancelAction: StatefulReservationAction;
   completeAction: StatefulReservationAction;
-  rescheduleAction: ReservationAction;
+  rescheduleAction: StatefulReservationAction;
   /** Si se pasa, sombrea las franjas dentro de la disponibilidad declarada. */
   availability?: AvailabilityRuleLite[];
   /** Bloquejos temporals: tapen la disponibilitat setmanal al ombrejat. */

@@ -565,13 +565,13 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Reprogramar",
-              "Canvia el dia i l'hora sense tocar el bo. Només funciona sobre una reserva encara reservada.",
+              "Mou la sessió a una altra hora sense tocar el bo (no se'n gasta una altra ni es torna l'antiga); si és d'una sèrie, es mou només aquesta. Només funciona sobre una reserva encara reservada, i la nova hora ha de ser futura i estar lliure de debò: dins de la disponibilitat del professional, sense bloqueigs, sense una altra sessió o prova a sobre i, si és d'un grup, amb places. Si no ho està, la fitxa diu per què i la sessió es queda on era. Si era una plaça d'un grup ple, la plaça de l'hora d'abans passa al primer de la llista d'espera. El client rep sempre un correu amb l'hora nova i la d'abans (si és d'una sèrie, li diu que només canvia aquesta).",
             ],
           ],
         },
         {
           t: "warn",
-          text: "L'avís de cancel·lació al client no es pot desactivar per preferències. És deliberat: una reserva que ja no existeix no la pot veure enlloc, i si no ho sap es planta al centre.",
+          text: "L'avís de cancel·lació al client no es pot desactivar per preferències, i el de canvi d'hora tampoc. És deliberat: una reserva que ja no existeix —o una hora que ja no és la seva— no la pot veure enlloc, i si no ho sap es planta al centre.",
         },
         { t: "h", text: "Les regles que hi posa la configuració" },
         {

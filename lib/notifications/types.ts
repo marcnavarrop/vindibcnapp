@@ -21,6 +21,7 @@ const CLIENT_EVENT_TEXT = ca.config.notifications.events;
 export type NotificationEventType =
   | "reservation_confirmed"
   | "reservation_cancelled"
+  | "reservation_rescheduled"
   | "session_reminder"
   | "trial_request"
   | "trial_status"
@@ -115,6 +116,11 @@ export const EVENT_META: Record<
   },
   reservation_cancelled: {
     ...CLIENT_EVENT_TEXT.reservation_cancelled,
+    audience: ["client"],
+    group: "general",
+  },
+  reservation_rescheduled: {
+    ...CLIENT_EVENT_TEXT.reservation_rescheduled,
     audience: ["client"],
     group: "general",
   },
@@ -262,6 +268,7 @@ export const EVENT_META: Record<
 export const EVENT_ORDER: NotificationEventType[] = [
   "reservation_confirmed",
   "reservation_cancelled",
+  "reservation_rescheduled",
   "session_reminder",
   "bono_low",
   "bono_expiring_soon",

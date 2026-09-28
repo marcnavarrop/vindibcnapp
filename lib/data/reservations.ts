@@ -36,7 +36,9 @@ import { afterBonoConsumed } from "@/lib/data/bono-consumption";
 import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { canRepeatInSeries } from "@/lib/series-rules";
 import { getViewer } from "@/lib/auth";
+import { toLocale, type Locale } from "@/lib/i18n/config";
 import type {
+  RescheduleReservationResult,
   Database,
   ServiceType,
   ReservationStatus,
@@ -143,6 +145,12 @@ type Contact = {
   email: string | null;
   phone: string | null;
   name: string | null;
+  /**
+   * L'idioma del client (`profiles.preferred_language`), com el que torna
+   * `getProfileContact` als clients. Sense, les plantilles —ja traduïdes—
+   * sortien sempre en català.
+   */
+  locale: Locale;
 };
 
 /** Contacte del client (perfil) a partir del client_id. */
@@ -157,20 +165,26 @@ async function clientContact(clientId: string): Promise<Contact | null> {
       email: p?.email ?? null,
       phone: p?.phone ?? null,
       name: p?.full_name ?? null,
+      locale: toLocale(p?.preferred_language),
     };
   }
   const admin = createAdminClient();
   const { data } = await admin
     .from("clients")
     .select(
-      "profile_id, profile:profiles!clients_profile_id_fkey(email, phone, full_name)",
+      "profile_id, profile:profiles!clients_profile_id_fkey(email, phone, full_name, preferred_language)",
     )
     .eq("id", clientId)
     .maybeSingle();
   if (!data) return null;
   const p = (
     data as unknown as {
-      profile: { email: string | null; phone: string | null; full_name: string | null } | null;
+      profile: {
+        email: string | null;
+        phone: string | null;
+        full_name: string | null;
+        preferred_language: string | null;
+      } | null;
     }
   ).profile;
   return {
@@ -178,6 +192,7 @@ async function clientContact(clientId: string): Promise<Contact | null> {
     email: p?.email ?? null,
     phone: p?.phone ?? null,
     name: p?.full_name ?? null,
+    locale: toLocale(p?.preferred_language),
   };
 }
 
@@ -312,6 +327,8 @@ export function mockOccupants(
   trainerId: string | null,
   scheduledAt: string,
   durationMinutes: number,
+  /** Una reserva que no compta: la que es reprograma (0093). */
+  excludeId?: string,
 ): { service_type: ServiceType; client_id: string }[] {
   if (!trainerId) return [];
   const start = new Date(scheduledAt).getTime();
@@ -319,6 +336,7 @@ export function mockOccupants(
   return store.reservations
     .filter(
       (r) =>
+        r.id !== excludeId &&
         r.trainer_id === trainerId &&
         r.status === "booked" &&
         rangesOverlap(start, end, new Date(r.scheduled_at).getTime(), rowEndMs(r)),
@@ -645,12 +663,16 @@ async function assertMayBookFor(clientId: string): Promise<void> {
   // Es comprova contra `clientId` i no contra `bono.client_id`: amb cortesia
   // no hi ha bo d'on treure'l. Amb bo, els dos valen el mateix —qui crida
   // passa `bono.client_id`—, així que la comprovació no s'ha afluixat.
-  const { data: seu } = await createAdminClient()
-    .from("clients")
-    .select("id")
-    .eq("id", clientId)
-    .eq("assigned_trainer_id", viewer.id)
-    .maybeSingle();
+  const seu = USE_MOCK
+    ? getStore().clients.some((c) => c.id === clientId && c.assigned_trainer_id === viewer.id)
+    : !!(
+        await createAdminClient()
+          .from("clients")
+          .select("id")
+          .eq("id", clientId)
+          .eq("assigned_trainer_id", viewer.id)
+          .maybeSingle()
+      ).data;
   if (!seu) throw new Error("Aquest client no és teu.");
 }
 
@@ -1237,28 +1259,187 @@ const NOT_COMPLETED =
   "No s'ha pogut marcar com a feta: o ja no estava reservada, o no és d'un client teu.";
 
 /** Reprograma una reserva (cambia la fecha/hora). Solo si está reservada. */
+const RESCHEDULE_ERROR: Record<
+  "not_found" | "not_booked" | "past" | "same" | "taken" | "full",
+  string
+> = {
+  not_found: "Aquesta reserva ja no existeix.",
+  not_booked: "Aquesta reserva ja no està reservada: no es pot moure.",
+  past: "La nova hora ja ha passat.",
+  same: "La reserva ja és a aquesta hora.",
+  taken: "Aquesta franja ja està ocupada.",
+  full: "El grup d'aquesta franja ja està complet.",
+};
+
+/**
+ * Mou una reserva a una altra hora.
+ *
+ * ÉS UN MOVIMENT, NO «CANCEL·LAR + CREAR». La reserva és la mateixa fila: el bo
+ * no es toca (ni es descompta una altra sessió ni es torna l'antiga) i, si és
+ * d'una sèrie, se'n mou només aquesta sessió.
+ *
+ * Qui decideix què passa a la base és `reschedule_reservation` (0093): mou la
+ * fila dins del mateix pany per professional que les funcions de crear i amb el
+ * mateix recompte d'ocupants —reserves i proves, per solapament—, sense
+ * comptar-hi la que es mou. Abans era un UPDATE sol, que no veia ni grups ni
+ * proves ni el pany.
+ *
+ * Aquí, abans, el que la funció no fa: el permís (admin, o el professional del
+ * client) i la disponibilitat amb els bloquejos, igual que en crear. I després,
+ * fora de la transacció com a `cancel_reservation`, la llista d'espera de l'hora
+ * antiga: si era una plaça de grup, allà hi ha quedat lloc.
+ *
+ * El client rep SEMPRE un correu amb l'hora nova i l'antiga
+ * (`reservation_rescheduled`, obligatori com la cancel·lació), només si la
+ * funció ha mogut la reserva de debò i fora de la transacció. No hi ha cap camí
+ * perquè el client es reprogrami ell mateix —`assertMayBookFor` només deixa
+ * passar l'admin i el professional del client—, així que el correu sempre avisa
+ * d'un canvi que ha fet algú altre.
+ */
 export async function rescheduleReservation(
   id: string,
   scheduledAt: string,
 ): Promise<void> {
-  if (USE_MOCK) {
-    const store = getStore();
-    const r = store.reservations.find((x) => x.id === id);
-    if (!r) throw new Error("Reserva no trobada.");
-    if (r.status !== "booked")
-      throw new Error("Només es poden reprogramar reserves actives.");
-    r.scheduled_at = scheduledAt;
-    saveStore(store);
-    return;
-  }
+  const when = new Date(scheduledAt);
+  if (Number.isNaN(when.getTime())) throw new Error("Data no vàlida.");
+  const target = when.toISOString();
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("reservations")
-    .update({ scheduled_at: scheduledAt })
-    .eq("id", id)
-    .eq("status", "booked");
-  if (error) throw error;
+  // Qui és i on va, per poder mirar el permís i la disponibilitat ABANS.
+  let current: {
+    client_id: string;
+    trainer_id: string | null;
+    service_type: ServiceType;
+    series_id: string | null;
+  } | null;
+  if (USE_MOCK) {
+    current = getStore().reservations.find((x) => x.id === id) ?? null;
+  } else {
+    const { data, error } = await createAdminClient()
+      .from("reservations")
+      .select("client_id, trainer_id, service_type, series_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    current = data;
+  }
+  if (!current) throw new Error(RESCHEDULE_ERROR.not_found);
+  await assertMayBookFor(current.client_id);
+  await assertWithinAvailability(current.trainer_id, when, current.service_type);
+
+  let res: RescheduleReservationResult;
+  if (USE_MOCK) {
+    res = mockReschedule(id, target);
+  } else {
+    const { data, error } = await createAdminClient().rpc("reschedule_reservation", {
+      p_id: id,
+      p_scheduled_at: target,
+      p_capacity: GROUP_CAPACITY,
+    });
+    if (error) {
+      // La constraint de la 0082 pot saltar si el recompte no ha vist un
+      // solapament; per a qui mira, és el mateix: la franja és ocupada.
+      if (error.code === "23P01") throw new Error(RESCHEDULE_ERROR.taken);
+      throw new Error("No s'ha pogut reprogramar la reserva.");
+    }
+    res = data as RescheduleReservationResult;
+  }
+  if (!res.ok) throw new Error(RESCHEDULE_ERROR[res.reason]);
+
+  // Ja s'ha mogut: ara, fora de la transacció, el correu (best-effort, com
+  // tots) i la cua de l'hora antiga.
+  await notifyRescheduled({
+    reservationId: res.id,
+    clientId: res.client_id,
+    trainerId: res.trainer_id,
+    serviceType: res.service_type,
+    oldScheduledAt: res.old_scheduled_at,
+    scheduledAt: res.scheduled_at,
+    inSeries: !!current.series_id,
+  });
+
+  // L'hora d'on ha sortit: si era una plaça de grup, hi entra el primer de la
+  // cua (amb la comprovació de disponibilitat de sempre). Mai llança.
+  await afterCancel({
+    trainer_id: res.trainer_id,
+    scheduled_at: res.old_scheduled_at,
+    service_type: res.service_type,
+  });
+}
+
+/**
+ * Avisa el client que l'equip li ha canviat l'hora d'una sessió.
+ *
+ * OBLIGATORI (`ALWAYS_SENT_EVENTS`), pel mateix criteri que la cancel·lació: la
+ * reserva nova es veu a l'app, però que la d'abans ja no hi és no ho diu enlloc,
+ * i qui la tenia al cap s'hi presentaria. Porta les dues hores, el servei, el
+ * professional i, si és d'una sèrie, que només canvia aquesta sessió.
+ */
+async function notifyRescheduled(info: {
+  reservationId: string;
+  clientId: string;
+  trainerId: string | null;
+  serviceType: ServiceType;
+  oldScheduledAt: string;
+  scheduledAt: string;
+  inSeries: boolean;
+}): Promise<void> {
+  const c = await clientContact(info.clientId);
+  if (!c) return;
+  const trainer = info.trainerId ? await getProfileContact(info.trainerId) : null;
+  await notify(
+    {
+      type: "reservation_rescheduled",
+      recipient: c,
+      relatedId: info.reservationId,
+      data: {
+        name: c.name ?? "",
+        whenIso: info.scheduledAt,
+        oldWhenIso: info.oldScheduledAt,
+        serviceType: info.serviceType,
+        ...(trainer?.name ? { trainer: trainer.name } : {}),
+        ...(info.inSeries ? { series: "1" } : {}),
+      },
+    },
+    { ignorePreferences: true },
+  );
+}
+
+/** El mirall de `reschedule_reservation` (0093) al mock. */
+function mockReschedule(id: string, scheduledAt: string): RescheduleReservationResult {
+  const store = getStore();
+  const r = store.reservations.find((x) => x.id === id);
+  if (!r) return { ok: false, reason: "not_found" };
+  if (r.status !== "booked") return { ok: false, reason: "not_booked" };
+  if (new Date(scheduledAt).getTime() <= Date.now()) return { ok: false, reason: "past" };
+  if (new Date(scheduledAt).getTime() === new Date(r.scheduled_at).getTime())
+    return { ok: false, reason: "same" };
+  const duration = r.duration_minutes ?? SESSION_DURATION_MINUTES;
+  if (r.trainer_id) {
+    const occupants = [
+      ...mockOccupants(store, r.trainer_id, scheduledAt, duration, r.id),
+      ...mockActiveHoldsAt(store, r.trainer_id, scheduledAt, duration),
+    ];
+    const exclusive = occupants.some((o) => o.service_type !== "grupo_reducido");
+    if (r.service_type === "grupo_reducido") {
+      if (exclusive) return { ok: false, reason: "taken" };
+      if (occupants.length >= GROUP_CAPACITY) return { ok: false, reason: "full" };
+    } else if (occupants.length > 0) {
+      return { ok: false, reason: "taken" };
+    }
+  }
+  const old = r.scheduled_at;
+  r.scheduled_at = scheduledAt;
+  r.ends_at = sessionEndIso(scheduledAt, duration);
+  saveStore(store);
+  return {
+    ok: true,
+    id: r.id,
+    client_id: r.client_id,
+    trainer_id: r.trainer_id,
+    service_type: r.service_type,
+    old_scheduled_at: old,
+    scheduled_at: scheduledAt,
+  };
 }
 
 // ──────────────── Autonomía del cliente (self-service) ────────────────

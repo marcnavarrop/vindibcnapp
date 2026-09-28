@@ -411,6 +411,30 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
       };
       break;
     }
+    case "reservation_rescheduled": {
+      const t = i.ns("emails.reservationRescheduled");
+      subject = t("subject");
+      /*
+       * L'hora nova, i l'antiga al costat: qui té al cap «dimarts a les 10»
+       * ha de veure que és AQUELLA la que ha canviat. Si és d'una sèrie, es
+       * diu que només es mou aquesta, perquè no pensi que ha canviat tota.
+       */
+      const oldWhen = d.oldWhenIso ? i.dateTime(d.oldWhenIso) : undefined;
+      block = {
+        heading: t("heading"),
+        intro: [hola, t("intro")],
+        details: rows([
+          [tl("newWhen"), when],
+          [tl("oldWhen"), oldWhen],
+          [tl("service"), service],
+          [tl("trainer"), d.trainer],
+        ]),
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [...(d.series === "1" ? [t("series")] : []), t("outro")],
+        footer: "client",
+      };
+      break;
+    }
     case "session_reminder": {
       const t = i.ns("emails.sessionReminder");
       subject = t("subject");

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import {
@@ -30,6 +29,8 @@ import {
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import { ReservationSheet, LockIcon } from "@/components/reservation-sheet";
 import { SVC_ICON, TRIAL_COLOR, TrialModal } from "@/components/weekly-calendar";
+import { CreateSlotSheet } from "@/components/create-slot-sheet";
+import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import type { SessionNote } from "@/lib/data/session-notes";
@@ -95,12 +96,6 @@ function addDays(d: Date, n: number): Date {
 function slotFloat(d: Date): number {
   return (d.getHours() * 60 + d.getMinutes()) / 30;
 }
-const pad = (n: number) => String(n).padStart(2, "0");
-function toLocalInput(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours(),
-  )}:${pad(d.getMinutes())}`;
-}
 /** «Núria S.»: el nom i la inicial, perquè a 100 px no calgui tallar res. */
 function shortName(name: string): string {
   const [first, second] = name.trim().split(/\s+/);
@@ -155,13 +150,14 @@ export function TrainerGrid({
   noteableIds,
   notes,
   clientBase,
-  newReservationBase,
   cancelAction,
   completeAction,
   rescheduleAction,
   manageableTrialIds,
   acceptTrialAction,
   rejectTrialAction,
+  createFromSlotAction,
+  loadBookableClients,
   palette,
   openingHour,
   closingHour,
@@ -186,21 +182,33 @@ export function TrainerGrid({
   noteableIds: string[];
   notes?: Record<string, SessionNote>;
   clientBase: string;
-  newReservationBase: string;
   cancelAction: StatefulReservationAction;
   completeAction: StatefulReservationAction;
-  rescheduleAction: ReservationAction;
+  rescheduleAction: StatefulReservationAction;
   manageableTrialIds: string[];
   acceptTrialAction?: ReservationAction;
   rejectTrialAction?: ReservationAction;
+  /** Crear sobre un forat o apuntar a un grup (fulla nova). */
+  createFromSlotAction: StatefulReservationAction;
+  /** Els clients assignats amb els seus bons, per a la fulla de crear. */
+  loadBookableClients: () => Promise<BookableClientsResult>;
   palette: ColorPalette;
   openingHour: number;
   closingHour: number;
 }) {
-  const router = useRouter();
   const [selected, setSelected] = useState<ReservationListItem | null>(null);
   const [selectedTrial, setSelectedTrial] = useState<TrialHoldItem | null>(null);
-  const [list, setList] = useState<{ title: string; entries: Entry[] } | null>(null);
+  const [list, setList] = useState<{
+    title: string;
+    entries: Entry[];
+    /** Un grup propi amb places i per venir: s'hi pot apuntar algú. */
+    join?: { at: Date; count: number };
+  } | null>(null);
+  const [creating, setCreating] = useState<{
+    at: Date;
+    services: ServiceType[];
+    group?: { count: number };
+  } | null>(null);
   const [showAll, setShowAll] = useState(false);
 
   /*
@@ -376,10 +384,9 @@ export function TrainerGrid({
     if (weekdayOf(prevStart) < 5) n++;
   }
 
-  const goNew = (at: Date) => {
-    const params = new URLSearchParams({ at: toLocalInput(at), trainer: myTrainerId });
-    router.push(`${newReservationBase}?${params}`);
-  };
+  // Tocar un forat lliure: la fulla de crear, amb els serveis que hi caben.
+  // El formulari de «+ Nova reserva» segueix existint per a la resta.
+  const goNew = (at: Date, services: ServiceType[]) => setCreating({ at, services });
 
   const open = (e: Entry) => {
     if (e.kind === "res") setSelected(e.r);
@@ -399,6 +406,10 @@ export function TrainerGrid({
           own: e.own,
           r,
         })),
+        join:
+          e.own && e.list.length < GROUP_CAPACITY && now && e.start.getTime() > now.getTime()
+            ? { at: e.start, count: e.list.length }
+            : undefined,
       });
   };
 
@@ -496,6 +507,7 @@ export function TrainerGrid({
           note={notes?.[selected.id] ?? null}
           canWriteNote={noteable.has(selected.id)}
           clientHref={`${clientBase}/${selected.clientId}`}
+          reschedulePicker
           onClose={() => setSelected(null)}
         />
       )}
@@ -518,7 +530,26 @@ export function TrainerGrid({
             setList(null);
             open(e);
           }}
+          onJoin={
+            list.join
+              ? () => {
+                  const j = list.join!;
+                  setList(null);
+                  setCreating({ at: j.at, services: ["grupo_reducido"], group: { count: j.count } });
+                }
+              : undefined
+          }
           onClose={() => setList(null)}
+        />
+      )}
+      {creating && (
+        <CreateSlotSheet
+          at={creating.at}
+          services={creating.services}
+          group={creating.group}
+          loadClients={loadBookableClients}
+          createAction={createFromSlotAction}
+          onClose={() => setCreating(null)}
         />
       )}
     </div>
@@ -579,7 +610,7 @@ function Grid({
   todayKey: string;
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
-  onNew: (at: Date) => void;
+  onNew: (at: Date, services: ServiceType[]) => void;
 }) {
   const dayInfos = days.map(info);
 
@@ -731,7 +762,7 @@ function DayColumn({
   manageable: Set<string>;
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
-  onNew: (at: Date) => void;
+  onNew: (at: Date, services: ServiceType[]) => void;
 }) {
   const placed = placeByDensity(
     d.entries.map((e) => ({ id: e.id, start: e.start.getTime(), end: e.end.getTime(), own: e.own })),
@@ -821,7 +852,7 @@ function DayColumn({
               const k = Math.min(Math.floor((e.clientY - rect.top) / SLOT_PX), f.lastStart - f.from);
               const at = new Date(startAt);
               at.setMinutes(at.getMinutes() + Math.max(0, k) * 30);
-              onNew(at);
+              onNew(at, f.services);
             }}
             className={clsx(
               "absolute inset-x-0.5 flex flex-col items-start gap-0.5 rounded-md border border-dashed px-1.5 py-1 text-left",
@@ -1095,6 +1126,7 @@ function EntryListSheet({
   palette,
   manageable,
   onPick,
+  onJoin,
   onClose,
 }: {
   title: string;
@@ -1102,6 +1134,8 @@ function EntryListSheet({
   palette: ColorPalette;
   manageable: Set<string>;
   onPick: (e: Entry) => void;
+  /** El grup té places: «Apuntar-hi un client». */
+  onJoin?: () => void;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -1158,6 +1192,15 @@ function EntryListSheet({
             );
           })}
         </ul>
+        {onJoin && (
+          <button
+            type="button"
+            onClick={onJoin}
+            className={`mt-4 w-full rounded-lg bg-brand-purple px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-purple-light ${TAP_SURFACE}`}
+          >
+            Apuntar-hi un client
+          </button>
+        )}
         <button
           type="button"
           onClick={onClose}

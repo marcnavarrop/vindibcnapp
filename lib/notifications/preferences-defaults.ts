@@ -18,6 +18,9 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   reservation_confirmed_email: true,
   // Sempre (ALWAYS_SENT_EVENTS): una reserva que ja no existeix no la pot veure enlloc.
   reservation_cancelled_email: true,
+  // Sempre (ALWAYS_SENT_EVENTS): l'equip li ha mogut una sessió i, si no ho
+  // sap, es presenta a l'hora d'abans. Mateix criteri que la cancel·lació.
+  reservation_rescheduled_email: true,
   session_reminder_email: false,
   trial_request_email: false,
   // Sempre (ALWAYS_SENT_EVENTS): és la resposta al que va demanar ell.
@@ -86,7 +89,13 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
  *
  * Per això `reservation_cancelled` hi és i `reservation_confirmed` no: una
  * reserva que existeix la pot veure a l'app quan vulgui; una que ja no
- * existeix, no. I per això `bono_expiring_soon` es queda opcional encara que hi
+ * existeix, no.
+ *
+ * `reservation_rescheduled` hi entra pel mateix costat que la cancel·lació,
+ * encara que la reserva nova sí que es vegi a l'app: el que no es veu enlloc és
+ * que la d'abans JA NO HI ÉS. Qui recorda «dimarts a les 10» no té cap motiu
+ * per tornar a mirar l'app, i es presenta a una hora que ja no és seva. Només
+ * s'envia quan ho mou l'equip: el client no pot reprogramar. I per això `bono_expiring_soon` es queda opcional encara que hi
  * hagi diners pel mig: avisa ABANS, d'un estat que és visible.
  *
  * `gift_voucher_redeemed` hi entra per un motiu que no és l'obvi: el val és un
@@ -121,6 +130,7 @@ export type AlwaysSentEvent =
   | "bono_renewal_failed"
   // Coses ja consumades que el client no pot veure a l'app.
   | "reservation_cancelled"
+  | "reservation_rescheduled"
   | "bono_unpaid_cancelled"
   | "waitlist_fulfilled"
   | "trial_status"
@@ -139,6 +149,7 @@ export const ALWAYS_SENT_EVENTS: AlwaysSentEvent[] = [
   "bono_auto_renewed",
   "bono_renewal_failed",
   "reservation_cancelled",
+  "reservation_rescheduled",
   "bono_unpaid_cancelled",
   "waitlist_fulfilled",
   "trial_status",

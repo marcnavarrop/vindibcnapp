@@ -14,6 +14,7 @@ import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { CancelReservationConfirm } from "@/components/cancel-reservation-confirm";
 import { SessionNotePanel } from "@/components/session-note-panel";
+import { ReschedulePicker } from "@/components/reschedule-picker";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import {
   getReservationDetailAction,
@@ -23,7 +24,6 @@ import type { ReservationListItem } from "@/lib/data/reservations";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type { SessionNote } from "@/lib/data/session-notes";
 
-type ReservationAction = (formData: FormData) => void | Promise<void>;
 type StatefulReservationAction = (
   prev: ReservationActionState,
   formData: FormData,
@@ -73,6 +73,7 @@ export function ReservationSheet({
   note,
   canWriteNote,
   clientHref,
+  reschedulePicker = false,
   onClose,
 }: {
   r: ReservationListItem;
@@ -81,12 +82,17 @@ export function ReservationSheet({
   canCancel: boolean;
   cancelAction: StatefulReservationAction;
   completeAction: StatefulReservationAction;
-  rescheduleAction: ReservationAction;
+  rescheduleAction: StatefulReservationAction;
   /** La nota, si la pàgina l'ha carregada (només sessions passades). */
   note: SessionNote | null;
   canWriteNote: boolean;
   /** On és la fitxa del client en aquesta àrea. */
   clientHref: string;
+  /**
+   * Reprogramar triant entre els inicis que existeixen (rejilla del
+   * professional). Sense, el camp de data i hora de sempre (l'admin).
+   */
+  reschedulePicker?: boolean;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -96,9 +102,16 @@ export function ReservationSheet({
    */
   const [cancelState, cancel, cancelling] = useActionState(cancelAction, {});
   const [completeState, complete, completing] = useActionState(completeAction, {});
-  const done = cancelState.ok ? "cancelled" : completeState.ok ? "completed" : null;
+  const [reschedState, reschedule, rescheduling] = useActionState(rescheduleAction, {});
+  const done = cancelState.ok
+    ? "cancelled"
+    : completeState.ok
+      ? "completed"
+      : reschedState.ok
+        ? "rescheduled"
+        : null;
   const error = cancelState.error ?? completeState.error ?? null;
-  const busy = cancelling || completing;
+  const busy = cancelling || completing || rescheduling;
 
   const [detail, setDetail] = useState<ReservationDetailResult | null>(null);
   useEffect(() => {
@@ -148,7 +161,11 @@ export function ReservationSheet({
           <div className="flex flex-col items-center gap-3 p-8 text-center">
             <AnimatedFeedback type={done === "cancelled" ? "cancel" : "success"} />
             <h2 className="text-xl font-bold text-brand-dark">
-              {done === "cancelled" ? "Reserva cancel·lada" : "Reserva marcada com feta"}
+              {done === "cancelled"
+                ? "Reserva cancel·lada"
+                : done === "rescheduled"
+                  ? "Reserva reprogramada"
+                  : "Reserva marcada com feta"}
             </h2>
             <button
               type="button"
@@ -213,36 +230,49 @@ export function ReservationSheet({
             {canManage ? (
               r.status === "booked" ? (
                 <div className="flex flex-col gap-2">
-                  <form
-                    action={rescheduleAction}
-                    className="flex flex-col gap-2 rounded-lg bg-brand-bg p-3"
-                  >
-                    <label
-                      htmlFor={`resched-${r.id}`}
-                      className="text-xs font-bold tracking-wide text-brand-muted uppercase"
+                  {reschedulePicker && r.trainerId ? (
+                    <ReschedulePicker
+                      r={r}
+                      action={reschedule}
+                      pending={rescheduling}
+                      error={reschedState.error ?? null}
+                    />
+                  ) : (
+                    <form
+                      action={reschedule}
+                      className="flex flex-col gap-2 rounded-lg bg-brand-bg p-3"
                     >
-                      Reprogramar
-                    </label>
-                    <input type="hidden" name="id" value={r.id} />
-                    {/* `min-w-0`: el datetime-local té una amplada pròpia que,
-                        sense, empenyia «Desar» fora de la caixa a 375 px. */}
-                    <div className="flex items-center gap-2">
-                      <input
-                        id={`resched-${r.id}`}
-                        type="datetime-local"
-                        name="scheduledAt"
-                        required
-                        defaultValue={toLocalInput(start)}
-                        className="min-w-0 flex-1 rounded-lg border border-brand-border bg-white px-2 py-1.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
-                      />
-                      <button
-                        type="submit"
-                        className={`shrink-0 rounded-lg bg-brand-orange px-3 py-1.5 text-sm font-bold text-white hover:opacity-90 ${TAP}`}
+                      <label
+                        htmlFor={`resched-${r.id}`}
+                        className="text-xs font-bold tracking-wide text-brand-muted uppercase"
                       >
-                        Desar
-                      </button>
-                    </div>
-                  </form>
+                        Reprogramar
+                      </label>
+                      <input type="hidden" name="id" value={r.id} />
+                      {/* `min-w-0`: el datetime-local té una amplada pròpia que,
+                          sense, empenyia «Desar» fora de la caixa a 375 px. */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          id={`resched-${r.id}`}
+                          type="datetime-local"
+                          name="scheduledAt"
+                          required
+                          defaultValue={toLocalInput(start)}
+                          className="min-w-0 flex-1 rounded-lg border border-brand-border bg-white px-2 py-1.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
+                        />
+                        <button
+                          type="submit"
+                          disabled={busy}
+                          className={`shrink-0 rounded-lg bg-brand-orange px-3 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60 ${TAP}`}
+                        >
+                          Desar
+                        </button>
+                      </div>
+                      {/* Ara el servidor diu per què no (0093): ocupada, grup
+                          ple, fora de l'horari… Abans la pàgina petava. */}
+                      {reschedState.error && <ActionError message={reschedState.error} />}
+                    </form>
+                  )}
                   <form action={complete}>
                     <input type="hidden" name="id" value={r.id} />
                     <button

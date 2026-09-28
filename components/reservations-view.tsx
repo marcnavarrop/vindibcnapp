@@ -7,6 +7,7 @@ import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import { TrainerGrid } from "@/components/trainer-grid";
 import type { OwnBlock } from "@/lib/data/availability-blocks";
+import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
 import {
   SERVICE_LABELS,
   SERVICE_TYPES,
@@ -77,6 +78,8 @@ export function ReservationsView({
   calendar = "week",
   ownBlocks,
   waiting,
+  createFromSlotAction,
+  loadBookableClients,
   openingHour,
   closingHour,
   palette,
@@ -103,7 +106,7 @@ export function ReservationsView({
   newReservationBase: string;
   cancelAction: StatefulReservationAction;
   completeAction: StatefulReservationAction;
-  rescheduleAction: ReservationAction;
+  rescheduleAction: StatefulReservationAction;
   /** Compatibilitat amb l'ús des de l'admin (sense selector de companys). */
   availability?: AvailabilityRuleLite[];
   /** Totes les regles de tots els professionals (per al selector del trainer). */
@@ -135,6 +138,9 @@ export function ReservationsView({
   ownBlocks?: OwnBlock[];
   /** Rejilla del professional: gent en espera per sessió (instant ISO). */
   waiting?: { at: string; count: number }[];
+  /** Rejilla del professional: crear sobre un forat i apuntar a un grup. */
+  createFromSlotAction?: StatefulReservationAction;
+  loadBookableClients?: () => Promise<BookableClientsResult>;
 }) {
   const view = nav.view;
   const [showOwnAvail, setShowOwnAvail] = useState(true);
@@ -513,7 +519,11 @@ export function ReservationsView({
         </div>
       )}
 
-      {view === "calendar" && calendar === "trainer" && myTrainerId ? (
+      {view === "calendar" &&
+      calendar === "trainer" &&
+      myTrainerId &&
+      createFromSlotAction &&
+      loadBookableClients ? (
         <TrainerGrid
           nav={nav}
           palette={palette}
@@ -528,6 +538,8 @@ export function ReservationsView({
           myTrainerId={myTrainerId}
           rules={(allAvailability ?? []).filter((r) => r.trainerId === myTrainerId)}
           blocks={allBlocks ?? []}
+          createFromSlotAction={createFromSlotAction}
+          loadBookableClients={loadBookableClients}
           ownBlocks={ownBlocks ?? []}
           waiting={waiting ?? []}
           showFree={showOwnAvail}
@@ -536,7 +548,6 @@ export function ReservationsView({
           noteableIds={noteableIds ?? []}
           notes={notes}
           clientBase={clientBase}
-          newReservationBase={newReservationBase}
           cancelAction={cancelAction}
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}

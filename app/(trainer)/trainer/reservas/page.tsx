@@ -26,6 +26,8 @@ import {
   rescheduleTrainerReservationAction,
   acceptTrialTrainerAction,
   rejectTrialTrainerAction,
+  createFromSlotAction,
+  getBookableClientsAction,
 } from "@/app/(trainer)/trainer/reservas/actions";
 
 export const dynamic = "force-dynamic";
@@ -171,6 +173,8 @@ export default async function TrainerReservasPage({
           showColleagueSelector={centerSettings.trainersSeColleaguesReservations}
           calendar="trainer"
           ownBlocks={ownBlocks}
+          createFromSlotAction={createFromSlotAction}
+          loadBookableClients={getBookableClientsAction}
           waiting={waiting}
           openingHour={centerSettings.openingHour}
           closingHour={centerSettings.closingHour}

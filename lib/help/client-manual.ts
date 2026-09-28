@@ -2004,9 +2004,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Per això la reserva cancel·lada s'envia sempre i la confirmada no: una reserva que existeix la pots veure quan vulguis; una que ja no existeix, no. Al capítol següent tens la llista sencera amb quins es poden apagar i quins no.",
-            es: "Por eso la reserva cancelada se envía siempre y la confirmada no: una reserva que existe la puedes ver cuando quieras; una que ya no existe, no. En el capítulo siguiente tienes la lista entera con cuáles se pueden apagar y cuáles no.",
-            en: "That's why a cancelled booking is always sent and a confirmed one isn't: a booking that exists you can look at whenever you like; one that no longer exists, you can't. The next chapter has the full list of which can be switched off and which can't.",
+            ca: "Per això la reserva cancel·lada s'envia sempre i la confirmada no: una reserva que existeix la pots veure quan vulguis; una que ja no existeix, no. Pel mateix motiu t'avisem sempre si el centre et canvia l'hora d'una sessió: l'hora que tenies apuntada ja no hi és. Al capítol següent tens la llista sencera amb quins es poden apagar i quins no.",
+            es: "Por eso la reserva cancelada se envía siempre y la confirmada no: una reserva que existe la puedes ver cuando quieras; una que ya no existe, no. Por el mismo motivo te avisamos siempre si el centro te cambia la hora de una sesión: la hora que tenías apuntada ya no está. En el capítulo siguiente tienes la lista entera con cuáles se pueden apagar y cuáles no.",
+            en: "That's why a cancelled booking is always sent and a confirmed one isn't: a booking that exists you can look at whenever you like; one that no longer exists, you can't. For the same reason we always tell you if the centre changes the time of one of your sessions: the time you had noted down is gone. The next chapter has the full list of which can be switched off and which can't.",
           }),
         },
         {
@@ -2139,6 +2139,19 @@ export function buildClientManual(
                 ca: "Quan s'anul·la una reserva teva, la cancel·lis tu o el centre.",
                 es: "Cuando se anula una reserva tuya, la canceles tú o el centro.",
                 en: "When a booking of yours is called off, whether by you or by the centre.",
+              }),
+              T({ ca: "No", es: "No", en: "No" }),
+            ],
+            [
+              T({
+                ca: "Canvi d'hora d'una reserva",
+                es: "Cambio de hora de una reserva",
+                en: "Booking time changed",
+              }),
+              T({
+                ca: "Quan el centre mou una sessió teva a una altra hora. Porta l'hora nova i la d'abans; si és d'una sèrie, et diu que només canvia aquella sessió.",
+                es: "Cuando el centro mueve una sesión tuya a otra hora. Lleva la nueva hora y la de antes; si es de una serie, te dice que solo cambia esa sesión.",
+                en: "When the centre moves one of your sessions to another time. It shows the new time and the old one; if it's part of a series, it tells you only that session changes.",
               }),
               T({ ca: "No", es: "No", en: "No" }),
             ],
