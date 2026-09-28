@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TAP } from "@/lib/utils";
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { SupportInlineButton } from "@/components/support-inline-button";
 
 const TABS = [
   { href: "/admin/reservas", label: "Reserves" },
@@ -14,7 +15,7 @@ import { agendaWindow } from "@/lib/agenda-window";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { listTrainers } from "@/lib/data/clients";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
-import { listAllBlocksLite } from "@/lib/data/availability-blocks";
+import { listAllBlocksLite, listBlocksForAdmin } from "@/lib/data/availability-blocks";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
 import {
@@ -36,15 +37,18 @@ export default async function ReservasPage({
 }) {
   // Només la setmana del calendari o els dies de la llista: vegeu `agendaWindow`.
   const { nav, from, to } = agendaWindow("/admin/reservas", await searchParams);
-  const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, palette] =
+  const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, centerBlocks, palette] =
     await Promise.all([
       listReservationsInRange({ from, to }),
       listTrainers(),
       listActiveTrialHolds({ from, to }),
       getCenterSettings(),
-      // Per a la capa opcional de disponibilitat del calendari.
+      // Per als forats reals de cada professional.
       listAllTrainerRulesLite(),
       listAllBlocksLite(),
+      // Els bloquejos amb el motiu, per pintar-los: una consulta només de
+      // l'admin, a part de la que alimenta /prova i el calendari del client.
+      listBlocksForAdmin({ from, to }),
       getColorPalette(),
     ]);
   const nowISO = new Date().toISOString();
@@ -61,23 +65,31 @@ export default async function ReservasPage({
   return (
     <>
       <GroupTabs tabs={TABS} />
-      <main className="mx-auto max-w-5xl p-6">
-        <div className="mb-6 flex items-center justify-between gap-4">
+      <main className="mx-auto max-w-5xl px-4 pt-3 pb-6 md:p-6">
+        {/* Al mòbil, una sola fila, com la del professional: l'agenda ha de
+            començar tan amunt com es pugui. El suport va aquí dins i no
+            flotant, que tapava la columna de la dreta. */}
+        <div className="mb-3 flex items-center justify-between gap-2 md:mb-6 md:gap-4">
           <div>
             <Link
               href="/admin"
-              className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
+              className={`hidden text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple md:inline ${TAP}`}
             >
               ← Tornar
             </Link>
-            <h1 className="mt-1 text-2xl text-brand-dark">Agenda de reserves</h1>
+            <h1 className="text-2xl text-brand-dark md:mt-1">
+              Agenda<span className="hidden sm:inline"> de reserves</span>
+            </h1>
           </div>
-          <Link
-            href="/admin/reservas/new"
-            className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
-          >
-            + Nova reserva
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <SupportInlineButton />
+            <Link
+              href="/admin/reservas/new"
+              className={`inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 text-sm font-bold tracking-wide whitespace-nowrap text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark md:h-10 ${TAP}`}
+            >
+              + Nova<span className="hidden sm:inline">&nbsp;reserva</span>
+            </Link>
+          </div>
         </div>
 
         <ReservationsView
@@ -101,7 +113,8 @@ export default async function ReservasPage({
           rejectTrialAction={rejectTrialAdminAction}
           allAvailability={allAvailability}
           allBlocks={allBlocks}
-          showCalendarFilters
+          calendar="admin"
+          centerBlocks={centerBlocks}
         />
       </main>
     </>

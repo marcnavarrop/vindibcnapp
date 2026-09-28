@@ -472,39 +472,67 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: `Totes les reserves del centre, de tots els professionals. Es veu de dues maneres, amb el selector de dalt: Calendari —una graella de la setmana, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}, amb una fila per cada mitja hora— o Llista.`,
+          text: "Totes les reserves del centre, de tots els professionals. Es veu de dues maneres, amb el selector de dalt: Calendari o Llista.",
         },
         {
           t: "p",
-          text: "Al calendari, les fletxes canvien de setmana i «Avui» torna a l'actual. La Llista s'obre amb trenta dies cap a cada banda: els trenta pròxims a «Properes» i els trenta darrers a «Passades». Sota de cadascuna, «Veure'n més» n'afegeix trenta més, fins a un any. La setmana, la vista i els dies queden a l'adreça de la pàgina: si la guardes o la comparteixes, s'obre on eres.",
+          text: "El calendari és UN DIA amb UNA COLUMNA PER PROFESSIONAL: a cada columna, les seves sessions, els seus forats lliures, els seus bloquejos i les proves que té. Les fletxes canvien de dia i «Avui» torna al d'avui. Al capdamunt de cada columna, el nom i quantes sessions té aquell dia; un guionet vol dir que té horari però cap sessió, i «sense horari», que aquell dia no en té.",
         },
-        {
-          t: "note",
-          text: "Al calendari només les files en punt porten l'hora escrita; la línia del mig parteix l'hora en dues. I com que una sessió dura una hora, n'ocupa dues files: la segona surt ombrejada i no s'hi pot clicar, perquè no és un forat lliure sinó la mateixa sessió continuant.",
-        },
-        { t: "h", text: "Els colors" },
         {
           t: "p",
-          text: "Cada pastilla del calendari es pinta amb el color del seu tipus de servei. Els colors es canvien a Configuració → Colors, i el que hi triïs es veu aquí i a la compra de bons.",
+          text: "Al mòbil se'n veuen tres alhora: si n'hi ha més, les fletxes ‹ › del costat de «Filtres» mouen la finestra d'un professional en un, i el text del mig diu quins estàs veient («1–3 de 4»). A l'ordinador surten tots els que tinguis encesos.",
+        },
+        {
+          t: "p",
+          text: `Com a l'agenda del professional, només surten les hores amb alguna cosa: la primera i l'última amb horari o sessions, i els trams llargs buits es pleguen en una banda fina. «Mostrar-ho tot» ensenya l'horari sencer del centre, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}.`,
+        },
+        {
+          t: "p",
+          text: "La Llista s'obre amb trenta dies cap a cada banda: els trenta pròxims a «Properes» i els trenta darrers a «Passades». Sota de cadascuna, «Veure'n més» n'afegeix trenta més, fins a un any. El dia, la vista i els dies de la llista queden a l'adreça de la pàgina: si la guardes o la comparteixes, s'obre on eres.",
+        },
+        { t: "h", text: "Què hi surt" },
+        {
+          t: "dl",
+          items: [
+            [
+              "Una sessió",
+              "Una targeta amb l'hora, el client i la icona del servei, pintada amb el color del servei (Configuració → Colors). Un grup és una sola targeta amb els noms i l'ocupació («3/4»); tocant-la surt la llista dels apuntats.",
+            ],
+            [
+              "Per marcar",
+              "Vora taronja: la sessió ja ha passat i segueix com a reservada. És feina pendent de qui la va donar; si cal, la pots marcar tu des de la fitxa.",
+            ],
+            [
+              "Lliure",
+              "Un forat real del professional: dins del seu horari, sense bloqueig i sense cap sessió ni prova que el trepitgi, amb els serveis que s'hi poden fer. Tocant-lo s'obre «Nova reserva» amb aquell professional, aquell dia i aquella hora ja posats.",
+            ],
+            [
+              "Bloquejat",
+              "Una franja ratllada amb el motiu que hi va posar qui el va crear (vacances, un congrés…). Només l'administració veu el motiu dels bloquejos de tothom.",
+            ],
+            [
+              "Prova",
+              "Una sol·licitud de sessió de prova, a l'hora que ocupa. Tocant-la, l'acceptes o la rebutges.",
+            ],
+          ],
         },
         { t: "h", text: "Els filtres" },
         {
           t: "p",
-          text: "A la vista de calendari tens tres filtres —professional, client i servei— i un botó per netejar-los tots. Són només de vista: no canvien res, només amaguen.",
+          text: "Uns botons amb el nom de cada professional encenen o apaguen la seva columna; un selector deixa només un servei (i els forats d'aquell servei), i un camp busca un client pel nom, sense que importin els accents. Al mòbil van plegats dins de «Filtres», que en fa el resum («3/4 · Fisioteràpia»). Són només de vista: no canvien res, només amaguen.",
         },
-        { t: "h", text: "La capa de disponibilitat" },
         {
-          t: "p",
-          text: "«Mostrar disponibilitat» ombreja les franges lliures de cada professional amb el SEU color (el de la persona, no el del servei), i pots encendre i apagar-los un per un. Serveix per veure d'un cop on hi ha hores obertes que ningú no ha agafat. «Lliure» vol dir el mateix que per al servidor en crear la reserva: si una sessió o una prova es trepitja amb l'hora sencera, no hi surt —tampoc si comença a la segona mitja hora—, i una sessió de grup amb plaça només hi surt com a grup. Els professionals que no tenen cap regla definida no hi surten.",
+          t: "note",
+          text: "Els professionals apagats i el servei es recorden en aquest navegador: demà, en obrir l'agenda, la trobaràs igual. Un professional nou surt encès sense haver de tocar res. En un altre dispositiu, o en mode privat, torna a sortir tot.",
         },
         { t: "h", text: "La fitxa d'una reserva" },
         {
           t: "p",
-          text: "Tocant una reserva al calendari s'obre la seva fitxa: al mòbil, una fulla que puja des de baix; a l'ordinador, un plafó a la dreta que deixa veure el calendari al costat. A més del servei, l'estat i el professional, hi surt el telèfon del client (amb «Copiar»), el bo del qual surt la sessió amb les que li queden i quan caduca, la posició dins de la sèrie si en forma part, la propera sessió que té reservada i l'enllaç a la seva fitxa. Aquestes dades es demanen en obrir-la, així que tarden un moment a sortir.",
+          text: "Tocant una sessió al calendari s'obre la seva fitxa: al mòbil, una fulla que puja des de baix; a l'ordinador, un plafó a la dreta que deixa veure el calendari al costat. A més del servei, l'estat i el professional, hi surt el telèfon del client (amb «Copiar»), el bo del qual surt la sessió amb les que li queden i quan caduca, la posició dins de la sèrie si en forma part, la propera sessió que té reservada i l'enllaç a la seva fitxa. Aquestes dades es demanen en obrir-la, així que tarden un moment a sortir.",
         },
         {
           t: "p",
-          text: "Des d'allà mateix es reprograma, es marca feta o es cancel·la. «Afegir al calendari» només surt a les sessions que encara han de passar.",
+          text: "Des d'allà mateix es marca feta o es cancel·la, i «Canviar l'hora» ofereix només les hores on aquell professional la pot fer de debò: dins del seu horari, sense bloqueig i sense xocar amb res. Si mentre tries algú ocupa aquella hora, t'ho diu a la mateixa fitxa i la reserva no es mou. En moure-la, el client rep un correu amb la nova hora. «Afegir al calendari» només surt a les sessions que encara han de passar.",
         },
         { t: "h", text: "Les notes de sessió" },
         {
@@ -535,7 +563,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Crear-ne una" },
         {
           t: "p",
-          text: "«+ Nova reserva», o tocant un forat del calendari (que arriba al formulari amb el dia i l'hora ja posats). Es tria el client, el bo del qual sortirà la sessió, el professional i el moment.",
+          text: "«+ Nova reserva», o tocant un forat lliure del calendari (que arriba al formulari amb el professional, el dia i l'hora ja posats). Es tria el client, el bo del qual sortirà la sessió, el professional i el moment.",
         },
         {
           t: "note",
