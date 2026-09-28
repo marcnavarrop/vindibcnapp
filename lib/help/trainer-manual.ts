@@ -27,6 +27,7 @@
  */
 
 import type { Block, Chapter } from "@/lib/help/client-manual";
+import { INBOX_DAYS } from "@/lib/inbox-window";
 
 /** Els ajustos del centre que el manual necessita per no dir cap número fals. */
 export type TrainerManualSettings = {
@@ -308,6 +309,32 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           t: "p",
           text: "La pantalla de Reserves té dues vistes del mateix: el calendari, que és la que s'obre, i la llista.",
         },
+        { t: "h", text: "Cal fer" },
+        {
+          t: "p",
+          text: "A sobre de l'agenda, el que tens pendent. Si no tens res pendent no hi surt res, ni tan sols una línia.",
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              "Per marcar",
+              `Sessions dels teus clients dels últims ${INBOX_DAYS} dies que ja han acabat i segueixen reservades. També les d'un client teu que va fer un company: marcar-les és de qui porta el client. «Marcar feta» ho fa allà mateix; si no es va fer, obre la fitxa tocant el nom i cancel·la-la.`,
+            ],
+            [
+              "Notes per escriure",
+              `Sessions que has donat tu, ja marcades com a fetes, sense nota (també dels últims ${INBOX_DAYS} dies). «Escriure nota» obre allà mateix el formulari de la nota; en desar-la, surt de la llista. Recorda que la nota la llegeix el client.`,
+            ],
+            [
+              "Proves per respondre",
+              "Sol·licituds de sessió de prova (/prova) pendents a la teva agenda. «Acceptar» la confirma d'un toc; «Rebutjar» et pregunta abans, perquè allibera la franja. Només surt si el centre té activades les sessions de prova.",
+            ],
+          ],
+        },
+        {
+          t: "p",
+          text: "Al mòbil surt plegada en una sola fila amb el total i el desglossament («2 per marcar · 1 nota · 1 prova»), perquè l'agenda comenci just a sota; toca-la per obrir-la. A l'ordinador surt oberta, amb les tres llistes una al costat de l'altra. Tocant el nom de qualsevol element s'obre la mateixa fitxa que al calendari, amb els mateixos permisos.",
+        },
         { t: "h", text: "El calendari" },
         {
           t: "p",
@@ -331,7 +358,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Per marcar",
-              "Vora taronja i l'etiqueta «Per marcar»: la sessió ja ha passat, segueix com a reservada i la pots marcar tu. No s'atenua com la resta del passat, perquè és feina pendent. Es resol a la seva fitxa amb «Marcar feta» (o cancel·lant-la, si no es va fer).",
+              "Vora taronja i l'etiqueta «Per marcar»: la sessió ja ha passat, segueix com a reservada i la pots marcar tu. No s'atenua com la resta del passat, perquè és feina pendent. Es resol a la seva fitxa amb «Marcar feta» (o cancel·lant-la, si no es va fer), o des de «Cal fer», a dalt.",
             ],
             [
               "Bloquejat",

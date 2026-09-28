@@ -32,6 +32,8 @@ export function SessionNotePanel({
   note,
   canEdit,
   closeOnSave = false,
+  startOpen = false,
+  onCancel,
 }: {
   reservationId: string;
   note: SessionNote | null;
@@ -41,8 +43,12 @@ export function SessionNotePanel({
    * reserva, perquè s'hi vegi la nota desada; la llista es queda com era.
    */
   closeOnSave?: boolean;
+  /** Obert d'entrada, amb el cursor a dins (la bandeja «Cal fer»). */
+  startOpen?: boolean;
+  /** Qui l'ha obert d'entrada decideix què passa en cancel·lar. */
+  onCancel?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [state, formAction] = useActionState(
     saveSessionNoteAction,
     {} as NoteState,
@@ -108,6 +114,7 @@ export function SessionNotePanel({
             id={`note-${reservationId}`}
             name="body"
             rows={4}
+            autoFocus={startOpen}
             defaultValue={note?.body ?? ""}
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
             placeholder="Com ha anat la sessió, què s'ha treballat, què cal tenir en compte la propera…"
@@ -125,7 +132,11 @@ export function SessionNotePanel({
           {state.error && <p className="text-sm text-error">{state.error}</p>}
           <div className="flex flex-wrap items-center gap-2">
             <SubmitButton pendingLabel="Desant…">Desar la nota</SubmitButton>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => (onCancel ? onCancel() : setOpen(false))}
+            >
               Cancel·lar
             </Button>
             {note && (
