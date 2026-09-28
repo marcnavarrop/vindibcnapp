@@ -26,6 +26,9 @@ export function parseReservationForm(formData: FormData): ParsedReservation {
   const raw = String(formData.get("scheduledAt") ?? "");
   const repeatWeeks = Number(formData.get("repeatWeeks")) || 1;
 
+  // El client ara es tria amb el buscador (un camp amagat): el navegador ja no
+  // pot exigir-lo com feia amb el desplegable, així que es diu aquí.
+  if (!clientId) return { ok: false, error: "Tria un client." };
   if (!raw) return { ok: false, error: "Indica la data i hora." };
   if (repeatWeeks < 1 || repeatWeeks > 52)
     return { ok: false, error: "Les repeticions han d'estar entre 1 i 52." };
@@ -36,9 +39,8 @@ export function parseReservationForm(formData: FormData): ParsedReservation {
   const scheduledAt = date.toISOString();
 
   if (complimentary) {
-    // El client ja el demanava el formulari; amb bo el valor s'ignorava perquè
-    // sortia del bo mateix. Sense bo és l'única manera de saber de qui és.
-    if (!clientId) return { ok: false, error: "Tria un client." };
+    // Amb bo el client surt del bo mateix; sense bo, el camp és l'única
+    // manera de saber de qui és (ja comprovat a dalt).
     if (!(SERVICE_TYPES as string[]).includes(serviceType))
       return { ok: false, error: "Tria un tipus de servei." };
     return {

@@ -18,9 +18,12 @@ import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite, listBlocksForAdmin } from "@/lib/data/availability-blocks";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
+import { listWaitingForAdmin } from "@/lib/data/waitlist";
+import { centerDateStr } from "@/lib/center-time";
 import {
   cancelReservationAction,
   completeReservationAction,
+  createFromSlotAdminAction,
   rescheduleReservationAction,
 } from "@/app/(admin)/admin/reservas/actions";
 import {
@@ -37,7 +40,7 @@ export default async function ReservasPage({
 }) {
   // Només la setmana del calendari o els dies de la llista: vegeu `agendaWindow`.
   const { nav, from, to } = agendaWindow("/admin/reservas", await searchParams);
-  const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, centerBlocks, palette] =
+  const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, centerBlocks, palette, waiting] =
     await Promise.all([
       listReservationsInRange({ from, to }),
       listTrainers(),
@@ -50,6 +53,8 @@ export default async function ReservasPage({
       // l'admin, a part de la que alimenta /prova i el calendari del client.
       listBlocksForAdmin({ from, to }),
       getColorPalette(),
+      // Qui espera plaça, amb el nom: també només de l'admin.
+      listWaitingForAdmin({ fromDay: centerDateStr(new Date(from)), toDay: centerDateStr(new Date(to)) }),
     ]);
   const nowISO = new Date().toISOString();
   // L'administració LLEGEIX les notes i no n'escriu cap: no es passa
@@ -115,6 +120,8 @@ export default async function ReservasPage({
           allBlocks={allBlocks}
           calendar="admin"
           centerBlocks={centerBlocks}
+          centerWaiting={waiting}
+          createFromSlotAction={createFromSlotAdminAction}
         />
       </main>
     </>

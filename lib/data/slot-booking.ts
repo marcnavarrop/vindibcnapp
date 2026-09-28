@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
 import { centerToday } from "@/lib/center-time";
 import { isBonoExpired } from "@/lib/data/bonos";
+import { matchesName, nameWords, wordRegex } from "@/lib/client-search-match";
 import type { BonoStatus, ServiceType } from "@/types/database";
 
 /**
@@ -117,4 +118,90 @@ export async function pickUsableBono(
   }
   const first = usable(rows)[0];
   return first ? toBookable(first) : null;
+}
+
+/**
+ * BUSCAR UN CLIENT PER RESERVAR-LI, AL SERVIDOR.
+ *
+ * Els selectors de client carregaven TOTS els clients del centre a la pàgina, i
+ * Supabase en torna com a molt 1000 per consulta: passat aquest nombre, els
+ * últims no hi sortien i ningú no ho notava. Ara la pantalla envia el que s'ha
+ * escrit i en torna com a molt `CLIENT_SEARCH_LIMIT`, amb els bons que poden
+ * gastar.
+ *
+ *   · L'admin busca entre tots els clients del centre.
+ *   · El professional, NOMÉS entre els seus assignats: els únics per als quals
+ *     `assertMayBookFor` li deixarà crear la reserva. No ho decideix la
+ *     pantalla: qui crida passa `onlyTrainerId` segons el rol de qui mira.
+ *
+ * Sense text, surten els primers per ordre alfabètic.
+ *
+ * ELS ACCENTS
+ *
+ * «nuria» ha de trobar «Núria». Postgres compara les lletres tal com són, i fer
+ * servir `unaccent` voldria una migració. En comptes d'això, cada paraula
+ * escrita es converteix en una expressió regular que accepta les dues grafies
+ * de cada lletra (`n[uùúûü]r[iìíîï][aàáâäã]`) i es filtra amb `imatch` (sense
+ * majúscules). Una condició per paraula: «puig laia» troba «Laia Puig».
+ */
+export const CLIENT_SEARCH_LIMIT = 20;
+
+export async function searchBookableClients(
+  query: string,
+  onlyTrainerId: string | null,
+): Promise<BookableClient[]> {
+  const q = query.trim().slice(0, 60);
+
+  // El professional: els seus assignats, que ja és una llista acotada.
+  if (onlyTrainerId) {
+    return (await listBookableClients(onlyTrainerId))
+      .filter((c) => !q || matchesName(c.name, q))
+      .slice(0, CLIENT_SEARCH_LIMIT);
+  }
+
+  if (USE_MOCK) {
+    const s = getStore();
+    return s.clients
+      .map((c) => ({
+        id: c.id,
+        name: s.profiles.find((p) => p.id === c.profile_id)?.full_name ?? "—",
+        bonos: usable(s.bonos.filter((b) => b.client_id === c.id) as BonoRow[]).map(toBookable),
+      }))
+      .filter((c) => !q || matchesName(c.name, q))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, CLIENT_SEARCH_LIMIT);
+  }
+
+  // L'admin: primer els noms (una consulta petita i ordenada), després els
+  // clients d'aquests noms amb els seus bons.
+  const supabase = await createClient();
+  let names = supabase
+    .from("profiles")
+    .select("id, full_name")
+    .eq("role", "client")
+    .order("full_name")
+    .limit(CLIENT_SEARCH_LIMIT);
+  for (const w of nameWords(q)) names = names.filter("full_name", "imatch", wordRegex(w));
+  const { data: profiles, error: pErr } = await names;
+  if (pErr) throw pErr;
+  const picked = profiles ?? [];
+  if (picked.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("clients")
+    .select(
+      `id, profile_id,
+       bonos(id, client_id, service_type, remaining_sessions, total_sessions, status, expires_at, purchased_at)`,
+    )
+    .in(
+      "profile_id",
+      picked.map((p) => p.id),
+    );
+  if (error) throw error;
+  type Row = { id: string; profile_id: string; bonos: BonoRow[] };
+  const byProfile = new Map((data as unknown as Row[]).map((c) => [c.profile_id, c]));
+  return picked.flatMap((p) => {
+    const c = byProfile.get(p.id);
+    return c ? [{ id: c.id, name: p.full_name ?? "—", bonos: usable(c.bonos).map(toBookable) }] : [];
+  });
 }
