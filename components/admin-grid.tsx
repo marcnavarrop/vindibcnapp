@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TAP, clsx } from "@/lib/utils";
 import { GROUP_CAPACITY, SERVICE_LABELS, SERVICE_TYPES, SESSION_DURATION_MINUTES } from "@/lib/labels";
@@ -16,6 +15,8 @@ import { occupancyFromSessions } from "@/lib/free-slots";
 import { colorOfPro, type ColorPalette } from "@/lib/colors";
 import { ReservationSheet } from "@/components/reservation-sheet";
 import { TrialModal } from "@/components/agenda-pieces";
+import { CreateSlotSheet } from "@/components/create-slot-sheet";
+import { searchClientsAction } from "@/app/actions/client-search-actions";
 import {
   EntryListSheet,
   Grid,
@@ -29,6 +30,7 @@ import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import type { SessionNote } from "@/lib/data/session-notes";
 import type { CenterBlock } from "@/lib/data/availability-blocks";
+import type { WaitingNames } from "@/lib/data/waitlist";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type { AgendaNav } from "@/lib/agenda-window";
 import type { ServiceType } from "@/types/database";
@@ -44,7 +46,10 @@ import type { ServiceType } from "@/types/database";
  *     n'hi ha més d'encesos, les fletxes ‹ › mouen la finestra d'un en un.
  *   · A l'ordinador, tots els encesos.
  *   · Els professionals encesos i el servei es recorden en aquest navegador.
- *   · Tocar un forat obre «Nova reserva» amb el professional i l'hora posats.
+ *   · Tocar un forat obre la fulla de crear amb el professional de la columna
+ *     i l'hora; el client es busca al servidor entre tots els del centre.
+ *   · Un grup amb places ofereix «Apuntar-hi un client» (qualsevol), i diu qui
+ *     espera plaça, amb el nom i per ordre.
  *
  * Només al navegador, com la del professional: l'hora de cada sessió és la del
  * navegador, i pintar-la al servidor (en UTC) donava l'error #418.
@@ -88,10 +93,6 @@ function addDays(d: Date, n: number): Date {
 function slotFloat(d: Date): number {
   return (d.getHours() * 60 + d.getMinutes()) / 30;
 }
-/** El format del camp de data i hora del formulari de «Nova reserva». */
-function toLocalInput(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 /** Per buscar noms sense que importin els accents ni les majúscules. */
 const norm = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -104,10 +105,11 @@ export function AdminGrid({
   rules,
   blocks,
   centerBlocks,
+  waiting,
   palette,
   notes,
   clientBase,
-  newReservationBase,
+  createFromSlotAction,
   cancelAction,
   completeAction,
   rescheduleAction,
@@ -127,10 +129,12 @@ export function AdminGrid({
   blocks: TrainerBlockLite[];
   /** Els bloquejos de tots, amb el motiu: per pintar-los (només l'admin). */
   centerBlocks: CenterBlock[];
+  /** Qui espera plaça a cada sessió, amb el nom (només l'admin). */
+  waiting: WaitingNames[];
   palette: ColorPalette;
   notes?: Record<string, SessionNote>;
   clientBase: string;
-  newReservationBase: string;
+  createFromSlotAction: StatefulReservationAction;
   cancelAction: StatefulReservationAction;
   completeAction: StatefulReservationAction;
   rescheduleAction: StatefulReservationAction;
@@ -139,10 +143,20 @@ export function AdminGrid({
   openingHour: number;
   closingHour: number;
 }) {
-  const router = useRouter();
   const [selected, setSelected] = useState<ReservationListItem | null>(null);
   const [selectedTrial, setSelectedTrial] = useState<TrialHoldItem | null>(null);
-  const [list, setList] = useState<{ title: string; entries: Entry[] } | null>(null);
+  const [list, setList] = useState<{
+    title: string;
+    entries: Entry[];
+    join?: { at: Date; count: number; trainer: { id: string; name: string } };
+    waitlist?: string[];
+  } | null>(null);
+  const [creating, setCreating] = useState<{
+    at: Date;
+    services: ServiceType[];
+    trainer: { id: string; name: string };
+    group?: { count: number };
+  } | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [query, setQuery] = useState("");
   const [start, setStart] = useState(0);
@@ -190,6 +204,12 @@ export function AdminGrid({
   const date = parseDay(nav.dayStart);
   const dayKey = nav.dayStart;
   const manageable = useMemo(() => new Set(reservations.map((r) => r.id)), [reservations]);
+  // Qui espera, per professional i hora.
+  const waitingOf = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const w of waiting) m.set(`${w.trainerId}|${new Date(w.at).getTime()}`, w.names);
+    return m;
+  }, [waiting]);
 
   // Ocupació per als forats lliures: reserves vives i proves actives.
   const occupancy = useMemo(
@@ -301,7 +321,11 @@ export function AdminGrid({
       rules: proRules,
       free,
       blocks: dayBlocks,
-      waiting: new Map(),
+      waiting: new Map(
+        waiting
+          .filter((w) => w.trainerId === p.id)
+          .map((w) => [new Date(w.at).getTime(), w.names.length] as const),
+      ),
     };
   };
 
@@ -311,16 +335,25 @@ export function AdminGrid({
   const mobileCols = visible.slice(from, from + MOBILE_COLUMNS).map(column);
   const desktopCols = visible.map(column);
 
+  const trainerOf = (id: string | null) => trainers.find((t) => t.id === id) ?? null;
   const open = (e: Entry) => {
     if (e.kind === "res") setSelected(e.r);
     else if (e.kind === "trial") setSelectedTrial(e.t);
-    else
+    else {
+      const pro = trainerOf(e.list[0].trainerId);
+      const queue = pro ? (waitingOf.get(`${pro.id}|${e.start.getTime()}`) ?? []) : [];
       setList({
         title: `Grup · ${hhmm(e.start)} · ${e.list.length}/${GROUP_CAPACITY}${
           e.list[0].trainerName ? ` · ${e.list[0].trainerName}` : ""
-        }`,
+        }${queue.length ? ` · +${queue.length} en espera` : ""}`,
         entries: e.list.map((r) => ({ kind: "res" as const, id: r.id, start: e.start, end: e.end, own: true, r })),
+        join:
+          pro && e.list.length < GROUP_CAPACITY && now && e.start.getTime() > now.getTime()
+            ? { at: e.start, count: e.list.length, trainer: pro }
+            : undefined,
+        waitlist: queue,
       });
+    }
   };
 
   const gridProps = {
@@ -333,12 +366,11 @@ export function AdminGrid({
     todayKey: now ? localDateStr(now) : "",
     onOpen: open,
     onMore: (title: string, entries: Entry[]) => setList({ title, entries }),
-    // El forat diu el professional (la columna) i l'hora. Fins que l'admin
-    // tingui la fulla de crear, obre el formulari amb tots dos posats.
-    onNew: (at: Date, _services: ServiceType[], col: string) => {
-      const params = new URLSearchParams({ at: toLocalInput(at) });
-      if (col !== NONE) params.set("trainer", col);
-      router.push(`${newReservationBase}?${params}`);
+    // El forat diu el professional (la columna) i l'hora: la fulla de crear
+    // només ha de demanar el servei i el client.
+    onNew: (at: Date, services: ServiceType[], col: string) => {
+      const pro = trainerOf(col);
+      if (pro) setCreating({ at, services, trainer: pro });
     },
     colleagues: [],
     onRail: () => {},
@@ -527,7 +559,7 @@ export function AdminGrid({
       </div>
 
       <p className="mt-3 text-xs text-brand-muted">
-        Toca un forat lliure per crear-hi una reserva amb aquell professional i aquella hora, o una sessió per obrir-ne la fitxa.
+        Toca un forat lliure per crear-hi una reserva amb aquell professional i aquella hora, o una sessió per obrir-ne la fitxa. Un grup amb places et deixa apuntar-hi qualsevol client.
       </p>
 
       {selected && (
@@ -566,7 +598,33 @@ export function AdminGrid({
             setList(null);
             open(e);
           }}
+          onJoin={
+            list.join
+              ? () => {
+                  const j = list.join!;
+                  setList(null);
+                  setCreating({
+                    at: j.at,
+                    services: ["grupo_reducido"],
+                    trainer: j.trainer,
+                    group: { count: j.count },
+                  });
+                }
+              : undefined
+          }
+          waitlist={list.waitlist}
           onClose={() => setList(null)}
+        />
+      )}
+      {creating && (
+        <CreateSlotSheet
+          at={creating.at}
+          services={creating.services}
+          group={creating.group}
+          trainer={creating.trainer}
+          searchClients={searchClientsAction}
+          createAction={createFromSlotAction}
+          onClose={() => setCreating(null)}
         />
       )}
     </div>

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { ReservationForm } from "@/components/forms/reservation-form";
-import { getReservationFormData } from "@/lib/data/reservations";
+import { listTrainers } from "@/lib/data/clients";
+import { listBookableClients } from "@/lib/data/slot-booking";
 import { createTrainerReservationAction } from "@/app/(trainer)/trainer/reservas/actions";
 import { TAP } from "@/lib/utils";
 
@@ -14,7 +15,12 @@ export default async function NewTrainerReservationPage({
 }) {
   const { at } = await searchParams;
   const viewer = await getViewer();
-  const { clients, trainers } = await getReservationFormData(viewer?.id);
+  // Només cal saber si en té cap: el formulari els busca al servidor, i el
+  // buscador només li ensenya els seus assignats.
+  const [trainers, clients] = await Promise.all([
+    listTrainers(),
+    viewer ? listBookableClients(viewer.id) : Promise.resolve([]),
+  ]);
 
   return (
       <main className="mx-auto max-w-5xl p-6">
@@ -31,11 +37,10 @@ export default async function NewTrainerReservationPage({
 
         {clients.length === 0 ? (
           <p className="rounded-2xl border border-brand-border bg-white px-5 py-8 text-sm text-brand-muted">
-            No tens clients amb bons disponibles.
+            No tens cap client assignat.
           </p>
         ) : (
           <ReservationForm
-            clients={clients}
             trainers={trainers}
             action={createTrainerReservationAction}
             cancelHref="/trainer/reservas"

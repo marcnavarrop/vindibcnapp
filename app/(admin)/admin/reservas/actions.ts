@@ -15,6 +15,8 @@ import {
 import { parseReservationForm } from "@/lib/data/reservation-input";
 import { datetimeLocalToInstant } from "@/lib/center-time";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
+import { getViewer } from "@/lib/auth";
+import { bookFromSlot } from "@/lib/data/slot-create";
 
 export async function createReservationAction(
   _prev: FormState,
@@ -90,5 +92,26 @@ export async function rescheduleReservationAction(
     return actionError(e, "No s'ha pogut reprogramar la reserva.");
   }
   revalidatePath("/admin/reservas");
+  return { ok: true };
+}
+
+/**
+ * Crea una reserva al forat que s'ha tocat a l'agenda de l'admin, o apunta un
+ * client a un grup amb places. El professional és el de la columna (camp
+ * `trainerId`) i el client, qualsevol del centre. La resta és la mateixa peça
+ * que fa servir el professional (`bookFromSlot`).
+ */
+export async function createFromSlotAdminAction(
+  _prev: ReservationActionState,
+  formData: FormData,
+): Promise<ReservationActionState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "admin") return { error: "No autoritzat." };
+  const trainerId = String(formData.get("trainerId") ?? "");
+  if (!trainerId) return { error: "Falta el professional." };
+  const result = await bookFromSlot(formData, trainerId);
+  if (!result.ok) return result;
+  revalidatePath("/admin/reservas");
+  revalidatePath("/admin/bonos");
   return { ok: true };
 }

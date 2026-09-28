@@ -1252,6 +1252,7 @@ export function EntryListSheet({
   manageable,
   onPick,
   onJoin,
+  waitlist,
   onClose,
 }: {
   title: string;
@@ -1261,6 +1262,8 @@ export function EntryListSheet({
   onPick: (e: Entry) => void;
   /** El grup té places: «Apuntar-hi un client». */
   onJoin?: () => void;
+  /** Qui espera plaça, per ordre d'arribada (només l'admin en veu els noms). */
+  waitlist?: string[];
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -1317,6 +1320,24 @@ export function EntryListSheet({
             );
           })}
         </ul>
+        {!!waitlist?.length && (
+          <section className="mt-4" data-waitlist>
+            <h3 className="text-xs font-bold tracking-wide text-brand-muted uppercase">
+              En espera · {waitlist.length}
+            </h3>
+            <ol className="mt-2 flex flex-col gap-1 text-sm">
+              {waitlist.map((n, i) => (
+                <li key={i} className="flex gap-2 rounded-lg bg-brand-bg px-3 py-2">
+                  <span className="font-bold text-brand-orange-dark">{i + 1}.</span>
+                  <span className="text-brand-dark">{n}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-1 text-xs text-brand-muted">
+              Si s&apos;allibera una plaça, es dona per aquest ordre.
+            </p>
+          </section>
+        )}
         {onJoin && (
           <button
             type="button"

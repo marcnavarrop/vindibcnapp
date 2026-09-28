@@ -8,21 +8,22 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { SERVICE_LABELS, SERVICE_TYPES, GROUP_CAPACITY } from "@/lib/labels";
 import { createReservationAction } from "@/app/(admin)/admin/reservas/actions";
 import { canRepeatInSeries } from "@/lib/series-rules";
-import type { ReservationFormData } from "@/lib/data/reservations";
+import type { BookableClient } from "@/lib/data/slot-booking";
+import { ClientSearch } from "@/components/client-search";
+import { searchClientsAction } from "@/app/actions/client-search-actions";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType } from "@/types/database";
 import { TAP } from "@/lib/utils";
 
 export function ReservationForm({
-  clients,
   trainers,
   action = createReservationAction,
   cancelHref,
   defaultScheduledAt,
   defaultTrainerId,
+  emptyClientsHint,
 }: {
-  clients: ReservationFormData["clients"];
-  trainers: ReservationFormData["trainers"];
+  trainers: { id: string; name: string }[];
   /** Acción del formulario; por defecto la del área admin. */
   action?: (prev: FormState, formData: FormData) => Promise<FormState>;
   /**
@@ -49,19 +50,22 @@ export function ReservationForm({
    * valor posat, deixa de ser una decisió i passa a ser una confirmació.
    */
   defaultTrainerId?: string;
+  /** Què dir si no surt cap client sense haver escrit res. */
+  emptyClientsHint?: string;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
-  const [clientId, setClientId] = useState("");
+  // El client es busca al servidor (`ClientSearch`): abans el desplegable els
+  // portava tots a la pàgina i, passat el miler, en perdia. Qui hi pot sortir
+  // ho decideix el rol de qui mira: l'admin, tothom; el professional, els seus.
+  const [client, setClient] = useState<BookableClient | null>(null);
+  const clientId = client?.id ?? "";
   // Cortesia: es regala la sessió. El bo deixa de tenir sentit i el tipus de
   // servei, que amb bo sortia del bo, s'ha de dir a mà.
   const [complimentary, setComplimentary] = useState(false);
   const [bonoId, setBonoId] = useState("");
   const [serviceType, setServiceType] = useState<ServiceType | "">("");
 
-  const bonos = useMemo(
-    () => clients.find((c) => c.id === clientId)?.bonos ?? [],
-    [clients, clientId],
-  );
+  const bonos = useMemo(() => client?.bonos ?? [], [client]);
 
   /**
    * De quin servei és aquesta reserva, vingui d'on vingui.
@@ -86,14 +90,16 @@ export function ReservationForm({
       action={formAction}
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
-      <SelectField
-        label="Client"
-        name="clientId"
-        placeholder="Tria un client"
-        required
-        value={clientId}
-        onChange={(e) => setClientId(e.target.value)}
-        options={clients.map((c) => ({ value: c.id, label: c.name }))}
+      <ClientSearch
+        search={searchClientsAction}
+        selected={client}
+        onSelect={(c) => {
+          setClient(c);
+          // El bo era del client d'abans.
+          setBonoId("");
+        }}
+        emptyHint={emptyClientsHint}
+        variant="form"
       />
 
       {/*

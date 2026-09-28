@@ -496,7 +496,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Una sessió",
-              "Una targeta amb l'hora, el client i la icona del servei, pintada amb el color del servei (Configuració → Colors). Un grup és una sola targeta amb els noms i l'ocupació («3/4»); tocant-la surt la llista dels apuntats.",
+              "Una targeta amb l'hora, el client i la icona del servei, pintada amb el color del servei (Configuració → Colors). Un grup és una sola targeta amb els noms i l'ocupació («3/4»); tocant-la surt la llista dels apuntats i, si té places, «Apuntar-hi un client».",
+            ],
+            [
+              "+N en espera",
+              "Un grup ple amb gent a la llista d'espera. Tocant-lo, a sota dels apuntats surten els noms dels que esperen, per ordre d'arribada: si s'allibera una plaça, es dona per aquest ordre. Els noms només els veu l'administració; el professional en veu el nombre.",
             ],
             [
               "Per marcar",
@@ -504,7 +508,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Lliure",
-              "Un forat real del professional: dins del seu horari, sense bloqueig i sense cap sessió ni prova que el trepitgi, amb els serveis que s'hi poden fer. Tocant-lo s'obre «Nova reserva» amb aquell professional, aquell dia i aquella hora ja posats.",
+              "Un forat real del professional: dins del seu horari, sense bloqueig i sense cap sessió ni prova que el trepitgi, amb els serveis que s'hi poden fer. Tocant-lo s'obre la fulla de crear-hi una reserva amb aquell professional, aquell dia i l'hora de la mitja hora on has tocat (vegeu «Crear i gestionar reserves»).",
             ],
             [
               "Bloquejat",
@@ -563,7 +567,34 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Crear-ne una" },
         {
           t: "p",
-          text: "«+ Nova reserva», o tocant un forat lliure del calendari (que arriba al formulari amb el professional, el dia i l'hora ja posats). Es tria el client, el bo del qual sortirà la sessió, el professional i el moment.",
+          text: "Hi ha dues maneres: tocant un forat lliure de l'agenda, que és la ràpida, o amb «+ Nova reserva», el formulari de sempre, per a tot el que no cau en un forat (repeticions setmanals, una reserva sense professional).",
+        },
+        { t: "h", text: "Des d'un forat de l'agenda" },
+        {
+          t: "p",
+          text: "La fulla no té cap camp de data ni de professional: el dia, l'hora i el professional són els del forat (surt escrit a dalt: «amb Raul Vidal»). Hi tries el servei —només els que hi caben— i el client, i prems Crear. Si el client té un bo d'aquell servei, la fulla diu de quin es gastarà la sessió i quantes en queden; si no en té, ho diu abans de crear i només deixa fer-la com a sessió de cortesia.",
+        },
+        {
+          t: "p",
+          text: "Per apuntar algú a un grup que ja existeix, toca la targeta del grup i «Apuntar-hi un client»: només surt si hi ha places i la sessió encara no ha passat. Pots apuntar-hi qualsevol client del centre, sigui de qui sigui.",
+        },
+        {
+          t: "note",
+          text: "Si mentre tens la fulla oberta algú agafa aquell forat, en prémer Crear la fulla t'ho diu i no es crea res.",
+        },
+        { t: "h", text: "Buscar el client" },
+        {
+          t: "p",
+          text: "A la fulla i a «+ Nova reserva» el client no es tria d'una llista llarga: s'escriu un tros del nom, sense accents ni majúscules i en qualsevol ordre («puig laia» troba la Laia Puig), i en surten com a molt vint, cadascun amb els bons que té. Sense escriure res, surten els vint primers per ordre alfabètic. Tu hi trobes tots els clients del centre; un professional, només els seus.",
+        },
+        {
+          t: "note",
+          text: "Abans el formulari carregava tots els clients a la pàgina, i a partir del miler els últims no hi sortien sense que ningú ho notés. Ara la cerca es fa al servidor i no hi ha aquest límit.",
+        },
+        { t: "h", text: "El formulari «+ Nova reserva»" },
+        {
+          t: "p",
+          text: "Es busca el client, es tria el bo del qual sortirà la sessió, el professional i el moment.",
         },
         {
           t: "note",

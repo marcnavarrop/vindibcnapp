@@ -7,6 +7,7 @@ import { ReservationsAgenda } from "@/components/reservations-agenda";
 import { WeeklyCalendar } from "@/components/weekly-calendar";
 import { TrainerGrid } from "@/components/trainer-grid";
 import { AdminGrid } from "@/components/admin-grid";
+import type { WaitingNames } from "@/lib/data/waitlist";
 import type { CenterBlock } from "@/lib/data/availability-blocks";
 import type { OwnBlock } from "@/lib/data/availability-blocks";
 import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
@@ -81,6 +82,7 @@ export function ReservationsView({
   showColleagueSelector,
   calendar = "week",
   centerBlocks,
+  centerWaiting,
   ownBlocks,
   waiting,
   createFromSlotAction,
@@ -141,11 +143,13 @@ export function ReservationsView({
   calendar?: "week" | "trainer" | "admin";
   /** Agenda de l'admin: els bloquejos de tots, amb el motiu. */
   centerBlocks?: CenterBlock[];
+  /** Agenda de l'admin: qui espera plaça a cada sessió, amb el nom. */
+  centerWaiting?: WaitingNames[];
   /** Rejilla del professional: els seus bloquejos, amb el motiu. */
   ownBlocks?: OwnBlock[];
   /** Rejilla del professional: gent en espera per sessió (instant ISO). */
   waiting?: { at: string; count: number }[];
-  /** Rejilla del professional: crear sobre un forat i apuntar a un grup. */
+  /** Rejilla del professional i agenda de l'admin: crear sobre un forat i apuntar a un grup. */
   createFromSlotAction?: StatefulReservationAction;
   loadBookableClients?: () => Promise<BookableClientsResult>;
 }) {
@@ -313,7 +317,9 @@ export function ReservationsView({
               href={v === "calendar" ? nav.href.calendar : nav.href.list}
               aria-current={view === v ? "page" : undefined}
               className={clsx(
-                "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
+                // 44 px d'alt al mòbil, com la resta de botons que es toquen
+                // amb el dit; a l'ordinador, la mida de sempre.
+                "flex min-h-11 items-center rounded-md px-3 text-sm font-bold transition-colors md:min-h-0 md:py-1.5",
                 view === v
                   ? "bg-brand-purple text-white"
                   : "text-brand-muted hover:text-brand-dark",
@@ -609,7 +615,7 @@ export function ReservationsView({
           openingHour={openingHour ?? 7}
           closingHour={closingHour ?? 22}
         />
-      ) : view === "calendar" && calendar === "admin" ? (
+      ) : view === "calendar" && calendar === "admin" && createFromSlotAction ? (
         <AdminGrid
           nav={nav}
           palette={palette}
@@ -619,9 +625,10 @@ export function ReservationsView({
           rules={allAvailability ?? []}
           blocks={allBlocks ?? []}
           centerBlocks={centerBlocks ?? []}
+          waiting={centerWaiting ?? []}
+          createFromSlotAction={createFromSlotAction}
           notes={notes}
           clientBase={clientBase}
-          newReservationBase={newReservationBase}
           cancelAction={cancelAction}
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}

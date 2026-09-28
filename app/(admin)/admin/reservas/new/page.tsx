@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ReservationForm } from "@/components/forms/reservation-form";
-import { getReservationFormData } from "@/lib/data/reservations";
+import { listTrainers } from "@/lib/data/clients";
 import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,8 @@ export default async function NewReservationPage({
   searchParams: Promise<{ at?: string; trainer?: string }>;
 }) {
   const { at, trainer } = await searchParams;
-  const { clients, trainers } = await getReservationFormData();
+  // Els clients ja no es carreguen aquí: el formulari els busca al servidor.
+  const trainers = await listTrainers();
 
   return (
       <main className="mx-auto max-w-5xl p-6">
@@ -24,7 +25,6 @@ export default async function NewReservationPage({
         <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Nova reserva</h1>
 
         <ReservationForm
-          clients={clients}
           trainers={trainers}
           cancelHref="/admin/reservas"
           defaultScheduledAt={at}

@@ -2,6 +2,8 @@ import "server-only";
 import { isSessionOffered } from "@/lib/data/availability-check";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth";
 import { getStore, saveStore } from "@/lib/mock/store";
 import {
   slotHasRoom,
@@ -736,4 +738,60 @@ export async function countWaitingForTrainer(input: {
     counts.set(at, (counts.get(at) ?? 0) + 1);
   }
   return [...counts].map(([at, count]) => ({ at, count }));
+}
+
+export type WaitingNames = { at: string; trainerId: string; names: string[] };
+
+/**
+ * Qui espera plaça a cada sessió de tot el centre, amb el NOM i per ordre
+ * d'arribada (el primer és qui entrarà si s'allibera una plaça). Per al
+ * «+N en espera» de l'agenda de l'admin i la llista del grup.
+ *
+ * NOMÉS L'ADMIN: comprova el rol i fa servir la sessió de qui mira, que
+ * `waitlist_select` (0049) ja deixa llegir a l'admin. El professional segueix
+ * amb `countWaitingForTrainer`, que no dona noms.
+ */
+export async function listWaitingForAdmin(input: {
+  fromDay: string;
+  toDay: string;
+}): Promise<WaitingNames[]> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "admin") return [];
+
+  type Row = { trainer_id: string | null; desired_date: string; desired_time: string; created_at: string; name: string };
+  let rows: Row[];
+  if (USE_MOCK) {
+    const s = getStore();
+    const nameOf = (clientId: string) => {
+      const c = s.clients.find((x) => x.id === clientId);
+      return s.profiles.find((p) => p.id === c?.profile_id)?.full_name ?? "—";
+    };
+    rows = s.waitlist_entries
+      .filter((w) => w.status === "waiting" && w.desired_date >= input.fromDay && w.desired_date <= input.toDay)
+      .map((w) => ({ ...w, name: nameOf(w.client_id) }));
+  } else {
+    const { data, error } = await (await createClient())
+      .from("waitlist_entries")
+      .select(
+        `trainer_id, desired_date, desired_time, created_at,
+         client:clients(profile:profiles!clients_profile_id_fkey(full_name))`,
+      )
+      .eq("status", "waiting")
+      .gte("desired_date", input.fromDay)
+      .lte("desired_date", input.toDay)
+      .order("created_at");
+    if (error) throw error;
+    type Raw = Omit<Row, "name"> & { client: { profile: { full_name: string | null } | null } | null };
+    rows = (data as unknown as Raw[]).map((w) => ({ ...w, name: w.client?.profile?.full_name ?? "—" }));
+  }
+
+  const out = new Map<string, WaitingNames>();
+  for (const r of [...rows].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
+    if (!r.trainer_id) continue;
+    const at = centerLocalToInstant(r.desired_date, r.desired_time.slice(0, 5)).toISOString();
+    const k = `${r.trainer_id}|${at}`;
+    const e = out.get(k) ?? out.set(k, { at, trainerId: r.trainer_id, names: [] }).get(k)!;
+    e.names.push(r.name);
+  }
+  return [...out.values()];
 }

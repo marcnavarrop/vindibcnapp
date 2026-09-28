@@ -9,6 +9,9 @@ import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type {
   BookableClientsResult,
 } from "@/app/(trainer)/trainer/reservas/actions";
+import type { ClientSearchResult } from "@/app/actions/client-search-actions";
+import type { BookableClient } from "@/lib/data/slot-booking";
+import { ClientSearch } from "@/components/client-search";
 import type { ServiceType } from "@/types/database";
 
 type StatefulAction = (
@@ -39,12 +42,19 @@ const whenFmt = new Intl.DateTimeFormat("ca-ES", {
  *
  * El servidor ho torna a comprovar tot (`createFromSlotAction`): si algú ha
  * agafat el forat mentre la fulla era oberta, l'error surt aquí.
+ *
+ * L'ADMIN la fa servir amb dues diferències: el professional és el de la
+ * columna (`trainer`, que viatja amb el formulari) i el client es BUSCA al
+ * servidor entre tots els del centre (`searchClients`), en comptes d'un
+ * desplegable amb tots.
  */
 export function CreateSlotSheet({
   at,
   services,
   group,
   loadClients,
+  searchClients,
+  trainer,
   createAction,
   onClose,
 }: {
@@ -52,7 +62,12 @@ export function CreateSlotSheet({
   services: ServiceType[];
   /** Apuntar a un grup que ja existeix: quanta gent hi ha. */
   group?: { count: number };
-  loadClients: () => Promise<BookableClientsResult>;
+  /** El professional: tots els seus clients, en un desplegable. */
+  loadClients?: () => Promise<BookableClientsResult>;
+  /** L'admin: el client es busca al servidor. */
+  searchClients?: (query: string) => Promise<ClientSearchResult>;
+  /** L'admin: per a qui és la reserva (la columna). */
+  trainer?: { id: string; name: string };
   createAction: StatefulAction;
   onClose: () => void;
 }) {
@@ -62,8 +77,10 @@ export function CreateSlotSheet({
   const [service, setService] = useState<ServiceType | null>(services[0] ?? null);
   const [clientId, setClientId] = useState("");
   const [courtesy, setCourtesy] = useState(false);
+  const [found, setFound] = useState<BookableClient | null>(null);
 
   useEffect(() => {
+    if (!loadClients) return;
     let live = true;
     loadClients()
       .then((c) => live && setClients(c))
@@ -91,8 +108,8 @@ export function CreateSlotSheet({
       service ? list.find((c) => c.id === id)?.bonos.find((b) => b.serviceType === service) ?? null : null,
     [list, service],
   );
-  const chosen = list.find((c) => c.id === clientId) ?? null;
-  const bono = chosen ? bonoFor(chosen.id) : null;
+  const chosen = searchClients ? found : (list.find((c) => c.id === clientId) ?? null);
+  const bono = chosen && service ? (chosen.bonos.find((b) => b.serviceType === service) ?? null) : null;
   const noBono = !!chosen && !bono;
   const canCreate = !!service && !!chosen && (!!bono || courtesy) && !creating;
 
@@ -143,8 +160,14 @@ export function CreateSlotSheet({
                 {whenFmt.format(at)}
                 {group && ` · ${group.count}/${GROUP_CAPACITY}`}
               </p>
+              {trainer && (
+                <p className="mt-0.5 text-sm font-bold text-brand-charcoal" data-slot-trainer>
+                  amb {trainer.name}
+                </p>
+              )}
             </header>
             <input type="hidden" name="at" value={at.toISOString()} />
+            {trainer && <input type="hidden" name="trainerId" value={trainer.id} />}
 
             {/* Servei: només el que hi cap. */}
             <fieldset className="flex flex-col gap-2">
@@ -179,43 +202,54 @@ export function CreateSlotSheet({
 
             {/* Client, amb el bo que es gastaria. */}
             <div className="flex flex-col gap-2">
-              <label
-                htmlFor="slot-client"
-                className="text-xs font-bold tracking-wide text-brand-muted uppercase"
-              >
-                Client
-              </label>
-              {!clients ? (
-                <p className="text-sm text-brand-muted" aria-live="polite">
-                  Carregant els teus clients…
-                </p>
-              ) : !clients.ok ? (
-                <p role="alert" className="text-sm text-error">
-                  {clients.error}
-                </p>
-              ) : list.length === 0 ? (
-                <p className="text-sm text-brand-muted">
-                  No tens cap client assignat. Els clients que no són teus es
-                  reserven des de la fitxa del seu professional.
-                </p>
+              {searchClients ? (
+                <ClientSearch
+                  search={searchClients}
+                  service={service}
+                  selected={found}
+                  onSelect={setFound}
+                />
               ) : (
-                <select
-                  id="slot-client"
-                  name="clientId"
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  className="min-h-11 rounded-lg border border-brand-border bg-white px-2 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
-                >
-                  <option value="">Tria un client…</option>
-                  {ordered.map((c) => {
-                    const b = bonoFor(c.id);
-                    return (
-                      <option key={c.id} value={c.id}>
-                        {c.name} — {b ? `${b.remaining} de ${b.total} sessions` : "sense bo"}
-                      </option>
-                    );
-                  })}
-                </select>
+                <>
+                  <label
+                    htmlFor="slot-client"
+                    className="text-xs font-bold tracking-wide text-brand-muted uppercase"
+                  >
+                    Client
+                  </label>
+                  {!clients ? (
+                    <p className="text-sm text-brand-muted" aria-live="polite">
+                      Carregant els teus clients…
+                    </p>
+                  ) : !clients.ok ? (
+                    <p role="alert" className="text-sm text-error">
+                      {clients.error}
+                    </p>
+                  ) : list.length === 0 ? (
+                    <p className="text-sm text-brand-muted">
+                      No tens cap client assignat. Els clients que no són teus es
+                      reserven des de la fitxa del seu professional.
+                    </p>
+                  ) : (
+                    <select
+                      id="slot-client"
+                      name="clientId"
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                      className="min-h-11 rounded-lg border border-brand-border bg-white px-2 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
+                    >
+                      <option value="">Tria un client…</option>
+                      {ordered.map((c) => {
+                        const b = bonoFor(c.id);
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {c.name} — {b ? `${b.remaining} de ${b.total} sessions` : "sense bo"}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  )}
+                </>
               )}
               {chosen && service && bono && (
                 <p className="text-sm text-brand-charcoal" data-bono-info>

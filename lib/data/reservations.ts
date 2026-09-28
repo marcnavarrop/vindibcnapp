@@ -11,7 +11,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { mockFails } from "@/lib/mock/faults";
-import { listTrainers } from "@/lib/data/clients";
 import { listAvailabilityLite } from "@/lib/data/availability";
 import { listBlocksLite } from "@/lib/data/availability-blocks";
 import {
@@ -520,85 +519,6 @@ export async function listUpcomingReservations(input: {
 
 // ─────────────────────────── Escritura ───────────────────────────
 
-/** Datos para el formulario de nueva reserva: clientes con sus bonos
- *  disponibles (activos y con sesiones) y la lista de entrenadores. */
-export type ReservationFormData = {
-  clients: {
-    id: string;
-    name: string;
-    bonos: { id: string; serviceType: ServiceType; remaining: number }[];
-  }[];
-  trainers: { id: string; name: string }[];
-};
-
-export async function getReservationFormData(
-  onlyTrainerId?: string,
-): Promise<ReservationFormData> {
-  const trainers = await listTrainers();
-
-  if (USE_MOCK) {
-    const store = getStore();
-    const clients = store.clients
-      .filter((c) => !onlyTrainerId || c.assigned_trainer_id === onlyTrainerId)
-      .map((c) => {
-      const profile = store.profiles.find((p) => p.id === c.profile_id);
-      return {
-        id: c.id,
-        name: profile?.full_name ?? "—",
-        bonos: store.bonos
-          .filter(
-            (b) =>
-              b.client_id === c.id &&
-              (b.status === "active" || b.status === "pending_payment") &&
-              b.remaining_sessions > 0,
-          )
-          .map((b) => ({
-            id: b.id,
-            serviceType: b.service_type,
-            remaining: b.remaining_sessions,
-          })),
-      };
-    });
-    return { clients, trainers };
-  }
-
-  const supabase = await createClient();
-  let query = supabase
-    .from("clients")
-    .select(
-      `id,
-       profile:profiles!clients_profile_id_fkey(full_name),
-       bonos(id, service_type, remaining_sessions, status)`,
-    )
-    .order("created_at", { ascending: true });
-  if (onlyTrainerId) query = query.eq("assigned_trainer_id", onlyTrainerId);
-  const { data, error } = await query;
-  if (error) throw error;
-
-  type Row = {
-    id: string;
-    profile: { full_name: string | null } | null;
-    bonos: {
-      id: string;
-      service_type: ServiceType;
-      remaining_sessions: number;
-      status: string;
-    }[];
-  };
-  const clients = (data as unknown as Row[]).map((c) => ({
-    id: c.id,
-    name: c.profile?.full_name ?? "—",
-    bonos: c.bonos
-      .filter((b) => (b.status === "active" || b.status === "pending_payment") && b.remaining_sessions > 0)
-      .map((b) => ({
-        id: b.id,
-        serviceType: b.service_type,
-        remaining: b.remaining_sessions,
-      })),
-  }));
-  return { clients, trainers };
-}
-
 /**
  * Què fa falta per crear una reserva des del panell.
  *
@@ -858,6 +778,10 @@ export async function createReservation(
     const clientId = bono ? bono.client_id : input.clientId!;
     const serviceType = bono ? bono.service_type : input.serviceType!;
     assertRepeatable(serviceType, weeks);
+    // El permís, com al camí real: fins ara la simulació no el mirava, i un
+    // professional hi podia reservar per a un client d'un company. En real ja
+    // l'aturava `assertMayBookFor` (més avall); aquí no es podia provar.
+    await assertMayBookFor(clientId);
     for (const scheduled_at of dates) {
       // La disponibilitat del professional també mana per aquí. Fins ara aquest
       // camí —el manual, el d'admin i professional— no la mirava gens: podia

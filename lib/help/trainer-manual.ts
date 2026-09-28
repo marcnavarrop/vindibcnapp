@@ -464,7 +464,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Client",
-              "Només hi surten els teus clients assignats amb bons disponibles. Si la llista és buida, el formulari t'ho diu en comptes de deixar-te omplir-lo per res.",
+              "Es busca escrivint el nom: sense accents ni majúscules, i en qualsevol ordre («puig laia» troba la Laia Puig). Només hi surten els teus clients assignats, que són els únics per als quals pots reservar, cadascun amb els bons que té. Sense escriure res surten els primers, per ordre alfabètic. Si no en tens cap d'assignat, el formulari t'ho diu en comptes de deixar-te omplir-lo per res.",
             ],
             [
               "Sessió de cortesia",
