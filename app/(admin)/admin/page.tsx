@@ -5,6 +5,8 @@ import {
   type ReservationListItem,
 } from "@/lib/data/reservations";
 import { getAdminAttention } from "@/lib/data/admin-attention";
+import { getAgendaHealth } from "@/lib/data/admin-agenda-health";
+import { AgendaHealthCards } from "@/components/admin/agenda-health";
 import { LowBonosCard } from "@/components/low-bonos-card";
 import {
   Header,
@@ -44,11 +46,12 @@ async function todaySessions(): Promise<{ list: ReservationListItem[]; failed: b
 }
 
 export default async function AdminHome() {
-  const [viewer, d, today, attention] = await Promise.all([
+  const [viewer, d, today, attention, health] = await Promise.all([
     getViewer(),
     getAdminDashboard(),
     todaySessions(),
     getAdminAttention(),
+    getAgendaHealth(),
   ]);
 
   return (
@@ -68,6 +71,11 @@ export default async function AdminHome() {
       <Attention a={attention} />
 
       <TodayAtCentre reservations={today.list} failed={today.failed} />
+
+      {/* L'estat de l'agenda de tot el centre: el que no s'ha marcat, el que
+          ha quedat fora de l'horari i els grups plens amb cua. Cada targeta
+          porta on es resol, i si la seva lectura falla, ho diu. */}
+      <AgendaHealthCards h={health} />
 
       {/* El detall que abans vivia dins de dues targetes de mètrica: la llista
           de bons a punt d'esgotar-se i les barres per professional. Segueixen

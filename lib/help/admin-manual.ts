@@ -218,6 +218,32 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "Les sessions d'avui de tot el centre, amb l'hora, el client, el servei i de quin professional és cadascuna. Les de cortesia porten l'etiqueta «Cortesia».",
         },
+        { t: "h", text: "L'estat de l'agenda" },
+        {
+          t: "p",
+          text: "Sota les sessions d'avui, tres targetes amb el que s'ha de resoldre a l'agenda de tot el centre. Cada una porta on es resol.",
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              "Sense marcar",
+              "Les sessions que ja han passat i segueixen com a reservades, dels últims 30 dies, per professional (primer qui en té més). De cadascú se'n llisten les tres més recents; tocant-ne una, l'agenda s'obre aquell dia amb la columna d'aquell professional marcada (i encesa, encara que l'haguessis apagat als filtres). Una sessió que no es marca com a feta no es paga a les liquidacions. Si n'hi ha més de 300, es compten les 300 més recents i la targeta ho diu («300+»).",
+            ],
+            [
+              "Fora de disponibilitat",
+              "Quantes reserves, proves i esperes han quedat fora de l'horari del seu professional, per exemple perquè se n'ha tancat una franja o s'hi ha posat un bloqueig. És el mateix recompte del plafó «Reserves fora de la disponibilitat» de Disponibilitat: «Revisar» porta al d'aquell professional, on es decideix què se'n fa.",
+            ],
+            [
+              "Grups amb espera",
+              "Els grups d'aquí a diumenge amb gent a la llista d'espera: el dia i l'hora, el professional, l'ocupació («4/4») i els noms dels que esperen, per ordre. Tocant-ne un, l'agenda s'obre aquell dia amb la columna del professional.",
+            ],
+          ],
+        },
+        {
+          t: "note",
+          text: "Cada targeta es llegeix per separat. Si una no es pot carregar, ho diu i no ensenya cap número; les altres surten igual. Un zero vol dir zero de debò.",
+        },
         { t: "h", text: "Ocupació per professional" },
         {
           t: "p",
