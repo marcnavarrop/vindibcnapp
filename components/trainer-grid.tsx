@@ -42,9 +42,9 @@ import type { ServiceType } from "@/types/database";
 /*
  * LA REJILLA DEL PROFESSIONAL.
  *
- * Substitueix, NOMÉS a /trainer/reservas, el calendari setmanal de sempre
- * (`weekly-calendar.tsx`), que l'admin segueix fent servir tal com és fins que
- * li toqui a ell. La geometria —quins dies, quines hores, com es reparteix
+ * Va substituir, a /trainer/reservas, el calendari setmanal d'abans (que ja
+ * no existeix); l'agenda de l'admin (`admin-grid.tsx`) fa servir aquesta
+ * mateixa rejilla, amb una columna per professional. La geometria —quins dies, quines hores, com es reparteix
  * l'amplada— viu a `lib/trainer-grid-layout.ts` i té la seva comprovació.
  *
  *   · Una sola rejilla: capçalera de dies enganxada a dalt i columna d'hores.
@@ -72,7 +72,7 @@ const SHORT: Record<ServiceType, string> = {
   fisioterapia: "Fisio",
 };
 const DOW = ["dl", "dt", "dc", "dj", "dv", "ds", "dg"];
-const FREE_COLOR = "#16a34a"; // green-600: el mateix verd de "lliure" de l'app
+export const FREE_COLOR = "#16a34a"; // green-600: el mateix verd de "lliure" de l'app
 
 const dayFmt = new Intl.DateTimeFormat("ca-ES", { day: "numeric", month: "short" });
 const longDayFmt = new Intl.DateTimeFormat("ca-ES", {

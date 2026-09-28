@@ -150,7 +150,7 @@ const liveTrials = store.trial_bookings.filter(
 );
 const booked = store.reservations.filter((r) => r.status === "booked");
 
-// L'agenda de l'equip: reserves i proves per separat (weekly-calendar.tsx).
+// L'agenda de l'equip: reserves i proves per separat (trainer-grid.tsx i admin-grid.tsx).
 const teamOcc = occupancyFromSessions([
   ...booked.map((r) => ({
     trainerId: r.trainer_id,

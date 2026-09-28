@@ -482,6 +482,20 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "Al mòbil se'n veuen tres alhora: si n'hi ha més, les fletxes ‹ › del costat de «Filtres» mouen la finestra d'un professional en un, i el text del mig diu quins estàs veient («1–3 de 4»). A l'ordinador surten tots els que tinguis encesos.",
         },
+        { t: "h", text: "La tira de la setmana" },
+        {
+          t: "p",
+          text: "A dalt de l'agenda, cinc caselles: de dilluns a divendres de la setmana del dia que mires. Cada casella té una barra per professional encès, del seu color, que s'omple segons la part del seu horari d'aquell dia que ja no és lliure (sessions, grups i proves; les hores bloquejades no compten). A sota, quants grups hi ha plens i quanta gent espera plaça («1 ple · 2 en espera»), o un guionet si no n'hi ha cap. Tocant una casella vas a aquell dia.",
+        },
+        {
+          t: "note",
+          text: "La barra no diu quantes sessions hi ha, sinó quant queda: un professional amb poques hores i totes plenes surt ple, i un amb moltes hores i dues sessions surt gairebé buit. Els percentatges exactes els llegeix el lector de pantalla.",
+        },
+        { t: "h", text: "Pròxim forat" },
+        {
+          t: "p",
+          text: "Al capdamunt de cada columna, sota el nom, «Pròxim forat» diu quan és el primer forat lliure d'aquell professional, d'ara a dues setmanes («dt. 29 · 15:00»). Si hi ha un servei triat al filtre, busca un forat d'aquell servei. Tocant-lo, l'agenda va a aquell dia i s'obre la fulla de crear-hi la reserva. Si no en té cap en dues setmanes, ho diu.",
+        },
         {
           t: "p",
           text: `Com a l'agenda del professional, només surten les hores amb alguna cosa: la primera i l'última amb horari o sessions, i els trams llargs buits es pleguen en una banda fina. «Mostrar-ho tot» ensenya l'horari sencer del centre, de ${hhmm(s.openingHour)} a ${hhmm(s.closingHour)}.`,
@@ -598,7 +612,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "El desplegable de bo només ensenya els bons amb sessions disponibles d'aquell client. Si surt buit, o no en té cap o els té esgotats: ven-li'n un abans des de la seva fitxa.",
+          text: "El desplegable de bo només ensenya els bons d'aquell client que es poden fer servir: actius o pendents de pagament, amb sessions i sense haver passat la data de caducitat. Si surt buit, o no en té cap, o els té esgotats o caducats: ven-li'n un abans des de la seva fitxa. El servidor fa la mateixa comprovació en crear: amb un bo caducat, la reserva no es crea.",
         },
         { t: "h", text: "Sessió de cortesia" },
         {

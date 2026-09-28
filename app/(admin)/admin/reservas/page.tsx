@@ -19,7 +19,12 @@ import { listAllBlocksLite, listBlocksForAdmin } from "@/lib/data/availability-b
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { getColorPalette } from "@/lib/data/colors";
 import { listWaitingForAdmin } from "@/lib/data/waitlist";
-import { centerDateStr } from "@/lib/center-time";
+import {
+  addDaysStr,
+  centerDateStr,
+  centerDayStart,
+  centerToday,
+} from "@/lib/center-time";
 import {
   cancelReservationAction,
   completeReservationAction,
@@ -39,7 +44,17 @@ export default async function ReservasPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   // Només la setmana del calendari o els dies de la llista: vegeu `agendaWindow`.
-  const { nav, from, to } = agendaWindow("/admin/reservas", await searchParams);
+  const win = agendaWindow("/admin/reservas", await searchParams);
+  const { nav } = win;
+  // Al calendari, a més, de avui a quinze dies: «Pròxim forat» busca el primer
+  // forat lliure de cada professional en les dues setmanes vinents, i per saber
+  // què és lliure cal saber què hi ha reservat.
+  const today = centerToday();
+  const lookFrom = centerDayStart(today);
+  const lookTo = centerDayStart(addDaysStr(today, 15));
+  const from =
+    nav.view === "calendar" && lookFrom < win.from ? lookFrom : win.from;
+  const to = nav.view === "calendar" && lookTo > win.to ? lookTo : win.to;
   const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, centerBlocks, palette, waiting] =
     await Promise.all([
       listReservationsInRange({ from, to }),
@@ -106,7 +121,6 @@ export default async function ReservasPage({
           nowISO={nowISO}
           clientBase="/admin/clients"
           notes={notes}
-          newReservationBase="/admin/reservas/new"
           openingHour={centerSettings.openingHour}
           closingHour={centerSettings.closingHour}
           cancelAction={cancelReservationAction}

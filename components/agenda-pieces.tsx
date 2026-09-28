@@ -6,8 +6,8 @@ import type { ServiceType } from "@/types/database";
 
 /*
  * Peces de l'agenda que fan servir la rejilla del professional, la de l'admin
- * i «Cal fer». Vivien dins de `weekly-calendar.tsx`, el calendari vell de
- * l'admin, i en surten tal com eren perquè aquell fitxer es pugui esborrar.
+ * i «Cal fer». Vivien dins del calendari setmanal vell de l'admin
+ * (`weekly-calendar.tsx`, ja esborrat), i en van sortir tal com eren.
  */
 
 type ReservationAction = (formData: FormData) => void | Promise<void>;
