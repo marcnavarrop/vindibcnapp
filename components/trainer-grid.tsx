@@ -122,10 +122,26 @@ type Entry =
 /** Un tram de forats lliures seguits amb els mateixos serveis. */
 type FreeRun = { from: number; to: number; lastStart: number; services: ServiceType[] };
 
+/**
+ * Una marca del carril dels companys: una sessió seva (o prova, o grup) o un
+ * tram seu de forats lliures. En slots amb decimals, com la resta.
+ */
+type RailMark = {
+  trainerId: string;
+  from: number;
+  to: number;
+  kind: "session" | "free";
+  entry?: Entry;
+  services?: ServiceType[];
+};
+
 type DayInfo = {
   date: Date;
   key: string;
+  /** Les PRÒPIES: les úniques que es reparteixen l'amplada del dia. */
   entries: Entry[];
+  /** Les dels companys encesos, al carril de la dreta. */
+  rail: RailMark[];
   rules: TrainerRuleLite[];
   free: FreeRun[];
   /** Els bloquejos propis d'aquest dia, en slots amb decimals, amb el motiu. */
@@ -141,6 +157,8 @@ export function TrainerGrid({
   trials,
   myTrainerId,
   rules,
+  colleagues,
+  colleagueRules,
   blocks,
   ownBlocks,
   waiting,
@@ -171,6 +189,10 @@ export function TrainerGrid({
   myTrainerId: string;
   /** Les regles de disponibilitat PRÒPIES. */
   rules: TrainerRuleLite[];
+  /** Els companys encesos al selector, amb el seu color (buit: cap carril). */
+  colleagues: { id: string; name: string; color: string }[];
+  /** Les regles dels companys encesos: per als seus forats lliures. */
+  colleagueRules: TrainerRuleLite[];
   blocks: TrainerBlockLite[];
   /** Els bloquejos PROPIS amb el motiu (els dels companys no el porten). */
   ownBlocks: OwnBlock[];
@@ -210,6 +232,8 @@ export function TrainerGrid({
     group?: { count: number };
   } | null>(null);
   const [showAll, setShowAll] = useState(false);
+  /** El detall d'un tros del carril dels companys. */
+  const [railSheet, setRailSheet] = useState<{ title: string; marks: RailMark[] } | null>(null);
 
   /*
    * NOMÉS AL NAVEGADOR. La rejilla pinta en l'hora del navegador (com el
@@ -292,46 +316,70 @@ export function TrainerGrid({
     return m;
   }, [reservations, trials, myTrainerId]);
 
+  /**
+   * Els trams de forats lliures d'un professional un dia: les hores de la seva
+   * disponibilitat on es pot reservar de debò (`freeServicesAt`, la regla del
+   * servidor), agrupades quan els serveis coincideixen.
+   */
+  const freeRunsFor = (trainerId: string, trainerRules: TrainerRuleLite[], date: Date, key: string, wd: number): FreeRun[] => {
+    const free: FreeRun[] = [];
+    if (!now) return free;
+    const starts: { slot: number; services: ServiceType[] }[] = [];
+    for (const r of trainerRules.filter((x) => x.trainerId === trainerId && ruleApplies(x, key, wd)))
+      for (let slot = r.startSlot; slot < r.endSlot; slot++) {
+        const at = new Date(date);
+        at.setHours(0, slot * 30, 0, 0);
+        if (at.getTime() <= now.getTime()) continue;
+        // Un grup amb plaça no és "lliure": ja té la seva targeta amb 2/4.
+        if (occupancy(trainerId, at, SESSION_DURATION_MINUTES).length) continue;
+        const svc = freeServicesAt({
+          rules: trainerRules,
+          blocks,
+          trainerId,
+          date,
+          slot,
+          durationMinutes: SESSION_DURATION_MINUTES,
+          occupancy,
+        });
+        if (svc.size) starts.push({ slot, services: SERVICE_TYPES.filter((x) => svc.has(x)) });
+      }
+    const uniq = [...new Map(starts.map((x) => [x.slot, x])).values()].sort((a, b) => a.slot - b.slot);
+    for (const x of uniq) {
+      const last = free[free.length - 1];
+      if (last && last.lastStart === x.slot - 1 && last.services.join() === x.services.join()) {
+        last.lastStart = x.slot;
+      } else {
+        free.push({ from: x.slot, to: x.slot, lastStart: x.slot, services: x.services });
+      }
+    }
+    // Fins on arriba cada tram: la sessió que hi comenci més tard acaba una
+    // hora després, sense trepitjar el tram següent.
+    free.forEach((f, i) => {
+      const next = free[i + 1]?.from ?? Infinity;
+      f.to = Math.min(f.lastStart + 2, next);
+    });
+    return free;
+  };
+
   const info = (date: Date): DayInfo => {
     const key = localDateStr(date);
     const wd = weekdayOf(date);
     const dayRules = rules.filter((r) => ruleApplies(r, key, wd));
-    const free: FreeRun[] = [];
-    if (showFree && now) {
-      const starts: { slot: number; services: ServiceType[] }[] = [];
-      for (const r of dayRules)
-        for (let slot = r.startSlot; slot < r.endSlot; slot++) {
-          const at = new Date(date);
-          at.setHours(0, slot * 30, 0, 0);
-          if (at.getTime() <= now.getTime()) continue;
-          // Un grup amb plaça no és "lliure": ja té la seva targeta amb 2/4.
-          if (occupancy(myTrainerId, at, SESSION_DURATION_MINUTES).length) continue;
-          const svc = freeServicesAt({
-            rules,
-            blocks,
-            trainerId: myTrainerId,
-            date,
-            slot,
-            durationMinutes: SESSION_DURATION_MINUTES,
-            occupancy,
-          });
-          if (svc.size) starts.push({ slot, services: SERVICE_TYPES.filter((s) => svc.has(s)) });
-        }
-      const uniq = [...new Map(starts.map((s) => [s.slot, s])).values()].sort((a, b) => a.slot - b.slot);
-      for (const s of uniq) {
-        const last = free[free.length - 1];
-        if (last && last.lastStart === s.slot - 1 && last.services.join() === s.services.join()) {
-          last.lastStart = s.slot;
-        } else {
-          free.push({ from: s.slot, to: s.slot, lastStart: s.slot, services: s.services });
-        }
+    const free = showFree ? freeRunsFor(myTrainerId, rules, date, key, wd) : [];
+    const all = entriesByDay.get(key) ?? [];
+    // Els companys, al carril: les seves sessions i els seus forats lliures.
+    const rail: RailMark[] = [];
+    if (colleagues.length) {
+      const on = new Set(colleagues.map((c) => c.id));
+      for (const e of all) {
+        if (e.own) continue;
+        const tid = e.kind === "res" ? e.r.trainerId : e.kind === "group" ? e.list[0].trainerId : e.t.trainerId;
+        if (!tid || !on.has(tid)) continue;
+        rail.push({ trainerId: tid, from: slotFloat(e.start), to: slotFloat(e.end) || 48, kind: "session", entry: e });
       }
-      // Fins on arriba cada tram: la sessió que hi comenci més tard acaba una
-      // hora després, sense trepitjar el tram següent.
-      free.forEach((f, i) => {
-        const next = free[i + 1]?.from ?? Infinity;
-        f.to = Math.min(f.lastStart + 2, next);
-      });
+      for (const c of colleagues)
+        for (const f of freeRunsFor(c.id, colleagueRules, date, key, wd))
+          rail.push({ trainerId: c.id, from: f.from, to: f.to, kind: "free", services: f.services });
     }
     // Els bloquejos propis, retallats al dia.
     const dayStart = new Date(date);
@@ -348,7 +396,8 @@ export function TrainerGrid({
     return {
       date,
       key,
-      entries: entriesByDay.get(key) ?? [],
+      entries: all.filter((e) => e.own || !colleagues.length),
+      rail,
       rules: dayRules,
       free,
       blocks: dayBlocks,
@@ -357,7 +406,7 @@ export function TrainerGrid({
   };
   const hasSomething = (d: Date) => {
     const i = info(d);
-    return i.entries.length > 0 || i.rules.length > 0;
+    return i.entries.length > 0 || i.rail.length > 0 || i.rules.length > 0;
   };
 
   const weekDays = visibleDays(
@@ -425,6 +474,8 @@ export function TrainerGrid({
     onOpen: open,
     onMore: (title: string, entries: Entry[]) => setList({ title, entries }),
     onNew: goNew,
+    colleagues,
+    onRail: (title: string, marks: RailMark[]) => setRailSheet({ title, marks }),
   };
 
   const showAllButton = (
@@ -542,6 +593,20 @@ export function TrainerGrid({
           onClose={() => setList(null)}
         />
       )}
+      {railSheet && (
+        <ColleagueSheet
+          title={railSheet.title}
+          marks={railSheet.marks}
+          colleagues={colleagues}
+          palette={palette}
+          manageable={manageable}
+          onPick={(e) => {
+            setRailSheet(null);
+            open(e);
+          }}
+          onClose={() => setRailSheet(null)}
+        />
+      )}
       {creating && (
         <CreateSlotSheet
           at={creating.at}
@@ -598,6 +663,8 @@ function Grid({
   onOpen,
   onMore,
   onNew,
+  colleagues,
+  onRail,
 }: {
   days: Date[];
   now: Date | null;
@@ -611,6 +678,8 @@ function Grid({
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
   onNew: (at: Date, services: ServiceType[]) => void;
+  colleagues: { id: string; name: string; color: string }[];
+  onRail: (title: string, marks: RailMark[]) => void;
 }) {
   const dayInfos = days.map(info);
 
@@ -623,6 +692,9 @@ function Grid({
       const b = Math.ceil(slotFloat(e.end) || 48);
       for (let s = a; s < b; s++) active.add(s);
     }
+    // El que hi ha al carril també compta: un forat d'un company fora de la
+    // teva jornada no pot quedar amagat dins d'una banda plegada.
+    for (const m of d.rail) for (let s = Math.floor(m.from); s < Math.ceil(m.to); s++) active.add(s);
   }
   const v = verticalLayout(active, hourToSlot(openingHour), hourToSlot(closingHour), showAll);
   const cols = `3rem repeat(${days.length}, minmax(0, 1fr))`;
@@ -734,6 +806,8 @@ function Grid({
             onOpen={onOpen}
             onMore={onMore}
             onNew={onNew}
+            colleagues={colleagues}
+            onRail={onRail}
           />
         ))}
       </div>
@@ -752,6 +826,8 @@ function DayColumn({
   onOpen,
   onMore,
   onNew,
+  colleagues,
+  onRail,
 }: {
   d: DayInfo;
   v: ReturnType<typeof verticalLayout>;
@@ -763,7 +839,10 @@ function DayColumn({
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
   onNew: (at: Date, services: ServiceType[]) => void;
+  colleagues: { id: string; name: string; color: string }[];
+  onRail: (title: string, marks: RailMark[]) => void;
 }) {
+  const railOn = colleagues.length > 0;
   const placed = placeByDensity(
     d.entries.map((e) => ({ id: e.id, start: e.start.getTime(), end: e.end.getTime(), own: e.own })),
   );
@@ -804,6 +883,13 @@ function DayColumn({
         />
       )}
 
+      {/*
+        LO PROPI I EL CARRIL. Amb algun company encès, la columna es parteix:
+        el que és teu (bloquejos, forats, sessions) a l'esquerra i els
+        companys en un carril estret a la dreta. Així una sessió d'un company
+        ja no tapa mai un forat teu, que és el que passava al PR 3a.
+      */}
+      <div className={clsx("absolute inset-y-0 left-0", railOn ? "right-6 md:right-7" : "right-0")}>
       {/* Bloquejos propis: ratllats i amb el motiu. No es toquen: no hi ha res
           a fer-hi des d'aquí (es gestionen a Disponibilitat). */}
       {d.blocks.map((bl) => {
@@ -930,6 +1016,10 @@ function DayColumn({
           />
         );
       })}
+
+      </div>
+
+      {railOn && <Rail d={d} v={v} colleagues={colleagues} onRail={onRail} />}
 
       {/* Ara */}
       {isToday && now && nowY > 0 && nowY < v.height && (
@@ -1201,6 +1291,240 @@ function EntryListSheet({
             Apuntar-hi un client
           </button>
         )}
+        <button
+          type="button"
+          onClick={onClose}
+          className={`mt-4 w-full rounded-lg px-3 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP_SURFACE}`}
+        >
+          Tancar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** «17:30» a partir d'un slot amb decimals. */
+function slotLabel(x: number): string {
+  const mins = Math.round(x * 30);
+  return `${String(Math.floor(mins / 60) % 24).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+}
+
+/** Què hi ha d'un company en un tros del carril, en paraules (per a l'aria-label). */
+function railSummary(marks: RailMark[], name: string): string {
+  const sessions = marks.filter((m) => m.kind === "session").length;
+  const free = marks
+    .filter((m) => m.kind === "free")
+    .map((m) => `lliure ${slotLabel(m.from)}–${slotLabel(m.to)}`);
+  return [
+    name,
+    [sessions ? `${sessions} ${sessions === 1 ? "sessió" : "sessions"}` : "", ...free]
+      .filter(Boolean)
+      .join(", "),
+  ].join(": ");
+}
+
+/**
+ * EL CARRIL DELS COMPANYS: una columna estreta a la dreta de cada dia.
+ *
+ * Cada company encès hi té la seva franja, del seu color: les seves sessions,
+ * plenes; els seus forats lliures, clars i amb vora discontínua. El que es
+ * toca és el tros sencer (el que coincideix en el temps, de tots els companys),
+ * que obre el detall. És estret a posta: el que és teu no es tapa mai.
+ */
+function Rail({
+  d,
+  v,
+  colleagues,
+  onRail,
+}: {
+  d: DayInfo;
+  v: ReturnType<typeof verticalLayout>;
+  colleagues: { id: string; name: string; color: string }[];
+  onRail: (title: string, marks: RailMark[]) => void;
+}) {
+  const order = new Map(colleagues.map((c, i) => [c.id, i]));
+  const sorted = [...d.rail].sort((a, b) => a.from - b.from || a.to - b.to);
+  // Trossos: es tallen quan el següent comença quan tots els d'abans ja han acabat.
+  const clusters: RailMark[][] = [];
+  let cur: RailMark[] = [];
+  let end = -Infinity;
+  for (const m of sorted) {
+    if (cur.length && m.from >= end) {
+      clusters.push(cur);
+      cur = [];
+      end = -Infinity;
+    }
+    cur.push(m);
+    end = Math.max(end, m.to);
+  }
+  if (cur.length) clusters.push(cur);
+
+  return (
+    // El tros ocupa tot l'ample del carril: 24 px al mòbil (el mínim d'una zona
+    // tàctil segons les WCAG) i 28 a l'ordinador. Sense vora ni marge que en mengin.
+    <div data-rail-col={d.key} className="absolute inset-y-0 right-0 w-6 md:w-7">
+      {clusters.map((c) => {
+        const from = Math.max(Math.min(...c.map((m) => m.from)), v.from);
+        const to = Math.min(Math.max(...c.map((m) => m.to)), v.to);
+        if (to <= from) return null;
+        const top = v.y(from) + 1;
+        const height = Math.max(v.y(to) - v.y(from) - 2, 44);
+        const who = colleagues.filter((x) => c.some((m) => m.trainerId === x.id));
+        const title = `Companys · ${slotLabel(from)}–${slotLabel(to)}`;
+        return (
+          <button
+            key={`rail-${from}`}
+            type="button"
+            data-rail={`${d.key} ${slotLabel(from)}`}
+            onClick={() => onRail(title, c)}
+            aria-label={`${title}. ${who.map((x) => railSummary(c.filter((m) => m.trainerId === x.id), x.name)).join(". ")}`}
+            className={clsx("absolute inset-x-0 flex gap-px overflow-hidden rounded-sm", TAP_SURFACE)}
+            style={{ top, height }}
+          >
+            {who
+              .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+              .map((x) => (
+                <span key={x.id} className="relative h-full flex-1">
+                  {c
+                    .filter((m) => m.trainerId === x.id)
+                    .map((m, i) => {
+                      const mTop = v.y(Math.max(m.from, v.from)) + 1 - top;
+                      const mH = Math.max(v.y(Math.min(m.to, v.to)) - v.y(Math.max(m.from, v.from)) - 2, 4);
+                      return (
+                        <span
+                          key={i}
+                          className="absolute inset-x-0 rounded-sm"
+                          style={
+                            m.kind === "session"
+                              ? { top: mTop, height: mH, backgroundColor: x.color }
+                              : {
+                                  top: mTop,
+                                  height: mH,
+                                  backgroundColor: `${x.color}26`,
+                                  border: `1px dashed ${x.color}`,
+                                }
+                          }
+                        />
+                      );
+                    })}
+                </span>
+              ))}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * El detall d'un tros del carril: per a cada company, les seves sessions (que
+ * obren la fitxa de sempre, amb el cadenat si no les pots gestionar) i els seus
+ * forats lliures amb els serveis que hi caben. Mateixa forma que la resta de
+ * fulles: a baix al mòbil, plafó a la dreta a l'ordinador.
+ */
+function ColleagueSheet({
+  title,
+  marks,
+  colleagues,
+  palette,
+  manageable,
+  onPick,
+  onClose,
+}: {
+  title: string;
+  marks: RailMark[];
+  colleagues: { id: string; name: string; color: string }[];
+  palette: ColorPalette;
+  manageable: Set<string>;
+  onPick: (e: Entry) => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const who = colleagues.filter((c) => marks.some((m) => m.trainerId === c.id));
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end bg-black/40 md:items-stretch md:justify-end"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[80dvh] w-full flex-col overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl md:h-full md:max-h-none md:w-[26rem] md:rounded-none md:p-6"
+      >
+        <h2 className="text-lg font-bold text-brand-dark">{title}</h2>
+        {who.map((c) => {
+          const mine = marks
+            .filter((m) => m.trainerId === c.id)
+            .sort((a, b) => a.from - b.from);
+          return (
+            <section key={c.id} data-colleague={c.id} className="mt-4">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-brand-dark">
+                <span aria-hidden className="inline-block h-3 w-3 rounded-sm" style={{ backgroundColor: c.color }} />
+                {c.name}
+              </h3>
+              <ul className="mt-2 flex flex-col gap-2">
+                {mine.map((m, i) => {
+                  if (m.kind === "free")
+                    return (
+                      <li
+                        key={`f${i}`}
+                        data-rail-free
+                        className="rounded-lg border border-dashed px-3 py-2 text-sm"
+                        style={{ borderColor: c.color, backgroundColor: `${c.color}14` }}
+                      >
+                        <span className="font-bold text-brand-dark">
+                          Lliure {slotLabel(m.from)}–{slotLabel(m.to)}
+                        </span>
+                        <span className="block text-xs text-brand-muted">
+                          {(m.services ?? []).map((x) => SERVICE_LABELS[x]).join(" · ")}
+                        </span>
+                      </li>
+                    );
+                  const e = m.entry!;
+                  const service: ServiceType =
+                    e.kind === "res" ? e.r.serviceType : e.kind === "group" ? "grupo_reducido" : e.t.serviceType;
+                  const color = e.kind === "trial" ? TRIAL_COLOR : colorOfService(palette, service);
+                  const name =
+                    e.kind === "res"
+                      ? e.r.clientName
+                      : e.kind === "trial"
+                        ? `Prova · ${e.t.fullName}`
+                        : `Grup ${e.list.length}/${GROUP_CAPACITY}`;
+                  const locked =
+                    e.kind === "res"
+                      ? !manageable.has(e.r.id)
+                      : e.kind === "group"
+                        ? !manageable.has(e.list[0].id)
+                        : true;
+                  return (
+                    <li key={e.id}>
+                      <button
+                        type="button"
+                        data-rail-entry={e.id}
+                        onClick={() => onPick(e)}
+                        className={`flex min-h-11 w-full items-center gap-3 rounded-lg border border-brand-border px-3 py-2 text-left text-sm hover:bg-brand-bg ${TAP_SURFACE}`}
+                        style={{ borderLeft: `3px solid ${color}` }}
+                      >
+                        <span className="font-bold text-brand-muted">{hhmm(e.start)}</span>
+                        <span className="flex-1">
+                          <span className="block font-bold text-brand-dark">{name}</span>
+                          <span className="block text-xs text-brand-muted">{SERVICE_LABELS[service]}</span>
+                        </span>
+                        {locked && <LockIcon />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
         <button
           type="button"
           onClick={onClose}

@@ -32,6 +32,9 @@ const whenFmt = new Intl.DateTimeFormat("ca-ES", {
   minute: "2-digit",
 });
 /** «dj. 1/10 · 17:00»: curt, perquè al mòbil hi càpiga l'hora sencera. */
+/** On es recorda que «Cal fer» s'ha plegat. */
+const FOLDED_KEY = "vindi.trainer.calfer.plegada";
+
 const when = (iso: string) => {
   const p = Object.fromEntries(whenFmt.formatToParts(new Date(iso)).map((x) => [x.type, x.value]));
   return `${p.weekday} ${p.day}/${p.month} · ${p.hour}:${p.minute}`;
@@ -73,11 +76,32 @@ export function CalFerTray({
   rejectTrialAction: PlainAction;
 }) {
   const total = inbox.toMark.length + inbox.toNote.length + inbox.trials.length;
-  // Plegada fins que se sap l'amplada: al mòbil no ha de fer cap salt.
+  /*
+   * Plegada fins que se sap l'amplada: al mòbil no ha de fer cap salt. A
+   * l'ordinador s'obre, llevat que qui la fa servir l'hagi plegada: això es
+   * recorda en aquest navegador. Tornar-la a obrir esborra la preferència i
+   * es torna al comportament de sempre.
+   */
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (window.matchMedia("(min-width: 768px)").matches) setOpen(true);
+    let folded = false;
+    try {
+      folded = window.localStorage.getItem(FOLDED_KEY) === "1";
+    } catch {
+      // Sense memòria: el comportament de sempre.
+    }
+    if (!folded && window.matchMedia("(min-width: 768px)").matches) setOpen(true);
   }, []);
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    try {
+      if (next) window.localStorage.removeItem(FOLDED_KEY);
+      else window.localStorage.setItem(FOLDED_KEY, "1");
+    } catch {
+      // Sense memòria: funciona igual, però no es recordarà.
+    }
+  };
   const [selected, setSelected] = useState<InboxReservation | null>(null);
   const [trial, setTrial] = useState<TrialHoldItem | null>(null);
 
@@ -102,7 +126,7 @@ export function CalFerTray({
         data-inbox-toggle
         aria-expanded={open}
         aria-controls="cal-fer-list"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         className={clsx(
           "flex min-h-11 w-full items-center gap-2 px-3 text-left",
           TAP_SURFACE,

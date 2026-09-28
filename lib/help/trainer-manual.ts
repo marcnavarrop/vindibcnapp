@@ -333,7 +333,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Al mòbil surt plegada en una sola fila amb el total i el desglossament («2 per marcar · 1 nota · 1 prova»), perquè l'agenda comenci just a sota; toca-la per obrir-la. A l'ordinador surt oberta, amb les tres llistes una al costat de l'altra. Tocant el nom de qualsevol element s'obre la mateixa fitxa que al calendari, amb els mateixos permisos.",
+          text: "Al mòbil surt plegada en una sola fila amb el total i el desglossament («2 per marcar · 1 nota · 1 prova»), perquè l'agenda comenci just a sota; toca-la per obrir-la. A l'ordinador surt oberta, amb les tres llistes una al costat de l'altra; si la pleges, es queda plegada en aquest navegador fins que la tornis a obrir. Tocant el nom de qualsevol element s'obre la mateixa fitxa que al calendari, amb els mateixos permisos.",
         },
         { t: "h", text: "El calendari" },
         {
@@ -350,7 +350,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Quan diverses coses coincideixen a la mateixa hora, la columna es reparteix: dues, meitat i meitat, amb la inicial i la icona del servei; tres o més, la teva es queda a la vista i la resta s'agrupa en «+N», que obre la llista d'aquella hora. Res no es talla: el que no hi cap es resumeix, i tot es pot tocar.",
+          text: "Si mai coincideixen dues coses teves a la mateixa hora, la columna es reparteix: dues, meitat i meitat, amb la inicial i la icona del servei; tres o més, se'n queda una a la vista i la resta s'agrupa en «+N», que obre la llista d'aquella hora. Res no es talla: el que no hi cap es resumeix, i tot es pot tocar. Els companys no entren en aquest repartiment: tenen el seu carril (vegeu «Companys», més avall).",
         },
         { t: "h", text: "Les senyals" },
         {
@@ -383,12 +383,28 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           t: "p",
           text: "Tocar un forat lliure obre la fulla de crear-hi una reserva (al mòbil puja des de baix; a l'ordinador, un plafó a la dreta), amb el dia i l'hora de la mitja hora on has tocat. S'explica al capítol «Crear i gestionar reserves». Per crear-ne una fora dels forats, «+ Nova reserva». Tocar una sessió obre la seva fitxa, amb el que hi puguis fer.",
         },
-        {
-          t: "p",
-          text: s.trainersSeeColleaguesReservations
-            ? "El selector «Companys» afegeix les reserves dels professionals que hi marquis, amb un cadenat: es miren i prou (llevat de les de la teva agenda, que pots cancel·lar)."
-            : "El centre té desactivada la vista de les reserves dels companys, així que al calendari només hi surten les teves.",
-        },
+        { t: "h", text: "Companys" },
+        ...(s.trainersSeeColleaguesReservations
+          ? ([
+              {
+                t: "p",
+                text: "Per defecte el calendari només ensenya el teu. Al selector «Companys» pots encendre un o més professionals, cadascun amb el seu color; el que encenguis es recorda en aquest navegador, i també quan l'apagues.",
+              },
+              {
+                t: "p",
+                text: "Amb algun company encès, cada dia té a la dreta un carril estret, i el que és teu es queda a l'esquerra sense que res ho tapi. Al carril, cada company té una franja del seu color: les seves sessions, plenes; els seus forats lliures, clars i amb la vora discontínua. Si coincideixen dos companys, les franges van una al costat de l'altra.",
+              },
+              {
+                t: "p",
+                text: "Tocar el carril obre el detall d'aquella estona: de cada company, les seves sessions (amb el cadenat, i tocant-les s'obre la fitxa en només lectura) i els seus forats lliures amb els serveis que hi caben. Si una d'aquestes sessions és d'un client TEU, no porta cadenat: la gestiones tu, com sempre. Els forats dels companys són per coordinar-vos; les reserves noves al teu calendari es creen sobre els teus forats.",
+              },
+            ] satisfies Block[])
+          : ([
+              {
+                t: "p",
+                text: "El centre té desactivada la vista de les reserves dels companys, així que al calendari només hi surten les teves.",
+              },
+            ] satisfies Block[])),
         { t: "h", text: "La llista" },
         {
           t: "p",
@@ -401,7 +417,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         {
           t: "note",
           text: s.trainersSeeColleaguesReservations
-            ? "Veus l'agenda de tot el centre per poder-te coordinar. Gestiones les reserves dels teus clients, i a més pots cancel·lar qualsevol reserva de la teva agenda encara que el client sigui d'un company. Les dels companys es miren i prou."
+            ? "La llista ensenya l'agenda de tot el centre, per poder-te coordinar; el calendari, només la teva i la dels companys que encenguis. Gestiones les reserves dels teus clients, i a més pots cancel·lar qualsevol reserva de la teva agenda encara que el client sigui d'un company. Les dels companys es miren i prou."
             : "Al calendari només hi surten les teves reserves: el centre té desactivada la vista de les dels companys.",
         },
       ],
@@ -541,7 +557,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "Només pots respondre les sol·licituds que són teves. Les dels companys les veus al calendari perquè la franja està ocupada, però els botons no hi són.",
+          text: "Només pots respondre les sol·licituds que són teves. Les dels companys que tinguis encesos a «Companys» surten al seu carril, i en tocar-les veus la fitxa de la prova, però els botons no hi són.",
         },
       ],
     },
