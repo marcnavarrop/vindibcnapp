@@ -230,7 +230,12 @@ try {
     const f = await resolveSeries(req("u-client-ana", JORDI, "fisioterapia", at("17:00")));
     const alt = f.occurrences[1]?.alternative?.trainerId;
     check(
-      f.occurrences[1]?.status === "alternativa_proposada" && (alt === RAUL || alt === NEUS),
+      // Qualsevol fisio que no sigui en Jordi: si la simulació té més
+      // professionals (p. ex. dades de proves carregades), pot ser un altre.
+      f.occurrences[1]?.status === "alternativa_proposada" &&
+        !!alt &&
+        alt !== JORDI &&
+        getStore().availability_rules.some((r) => r.trainer_id === alt && (r.service_types ?? []).includes("fisioterapia")),
       `fisio amb Jordi bloquejat → alternativa amb un altre fisio (${alt ?? "cap"})`,
     );
   }
