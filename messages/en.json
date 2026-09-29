@@ -479,7 +479,7 @@
   },
   "reservas": {
     "title": "Bookings",
-    "intro": "Book any free slot at the centre, according to the services on your passes. 1-to-1 and pairs sessions are with your trainer; small groups and physiotherapy, with any professional who offers them. From the booking dialog you can set it to repeat.",
+    "intro": "Book any free slot at the centre, according to the services on your passes. 1-to-1 and pairs sessions are with your trainer; small groups and physiotherapy, with any professional who offers them. From the confirmation you can repeat it every week.",
     "noBonos": "You don't have any active pass with sessions left, so there's nothing to book for now. Talk to the centre to get one.",
     "noTrainer": {
       "title": "You don't have an assigned trainer yet",

@@ -479,7 +479,7 @@
   },
   "reservas": {
     "title": "Reserves",
-    "intro": "Reserva en qualsevol franja lliure del centre, segons els serveis dels teus bons. Les sessions individuals i en parella, amb el teu entrenador; els grups i la fisioteràpia, amb qualsevol professional que en faci. Des del diàleg de reserva pots repetir-la en bucle.",
+    "intro": "Reserva en qualsevol franja lliure del centre, segons els serveis dels teus bons. Les sessions individuals i en parella, amb el teu entrenador; els grups i la fisioteràpia, amb qualsevol professional que en faci. Des de la confirmació la pots repetir cada setmana.",
     "noBonos": "No tens cap bo actiu amb sessions disponibles, així que de moment no hi ha res reservable. Parla amb el centre per adquirir-ne un.",
     "noTrainer": {
       "title": "Encara no tens entrenador assignat",

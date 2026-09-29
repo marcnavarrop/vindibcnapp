@@ -139,7 +139,9 @@ export function MyBookingsHeader({
               <li
                 key={r.id}
                 className={clsx(
-                  "flex items-center gap-3 rounded-xl border px-3 py-2",
+                  // A l'escriptori la columna és estreta: «Cancel·lar» baixa a una
+                  // segona línia perquè la data es llegeixi sencera.
+                  "flex items-center gap-3 rounded-xl border px-3 py-2 lg:flex-wrap lg:gap-y-0",
                   i === 0 ? "border-green-200 bg-green-50" : "border-brand-border bg-white",
                 )}
               >
@@ -148,13 +150,14 @@ export function MyBookingsHeader({
                   onClick={() => {
                     setOwn({ r, confirm: false });
                   }}
-                  className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left ${TAP}`}
+                  className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left lg:basis-full ${TAP}`}
                 >
                   <Avatar
                     name={trainerName(r.trainerId)}
                     url={data.trainers.find((x) => x.id === r.trainerId)?.avatarUrl ?? null}
                     size={32}
                     color={colorOfPro(palette, r.trainerId)}
+                    className="lg:hidden"
                   />
                   <span className="min-w-0">
                     {i === 0 && (
@@ -176,12 +179,12 @@ export function MyBookingsHeader({
                     onClick={() => {
                         setOwn({ r, confirm: true });
                     }}
-                    className={`min-h-11 shrink-0 rounded-lg px-3 text-sm font-bold text-error hover:bg-error/10 active:bg-error/20 ${TAP}`}
+                    className={`min-h-11 shrink-0 rounded-lg px-3 text-sm font-bold text-error hover:bg-error/10 active:bg-error/20 lg:ml-auto ${TAP}`}
                   >
                     {t("cancel")}
                   </button>
                 ) : (
-                  <span className="max-w-[6rem] shrink-0 text-right text-[11px] leading-tight text-brand-muted">
+                  <span className="max-w-[6rem] shrink-0 text-right text-[11px] leading-tight text-brand-muted lg:ml-auto lg:max-w-none lg:pb-1">
                     {t("cantCancel")}
                   </span>
                 )}
@@ -439,7 +442,7 @@ export function ReservasList({
                     aria-label={`${formatDayHeading(`${d}T12:00:00Z`, locale)} · ${t("hours", { count: n })}`}
                     onClick={() => setPickedDay(d)}
                     className={clsx(
-                      "flex h-16 w-[3.25rem] shrink-0 flex-col items-center justify-center rounded-xl border lg:w-auto",
+                      "flex h-16 w-[3.25rem] shrink-0 flex-col items-center justify-center rounded-xl border lg:h-14 lg:w-auto lg:rounded-lg",
                       TAP,
                       on
                         ? "border-brand-purple bg-brand-purple text-white"
@@ -448,12 +451,15 @@ export function ReservasList({
                           : "border-brand-border bg-brand-bg text-brand-muted",
                     )}
                   >
-                    <span className="text-[11px] font-bold uppercase">
+                    <span className="text-[11px] font-bold uppercase lg:text-[9px]">
                       {d === today ? t("today") : dayNames[weekdayOfDay(d)]}
                     </span>
-                    <span className="text-lg leading-tight font-bold">{Number(d.slice(8))}</span>
+                    <span className="text-lg leading-tight font-bold lg:text-base">{Number(d.slice(8))}</span>
                     <span className={clsx("text-[10px] font-bold", on ? "text-white/85" : n > 0 ? "text-green-700" : "")}>
-                      {n > 0 ? t("hoursShort", { count: n }) : "—"}
+                      {/* A l'escriptori la cel·la és estreta: només el número (el
+                          text sencer és a l'aria-label). */}
+                      <span className="lg:hidden">{n > 0 ? t("hoursShort", { count: n }) : "—"}</span>
+                      <span className="hidden lg:inline" aria-hidden>{n > 0 ? n : "—"}</span>
                     </span>
                   </button>
                 );

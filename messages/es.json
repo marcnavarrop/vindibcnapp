@@ -479,7 +479,7 @@
   },
   "reservas": {
     "title": "Reservas",
-    "intro": "Reserva en cualquier franja libre del centro, según los servicios de tus bonos. Las sesiones individuales y en pareja, con tu entrenador; los grupos y la fisioterapia, con cualquier profesional que los haga. Desde el diálogo de reserva puedes repetirla en bucle.",
+    "intro": "Reserva en cualquier franja libre del centro, según los servicios de tus bonos. Las sesiones individuales y en pareja, con tu entrenador; los grupos y la fisioterapia, con cualquier profesional que los haga. Desde la confirmación puedes repetirla cada semana.",
     "noBonos": "No tienes ningún bono activo con sesiones disponibles, así que de momento no hay nada reservable. Habla con el centro para adquirir uno.",
     "noTrainer": {
       "title": "Aún no tienes entrenador asignado",

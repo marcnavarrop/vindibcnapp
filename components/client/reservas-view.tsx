@@ -98,7 +98,7 @@ export function ClientReservasView({
 
   return (
     <div
-      className="flex flex-col gap-6 lg:grid lg:grid-cols-[18rem_17rem_minmax(0,1fr)] lg:items-start lg:gap-x-8"
+      className="flex flex-col gap-6 lg:grid lg:grid-cols-[17rem_19rem_minmax(0,1fr)] lg:items-start lg:gap-x-6"
       data-testid="reservas-layout"
     >
       <div className="flex flex-col gap-6 lg:col-start-1 lg:row-span-3 lg:row-start-1">
