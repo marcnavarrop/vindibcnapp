@@ -545,7 +545,22 @@
       "full": "Full",
       "queue": "Waitlist",
       "onQueue": "You're on the waitlist",
-      "queueOpen": "View"
+      "queueOpen": "View",
+      "months": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
+      "shortDate": "{weekday} {day} {month}"
     },
     "own": {
       "withYou": "With you",

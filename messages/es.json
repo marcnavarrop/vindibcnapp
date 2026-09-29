@@ -545,7 +545,22 @@
       "full": "Lleno",
       "queue": "Cola",
       "onQueue": "Estás en la cola",
-      "queueOpen": "Ver"
+      "queueOpen": "Ver",
+      "months": [
+        "ene.",
+        "feb.",
+        "mar.",
+        "abr.",
+        "may.",
+        "jun.",
+        "jul.",
+        "ago.",
+        "sept.",
+        "oct.",
+        "nov.",
+        "dic."
+      ],
+      "shortDate": "{weekday} {day} {month}"
     },
     "own": {
       "withYou": "Contigo están",

@@ -33,6 +33,7 @@ import type { SeriesReviewState } from "@/components/forms/series-wizard";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { ServiceType } from "@/types/database";
 import type { Locale } from "@/lib/i18n/config";
+import { centerDateStr } from "@/lib/center-time";
 
 /**
  * Reserves del client, versió llista (C2 · direcció A amb la capçalera de B).
@@ -61,6 +62,32 @@ export const STRIP_DAYS = 21;
 const UPCOMING_SHOWN = 3;
 
 const firstName = (name: string) => name.split(" ")[0];
+
+/**
+ * «Dc 30 de set. · 10:00», en hora del centre. Curt a propòsit: al mòbil la
+ * versió llarga («Dimecres, 30 de setembre») no hi cabia i es tallava.
+ *
+ * El dia i el mes surten del DICCIONARI i no d'`Intl`: aquesta línia es pinta
+ * al servidor i al navegador, i el format curt d'`Intl` no és igual als dos
+ * motors (en anglès, Node escriu «Fri 2 Oct» i Chrome «Fri, 2 Oct»). Aquella
+ * coma de diferència ja és un error d'hidratació #418.
+ */
+function useShortWhen() {
+  const t = useTranslations("reservas.list");
+  const tr = useTranslations("reservas");
+  const locale = useLocale() as Locale;
+  const days = tr.raw("days") as string[];
+  const months = t.raw("months") as string[];
+  return (iso: string) => {
+    const day = centerDateStr(new Date(iso));
+    const date = t("shortDate", {
+      weekday: days[weekdayOfDay(day)],
+      day: Number(day.slice(8)),
+      month: months[Number(day.slice(5, 7)) - 1],
+    });
+    return `${date} · ${formatTime(iso, locale)}`;
+  };
+}
 
 type Common = {
   data: ClientCenterData;
@@ -92,8 +119,8 @@ export function MyBookingsHeader({
   const t = useTranslations("reservas.list");
   const tl = useTranslations("labels.service");
   const tr = useTranslations("reservas");
-  const locale = useLocale() as Locale;
   const nowMs = new Date(nowISO).getTime();
+  const shortWhen = useShortWhen();
   const [all, setAll] = useState(false);
   const [own, setOwn] = useState<{ r: SlotReservation; confirm: boolean } | null>(null);
   const upcoming = useMemo(() => upcomingOwn(data.reservations, nowMs), [data.reservations, nowMs]);
@@ -115,7 +142,6 @@ export function MyBookingsHeader({
         <ul className="flex flex-col gap-2" data-testid="upcoming">
           {shown.map((r, i) => {
             const cancellable = canCancelAt(r.scheduledAt, minCancellationHours, nowMs);
-            const day = formatDayHeading(r.scheduledAt, locale);
             return (
               <li
                 key={r.id}
@@ -145,7 +171,7 @@ export function MyBookingsHeader({
                       </span>
                     )}
                     <span className="block truncate text-sm font-bold text-brand-dark first-letter:uppercase">
-                      {day} · {formatTime(r.scheduledAt, locale)}
+                      {shortWhen(r.scheduledAt)}
                     </span>
                     <span className="block truncate text-xs text-brand-muted">
                       {tl(r.serviceType)} · {firstName(trainerName(r.trainerId))}
@@ -286,6 +312,7 @@ export function ReservasList({
   const t = useTranslations("reservas.list");
   const tr = useTranslations("reservas");
   const tl = useTranslations("labels.service");
+  const tb = useTranslations("reservas.serviceBadge");
   const locale = useLocale() as Locale;
   const dayNames = tr.raw("days") as string[];
   const nowMs = new Date(nowISO).getTime();
@@ -388,7 +415,7 @@ export function ReservasList({
               )}
             >
               <span aria-hidden>{SVC_ICON[s]}</span>
-              {tl(s)}
+              <span title={tl(s)}>{tb(s)}</span>
               <span className={clsx("font-normal", s === service ? "text-white/80" : "text-brand-muted")}>
                 · {data.bonoSessions[s] ?? 0}
               </span>
@@ -426,6 +453,7 @@ export function ReservasList({
                     key={d}
                     type="button"
                     aria-pressed={on}
+                    data-day={d}
                     aria-label={`${formatDayHeading(`${d}T12:00:00Z`, locale)} · ${t("hours", { count: n })}`}
                     onClick={() => setPickedDay(d)}
                     className={clsx(
