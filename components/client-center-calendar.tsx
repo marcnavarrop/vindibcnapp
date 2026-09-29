@@ -42,6 +42,7 @@ import {
 } from "@/app/(client)/client/reservas/waitlist-actions";
 import { getOccupancyStatus } from "@/lib/group-occupancy";
 import { freeServicesAt, occupancyFromSessions } from "@/lib/free-slots";
+import { clientBookingScope, requiresAssignedTrainer } from "@/lib/booking-scope";
 import { canCancelAt } from "@/lib/cancellation";
 
 /* Els noms dels dies i les abreviatures de servei viuen al diccionari
@@ -342,6 +343,17 @@ export function ClientCenterCalendar({
   // Servicios que puede reservar (bonos), respetando el filtro de servicio.
   const canBook = (s: ServiceType) =>
     bonoTypes.includes(s) && (serviceFilter === "all" || serviceFilter === s);
+  // I amb qui: individual i parelles, només amb l'entrenador assignat; grup i
+  // fisio, amb qualsevol que els ofereixi. La mateixa regla que el servidor
+  // (`lib/booking-scope.ts`), perquè la graella no ofereixi el que després
+  // es rebutjaria.
+  const canBookWith = (s: ServiceType, trainerId: string) =>
+    canBook(s) &&
+    clientBookingScope({ serviceType: s, trainerId, assignedTrainerId }) === "ok";
+  // Té bons d'individual o parelles però cap entrenador: la graella no li'n
+  // pot ensenyar cap, i cal dir-li per què en comptes d'un calendari buit.
+  const lacksTrainer =
+    !assignedTrainerId && bonoTypes.some((s) => requiresAssignedTrainer(s));
   const showTrainer = (id: string | null) =>
     trainerFilter === "all" || trainerFilter === id;
 
@@ -432,7 +444,10 @@ export function ClientCenterCalendar({
         const count = groupHere.length;
         const hasFree = count < GROUP_CAPACITY;
         const pot =
-          inFuture && inHours && canBook("grupo_reducido") && !clientAlreadyBookedThisHour;
+          inFuture &&
+          inHours &&
+          canBookWith("grupo_reducido", t.id) &&
+          !clientAlreadyBookedThisHour;
         items.push({
           kind: "group",
           trainerId: t.id,
@@ -451,7 +466,7 @@ export function ClientCenterCalendar({
       // para el que el cliente tenga bono.
       if (inFuture && inHours && !clientAlreadyBookedThisHour) {
         for (const s of SERVICE_TYPES) {
-          if (offered.has(s) && canBook(s))
+          if (offered.has(s) && canBookWith(s, t.id))
             items.push({
               kind: "free",
               trainerId: t.id,
@@ -503,9 +518,23 @@ export function ClientCenterCalendar({
     <div>
       {bonoTypes.length === 0 && (
         <p className="mb-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-          No tens cap bo actiu amb sessions disponibles, així que de moment no hi
-          ha res reservable. Parla amb el centre per adquirir-ne un.
+          {t("noBonos")}
         </p>
+      )}
+
+      {lacksTrainer && (
+        <div
+          role="status"
+          data-testid="no-assigned-trainer"
+          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+        >
+          <p className="font-bold">{t("noTrainer.title")}</p>
+          <p className="mt-0.5">
+            {bonoTypes.some((s) => !requiresAssignedTrainer(s))
+              ? t("noTrainer.bodyOthers")
+              : t("noTrainer.bodyOnly")}
+          </p>
+        </div>
       )}
 
       {filteredTrainerOffersNothing && (

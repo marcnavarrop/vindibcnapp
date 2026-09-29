@@ -1034,6 +1034,55 @@ export function buildClientManual(
         {
           t: "h",
           text: T({
+            ca: "Amb qui pots reservar",
+            es: "Con quién puedes reservar",
+            en: "Who you can book with",
+          }),
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              T({
+                ca: "EP Individual i EP Parelles",
+                es: "EP Individual y EP Parejas",
+                en: "1-to-1 PT and PT for pairs",
+              }),
+              T({
+                ca: "Només amb el teu entrenador, el que el centre t'ha assignat. Les franges dels altres professionals per a aquests serveis no et surten, i no es poden triar.",
+                es: "Solo con tu entrenador, el que el centro te ha asignado. Las franjas de los demás profesionales para estos servicios no te salen, y no se pueden elegir.",
+                en: "Only with your trainer, the one the centre has assigned to you. Other professionals' slots for these services don't appear, and can't be chosen.",
+              }),
+            ],
+            [
+              T({ ca: "Grup reduït", es: "Grupo reducido", en: "Small group" }),
+              T({
+                ca: "Amb qualsevol professional que faci grups.",
+                es: "Con cualquier profesional que haga grupos.",
+                en: "With any professional who runs groups.",
+              }),
+            ],
+            [
+              T({ ca: "Fisioteràpia", es: "Fisioterapia", en: "Physiotherapy" }),
+              T({
+                ca: "Amb qualsevol professional del centre que en faci.",
+                es: "Con cualquier profesional del centro que la haga.",
+                en: "With any of the centre's professionals who offer it.",
+              }),
+            ],
+          ],
+        },
+        {
+          t: "note",
+          text: T({
+            ca: "Si encara no tens entrenador assignat, l'app t'ho diu a dalt del calendari: fins que el centre no te n'assigni un, no pots reservar sessions individuals ni en parella. Parla amb el centre perquè te l'assignin. Els grups i la fisioteràpia sí que els pots reservar.",
+            es: "Si aún no tienes entrenador asignado, la app te lo dice arriba del calendario: hasta que el centro no te asigne uno, no puedes reservar sesiones individuales ni en pareja. Habla con el centro para que te lo asignen. Los grupos y la fisioterapia sí puedes reservarlos.",
+            en: "If you don't have an assigned trainer yet, the app tells you at the top of the calendar: until the centre assigns you one, you can't book 1-to-1 or pairs sessions. Talk to the centre so they can assign you one. You can still book small groups and physiotherapy.",
+          }),
+        },
+        {
+          t: "h",
+          text: T({
             ca: "Què vol dir cada casella",
             es: "Qué quiere decir cada casilla",
             en: "What each cell means",
@@ -1108,6 +1157,11 @@ export function buildClientManual(
               ca: "Aquell professional no ofereix cap dels serveis dels teus bons. Si has filtrat per ell, l'app t'ho avisa i t'ofereix tornar a veure'ls tots.",
               es: "Ese profesional no ofrece ninguno de los servicios de tus bonos. Si has filtrado por él, la app te avisa y te ofrece volver a verlos todos.",
               en: "That professional doesn't offer any of the services your passes cover. If you've filtered by them, the app warns you and offers to show everyone again.",
+            }),
+            T({
+              ca: "És una sessió individual o en parella d'un professional que no és el teu entrenador: aquestes només les pots fer amb el teu. Si no en tens cap d'assignat, no et sortirà cap franja d'aquests serveis fins que el centre te n'assigni un.",
+              es: "Es una sesión individual o en pareja de un profesional que no es tu entrenador: esas solo puedes hacerlas con el tuyo. Si no tienes ninguno asignado, no te saldrá ninguna franja de estos servicios hasta que el centro te asigne uno.",
+              en: "It's a 1-to-1 or pairs session with a professional who isn't your trainer: those you can only do with yours. If you don't have one assigned, no slots for these services will appear until the centre assigns you one.",
             }),
             T({
               ca: "Ja tens una reserva confirmada a aquella hora: no se te'n proposa una altra al mateix moment.",
@@ -1339,9 +1393,9 @@ export function buildClientManual(
                 en: "Suggest alternatives automatically",
               }),
               T({
-                ca: "Per a les dates ocupades et suggerim la millor alternativa possible (una altra hora o un altre professional) i decideixes tu si l'acceptes, una per una.",
-                es: "Para las fechas ocupadas te sugerimos la mejor alternativa posible (otra hora u otro profesional) y decides tú si la aceptas, una por una.",
-                en: "For dates that are taken we suggest the best alternative we can (another hour or another professional) and you decide whether to accept, one by one.",
+                ca: "Per a les dates ocupades et suggerim la millor alternativa possible i decideixes tu si l'acceptes, una per una. En individual i en parella és una altra hora el mateix dia amb el teu entrenador; en fisioteràpia també pot ser la mateixa hora amb un altre professional.",
+                es: "Para las fechas ocupadas te sugerimos la mejor alternativa posible y decides tú si la aceptas, una por una. En individual y en pareja es otra hora el mismo día con tu entrenador; en fisioterapia también puede ser la misma hora con otro profesional.",
+                en: "For dates that are taken we suggest the best alternative we can and you decide whether to accept, one by one. For 1-to-1 and pairs it's another hour the same day with your trainer; for physiotherapy it can also be the same hour with another professional.",
               }),
             ],
             ...(s.waitlistEnabled
@@ -1475,6 +1529,18 @@ export function buildClientManual(
             en: "If the centre has to call off one of your series sessions, the series carries on with the rest. And if your series extends itself with your subscription, that session isn't taken off the number you asked for.",
           }),
         },
+        ...(s.subscriptionsEnabled
+          ? [
+              {
+                t: "note" as const,
+                text: T({
+                  ca: "Si una sèrie individual o en parella s'allargava sola i el centre et canvia d'entrenador, deixa d'allargar-se: mai no et reservarem res amb l'entrenador d'abans. Les sessions que ja tenies reservades es mantenen, i a «Les meves sèries» t'ho posa.",
+                  es: "Si una serie individual o en pareja se alargaba sola y el centro te cambia de entrenador, deja de alargarse: nunca te reservaremos nada con el entrenador de antes. Las sesiones que ya tenías reservadas se mantienen, y en «Mis series» te lo pone.",
+                  en: "If a 1-to-1 or pairs series was extending itself and the centre changes your trainer, it stops extending: we'll never book you anything with your previous trainer. The sessions you'd already booked stay, and «My series» says so.",
+                }),
+              },
+            ]
+          : []),
         {
           t: "h",
           text: T({
@@ -2385,9 +2451,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Gairebé sempre és una d'aquestes tres: no tens cap bo actiu amb sessions disponibles, el bo que tens és d'un altre servei del que estàs mirant, o tens un filtre de professional posat que amaga la resta. Comprova-ho per aquest ordre; l'app t'avisa a dalt de la pantalla en els dos primers casos.",
-            es: "Casi siempre es una de estas tres: no tienes ningún bono activo con sesiones disponibles, el bono que tienes es de otro servicio del que estás mirando, o tienes puesto un filtro de profesional que esconde al resto. Compruébalo por este orden; la app te avisa arriba de la pantalla en los dos primeros casos.",
-            en: "It's nearly always one of these three: you have no active pass with sessions available, the pass you have is for a different service from the one you're looking at, or you have a professional filter set that's hiding everyone else. Check in that order; the app warns you at the top of the screen in the first two cases.",
+            ca: "Gairebé sempre és una d'aquestes quatre: no tens cap bo actiu amb sessions disponibles, el bo que tens és d'un altre servei del que estàs mirant, el bo és d'individual o parelles i encara no tens entrenador assignat, o tens un filtre de professional posat que amaga la resta. Comprova-ho per aquest ordre; l'app t'avisa a dalt de la pantalla quan no tens bo i quan no tens entrenador.",
+            es: "Casi siempre es una de estas cuatro: no tienes ningún bono activo con sesiones disponibles, el bono que tienes es de otro servicio del que estás mirando, el bono es de individual o pareja y aún no tienes entrenador asignado, o tienes puesto un filtro de profesional que esconde al resto. Compruébalo por este orden; la app te avisa arriba de la pantalla cuando no tienes bono y cuando no tienes entrenador.",
+            en: "It's nearly always one of these four: you have no active pass with sessions available, the pass you have is for a different service from the one you're looking at, the pass is for 1-to-1 or pairs and you don't have an assigned trainer yet, or you have a professional filter set that's hiding everyone else. Check in that order; the app warns you at the top of the screen when you have no pass and when you have no trainer.",
           }),
         },
         {

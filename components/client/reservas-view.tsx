@@ -186,6 +186,14 @@ function SeriesList({
             >
               {t("cancel")}
             </button>
+            {s.stoppedTrainerChanged && (
+              <p
+                data-testid="series-stopped"
+                className="w-full rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900"
+              >
+                {t("stoppedTrainerChanged")}
+              </p>
+            )}
           </div>
         ))}
       </div>

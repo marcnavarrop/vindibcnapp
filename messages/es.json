@@ -479,7 +479,13 @@
   },
   "reservas": {
     "title": "Reservas",
-    "intro": "Reserva en cualquier franja libre del centro. Ves las disponibilidades de todos los profesionales según los servicios de tus bonos. Desde el diálogo de reserva puedes repetirla en bucle.",
+    "intro": "Reserva en cualquier franja libre del centro, según los servicios de tus bonos. Las sesiones individuales y en pareja, con tu entrenador; los grupos y la fisioterapia, con cualquier profesional que los haga. Desde el diálogo de reserva puedes repetirla en bucle.",
+    "noBonos": "No tienes ningún bono activo con sesiones disponibles, así que de momento no hay nada reservable. Habla con el centro para adquirir uno.",
+    "noTrainer": {
+      "title": "Aún no tienes entrenador asignado",
+      "bodyOthers": "Hasta que el centro no te asigne uno, no puedes reservar sesiones individuales ni en pareja. Habla con el centro para que te lo asignen. Los grupos y la fisioterapia sí puedes reservarlos.",
+      "bodyOnly": "Hasta que el centro no te asigne uno, no puedes reservar sesiones individuales ni en pareja. Habla con el centro para que te lo asignen."
+    },
     "day": "Día",
     "week": "Semana",
     "all": "Todos",
@@ -557,7 +563,8 @@
       "keptMany": "{count} sesiones se han quedado porque ya estaban demasiado cerca para cancelarlas.",
       "allReturned": "Las sesiones han vuelto a tu bono.",
       "close": "Cerrar",
-      "keepIt": "Dejarlo estar"
+      "keepIt": "Dejarlo estar",
+      "stoppedTrainerChanged": "Esta serie ya no se alargará: el centro te ha cambiado de entrenador. Las sesiones que ya tienes reservadas se mantienen."
     },
     "errors": {
       "unauthorized": "No autorizado.",
@@ -572,7 +579,9 @@
       "noLimit": "Di hasta cuándo se repite o cuántas sesiones quieres.",
       "nothingToConfirm": "No hay nada que confirmar.",
       "failed": "No se ha podido completar la operación. Inténtalo de nuevo.",
-      "tooLate": "Ya no se puede cancelar esta reserva (hay que hacerlo con al menos {hours} h de antelación). Contacta con el centro si tienes una urgencia."
+      "tooLate": "Ya no se puede cancelar esta reserva (hay que hacerlo con al menos {hours} h de antelación). Contacta con el centro si tienes una urgencia.",
+      "notYourTrainer": "Las sesiones individuales y en pareja solo puedes reservarlas con tu entrenador.",
+      "noAssignedTrainer": "Aún no tienes entrenador asignado. Habla con el centro para que te asignen uno y poder reservar sesiones individuales o en pareja."
     },
     "days": [
       "Lu",

@@ -13,6 +13,7 @@ import { canRepeatInSeries } from "@/lib/series-rules";
 import {
   applyOccurrences,
   resolveSeries,
+  stopsForTrainerChange,
   type SeriesRequest,
 } from "@/lib/data/booking-series";
 import type { Subscription } from "@/lib/data/subscriptions";
@@ -51,6 +52,8 @@ export type SeriesToExtend = {
   serviceType: ServiceType;
   frequency: BookingFrequency;
   baseTrainerId: string | null;
+  /** L'entrenador assignat ARA al client (`lib/booking-scope.ts`). */
+  assignedTrainerId: string | null;
   endDate: string | null;
   occurrenceCount: number | null;
   bookOnlyAvailable: boolean;
@@ -68,7 +71,7 @@ export type ExtensionOutcome = {
   waitlisted: number;
   failed: number;
   /** Per què no s'ha allargat, si no s'ha allargat. */
-  skipped?: "limitReached" | "noPattern" | "noTrainer";
+  skipped?: "limitReached" | "noPattern" | "noTrainer" | "trainerChanged";
 };
 
 /**
@@ -153,6 +156,17 @@ async function extendOne(s: SeriesToExtend): Promise<ExtensionOutcome> {
   const anchor = s.lastAt ?? s.firstAt;
   if (!anchor) return { ...empty, skipped: "noPattern" };
   if (!s.baseTrainerId) return { ...empty, skipped: "noTrainer" };
+  // El centre ha canviat l'entrenador del client: en individual i parelles la
+  // sèrie deixa d'allargar-se, i MAI es reserva amb l'anterior (decisió de
+  // Marc). Les sessions ja reservades es queden; «Les teves sèries» ho explica
+  // amb la mateixa funció (`stopsForTrainerChange`).
+  if (
+    stopsForTrainerChange(
+      { auto_extend: true, service_type: s.serviceType, base_trainer_id: s.baseTrainerId },
+      s.assignedTrainerId,
+    )
+  )
+    return { ...empty, skipped: "trainerChanged" };
 
   const req: SeriesRequest = {
     profileId: s.profileId,
@@ -244,9 +258,10 @@ async function listSeriesToExtend(
 ): Promise<SeriesToExtend[]> {
   if (USE_MOCK) {
     const store = getStore();
-    const profileId =
-      store.clients.find((c) => c.id === clientId)?.profile_id ?? null;
+    const client = store.clients.find((c) => c.id === clientId);
+    const profileId = client?.profile_id ?? null;
     if (!profileId) return [];
+    const assignedTrainerId = client?.assigned_trainer_id ?? null;
 
     return store.booking_series
       .filter(
@@ -270,6 +285,7 @@ async function listSeriesToExtend(
           serviceType: s.service_type,
           frequency: s.frequency,
           baseTrainerId: s.base_trainer_id,
+          assignedTrainerId,
           endDate: s.end_date,
           occurrenceCount: s.occurrence_count,
           bookOnlyAvailable: s.book_only_available,
@@ -291,7 +307,7 @@ async function listSeriesToExtend(
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("clients")
-    .select("profile_id")
+    .select("profile_id, assigned_trainer_id")
     .eq("id", clientId)
     .maybeSingle();
   if (!client?.profile_id) return [];
@@ -333,6 +349,7 @@ async function listSeriesToExtend(
       serviceType: s.service_type,
       frequency: s.frequency,
       baseTrainerId: s.base_trainer_id,
+      assignedTrainerId: client.assigned_trainer_id ?? null,
       endDate: s.end_date,
       occurrenceCount: s.occurrence_count,
       bookOnlyAvailable: s.book_only_available,

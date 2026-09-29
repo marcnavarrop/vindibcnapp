@@ -479,7 +479,13 @@
   },
   "reservas": {
     "title": "Bookings",
-    "intro": "Book any free slot at the centre. You see every professional's availability for the services your passes cover. From the booking dialog you can set it to repeat.",
+    "intro": "Book any free slot at the centre, according to the services on your passes. 1-to-1 and pairs sessions are with your trainer; small groups and physiotherapy, with any professional who offers them. From the booking dialog you can set it to repeat.",
+    "noBonos": "You don't have any active pass with sessions left, so there's nothing to book for now. Talk to the centre to get one.",
+    "noTrainer": {
+      "title": "You don't have an assigned trainer yet",
+      "bodyOthers": "Until the centre assigns you one, you can't book 1-to-1 or pairs sessions. Talk to the centre so they can assign you one. You can still book small groups and physiotherapy.",
+      "bodyOnly": "Until the centre assigns you one, you can't book 1-to-1 or pairs sessions. Talk to the centre so they can assign you one."
+    },
     "day": "Day",
     "week": "Week",
     "all": "All",
@@ -557,7 +563,8 @@
       "keptMany": "{count} sessions stayed because they were already too close to cancel.",
       "allReturned": "The sessions are back in your package.",
       "close": "Close",
-      "keepIt": "Leave it"
+      "keepIt": "Leave it",
+      "stoppedTrainerChanged": "This series won't extend any more: the centre has changed your trainer. The sessions you've already booked stay as they are."
     },
     "errors": {
       "unauthorized": "Not authorised.",
@@ -572,7 +579,9 @@
       "noLimit": "Tell us until when it repeats, or how many sessions you want.",
       "nothingToConfirm": "There's nothing to confirm.",
       "failed": "We couldn't complete that. Please try again.",
-      "tooLate": "This booking can no longer be cancelled (it needs at least {hours} h notice). Contact the centre if it's urgent."
+      "tooLate": "This booking can no longer be cancelled (it needs at least {hours} h notice). Contact the centre if it's urgent.",
+      "notYourTrainer": "You can only book 1-to-1 and pairs sessions with your trainer.",
+      "noAssignedTrainer": "You don't have an assigned trainer yet. Talk to the centre so they can assign you one and you can book 1-to-1 or pairs sessions."
     },
     "days": [
       "Mon",

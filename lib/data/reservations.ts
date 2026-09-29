@@ -46,6 +46,7 @@ import type {
   CancelReservationResult,
 } from "@/types/database";
 import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
+import { assertClientBookingScope } from "@/lib/booking-scope";
 
 /**
  * Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio.
@@ -1438,6 +1439,12 @@ export async function createClientReservation(
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === input.profileId);
     if (!client) throw new Error("Client no trobat.");
+    // Amb qui pot reservar (individual i parelles, només amb l'assignat).
+    assertClientBookingScope({
+      serviceType,
+      trainerId,
+      assignedTrainerId: client.assigned_trainer_id ?? null,
+    });
     const bono = store.bonos
       .filter(
         (b) =>
@@ -1522,10 +1529,19 @@ export async function createClientReservation(
   // 1. Cliente.
   const { data: client, error: cErr } = await admin
     .from("clients")
-    .select("id")
+    .select("id, assigned_trainer_id")
     .eq("profile_id", input.profileId)
     .single();
   if (cErr || !client) throw new Error("Client no trobat.");
+
+  // 1a. Amb qui pot reservar: individual i parelles, només amb l'entrenador
+  //     assignat (`lib/booking-scope.ts`). Abans de tot, perquè no depèn de
+  //     res més i el formulari porta el professional escrit pel navegador.
+  assertClientBookingScope({
+    serviceType,
+    trainerId,
+    assignedTrainerId: client.assigned_trainer_id ?? null,
+  });
 
   // 1b. El client no pot tenir dues reserves confirmades a la mateixa hora.
   const { data: clientConflict } = await admin

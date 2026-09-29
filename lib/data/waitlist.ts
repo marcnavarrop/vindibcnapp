@@ -17,6 +17,11 @@ import { sessionEndIso } from "@/lib/availability-slots";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerDateStr, centerLocalToInstant } from "@/lib/center-time";
+import {
+  assertClientBookingScope,
+  clientBookingScope,
+  requiresAssignedTrainer,
+} from "@/lib/booking-scope";
 import type { BonoStatus, ServiceType, WaitlistStatus } from "@/types/database";
 
 /**
@@ -114,6 +119,8 @@ export async function addToWaitlist(input: WaitlistEntryInput): Promise<string> 
  *   4. La franja ha d'estar realment plena; si hi ha lloc, el que toca és
  *      reservar-la i no fer cua.
  *   5. Ni dues vegades a la mateixa cua ni tenir-hi ja una reserva.
+ *   6. Individual i parelles, només amb l'entrenador assignat
+ *      (`lib/booking-scope.ts`).
  */
 export async function joinWaitlist(input: {
   profileId: string;
@@ -136,6 +143,11 @@ export async function joinWaitlist(input: {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === input.profileId);
     if (!client) throw new Error("No tens fitxa de client.");
+    assertClientBookingScope({
+      serviceType: input.serviceType,
+      trainerId: input.trainerId,
+      assignedTrainerId: client.assigned_trainer_id ?? null,
+    });
 
     const bono = store.bonos.find(
       (b) =>
@@ -192,10 +204,18 @@ export async function joinWaitlist(input: {
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("clients")
-    .select("id")
+    .select("id, assigned_trainer_id")
     .eq("profile_id", input.profileId)
     .maybeSingle();
   if (!client) throw new Error("No tens fitxa de client.");
+  // Individual i parelles, només amb l'entrenador assignat
+  // (`lib/booking-scope.ts`): fer cua amb un altre seria esperar una plaça que
+  // després la promoció no li podria donar.
+  assertClientBookingScope({
+    serviceType: input.serviceType,
+    trainerId: input.trainerId,
+    assignedTrainerId: client.assigned_trainer_id ?? null,
+  });
 
   const { data: bonos } = await admin
     .from("bonos")
@@ -363,9 +383,36 @@ export async function promoteFromWaitlist(freed: {
     if (!slotHasRoom(occupied, freed.serviceType))
       return { promoted: false, reason: "La franja segueix plena." };
 
+    // Amb qui pot reservar cada candidat (`lib/booking-scope.ts`): en individual
+    // i parelles, només entra si la franja és del SEU entrenador. Es torna a
+    // mirar aquí, i no només en apuntar-s'hi, per tres motius: les esperes
+    // d'abans de la regla, les de «m'és igual qui», i que el centre li pot
+    // haver canviat l'entrenador mentre esperava. Una espera que no passa
+    // aquest filtre no es toca: es queda a la cua i caduca sola.
+    const assignedOf = new Map<string, string | null>();
+    if (candidates.some((c) => requiresAssignedTrainer(c.service_type))) {
+      const { data: cls, error: clErr } = await admin
+        .from("clients")
+        .select("id, assigned_trainer_id")
+        .in("id", [...new Set(candidates.map((c) => c.client_id))]);
+      // Sense saber-ho no es promociona ningú: millor una plaça lliure que una
+      // reserva amb qui no toca.
+      if (clErr) return { promoted: false, reason: "Error en la promoció." };
+      for (const cl of cls ?? []) assignedOf.set(cl.id, cl.assigned_trainer_id ?? null);
+    }
+
     for (const c of candidates) {
       // Ja hi és? (pot passar en un grup on el mateix client hi tingui plaça)
       if (occupied.some((o) => o.client_id === c.client_id)) continue;
+
+      if (
+        clientBookingScope({
+          serviceType: c.service_type,
+          trainerId,
+          assignedTrainerId: assignedOf.get(c.client_id) ?? null,
+        }) !== "ok"
+      )
+        continue;
 
       // Ha de tenir sessions. Es mira el bo que va apuntar i, si ja no serveix,
       // qualsevol altre del mateix tipus: el que compta és que pugui venir.
@@ -526,6 +573,16 @@ async function promoteMock(
 
   for (const c of candidates) {
     if (occupied.some((o) => o.client_id === c.client_id)) continue;
+    const assigned =
+      store.clients.find((cl) => cl.id === c.client_id)?.assigned_trainer_id ?? null;
+    if (
+      clientBookingScope({
+        serviceType: c.service_type,
+        trainerId: freed.trainerId,
+        assignedTrainerId: assigned,
+      }) !== "ok"
+    )
+      continue;
     const bono = store.bonos
       .filter(
         (b) =>

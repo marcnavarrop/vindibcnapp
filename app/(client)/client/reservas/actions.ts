@@ -1,6 +1,7 @@
 "use server";
 
 import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
+import { scopeErrorCode } from "@/lib/booking-scope";
 
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
@@ -54,6 +55,8 @@ export async function createOwnReservationAction(
       scheduledAt,
     });
   } catch (e) {
+    const scoped = scopeErrorCode(e);
+    if (scoped) return { errorCode: scoped };
     console.error("[reserves]", e);
     return { errorCode: "failed" };
   }
