@@ -1002,17 +1002,98 @@ export function buildClientManual(
         {
           t: "h",
           text: T({
-            ca: "Llegir el calendari",
-            es: "Leer el calendario",
-            en: "Reading the calendar",
+            ca: "A dalt: les teves sessions i els teus bons",
+            es: "Arriba: tus sesiones y tus bonos",
+            en: "At the top: your sessions and your passes",
           }),
         },
         {
           t: "p",
           text: T({
-            ca: `Es pot mirar per dia o per setmana —al mòbil s'obre per dia— i moure't amb les fletxes: endavant tant com vulguis, i enrere fins a la setmana d'avui. Les sessions que ja has fet són més avall, a «Sessions passades». L'horari que es mostra va de les ${hhmm(s.openingHour)} a les ${hhmm(s.closingHour)}, que és l'horari del centre.`,
-            es: `Se puede mirar por día o por semana —en el móvil se abre por día— y moverte con las flechas: hacia delante todo lo que quieras, y hacia atrás hasta la semana actual. Las sesiones que ya has hecho están más abajo, en «Sesiones pasadas». El horario que se muestra va de las ${hhmm(s.openingHour)} a las ${hhmm(s.closingHour)}, que es el horario del centro.`,
-            en: `You can view it by day or by week —on a phone it opens by day— and move with the arrows: forward as far as you like, and back as far as the current week. The sessions you've already done are further down, under «Past sessions». The hours shown run from ${hhmm(s.openingHour)} to ${hhmm(s.closingHour)}, which is the centre's opening time.`,
+            ca: "El primer que veus són les teves properes sessions, començant per la més propera. Cadascuna porta el seu botó «Cancel·lar»: el prems, confirmes, i ja està. Si ja és massa a prop per cancel·lar-la, en comptes del botó hi diu que ja no es pot. Tocant la sessió en veus el detall, la pots afegir al teu calendari o repetir-la cada setmana. Si en tens més de tres, «Veure-les totes» les ensenya.",
+            es: "Lo primero que ves son tus próximas sesiones, empezando por la más cercana. Cada una lleva su botón «Cancelar»: lo pulsas, confirmas, y listo. Si ya está demasiado cerca para cancelarla, en lugar del botón pone que ya no se puede. Tocando la sesión ves el detalle, puedes añadirla a tu calendario o repetirla cada semana. Si tienes más de tres, «Verlas todas» las enseña.",
+            en: "The first thing you see is your upcoming sessions, starting with the nearest. Each has its own «Cancel» button: press it, confirm, and that's it. If it's already too close to cancel, it says so instead of showing the button. Tapping the session shows the details, and lets you add it to your calendar or repeat it every week. If you have more than three, «See all» shows them.",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
+            ca: "Just a sota, les sessions que et queden de cada servei, i un enllaç a «Els meus bons».",
+            es: "Justo debajo, las sesiones que te quedan de cada servicio, y un enlace a «Mis bonos».",
+            en: "Just below, the sessions you have left for each service, and a link to «My passes».",
+          }),
+        },
+        {
+          t: "h",
+          text: T({
+            ca: "Al mòbil: servei, dia i hora",
+            es: "En el móvil: servicio, día y hora",
+            en: "On a phone: service, day and time",
+          }),
+        },
+        {
+          t: "ol",
+          items: [
+            T({
+              ca: "Tria què vols reservar. Només hi surten els serveis dels teus bons, amb les sessions que et queden.",
+              es: "Elige qué quieres reservar. Solo salen los servicios de tus bonos, con las sesiones que te quedan.",
+              en: "Choose what you'd like to book. Only the services on your passes appear, with the sessions you have left.",
+            }),
+            T({
+              ca: "Tria el dia. La tira va d'avui a tres setmanes vista, i cada dia diu quantes hores lliures té. Ja ve triat el primer dia amb hores.",
+              es: "Elige el día. La tira va de hoy a tres semanas vista, y cada día dice cuántas horas libres tiene. Ya viene elegido el primer día con horas.",
+              en: "Choose the day. The strip runs from today to three weeks ahead, and each day says how many free times it has. The first day with free times comes already selected.",
+            }),
+            T({
+              ca: "Toca una hora. S'obre la confirmació amb el dia, l'hora, qui te la farà i el bo que es gasta («en quedaran 5»). Prems «Reservar» i ja la tens.",
+              es: "Toca una hora. Se abre la confirmación con el día, la hora, quién te la hará y el bono que se gasta («quedarán 5»). Pulsas «Reservar» y ya la tienes.",
+              en: "Tap a time. The confirmation opens with the day, the time, who will do it and the pass it uses («5 left after this»). Press «Book» and it's yours.",
+            }),
+          ],
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              T({ ca: "Grups", es: "Grupos", en: "Groups" }),
+              T({
+                ca: "Cada grup diu com va de ple, amb un punt per plaça: «Queda 1 plaça», «Grup nou · seràs el primer» o «Ple». Si és ple i el centre té la cua oberta, hi surt «Cua»: toca-la per apuntar-t'hi. Si ja hi ets, hi diu «Ets a la cua» i des d'allà te'n pots donar de baixa.",
+                es: "Cada grupo dice cómo va de lleno, con un punto por plaza: «Queda 1 plaza», «Grupo nuevo · serás el primero» o «Lleno». Si está lleno y el centro tiene la cola abierta, sale «Cola»: tócala para apuntarte. Si ya estás, pone «Estás en la cola» y desde ahí te puedes dar de baja.",
+                en: "Each group shows how full it is, with one dot per space: «1 space left», «New group · you'll be the first» or «Full». If it's full and the centre has the waitlist open, «Waitlist» appears: tap it to join. If you're already on it, it says «You're on the waitlist» and you can leave from there.",
+              }),
+            ],
+            [
+              T({ ca: "Fisioteràpia", es: "Fisioterapia", en: "Physiotherapy" }),
+              T({
+                ca: "Si la mateixa hora la poden fer diversos fisioterapeutes, tries amb qui a la mateixa confirmació.",
+                es: "Si la misma hora la pueden hacer varios fisioterapeutas, eliges con quién en la misma confirmación.",
+                en: "If several physios can do the same time, you choose who in the confirmation itself.",
+              }),
+            ],
+            [
+              T({ ca: "La teva sessió", es: "Tu sesión", en: "Your session" }),
+              T({
+                ca: "Les que ja tens surten en verd a la seva hora. Mentre en tens una, no et proposem res que s'hi trepitgi.",
+                es: "Las que ya tienes salen en verde a su hora. Mientras tienes una, no te proponemos nada que se solape.",
+                en: "The ones you already have show in green at their time. While you have one, nothing that overlaps it is offered.",
+              }),
+            ],
+          ],
+        },
+        {
+          t: "h",
+          text: T({
+            ca: "A l'ordinador: el calendari",
+            es: "En el ordenador: el calendario",
+            en: "On a computer: the calendar",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
+            ca: `A l'ordinador, sota les teves sessions, hi ha el calendari de tot el centre. Es pot mirar per dia o per setmana i moure't amb les fletxes: endavant tant com vulguis, i enrere fins a la setmana d'avui. Les sessions que ja has fet són més avall, a «Sessions passades». L'horari que es mostra va de les ${hhmm(s.openingHour)} a les ${hhmm(s.closingHour)}, que és l'horari del centre.`,
+            es: `En el ordenador, debajo de tus sesiones, está el calendario de todo el centro. Se puede mirar por día o por semana y moverte con las flechas: hacia delante todo lo que quieras, y hacia atrás hasta la semana actual. Las sesiones que ya has hecho están más abajo, en «Sesiones pasadas». El horario que se muestra va de las ${hhmm(s.openingHour)} a las ${hhmm(s.closingHour)}, que es el horario del centro.`,
+            en: `On a computer, below your sessions, there's the calendar for the whole centre. You can view it by day or by week and move with the arrows: forward as far as you like, and back as far as the current week. The sessions you've already done are further down, under «Past sessions». The hours shown run from ${hhmm(s.openingHour)} to ${hhmm(s.closingHour)}, which is the centre's opening time.`,
           }),
         },
         {

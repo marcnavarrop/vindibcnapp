@@ -1,11 +1,12 @@
 "use client";
 
 import { TAP } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { ClientCenterCalendar } from "@/components/client-center-calendar";
+import { MyBookingsHeader, ReservasList } from "@/components/client/reservas-list";
 import {
   SeriesReview,
   type SeriesReviewState,
@@ -25,13 +26,33 @@ import type { SeriesSummary } from "@/lib/data/booking-series";
 import type { ColorPalette } from "@/lib/colors";
 import type { CreateAction, CancelAction } from "@/components/client-center-calendar";
 
+/** A partir d'aquí (el `md` de Tailwind) la pantalla és d'escriptori. */
+const DESKTOP_QUERY = "(min-width: 768px)";
+function subscribeDesktop(cb: () => void) {
+  const m = window.matchMedia(DESKTOP_QUERY);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+}
+
 /**
- * La pantalla de reserves del client: el calendari de sempre i, al costat,
- * l'assistent de reserva en bucle quan se n'obre un.
+ * La pantalla de reserves del client.
  *
- * L'assistent viu AQUÍ i no dins del calendari perquè el calendari ja fa prou
- * feina i perquè així la mateixa graella segueix servint sense assistent allà
- * on no calgui (és el que fa la prop opcional `onPickSeries`).
+ * Des de C2:
+ *   · A dalt, a totes les amplades, les teves properes sessions (amb
+ *     «Cancel·lar» a mà) i els bons que et queden.
+ *   · Al mòbil, la llista nova: servei → dia → hores (`ReservasList`).
+ *   · A l'escriptori, la graella de sempre fins a C3.
+ *
+ * LA GRAELLA NOMÉS ES PINTA AL NAVEGADOR. Compta les hores amb el rellotge local
+ * del procés: al servidor (UTC) la primera fila li sortia a les 06:00 i al
+ * navegador (Madrid) a les 07:00, i React ho detectava com a error d'hidratació
+ * #418. Pintar-la només al navegador —i només si la pantalla és d'escriptori—
+ * treu l'error i, de passada, estalvia al mòbil tota la feina d'una graella
+ * que no s'hi veu. La llista, en canvi, es pinta al servidor sense problema:
+ * compta en hora del centre.
+ *
+ * L'assistent de sèries viu AQUÍ i no dins de cap de les dues perquè el fan
+ * servir totes dues.
  */
 export function ClientReservasView({
   data,
@@ -39,14 +60,21 @@ export function ClientReservasView({
   createAction,
   cancelAction,
   minCancellationHours,
+  minBookingHours,
   openingHour,
   closingHour,
+  nowISO,
+  today,
   series,
   waitlistEnabled,
   subscriptionServiceType,
   waitlist,
 }: {
   data: ClientCenterData;
+  /** L'instant de referència i el dia d'avui del centre, del servidor. */
+  nowISO: string;
+  today: string;
+  minBookingHours: number;
   palette: ColorPalette;
   createAction: CreateAction;
   cancelAction: CancelAction;
@@ -78,9 +106,36 @@ export function ClientReservasView({
     id: string;
     count: number;
   } | null>(null);
+  // Al servidor i en la primera passada del navegador, `false`: la graella no
+  // hi és. Després, el que digui la pantalla.
+  const desktop = useSyncExternalStore(
+    subscribeDesktop,
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => false,
+  );
+  // Al mòbil la revisió de la sèrie surt sota la llista: s'hi porta la vista
+  // perquè qui ha premut «Veure les sessions» la vegi sense haver de buscar-la.
+  const reviewRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (review) reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [review]);
+
+  const common = {
+    data,
+    palette,
+    nowISO,
+    minCancellationHours,
+    cancelAction,
+    waitlistEnabled,
+    subscriptionServiceType,
+    onSeriesReady: setReview,
+    onDialogOpen: () => setReview(null),
+  };
 
   return (
     <div className="flex flex-col gap-6">
+      <MyBookingsHeader {...common} />
+
       {series.length > 0 && (
         <SeriesList
           series={series}
@@ -104,24 +159,39 @@ export function ClientReservasView({
         }
       >
         <div className="min-w-0">
-          <ClientCenterCalendar
-            data={data}
-            palette={palette}
-            createAction={createAction}
-            cancelAction={cancelAction}
-            minCancellationHours={minCancellationHours}
-            openingHour={openingHour}
-            closingHour={closingHour}
-            onSeriesReady={setReview}
-            onDialogOpen={() => setReview(null)}
-            waitlistEnabled={waitlistEnabled}
-            subscriptionServiceType={subscriptionServiceType}
-            waitlist={waitlist}
-          />
+          <div className="md:hidden">
+            <ReservasList
+              {...common}
+              today={today}
+              minBookingHours={minBookingHours}
+              openingHour={openingHour}
+              closingHour={closingHour}
+              createAction={createAction}
+              waitlist={waitlist}
+            />
+          </div>
+          {desktop && (
+            <div className="hidden md:block" data-testid="desktop-grid">
+              <ClientCenterCalendar
+                data={data}
+                palette={palette}
+                createAction={createAction}
+                cancelAction={cancelAction}
+                minCancellationHours={minCancellationHours}
+                openingHour={openingHour}
+                closingHour={closingHour}
+                onSeriesReady={setReview}
+                onDialogOpen={() => setReview(null)}
+                waitlistEnabled={waitlistEnabled}
+                subscriptionServiceType={subscriptionServiceType}
+                waitlist={waitlist}
+              />
+            </div>
+          )}
         </div>
 
         {review && (
-          <div className="xl:sticky xl:top-4">
+          <div ref={reviewRef} className="scroll-mt-4 xl:sticky xl:top-4">
             <SeriesReview
               review={review}
               onClose={() => setReview(null)}
@@ -182,7 +252,7 @@ function SeriesList({
             <button
               type="button"
               onClick={() => onCancel(s.id, s.upcoming)}
-              className={`ml-auto rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error active:bg-brand-bg ${TAP}`}
+              className={`ml-auto min-h-11 rounded-md border border-brand-border px-3 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error active:bg-brand-bg ${TAP}`}
             >
               {t("cancel")}
             </button>
