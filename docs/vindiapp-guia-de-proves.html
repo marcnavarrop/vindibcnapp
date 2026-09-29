@@ -471,14 +471,24 @@
       <li>Amb un compte sense fitxa de client, comprova que surt l'avís "Encara no tens fitxa de client" i no un error</li>
     </ul>
 
-    <h3>4.2 Reserves <span class="flag">Nou: amb qui pots reservar</span></h3>
+    <h3>4.2 Reserves <span class="flag">Nou: al mòbil, servei → dia → hora</span></h3>
+    <p><strong>Prova-ho sobretot al mòbil</strong>, amb pressa: tot s'ha de poder fer amb el polze i sense apuntar.</p>
     <ul class="checklist">
+      <li><strong>A dalt, a totes les amplades:</strong> les teves properes sessions (la primera en verd, «La propera») i, a cada una, <strong>«Cancel·lar»</strong>. Cancel·lar ha de costar <strong>dos tocs</strong>: «Cancel·lar» i «Sí, cancel·la». Una sessió dins del marge mínim no té el botó: hi diu «Ja no es pot cancel·lar». Amb més de tres, «Veure-les totes». Sota, «Et queden:» amb les sessions de cada bo i l'enllaç a «Els meus bons»</li>
+      <li><strong>Al mòbil</strong> ja no hi ha graella: <strong>1 · Què vols reservar?</strong> (els serveis dels teus bons, amb les sessions que et queden), <strong>2 · Quin dia?</strong> (d'avui a tres setmanes, cada dia amb les hores lliures que té; ve triat el primer amb hores) i <strong>3 · A quina hora?</strong> (la llista, per matí i tarda)</li>
+      <li>Toca una hora: la confirmació puja des de baix i diu <strong>quin bo es gasta</strong> («en quedaran 5»). A fisio, si la poden fer diversos professionals, <strong>tries amb qui</strong> allà mateix. «Reservar» i torna a la llista amb la sessió en verd</li>
+      <li>Grups a la llista: un punt per plaça, «Queda 1 plaça», «Grup nou · seràs el primer» o «Ple». Si és ple i la cua és oberta, <strong>«Cua»</strong>; si ja hi ets, «Ets a la cua» i te'n pots donar de baixa</li>
+      <li>Un dia sense hores diu «Aquest dia no hi ha hores lliures» i ofereix anar al pròxim que en té</li>
+      <li>Totes les zones tàctils fan <strong>com a mínim 44 px</strong> (serveis, dies, hores, botons de les fulles)</li>
+      <li>Canvia l'idioma a castellà i anglès: tots els textos nous surten traduïts, també els de les fulles</li>
+      <li>Obre la consola del navegador a /client/reservas: <strong>cap error d'hidratació</strong> (abans hi sortia el #418)</li>
+      <li><strong>A l'ordinador</strong> (768 px o més) hi segueix la graella de tot el centre fins a C3, sota les teves sessions</li>
       <li><strong>Amb qui:</strong> individual i parelles, <strong>només amb el teu entrenador assignat</strong>; grup i fisioteràpia, amb qualsevol professional que ho ofereixi a la seva disponibilitat (encara que la seva especialitat digui una altra cosa o estigui buida). Posa el filtre de professional a "Tots": les franges d'individual d'un altre professional <strong>no surten</strong>, i les seves de grup i fisio sí</li>
       <li><strong>Sense entrenador assignat</strong> (treu-lo des de la fitxa del client a l'admin): a dalt surt l'avís "Encara no tens entrenador assignat", en els tres idiomes, i cap franja d'individual ni parelles. Grup i fisio segueixen sortint. Les reserves que ja tenia es queden</li>
       <li>El servidor també ho comprova: obre la finestra de reserva d'una franja del teu entrenador, <strong>canvia-li l'entrenador des de l'admin</strong> i prem "Reservar". Ha de sortir "Les sessions individuals i en parella només les pots reservar amb el teu entrenador" i no s'ha de crear res</li>
       <li>L'admin i els professionals <strong>no hi estan subjectes</strong>: des de l'admin, reserva una individual a un client amb un professional que no és el seu i ha de funcionar</li>
-      <li>Vista per dia o per setmana (<strong>al mòbil s'obre per dia</strong>), amb fletxes: endavant sense límit, i enrere <strong>només fins a la setmana d'avui</strong> (la fletxa enrere es desactiva). L'historial és a "Sessions passades"</li>
-      <li>El calendari s'obre <strong>filtrat pel teu professional assignat</strong> — canvia a "Tots" per veure la resta</li>
+      <li>Graella (ordinador): vista per dia o per setmana, amb fletxes: endavant sense límit, i enrere <strong>només fins a la setmana d'avui</strong> (la fletxa enrere es desactiva). L'historial és a "Sessions passades"</li>
+      <li>La graella s'obre <strong>filtrada pel teu professional assignat</strong> — canvia a "Tots" per veure la resta</li>
       <li>Color per professional (llegenda sota el calendari) + filtres per servei i per professional</li>
       <li>Només hi surt <strong>el que pots reservar amb els bons que tens</strong>. Sense bo actiu no surt cap franja, i l'app t'ho diu a dalt de tot, <strong>en l'idioma del client</strong> (abans sortia sempre en català)</li>
       <li>Grup Reduït: comptador d'ocupació amb semàfor — verd si hi ha lloc de sobres, ambre si en queda una, vermell si és plena</li>

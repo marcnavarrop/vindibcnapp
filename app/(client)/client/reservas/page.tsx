@@ -2,6 +2,7 @@ import { getViewer } from "@/lib/auth";
 import { getTranslations } from "next-intl/server";
 import { getClientCenterData } from "@/lib/data/client-calendar";
 import { getCenterSettings } from "@/lib/data/center-settings";
+import { centerToday } from "@/lib/center-time";
 import { getColorPalette } from "@/lib/data/colors";
 import { ClientReservasView } from "@/components/client/reservas-view";
 import { getAnyLiveSubscription } from "@/lib/data/subscriptions";
@@ -62,16 +63,26 @@ export default async function ClientReservasPage() {
       ? await getAnyLiveSubscription(data.clientId)
       : null;
 
+  // Un sol «ara» per a tota la pantalla, decidit aquí: la llista es pinta al
+  // servidor i després al navegador, i totes dues passades han de veure el
+  // mateix instant i el mateix dia del centre (vegeu reservas-list.tsx).
+  const nowISO = new Date().toISOString();
+
   return (
-    <main className="mx-auto max-w-6xl p-6">
+    <main className="mx-auto max-w-6xl p-4 md:p-6">
       <h1 className="mb-1 text-2xl text-brand-dark">{t("title")}</h1>
-      <p className="mb-6 text-sm text-brand-muted">
+      {/* Al mòbil, directe a reservar: la regla d'amb qui ja surt on toca. */}
+      <p className="mb-6 hidden text-sm text-brand-muted md:block">
         {t("intro")}
       </p>
+      <div className="mb-4 md:hidden" />
 
       <ClientReservasView
         data={data}
         palette={palette}
+        nowISO={nowISO}
+        today={centerToday()}
+        minBookingHours={centerSettings.minBookingHours}
         createAction={createOwnReservationAction}
         cancelAction={cancelOwnReservationAction}
         minCancellationHours={centerSettings.minCancellationHours}
