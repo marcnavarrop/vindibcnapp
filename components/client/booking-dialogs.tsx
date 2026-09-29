@@ -297,6 +297,7 @@ export function CreateModal({
         </dl>
         <div className="mt-5 flex flex-col items-center gap-3">
           <AddToCalendarButton
+            touch
             serviceType={service}
             otherPartyName={trainerName}
             scheduledAt={slot.toISOString()}
@@ -499,6 +500,7 @@ export function OwnModal({
       {!confirming && (
         <div className="mt-4">
           <AddToCalendarButton
+            touch
             serviceType={service}
             otherPartyName={trainerNameFull}
             scheduledAt={scheduledAt}

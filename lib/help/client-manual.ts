@@ -1341,6 +1341,51 @@ export function buildClientManual(
           }),
         },
         {
+          t: "p",
+          text: T({
+            ca: "Si necessites una altra cosa, a sota hi ha «Més opcions», plegat:",
+            es: "Si necesitas otra cosa, debajo está «Más opciones», plegado:",
+            en: "If you need something else, «More options» is folded away underneath:",
+          }),
+        },
+        {
+          t: "ul",
+          items: [
+            T({
+              ca: "Cada quan: cada setmana, cada dues setmanes o cada mes (el mateix dia del mes).",
+              es: "Cada cuánto: cada semana, cada dos semanas o cada mes (el mismo día del mes).",
+              en: "How often: every week, every two weeks or every month (the same day of the month).",
+            }),
+            T({
+              ca: "Fins quan: un nombre de sessions (4, 8 o 12) o una data final.",
+              es: "Hasta cuándo: un número de sesiones (4, 8 o 12) o una fecha final.",
+              en: "Until: a number of sessions (4, 8 or 12) or an end date.",
+            }),
+            T({
+              ca: "Si un dia no hi ha lloc, «Saltar-lo» (el que passa si no toques res) o «Proposar-me una altra hora». Les propostes surten a la llista i només es reserven les que acceptes. En individual i en parella, sempre amb el teu entrenador: una altra hora aquell mateix dia. En fisioteràpia també pot ser un altre fisioterapeuta a la mateixa hora.",
+              es: "Si un día no hay hueco, «Saltarlo» (lo que pasa si no tocas nada) o «Proponerme otra hora». Las propuestas salen en la lista y solo se reservan las que aceptas. En individual y en pareja, siempre con tu entrenador: otra hora ese mismo día. En fisioterapia también puede ser otro fisioterapeuta a la misma hora.",
+              en: "If a day is full, «Skip it» (what happens if you don't change anything) or «Suggest another time». Suggestions appear in the list and only the ones you accept are booked. For individual and pairs, always with your trainer: another time that same day. For physiotherapy it can also be another physiotherapist at the same time.",
+            }),
+            ...(s.waitlistEnabled
+              ? [
+                  T({
+                    ca: "També pots triar «Apuntar-me a la cua»: aquell dia et quedes a la cua i, si algú deixa la plaça, entres tu i t'avisem per correu. Si el professional no hi és aquell dia (vacances, un bloqueig), no hi ha cua possible i surt «Sense plaça».",
+                    es: "También puedes elegir «Apuntarme a la cola»: ese día te quedas en la cola y, si alguien deja la plaza, entras tú y te avisamos por correo. Si el profesional no está ese día (vacaciones, un bloqueo), no hay cola posible y sale «Sin plaza».",
+                    en: "You can also choose «Join the waitlist»: that day you go on the waitlist and, if someone gives up the space, you're in and we email you. If the professional isn't there that day (holidays, a block), there's no waitlist and it says «No space».",
+                  }),
+                ]
+              : []),
+          ],
+        },
+        {
+          t: "p",
+          text: T({
+            ca: "La llista d'abans de confirmar ja ho reflecteix tot: a dalt, cada quan i a quina hora; a cada fila, la data i què hi passarà, amb les propostes i el botó «Acceptar».",
+            es: "La lista de antes de confirmar ya lo refleja todo: arriba, cada cuánto y a qué hora; en cada fila, la fecha y qué pasará, con las propuestas y el botón «Aceptar».",
+            en: "The list before you confirm already shows all of it: at the top, how often and at what time; on each row, the date and what will happen, with the suggestions and the «Accept» button.",
+          }),
+        },
+        {
           t: "note",
           text: T({
             ca: "Les sessions de Grup reduït no es poden repetir, i per això no hi trobaràs la casella. Una franja de grup són poques places, i una sèrie deixaria la mateixa plaça ocupada per la mateixa persona setmana rere setmana.",
