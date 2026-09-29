@@ -1,6 +1,7 @@
 "use server";
 
 import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
+import { scopeErrorCode } from "@/lib/booking-scope";
 
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
@@ -101,6 +102,7 @@ export async function calculateSeriesAction(
     return { errorCode: "noLimit" };
 
   const plan = await resolveSeries(await toRequest(viewer.id, input));
+  if (plan.scope) return { errorCode: scopeErrorCode(plan.scope)! };
   if (plan.error) {
     console.error("[sèries]", plan.error);
     return { errorCode: "failed" };
@@ -145,6 +147,8 @@ export async function confirmSeriesAction(
       failed: res.failed,
     };
   } catch (e) {
+    const scoped = scopeErrorCode(e);
+    if (scoped) return { errorCode: scoped };
     console.error("[sèries]", e);
     return { errorCode: "failed" };
   }

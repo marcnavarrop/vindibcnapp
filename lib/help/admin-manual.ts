@@ -336,6 +336,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
           ],
         },
+        {
+          t: "warn",
+          text: "El professional assignat decideix amb qui pot reservar el client des de la seva àrea: les sessions individuals i en parella, NOMÉS amb el seu entrenador assignat; els grups i la fisioteràpia, amb qualsevol professional que en faci segons la seva disponibilitat (no segons l'especialitat). Un client sense professional assignat no pot reservar individual ni parelles fins que n'hi posis un; l'app li diu que parli amb el centre. Tu i els professionals, quan reserveu per a un client, no hi esteu subjectes. Si li canvies el professional, les reserves que ja tenia es queden, les seves esperes amb l'anterior ja no entraran, i una sèrie seva que s'allargava sola deixa d'allargar-se.",
+        },
         { t: "h", text: "Les deu pestanyes" },
         {
           t: "dl",

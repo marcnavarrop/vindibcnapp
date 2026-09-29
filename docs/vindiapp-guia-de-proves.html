@@ -471,12 +471,16 @@
       <li>Amb un compte sense fitxa de client, comprova que surt l'avís "Encara no tens fitxa de client" i no un error</li>
     </ul>
 
-    <h3>4.2 Reserves</h3>
+    <h3>4.2 Reserves <span class="flag">Nou: amb qui pots reservar</span></h3>
     <ul class="checklist">
+      <li><strong>Amb qui:</strong> individual i parelles, <strong>només amb el teu entrenador assignat</strong>; grup i fisioteràpia, amb qualsevol professional que ho ofereixi a la seva disponibilitat (encara que la seva especialitat digui una altra cosa o estigui buida). Posa el filtre de professional a "Tots": les franges d'individual d'un altre professional <strong>no surten</strong>, i les seves de grup i fisio sí</li>
+      <li><strong>Sense entrenador assignat</strong> (treu-lo des de la fitxa del client a l'admin): a dalt surt l'avís "Encara no tens entrenador assignat", en els tres idiomes, i cap franja d'individual ni parelles. Grup i fisio segueixen sortint. Les reserves que ja tenia es queden</li>
+      <li>El servidor també ho comprova: obre la finestra de reserva d'una franja del teu entrenador, <strong>canvia-li l'entrenador des de l'admin</strong> i prem "Reservar". Ha de sortir "Les sessions individuals i en parella només les pots reservar amb el teu entrenador" i no s'ha de crear res</li>
+      <li>L'admin i els professionals <strong>no hi estan subjectes</strong>: des de l'admin, reserva una individual a un client amb un professional que no és el seu i ha de funcionar</li>
       <li>Vista per dia o per setmana (<strong>al mòbil s'obre per dia</strong>), amb fletxes: endavant sense límit, i enrere <strong>només fins a la setmana d'avui</strong> (la fletxa enrere es desactiva). L'historial és a "Sessions passades"</li>
       <li>El calendari s'obre <strong>filtrat pel teu professional assignat</strong> — canvia a "Tots" per veure la resta</li>
       <li>Color per professional (llegenda sota el calendari) + filtres per servei i per professional</li>
-      <li>Només hi surt <strong>el que pots reservar amb els bons que tens</strong>. Sense bo actiu no surt cap franja, i l'app t'ho diu a dalt de tot</li>
+      <li>Només hi surt <strong>el que pots reservar amb els bons que tens</strong>. Sense bo actiu no surt cap franja, i l'app t'ho diu a dalt de tot, <strong>en l'idioma del client</strong> (abans sortia sempre en català)</li>
       <li>Grup Reduït: comptador d'ocupació amb semàfor — verd si hi ha lloc de sobres, ambre si en queda una, vermell si és plena</li>
       <li>En obrir una sessió de grup <strong>veus qui s'hi ha apuntat</strong>; a la graella, no (el calendari es veu de lluny)</li>
       <li>Reserva pròpia: es marca en verd amb un check i <strong>surt sempre, encara que hi hagi filtres posats</strong></li>
@@ -642,10 +646,11 @@
       <li>Tries la freqüència (<strong>cada setmana, cada dues, cada mes</strong>) i fins quan (una data, un nombre de sessions, o tots dos: mana el primer límit)</li>
       <li><strong>"Veure les sessions"</strong> calcula la sèrie i te l'ensenya sencera. <strong>Comprova que encara no s'ha reservat res</strong></li>
       <li>Llegeix les etiquetes de la revisió: <strong>Confirmada</strong>, <strong>Ja reservada</strong> (s'adopta, no es duplica), <strong>Alternativa proposada</strong> (no compta fins que prems "Accepta"), <strong>Llista d'espera</strong>, <strong>Sense places</strong></li>
-      <li>Opcions de <strong>"Si no hi ha plaça…"</strong>: reservar només les disponibles (per defecte), <strong>proposar alternatives</strong> (una altra hora o un altre professional), <strong>afegir a la llista d'espera</strong>, i <strong>allargar-la sola cada mes</strong> (només amb subscripció)</li>
+      <li>Opcions de <strong>"Si no hi ha plaça…"</strong>: reservar només les disponibles (per defecte), <strong>proposar alternatives</strong> (en individual i parelles, només una altra hora amb el teu entrenador; en fisio, també un altre professional), <strong>afegir a la llista d'espera</strong>, i <strong>allargar-la sola cada mes</strong> (només amb subscripció)</li>
       <li>Si el bo no arriba per a totes, l'app <strong>t'ho diu abans de confirmar</strong>: quantes es reserven i quantes queden fora</li>
       <li>Comprova que la sèrie respecta <strong>l'antelació mínima del centre</strong> i que <strong>no promet hores que ja tens ocupades</strong></li>
       <li>"Les meves sèries": veure com va acabar cadascuna i <strong>cancel·lar-la sencera</strong></li>
+      <li>Sèrie individual que s'allarga sola i <strong>el centre canvia l'entrenador del client</strong>: a "Les meves sèries" surt que ja no s'allargarà; en la renovació no es reserva res amb l'entrenador d'abans, i les sessions ja reservades es queden</li>
       <li>Amb subscripció i auto-extensió: en renovar-se, comprova que <strong>les sessions que faltaven es reserven soles</strong> seguint el mateix patró, i que si la franja està ocupada aquella sessió simplement no es fa (mai se li canvia l'hora sense dir-l'hi)</li>
     </ul>
 
@@ -656,6 +661,7 @@
       <li>Cancel·la una plaça d'aquella sessió (des de l'admin o des d'un altre client) i comprova que <strong>la reserva es fa sola</strong> per al primer de la cua, es descompta la sessió del seu bo i <strong>li arriba el correu</strong></li>
       <li>Ara al revés: bloqueja aquella hora al professional i cancel·la una plaça. <strong>No ha d'entrar ningú de la cua</strong>: la franja ja no existeix</li>
       <li>Aquest avís <strong>no es pot desactivar</strong>: la reserva es fa sense que ell premi res</li>
+      <li>A la cua d'una individual d'un professional que no és el teu <strong>no t'hi pots apuntar</strong>. I si el centre et canvia l'entrenador mentre esperes, quan s'alliberi la plaça <strong>no hi entres</strong>: passa el següent que sí que pot, i la teva espera caduca sola</li>
       <li>Desactiva la llista d'espera a Configuració i comprova que <strong>no s'hi apunta ningú nou però els que ja hi eren segueixen entrant</strong></li>
       <li>L'aforament de grup el garanteix la base de dades: <strong>prova a reservar la darrera plaça des de dues finestres alhora</strong> — només una ha de passar</li>
     </ul>

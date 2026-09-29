@@ -31,6 +31,11 @@ import {
   type ResolvedOccurrence,
 } from "@/lib/booking-series-core";
 import type { BookingFrequency, ServiceType } from "@/types/database";
+import {
+  BookingScopeError,
+  clientBookingScope,
+  type BookingScope,
+} from "@/lib/booking-scope";
 
 /**
  * Reserva en bucle: generar les dates, mirar què hi cap i deixar-ho tot escrit
@@ -89,6 +94,12 @@ export type SeriesPlan = {
    */
   skippedForBono: number;
   error?: string;
+  /**
+   * La regla de `lib/booking-scope.ts` diu que no: individual i parelles, només
+   * amb l'entrenador assignat. Va a part d'`error` perquè la pantalla ho ha
+   * d'explicar, i no amb el «no s'ha pogut» de sempre.
+   */
+  scope?: Exclude<BookingScope, "ok">;
 };
 
 type SlotRow = {
@@ -154,7 +165,7 @@ export async function resolveSeries(req: SeriesRequest): Promise<SeriesPlan> {
 
   const ctx = await loadContext(req);
   if (ctx.error)
-    return { occurrences: [], sessionsRemaining: 0, bonoId: null, skippedForBono: 0, error: ctx.error };
+    return { occurrences: [], sessionsRemaining: 0, bonoId: null, skippedForBono: 0, error: ctx.error, scope: ctx.scope };
 
   // Les dates es generen en hora del CENTRE i es tornen a convertir a
   // instants. Sumar 7×24 h sobre l'instant cru semblaria equivalent, però no
@@ -392,9 +403,19 @@ function findAlternative(
     }
   }
 
-  // b) Mateixa hora, un altre professional.
+  // b) Mateixa hora, un altre professional. Individual i parelles NO en tenen:
+  //    només es poden fer amb l'entrenador assignat (`lib/booking-scope.ts`), i
+  //    proposar-ne un altre seria oferir el que el servidor rebutjaria.
   for (const t of ctx.trainers) {
     if (t === req.trainerId) continue;
+    if (
+      clientBookingScope({
+        serviceType: req.serviceType,
+        trainerId: t,
+        assignedTrainerId: ctx.assignedTrainerId,
+      }) !== "ok"
+    )
+      continue;
     if (free(t, when))
       return {
         scheduledAt: when.toISOString(),
@@ -411,6 +432,10 @@ function findAlternative(
 
 type Ctx = {
   error?: string;
+  /** Per què la regla d'amb qui es pot reservar diu que no (vegeu `SeriesPlan`). */
+  scope?: Exclude<BookingScope, "ok">;
+  /** L'entrenador assignat del client (`lib/booking-scope.ts`). */
+  assignedTrainerId: string | null;
   /** El primer bo de la cua. Metadada, no sostre: vegeu `SeriesPlan`. */
   bonoId: string | null;
   /** Sessions del CONJUNT de bons utilitzables d'aquest servei. */
@@ -472,12 +497,32 @@ function sumSessions(bons: { remaining_sessions: number }[]): number {
   return bons.reduce((total, b) => total + b.remaining_sessions, 0);
 }
 
+/**
+ * La sèrie es demana amb un professional: en individual i parelles ha de ser
+ * l'entrenador assignat (`lib/booking-scope.ts`). Es mira abans dels bons i de
+ * l'ocupació perquè no depèn de res d'això, i així el pla no promet res.
+ */
+function scopeCheck(
+  req: SeriesRequest,
+  assignedTrainerId: string | null,
+): { error: string; scope: Exclude<BookingScope, "ok"> } | null {
+  const scope = clientBookingScope({
+    serviceType: req.serviceType,
+    trainerId: req.trainerId,
+    assignedTrainerId,
+  });
+  return scope === "ok"
+    ? null
+    : { error: new BookingScopeError(scope).message, scope };
+}
+
 /** Tot el que fa falta per resoldre, demanat d'un sol cop. */
 async function loadContext(req: SeriesRequest): Promise<Ctx> {
   const empty: Ctx = {
     bonoId: null,
     sessionsRemaining: 0,
     clientId: "",
+    assignedTrainerId: null,
     slots: [],
     rules: [],
     blocks: [],
@@ -520,6 +565,9 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     const store = getStore();
     const client = store.clients.find((c) => c.profile_id === req.profileId);
     if (!client) return { ...empty, error: "Client no trobat." };
+    const assignedTrainerId = client.assigned_trainer_id ?? null;
+    const scoped = scopeCheck(req, assignedTrainerId);
+    if (scoped) return { ...empty, ...scoped };
     // TOTS els bons utilitzables, en ordre de consum. La primera reserva
     // gastarà del primer; quan s'acabi, la següent seguirà pel de darrere.
     const bons = store.bonos
@@ -543,6 +591,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       bonoId: bons[0].id,
       sessionsRemaining: sumSessions(bons),
       clientId: client.id,
+      assignedTrainerId,
       // Reserves + proves actives, com a la branca real: si en simulació el
       // planificador comptés diferent, provar-ho en local no voldria dir res.
       slots: [
@@ -597,10 +646,13 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("clients")
-    .select("id")
+    .select("id, assigned_trainer_id")
     .eq("profile_id", req.profileId)
     .maybeSingle();
   if (!client) return { ...empty, error: "Client no trobat." };
+  const assignedTrainerId = client.assigned_trainer_id ?? null;
+  const scoped = scopeCheck(req, assignedTrainerId);
+  if (scoped) return { ...empty, ...scoped };
 
   const [{ data: bonos }, { data: res }, holds, { data: pros }, rules, blocks] =
     await Promise.all([
@@ -635,6 +687,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     bonoId: bons[0].id,
     sessionsRemaining: sumSessions(bons),
     clientId: client.id,
+    assignedTrainerId,
     /*
      * Les reserves I les sessions de prova.
      *
@@ -703,6 +756,7 @@ export async function commitSeries(
   decided: ResolvedOccurrence[],
 ): Promise<CommitResult> {
   const ctx = await loadContext(req);
+  if (ctx.scope) throw new BookingScopeError(ctx.scope);
   if (ctx.error) throw new Error(ctx.error);
 
   const seriesId = await insertSeries(req, ctx.clientId, ctx.bonoId);
@@ -725,6 +779,7 @@ export async function applyOccurrences(
   loaded?: Ctx,
 ): Promise<CommitResult> {
   const ctx = loaded ?? (await loadContext(req));
+  if (ctx.scope) throw new BookingScopeError(ctx.scope);
   if (ctx.error) throw new Error(ctx.error);
 
   let created = 0;
@@ -782,6 +837,19 @@ export async function applyOccurrences(
     }
 
     if (o.status === "llista_espera") {
+      // Les ocurrències les envia el navegador: el professional de cadascuna es
+      // torna a mirar. Les reserves ja ho fan dins de `createClientReservation`;
+      // la cua no hi passa, i per això es mira aquí.
+      if (
+        clientBookingScope({
+          serviceType: req.serviceType,
+          trainerId: o.requestedTrainerId,
+          assignedTrainerId: ctx.assignedTrainerId,
+        }) !== "ok"
+      ) {
+        failed++;
+        continue;
+      }
       const { date, time } = slotKeyOf(o.requestedAt);
       try {
         await addToWaitlist({
@@ -1017,7 +1085,34 @@ export type SeriesSummary = {
   /** Reserves futures que encara viuen. */
   upcoming: number;
   nextAt: string | null;
+  /**
+   * Una sèrie que s'allargava sola i ja no ho farà perquè el centre ha canviat
+   * l'entrenador del client (decisió de Marc): no es reserva mai amb l'anterior.
+   * Les sessions ja reservades es queden. «Les teves sèries» ho explica.
+   */
+  stoppedTrainerChanged: boolean;
 };
+
+/**
+ * ¿Aquesta sèrie ha deixat de poder allargar-se perquè el seu professional ja
+ * no és l'entrenador assignat? Només passa en individual i parelles
+ * (`lib/booking-scope.ts`), i només importa a les que s'allarguen soles.
+ * La fa servir també l'allargament (`series-extension.ts`), perquè la pantalla
+ * i el cron diguin el mateix.
+ */
+export function stopsForTrainerChange(
+  s: { auto_extend?: boolean | null; service_type: ServiceType; base_trainer_id: string | null },
+  assignedTrainerId: string | null,
+): boolean {
+  if (!s.auto_extend || !s.base_trainer_id) return false;
+  return (
+    clientBookingScope({
+      serviceType: s.service_type,
+      trainerId: s.base_trainer_id,
+      assignedTrainerId,
+    }) !== "ok"
+  );
+}
 
 /**
  * Les sèries vives d'un client, i de passada les que ja s'han acabat.
@@ -1049,6 +1144,8 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
 
   if (USE_MOCK) {
     const store = getStore();
+    const assigned =
+      store.clients.find((c) => c.id === clientId)?.assigned_trainer_id ?? null;
     const mine = store.booking_series.filter(
       (s) => s.client_id === clientId && s.status === "active",
     );
@@ -1065,8 +1162,9 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
       const waiting = store.waitlist_entries.some(
         (w) => w.series_id === s.id && w.status === "waiting",
       );
+      const stopped = stopsForTrainerChange(s, assigned);
       if (future.length === 0) {
-        if (!waiting && !(await canStillGrow(s, clientId))) {
+        if (!waiting && (stopped || !(await canStillGrow(s, clientId)))) {
           s.status = "completed";
           changed = true;
         }
@@ -1078,6 +1176,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
         frequency: s.frequency,
         upcoming: future.length,
         nextAt: future[0].scheduled_at,
+        stoppedTrainerChanged: stopped,
       });
     }
 
@@ -1089,12 +1188,19 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
   const { data: series } = await admin
     .from("booking_series")
     .select(
-      "id, service_type, frequency, auto_extend, end_date, occurrence_count",
+      "id, service_type, frequency, auto_extend, end_date, occurrence_count, base_trainer_id",
     )
     .eq("client_id", clientId)
     .eq("status", "active")
     .order("created_at", { ascending: false });
   if (!series || series.length === 0) return [];
+
+  const { data: clientRow } = await admin
+    .from("clients")
+    .select("assigned_trainer_id")
+    .eq("id", clientId)
+    .maybeSingle();
+  const assigned = clientRow?.assigned_trainer_id ?? null;
 
   const ids = series.map((s) => s.id);
   const [{ data: res }, { data: waits }] = await Promise.all([
@@ -1117,10 +1223,11 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
 
   for (const s of series) {
     const future = (res ?? []).filter((r) => r.series_id === s.id);
+    const stopped = stopsForTrainerChange(s, assigned);
     if (future.length === 0) {
       if (
         !(waits ?? []).some((w) => w.series_id === s.id) &&
-        !(await canStillGrow(s, clientId))
+        (stopped || !(await canStillGrow(s, clientId)))
       )
         finished.push(s.id);
       continue;
@@ -1131,6 +1238,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
       frequency: s.frequency,
       upcoming: future.length,
       nextAt: future[0].scheduled_at,
+      stoppedTrainerChanged: stopped,
     });
   }
 

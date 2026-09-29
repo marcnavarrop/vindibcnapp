@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { joinWaitlist, cancelWaitlistEntry } from "@/lib/data/waitlist";
+import { scopeErrorCode } from "@/lib/booking-scope";
 import type { ServiceType } from "@/types/database";
 
 /**
@@ -19,7 +20,7 @@ import type { ServiceType } from "@/types/database";
  * quin idioma llegeix el client. El text el posa la pantalla.
  */
 export type ReservaErrorCode =
-  | "unauthorized" | "noTrainer" | "badService" | "noDate" | "noReservation" | "noSession" | "noEntry" | "noClient" | "noSeries" | "noLimit" | "nothingToConfirm" | "tooLate" | "failed";
+  | "unauthorized" | "noTrainer" | "badService" | "noDate" | "noReservation" | "noSession" | "noEntry" | "noClient" | "noSeries" | "noLimit" | "nothingToConfirm" | "tooLate" | "notYourTrainer" | "noAssignedTrainer" | "failed";
 
 export type WaitlistState = { errorCode?: ReservaErrorCode; ok?: boolean };
 
@@ -43,6 +44,8 @@ export async function joinWaitlistAction(
       scheduledAt,
     });
   } catch (e) {
+    const scoped = scopeErrorCode(e);
+    if (scoped) return { errorCode: scoped };
     console.error("[llista d'espera]", e);
     return { errorCode: "failed" };
   }
