@@ -8,7 +8,6 @@ import { clsx, TAP } from "@/lib/utils";
 import { GROUP_CAPACITY, SERVICE_TYPES, formatDayHeading, formatTime } from "@/lib/labels";
 import { weekdayOfDay } from "@/lib/availability-slots";
 import { canCancelAt } from "@/lib/cancellation";
-import { canRepeatInSeries } from "@/lib/series-rules";
 import {
   countsFor,
   hoursFor,
@@ -21,7 +20,7 @@ import {
 } from "@/lib/client-day-slots";
 import { colorOfPro, colorOfService, type ColorPalette } from "@/lib/colors";
 import { Avatar } from "@/components/ui/avatar";
-import { SVC_ICON } from "@/components/client-center-calendar";
+import { SVC_ICON } from "@/components/client/service-icons";
 import {
   CreateModal,
   OwnModal,
@@ -29,7 +28,6 @@ import {
   type CreateAction,
   type CancelAction,
 } from "@/components/client/booking-dialogs";
-import type { SeriesReviewState } from "@/components/forms/series-wizard";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { ServiceType } from "@/types/database";
 import type { Locale } from "@/lib/i18n/config";
@@ -97,8 +95,6 @@ type Common = {
   cancelAction: CancelAction;
   waitlistEnabled: boolean;
   subscriptionServiceType: ServiceType | null;
-  onSeriesReady?: (review: SeriesReviewState) => void;
-  onDialogOpen?: () => void;
 };
 
 /**
@@ -111,10 +107,8 @@ export function MyBookingsHeader({
   nowISO,
   minCancellationHours,
   cancelAction,
-  waitlistEnabled,
   subscriptionServiceType,
-  onSeriesReady,
-  onDialogOpen,
+  waitlistEnabled,
 }: Common) {
   const t = useTranslations("reservas.list");
   const tl = useTranslations("labels.service");
@@ -146,23 +140,25 @@ export function MyBookingsHeader({
               <li
                 key={r.id}
                 className={clsx(
-                  "flex items-center gap-3 rounded-xl border px-3 py-2",
+                  // A l'escriptori la columna és estreta: «Cancel·lar» baixa a una
+                  // segona línia perquè la data es llegeixi sencera.
+                  "flex items-center gap-3 rounded-xl border px-3 py-2 lg:flex-wrap lg:gap-y-0",
                   i === 0 ? "border-green-200 bg-green-50" : "border-brand-border bg-white",
                 )}
               >
                 <button
                   type="button"
                   onClick={() => {
-                    onDialogOpen?.();
                     setOwn({ r, confirm: false });
                   }}
-                  className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left ${TAP}`}
+                  className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left lg:basis-full ${TAP}`}
                 >
                   <Avatar
                     name={trainerName(r.trainerId)}
                     url={data.trainers.find((x) => x.id === r.trainerId)?.avatarUrl ?? null}
                     size={32}
                     color={colorOfPro(palette, r.trainerId)}
+                    className="lg:hidden"
                   />
                   <span className="min-w-0">
                     {i === 0 && (
@@ -182,15 +178,14 @@ export function MyBookingsHeader({
                   <button
                     type="button"
                     onClick={() => {
-                      onDialogOpen?.();
-                      setOwn({ r, confirm: true });
+                        setOwn({ r, confirm: true });
                     }}
-                    className={`min-h-11 shrink-0 rounded-lg px-3 text-sm font-bold text-error hover:bg-error/10 active:bg-error/20 ${TAP}`}
+                    className={`min-h-11 shrink-0 rounded-lg px-3 text-sm font-bold text-error hover:bg-error/10 active:bg-error/20 lg:ml-auto ${TAP}`}
                   >
                     {t("cancel")}
                   </button>
                 ) : (
-                  <span className="max-w-[6rem] shrink-0 text-right text-[11px] leading-tight text-brand-muted">
+                  <span className="max-w-[6rem] shrink-0 text-right text-[11px] leading-tight text-brand-muted lg:ml-auto lg:max-w-none lg:pb-1">
                     {t("cantCancel")}
                   </span>
                 )}
@@ -254,27 +249,9 @@ export function MyBookingsHeader({
           minCancellationHours={minCancellationHours}
           cancelAction={cancelAction}
           startConfirming={own.confirm}
-          seed={
-            own.r.trainerId && canRepeatInSeries(own.r.serviceType)
-              ? {
-                  scheduledAt: own.r.scheduledAt,
-                  trainerId: own.r.trainerId,
-                  trainerName: trainerName(own.r.trainerId),
-                  serviceType: own.r.serviceType,
-                }
-              : undefined
-          }
-          remainingSessions={data.bonoSessions[own.r.serviceType]}
-          waitlistEnabled={waitlistEnabled}
+          trainerId={own.r.trainerId}
           subscriptionServiceType={subscriptionServiceType}
-          onSeriesReady={
-            onSeriesReady
-              ? (review) => {
-                  setOwn(null);
-                  onSeriesReady(review);
-                }
-              : undefined
-          }
+          waitlistEnabled={waitlistEnabled}
           onClose={() => setOwn(null)}
         />
       )}
@@ -297,8 +274,6 @@ export function ReservasList({
   waitlistEnabled,
   subscriptionServiceType,
   waitlist,
-  onSeriesReady,
-  onDialogOpen,
 }: Common & {
   /** Avui, en hora del centre (YYYY-MM-DD). Arriba del servidor. */
   today: string;
@@ -367,7 +342,6 @@ export function ReservasList({
   const trainer = (id: string | null) => data.trainers.find((x) => x.id === id);
   const trainerName = (id: string | null) => trainer(id)?.name ?? tr("professional");
   const open = (fn: () => void) => {
-    onDialogOpen?.();
     fn();
   };
 
@@ -390,13 +364,17 @@ export function ReservasList({
   const afternoon = rows.filter((r) => r.hhmm >= "14:00");
 
   return (
-    <div className="flex flex-col gap-5" data-testid="reservas-list">
+    <div className="flex flex-col gap-5 lg:contents" data-testid="reservas-list">
       {/* 1. Què vols reservar? */}
-      <section aria-labelledby="step-service">
+      <section aria-labelledby="step-service" className="lg:col-start-2 lg:row-start-1">
         <h2 id="step-service" className="mb-2 text-xs font-bold tracking-wide text-brand-muted uppercase">
           {t("stepService")}
         </h2>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="group" aria-labelledby="step-service">
+        <div
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0"
+          role="group"
+          aria-labelledby="step-service"
+        >
           {services.map((s) => (
             <button
               key={s}
@@ -428,7 +406,7 @@ export function ReservasList({
         <div
           role="status"
           data-testid="no-assigned-trainer"
-          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 lg:col-span-2 lg:col-start-2 lg:row-start-2"
         >
           <p className="font-bold">{tr("noTrainer.title")}</p>
           <p className="mt-1">
@@ -440,11 +418,20 @@ export function ReservasList({
       ) : (
         <>
           {/* 2. Quin dia? */}
-          <section aria-labelledby="step-day">
+          <section aria-labelledby="step-day" className="lg:col-start-2 lg:row-start-2">
             <h2 id="step-day" className="mb-2 text-xs font-bold tracking-wide text-brand-muted uppercase">
               {t("stepDay")}
             </h2>
-            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1" data-testid="day-strip">
+            {/* Al mòbil, una tira que llisca. A l'escriptori, un calendari de tres
+                setmanes: set columnes, amb els dies passats d'aquesta setmana
+                com a buits perquè cada dia caigui sota el seu nom. */}
+            <div
+              className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:grid-cols-7 lg:gap-1 lg:overflow-visible lg:px-0"
+              data-testid="day-strip"
+            >
+              {Array.from({ length: weekdayOfDay(today) }, (_, i) => (
+                <span key={`pad-${i}`} aria-hidden className="hidden lg:block" />
+              ))}
               {days.map((d) => {
                 const n = counts[d] ?? 0;
                 const on = d === day;
@@ -457,7 +444,7 @@ export function ReservasList({
                     aria-label={`${formatDayHeading(`${d}T12:00:00Z`, locale)} · ${t("hours", { count: n })}`}
                     onClick={() => setPickedDay(d)}
                     className={clsx(
-                      "flex h-16 w-[3.25rem] shrink-0 flex-col items-center justify-center rounded-xl border",
+                      "flex h-16 w-[3.25rem] shrink-0 flex-col items-center justify-center rounded-xl border lg:h-14 lg:w-auto lg:rounded-lg",
                       TAP,
                       on
                         ? "border-brand-purple bg-brand-purple text-white"
@@ -466,12 +453,15 @@ export function ReservasList({
                           : "border-brand-border bg-brand-bg text-brand-muted",
                     )}
                   >
-                    <span className="text-[11px] font-bold uppercase">
+                    <span className="text-[11px] font-bold uppercase lg:text-[9px]">
                       {d === today ? t("today") : dayNames[weekdayOfDay(d)]}
                     </span>
-                    <span className="text-lg leading-tight font-bold">{Number(d.slice(8))}</span>
+                    <span className="text-lg leading-tight font-bold lg:text-base">{Number(d.slice(8))}</span>
                     <span className={clsx("text-[10px] font-bold", on ? "text-white/85" : n > 0 ? "text-green-700" : "")}>
-                      {n > 0 ? t("hoursShort", { count: n }) : "—"}
+                      {/* A l'escriptori la cel·la és estreta: només el número (el
+                          text sencer és a l'aria-label). */}
+                      <span className="lg:hidden">{n > 0 ? t("hoursShort", { count: n }) : "—"}</span>
+                      <span className="hidden lg:inline" aria-hidden>{n > 0 ? n : "—"}</span>
                     </span>
                   </button>
                 );
@@ -480,7 +470,7 @@ export function ReservasList({
           </section>
 
           {/* 3. A quina hora? */}
-          <section aria-labelledby="step-hour">
+          <section aria-labelledby="step-hour" className="lg:col-start-3 lg:row-span-3 lg:row-start-1">
             <h2 id="step-hour" className="mb-2 text-xs font-bold tracking-wide text-brand-muted uppercase">
               {t("stepHour")}
             </h2>
@@ -552,27 +542,9 @@ export function ReservasList({
           service={book.service}
           slot={new Date(book.at)}
           mates={book.mates}
-          seed={
-            canRepeatInSeries(book.service)
-              ? {
-                  scheduledAt: book.at,
-                  trainerId: book.trainerIds[0],
-                  trainerName: trainerName(book.trainerIds[0]),
-                  serviceType: book.service,
-                }
-              : undefined
-          }
           remainingSessions={data.bonoSessions[book.service]}
-          waitlistEnabled={waitlistEnabled}
           subscriptionServiceType={subscriptionServiceType}
-          onSeriesReady={
-            onSeriesReady
-              ? (review) => {
-                  setBook(null);
-                  onSeriesReady(review);
-                }
-              : undefined
-          }
+          waitlistEnabled={waitlistEnabled}
           action={createAction}
           onClose={() => setBook(null)}
           onDone={() => {
@@ -605,27 +577,9 @@ export function ReservasList({
           scheduledAt={own.at}
           minCancellationHours={minCancellationHours}
           cancelAction={cancelAction}
-          seed={
-            own.trainerId && canRepeatInSeries(own.service)
-              ? {
-                  scheduledAt: own.at,
-                  trainerId: own.trainerId,
-                  trainerName: trainerName(own.trainerId),
-                  serviceType: own.service,
-                }
-              : undefined
-          }
-          remainingSessions={data.bonoSessions[own.service]}
-          waitlistEnabled={waitlistEnabled}
+          trainerId={own.trainerId}
           subscriptionServiceType={subscriptionServiceType}
-          onSeriesReady={
-            onSeriesReady
-              ? (review) => {
-                  setOwn(null);
-                  onSeriesReady(review);
-                }
-              : undefined
-          }
+          waitlistEnabled={waitlistEnabled}
           onClose={() => setOwn(null)}
         />
       )}

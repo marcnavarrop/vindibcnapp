@@ -12,11 +12,8 @@ import type { FormState } from "@/app/(client)/client/reservas/actions";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
-import {
-  RecurrenceFields,
-  type SeriesSeed,
-  type SeriesReviewState,
-} from "@/components/forms/series-wizard";
+import { WeeklyRepeat, type WeeklySeed } from "@/components/client/weekly-repeat";
+import { canRepeatInSeries } from "@/lib/series-rules";
 import {
   joinWaitlistAction,
   leaveWaitlistAction,
@@ -235,11 +232,9 @@ export function CreateModal({
   service,
   slot,
   mates = [],
-  seed,
   remainingSessions,
-  waitlistEnabled,
   subscriptionServiceType,
-  onSeriesReady,
+  waitlistEnabled = false,
   action,
   onClose,
   onDone,
@@ -255,13 +250,11 @@ export function CreateModal({
   slot: Date;
   /** Companys de grup ja apuntats. Sempre buit si no és 'grupo_reducido'. */
   mates?: string[];
-  /** La franja, per si es vol repetir en bucle. */
-  seed?: SeriesSeed;
   remainingSessions?: number;
-  waitlistEnabled?: boolean;
-  /** El client té subscripció viva d'aquest servei (0072). */
+  /** De quin servei és la subscripció viva del client, si en té (0072/0086). */
   subscriptionServiceType?: ServiceType | null;
-  onSeriesReady?: (review: SeriesReviewState) => void;
+  /** El centre accepta inscripcions noves a la cua (opció de la sèrie). */
+  waitlistEnabled?: boolean;
   action: CreateAction;
   onClose: () => void;
   onDone: () => void;
@@ -271,7 +264,10 @@ export function CreateModal({
   const chosenFull = chosen?.name ?? trainerNameFull;
   const trainerName = firstName(chosenFull);
   // La sèrie es repeteix amb qui s'hagi triat, no amb el primer de la llista.
-  const chosenSeed = seed ? { ...seed, trainerId, trainerName: chosenFull } : undefined;
+  // Només els serveis que es poden repetir (`canRepeatInSeries`): un grup no.
+  const weeklySeed: WeeklySeed | undefined = canRepeatInSeries(service)
+    ? { scheduledAt: slot.toISOString(), trainerId, serviceType: service }
+    : undefined;
   const [recurrent, setRecurrent] = useState(false);
   const [state, formAction] = useActionState(action, {} as FormState);
   useEffect(() => {
@@ -301,6 +297,7 @@ export function CreateModal({
         </dl>
         <div className="mt-5 flex flex-col items-center gap-3">
           <AddToCalendarButton
+            touch
             serviceType={service}
             otherPartyName={trainerName}
             scheduledAt={slot.toISOString()}
@@ -362,7 +359,7 @@ export function CreateModal({
 
       {/* Repetir-la és la mateixa decisió que fer-la, i per això es plega
           aquí sota en comptes d'obrir una altra superfície. */}
-      {chosenSeed && onSeriesReady && (
+      {weeklySeed && (
         <label className="mt-4 flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-brand-border px-3 py-2">
           <input
             type="checkbox"
@@ -371,26 +368,21 @@ export function CreateModal({
             className="h-5 w-5 shrink-0 accent-brand-purple"
           />
           <span className="text-sm font-bold text-brand-charcoal">
-            {t("book.makeRecurrent")}
+            {t("repeat.toggle")}
           </span>
         </label>
       )}
 
       {/* Un sol botó primari a cada moment: o reserves aquesta, o mires com
-          quedaria la sèrie. Mai els dos alhora. */}
-      {recurrent && chosenSeed && onSeriesReady ? (
-        <RecurrenceFields
+          quedarien les setmanes. Mai els dos alhora. */}
+      {recurrent && weeklySeed ? (
+        <WeeklyRepeat
           key={trainerId}
-          seed={chosenSeed}
-          remainingSessions={remainingSessions}
-          waitlistEnabled={waitlistEnabled}
+          seed={weeklySeed}
           subscriptionServiceType={subscriptionServiceType}
-          onReady={onSeriesReady}
-          secondaryAction={
-            <button type="button" onClick={onClose} className={QUIET}>
-              {t("cancel")}
-            </button>
-          }
+          waitlistEnabled={waitlistEnabled}
+          onBack={() => setRecurrent(false)}
+          onDone={onDone}
         />
       ) : (
         <form action={formAction} className="mt-5">
@@ -431,11 +423,9 @@ export function OwnModal({
   mates = [],
   minCancellationHours,
   cancelAction,
-  seed,
-  remainingSessions,
-  waitlistEnabled,
+  trainerId,
   subscriptionServiceType,
-  onSeriesReady,
+  waitlistEnabled = false,
   startConfirming = false,
   onClose,
 }: {
@@ -447,13 +437,12 @@ export function OwnModal({
   mates?: string[];
   minCancellationHours: number;
   cancelAction: CancelAction;
-  /** Aquesta sessió, com a origen d'una sèrie. */
-  seed?: SeriesSeed;
-  remainingSessions?: number;
-  waitlistEnabled?: boolean;
-  /** El client té subscripció viva d'aquest servei (0072). */
+  /** Amb qui és, per poder-la repetir cada setmana. */
+  trainerId: string | null;
+  /** De quin servei és la subscripció viva del client, si en té (0072/0086). */
   subscriptionServiceType?: ServiceType | null;
-  onSeriesReady?: (review: SeriesReviewState) => void;
+  /** El centre accepta inscripcions noves a la cua (opció de la sèrie). */
+  waitlistEnabled?: boolean;
   startConfirming?: boolean;
   onClose: () => void;
 }) {
@@ -470,6 +459,12 @@ export function OwnModal({
   }, [state.ok]);
   const canCancel = canCancelAt(scheduledAt, minCancellationHours);
   const when = useWhen(scheduledAt);
+  // Repetir-la cada setmana a partir d'aquesta: la sessió s'adopta a la sèrie
+  // (`ja_reservada`) i no es torna a reservar.
+  const weeklySeed: WeeklySeed | undefined =
+    trainerId && canRepeatInSeries(service)
+      ? { scheduledAt, trainerId, serviceType: service }
+      : undefined;
 
   if (cancelled) {
     const close = () => { router.refresh(); onClose(); };
@@ -505,6 +500,7 @@ export function OwnModal({
       {!confirming && (
         <div className="mt-4">
           <AddToCalendarButton
+            touch
             serviceType={service}
             otherPartyName={trainerNameFull}
             scheduledAt={scheduledAt}
@@ -516,30 +512,28 @@ export function OwnModal({
           La sessió d'aquí s'adopta a la sèrie amb el seu `series_id` (vegeu
           `ja_reservada`), de manera que no es duplica ni es queda fora quan es
           cancel·li la sèrie sencera. */}
-      {seed && onSeriesReady && !recurrent && !confirming && (
+      {weeklySeed && !recurrent && !confirming && (
         <button
           type="button"
           onClick={() => setRecurrent(true)}
           className={`mt-4 flex w-full items-center justify-center gap-2 ${BTN} border-2 border-brand-purple text-brand-purple transition-colors hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
         >
-          {t("own.repeat")}
+          {t("repeat.toggle")}
         </button>
       )}
       {/* Mentre s'està configurant la repetició, la cancel·lació desapareix:
           "Cancel·lar reserva" just sota de "Veure les sessions" és massa fàcil
           de prémer per error, i són dues coses oposades. */}
-      {recurrent && seed && onSeriesReady && (
-        <RecurrenceFields
-          seed={seed}
-          remainingSessions={remainingSessions}
-          waitlistEnabled={waitlistEnabled}
+      {recurrent && weeklySeed && (
+        <WeeklyRepeat
+          seed={weeklySeed}
           subscriptionServiceType={subscriptionServiceType}
-          onReady={onSeriesReady}
-          secondaryAction={
-            <button type="button" onClick={() => setRecurrent(false)} className={QUIET}>
-              {t("back")}
-            </button>
-          }
+          waitlistEnabled={waitlistEnabled}
+          onBack={() => setRecurrent(false)}
+          onDone={() => {
+            router.refresh();
+            onClose();
+          }}
         />
       )}
       {!recurrent &&
@@ -587,7 +581,7 @@ export function OwnModal({
             {t("own.tooLate", { hours: minCancellationHours })}
           </p>
         ))}
-      {!confirming && (
+      {!confirming && !recurrent && (
         <button type="button" onClick={onClose} className={`mt-3 w-full ${QUIET}`}>
           {t("close")}
         </button>

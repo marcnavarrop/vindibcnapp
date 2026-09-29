@@ -14,6 +14,11 @@ type Props = {
   otherPartyName: string | null;
   scheduledAt: string;
   className?: string;
+  /**
+   * Alçada de dit (44 px) per al botó i les opcions. Només la fan servir les
+   * fulles del client al mòbil; la resta de pantalles es queden com eren.
+   */
+  touch?: boolean;
 };
 
 export function AddToCalendarButton({
@@ -21,7 +26,9 @@ export function AddToCalendarButton({
   otherPartyName,
   scheduledAt,
   className = "",
+  touch = false,
 }: Props) {
+  const tall = touch ? "min-h-11 " : "";
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -61,7 +68,7 @@ export function AddToCalendarButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg ${TAP}`}
+        className={`${tall}flex items-center gap-1.5 rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg ${TAP}`}
       >
         <CalendarIcon />
         Afegir al calendari
@@ -72,7 +79,7 @@ export function AddToCalendarButton({
           <button
             type="button"
             onClick={openGoogle}
-            className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
+            className={`${tall}flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             <GoogleIcon />
             Google Calendar
@@ -80,7 +87,7 @@ export function AddToCalendarButton({
           <button
             type="button"
             onClick={downloadIcs}
-            className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
+            className={`${tall}flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             <AppleIcon />
             Apple Calendar
@@ -88,7 +95,7 @@ export function AddToCalendarButton({
           <button
             type="button"
             onClick={downloadIcs}
-            className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
+            className={`${tall}flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             <OutlookIcon />
             Outlook / altres (.ics)

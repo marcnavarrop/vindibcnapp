@@ -475,8 +475,8 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Un bo és un paquet de sessions ja pagades (o pendents de pagar) d'un servei concret. Sense un bo amb sessions disponibles no es pot reservar: el calendari no t'ensenyarà cap franja lliure. Aquesta secció té dues pestanyes, «Comprar bo nou» i «Els meus bons».",
-            es: "Un bono es un paquete de sesiones ya pagadas (o pendientes de pagar) de un servicio concreto. Sin un bono con sesiones disponibles no se puede reservar: el calendario no te enseñará ninguna franja libre. Esta sección tiene dos pestañas, «Comprar bono nuevo» y «Mis bonos».",
+            ca: "Un bo és un paquet de sessions ja pagades (o pendents de pagar) d'un servei concret. Sense un bo amb sessions disponibles no es pot reservar: no et sortirà cap hora lliure per reservar. Aquesta secció té dues pestanyes, «Comprar bo nou» i «Els meus bons».",
+            es: "Un bono es un paquete de sesiones ya pagadas (o pendientes de pagar) de un servicio concreto. Sin un bono con sesiones disponibles no se puede reservar: no te saldrá ninguna hora libre para reservar. Esta sección tiene dos pestañas, «Comprar bono nuevo» y «Mis bonos».",
             en: "A pass is a package of sessions for a particular service, already paid for (or awaiting payment). Without a pass with sessions available you can't book: the calendar won't show you a single free slot. This section has two tabs, «Buy a new pass» and «My passes».",
           }),
         },
@@ -994,9 +994,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Aquí es reserva. El calendari ensenya les franges lliures de TOTS els professionals del centre, filtrades pel que tu pots fer: només hi surt el que pots reservar amb els bons que tens.",
-            es: "Aquí se reserva. El calendario enseña las franjas libres de TODOS los profesionales del centro, filtradas por lo que tú puedes hacer: solo sale lo que puedes reservar con los bonos que tienes.",
-            en: "This is where you book. The calendar shows the free slots of EVERY trainer and physio at the centre, filtered by what you can do: only what you can book with the passes you hold appears.",
+            ca: "Aquí es reserva. Hi veus les hores lliures del centre, ja filtrades pel que tu pots fer: només hi surt el que pots reservar amb els bons que tens i amb qui ho pots reservar.",
+            es: "Aquí se reserva. Ves las horas libres del centro, ya filtradas por lo que tú puedes hacer: solo sale lo que puedes reservar con los bonos que tienes y con quién puedes reservarlo.",
+            en: "This is where you book. You see the centre's free times, already filtered by what you can do: only what you can book with the passes you hold, and with whom, appears.",
           }),
         },
         {
@@ -1026,9 +1026,9 @@ export function buildClientManual(
         {
           t: "h",
           text: T({
-            ca: "Al mòbil: servei, dia i hora",
-            es: "En el móvil: servicio, día y hora",
-            en: "On a phone: service, day and time",
+            ca: "Reservar: servei, dia i hora",
+            es: "Reservar: servicio, día y hora",
+            en: "Booking: service, day and time",
           }),
         },
         {
@@ -1081,35 +1081,11 @@ export function buildClientManual(
           ],
         },
         {
-          t: "h",
-          text: T({
-            ca: "A l'ordinador: el calendari",
-            es: "En el ordenador: el calendario",
-            en: "On a computer: the calendar",
-          }),
-        },
-        {
           t: "p",
           text: T({
-            ca: `A l'ordinador, sota les teves sessions, hi ha el calendari de tot el centre. Es pot mirar per dia o per setmana i moure't amb les fletxes: endavant tant com vulguis, i enrere fins a la setmana d'avui. Les sessions que ja has fet són més avall, a «Sessions passades». L'horari que es mostra va de les ${hhmm(s.openingHour)} a les ${hhmm(s.closingHour)}, que és l'horari del centre.`,
-            es: `En el ordenador, debajo de tus sesiones, está el calendario de todo el centro. Se puede mirar por día o por semana y moverte con las flechas: hacia delante todo lo que quieras, y hacia atrás hasta la semana actual. Las sesiones que ya has hecho están más abajo, en «Sesiones pasadas». El horario que se muestra va de las ${hhmm(s.openingHour)} a las ${hhmm(s.closingHour)}, que es el horario del centro.`,
-            en: `On a computer, below your sessions, there's the calendar for the whole centre. You can view it by day or by week and move with the arrows: forward as far as you like, and back as far as the current week. The sessions you've already done are further down, under «Past sessions». The hours shown run from ${hhmm(s.openingHour)} to ${hhmm(s.closingHour)}, which is the centre's opening time.`,
-          }),
-        },
-        {
-          t: "p",
-          text: T({
-            ca: "Hi ha una fila per cada mitja hora, i les sessions poden començar tant en punt com a i mitja. Només les files en punt porten l'hora escrita; la línia del mig parteix l'hora en dues.",
-            es: "Hay una fila por cada media hora, y las sesiones pueden empezar tanto en punto como a y media. Solo las filas en punto llevan la hora escrita; la línea del medio parte la hora en dos.",
-            en: "There is one row per half hour, and sessions can start either on the hour or at half past. Only the on-the-hour rows are labelled; the fainter line in between splits the hour in two.",
-          }),
-        },
-        {
-          t: "p",
-          text: T({
-            ca: "Cada professional té el seu color, i la llegenda de sota el calendari diu quin és de qui. A dalt hi ha dos filtres, per servei i per professional, per si vols mirar només una cosa. Si tens un professional assignat, el filtre ja hi ve posat.",
-            es: "Cada profesional tiene su color, y la leyenda de debajo del calendario dice cuál es de quién. Arriba hay dos filtros, por servicio y por profesional, por si quieres mirar solo una cosa. Si tienes un profesional asignado, el filtro ya viene puesto.",
-            en: "Each professional has their own colour, and the key below the calendar says which is whose. At the top there are two filters, by service and by professional, in case you want to look at just one thing. If you have a professional assigned to you, that filter comes ready set.",
+            ca: `A l'ordinador hi ha les mateixes peces en tres columnes: a l'esquerra, les teves sessions, els bons i les sèries; al mig, el servei i un calendari de tres setmanes amb les hores lliures de cada dia; a la dreta, les hores del dia triat. Les hores van de les ${hhmm(s.openingHour)} a les ${hhmm(s.closingHour)}, que és l'horari del centre, i les sessions poden començar en punt o a i mitja.`,
+            es: `En el ordenador están las mismas piezas en tres columnas: a la izquierda, tus sesiones, los bonos y las series; en el centro, el servicio y un calendario de tres semanas con las horas libres de cada día; a la derecha, las horas del día elegido. Las horas van de las ${hhmm(s.openingHour)} a las ${hhmm(s.closingHour)}, que es el horario del centro, y las sesiones pueden empezar en punto o a y media.`,
+            en: `On a computer the same pieces sit in three columns: on the left, your sessions, passes and series; in the middle, the service and a three-week calendar with each day's free times; on the right, the times for the chosen day. Times run from ${hhmm(s.openingHour)} to ${hhmm(s.closingHour)}, the centre's opening hours, and sessions can start on the hour or at half past.`,
           }),
         },
         {
@@ -1156,74 +1132,17 @@ export function buildClientManual(
         {
           t: "note",
           text: T({
-            ca: "Si encara no tens entrenador assignat, l'app t'ho diu a dalt del calendari: fins que el centre no te n'assigni un, no pots reservar sessions individuals ni en parella. Parla amb el centre perquè te l'assignin. Els grups i la fisioteràpia sí que els pots reservar.",
-            es: "Si aún no tienes entrenador asignado, la app te lo dice arriba del calendario: hasta que el centro no te asigne uno, no puedes reservar sesiones individuales ni en pareja. Habla con el centro para que te lo asignen. Los grupos y la fisioterapia sí puedes reservarlos.",
-            en: "If you don't have an assigned trainer yet, the app tells you at the top of the calendar: until the centre assigns you one, you can't book 1-to-1 or pairs sessions. Talk to the centre so they can assign you one. You can still book small groups and physiotherapy.",
+            ca: "Si encara no tens entrenador assignat, l'app t'ho diu on hi hauria les hores: fins que el centre no te n'assigni un, no pots reservar sessions individuals ni en parella. Parla amb el centre perquè te l'assignin. Els grups i la fisioteràpia sí que els pots reservar.",
+            es: "Si aún no tienes entrenador asignado, la app te lo dice donde estarían las horas: hasta que el centro no te asigne uno, no puedes reservar sesiones individuales ni en pareja. Habla con el centro para que te lo asignen. Los grupos y la fisioterapia sí puedes reservarlos.",
+            en: "If you don't have an assigned trainer yet, the app tells you where the times would be: until the centre assigns you one, you can't book 1-to-1 or pairs sessions. Talk to the centre so they can assign you one. You can still book small groups and physiotherapy.",
           }),
         },
         {
           t: "h",
           text: T({
-            ca: "Què vol dir cada casella",
-            es: "Qué quiere decir cada casilla",
-            en: "What each cell means",
-          }),
-        },
-        {
-          t: "dl",
-          items: [
-            [
-              T({
-                ca: "Una franja de color amb el nom d'un servei",
-                es: "Una franja de color con el nombre de un servicio",
-                en: "A coloured slot with a service name",
-              }),
-              T({
-                ca: "És lliure i la pots reservar. Si un professional ofereix dues coses a la mateixa franja, en surt una per cada servei que tu puguis reservar.",
-                es: "Está libre y la puedes reservar. Si un profesional ofrece dos cosas en la misma franja, sale una por cada servicio que tú puedas reservar.",
-                en: "It's free and you can book it. If a professional offers two things in the same slot, one appears for each service you're able to book.",
-              }),
-            ],
-            [
-              T({ ca: "Ocupat", es: "Ocupado", en: "Taken" }),
-              T({
-                ca: "Aquella franja ja la té ocupada una altra persona. No hi veus mai qui és. Com que una sessió dura una hora, també tapa la mitja hora següent.",
-                es: "Esa franja ya la tiene ocupada otra persona. No ves nunca quién es. Como una sesión dura una hora, también tapa la media hora siguiente.",
-                en: "That slot is already taken by someone else. You never see who. Since a session lasts an hour, it also covers the following half hour.",
-              }),
-            ],
-            [
-              T({
-                ca: `Un comptador tipus «2/${s.groupCapacity}»`,
-                es: `Un contador tipo «2/${s.groupCapacity}»`,
-                en: `A counter such as «2/${s.groupCapacity}»`,
-              }),
-              T({
-                ca: "És una sessió de Grup reduït que ja està en marxa i encara té places. El color et diu com va: verd si hi ha lloc de sobres, ambre si en queda una de sola, vermell si està plena.",
-                es: "Es una sesión de Grupo reducido que ya está en marcha y todavía tiene plazas. El color te dice cómo va: verde si hay sitio de sobra, ámbar si queda una sola, rojo si está llena.",
-                en: "It's a Small group session already under way that still has spaces. The colour tells you how it's going: green if there's plenty of room, amber if only one space is left, red if it's full.",
-              }),
-            ],
-            [
-              T({
-                ca: "La teva sessió",
-                es: "Tu sesión",
-                en: "Your session",
-              }),
-              T({
-                ca: "Les que ja tens reservades surten sempre, encara que hi hagi filtres posats.",
-                es: "Las que ya tienes reservadas salen siempre, aunque haya filtros puestos.",
-                en: "The ones you've already booked always show, even with filters applied.",
-              }),
-            ],
-          ],
-        },
-        {
-          t: "h",
-          text: T({
-            ca: "Per què hi ha franges que no et surten",
-            es: "Por qué hay franjas que no te salen",
-            en: "Why some slots don't appear",
+            ca: "Per què una hora no et surt",
+            es: "Por qué una hora no te sale",
+            en: "Why a time doesn't appear",
           }),
         },
         {
@@ -1233,11 +1152,6 @@ export function buildClientManual(
               ca: "No tens cap bo actiu amb sessions disponibles: sense bo no hi ha res reservable, i l'app t'ho diu a dalt de tot.",
               es: "No tienes ningún bono activo con sesiones disponibles: sin bono no hay nada reservable, y la app te lo dice arriba del todo.",
               en: "You have no active pass with sessions available: without a pass nothing is bookable, and the app says so right at the top.",
-            }),
-            T({
-              ca: "Aquell professional no ofereix cap dels serveis dels teus bons. Si has filtrat per ell, l'app t'ho avisa i t'ofereix tornar a veure'ls tots.",
-              es: "Ese profesional no ofrece ninguno de los servicios de tus bonos. Si has filtrado por él, la app te avisa y te ofrece volver a verlos todos.",
-              en: "That professional doesn't offer any of the services your passes cover. If you've filtered by them, the app warns you and offers to show everyone again.",
             }),
             T({
               ca: "És una sessió individual o en parella d'un professional que no és el teu entrenador: aquestes només les pots fer amb el teu. Si no en tens cap d'assignat, no et sortirà cap franja d'aquests serveis fins que el centre te n'assigni un.",
@@ -1276,9 +1190,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Cliques la franja i s'obre una finestra amb el dia, l'hora, el servei i el professional. Prems «Reservar» i ja està: la sessió es descompta del bo i la confirmació surt al moment, amb el botó per afegir-la al teu calendari.",
-            es: "Haces clic en la franja y se abre una ventana con el día, la hora, el servicio y el profesional. Pulsas «Reservar» y ya está: la sesión se descuenta del bono y la confirmación sale al momento, con el botón para añadirla a tu calendario.",
-            en: "You click the slot and a window opens with the day, the time, the service and the professional. You press «Book» and that's it: the session comes off your pass and the confirmation appears straight away, with the button to add it to your calendar.",
+            ca: "Toques l'hora i s'obre la confirmació amb el dia, l'hora, el servei, el professional i el bo que es gasta. Prems «Reservar» i ja està: la sessió es descompta del bo i la confirmació surt al moment, amb el botó per afegir-la al teu calendari.",
+            es: "Tocas la hora y se abre la confirmación con el día, la hora, el servicio, el profesional y el bono que se gasta. Pulsas «Reservar» y ya está: la sesión se descuenta del bono y la confirmación sale al momento, con el botón para añadirla a tu calendario.",
+            en: "Tap the time and the confirmation opens with the day, the time, the service, the professional and the pass it uses. Press «Book» and that's it: the session comes off your pass and the confirmation appears straight away, with the button to add it to your calendar.",
           }),
         },
         {
@@ -1300,9 +1214,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: `Un Grup reduït admet ${s.groupCapacity} persones. En obrir la finestra d'una sessió de grup veus qui ja s'hi ha apuntat; a la graella del calendari no hi surt cap nom, només el comptador, perquè el calendari es veu de lluny i sense voler.`,
-            es: `Un Grupo reducido admite ${s.groupCapacity} personas. Al abrir la ventana de una sesión de grupo ves quién se ha apuntado ya; en la parrilla del calendario no sale ningún nombre, solo el contador, porque el calendario se ve de lejos y sin querer.`,
-            en: `A Small group takes ${s.groupCapacity} people. When you open a group session's window you see who has already joined; on the calendar grid no names appear, only the counter, because a calendar gets seen from a distance and by accident.`,
+            ca: `Un Grup reduït admet ${s.groupCapacity} persones. En obrir la confirmació d'una sessió de grup veus qui ja s'hi ha apuntat; a la llista no hi surt cap nom, només les places, perquè la pantalla es veu de lluny i sense voler.`,
+            es: `Un Grupo reducido admite ${s.groupCapacity} personas. Al abrir la confirmación de una sesión de grupo ves quién se ha apuntado ya; en la lista no sale ningún nombre, solo las plazas, porque la pantalla se ve de lejos y sin querer.`,
+            en: `A Small group takes ${s.groupCapacity} people. When you open a group session's confirmation you see who has already joined; the list shows no names, only the spaces, because a screen gets seen from a distance and by accident.`,
           }),
         },
         {
@@ -1316,9 +1230,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Cliques la teva sessió al calendari i s'obre amb el detall, el botó d'afegir-la al calendari i el de cancel·lar. Cancel·lar demana una confirmació; la sessió torna al teu bo.",
-            es: "Haces clic en tu sesión en el calendario y se abre con el detalle, el botón de añadirla al calendario y el de cancelar. Cancelar pide una confirmación; la sesión vuelve a tu bono.",
-            en: "Click your session on the calendar and it opens with the details, the button to add it to your calendar and the one to cancel. Cancelling asks for confirmation; the session goes back onto your pass.",
+            ca: "Toques la teva sessió, a dalt o a la llista d'hores, i s'obre amb el detall, el botó d'afegir-la al calendari, el de repetir-la cada setmana i el de cancel·lar. Cancel·lar demana una confirmació; la sessió torna al teu bo.",
+            es: "Tocas tu sesión, arriba o en la lista de horas, y se abre con el detalle, el botón de añadirla al calendario, el de repetirla cada semana y el de cancelar. Cancelar pide una confirmación; la sesión vuelve a tu bono.",
+            en: "Tap your session, at the top or in the list of times, and it opens with the details, the button to add it to your calendar, the one to repeat it every week and the one to cancel. Cancelling asks for confirmation; the session goes back onto your pass.",
           }),
         },
         {
@@ -1366,9 +1280,9 @@ export function buildClientManual(
               {
                 t: "p",
                 text: T({
-                  ca: "Mentre hi siguis, la franja et surt marcada com que ets a la llista, i des d'allà mateix te'n pots donar de baixa.",
-                  es: "Mientras estés en ella, la franja te sale marcada como que estás en la lista, y desde ahí mismo te puedes dar de baja.",
-                  en: "While you're on it, the slot is marked to show you're on the list, and you can take yourself off from there.",
+                  ca: "Mentre hi siguis, l'hora et surt marcada amb «Ets a la cua», i des d'allà mateix te'n pots donar de baixa.",
+                  es: "Mientras estés en ella, la hora te sale marcada con «Estás en la cola», y desde ahí mismo te puedes dar de baja.",
+                  en: "While you're on it, the time is marked «You're on the waitlist», and you can take yourself off from there.",
                 }),
               },
             ] as Block[])
@@ -1385,197 +1299,98 @@ export function buildClientManual(
         {
           t: "h",
           text: T({
-            ca: "Repetir una sessió en bucle (les sèries)",
-            es: "Repetir una sesión en bucle (las series)",
-            en: "Repeating a session (series)",
+            ca: "Repetir cada setmana (les sèries)",
+            es: "Repetir cada semana (las series)",
+            en: "Repeating every week (series)",
           }),
         },
         {
           t: "p",
           text: T({
-            ca: "Si vols la mateixa franja cada setmana, no cal reservar-la una per una. Hi ha dues portes: la casella «Fer-ho recurrent» a la finestra de reservar, i el botó «Repetir en bucle a partir d'aquesta» a una sessió que ja tinguis reservada.",
-            es: "Si quieres la misma franja cada semana, no hace falta reservarla una por una. Hay dos puertas: la casilla «Hacerlo recurrente» en la ventana de reservar, y el botón «Repetir en bucle a partir de esta» en una sesión que ya tengas reservada.",
-            en: "If you want the same slot every week, there's no need to book it one at a time. There are two ways in: the «Make it recurring» box in the booking window, and the «Repeat from this one» button on a session you've already booked.",
-          }),
-        },
-        {
-          t: "warn",
-          text: T({
-            ca: "Les sessions de Grup reduït no es poden repetir en bucle, i per això no hi trobaràs cap de les dues portes. Una franja de grup són poques places, i deixar-la reservada mes rere mes per la mateixa persona la tancaria per a la resta. Les de grup es reserven d'una en una.",
-            es: "Las sesiones de Grupo reducido no se pueden repetir en bucle, y por eso no encontrarás ninguna de las dos puertas. Una franja de grupo son pocas plazas, y dejarla reservada mes tras mes por la misma persona la cerraría para el resto. Las de grupo se reservan de una en una.",
-            en: "Small group sessions can't be repeated in a loop, which is why neither way in appears for them. A group slot has only a few places, and leaving it booked month after month by the same person would close it to everyone else. Group sessions are booked one at a time.",
+            ca: "Si vols la mateixa hora cada setmana, no cal reservar-la una per una. A la confirmació hi ha la casella «Repetir cada setmana», i també a una sessió teva que ja tinguis reservada.",
+            es: "Si quieres la misma hora cada semana, no hace falta reservarla una por una. En la confirmación está la casilla «Repetir cada semana», y también en una sesión tuya que ya tengas reservada.",
+            en: "If you want the same time every week, there's no need to book it one at a time. The confirmation has a «Repeat every week» box, and so does a session of yours you've already booked.",
           }),
         },
         {
           t: "ol",
           items: [
             T({
-              ca: "Tries cada quant es repeteix: cada setmana, cada dues setmanes o cada mes.",
-              es: "Eliges cada cuánto se repite: cada semana, cada dos semanas o cada mes.",
-              en: "You choose how often it repeats: weekly, fortnightly or monthly.",
+              ca: "Marques «Repetir cada setmana» i tries quantes setmanes: 4, 8 o 12.",
+              es: "Marcas «Repetir cada semana» y eliges cuántas semanas: 4, 8 o 12.",
+              en: "Tick «Repeat every week» and choose how many weeks: 4, 8 or 12.",
             }),
             T({
-              ca: "Dius fins quan (una data) o quantes sessions en vols. Pots omplir-ne un o tots dos; amb tots dos, la sèrie s'atura amb el primer límit que arribi.",
-              es: "Dices hasta cuándo (una fecha) o cuántas sesiones quieres. Puedes rellenar uno o los dos; con los dos, la serie se detiene con el primer límite que llegue.",
-              en: "You say until when (a date) or how many sessions you want. You can fill in one or both; with both, the series stops at whichever limit comes first.",
+              ca: "Prems «Veure les setmanes»: veus cada setmana i què hi passarà («Es reservarà», «Ja la tens» o «Sense plaça»). Encara no s'ha reservat res.",
+              es: "Pulsas «Ver las semanas»: ves cada semana y qué pasará («Se reservará», «Ya la tienes» o «Sin plaza»). Aún no se ha reservado nada.",
+              en: "Press «See the weeks»: you see each week and what will happen («Will be booked», «Already yours» or «No space»). Nothing has been booked yet.",
             }),
             T({
-              ca: "Si vols, obres «Si no hi ha plaça…» i ajustes què s'ha de fer amb les dates que estiguin ocupades.",
-              es: "Si quieres, abres «Si no hay plaza…» y ajustas qué hay que hacer con las fechas que estén ocupadas.",
-              en: "If you like, open «If there's no space…» and set what should happen with dates that are taken.",
-            }),
-            T({
-              ca: "Prems «Veure les sessions»: es calcula la sèrie i te l'ensenyem sencera. Encara no s'ha reservat res.",
-              es: "Pulsas «Ver las sesiones»: se calcula la serie y te la enseñamos entera. Todavía no se ha reservado nada.",
-              en: "Press «See the sessions»: the series is worked out and shown to you in full. Nothing has been booked yet.",
-            }),
-            T({
-              ca: "Revises la llista, acceptes les alternatives que t'agradin i prems «Confirmar sèrie».",
-              es: "Revisas la lista, aceptas las alternativas que te gusten y pulsas «Confirmar serie».",
-              en: "You look through the list, accept whichever alternatives suit you and press «Confirm series».",
+              ca: "Prems «Reservar» i ja les tens totes.",
+              es: "Pulsas «Reservar» y ya las tienes todas.",
+              en: "Press «Book» and they're all yours.",
             }),
           ],
         },
         {
-          t: "note",
+          t: "p",
           text: T({
-            ca: "Fins que no prems «Confirmar sèrie» no es reserva absolutament res. El pas de revisió és exactament perquè puguis veure on cauen les sessions abans de comprometre-les.",
-            es: "Hasta que no pulsas «Confirmar serie» no se reserva absolutamente nada. El paso de revisión está exactamente para que puedas ver dónde caen las sesiones antes de comprometerlas.",
-            en: "Until you press «Confirm series» absolutely nothing is booked. The review step exists precisely so you can see where the sessions land before committing them.",
+            ca: "Només es reserven les setmanes amb plaça, a la mateixa hora i amb el mateix professional; les que no en tenen no es reserven. Si el bo no arriba per a totes, t'ho diem abans de confirmar.",
+            es: "Solo se reservan las semanas con plaza, a la misma hora y con el mismo profesional; las que no tienen no se reservan. Si el bono no llega para todas, te lo decimos antes de confirmar.",
+            en: "Only weeks with a free space are booked, at the same time and with the same professional; the others aren't. If your pass doesn't stretch to all of them, we tell you before you confirm.",
           }),
         },
         {
-          t: "h",
+          t: "p",
           text: T({
-            ca: "Les opcions de «Si no hi ha plaça…»",
-            es: "Las opciones de «Si no hay plaza…»",
-            en: "The «If there's no space…» options",
+            ca: "Si necessites una altra cosa, a sota hi ha «Més opcions», plegat:",
+            es: "Si necesitas otra cosa, debajo está «Más opciones», plegado:",
+            en: "If you need something else, «More options» is folded away underneath:",
           }),
         },
         {
-          t: "dl",
+          t: "ul",
           items: [
-            [
-              T({
-                ca: "Reservar només les disponibles",
-                es: "Reservar solo las disponibles",
-                en: "Book only the available ones",
-              }),
-              T({
-                ca: "Ve marcada per defecte. Només es confirmen les dates amb plaça i la resta es descarten. Té prioritat sobre les altres dues.",
-                es: "Viene marcada por defecto. Solo se confirman las fechas con plaza y el resto se descartan. Tiene prioridad sobre las otras dos.",
-                en: "Ticked by default. Only dates with space are confirmed and the rest are dropped. It takes priority over the other two.",
-              }),
-            ],
-            [
-              T({
-                ca: "Proposar alternatives automàtiques",
-                es: "Proponer alternativas automáticas",
-                en: "Suggest alternatives automatically",
-              }),
-              T({
-                ca: "Per a les dates ocupades et suggerim la millor alternativa possible i decideixes tu si l'acceptes, una per una. En individual i en parella és una altra hora el mateix dia amb el teu entrenador; en fisioteràpia també pot ser la mateixa hora amb un altre professional.",
-                es: "Para las fechas ocupadas te sugerimos la mejor alternativa posible y decides tú si la aceptas, una por una. En individual y en pareja es otra hora el mismo día con tu entrenador; en fisioterapia también puede ser la misma hora con otro profesional.",
-                en: "For dates that are taken we suggest the best alternative we can and you decide whether to accept, one by one. For 1-to-1 and pairs it's another hour the same day with your trainer; for physiotherapy it can also be the same hour with another professional.",
-              }),
-            ],
+            T({
+              ca: "Cada quan: cada setmana, cada dues setmanes o cada mes (el mateix dia del mes).",
+              es: "Cada cuánto: cada semana, cada dos semanas o cada mes (el mismo día del mes).",
+              en: "How often: every week, every two weeks or every month (the same day of the month).",
+            }),
+            T({
+              ca: "Fins quan: un nombre de sessions (4, 8 o 12) o una data final.",
+              es: "Hasta cuándo: un número de sesiones (4, 8 o 12) o una fecha final.",
+              en: "Until: a number of sessions (4, 8 or 12) or an end date.",
+            }),
+            T({
+              ca: "Si un dia no hi ha lloc, «Saltar-lo» (el que passa si no toques res) o «Proposar-me una altra hora». Les propostes surten a la llista i només es reserven les que acceptes. En individual i en parella, sempre amb el teu entrenador: una altra hora aquell mateix dia. En fisioteràpia també pot ser un altre fisioterapeuta a la mateixa hora.",
+              es: "Si un día no hay hueco, «Saltarlo» (lo que pasa si no tocas nada) o «Proponerme otra hora». Las propuestas salen en la lista y solo se reservan las que aceptas. En individual y en pareja, siempre con tu entrenador: otra hora ese mismo día. En fisioterapia también puede ser otro fisioterapeuta a la misma hora.",
+              en: "If a day is full, «Skip it» (what happens if you don't change anything) or «Suggest another time». Suggestions appear in the list and only the ones you accept are booked. For individual and pairs, always with your trainer: another time that same day. For physiotherapy it can also be another physiotherapist at the same time.",
+            }),
             ...(s.waitlistEnabled
-              ? ([
-                  [
-                    T({
-                      ca: "Afegir a la llista d'espera si no hi ha plaça",
-                      es: "Añadir a la lista de espera si no hay plaza",
-                      en: "Join the waiting list if there's no space",
-                    }),
-                    T({
-                      ca: "Les dates plenes no es descarten: t'apuntem a la cua i, si algú cancel·la, la plaça és teva. Només les plenes: si aquell dia el professional no hi és, no hi ha cap cua on apuntar-te.",
-                      es: "Las fechas llenas no se descartan: te apuntamos a la cola y, si alguien cancela, la plaza es tuya. Solo las llenas: si ese día el profesional no está, no hay ninguna cola donde apuntarte.",
-                      en: "Full dates aren't dropped: we put you in the queue and, if someone cancels, the space is yours. Only full ones: if the professional isn't there that day, there's no queue to join.",
-                    }),
-                  ],
-                ] as [string, string][])
+              ? [
+                  T({
+                    ca: "També pots triar «Apuntar-me a la cua»: aquell dia et quedes a la cua i, si algú deixa la plaça, entres tu i t'avisem per correu. Si el professional no hi és aquell dia (vacances, un bloqueig), no hi ha cua possible i surt «Sense plaça».",
+                    es: "También puedes elegir «Apuntarme a la cola»: ese día te quedas en la cola y, si alguien deja la plaza, entras tú y te avisamos por correo. Si el profesional no está ese día (vacaciones, un bloqueo), no hay cola posible y sale «Sin plaza».",
+                    en: "You can also choose «Join the waitlist»: that day you go on the waitlist and, if someone gives up the space, you're in and we email you. If the professional isn't there that day (holidays, a block), there's no waitlist and it says «No space».",
+                  }),
+                ]
               : []),
           ],
         },
         {
-          t: "h",
+          t: "p",
           text: T({
-            ca: "Llegir la revisió de la sèrie",
-            es: "Leer la revisión de la serie",
-            en: "Reading the series review",
+            ca: "La llista d'abans de confirmar ja ho reflecteix tot: a dalt, cada quan i a quina hora; a cada fila, la data i què hi passarà, amb les propostes i el botó «Acceptar».",
+            es: "La lista de antes de confirmar ya lo refleja todo: arriba, cada cuánto y a qué hora; en cada fila, la fecha y qué pasará, con las propuestas y el botón «Aceptar».",
+            en: "The list before you confirm already shows all of it: at the top, how often and at what time; on each row, the date and what will happen, with the suggestions and the «Accept» button.",
           }),
         },
         {
-          t: "p",
+          t: "note",
           text: T({
-            ca: "Cada data de la llista porta una etiqueta:",
-            es: "Cada fecha de la lista lleva una etiqueta:",
-            en: "Each date on the list carries a label:",
-          }),
-        },
-        {
-          t: "dl",
-          items: [
-            [
-              T({ ca: "Confirmada", es: "Confirmada", en: "Confirmed" }),
-              T({
-                ca: "Hi ha plaça i es reservarà.",
-                es: "Hay plaza y se reservará.",
-                en: "There's space and it will be booked.",
-              }),
-            ],
-            [
-              T({
-                ca: "Ja reservada",
-                es: "Ya reservada",
-                en: "Already booked",
-              }),
-              T({
-                ca: "Aquella sessió ja la tenies. No es duplica: s'adopta a la sèrie, i si un dia cancel·les la sèrie sencera, se n'anirà amb ella.",
-                es: "Esa sesión ya la tenías. No se duplica: se adopta en la serie, y si un día cancelas la serie entera, se irá con ella.",
-                en: "You already had that session. It isn't duplicated: it's taken into the series, and if you one day cancel the whole series, it goes with it.",
-              }),
-            ],
-            [
-              T({
-                ca: "Alternativa proposada",
-                es: "Alternativa propuesta",
-                en: "Alternative suggested",
-              }),
-              T({
-                ca: "L'original està ocupada i te'n proposem una altra. No compta fins que prems «Accepta».",
-                es: "La original está ocupada y te proponemos otra. No cuenta hasta que pulsas «Aceptar».",
-                en: "The original is taken and we're offering another. It doesn't count until you press «Accept».",
-              }),
-            ],
-            [
-              T({
-                ca: "Llista d'espera",
-                es: "Lista de espera",
-                en: "Waiting list",
-              }),
-              T({
-                ca: "T'apuntarem a la cua d'aquella sessió.",
-                es: "Te apuntaremos a la cola de esa sesión.",
-                en: "We'll add you to the queue for that session.",
-              }),
-            ],
-            [
-              T({ ca: "Sense places", es: "Sin plazas", en: "No spaces" }),
-              T({
-                ca: "No es reservarà.",
-                es: "No se reservará.",
-                en: "It won't be booked.",
-              }),
-            ],
-          ],
-        },
-        {
-          t: "p",
-          text: T({
-            ca: "A sota hi ha el recompte i, si el bo no arriba per a totes, t'ho diem abans de confirmar: quantes es reserven ara i quantes queden fora. Les que queden fora no es reserven: quan tornis a tenir sessions, les pots afegir tu.",
-            es: "Abajo está el recuento y, si el bono no llega para todas, te lo decimos antes de confirmar: cuántas se reservan ahora y cuántas quedan fuera. Las que quedan fuera no se reservan: cuando vuelvas a tener sesiones, las puedes añadir tú.",
-            en: "Below is the tally and, if the pass doesn't stretch to all of them, we tell you before you confirm: how many are being booked now and how many fall outside. The ones that fall outside aren't booked: when you have sessions again, you can add them yourself.",
+            ca: "Les sessions de Grup reduït no es poden repetir, i per això no hi trobaràs la casella. Una franja de grup són poques places, i una sèrie deixaria la mateixa plaça ocupada per la mateixa persona setmana rere setmana.",
+            es: "Las sesiones de Grupo reducido no se pueden repetir, y por eso no encontrarás la casilla. Una franja de grupo son pocas plazas, y una serie dejaría la misma plaza ocupada por la misma persona semana tras semana.",
+            en: "Small group sessions can't be repeated, which is why the box isn't there. A group slot has few spaces, and a series would keep the same space taken by the same person week after week.",
           }),
         },
         {
@@ -1633,9 +1448,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Al final d'aquesta mateixa pantalla, sota el calendari, hi ha les sessions que ja has fet. És on pots mirar enrere: la data, el servei i amb qui la vas fer.",
-            es: "Al final de esta misma pantalla, bajo el calendario, están las sesiones que ya has hecho. Es donde puedes mirar atrás: la fecha, el servicio y con quién la hiciste.",
-            en: "At the foot of this same screen, below the calendar, are the sessions you've already done. It's where you can look back: the date, the service and who it was with.",
+            ca: "Al final d'aquesta mateixa pantalla, hi ha les sessions que ja has fet. És on pots mirar enrere: la data, el servei i amb qui la vas fer.",
+            es: "Al final de esta misma pantalla están las sesiones que ya has hecho. Es donde puedes mirar atrás: la fecha, el servicio y con quién la hiciste.",
+            en: "At the foot of this same screen are the sessions you've already done. It's where you can look back: the date, the service and who it was with.",
           }),
         },
         {
@@ -2524,17 +2339,17 @@ export function buildClientManual(
         {
           t: "h",
           text: T({
-            ca: "El calendari no em deixa reservar res",
-            es: "El calendario no me deja reservar nada",
-            en: "The calendar won't let me book anything",
+            ca: "No em surt cap hora per reservar",
+            es: "No me sale ninguna hora para reservar",
+            en: "No times show up for me to book",
           }),
         },
         {
           t: "p",
           text: T({
-            ca: "Gairebé sempre és una d'aquestes quatre: no tens cap bo actiu amb sessions disponibles, el bo que tens és d'un altre servei del que estàs mirant, el bo és d'individual o parelles i encara no tens entrenador assignat, o tens un filtre de professional posat que amaga la resta. Comprova-ho per aquest ordre; l'app t'avisa a dalt de la pantalla quan no tens bo i quan no tens entrenador.",
-            es: "Casi siempre es una de estas cuatro: no tienes ningún bono activo con sesiones disponibles, el bono que tienes es de otro servicio del que estás mirando, el bono es de individual o pareja y aún no tienes entrenador asignado, o tienes puesto un filtro de profesional que esconde al resto. Compruébalo por este orden; la app te avisa arriba de la pantalla cuando no tienes bono y cuando no tienes entrenador.",
-            en: "It's nearly always one of these four: you have no active pass with sessions available, the pass you have is for a different service from the one you're looking at, the pass is for 1-to-1 or pairs and you don't have an assigned trainer yet, or you have a professional filter set that's hiding everyone else. Check in that order; the app warns you at the top of the screen when you have no pass and when you have no trainer.",
+            ca: "Gairebé sempre és una d'aquestes tres: no tens cap bo actiu amb sessions disponibles, el bo que tens és d'un altre servei del que estàs mirant, o el bo és d'individual o parelles i encara no tens entrenador assignat. Comprova-ho per aquest ordre; l'app t'avisa a dalt de la pantalla quan no tens bo i quan no tens entrenador.",
+            es: "Casi siempre es una de estas tres: no tienes ningún bono activo con sesiones disponibles, el bono que tienes es de otro servicio del que estás mirando, o el bono es de individual o pareja y aún no tienes entrenador asignado. Compruébalo por este orden; la app te avisa arriba de la pantalla cuando no tienes bono y cuando no tienes entrenador.",
+            en: "It's nearly always one of these three: you have no active pass with sessions available, the pass you have is for a different service from the one you're looking at, or the pass is for 1-to-1 or pairs and you don't have an assigned trainer yet. Check in that order; the app warns you at the top of the screen when you have no pass and when you have no trainer.",
           }),
         },
         {
@@ -2681,9 +2496,9 @@ export function buildClientManual(
             [
               T({ ca: "Franja", es: "Franja", en: "Slot" }),
               T({
-                ca: "Un buit lliure a l'agenda d'un professional. Al calendari és cada una de les caselles de color.",
-                es: "Un hueco libre en la agenda de un profesional. En el calendario es cada una de las casillas de color.",
-                en: "A free gap in a professional's diary. On the calendar it's each of the coloured cells.",
+                ca: "Un buit lliure a l'agenda d'un professional. A Reserves és cada una de les hores de la llista.",
+                es: "Un hueco libre en la agenda de un profesional. En Reservas es cada una de las horas de la lista.",
+                en: "A free gap in a professional's diary. Under Bookings it's each of the times in the list.",
               }),
             ],
             [
