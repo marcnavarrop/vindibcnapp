@@ -1,16 +1,10 @@
 "use client";
 
 import { TAP } from "@/lib/utils";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useActionState } from "react";
-import { ClientCenterCalendar } from "@/components/client-center-calendar";
 import { MyBookingsHeader, ReservasList } from "@/components/client/reservas-list";
-import {
-  SeriesReview,
-  type SeriesReviewState,
-} from "@/components/forms/series-wizard";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
@@ -24,35 +18,24 @@ import type { Locale } from "@/lib/i18n/config";
 import type { ClientCenterData } from "@/lib/data/client-calendar";
 import type { SeriesSummary } from "@/lib/data/booking-series";
 import type { ColorPalette } from "@/lib/colors";
-import type { CreateAction, CancelAction } from "@/components/client-center-calendar";
-
-/** A partir d'aquí (el `md` de Tailwind) la pantalla és d'escriptori. */
-const DESKTOP_QUERY = "(min-width: 768px)";
-function subscribeDesktop(cb: () => void) {
-  const m = window.matchMedia(DESKTOP_QUERY);
-  m.addEventListener("change", cb);
-  return () => m.removeEventListener("change", cb);
-}
+import type { CreateAction, CancelAction } from "@/components/client/booking-dialogs";
 
 /**
  * La pantalla de reserves del client.
  *
- * Des de C2:
- *   · A dalt, a totes les amplades, les teves properes sessions (amb
- *     «Cancel·lar» a mà) i els bons que et queden.
- *   · Al mòbil, la llista nova: servei → dia → hores (`ReservasList`).
- *   · A l'escriptori, la graella de sempre fins a C3.
+ *   · Mòbil (C2): una columna. A dalt, les teves properes sessions (amb
+ *     «Cancel·lar» a mà) i els bons que et queden; a sota, servei → dia →
+ *     hores.
+ *   · Escriptori (C3, a partir de `lg`): les mateixes peces en tres columnes.
+ *     A l'esquerra les teves sessions, els bons i les sèries; al mig, el servei
+ *     i un calendari de tres setmanes; a la dreta, les hores del dia triat.
  *
- * LA GRAELLA NOMÉS ES PINTA AL NAVEGADOR. Compta les hores amb el rellotge local
- * del procés: al servidor (UTC) la primera fila li sortia a les 06:00 i al
- * navegador (Madrid) a les 07:00, i React ho detectava com a error d'hidratació
- * #418. Pintar-la només al navegador —i només si la pantalla és d'escriptori—
- * treu l'error i, de passada, estalvia al mòbil tota la feina d'una graella
- * que no s'hi veu. La llista, en canvi, es pinta al servidor sense problema:
- * compta en hora del centre.
+ * La graella antiga (client-center-calendar.tsx) ja no hi és: era la que
+ * provocava l'error d'hidratació #418 i a l'escriptori ja no fa falta.
  *
- * L'assistent de sèries viu AQUÍ i no dins de cap de les dues perquè el fan
- * servir totes dues.
+ * Les tres columnes surten d'una sola graella CSS: la llista es declara
+ * `lg:contents` perquè les seves seccions siguin cel·les d'aquesta graella, i
+ * així cada peça viu en un sol lloc per a les dues amplades.
  */
 export function ClientReservasView({
   data,
@@ -87,18 +70,14 @@ export function ClientReservasView({
   /**
    * De quin servei és la subscripció viva del client, si en té cap.
    *
-   * Abans era un booleà. Des de la 0086 un paquet de qualsevol tipus pot anar
-   * per subscripció, així que saber que en té una ja no diu de QUÈ: la sèrie
-   * només s'allarga sola si la subscripció és del mateix servei.
+   * Des de la 0086 un paquet de qualsevol tipus pot anar per subscripció, així
+   * que saber que en té una ja no diu de QUÈ: la sèrie només s'allarga sola si
+   * la subscripció és del mateix servei.
    */
   subscriptionServiceType: ServiceType | null;
   /** Les esperes vives del client, per no oferir-li apuntar-s'hi dos cops. */
   waitlist: { id: string; trainerId: string | null; desiredAt: string }[];
 }) {
-  const router = useRouter();
-  // La sèrie ja calculada, esperant que la revisin. La configuració viu ara
-  // dins del diàleg de reserva; aquí només hi arriba el resultat.
-  const [review, setReview] = useState<SeriesReviewState | null>(null);
   // Quina sèrie s'està cancel·lant. Viu AQUÍ, i no a la fila de la llista,
   // perquè en cancel·lar-la la fila desapareix: si el diàleg hi visqués a
   // dins, se n'aniria amb ella abans que ningú llegís el resultat.
@@ -106,19 +85,6 @@ export function ClientReservasView({
     id: string;
     count: number;
   } | null>(null);
-  // Al servidor i en la primera passada del navegador, `false`: la graella no
-  // hi és. Després, el que digui la pantalla.
-  const desktop = useSyncExternalStore(
-    subscribeDesktop,
-    () => window.matchMedia(DESKTOP_QUERY).matches,
-    () => false,
-  );
-  // Al mòbil la revisió de la sèrie surt sota la llista: s'hi porta la vista
-  // perquè qui ha premut «Veure les sessions» la vegi sense haver de buscar-la.
-  const reviewRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (review) reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [review]);
 
   const common = {
     data,
@@ -128,20 +94,22 @@ export function ClientReservasView({
     cancelAction,
     waitlistEnabled,
     subscriptionServiceType,
-    onSeriesReady: setReview,
-    onDialogOpen: () => setReview(null),
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <MyBookingsHeader {...common} />
-
-      {series.length > 0 && (
-        <SeriesList
-          series={series}
-          onCancel={(id, count) => setCancelling({ id, count })}
-        />
-      )}
+    <div
+      className="flex flex-col gap-6 lg:grid lg:grid-cols-[18rem_17rem_minmax(0,1fr)] lg:items-start lg:gap-x-8"
+      data-testid="reservas-layout"
+    >
+      <div className="flex flex-col gap-6 lg:col-start-1 lg:row-span-3 lg:row-start-1">
+        <MyBookingsHeader {...common} />
+        {series.length > 0 && (
+          <SeriesList
+            series={series}
+            onCancel={(id, count) => setCancelling({ id, count })}
+          />
+        )}
+      </div>
 
       {cancelling && (
         <CancelSeriesDialog
@@ -151,58 +119,15 @@ export function ClientReservasView({
         />
       )}
 
-      <div
-        className={
-          review
-            ? "grid items-start gap-6 xl:grid-cols-[1fr_26rem]"
-            : "grid items-start gap-6"
-        }
-      >
-        <div className="min-w-0">
-          <div className="md:hidden">
-            <ReservasList
-              {...common}
-              today={today}
-              minBookingHours={minBookingHours}
-              openingHour={openingHour}
-              closingHour={closingHour}
-              createAction={createAction}
-              waitlist={waitlist}
-            />
-          </div>
-          {desktop && (
-            <div className="hidden md:block" data-testid="desktop-grid">
-              <ClientCenterCalendar
-                data={data}
-                palette={palette}
-                createAction={createAction}
-                cancelAction={cancelAction}
-                minCancellationHours={minCancellationHours}
-                openingHour={openingHour}
-                closingHour={closingHour}
-                onSeriesReady={setReview}
-                onDialogOpen={() => setReview(null)}
-                waitlistEnabled={waitlistEnabled}
-                subscriptionServiceType={subscriptionServiceType}
-                waitlist={waitlist}
-              />
-            </div>
-          )}
-        </div>
-
-        {review && (
-          <div ref={reviewRef} className="scroll-mt-4 xl:sticky xl:top-4">
-            <SeriesReview
-              review={review}
-              onClose={() => setReview(null)}
-              onDone={() => {
-                setReview(null);
-                router.refresh();
-              }}
-            />
-          </div>
-        )}
-      </div>
+      <ReservasList
+        {...common}
+        today={today}
+        minBookingHours={minBookingHours}
+        openingHour={openingHour}
+        closingHour={closingHour}
+        createAction={createAction}
+        waitlist={waitlist}
+      />
     </div>
   );
 }

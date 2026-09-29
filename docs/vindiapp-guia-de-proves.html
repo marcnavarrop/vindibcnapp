@@ -471,7 +471,7 @@
       <li>Amb un compte sense fitxa de client, comprova que surt l'avís "Encara no tens fitxa de client" i no un error</li>
     </ul>
 
-    <h3>4.2 Reserves <span class="flag">Nou: al mòbil, servei → dia → hora</span></h3>
+    <h3>4.2 Reserves <span class="flag">Nou: servei → dia → hora, també a l'ordinador</span></h3>
     <p><strong>Prova-ho sobretot al mòbil</strong>, amb pressa: tot s'ha de poder fer amb el polze i sense apuntar.</p>
     <ul class="checklist">
       <li><strong>A dalt, a totes les amplades:</strong> les teves properes sessions (la primera en verd, «La propera») i, a cada una, <strong>«Cancel·lar»</strong>. Cancel·lar ha de costar <strong>dos tocs</strong>: «Cancel·lar» i «Sí, cancel·la». Una sessió dins del marge mínim no té el botó: hi diu «Ja no es pot cancel·lar». Amb més de tres, «Veure-les totes». Sota, «Et queden:» amb les sessions de cada bo i l'enllaç a «Els meus bons»</li>
@@ -482,20 +482,15 @@
       <li>Totes les zones tàctils fan <strong>com a mínim 44 px</strong> (serveis, dies, hores, botons de les fulles)</li>
       <li>Canvia l'idioma a castellà i anglès: tots els textos nous surten traduïts, també els de les fulles</li>
       <li>Obre la consola del navegador a /client/reservas: <strong>cap error d'hidratació</strong> (abans hi sortia el #418)</li>
-      <li><strong>A l'ordinador</strong> (768 px o més) hi segueix la graella de tot el centre fins a C3, sota les teves sessions</li>
+      <li><strong>A l'ordinador</strong> (1024 px o més), les mateixes peces en <strong>tres columnes</strong>: a l'esquerra les teves sessions, els bons i les sèries; al mig el servei i un <strong>calendari de tres setmanes</strong> (cada dia sota el seu nom, amb les hores lliures); a la dreta, les hores del dia triat. Ja no hi ha graella enlloc</li>
       <li><strong>Amb qui:</strong> individual i parelles, <strong>només amb el teu entrenador assignat</strong>; grup i fisioteràpia, amb qualsevol professional que ho ofereixi a la seva disponibilitat (encara que la seva especialitat digui una altra cosa o estigui buida). Posa el filtre de professional a "Tots": les franges d'individual d'un altre professional <strong>no surten</strong>, i les seves de grup i fisio sí</li>
       <li><strong>Sense entrenador assignat</strong> (treu-lo des de la fitxa del client a l'admin): a dalt surt l'avís "Encara no tens entrenador assignat", en els tres idiomes, i cap franja d'individual ni parelles. Grup i fisio segueixen sortint. Les reserves que ja tenia es queden</li>
       <li>El servidor també ho comprova: obre la finestra de reserva d'una franja del teu entrenador, <strong>canvia-li l'entrenador des de l'admin</strong> i prem "Reservar". Ha de sortir "Les sessions individuals i en parella només les pots reservar amb el teu entrenador" i no s'ha de crear res</li>
       <li>L'admin i els professionals <strong>no hi estan subjectes</strong>: des de l'admin, reserva una individual a un client amb un professional que no és el seu i ha de funcionar</li>
-      <li>Graella (ordinador): vista per dia o per setmana, amb fletxes: endavant sense límit, i enrere <strong>només fins a la setmana d'avui</strong> (la fletxa enrere es desactiva). L'historial és a "Sessions passades"</li>
-      <li>La graella s'obre <strong>filtrada pel teu professional assignat</strong> — canvia a "Tots" per veure la resta</li>
-      <li>Color per professional (llegenda sota el calendari) + filtres per servei i per professional</li>
-      <li>Només hi surt <strong>el que pots reservar amb els bons que tens</strong>. Sense bo actiu no surt cap franja, i l'app t'ho diu a dalt de tot, <strong>en l'idioma del client</strong> (abans sortia sempre en català)</li>
-      <li>Grup Reduït: comptador d'ocupació amb semàfor — verd si hi ha lloc de sobres, ambre si en queda una, vermell si és plena</li>
-      <li>En obrir una sessió de grup <strong>veus qui s'hi ha apuntat</strong>; a la graella, no (el calendari es veu de lluny)</li>
-      <li>Reserva pròpia: es marca en verd amb un check i <strong>surt sempre, encara que hi hagi filtres posats</strong></li>
+      <li>Només hi surt <strong>el que pots reservar amb els bons que tens</strong>. Sense bo actiu no surt cap hora, i l'app t'ho diu, <strong>en l'idioma del client</strong>, amb un botó per comprar-ne un</li>
+      <li>En obrir una sessió de grup <strong>veus qui s'hi ha apuntat</strong>; a la llista, no (la pantalla es veu de lluny)</li>
+      <li>Les teves sessions surten <strong>en verd</strong> a la seva hora, i mentre en tens una no se't proposa res que s'hi trepitgi</li>
       <li>Prova que el botó es bloqueja i diu "Reservant…" — un doble clic no ha de fer dues reserves</li>
-      <li>Intenta reservar dues sessions a la mateixa hora: la segona ja no és clicable</li>
       <li>Cancel·lar demana confirmació; passat el marge mínim <strong>el botó desapareix i l'app explica per què</strong></li>
       <li><strong>"Sessions passades"</strong>, a sota: l'historial amb <strong>la nota del professional</strong> si n'hi ha (secció 12)</li>
       <li>Sèries i llista d'espera: secció <a href="#series">8</a></li>
@@ -650,14 +645,14 @@
 
     <h2 id="series"><span class="num">8</span> Sèries, llista d'espera i sessions de cortesia <span class="new-badge">Nou</span></h2>
 
-    <h3>8.1 Reservar en bucle: les sèries (client)</h3>
+    <h3>8.1 Repetir cada setmana: les sèries (client) <span class="flag">Nou: dins de la confirmació</span></h3>
     <ul class="checklist">
-      <li>Dues portes: la casella <strong>"Fer-ho recurrent"</strong> en reservar, i <strong>"Repetir en bucle a partir d'aquesta"</strong> sobre una sessió que ja tens</li>
-      <li>Tries la freqüència (<strong>cada setmana, cada dues, cada mes</strong>) i fins quan (una data, un nombre de sessions, o tots dos: mana el primer límit)</li>
-      <li><strong>"Veure les sessions"</strong> calcula la sèrie i te l'ensenya sencera. <strong>Comprova que encara no s'ha reservat res</strong></li>
-      <li>Llegeix les etiquetes de la revisió: <strong>Confirmada</strong>, <strong>Ja reservada</strong> (s'adopta, no es duplica), <strong>Alternativa proposada</strong> (no compta fins que prems "Accepta"), <strong>Llista d'espera</strong>, <strong>Sense places</strong></li>
-      <li>Opcions de <strong>"Si no hi ha plaça…"</strong>: reservar només les disponibles (per defecte), <strong>proposar alternatives</strong> (en individual i parelles, només una altra hora amb el teu entrenador; en fisio, també un altre professional), <strong>afegir a la llista d'espera</strong>, i <strong>allargar-la sola cada mes</strong> (només amb subscripció)</li>
-      <li>Si el bo no arriba per a totes, l'app <strong>t'ho diu abans de confirmar</strong>: quantes es reserven i quantes queden fora</li>
+      <li>A la confirmació d'una hora, la casella <strong>"Repetir cada setmana"</strong>, i el botó <strong>"Repetir cada setmana"</strong> a una sessió que ja tens. <strong>Només</strong> en els serveis que es poden repetir: en un grup no surt</li>
+      <li>Tries <strong>quantes setmanes (4, 8 o 12)</strong> i prems <strong>"Veure les setmanes"</strong>: surt cada setmana amb "Es reservarà", "Ja la tens" o "Sense plaça". <strong>Comprova que encara no s'ha reservat res</strong></li>
+      <li>Només es reserven les setmanes amb plaça, a la mateixa hora i amb el mateix professional: <strong>sense alternatives ni cua</strong> (l'assistent d'abans, amb freqüència, data final i opcions, ja no hi és)</li>
+      <li>"Reservar N sessions" les reserva totes i surten a "Les meves sèries". Si ho fas des d'una sessió que ja tenies, aquella s'hi <strong>adopta</strong>: no es duplica ni gasta cap sessió més</li>
+      <li>Si el bo no arriba per a totes, l'app <strong>t'ho diu abans de confirmar</strong></li>
+      <li>La regla d'amb qui (C1) també hi val: individual i parelles només amb el teu entrenador</li>
       <li>Comprova que la sèrie respecta <strong>l'antelació mínima del centre</strong> i que <strong>no promet hores que ja tens ocupades</strong></li>
       <li>"Les meves sèries": veure com va acabar cadascuna i <strong>cancel·lar-la sencera</strong></li>
       <li>Sèrie individual que s'allarga sola i <strong>el centre canvia l'entrenador del client</strong>: a "Les meves sèries" surt que ja no s'allargarà; en la renovació no es reserva res amb l'entrenador d'abans, i les sessions ja reservades es queden</li>
@@ -705,14 +700,14 @@
     <table>
       <thead><tr><th>Element</th><th>Admin/Trainer</th><th>Client</th></tr></thead>
       <tbody>
-        <tr><td>Color de la targeta</td><td>Per <strong>tipus de servei</strong></td><td>Per <strong>professional</strong></td></tr>
-        <tr><td>Reserva pròpia</td><td>—</td><td>Verd + check ✓ (surt sempre, encara que filtris)</td></tr>
+        <tr><td>Color de la targeta</td><td>Per <strong>tipus de servei</strong></td><td>Avatar amb el color del <strong>professional</strong>; el servei, amb la seva icona</td></tr>
+        <tr><td>Reserva pròpia</td><td>—</td><td>A dalt, a «Les teves properes»; a la llista, en verd amb ✓ a la seva hora</td></tr>
         <tr><td>Nom del professional</td><td>Nom + primer cognom</td><td>Nom de pila</td></tr>
-        <tr><td>Forats lliures</td><td>Targetes «Lliure» amb els serveis possibles. Admin: a la columna de cada professional</td><td>—</td></tr>
-        <tr><td>Reserves de companys</td><td>Multicheck opcional, amb cadenat</td><td>"Ocupat" (sense noms)</td></tr>
-        <tr><td>Sessions de grup</td><td>Pastilla del servei</td><td>Comptador <code>2/4</code> amb semàfor; noms només en obrir-la</td></tr>
+        <tr><td>Forats lliures</td><td>Targetes «Lliure» amb els serveis possibles. Admin: a la columna de cada professional</td><td>La <strong>llista d'hores</strong> del dia i servei triats (sense graella)</td></tr>
+        <tr><td>Reserves de companys</td><td>Multicheck opcional, amb cadenat</td><td>No surten: la llista només ensenya el que pots reservar</td></tr>
+        <tr><td>Sessions de grup</td><td>Pastilla del servei</td><td>Un punt per plaça («Queda 1 plaça», «Ple» + «Cua»); noms només en obrir-la</td></tr>
         <tr><td>Sessions de cortesia</td><td>Etiqueta "Cortesia"</td><td>Una sessió seva més</td></tr>
-        <tr><td>Sol·licituds de prova</td><td>Ocupen la franja i s'accepten tocant-les</td><td>La franja no surt lliure</td></tr>
+        <tr><td>Sol·licituds de prova</td><td>Ocupen la franja i s'accepten tocant-les</td><td>L'hora no surt lliure</td></tr>
         <tr><td>Notes de sessió</td><td>A la vista de <strong>llista</strong>, sota les passades</td><td>A "Sessions passades"</td></tr>
       </tbody>
     </table>
