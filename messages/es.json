@@ -651,15 +651,52 @@
       "willBook": "Se reservará",
       "already": "Ya la tienes",
       "noSpace": "Sin plaza",
-      "bonoLimit": "{skipped, plural, one {# semana no cabe} other {# semanas no caben}}: en el bono te quedan {remaining} sesiones.",
-      "bonoLimitSubscription": "{skipped, plural, one {# semana se reservará} other {# semanas se reservarán}} cuando se renueve la suscripción.",
-      "nothing": "Ninguna semana tiene plaza.",
+      "bonoLimit": "{skipped, plural, one {# sesión no cabe} other {# sesiones no caben}}: en el bono te quedan {remaining} sesiones.",
+      "bonoLimitSubscription": "{skipped, plural, one {# sesión se reservará} other {# sesiones se reservarán}} cuando se renueve la suscripción.",
+      "nothing": "Ningún día tiene plaza.",
       "confirm": "{count, plural, =0 {Añadirla a la serie} one {Reservar # sesión} other {Reservar # sesiones}}",
       "booking": "Reservando…",
       "back": "Atrás",
       "doneTitle": "{count, plural, one {# sesión en la serie} other {# sesiones en la serie}}",
       "doneBody": "Las tienes en «Mis series», y puedes cancelarlas todas de golpe.",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "howManySessions": "¿Cuántas sesiones?",
+      "sessions": "{count} sesiones",
+      "untilWhen": "¿Hasta cuándo?",
+      "more": "Más opciones",
+      "howOften": "Cada cuánto",
+      "endBy": "Hasta cuándo",
+      "endCount": "Número",
+      "endDate": "Fecha final",
+      "ifNoSpace": "Si un día no hay hueco",
+      "freq": {
+        "weekly": "Semana",
+        "biweekly": "2 sem.",
+        "monthly": "Mes"
+      },
+      "every": {
+        "weekly": "Cada semana",
+        "biweekly": "Cada dos semanas",
+        "monthly": "Cada mes"
+      },
+      "policy": {
+        "skip": "Saltarlo",
+        "alternative": "Proponerme otra hora",
+        "waitlist": "Apuntarme a la cola"
+      },
+      "onlyFreeDates": "Solo se reservan los días con plaza, a la misma hora y con el mismo profesional.",
+      "altHintAssigned": "Te propondremos otra hora ese día, siempre con tu entrenador. Tú decides.",
+      "altHintAny": "Te propondremos otra hora ese día u otro profesional a la misma hora. Tú decides.",
+      "waitHint": "Si ese día no hay hueco, te quedas en la cola: si alguien lo deja, entras y te avisamos.",
+      "seeDates": "Ver las fechas",
+      "proposed": "Propuesta: {time}",
+      "proposedWith": "Propuesta: {time} · {name}",
+      "accept": "Aceptar",
+      "accepted": "✓ Aceptada",
+      "acceptHint": "Las propuestas que no aceptes no se reservan.",
+      "queued": "En la cola",
+      "queuedHint": "{count, plural, one {# día en la cola: si se libera hueco, entras y te avisamos.} other {# días en la cola: si se libera hueco, entras y te avisamos.}}",
+      "doneWaitlisted": "{count, plural, one {y # en la cola} other {y # en la cola}}"
     }
   },
   "wizard": {

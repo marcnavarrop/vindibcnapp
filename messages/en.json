@@ -651,15 +651,52 @@
       "willBook": "Will be booked",
       "already": "Already yours",
       "noSpace": "No space",
-      "bonoLimit": "{skipped, plural, one {# week doesn't fit} other {# weeks don't fit}}: you have {remaining} sessions left on your pass.",
-      "bonoLimitSubscription": "{skipped, plural, one {# week will be booked} other {# weeks will be booked}} when your subscription renews.",
-      "nothing": "No week has a free space.",
+      "bonoLimit": "{skipped, plural, one {# session doesn't fit} other {# sessions don't fit}}: you have {remaining} sessions left on your pass.",
+      "bonoLimitSubscription": "{skipped, plural, one {# session will be booked} other {# sessions will be booked}} when your subscription renews.",
+      "nothing": "No day has a free space.",
       "confirm": "{count, plural, =0 {Add it to the series} one {Book # session} other {Book # sessions}}",
       "booking": "Booking…",
       "back": "Back",
       "doneTitle": "{count, plural, one {# session in the series} other {# sessions in the series}}",
       "doneBody": "You'll find them under «My series», and you can cancel them all at once.",
-      "close": "Close"
+      "close": "Close",
+      "howManySessions": "How many sessions?",
+      "sessions": "{count} sessions",
+      "untilWhen": "Until when?",
+      "more": "More options",
+      "howOften": "How often",
+      "endBy": "Until",
+      "endCount": "Number",
+      "endDate": "End date",
+      "ifNoSpace": "If a day is full",
+      "freq": {
+        "weekly": "Week",
+        "biweekly": "2 weeks",
+        "monthly": "Month"
+      },
+      "every": {
+        "weekly": "Every week",
+        "biweekly": "Every two weeks",
+        "monthly": "Every month"
+      },
+      "policy": {
+        "skip": "Skip it",
+        "alternative": "Suggest another time",
+        "waitlist": "Join the waitlist"
+      },
+      "onlyFreeDates": "Only days with a free space are booked, at the same time and with the same professional.",
+      "altHintAssigned": "We'll suggest another time that day, always with your trainer. You decide.",
+      "altHintAny": "We'll suggest another time that day or another professional at the same time. You decide.",
+      "waitHint": "If that day is full, you go on the waitlist: if someone drops out, you're in and we'll let you know.",
+      "seeDates": "See the dates",
+      "proposed": "Suggested: {time}",
+      "proposedWith": "Suggested: {time} · {name}",
+      "accept": "Accept",
+      "accepted": "✓ Accepted",
+      "acceptHint": "Suggestions you don't accept won't be booked.",
+      "queued": "Waitlist",
+      "queuedHint": "{count, plural, one {# day on the waitlist: if a space opens up, you're in and we'll let you know.} other {# days on the waitlist: if a space opens up, you're in and we'll let you know.}}",
+      "doneWaitlisted": "{count, plural, one {and # on the waitlist} other {and # on the waitlist}}"
     }
   },
   "wizard": {

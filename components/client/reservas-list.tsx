@@ -108,6 +108,7 @@ export function MyBookingsHeader({
   minCancellationHours,
   cancelAction,
   subscriptionServiceType,
+  waitlistEnabled,
 }: Common) {
   const t = useTranslations("reservas.list");
   const tl = useTranslations("labels.service");
@@ -250,6 +251,7 @@ export function MyBookingsHeader({
           startConfirming={own.confirm}
           trainerId={own.r.trainerId}
           subscriptionServiceType={subscriptionServiceType}
+          waitlistEnabled={waitlistEnabled}
           onClose={() => setOwn(null)}
         />
       )}
@@ -542,6 +544,7 @@ export function ReservasList({
           mates={book.mates}
           remainingSessions={data.bonoSessions[book.service]}
           subscriptionServiceType={subscriptionServiceType}
+          waitlistEnabled={waitlistEnabled}
           action={createAction}
           onClose={() => setBook(null)}
           onDone={() => {
@@ -576,6 +579,7 @@ export function ReservasList({
           cancelAction={cancelAction}
           trainerId={own.trainerId}
           subscriptionServiceType={subscriptionServiceType}
+          waitlistEnabled={waitlistEnabled}
           onClose={() => setOwn(null)}
         />
       )}

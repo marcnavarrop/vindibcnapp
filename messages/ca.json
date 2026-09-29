@@ -651,15 +651,52 @@
       "willBook": "Es reservarà",
       "already": "Ja la tens",
       "noSpace": "Sense plaça",
-      "bonoLimit": "{skipped, plural, one {# setmana no hi cap} other {# setmanes no hi caben}}: al bo et queden {remaining} sessions.",
-      "bonoLimitSubscription": "{skipped, plural, one {# setmana es reservarà} other {# setmanes es reservaran}} quan es renovi la subscripció.",
-      "nothing": "Cap setmana té plaça.",
+      "bonoLimit": "{skipped, plural, one {# sessió no hi cap} other {# sessions no hi caben}}: al bo et queden {remaining} sessions.",
+      "bonoLimitSubscription": "{skipped, plural, one {# sessió es reservarà} other {# sessions es reservaran}} quan es renovi la subscripció.",
+      "nothing": "Cap dia té plaça.",
       "confirm": "{count, plural, =0 {Afegir-la a la sèrie} one {Reservar # sessió} other {Reservar # sessions}}",
       "booking": "Reservant…",
       "back": "Enrere",
       "doneTitle": "{count, plural, one {# sessió a la sèrie} other {# sessions a la sèrie}}",
       "doneBody": "Les tens a «Les meves sèries», i les pots cancel·lar totes d'un cop.",
-      "close": "Tancar"
+      "close": "Tancar",
+      "howManySessions": "Quantes sessions?",
+      "sessions": "{count} sessions",
+      "untilWhen": "Fins quan?",
+      "more": "Més opcions",
+      "howOften": "Cada quan",
+      "endBy": "Fins quan",
+      "endCount": "Nombre",
+      "endDate": "Data final",
+      "ifNoSpace": "Si un dia no hi ha lloc",
+      "freq": {
+        "weekly": "Setmana",
+        "biweekly": "2 setm.",
+        "monthly": "Mes"
+      },
+      "every": {
+        "weekly": "Cada setmana",
+        "biweekly": "Cada dues setmanes",
+        "monthly": "Cada mes"
+      },
+      "policy": {
+        "skip": "Saltar-lo",
+        "alternative": "Proposar-me una altra hora",
+        "waitlist": "Apuntar-me a la cua"
+      },
+      "onlyFreeDates": "Només es reserven els dies amb plaça, a la mateixa hora i amb el mateix professional.",
+      "altHintAssigned": "Et proposarem una altra hora aquell dia, sempre amb el teu entrenador. Tu decideixes.",
+      "altHintAny": "Et proposarem una altra hora aquell dia o un altre professional a la mateixa hora. Tu decideixes.",
+      "waitHint": "Si aquell dia no hi ha lloc, et quedes a la cua: si algú el deixa, entres i t'avisem.",
+      "seeDates": "Veure les dates",
+      "proposed": "Proposta: {time}",
+      "proposedWith": "Proposta: {time} · {name}",
+      "accept": "Acceptar",
+      "accepted": "✓ Acceptada",
+      "acceptHint": "Les propostes que no acceptis no es reserven.",
+      "queued": "A la cua",
+      "queuedHint": "{count, plural, one {# dia a la cua: si s'allibera lloc, entres i t'avisem.} other {# dies a la cua: si s'allibera lloc, entres i t'avisem.}}",
+      "doneWaitlisted": "{count, plural, one {i # a la cua} other {i # a la cua}}"
     }
   },
   "wizard": {

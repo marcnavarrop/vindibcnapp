@@ -234,6 +234,7 @@ export function CreateModal({
   mates = [],
   remainingSessions,
   subscriptionServiceType,
+  waitlistEnabled = false,
   action,
   onClose,
   onDone,
@@ -252,6 +253,8 @@ export function CreateModal({
   remainingSessions?: number;
   /** De quin servei és la subscripció viva del client, si en té (0072/0086). */
   subscriptionServiceType?: ServiceType | null;
+  /** El centre accepta inscripcions noves a la cua (opció de la sèrie). */
+  waitlistEnabled?: boolean;
   action: CreateAction;
   onClose: () => void;
   onDone: () => void;
@@ -376,6 +379,7 @@ export function CreateModal({
           key={trainerId}
           seed={weeklySeed}
           subscriptionServiceType={subscriptionServiceType}
+          waitlistEnabled={waitlistEnabled}
           onBack={() => setRecurrent(false)}
           onDone={onDone}
         />
@@ -420,6 +424,7 @@ export function OwnModal({
   cancelAction,
   trainerId,
   subscriptionServiceType,
+  waitlistEnabled = false,
   startConfirming = false,
   onClose,
 }: {
@@ -435,6 +440,8 @@ export function OwnModal({
   trainerId: string | null;
   /** De quin servei és la subscripció viva del client, si en té (0072/0086). */
   subscriptionServiceType?: ServiceType | null;
+  /** El centre accepta inscripcions noves a la cua (opció de la sèrie). */
+  waitlistEnabled?: boolean;
   startConfirming?: boolean;
   onClose: () => void;
 }) {
@@ -519,6 +526,7 @@ export function OwnModal({
         <WeeklyRepeat
           seed={weeklySeed}
           subscriptionServiceType={subscriptionServiceType}
+          waitlistEnabled={waitlistEnabled}
           onBack={() => setRecurrent(false)}
           onDone={() => {
             router.refresh();
