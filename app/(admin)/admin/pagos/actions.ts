@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createPayment } from "@/lib/data/payments";
+import { createPayment, listPayments } from "@/lib/data/payments";
+import { getViewer } from "@/lib/auth";
+import { toPaymentRow, type PaymentRowView } from "@/lib/payment-row";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { PaymentMethod } from "@/types/database";
 
@@ -30,4 +32,27 @@ export async function createPaymentAction(
 
   revalidatePath("/admin/pagos");
   redirect("/admin/pagos");
+}
+
+export type LoadMorePaymentsResult =
+  | { ok: true; rows: PaymentRowView[]; nextCursor: string | null }
+  | { ok: false; error: string };
+
+/** «Carregar més»: la pàgina següent de la llista de pagaments. Només admin. */
+export async function loadMorePaymentsAction(
+  cursor: string,
+): Promise<LoadMorePaymentsResult> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "admin") return { ok: false, error: "No autoritzat." };
+  try {
+    const page = await listPayments({ cursor });
+    return {
+      ok: true,
+      rows: page.items.map(toPaymentRow),
+      nextCursor: page.nextCursor,
+    };
+  } catch (e) {
+    console.error("[pagaments] carregar més:", e);
+    return { ok: false, error: "No s'han pogut carregar més pagaments. Torna-ho a provar." };
+  }
 }

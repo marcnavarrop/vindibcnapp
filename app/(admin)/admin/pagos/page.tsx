@@ -1,22 +1,30 @@
 import Link from "next/link";
 import { TAP } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { listPayments } from "@/lib/data/payments";
-import { PAYMENT_METHOD_LABELS, formatEur, formatDate } from "@/lib/labels";
+import { getPaymentsSummary, listPayments, type PaymentsSummary } from "@/lib/data/payments";
+import { toPaymentRow } from "@/lib/payment-row";
+import { formatEur } from "@/lib/labels";
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { PaymentsTable } from "@/components/admin/payments-table";
 import { BONS_TABS } from "@/lib/admin-tabs";
 
 export const dynamic = "force-dynamic";
 
 export default async function PagosPage() {
-  const payments = await listPayments();
-  const total = payments.reduce((s, p) => s + p.amount, 0);
+  // El total el compta la base (`payments_summary`, 0095): no depèn de quantes
+  // files s'hagin carregat. Si falla, es diu; un «0 € cobrat» semblaria cert.
+  const [summary, page] = await Promise.all([
+    getPaymentsSummary().catch((e): PaymentsSummary | null => {
+      console.error("[pagaments] total:", e);
+      return null;
+    }),
+    listPayments(),
+  ]);
 
   return (
     <>
       <GroupTabs tabs={BONS_TABS} />
       <main className="mx-auto max-w-5xl p-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <Link
               href="/admin"
@@ -26,9 +34,12 @@ export default async function PagosPage() {
             </Link>
             <h1 className="mt-1 text-2xl text-brand-dark">Pagaments</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full bg-success/10 px-3 py-1 text-sm font-bold text-success">
-              {formatEur(total)} cobrat
+          <div className="flex flex-wrap items-center gap-3">
+            <span
+              className="rounded-full bg-success/10 px-3 py-1 text-sm font-bold text-success tabular-nums"
+              data-testid="payments-total"
+            >
+              {summary ? `${formatEur(summary.total)} cobrat` : "Total no disponible"}
             </span>
             <Link
               href="/admin/pagos/new"
@@ -39,37 +50,23 @@ export default async function PagosPage() {
           </div>
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-brand-border bg-white">
-          <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead className="border-b border-brand-border bg-brand-bg">
-              <tr className="text-xs tracking-wide text-brand-muted uppercase">
-                <th className="px-4 py-3 font-bold">Data</th>
-                <th className="px-4 py-3 font-bold">Client</th>
-                <th className="px-4 py-3 font-bold">Import</th>
-                <th className="px-4 py-3 font-bold">Mètode</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-brand-border last:border-0"
-                >
-                  <td className="px-4 py-3 font-bold text-brand-dark">
-                    {formatDate(p.paidAt)}
-                  </td>
-                  <td className="px-4 py-3">{p.clientName}</td>
-                  <td className="px-4 py-3 font-bold">{formatEur(p.amount)}</td>
-                  <td className="px-4 py-3">
-                    <Badge tone={p.method === "card" ? "info" : "warn"}>
-                      {PAYMENT_METHOD_LABELS[p.method]}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {summary ? (
+          <p className="mt-2 text-sm text-brand-muted tabular-nums" data-testid="payments-breakdown">
+            {summary.count} pagaments · Targeta {formatEur(summary.card.total)} ({summary.card.count}) ·
+            Efectiu {formatEur(summary.cash.total)} ({summary.cash.count})
+          </p>
+        ) : (
+          <p role="alert" className="mt-2 text-sm text-error">
+            No s&apos;ha pogut calcular el total. La llista és correcta; torna a carregar la pàgina
+            d&apos;aquí a una estona.
+          </p>
+        )}
+
+        <PaymentsTable
+          initialRows={page.items.map(toPaymentRow)}
+          initialCursor={page.nextCursor}
+          total={summary?.count ?? null}
+        />
       </main>
     </>
   );

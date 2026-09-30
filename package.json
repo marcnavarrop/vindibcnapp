@@ -19,6 +19,7 @@
     "search:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/search-check.mts",
     "scope:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/scope-check.mts",
     "dayslots:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/day-slots-check.mts",
+    "payments:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/payments-check.mts",
     "waitlist:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/waitlist-check.mts",
     "series:bonos": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/series-bonos-check.mts",
     "emails:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/email-snapshot.mts",

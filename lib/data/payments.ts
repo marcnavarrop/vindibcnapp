@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { SERVICE_LABELS } from "@/lib/labels";
+import { centerDateStr } from "@/lib/center-time";
 import type { PaymentMethod, ServiceType } from "@/types/database";
 
 /** Concepte comptable d'un pagament de bo (per a la retenció fiscal). */
@@ -19,6 +20,7 @@ export type PaymentListItem = {
   clientName: string;
   amount: number;
   method: PaymentMethod;
+  /** Tal com el torna Postgres (amb microsegons): el cursor el necessita exacte. */
   paidAt: string;
 };
 
@@ -29,12 +31,75 @@ function clientName(clientId: string | null, store: Store): string {
   return profile?.full_name ?? "—";
 }
 
-export async function listPayments(): Promise<PaymentListItem[]> {
+/** Pagaments per pàgina de la llista. */
+export const PAYMENTS_PAGE_SIZE = 50;
+
+export type PaymentsPage = {
+  items: PaymentListItem[];
+  /** Per demanar la pàgina següent; null quan ja no n'hi ha més. */
+  nextCursor: string | null;
+};
+
+/**
+ * El cursor és l'últim (paid_at, id) de la pàgina, opac per a la pantalla.
+ *
+ * NO es fa passar `paid_at` per un `Date`: Postgres el guarda amb microsegons
+ * i `toISOString()` els talla a mil·lèsimes. Amb l'hora retallada, la
+ * comparació del cursor saltaria o repetiria els pagaments d'aquell mateix
+ * instant.
+ */
+function encodeCursor(item: PaymentListItem): string {
+  return Buffer.from(JSON.stringify([item.paidAt, item.id])).toString("base64url");
+}
+
+// Tots dos van dins d'un filtre de PostgREST (`or=(...)`), i no hi ha de poder
+// entrar ni una coma, ni un parèntesi ni una cometa. L'id: lletres, xifres i
+// guions (un uuid a la base; "pay-1" a la simulació). L'hora: xifres, guions,
+// dos punts, punt, T o espai, i la zona.
+const SAFE_ID = /^[A-Za-z0-9-]{1,64}$/;
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}[T ][\d:.]+(Z|[+-]\d{2}(:?\d{2})?)?$/;
+
+function decodeCursor(cursor: string): { paidAt: string; id: string } | null {
+  try {
+    const v = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
+    if (!Array.isArray(v) || v.length !== 2) return null;
+    const [paidAt, id] = v;
+    if (typeof paidAt !== "string" || !TIMESTAMP.test(paidAt)) return null;
+    if (typeof id !== "string" || !SAFE_ID.test(id)) return null;
+    return { paidAt, id };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Una pàgina de pagaments, del més recent al més antic.
+ *
+ * Abans es portaven TOTS i la base en tallava 1000 sense avisar. Ara van per
+ * pàgines amb un cursor sobre (paid_at, id), que és l'índex de la 0095: la
+ * pàgina 20 costa el mateix que la primera, i un pagament nou no fa repetir ni
+ * saltar-ne cap com passaria amb un offset.
+ */
+export async function listPayments(
+  opts: { cursor?: string | null; limit?: number } = {},
+): Promise<PaymentsPage> {
+  const limit = Math.min(Math.max(opts.limit ?? PAYMENTS_PAGE_SIZE, 1), 200);
+  const after = opts.cursor ? decodeCursor(opts.cursor) : null;
+  if (opts.cursor && !after) throw new Error("Cursor de pagaments no vàlid.");
+
+  let rows: PaymentListItem[];
   if (USE_MOCK) {
     const store = getStore();
-    return store.payments
+    rows = store.payments
       .slice()
-      .sort((a, b) => b.paid_at.localeCompare(a.paid_at))
+      .sort((a, b) => b.paid_at.localeCompare(a.paid_at) || b.id.localeCompare(a.id))
+      .filter(
+        (p) =>
+          !after ||
+          p.paid_at < after.paidAt ||
+          (p.paid_at === after.paidAt && p.id < after.id),
+      )
+      .slice(0, limit + 1)
       .map((p) => ({
         id: p.id,
         clientName: clientName(p.client_id, store),
@@ -42,34 +107,136 @@ export async function listPayments(): Promise<PaymentListItem[]> {
         method: p.method,
         paidAt: p.paid_at,
       }));
+  } else {
+    const supabase = await createClient();
+    let query = supabase
+      .from("payments")
+      .select(
+        `id, amount, method, paid_at,
+         client:clients!payments_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
+      )
+      .order("paid_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit + 1);
+    // (paid_at, id) < (cursor): més antic, o del mateix instant amb id menor.
+    if (after)
+      query = query.or(
+        `paid_at.lt."${after.paidAt}",and(paid_at.eq."${after.paidAt}",id.lt.${after.id})`,
+      );
+    const { data, error } = await query;
+    if (error) throw error;
+
+    type Row = {
+      id: string;
+      amount: number;
+      method: PaymentMethod;
+      paid_at: string;
+      client: { profile: { full_name: string | null } | null } | null;
+    };
+    rows = (data as unknown as Row[]).map((p) => ({
+      id: p.id,
+      clientName: p.client?.profile?.full_name ?? "—",
+      amount: p.amount,
+      method: p.method,
+      paidAt: p.paid_at,
+    }));
   }
 
-  // ── Backend real (verificar al conectar Supabase). ──
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("payments")
-    .select(
-      `id, amount, method, paid_at,
-       client:clients!payments_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
-    )
-    .order("paid_at", { ascending: false });
-  if (error) throw error;
-
-  type Row = {
-    id: string;
-    amount: number;
-    method: PaymentMethod;
-    paid_at: string;
-    client: { profile: { full_name: string | null } | null } | null;
+  // Se'n demana una de més per saber si n'hi ha més sense un segon viatge.
+  const items = rows.slice(0, limit);
+  return {
+    items,
+    nextCursor: rows.length > limit ? encodeCursor(items[items.length - 1]) : null,
   };
-  return (data as unknown as Row[]).map((p) => ({
-    id: p.id,
-    clientName: p.client?.profile?.full_name ?? "—",
-    amount: p.amount,
-    method: p.method,
-    paidAt: p.paid_at,
+}
+
+// ─── Totals (0095) ──────────────────────────────────────────────────────────
+
+export type PaymentsSummary = {
+  total: number;
+  count: number;
+  card: { total: number; count: number };
+  cash: { total: number; count: number };
+};
+
+/**
+ * Els totals de TOTS els pagaments, comptats per la base (`payments_summary`).
+ *
+ * Abans la pantalla sumava la llista, i el dia que la base en tallés 1000 el
+ * total hauria deixat de ser el total. Va amb la sessió de qui mira: la funció
+ * només respon a l'admin i a qualsevol altre li torna un error, no un zero.
+ */
+export async function getPaymentsSummary(): Promise<PaymentsSummary> {
+  if (USE_MOCK) {
+    const ps = getStore().payments;
+    const of = (m?: PaymentMethod) => {
+      const xs = m ? ps.filter((p) => p.method === m) : ps;
+      return { total: round2(xs.reduce((s, p) => s + p.amount, 0)), count: xs.length };
+    };
+    const all = of();
+    return { total: all.total, count: all.count, card: of("card"), cash: of("cash") };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("payments_summary", {});
+  if (error) throw error;
+  const r = data?.[0];
+  if (!r) throw new Error("payments_summary no ha tornat cap fila.");
+  return {
+    total: Number(r.total),
+    count: Number(r.n),
+    card: { total: Number(r.card_total), count: Number(r.card_n) },
+    cash: { total: Number(r.cash_total), count: Number(r.cash_n) },
+  };
+}
+
+export type MonthRevenue = {
+  /** L'1 del mes, "AAAA-MM-01", en hora del centre. */
+  month: string;
+  total: number;
+  count: number;
+};
+
+/**
+ * El total de cada mes natural (hora del centre), dels últims `months` mesos
+ * amb el que corre inclòs, del més antic al més nou i amb els buits a zero
+ * (`payments_by_month`, 0095). Inici en demana 2. Mateixa regla que
+ * `getPaymentsSummary`: només l'admin, amb la seva sessió.
+ */
+export async function paymentsByMonth(months: number): Promise<MonthRevenue[]> {
+  if (!Number.isInteger(months) || months < 1 || months > 36)
+    throw new Error("Mesos fora de rang (1..36).");
+
+  if (USE_MOCK) {
+    const [y, m] = centerDateStr(new Date()).split("-").map(Number);
+    const keys: string[] = [];
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(Date.UTC(y, m - 1 - i, 1));
+      keys.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`);
+    }
+    const out = new Map(keys.map((k) => [k, { month: k, total: 0, count: 0 }]));
+    for (const p of getStore().payments) {
+      const k = `${centerDateStr(new Date(p.paid_at)).slice(0, 7)}-01`;
+      const row = out.get(k);
+      if (row) {
+        row.total = round2(row.total + p.amount);
+        row.count++;
+      }
+    }
+    return [...out.values()];
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("payments_by_month", { p_months: months });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    month: String(r.month),
+    total: Number(r.total),
+    count: Number(r.n),
   }));
 }
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export type PaymentInput = {
   clientId: string;

@@ -35,6 +35,7 @@ import {
   addDaysStr,
 } from "@/lib/center-time";
 import { mockFails } from "@/lib/mock/faults";
+import { paymentsByMonth, type MonthRevenue } from "@/lib/data/payments";
 import type { BonoStatus, ServiceType, TrialStatus } from "@/types/database";
 
 // ─────────────────────── Tipus de sortida ───────────────────────
@@ -88,7 +89,8 @@ export type AdminDashboard = {
 // ─────────────────────── Dades crues ───────────────────────
 // Es normalitzen mock i real a la mateixa forma perquè el CÀLCUL sigui únic.
 
-type RawPayment = { amount: number; paidAt: string };
+/** Ingressos d'aquest mes i de l'anterior, en hora del centre (0095). */
+type RawRevenue = { current: number; previous: number };
 type RawBono = {
   id: string;
   clientId: string;
@@ -124,7 +126,7 @@ export type DashboardPart =
   | "clients";
 
 type Raw = {
-  payments: RawPayment[];
+  revenue: RawRevenue;
   bonos: RawBono[];
   reservations: RawReservation[];
   trials: RawTrials;
@@ -150,28 +152,34 @@ const TRIAL_HAPPENED = (status: TrialStatus) =>
   TRIAL_HAPPENED_STATUSES.includes(status);
 
 /**
- * La finestra que el tauler mira, en instants reals.
+ * La finestra que el tauler mira, en instants reals: la setmana en curs, de
+ * dilluns a dilluns. "Avui" hi és a dins sempre.
  *
- * - `monthsFrom`: l'1 del mes ANTERIOR, per als ingressos (aquest mes i el
- *   passat, per comparar).
- * - `weekFrom`/`weekTo`: la setmana en curs, de dilluns a dilluns. "Avui" hi
- *   és a dins sempre.
- *
- * Abans es portava tot l'històric i es filtrava aquí; amb el tall de la base a
- * 1000 files, el tauler hauria acabat comptant una mostra qualsevol.
+ * Els ingressos ja no hi són: els compta la base per mesos
+ * (`payments_by_month`). Abans es portava tot l'històric i es filtrava aquí;
+ * amb el tall de la base a 1000 files, el tauler hauria acabat comptant una
+ * mostra qualsevol.
  */
 function dashboardWindow(now: Date) {
-  const today = centerDateStr(now);
-  const monday = centerWeekStart(today);
-  const [y, m] = today.split("-").map(Number);
-  const prevY = m === 1 ? y - 1 : y;
-  const prevM = m === 1 ? 12 : m - 1;
-  const monthsFrom = `${prevY}-${String(prevM).padStart(2, "0")}-01`;
+  const monday = centerWeekStart(centerDateStr(now));
   return {
-    monthsFrom: centerDayStart(monthsFrom),
     weekFrom: centerDayStart(monday),
     weekTo: centerDayStart(addDaysStr(monday, 7)),
   };
+}
+
+/**
+ * `payments_by_month(2)` torna el mes anterior i el que corre, en aquest ordre.
+ * Es busca per data i no per posició: si mai en tornés un altre nombre, un
+ * mes que no hi és compta zero en comptes de prendre el d'un altre.
+ */
+function toRevenue(rows: MonthRevenue[]): RawRevenue {
+  const today = centerDateStr(new Date());
+  const [y, m] = today.split("-").map(Number);
+  const cur = `${today.slice(0, 7)}-01`;
+  const prev = `${m === 1 ? y - 1 : y}-${String(m === 1 ? 12 : m - 1).padStart(2, "0")}-01`;
+  const at = (k: string) => rows.find((r) => r.month === k)?.total ?? 0;
+  return { current: at(cur), previous: at(prev) };
 }
 
 /** Registra l'error d'una part i la marca com a fallida. */
@@ -209,18 +217,15 @@ async function gather(lowThreshold: number): Promise<Raw> {
 
     // Mateixes finestres que la consulta real, perquè el mode demo digui el
     // mateix que diria la base.
-    const monthsFrom = win.monthsFrom.toISOString();
     const weekFrom = win.weekFrom.toISOString();
     const weekTo = win.weekTo.toISOString();
     const fail = (part: string, parts: DashboardPart[]) =>
       mockFails(part) &&
       noteFailure(failed, parts, `${part} (simulat)`, { message: "error simulat" });
 
-    const payments = fail("payments", ["revenue"])
-      ? []
-      : store.payments
-          .filter((p) => p.paid_at >= monthsFrom)
-          .map((p) => ({ amount: p.amount, paidAt: p.paid_at }));
+    const revenue = fail("payments", ["revenue"])
+      ? { current: 0, previous: 0 }
+      : toRevenue(await paymentsByMonth(2));
     const toRaw = (b: (typeof store.bonos)[number]): RawBono => ({
       id: b.id,
       clientId: b.client_id,
@@ -252,7 +257,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
         };
 
     return {
-      payments,
+      revenue,
       bonos: [...pending, ...low],
       reservations,
       trials,
@@ -280,7 +285,14 @@ async function gather(lowThreshold: number): Promise<Raw> {
     await Promise.all([
       listAllTrainerRulesLite(),
       listAllBlocksLite(),
-      admin.from("payments").select("amount, paid_at").gte("paid_at", win.monthsFrom.toISOString()),
+      // Els ingressos els compta la base (`payments_by_month`, 0095), amb la
+      // sessió de l'admin: abans es portaven les files des de l'1 del mes
+      // anterior i es sumaven aquí, i un mes de més de 1000 cobraments hauria
+      // quedat curt sense avisar.
+      paymentsByMonth(2).then(
+        (rows) => ({ data: rows, error: null }),
+        (e: unknown) => ({ data: null, error: { message: e instanceof Error ? e.message : String(e) } }),
+      ),
       admin.from("bonos").select(BONO_SELECT).eq("status", "pending_payment"),
       admin
         .from("bonos")
@@ -343,10 +355,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
   for (const t of tra.data ?? []) trainerNames.set(t.id, t.full_name ?? "—");
 
   return {
-    payments: (pay.data ?? []).map((p) => ({
-      amount: p.amount,
-      paidAt: p.paid_at,
-    })),
+    revenue: pay.data ? toRevenue(pay.data) : { current: 0, previous: 0 },
     bonos,
     reservations: (res.data ?? []).map((r) => ({
       trainerId: r.trainer_id,
@@ -425,25 +434,11 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   const now = new Date();
 
   // ── 1. Ingressos del mes (pagaments reals, mai bonos pendents) ──
-  const localNow = toCenterLocal(now);
-  const y = localNow.getUTCFullYear();
-  const m = localNow.getUTCMonth();
-  const prevY = m === 0 ? y - 1 : y;
+  // Els imports els ha comptat la base; aquí només queda el nom del mes
+  // anterior per a l'etiqueta i el %.
+  const m = toCenterLocal(now).getUTCMonth();
   const prevM = m === 0 ? 11 : m - 1;
-  const monthKey = (d: Date) => {
-    const l = toCenterLocal(d);
-    return `${l.getUTCFullYear()}-${l.getUTCMonth()}`;
-  };
-  const curKey = `${y}-${m}`;
-  const prvKey = `${prevY}-${prevM}`;
-
-  let current = 0;
-  let previous = 0;
-  for (const p of raw.payments) {
-    const k = monthKey(new Date(p.paidAt));
-    if (k === curKey) current += p.amount;
-    else if (k === prvKey) previous += p.amount;
-  }
+  const { current, previous } = raw.revenue;
   const changePct =
     previous > 0 ? ((current - previous) / previous) * 100 : null;
 

@@ -1904,6 +1904,34 @@ export interface Database {
         Returns: CenterCancellationRow[];
       };
       /**
+       * Totals de pagaments d'un interval de paid_at (0095). Només admin: un
+       * altre rol, o una sessió sense perfil, rep un error 42501.
+       */
+      payments_summary: {
+        Args: {
+          p_from?: string | null;
+          p_to?: string | null;
+          p_method?: PaymentMethod | null;
+        };
+        Returns: {
+          total: number;
+          n: number;
+          card_total: number;
+          card_n: number;
+          cash_total: number;
+          cash_n: number;
+        }[];
+      };
+      /**
+       * Total de cada mes natural en hora de Madrid, dels últims p_months
+       * (1..36) mesos amb els buits a zero, del més antic al més nou (0095).
+       * Només admin.
+       */
+      payments_by_month: {
+        Args: { p_months: number };
+        Returns: { month: string; total: number; n: number }[];
+      };
+      /**
        * Reclama una sessió extra del cicle en curs (0073). Serialitza per
        * subscripció amb un advisory lock i crea un bo d'1 sessió en
        * 'pending_payment' — també quan es pagarà amb targeta: el que es reclama

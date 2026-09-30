@@ -150,7 +150,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Ingressos del mes",
-              "Suma dels pagaments REGISTRATS aquest mes, amb la variació respecte del mes anterior. Compta diners cobrats, no bons venuts: un bo pendent de cobrament no hi surt fins que el cobres.",
+              "Suma dels pagaments REGISTRATS aquest mes natural (hora de Madrid), amb la variació respecte del mes anterior. Compta diners cobrats, no bons venuts: un bo pendent de cobrament no hi surt fins que el cobres. La suma la fa la base de dades, així que és exacta per molts pagaments que hi hagi.",
             ],
             [
               "Pendent de cobrament",
@@ -1027,7 +1027,15 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "El registre de tot el que ha entrat: data, client, import i mètode. A dalt a la dreta hi ha el total cobrat de tot l'històric. És d'aquí que surt la xifra d'ingressos de l'inici.",
+          text: "El registre de tot el que ha entrat: data, client, import i mètode, del més recent al més antic. A dalt a la dreta hi ha el total cobrat de tot l'històric i, a sota, quants pagaments són i quant s'ha cobrat amb targeta i quant en efectiu.",
+        },
+        {
+          t: "p",
+          text: "La llista en carrega 50 de cop. A sota diu quants en veus del total («50 de 124 pagaments») i, si n'hi ha més, «Carregar més» afegeix els 50 següents. El total de dalt és sempre el de tots, encara que no els tinguis carregats: el compta la base de dades, no la llista.",
+        },
+        {
+          t: "note",
+          text: "Si el total no es pot calcular, a dalt hi diu «Total no disponible» i un avís en vermell, però la llista es veu igual. No surt mai un zero que sembli cert. La xifra d'ingressos de l'inici (aquest mes i el percentatge respecte de l'anterior) es calcula igual, per mesos naturals en hora de Madrid.",
         },
         { t: "h", text: "D'on surt cada apunt" },
         {
