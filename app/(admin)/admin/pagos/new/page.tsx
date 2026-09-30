@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { PaymentForm } from "@/components/forms/payment-form";
-import { getPaymentFormData } from "@/lib/data/payments";
 import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewPaymentPage() {
-  const { clients } = await getPaymentFormData();
-
+export default function NewPaymentPage() {
   return (
       <main className="mx-auto max-w-5xl p-6">
         <Link
@@ -18,7 +15,7 @@ export default async function NewPaymentPage() {
         </Link>
         <h1 className="mt-1 mb-6 text-2xl text-brand-dark">Nou pagament</h1>
 
-        <PaymentForm clients={clients} />
+        <PaymentForm />
       </main>
   );
 }

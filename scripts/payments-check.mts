@@ -9,6 +9,8 @@
  *   · `getPaymentsSummary` suma el mateix que la llista sencera, amb el
  *     desglossament per mètode.
  *   · `paymentsByMonth` talla en hora de Madrid i posa a zero els mesos buits.
+ *   · «Nou pagament»: els bons d'UN client (els seus i prou, del més nou al més
+ *     antic) i que un bo d'un altre client no hi passa.
  *
  * La part real (les funcions de la 0095 i el filtre de PostgREST) es va provar
  * a banda: PGlite per a la migració i una lectura a producció per al cursor.
@@ -29,7 +31,10 @@ const restaura = () => {
 };
 
 const { getStore, saveStore } = await import("../lib/mock/store");
-const { listPayments, getPaymentsSummary, paymentsByMonth, PAYMENTS_PAGE_SIZE } = await import(
+const {
+  listPayments, getPaymentsSummary, paymentsByMonth, PAYMENTS_PAGE_SIZE,
+  listBonosForPayment, bonoBelongsTo,
+} = await import(
   "../lib/data/payments"
 );
 const { centerDateStr } = await import("../lib/center-time");
@@ -111,6 +116,17 @@ try {
     try { await paymentsByMonth(n); } catch { foraDeRang++; }
   }
   check(foraDeRang === 3, "0, 37 i 1,5 mesos es rebutgen abans d'arribar a la base");
+
+  console.log("\n«Nou pagament»: els bons del client triat");
+  const deAna = await listBonosForPayment("c-ana");
+  const esperats = getStore().bonos.filter((b) => b.client_id === "c-ana");
+  check(deAna.length === esperats.length && deAna.length > 0, `c-ana: ${deAna.length} bons, tots seus`);
+  check(!deAna.some((b) => !esperats.some((e) => e.id === b.id)), "cap bo d'un altre client");
+  const unAltre = getStore().bonos.find((b) => b.client_id !== "c-ana")!;
+  check(await bonoBelongsTo(esperats[0].id, "c-ana"), "un bo seu: sí");
+  check(!(await bonoBelongsTo(unAltre.id, "c-ana")), `el bo ${unAltre.id} d'un altre client: no`);
+  check((await listBonosForPayment("no-existeix")).length === 0, "un client que no existeix: cap bo");
+
 } catch (e) {
   console.error(e);
   fallides++;

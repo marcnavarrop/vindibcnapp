@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { SERVICE_LABELS } from "@/lib/labels";
 import { centerDateStr } from "@/lib/center-time";
-import type { PaymentMethod, ServiceType } from "@/types/database";
+import type { BonoStatus, PaymentMethod, ServiceType } from "@/types/database";
 
 /** Concepte comptable d'un pagament de bo (per a la retenció fiscal). */
 export function bonoConcept(
@@ -331,59 +331,62 @@ function mockPayment(input: PaymentInput): string {
   return id;
 }
 
-export type PaymentFormData = {
-  clients: {
-    id: string;
-    name: string;
-    bonos: { id: string; serviceType: ServiceType; price: number }[];
-  }[];
+/** Un bo que es pot lligar a un pagament manual. */
+export type PaymentBono = {
+  id: string;
+  serviceType: ServiceType;
+  price: number;
+  status: BonoStatus;
 };
 
-/** Clientes y sus bonos, para el alta manual de un pago. */
-export async function getPaymentFormData(): Promise<PaymentFormData> {
+/** Tope de bons d'un client al formulari: els més nous. Un client en té pocs. */
+export const PAYMENT_BONOS_LIMIT = 100;
+
+/**
+ * Els bons d'UN client, per a «+ Nou pagament», del més nou al més antic.
+ *
+ * Abans el formulari portava TOTS els clients del centre amb TOTS els seus bons
+ * (`getPaymentFormData`), ordenats per alta: al tall de 1000 files, els clients
+ * més nous haurien desaparegut del desplegable i no se'ls hauria pogut cobrar.
+ * Ara el client es busca al servidor (`ClientSearch`) i els bons es demanen
+ * només del triat.
+ */
+export async function listBonosForPayment(clientId: string): Promise<PaymentBono[]> {
   if (USE_MOCK) {
-    const store = getStore();
-    const clients = store.clients.map((c) => {
-      const profile = store.profiles.find((p) => p.id === c.profile_id);
-      return {
-        id: c.id,
-        name: profile?.full_name ?? "—",
-        bonos: store.bonos
-          .filter((b) => b.client_id === c.id)
-          .map((b) => ({
-            id: b.id,
-            serviceType: b.service_type,
-            price: b.price,
-          })),
-      };
-    });
-    return { clients };
+    return getStore()
+      .bonos.filter((b) => b.client_id === clientId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, PAYMENT_BONOS_LIMIT)
+      .map((b) => ({ id: b.id, serviceType: b.service_type, price: b.price, status: b.status }));
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("clients")
-    .select(
-      `id,
-       profile:profiles!clients_profile_id_fkey(full_name),
-       bonos(id, service_type, price)`,
-    )
-    .order("created_at", { ascending: true });
+    .from("bonos")
+    .select("id, service_type, price, status")
+    .eq("client_id", clientId)
+    .order("created_at", { ascending: false })
+    .limit(PAYMENT_BONOS_LIMIT);
   if (error) throw error;
-
-  type Row = {
-    id: string;
-    profile: { full_name: string | null } | null;
-    bonos: { id: string; service_type: ServiceType; price: number }[];
-  };
-  const clients = (data as unknown as Row[]).map((c) => ({
-    id: c.id,
-    name: c.profile?.full_name ?? "—",
-    bonos: c.bonos.map((b) => ({
-      id: b.id,
-      serviceType: b.service_type,
-      price: b.price,
-    })),
+  return (data ?? []).map((b) => ({
+    id: b.id,
+    serviceType: b.service_type,
+    price: b.price,
+    status: b.status,
   }));
-  return { clients };
+}
+
+/** ¿Aquest bo és d'aquest client? Per no anotar un pagament contra el bo d'un altre. */
+export async function bonoBelongsTo(bonoId: string, clientId: string): Promise<boolean> {
+  if (USE_MOCK)
+    return getStore().bonos.some((b) => b.id === bonoId && b.client_id === clientId);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bonos")
+    .select("id")
+    .eq("id", bonoId)
+    .eq("client_id", clientId)
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
 }

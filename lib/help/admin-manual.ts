@@ -1054,6 +1054,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           text: "«+ Nou pagament» demana el client, opcionalment el bo al qual va lligat —triar-lo omple l'import sol—, la quantitat i el mètode. Serveix per a tot el que entra fora del camí normal: una diferència, un pagament fraccionat, un cobrament d'una cosa que no és un bo.",
         },
         {
+          t: "p",
+          text: "El client es busca escrivint un tros del nom, sense accents ni majúscules i en qualsevol ordre: el mateix buscador que la fulla de reserva. Sense escriure res en surten els primers vint per ordre alfabètic. Quan el tries, a «Bo» hi surten només els seus, amb el servei, el preu i l'estat (per exemple, «Pendent de pagament»). Si el bo no fos d'aquell client —perquè s'ha canviat de client a mig omplir—, el pagament no es registra i t'ho diu.",
+        },
+        {
           t: "note",
           text: "Aquesta pantalla no té botó d'esborrar ni d'editar. És un llibre de comptes: un apunt equivocat es corregeix amb un altre apunt, no fent desaparèixer el primer.",
         },
