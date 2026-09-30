@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { TAP } from "@/lib/utils";
 import { ClientsTable } from "@/components/clients-table";
-import { listClients } from "@/lib/data/clients";
+import { listClientsPage } from "@/lib/data/clients";
 import { getTrainer } from "@/lib/data/trainers";
 import { GroupTabs } from "@/components/ui/group-tabs";
 
@@ -15,14 +15,16 @@ export const dynamic = "force-dynamic";
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ trainer?: string }>;
+  searchParams: Promise<{ trainer?: string; q?: string }>;
 }) {
-  const { trainer: trainerId } = await searchParams;
+  const { trainer, q: rawQ } = await searchParams;
+  const trainerId = trainer || null;
+  const q = (rawQ ?? "").trim().slice(0, 60);
 
-  // El filtre per entrenador es resol al servidor i per id: listClients ja
-  // l'accepta, i així evitem ambigüitats si dos entrenadors es diuen igual.
-  const [clients, trainer] = await Promise.all([
-    listClients(trainerId),
+  // La cerca i el filtre per entrenador es resolen al servidor. El filtre va
+  // per id, per no confondre dos entrenadors que es diguin igual.
+  const [page, trainerRow] = await Promise.all([
+    listClientsPage({ q, trainerId }),
     trainerId ? getTrainer(trainerId) : null,
   ]);
 
@@ -49,8 +51,12 @@ export default async function ClientsPage({
         </div>
 
         <ClientsTable
-          clients={clients}
-          trainerFilter={trainerId ? { name: trainer?.fullName ?? null } : null}
+          initialRows={page.items}
+          initialCursor={page.nextCursor}
+          total={page.total}
+          q={q}
+          trainerId={trainerId}
+          trainerFilter={trainerId ? { name: trainerRow?.fullName ?? null } : null}
         />
       </main>
     </>

@@ -178,11 +178,11 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "La llista de persones del centre. S'obre amb «Els meus» seleccionat; el botó «Tots» ensenya la resta, i el comptador de la dreta et diu quantes n'estàs veient.",
+          text: "La llista de persones del centre, per ordre alfabètic. S'obre amb «Els meus» seleccionat; el botó «Tots» ensenya la resta. N'hi surten 50 de cop: a sota diu quants en veus del total («50 de 74 clients») i «Carregar més» n'afegeix 50 més.",
         },
         {
           t: "p",
-          text: "El cercador busca alhora pel nom del client, pel seu correu i pel nom del professional que té assignat. Aquesta tercera cosa és la que fa que serveixi de debò: escriure el nom d'un company t'ensenya tota la seva cartera.",
+          text: "El cercador busca pel nom del client (sense accents ni majúscules, i les paraules en qualsevol ordre), pel seu correu i, si hi escrius un telèfon, pels dígits del telèfon. A «Tots» hi ha a més el desplegable «Professional»: tria un company i veuràs tota la seva cartera. Abans això es feia escrivint el nom del company al cercador; ara és un filtre a part i exacte, i es combina amb la cerca.",
         },
         { t: "h", text: "Les columnes" },
         {

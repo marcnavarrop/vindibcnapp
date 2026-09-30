@@ -264,7 +264,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Buscar" },
         {
           t: "p",
-          text: "El cercador de dalt filtra per nom, correu i telèfon, i ignora accents i majúscules. El telèfon es compara només amb els dígits, així que buscar «600100» el troba tant si està desat pelat com amb prefix o espais.",
+          text: "El cercador de dalt filtra per nom, correu i telèfon, i ignora accents i majúscules; les paraules del nom poden anar en qualsevol ordre. El telèfon es compara només amb els dígits, així que buscar «600100» el troba tant si està desat pelat com amb prefix o espais. Perquè es busqui al telèfon, el que escriguis ha de semblar un telèfon (xifres, espais, +) i tenir almenys tres xifres: «ana42@» ja no treu tots els telèfons que porten un 42.",
+        },
+        {
+          t: "p",
+          text: "La llista va per ordre alfabètic i en carrega 50 de cop. A sota diu quants en veus del total («50 de 74 clients») i «Carregar més» n'afegeix 50 més. La cerca es fa al servidor sobre TOTS els clients, no només sobre els carregats, i queda a l'adreça: es pot desar o enviar.",
         },
         {
           t: "note",

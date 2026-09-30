@@ -1,49 +1,46 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { ClientListItem } from "@/lib/data/clients";
+import type { ClientsPageItem } from "@/lib/data/clients";
 import { ResendInviteButton } from "@/components/resend-invite-button";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
-import { TAP, TAP_SURFACE, digitsOnly, normalizeForSearch } from "@/lib/utils";
+import { LoadMoreFooter, useLoadMore, useUrlQuery } from "@/components/server-list";
+import { loadMoreClientsAction } from "@/app/actions/client-list-actions";
+import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 
+/**
+ * La llista de clients de l'admin.
+ *
+ * La cerca i el filtre de professional es fan al SERVIDOR (`listClientsPage`):
+ * el camp escriu `?q=` a l'adreça i la primera pàgina arriba ja filtrada;
+ * «Carregar més» continua amb el cursor. Abans es portaven tots els clients i
+ * es filtrava aquí, i al tall de 1000 files els més nous no haurien sortit.
+ */
 export function ClientsTable({
-  clients,
+  initialRows,
+  initialCursor,
+  total,
+  q,
+  trainerId,
   trainerFilter = null,
 }: {
-  clients: ClientListItem[];
+  initialRows: ClientsPageItem[];
+  initialCursor: string | null;
+  total: number | null;
+  /** La cerca amb què s'ha pintat aquesta pàgina. */
+  q: string;
+  trainerId: string | null;
   /**
    * Filtre per entrenador actiu, resolt al servidor via ?trainer=<id>.
    * `name` és null si l'id no resol cap entrenador (enllaç antic o eliminat).
    */
   trainerFilter?: { name: string | null } | null;
 }) {
-  const [query, setQuery] = useState("");
-
-  const filtered = useMemo(() => {
-    const q = normalizeForSearch(query.trim());
-    if (!q) return clients;
-    const qDigits = digitsOnly(query);
-    return clients.filter((c) => {
-      // Només dades del propi client: cercar "Laia" no ha de retornar els
-      // clients de l'entrenadora Laia. Per això hi ha el filtre d'entrenador.
-      if (
-        normalizeForSearch(c.fullName).includes(q) ||
-        normalizeForSearch(c.email).includes(q) ||
-        normalizeForSearch(c.phone).includes(q)
-      )
-        return true;
-      // Comparant només dígits, cercar "600100" troba el número tant si està
-      // desat pelat com amb prefix o espais. (Deia aquí que es desava com
-      // "+34 600 100 001"; això és la llavor del mode simulació. A la base real
-      // són dígits pelats i el camp no té cap validació de format.)
-      return qDigits.length > 0 && digitsOnly(c.phone).includes(qDigits);
-    });
-  }, [query, clients]);
+  const search = useUrlQuery();
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
           <svg
             aria-hidden="true"
@@ -59,22 +56,24 @@ export function ClientsTable({
           </svg>
           <input
             type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={search.value}
+            onChange={(e) => search.setValue(e.target.value)}
             placeholder="Cerca per nom, correu o telèfon…"
             aria-label="Cerca clients"
             className="w-full rounded-lg border border-brand-border bg-white py-2.5 pr-3 pl-9 text-sm text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
           />
         </div>
-        <span className="text-sm whitespace-nowrap text-brand-muted">
-          {filtered.length} de {clients.length}
-        </span>
+        {search.pending && (
+          <span className="text-sm text-brand-muted" aria-live="polite">
+            Buscant…
+          </span>
+        )}
 
         {trainerFilter && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple/10 py-1 pr-1 pl-3 text-xs font-bold text-brand-purple">
             Professional: {trainerFilter.name ?? "desconegut/da"}
             <Link
-              href="/admin/clients"
+              href={q ? `/admin/clients?q=${encodeURIComponent(q)}` : "/admin/clients"}
               aria-label="Treure el filtre de professional"
               title="Treure el filtre"
               className={`inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-brand-purple/20 ${TAP}`}
@@ -95,8 +94,51 @@ export function ClientsTable({
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-        <table className="w-full min-w-[40rem] text-left text-sm">
+      {/* La `key`: amb uns altres filtres, la llista torna a començar. */}
+      <ClientsRows
+        key={`${q}|${trainerId ?? ""}`}
+        initialRows={initialRows}
+        initialCursor={initialCursor}
+        total={total}
+        q={q}
+        trainerId={trainerId}
+        trainerFilter={trainerFilter}
+        dim={search.pending}
+      />
+    </div>
+  );
+}
+
+function ClientsRows({
+  initialRows,
+  initialCursor,
+  total,
+  q,
+  trainerId,
+  trainerFilter,
+  dim,
+}: {
+  initialRows: ClientsPageItem[];
+  initialCursor: string | null;
+  total: number | null;
+  q: string;
+  trainerId: string | null;
+  trainerFilter: { name: string | null } | null;
+  dim: boolean;
+}) {
+  const list = useLoadMore(initialRows, initialCursor, (cursor) =>
+    loadMoreClientsAction({ q, trainerId }, cursor),
+  );
+
+  return (
+    <>
+      <div
+        className={clsx(
+          "overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity",
+          dim && "opacity-60",
+        )}
+      >
+        <table className="w-full min-w-[40rem] text-left text-sm" data-testid="clients-table">
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Client</th>
@@ -108,7 +150,7 @@ export function ClientsTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((c) => (
+            {list.items.map((c) => (
               <tr
                 key={c.id}
                 className={`border-b border-brand-border last:border-0 hover:bg-brand-bg/50 active:bg-brand-bg ${TAP_SURFACE}`}
@@ -159,24 +201,35 @@ export function ClientsTable({
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {list.items.length === 0 && (
               <tr>
                 <td
                   colSpan={6}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
-                  {clients.length > 0 || !trainerFilter
+                  {q
                     ? "No s'ha trobat cap client amb aquesta cerca."
-                    : trainerFilter.name
-                      ? `${trainerFilter.name} no té cap client assignat.`
-                      : "Aquest professional ja no existeix."}
+                    : !trainerFilter
+                      ? "Encara no hi ha cap client."
+                      : trainerFilter.name
+                        ? `${trainerFilter.name} no té cap client assignat.`
+                        : "Aquest professional ja no existeix."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-    </div>
+      <LoadMoreFooter
+        shown={list.items.length}
+        total={total}
+        noun="clients"
+        hasMore={list.hasMore}
+        pending={list.pending}
+        error={list.error}
+        onLoadMore={list.loadMore}
+      />
+    </>
   );
 }
 

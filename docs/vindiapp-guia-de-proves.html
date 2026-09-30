@@ -201,7 +201,8 @@
 
     <h3>1.2 Persones → Clients</h3>
     <ul class="checklist">
-      <li><strong>Cercador instantani</strong>: per nom, correu o telèfon (sense accents; el telèfon es compara només amb els dígits, així que "600100" el troba amb prefix o amb espais)</li>
+      <li><strong>Cercador</strong>: per nom, correu o telèfon (sense accents, paraules en qualsevol ordre; el telèfon es compara només amb els dígits, així que "600100" el troba amb prefix o amb espais). <span class="flag">Nou</span> La cerca la fa el servidor sobre tots els clients i queda a l'adreça (<code>?q=</code>); el camp no perd el focus mentre escrius. Per buscar al telèfon cal escriure un telèfon: «ana42@» no ha de treure els telèfons amb un 42</li>
+      <li><strong>Per pàgines</strong> <span class="flag">Nou</span>: ordre alfabètic, 50 de cop, «50 de N clients» i «Carregar més» fins que desapareix. Dona d'alta un client nou i comprova que el trobes cercant-lo de seguida. Amb el filtre de professional i una cerca alhora, treure el filtre conserva la cerca</li>
       <li>La cerca mira <strong>només dades del client</strong>: escriure el nom d'una professional no retorna els seus clients (per això hi ha el filtre per professional, que s'activa des del recompte de la pantalla de Professionals)</li>
       <li>A cada fila, dues accions fora de l'enllaç: la <strong>icona de WhatsApp</strong> (només si té telèfon) i "Reenviar invitació". Comprova que tocar la fila obre la fitxa i que tocar les icones <strong>no</strong> l'obre</li>
       <li>"+ Nou client": nom, correu, telèfon, professional assignat i els dos blocs de notes</li>
@@ -395,6 +396,7 @@
     <h3>3.2 Clients <span class="flag">Ampliat</span></h3>
     <ul class="checklist">
       <li>Toggle "Els meus / Tots" — veus la fitxa completa de qualsevol client (coordinació), però només edites/reserves els teus assignats</li>
+      <li><span class="flag">Nou</span> Com la de l'admin: 50 per pàgina amb «Carregar més», cerca al servidor (nom, correu, telèfon). A «Tots», el desplegable <strong>«Professional»</strong> ensenya la cartera d'un company (abans es feia escrivint el seu nom al cercador)</li>
       <li>Icona de <strong>WhatsApp</strong> a la llista i a la fitxa</li>
       <li><strong>Pots canviar el professional assignat d'un client</strong>, també si no és teu (secció 13)</li>
       <li><strong>Pots etiquetar els teus clients</strong> i crear una etiqueta nova des de la fitxa; el que no pots és mantenir el catàleg d'etiquetes</li>

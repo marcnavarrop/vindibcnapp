@@ -5,6 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { createUserWithInvite } from "@/lib/notifications/auth-emails";
+import { foldName, matchesName, nameWords, wordRegex } from "@/lib/client-search-match";
+import { digitsOnly } from "@/lib/utils";
 import type {
   ServiceType,
   BonoStatus,
@@ -138,22 +140,235 @@ function toListItem(clientId: string, store = getStore()): ClientListItem {
   };
 }
 
+/** Clients per pàgina de la llista (admin i professional). */
+export const CLIENTS_PAGE_SIZE = 50;
+
+export type ClientsPageItem = ClientListItem & {
+  /** Per marcar «el meu» a la llista del professional. */
+  assignedTrainerId: string | null;
+};
+
+export type ClientsPage = {
+  items: ClientsPageItem[];
+  nextCursor: string | null;
+  /** Quants en surten amb aquests filtres. Només a la primera pàgina. */
+  total: number | null;
+};
+
+// El cursor va dins d'un filtre de PostgREST: el nom, entre cometes i escapat;
+// l'id, només lletres, xifres i guions.
+const SAFE_ID = /^[A-Za-z0-9-]{1,64}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function encodeClientsCursor(item: { fullName: string | null; profileId: string }): string {
+  return Buffer.from(JSON.stringify([item.fullName, item.profileId])).toString("base64url");
+}
+
+function decodeClientsCursor(c: string): { name: string | null; id: string } | null {
+  try {
+    const v = JSON.parse(Buffer.from(c, "base64url").toString("utf8"));
+    if (!Array.isArray(v) || v.length !== 2) return null;
+    const [name, id] = v;
+    if (name !== null && (typeof name !== "string" || name.length > 200)) return null;
+    if (typeof id !== "string" || !SAFE_ID.test(id)) return null;
+    return { name, id };
+  } catch {
+    return null;
+  }
+}
+
+/** Un valor dins d'un filtre `or=(...)` de PostgREST, entre cometes. */
+function pgrstQuote(v: string): string {
+  return `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
 /**
- * Lista de clientes. Si se pasa `trainerId`, solo los asignados a ese
- * entrenador (área trainer). Misma firma en simulación y en real.
+ * Els dígits a buscar al telèfon, NOMÉS si el que s'ha escrit sembla un
+ * telèfon (xifres, espais, +, -, parèntesis) i en porta almenys tres. Abans
+ * qualsevol xifra valia: «ana42@» buscava «42» a tots els telèfons i en treia
+ * mitja llista.
  */
-export async function listClients(
-  trainerId?: string,
-): Promise<ClientListItem[]> {
+function phoneDigits(q: string): string | null {
+  if (!/^[\d\s+\-()]+$/.test(q)) return null;
+  const d = digitsOnly(q);
+  return d.length >= 3 ? d : null;
+}
+
+/**
+ * La cerca: totes les paraules al nom (sense accents ni majúscules, en
+ * qualsevol ordre, com `ClientSearch`), O un tros del correu, O els dígits del
+ * telèfon si el que s'ha escrit és un telèfon (tant si està desat pelat com
+ * amb espais o prefix). Només dades del
+ * propi client: cercar «Laia» no torna els clients de la Laia.
+ */
+function searchCondition(q: string): string {
+  const parts: string[] = [];
+  const words = nameWords(q);
+  if (words.length)
+    parts.push(`and(${words.map((w) => `full_name.imatch.${pgrstQuote(wordRegex(w))}`).join(",")})`);
+  parts.push(`email.ilike.${pgrstQuote(`*${q}*`)}`);
+  const d = phoneDigits(q);
+  if (d) parts.push(`phone.imatch.${pgrstQuote(d.split("").join("\\D*"))}`);
+  return `or(${parts.join(",")})`;
+}
+
+function matchesQuery(c: { fullName: string; email: string; phone: string | null }, q: string): boolean {
+  if (matchesName(c.fullName, q)) return true;
+  if (foldName(c.email).includes(foldName(q))) return true;
+  const d = phoneDigits(q);
+  return d !== null && digitsOnly(c.phone).includes(d);
+}
+
+/**
+ * Una pàgina de clients, per ordre alfabètic, amb la cerca i el filtre de
+ * professional fets a la BASE.
+ *
+ * Abans les dues llistes portaven TOTS els clients (ordenats per alta) i
+ * filtraven al navegador. Al tall de 1000 files, els més nous no haurien
+ * sortit, ni cercant-los. Ara: cursor sobre (nom, id), 50 per pàgina i el
+ * total amb `count: exact` a la primera.
+ */
+export async function listClientsPage(opts: {
+  q?: string;
+  /** Només els assignats a aquest professional. */
+  trainerId?: string | null;
+  cursor?: string | null;
+  limit?: number;
+}): Promise<ClientsPage> {
+  const limit = Math.min(Math.max(opts.limit ?? CLIENTS_PAGE_SIZE, 1), 200);
+  const q = (opts.q ?? "").trim().slice(0, 60);
+  const after = opts.cursor ? decodeClientsCursor(opts.cursor) : null;
+  if (opts.cursor && !after) throw new Error("Cursor de clients no vàlid.");
+
+  // Cada fila porta, a part, el nom TAL COM és a la base (null inclòs): és el
+  // que ha d'anar al cursor, no el «—» que es pinta.
+  let rows: { item: ClientsPageItem; rawName: string | null }[];
+  let total: number | null = null;
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const all = store.clients
+      .filter((c) => !opts.trainerId || c.assigned_trainer_id === opts.trainerId)
+      .map((c) => ({ ...toListItem(c.id, store), assignedTrainerId: c.assigned_trainer_id ?? null }))
+      .filter((c) => !q || matchesQuery(c, q))
+      .sort((a, b) => (a.fullName < b.fullName ? -1 : a.fullName > b.fullName ? 1 : a.profileId < b.profileId ? -1 : 1));
+    total = after ? null : all.length;
+    rows = all
+      .filter(
+        (c) =>
+          !after ||
+          (after.name !== null &&
+            (c.fullName > after.name || (c.fullName === after.name && c.profileId > after.id))),
+      )
+      .slice(0, limit + 1)
+      .map((item) => ({ item, rawName: item.fullName }));
+  } else if (opts.trainerId && !UUID.test(opts.trainerId)) {
+    // Un ?trainer= que no és un uuid (un enllaç vell o escrit a mà): Postgres
+    // el rebutjaria amb un error i tombaria la pàgina. No és de ningú: cap client.
+    rows = [];
+    total = 0;
+  } else {
+    const supabase = await createClient();
+    let query = supabase
+      .from("profiles")
+      .select(
+        `id, full_name, email, phone,
+         client:clients!clients_profile_id_fkey!inner(
+           id, assigned_trainer_id,
+           trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
+           bonos(remaining_sessions, status, expires_at)
+         )`,
+        // El total només cal a la primera pàgina; amb el cursor posat,
+        // comptaria només els que queden.
+        after ? undefined : { count: "exact" },
+      )
+      .eq("role", "client")
+      .order("full_name", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: true })
+      .limit(limit + 1);
+    if (opts.trainerId) query = query.eq("client.assigned_trainer_id", opts.trainerId);
+
+    const conds: string[] = [];
+    if (q) conds.push(searchCondition(q));
+    if (after)
+      conds.push(
+        after.name === null
+          ? `and(full_name.is.null,id.gt.${after.id})`
+          : `or(full_name.gt.${pgrstQuote(after.name)},and(full_name.eq.${pgrstQuote(after.name)},id.gt.${after.id}),full_name.is.null)`,
+      );
+    if (conds.length) query = query.or(`and(${conds.join(",")})`);
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+    total = after ? null : (count ?? null);
+
+    type Row = {
+      id: string;
+      full_name: string | null;
+      email: string | null;
+      phone: string | null;
+      client: {
+        id: string;
+        assigned_trainer_id: string | null;
+        trainer: { full_name: string | null } | null;
+        bonos: { remaining_sessions: number; status: BonoStatus; expires_at: string | null }[];
+      } | null;
+    };
+    rows = (data as unknown as Row[]).flatMap((r) => {
+      if (!r.client) return [];
+      const active = r.client.bonos.filter(
+        (b) =>
+          (b.status === "active" || b.status === "pending_payment") &&
+          !isBonoExpired({ status: b.status, expires_at: b.expires_at }),
+      );
+      return [
+        {
+          rawName: r.full_name,
+          item: {
+            id: r.client.id,
+            profileId: r.id,
+            fullName: r.full_name ?? "—",
+            email: r.email ?? "",
+            phone: r.phone,
+            trainerName: r.client.trainer?.full_name ?? null,
+            assignedTrainerId: r.client.assigned_trainer_id ?? null,
+            activeBonos: active.length,
+            remainingSessions: active.reduce((s, b) => s + b.remaining_sessions, 0),
+          },
+        },
+      ];
+    });
+  }
+
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  return {
+    items: page.map((r) => r.item),
+    nextCursor:
+      rows.length > limit && last
+        ? encodeClientsCursor({ fullName: last.rawName, profileId: last.item.profileId })
+        : null,
+    total,
+  };
+}
+
+/**
+ * Els clients assignats a UN professional (Inici, reserves i bons del
+ * professional). La llista del centre sencera ja no passa per aquí: va per
+ * pàgines amb `listClientsPage`. El professional és obligatori: amb un id buit,
+ * abans el filtre desapareixia i tornava TOTS els clients del centre.
+ */
+export async function listClients(trainerId: string): Promise<ClientListItem[]> {
+  if (!trainerId) return [];
   if (USE_MOCK) {
     const store = getStore();
     return store.clients
-      .filter((c) => !trainerId || c.assigned_trainer_id === trainerId)
+      .filter((c) => c.assigned_trainer_id === trainerId)
       .map((c) => toListItem(c.id, store));
   }
 
   const supabase = await createClient();
-  let query = supabase
+  const query = supabase
     .from("clients")
     .select(
       `id, profile_id,
@@ -161,8 +376,8 @@ export async function listClients(
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(remaining_sessions, status, expires_at)`,
     )
+    .eq("assigned_trainer_id", trainerId)
     .order("created_at", { ascending: true });
-  if (trainerId) query = query.eq("assigned_trainer_id", trainerId);
 
   const { data, error } = await query;
   if (error) throw error;

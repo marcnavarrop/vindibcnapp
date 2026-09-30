@@ -1,49 +1,65 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
-import type { ClientListItem } from "@/lib/data/clients";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { clsx, TAP, TAP_SURFACE } from "@/lib/utils";
+import type { ClientsPageItem } from "@/lib/data/clients";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
+import { LoadMoreFooter, useLoadMore, useUrlQuery } from "@/components/server-list";
+import { loadMoreClientsAction } from "@/app/actions/client-list-actions";
 
 /**
- * Tabla de clientes del área de entrenador/a con un conmutador
- * "Els meus / Tots". Cualquier ficha se puede abrir; las acciones de gestión
- * dependen de si el cliente es suyo (eso lo controla la propia ficha + RLS).
+ * La llista de clients del professional: "Els meus / Tots". Qualsevol fitxa
+ * es pot obrir; les accions de gestió només surten als seus assignats.
+ *
+ * Com la de l'admin, la cerca i «Els meus / Tots» es fan al SERVIDOR
+ * (`listClientsPage`) i la llista va per pàgines. Abans es portaven tots els
+ * clients del centre al navegador.
  */
 export function TrainerClientsTable({
-  clients,
-  myIds,
+  initialRows,
+  initialCursor,
+  total,
+  q,
+  scope,
+  professionalId,
+  trainers,
 }: {
-  clients: ClientListItem[];
-  myIds: string[];
+  initialRows: ClientsPageItem[];
+  initialCursor: string | null;
+  total: number | null;
+  q: string;
+  scope: "mine" | "all";
+  /** A «Tots»: la cartera de quin professional (null = tots). */
+  professionalId: string | null;
+  trainers: { id: string; name: string }[];
 }) {
-  const [scope, setScope] = useState<"mine" | "all">("mine");
-  const [query, setQuery] = useState("");
-  const mine = useMemo(() => new Set(myIds), [myIds]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return clients
-      .filter((c) => (scope === "mine" ? mine.has(c.id) : true))
-      .filter(
-        (c) =>
-          !q ||
-          c.fullName.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          (c.trainerName ?? "").toLowerCase().includes(q),
-      );
-  }, [clients, scope, mine, query]);
+  const search = useUrlQuery();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [switching, startSwitch] = useTransition();
+  const href = (s: "mine" | "all", pro: string | null) => {
+    const p = new URLSearchParams();
+    if (s === "all") p.set("tots", "1");
+    if (s === "all" && pro) p.set("professional", pro);
+    if (q) p.set("q", q);
+    const qs = p.toString();
+    return qs ? `${pathname}?${qs}` : pathname;
+  };
+  const scopeHref = (s: "mine" | "all") => href(s, null);
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
+        <nav aria-label="Quins clients" className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
           {(["mine", "all"] as const).map((s) => (
-            <button
+            <Link
               key={s}
-              type="button"
-              onClick={() => setScope(s)}
+              href={scopeHref(s)}
+              replace
+              scroll={false}
+              aria-current={scope === s ? "page" : undefined}
               className={clsx(
                 "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
                 scope === s
@@ -53,23 +69,87 @@ export function TrainerClientsTable({
               )}
             >
               {s === "mine" ? "Els meus" : "Tots"}
-            </button>
+            </Link>
           ))}
-        </div>
+        </nav>
         <input
           type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca per nom, correu o professional…"
+          value={search.value}
+          onChange={(e) => search.setValue(e.target.value)}
+          placeholder="Cerca per nom, correu o telèfon…"
+          aria-label="Cerca clients"
           className="w-full max-w-sm rounded-lg border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
         />
-        <span className="text-sm whitespace-nowrap text-brand-muted">
-          {filtered.length} clients
-        </span>
+        {scope === "all" && (
+          <label className="flex items-center gap-2 text-sm text-brand-muted">
+            <span className="whitespace-nowrap">Professional</span>
+            <select
+              value={professionalId ?? ""}
+              onChange={(e) =>
+                startSwitch(() => router.replace(href("all", e.target.value || null), { scroll: false }))
+              }
+              className="min-h-11 rounded-lg border border-brand-border bg-white px-3 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
+            >
+              <option value="">Tots</option>
+              {trainers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {(search.pending || switching) && (
+          <span className="text-sm text-brand-muted" aria-live="polite">
+            Buscant…
+          </span>
+        )}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-        <table className="w-full min-w-[40rem] text-left text-sm">
+      <TrainerClientsRows
+        key={`${scope}|${professionalId ?? ""}|${q}`}
+        initialRows={initialRows}
+        initialCursor={initialCursor}
+        total={total}
+        q={q}
+        scope={scope}
+        professionalId={professionalId}
+        dim={search.pending || switching}
+      />
+    </div>
+  );
+}
+
+function TrainerClientsRows({
+  initialRows,
+  initialCursor,
+  total,
+  q,
+  scope,
+  professionalId,
+  dim,
+}: {
+  initialRows: ClientsPageItem[];
+  initialCursor: string | null;
+  total: number | null;
+  q: string;
+  scope: "mine" | "all";
+  professionalId: string | null;
+  dim: boolean;
+}) {
+  const list = useLoadMore(initialRows, initialCursor, (cursor) =>
+    loadMoreClientsAction({ q, scope, professionalId }, cursor),
+  );
+
+  return (
+    <>
+      <div
+        className={clsx(
+          "overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity",
+          dim && "opacity-60",
+        )}
+      >
+        <table className="w-full min-w-[40rem] text-left text-sm" data-testid="clients-table">
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Client</th>
@@ -80,7 +160,7 @@ export function TrainerClientsTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((c) => (
+            {list.items.map((c) => (
               <tr
                 key={c.id}
                 className={`border-b border-brand-border last:border-0 hover:bg-brand-bg/50 active:bg-brand-bg ${TAP_SURFACE}`}
@@ -120,20 +200,29 @@ export function TrainerClientsTable({
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {list.items.length === 0 && (
               <tr>
                 <td
                   colSpan={5}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
-                  Sense clients.
+                  {q ? "No s'ha trobat cap client amb aquesta cerca." : "Sense clients."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-    </div>
+      <LoadMoreFooter
+        shown={list.items.length}
+        total={total}
+        noun="clients"
+        hasMore={list.hasMore}
+        pending={list.pending}
+        error={list.error}
+        onLoadMore={list.loadMore}
+      />
+    </>
   );
 }
 
