@@ -1297,6 +1297,22 @@ export function buildClientManual(
               },
             ] as Block[])),
         {
+          t: "p",
+          text: T({
+            ca: "Totes les teves esperes —les d'un grup i les que una sèrie ha deixat a la cua— surten sota les teves properes sessions, al bloc «A la cua»: el dia, l'hora, amb qui i «En espera». No són sessions reservades encara, i per això van a part. Tocant-ne una te'n pots donar de baixa. Quan passa l'hora sense que s'alliberi cap plaça, l'espera desapareix sola.",
+            es: "Todas tus esperas —las de un grupo y las que una serie ha dejado en la cola— salen debajo de tus próximas sesiones, en el bloque «En la cola»: el día, la hora, con quién y «En espera». Todavía no son sesiones reservadas, y por eso van aparte. Tocando una te puedes dar de baja. Cuando pasa la hora sin que se libere ninguna plaza, la espera desaparece sola.",
+            en: "All your waits —for a group, and the ones a series has left on the waitlist— appear under your upcoming sessions, in the «On the waitlist» block: the day, the time, who with and «Waiting». They aren't booked sessions yet, which is why they're kept apart. Tap one to take yourself off. When the time passes without a place opening up, the wait disappears on its own.",
+          }),
+        },
+        {
+          t: "warn",
+          text: T({
+            ca: "Si una espera porta un avís groc, és que encara que s'alliberi la plaça no hi entraràs: o no et queden sessions d'aquell servei al bo, o el centre t'ha canviat d'entrenador i aquella hora era amb l'anterior. En el primer cas, amb un bo nou hi tornes a optar.",
+            es: "Si una espera lleva un aviso amarillo, es que aunque se libere la plaza no entrarás: o no te quedan sesiones de ese servicio en el bono, o el centro te ha cambiado de entrenador y esa hora era con el anterior. En el primer caso, con un bono nuevo vuelves a optar.",
+            en: "If a wait shows a yellow notice, you won't get in even if the place opens up: either you have no sessions of that service left on your pass, or the centre has changed your trainer and that time was with the previous one. In the first case, a new pass puts you back in the running.",
+          }),
+        },
+        {
           t: "h",
           text: T({
             ca: "Repetir cada setmana (les sèries)",
@@ -1404,17 +1420,17 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Les sèries vives surten en un bloc a dalt de la pantalla de Reserves, amb la freqüència, quantes sessions queden pendents i quina és la pròxima. Des d'allà pots cancel·lar-ne una de sencera.",
-            es: "Las series vivas salen en un bloque arriba de la pantalla de Reservas, con la frecuencia, cuántas sesiones quedan pendientes y cuál es la próxima. Desde ahí puedes cancelar una entera.",
-            en: "Live series appear in a block at the top of the Bookings screen, with the frequency, how many sessions are still pending and which is next. From there you can cancel a whole one.",
+            ca: "Les sèries vives surten en un bloc a dalt de la pantalla de Reserves, amb la freqüència, quantes sessions queden pendents, quina és la pròxima i, si n'hi ha, quantes són a la cua. Una sèrie que només té sessions a la cua també hi surt. Des d'allà pots cancel·lar-ne una de sencera.",
+            es: "Las series vivas salen en un bloque arriba de la pantalla de Reservas, con la frecuencia, cuántas sesiones quedan pendientes, cuál es la próxima y, si las hay, cuántas están en la cola. Una serie que solo tiene sesiones en la cola también sale. Desde ahí puedes cancelar una entera.",
+            en: "Live series appear in a block at the top of the Bookings screen, with the frequency, how many sessions are still pending, which is next and, if there are any, how many are on the waitlist. A series with only waitlisted sessions shows up too. From there you can cancel a whole one.",
           }),
         },
         {
           t: "warn",
           text: T({
-            ca: `Cancel·lar la sèrie anul·la totes les sessions futures d'aquella sèrie i les torna al teu bo. Les que ja siguin a menys de ${s.minCancellationHours} h es queden com estaven, i l'app et diu quantes n'han quedat.`,
-            es: `Cancelar la serie anula todas las sesiones futuras de esa serie y las devuelve a tu bono. Las que ya estén a menos de ${s.minCancellationHours} h se quedan como estaban, y la app te dice cuántas han quedado.`,
-            en: `Cancelling the series calls off every future session in it and returns them to your pass. Any that are already within ${s.minCancellationHours} h stay as they were, and the app tells you how many those are.`,
+            ca: `Cancel·lar la sèrie anul·la totes les sessions futures d'aquella sèrie i les torna al teu bo, també les que et van arribar des de la cua, i et treu de la cua de les que encara hi esperaven. Les que ja siguin a menys de ${s.minCancellationHours} h es queden com estaven, i l'app et diu quantes n'han quedat.`,
+            es: `Cancelar la serie anula todas las sesiones futuras de esa serie y las devuelve a tu bono, también las que te llegaron desde la cola, y te saca de la cola de las que todavía esperaban. Las que ya estén a menos de ${s.minCancellationHours} h se quedan como estaban, y la app te dice cuántas han quedado.`,
+            en: `Cancelling the series calls off every future session in it and returns them to your pass —including the ones you got from the waitlist— and takes you off the waitlist for those still waiting. Any that are already within ${s.minCancellationHours} h stay as they were, and the app tells you how many those are.`,
           }),
         },
         {

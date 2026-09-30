@@ -545,7 +545,12 @@
         "Nov",
         "Dec"
       ],
-      "shortDate": "{weekday} {day} {month}"
+      "shortDate": "{weekday} {day} {month}",
+      "waitingTitle": "On the waitlist",
+      "waiting": "Waiting",
+      "fromSeries": "from a series",
+      "waitTrainerChanged": "You won't get this one: the centre has changed your trainer. You can leave the waitlist.",
+      "waitNoSessions": "You have no {service} sessions left: if a place opens up, you won't be able to take it."
     },
     "own": {
       "withYou": "With you",
@@ -596,7 +601,11 @@
       "allReturned": "The sessions are back in your package.",
       "close": "Close",
       "keepIt": "Leave it",
-      "stoppedTrainerChanged": "This series won't extend any more: the centre has changed your trainer. The sessions you've already booked stay as they are."
+      "stoppedTrainerChanged": "This series won't extend any more: the centre has changed your trainer. The sessions you've already booked stay as they are.",
+      "waiting": "{count, plural, one {# on the waitlist} other {# on the waitlist}}",
+      "waitingBlocked": "The sessions of this series on the waitlist won't get in any more: the centre has changed your trainer.",
+      "cancelWaiting": "{count, plural, one {We'll take you off the waitlist for # session of this series.} other {We'll take you off the waitlist for the # sessions of this series.}}",
+      "waitsLeft": "{count, plural, one {You're no longer on the waitlist for # session.} other {You're no longer on the waitlist for # sessions.}}"
     },
     "errors": {
       "unauthorized": "Not authorised.",

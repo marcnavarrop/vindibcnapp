@@ -18,6 +18,7 @@ import {
   type HourRow,
   type SlotReservation,
 } from "@/lib/client-day-slots";
+import { requiresAssignedTrainer } from "@/lib/booking-scope";
 import { colorOfPro, colorOfService, type ColorPalette } from "@/lib/colors";
 import { Avatar } from "@/components/ui/avatar";
 import { SVC_ICON } from "@/components/client/service-icons";
@@ -58,6 +59,15 @@ import { centerDateStr } from "@/lib/center-time";
 export const STRIP_DAYS = 21;
 /** Les properes que surten de cop a la capçalera; la resta, amb «Veure-les totes». */
 const UPCOMING_SHOWN = 3;
+
+/** Una espera viva del client (solta o d'una sèrie), com arriba de la pàgina. */
+export type ClientWait = {
+  id: string;
+  trainerId: string | null;
+  desiredAt: string;
+  serviceType: ServiceType;
+  seriesId: string | null;
+};
 
 const firstName = (name: string) => name.split(" ")[0];
 
@@ -109,15 +119,41 @@ export function MyBookingsHeader({
   cancelAction,
   subscriptionServiceType,
   waitlistEnabled,
-}: Common) {
+  waitlist,
+}: Common & { waitlist: ClientWait[] }) {
   const t = useTranslations("reservas.list");
   const tl = useTranslations("labels.service");
   const tr = useTranslations("reservas");
+  const router = useRouter();
   const nowMs = new Date(nowISO).getTime();
   const shortWhen = useShortWhen();
   const [all, setAll] = useState(false);
   const [own, setOwn] = useState<{ r: SlotReservation; confirm: boolean } | null>(null);
+  const [wait, setWait] = useState<ClientWait | null>(null);
   const upcoming = useMemo(() => upcomingOwn(data.reservations, nowMs), [data.reservations, nowMs]);
+  // Les esperes que encara poden arribar, de la més propera a la més llunyana.
+  // Van a part de les reserves: una espera no és una sessió, i no ha de fer de
+  // «La propera» ni empènyer les de debò fora del «Veure-les totes».
+  const waits = useMemo(
+    () =>
+      waitlist
+        .filter((w) => new Date(w.desiredAt).getTime() > nowMs)
+        .sort((a, b) => new Date(a.desiredAt).getTime() - new Date(b.desiredAt).getTime()),
+    [waitlist, nowMs],
+  );
+  const [allWaits, setAllWaits] = useState(false);
+  const shownWaits = allWaits ? waits : waits.slice(0, UPCOMING_SHOWN);
+  /**
+   * Per què una espera no podrà entrar, si és que no pot. És la mateixa regla
+   * que aplica `promoteFromWaitlist` quan s'allibera la plaça: sense avisar-ho
+   * aquí, el client esperaria una plaça que la cua li saltaria en silenci.
+   */
+  const waitProblem = (w: ClientWait): "trainerChanged" | "noSessions" | null =>
+    requiresAssignedTrainer(w.serviceType) && w.trainerId !== data.assignedTrainerId
+      ? "trainerChanged"
+      : (data.bonoSessions[w.serviceType] ?? 0) === 0
+        ? "noSessions"
+        : null;
   const shown = all ? upcoming : upcoming.slice(0, UPCOMING_SHOWN);
   const trainerName = (id: string | null) =>
     data.trainers.find((x) => x.id === id)?.name ?? tr("professional");
@@ -205,6 +241,66 @@ export function MyBookingsHeader({
         </button>
       )}
 
+      {waits.length > 0 && (
+        <div className="flex flex-col gap-2" data-testid="waiting">
+          <h3 className="text-xs font-bold tracking-wide text-brand-muted uppercase">
+            {t("waitingTitle")}
+          </h3>
+          <ul className="flex flex-col gap-2">
+            {shownWaits.map((w) => {
+              const problem = waitProblem(w);
+              return (
+                <li key={w.id}>
+                  <button
+                    type="button"
+                    onClick={() => setWait(w)}
+                    data-wait={w.id}
+                    className={`flex min-h-11 w-full flex-col gap-1 rounded-xl border border-dashed border-brand-border bg-brand-bg px-3 py-2 text-left active:brightness-95 ${TAP}`}
+                  >
+                    <span className="flex w-full items-center gap-3">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-bold text-brand-dark first-letter:uppercase">
+                          {shortWhen(w.desiredAt)}
+                        </span>
+                        {/* Sense `truncate`: a la columna estreta de l'escriptori
+                            «de la sèrie» es tallava i és el que més informa. */}
+                        <span className="block text-xs text-brand-muted">
+                          {tl(w.serviceType)} · {firstName(trainerName(w.trainerId))}
+                          {w.seriesId && <> · {t("fromSeries")}</>}
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full border border-brand-border bg-white px-2.5 py-0.5 text-xs font-bold text-brand-charcoal">
+                        {t("waiting")}
+                      </span>
+                    </span>
+                    {problem && (
+                      <span
+                        data-testid={`wait-${problem}`}
+                        className="block rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900"
+                      >
+                        {problem === "trainerChanged"
+                          ? t("waitTrainerChanged")
+                          : t("waitNoSessions", { service: tl(w.serviceType) })}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {waits.length > UPCOMING_SHOWN && (
+            <button
+              type="button"
+              onClick={() => setAllWaits((v) => !v)}
+              aria-expanded={allWaits}
+              className={`min-h-11 self-start rounded-lg px-2 text-sm font-bold text-brand-purple active:bg-brand-bg ${TAP}`}
+            >
+              {allWaits ? t("seeLess") : t("seeAll", { count: waits.length })}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" data-testid="bonos">
         <span className="font-bold text-brand-charcoal">{t("left")}</span>
         {bonos.length === 0 ? (
@@ -224,6 +320,35 @@ export function MyBookingsHeader({
           {t("myBonos")}
         </Link>
       </div>
+
+      {wait && (
+        <WaitlistModal
+          trainerName={trainerName(wait.trainerId)}
+          slot={new Date(wait.desiredAt)}
+          trainerId={wait.trainerId ?? ""}
+          service={wait.serviceType}
+          entryId={wait.id}
+          notice={(() => {
+            const problem = waitProblem(wait);
+            if (problem === "trainerChanged") return t("waitTrainerChanged");
+            if (problem === "noSessions")
+              return (
+                <>
+                  {t("waitNoSessions", { service: tl(wait.serviceType) })}{" "}
+                  <Link href="/client/bonos" className="font-bold underline">
+                    {t("myBonos")}
+                  </Link>
+                </>
+              );
+            return null;
+          })()}
+          onClose={() => setWait(null)}
+          onDone={() => {
+            setWait(null);
+            router.refresh();
+          }}
+        />
+      )}
 
       {own && (
         <OwnModal
@@ -281,7 +406,7 @@ export function ReservasList({
   openingHour: number;
   closingHour: number;
   createAction: CreateAction;
-  waitlist: { id: string; trainerId: string | null; desiredAt: string }[];
+  waitlist: ClientWait[];
 }) {
   const router = useRouter();
   const t = useTranslations("reservas.list");

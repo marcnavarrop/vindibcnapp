@@ -545,7 +545,12 @@
         "de nov.",
         "de des."
       ],
-      "shortDate": "{weekday} {day} {month}"
+      "shortDate": "{weekday} {day} {month}",
+      "waitingTitle": "A la cua",
+      "waiting": "En espera",
+      "fromSeries": "de la sèrie",
+      "waitTrainerChanged": "Ja no hi entraràs: el centre t'ha canviat d'entrenador. Pots donar-te'n de baixa.",
+      "waitNoSessions": "No et queden sessions per a {service}: si s'allibera la plaça, no hi podràs entrar."
     },
     "own": {
       "withYou": "Amb tu hi ha",
@@ -596,7 +601,11 @@
       "allReturned": "Les sessions han tornat al teu bo.",
       "close": "Tancar",
       "keepIt": "Deixar-ho estar",
-      "stoppedTrainerChanged": "Aquesta sèrie ja no s'allargarà: el centre t'ha canviat d'entrenador. Les sessions que ja tens reservades es mantenen."
+      "stoppedTrainerChanged": "Aquesta sèrie ja no s'allargarà: el centre t'ha canviat d'entrenador. Les sessions que ja tens reservades es mantenen.",
+      "waiting": "{count, plural, one {# a la cua} other {# a la cua}}",
+      "waitingBlocked": "Les sessions a la cua d'aquesta sèrie ja no entraran: el centre t'ha canviat d'entrenador.",
+      "cancelWaiting": "{count, plural, one {Et traurem de la cua de # sessió d'aquesta sèrie.} other {Et traurem de la cua de les # sessions d'aquesta sèrie.}}",
+      "waitsLeft": "{count, plural, one {Ja no ets a la cua de # sessió.} other {Ja no ets a la cua de # sessions.}}"
     },
     "errors": {
       "unauthorized": "No autoritzat.",

@@ -92,10 +92,17 @@ export default async function ClientReservasPage() {
         waitlistEnabled={centerSettings.waitlistEnabled}
         subscriptionServiceType={subscription?.serviceType ?? null}
         // Només les que encara esperen: una de complerta o donada de baixa ja
-        // no ha de bloquejar tornar-s'hi a apuntar.
+        // no ha de bloquejar tornar-s'hi a apuntar. Les passades ja arriben
+        // caducades (`sweepExpiredWaitlist`).
         waitlist={waitlist
           .filter((w) => w.status === "waiting")
-          .map((w) => ({ id: w.id, trainerId: w.trainerId, desiredAt: w.desiredAt }))}
+          .map((w) => ({
+            id: w.id,
+            trainerId: w.trainerId,
+            desiredAt: w.desiredAt,
+            serviceType: w.serviceType,
+            seriesId: w.seriesId,
+          }))}
       />
 
       {/* Sota el calendari, no dins: reservar i mirar enrere són dues coses

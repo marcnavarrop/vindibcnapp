@@ -1092,6 +1092,14 @@ export type SeriesSummary = {
    * Les sessions ja reservades es queden. «Les teves sèries» ho explica.
    */
   stoppedTrainerChanged: boolean;
+  /** Sessions de la sèrie que encara esperen plaça a la cua. */
+  waiting: number;
+  /**
+   * Les esperes de la sèrie ja no poden entrar: són amb un professional que ja
+   * no és el seu entrenador (individual i parelles). La promoció se les salta
+   * (`promoteFromWaitlist`) i caduquen soles; «Les meves sèries» ho diu.
+   */
+  waitingBlocked: boolean;
 };
 
 /**
@@ -1106,6 +1114,26 @@ export function stopsForTrainerChange(
   assignedTrainerId: string | null,
 ): boolean {
   if (!s.auto_extend || !s.base_trainer_id) return false;
+  return (
+    clientBookingScope({
+      serviceType: s.service_type,
+      trainerId: s.base_trainer_id,
+      assignedTrainerId,
+    }) !== "ok"
+  );
+}
+
+/**
+ * ¿Les esperes d'aquesta sèrie ja no poden entrar? Mateixa regla que la
+ * promoció (`clientBookingScope`): en individual i parelles, només amb
+ * l'entrenador assignat. A diferència de `stopsForTrainerChange`, no depèn de
+ * si la sèrie s'allarga sola: una espera és una espera.
+ */
+function waitsBlocked(
+  s: { service_type: ServiceType; base_trainer_id: string | null },
+  assignedTrainerId: string | null,
+): boolean {
+  if (!s.base_trainer_id) return false;
   return (
     clientBookingScope({
       serviceType: s.service_type,
@@ -1163,12 +1191,12 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
             r.series_id === s.id && r.status === "booked" && r.scheduled_at > nowISO,
         )
         .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
-      const waiting = store.waitlist_entries.some(
+      const waiting = store.waitlist_entries.filter(
         (w) => w.series_id === s.id && w.status === "waiting",
-      );
+      ).length;
       const stopped = stopsForTrainerChange(s, assigned);
-      if (future.length === 0) {
-        if (!waiting && (stopped || !(await canStillGrow(s, clientId)))) {
+      if (future.length === 0 && waiting === 0) {
+        if (stopped || !(await canStillGrow(s, clientId))) {
           s.status = "completed";
           changed = true;
         }
@@ -1179,8 +1207,10 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
         serviceType: s.service_type,
         frequency: s.frequency,
         upcoming: future.length,
-        nextAt: future[0].scheduled_at,
+        nextAt: future[0]?.scheduled_at ?? null,
         stoppedTrainerChanged: stopped,
+        waiting,
+        waitingBlocked: waiting > 0 && waitsBlocked(s, assigned),
       });
     }
 
@@ -1227,13 +1257,12 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
 
   for (const s of series) {
     const future = (res ?? []).filter((r) => r.series_id === s.id);
+    const waiting = (waits ?? []).filter((w) => w.series_id === s.id).length;
     const stopped = stopsForTrainerChange(s, assigned);
-    if (future.length === 0) {
-      if (
-        !(waits ?? []).some((w) => w.series_id === s.id) &&
-        (stopped || !(await canStillGrow(s, clientId)))
-      )
-        finished.push(s.id);
+    // Una sèrie que només té esperes també surt: fins ara s'amagava (no tenia
+    // cap reserva futura) i el client no la podia ni veure ni cancel·lar.
+    if (future.length === 0 && waiting === 0) {
+      if (stopped || !(await canStillGrow(s, clientId))) finished.push(s.id);
       continue;
     }
     out.push({
@@ -1241,8 +1270,10 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
       serviceType: s.service_type,
       frequency: s.frequency,
       upcoming: future.length,
-      nextAt: future[0].scheduled_at,
+      nextAt: future[0]?.scheduled_at ?? null,
       stoppedTrainerChanged: stopped,
+      waiting,
+      waitingBlocked: waiting > 0 && waitsBlocked(s, assigned),
     });
   }
 

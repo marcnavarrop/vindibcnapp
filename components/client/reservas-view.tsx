@@ -4,7 +4,7 @@ import { TAP } from "@/lib/utils";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useActionState } from "react";
-import { MyBookingsHeader, ReservasList } from "@/components/client/reservas-list";
+import { MyBookingsHeader, ReservasList, type ClientWait } from "@/components/client/reservas-list";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
@@ -76,7 +76,7 @@ export function ClientReservasView({
    */
   subscriptionServiceType: ServiceType | null;
   /** Les esperes vives del client, per no oferir-li apuntar-s'hi dos cops. */
-  waitlist: { id: string; trainerId: string | null; desiredAt: string }[];
+  waitlist: ClientWait[];
 }) {
   // Quina sèrie s'està cancel·lant. Viu AQUÍ, i no a la fila de la llista,
   // perquè en cancel·lar-la la fila desapareix: si el diàleg hi visqués a
@@ -84,6 +84,7 @@ export function ClientReservasView({
   const [cancelling, setCancelling] = useState<{
     id: string;
     count: number;
+    waiting: number;
   } | null>(null);
 
   const common = {
@@ -102,11 +103,11 @@ export function ClientReservasView({
       data-testid="reservas-layout"
     >
       <div className="flex flex-col gap-6 lg:col-start-1 lg:row-span-3 lg:row-start-1">
-        <MyBookingsHeader {...common} />
+        <MyBookingsHeader {...common} waitlist={waitlist} />
         {series.length > 0 && (
           <SeriesList
             series={series}
-            onCancel={(id, count) => setCancelling({ id, count })}
+            onCancel={(id, count, waiting) => setCancelling({ id, count, waiting })}
           />
         )}
       </div>
@@ -115,6 +116,7 @@ export function ClientReservasView({
         <CancelSeriesDialog
           seriesId={cancelling.id}
           count={cancelling.count}
+          waiting={cancelling.waiting}
           onClose={() => setCancelling(null)}
         />
       )}
@@ -138,7 +140,7 @@ function SeriesList({
   onCancel,
 }: {
   series: SeriesSummary[];
-  onCancel: (id: string, count: number) => void;
+  onCancel: (id: string, count: number, waiting: number) => void;
 }) {
   const t = useTranslations("reservas.series");
   const tl = useTranslations("labels.service");
@@ -162,11 +164,18 @@ function SeriesList({
             <span className="text-brand-muted">
               {t("every", { frequency: tf(s.frequency).toLowerCase() })}
             </span>
-            <span className="text-brand-muted">
-              {s.upcoming === 1
-                ? t("pendingOne", { count: s.upcoming })
-                : t("pendingMany", { count: s.upcoming })}
-            </span>
+            {s.upcoming > 0 && (
+              <span className="text-brand-muted">
+                {s.upcoming === 1
+                  ? t("pendingOne", { count: s.upcoming })
+                  : t("pendingMany", { count: s.upcoming })}
+              </span>
+            )}
+            {s.waiting > 0 && (
+              <span className="text-brand-muted" data-testid="series-waiting">
+                {t("waiting", { count: s.waiting })}
+              </span>
+            )}
             {s.nextAt && (
               <span className="text-xs text-brand-muted first-letter:uppercase">
                 {t("next", {
@@ -176,7 +185,7 @@ function SeriesList({
             )}
             <button
               type="button"
-              onClick={() => onCancel(s.id, s.upcoming)}
+              onClick={() => onCancel(s.id, s.upcoming, s.waiting)}
               className={`ml-auto min-h-11 rounded-md border border-brand-border px-3 py-1 text-xs font-bold text-brand-muted transition-colors hover:border-error hover:text-error active:bg-brand-bg ${TAP}`}
             >
               {t("cancel")}
@@ -187,6 +196,14 @@ function SeriesList({
                 className="w-full rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900"
               >
                 {t("stoppedTrainerChanged")}
+              </p>
+            )}
+            {s.waitingBlocked && (
+              <p
+                data-testid="series-waiting-blocked"
+                className="w-full rounded-md bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900"
+              >
+                {t("waitingBlocked")}
               </p>
             )}
           </div>
@@ -212,10 +229,13 @@ function SeriesList({
 function CancelSeriesDialog({
   seriesId,
   count,
+  waiting,
   onClose,
 }: {
   seriesId: string;
   count: number;
+  /** Sessions de la sèrie a la cua: cancel·lar la sèrie també les treu. */
+  waiting: number;
   onClose: () => void;
 }) {
   const t = useTranslations("reservas.series");
@@ -245,16 +265,25 @@ function CancelSeriesDialog({
         >
           <div className="flex flex-col items-center gap-3 py-2 text-center">
             <AnimatedFeedback type="cancel" />
-            <p className="text-sm font-bold text-brand-dark">
-              {t("cancelledCount", { count: state.cancelled ?? 0 })}
-            </p>
-            <p className="text-sm text-brand-muted">
-              {state.kept
-                ? state.kept === 1
-                  ? t("keptOne")
-                  : t("keptMany", { count: state.kept })
-                : t("allReturned")}
-            </p>
+            {/* Una sèrie que només tenia esperes no ha cancel·lat cap sessió:
+                «0 sessions cancel·lades» seria un resultat estrany. */}
+            {((state.cancelled ?? 0) > 0 || waiting === 0) && (
+              <p className="text-sm font-bold text-brand-dark">
+                {t("cancelledCount", { count: state.cancelled ?? 0 })}
+              </p>
+            )}
+            {(state.cancelled ?? 0) + (state.kept ?? 0) > 0 && (
+              <p className="text-sm text-brand-muted">
+                {state.kept
+                  ? state.kept === 1
+                    ? t("keptOne")
+                    : t("keptMany", { count: state.kept })
+                  : t("allReturned")}
+              </p>
+            )}
+            {waiting > 0 && (
+              <p className="text-sm text-brand-muted">{t("waitsLeft", { count: waiting })}</p>
+            )}
           </div>
         </ConfirmDialog>
       ) : (
@@ -281,9 +310,16 @@ function CancelSeriesDialog({
             </>
           }
         >
-          <p className="text-sm text-brand-charcoal">
-            {t("cancelBody", { count })}
-          </p>
+          {count > 0 && (
+            <p className="text-sm text-brand-charcoal">
+              {t("cancelBody", { count })}
+            </p>
+          )}
+          {waiting > 0 && (
+            <p className={`text-sm text-brand-charcoal ${count > 0 ? "mt-2" : ""}`}>
+              {t("cancelWaiting", { count: waiting })}
+            </p>
+          )}
           {state.errorCode && (
             <p className="mt-3 text-xs text-error">{te(state.errorCode)}</p>
           )}

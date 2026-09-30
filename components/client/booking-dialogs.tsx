@@ -87,15 +87,25 @@ export function WaitlistModal({
   trainerName: trainerNameFull,
   slot,
   trainerId,
+  service = "grupo_reducido",
   entryId,
+  notice,
   onClose,
   onDone,
 }: {
   trainerName: string;
   slot: Date;
   trainerId: string;
+  /**
+   * El servei de la sessió. Per apuntar-se des de la llista d'hores només és
+   * grup; per donar-se de baixa des de «A la cua» pot ser qualsevol, també una
+   * espera d'una sèrie individual.
+   */
+  service?: ServiceType;
   /** Ja hi és a la cua? Llavors el que s'ofereix és la baixa. */
   entryId: string | null;
+  /** Per què aquesta espera no podrà entrar, si és el cas (avís ambre). */
+  notice?: React.ReactNode;
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -154,15 +164,24 @@ export function WaitlistModal({
       <h2 className="text-lg font-bold text-brand-dark">{title}</h2>
       <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">{when}</p>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
-        <Field label={t("service")} value={tl("grupo_reducido")} />
+        <Field label={t("service")} value={tl(service)} />
         <Field label={t("professional")} value={firstName(trainerNameFull)} />
       </dl>
 
       {entryId ? (
         <>
-          <p className="mt-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-charcoal">
-            {t("waitlist.onListBody")}
-          </p>
+          {notice ? (
+            <p
+              data-testid="wait-notice"
+              className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {notice}
+            </p>
+          ) : (
+            <p className="mt-4 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-charcoal">
+              {t("waitlist.onListBody")}
+            </p>
+          )}
           <form action={leave} className="mt-5">
             <input type="hidden" name="entryId" value={entryId} />
             {leaveState.errorCode && (
@@ -183,7 +202,7 @@ export function WaitlistModal({
           </p>
           <form action={join} className="mt-5">
             <input type="hidden" name="trainerId" value={trainerId} />
-            <input type="hidden" name="serviceType" value="grupo_reducido" />
+            <input type="hidden" name="serviceType" value={service} />
             <input type="hidden" name="scheduledAt" value={slot.toISOString()} />
             {joinState.errorCode && (
               <p className="mb-3 text-sm text-error">{te(joinState.errorCode)}</p>

@@ -545,7 +545,12 @@
         "nov.",
         "dic."
       ],
-      "shortDate": "{weekday} {day} {month}"
+      "shortDate": "{weekday} {day} {month}",
+      "waitingTitle": "En la cola",
+      "waiting": "En espera",
+      "fromSeries": "de la serie",
+      "waitTrainerChanged": "Ya no entrarás: el centro te ha cambiado de entrenador. Puedes darte de baja.",
+      "waitNoSessions": "No te quedan sesiones de {service}: si se libera la plaza, no podrás entrar."
     },
     "own": {
       "withYou": "Contigo están",
@@ -596,7 +601,11 @@
       "allReturned": "Las sesiones han vuelto a tu bono.",
       "close": "Cerrar",
       "keepIt": "Dejarlo estar",
-      "stoppedTrainerChanged": "Esta serie ya no se alargará: el centro te ha cambiado de entrenador. Las sesiones que ya tienes reservadas se mantienen."
+      "stoppedTrainerChanged": "Esta serie ya no se alargará: el centro te ha cambiado de entrenador. Las sesiones que ya tienes reservadas se mantienen.",
+      "waiting": "{count, plural, one {# en la cola} other {# en la cola}}",
+      "waitingBlocked": "Las sesiones en la cola de esta serie ya no entrarán: el centro te ha cambiado de entrenador.",
+      "cancelWaiting": "{count, plural, one {Te sacaremos de la cola de # sesión de esta serie.} other {Te sacaremos de la cola de las # sesiones de esta serie.}}",
+      "waitsLeft": "{count, plural, one {Ya no estás en la cola de # sesión.} other {Ya no estás en la cola de # sesiones.}}"
     },
     "errors": {
       "unauthorized": "No autorizado.",
