@@ -53,6 +53,53 @@ export function slotKeyOf(scheduledAt: string): {
   return { date, time: `${hhmm}:00` };
 }
 
+/**
+ * Marca com 'expired' les esperes d'una sessió que ja ha començat. Peresós i
+ * oportunista, com les proves i els vals: no cal cap cron, es fa abans de cada
+ * lectura de la cua.
+ *
+ * Fins ara 'expired' existia a l'enum (0049) i no l'escrivia ningú: una espera
+ * que no rebia mai plaça es quedava 'waiting' per sempre. Això mantenia viva
+ * (i amagada) la sèrie que la tenia, i deixava la porta oberta a promocionar a
+ * una hora passada. Aquesta segona porta la tanca `promoteFromWaitlist`,
+ * que mira el rellotge ella mateixa: la caducitat posa ordre, no protegeix.
+ *
+ * Mateixa frontera que la promoció: a l'hora en punt de la sessió ja no s'hi
+ * entra, i l'espera ja ha caducat.
+ */
+export async function sweepExpiredWaitlist(): Promise<void> {
+  const { date: today, time: now } = slotKeyOf(new Date().toISOString());
+  const past = (w: { desired_date: string; desired_time: string }) =>
+    w.desired_date < today || (w.desired_date === today && w.desired_time <= now);
+
+  if (USE_MOCK) {
+    const store = getStore();
+    let changed = false;
+    for (const w of store.waitlist_entries)
+      if (w.status === "waiting" && past(w)) {
+        w.status = "expired";
+        changed = true;
+      }
+    if (changed) saveStore(store);
+    return;
+  }
+
+  const admin = createAdminClient();
+  await Promise.all([
+    admin
+      .from("waitlist_entries")
+      .update({ status: "expired" as WaitlistStatus })
+      .eq("status", "waiting")
+      .lt("desired_date", today),
+    admin
+      .from("waitlist_entries")
+      .update({ status: "expired" as WaitlistStatus })
+      .eq("status", "waiting")
+      .eq("desired_date", today)
+      .lte("desired_time", now),
+  ]);
+}
+
 export type WaitlistEntryInput = {
   clientId: string;
   bonoId: string | null;
@@ -317,6 +364,14 @@ export async function promoteFromWaitlist(freed: {
   try {
     const { date, time } = slotKeyOf(freed.scheduledAt);
 
+    // La sessió ha de ser al FUTUR. L'equip pot cancel·lar una sessió passada
+    // que ningú va marcar (0091), i aquesta funció no ho mirava: qui era a la
+    // cua d'aquella hora hi entrava, amb una reserva a una hora que ja havia
+    // passat, la sessió descomptada del bo i el correu de «tens plaça».
+    // Reproduït en simulació.
+    if (new Date(freed.scheduledAt).getTime() <= Date.now())
+      return { promoted: false, reason: "La sessió ja ha començat." };
+
     // La franja ha de SEGUIR EXISTINT. Una plaça que s'allibera perquè el
     // professional ha tancat la franja —un bloqueig de vacances, una regla
     // esborrada— no és una plaça lliure: no hi ha ningú per fer la sessió. Fins
@@ -347,7 +402,7 @@ export async function promoteFromWaitlist(freed: {
     // més nou. `trainer_id` null = "m'és igual qui" i també hi entra.
     let q = admin
       .from("waitlist_entries")
-      .select("id, client_id, bono_id, service_type")
+      .select("id, client_id, bono_id, service_type, series_id")
       .eq("status", "waiting")
       .eq("desired_date", date)
       .eq("desired_time", time)
@@ -523,6 +578,20 @@ export async function promoteFromWaitlist(freed: {
         continue;
       }
 
+      // Una espera d'una sèrie dona una sessió DE LA SÈRIE. Les dues funcions
+      // de reclam no saben res de sèries i la reserva naixia solta: cancel·lar
+      // la sèrie no la tocava i la sessió es quedava gastada. Va després de
+      // guanyar la cursa, com tota la resta, i si fallés la reserva continua
+      // sent bona: només es queda fora de la sèrie, que és com estava fins ara.
+      if (c.series_id) {
+        const { error: tagErr } = await admin
+          .from("reservations")
+          .update({ series_id: c.series_id })
+          .eq("id", createdId);
+        if (tagErr)
+          console.error(`[llista d'espera] ${createdId} sense sèrie: ${tagErr.message}`);
+      }
+
       await notifyPromotion(c.client_id, freed, createdId);
       // El cinquè camí que gasta una sessió, i l'únic que fins ara no ho deia
       // a ningú. Va DESPRÉS de marcar l'entrada: si la cursa l'hagués guanyat
@@ -615,7 +684,7 @@ async function promoteMock(
       ends_at: sessionEndIso(freed.scheduledAt, SESSION_DURATION_MINUTES),
       service_type: c.service_type,
       status: "booked",
-      series_id: null,
+      series_id: c.series_id,
       is_complimentary: false,
       cancelled_by_center: false,
       created_at: new Date().toISOString(),
@@ -718,6 +787,7 @@ export async function listWaitlistForClient(
     seriesId: w.series_id,
   });
 
+  await sweepExpiredWaitlist();
   if (USE_MOCK)
     return getStore()
       .waitlist_entries.filter((w) => w.client_id === clientId)
@@ -769,6 +839,7 @@ export async function countWaitingForTrainer(input: {
   fromDay: string;
   toDay: string;
 }): Promise<{ at: string; count: number }[]> {
+  await sweepExpiredWaitlist();
   let rows: { desired_date: string; desired_time: string }[];
   if (USE_MOCK) {
     rows = getStore().waitlist_entries.filter(
@@ -814,6 +885,7 @@ export async function listWaitingForAdmin(input: {
 }): Promise<WaitingNames[]> {
   const viewer = await getViewer();
   if (!viewer || viewer.role !== "admin") return [];
+  await sweepExpiredWaitlist();
 
   type Row = { trainer_id: string | null; desired_date: string; desired_time: string; created_at: string; name: string };
   let rows: Row[];

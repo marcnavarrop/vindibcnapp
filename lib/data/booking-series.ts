@@ -7,7 +7,7 @@ import { isBonoExpired } from "@/lib/data/bonos";
 import { slotHasRoom, createClientReservation, cancelClientReservation } from "@/lib/data/reservations";
 import { isSessionCovered } from "@/lib/availability-coverage";
 import { fetchAllActiveHolds } from "@/lib/data/trial-bookings";
-import { addToWaitlist, slotKeyOf } from "@/lib/data/waitlist";
+import { addToWaitlist, slotKeyOf, sweepExpiredWaitlist } from "@/lib/data/waitlist";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import {
@@ -1141,6 +1141,9 @@ export function stopsForTrainerChange(
  */
 export async function listActiveSeries(clientId: string): Promise<SeriesSummary[]> {
   const nowISO = new Date().toISOString();
+  // Una espera d'una sessió que ja ha passat no pot rebre cap plaça: si no es
+  // caduca abans, la sèrie que la té no es tancaria mai.
+  await sweepExpiredWaitlist();
 
   if (USE_MOCK) {
     const store = getStore();
