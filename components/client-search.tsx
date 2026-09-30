@@ -150,15 +150,20 @@ export function ClientSearch({
             <ul
               id={`${id}-list`}
               aria-label="Clients"
+              aria-busy={loading}
               className={clsx("flex max-h-72 flex-col gap-1 overflow-y-auto", loading && "opacity-60")}
             >
               {list.map((c) => (
                 <li key={c.id}>
+                  {/* Mentre busca, la llista és la de la cerca ANTERIOR: no es pot
+                      triar. Abans només s'esvaïa i es podia clicar, i a «Nou
+                      pagament» això volia dir cobrar a una altra persona. */}
                   <button
                     type="button"
                     data-client-option={c.id}
+                    disabled={loading}
                     onClick={() => onSelect(c)}
-                    className={`flex min-h-11 w-full flex-col items-start rounded-lg border border-brand-border px-3 py-1.5 text-left text-sm hover:bg-brand-bg ${TAP_SURFACE}`}
+                    className={`flex min-h-11 w-full flex-col items-start rounded-lg border border-brand-border px-3 py-1.5 text-left text-sm hover:bg-brand-bg disabled:cursor-wait disabled:hover:bg-transparent ${TAP_SURFACE}`}
                   >
                     <span className="font-bold text-brand-dark">{c.name}</span>
                     <span className="text-xs text-brand-muted">{hint(c)}</span>
