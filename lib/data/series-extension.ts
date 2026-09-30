@@ -8,7 +8,7 @@ import {
   centerLocalToInstant,
 } from "@/lib/center-time";
 import { slotToHHMM } from "@/lib/availability-slots";
-import { nextOccurrence } from "@/lib/booking-series-core";
+import { nextOccurrence, waitCountedByReservation } from "@/lib/booking-series-core";
 import { canRepeatInSeries } from "@/lib/series-rules";
 import {
   applyOccurrences,
@@ -296,9 +296,14 @@ async function listSeriesToExtend(
           // Sí que compten per a `lastAt`, reserves i esperes: el patró
           // continua després d'elles.
           // Les esperes que ha tancat el centre tampoc (0091).
+          // Tampoc la complerta que ja compta la seva reserva: seria doble.
           placed:
             res.filter((r) => !r.cancelled_by_center).length +
-            waits.filter((w) => !w.cancelled_by_center).length,
+            waits.filter(
+              (w) =>
+                !w.cancelled_by_center &&
+                !waitCountedByReservation(w, new Set(res.map((r) => r.id))),
+            ).length,
           lastAt: lastAt ?? null,
         };
       });
@@ -328,16 +333,17 @@ async function listSeriesToExtend(
   const [{ data: res }, { data: waits }] = await Promise.all([
     admin
       .from("reservations")
-      .select("series_id, scheduled_at, cancelled_by_center")
+      .select("id, series_id, scheduled_at, cancelled_by_center")
       .in("series_id", ids),
     admin
       .from("waitlist_entries")
-      .select("series_id, cancelled_by_center, desired_date, desired_time")
+      .select("series_id, cancelled_by_center, desired_date, desired_time, status, fulfilled_reservation_id")
       .in("series_id", ids),
   ]);
 
   return series.map((s) => {
     const mine = (res ?? []).filter((r) => r.series_id === s.id);
+    const mineIds = new Set(mine.map((r) => r.id));
     const lastAt = lastPlaced(
       mine.map((r) => r.scheduled_at),
       (waits ?? []).filter((w) => w.series_id === s.id),
@@ -360,8 +366,12 @@ async function listSeriesToExtend(
       // Les reserves sí que marquen on va el patró.
       placed:
         mine.filter((r) => !r.cancelled_by_center).length +
-        (waits ?? []).filter((w) => w.series_id === s.id && !w.cancelled_by_center)
-          .length,
+        (waits ?? []).filter(
+          (w) =>
+            w.series_id === s.id &&
+            !w.cancelled_by_center &&
+            !waitCountedByReservation(w, mineIds),
+        ).length,
       lastAt: lastAt ?? null,
     };
   });

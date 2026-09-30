@@ -28,6 +28,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import {
   generateOccurrences,
   localDayString,
+  waitCountedByReservation,
   type ResolvedOccurrence,
 } from "@/lib/booking-series-core";
 import type { BookingFrequency, ServiceType } from "@/types/database";
@@ -1295,28 +1296,32 @@ async function canStillGrow(
   return sub !== null;
 }
 
-/** Ocurrències ja col·locades: reserves de qualsevol estat, més esperes. */
+/**
+ * Ocurrències ja col·locades: reserves de qualsevol estat, més esperes. Una
+ * espera complerta que ja compta la seva reserva de la sèrie no suma dos cops
+ * (`waitCountedByReservation`).
+ */
 async function countPlacedOccurrences(seriesId: string): Promise<number> {
+  let res: { id: string }[];
+  let waits: { status: string; fulfilled_reservation_id: string | null }[];
   if (USE_MOCK) {
     const store = getStore();
-    return (
-      store.reservations.filter((r) => r.series_id === seriesId).length +
-      store.waitlist_entries.filter((w) => w.series_id === seriesId).length
-    );
+    res = store.reservations.filter((r) => r.series_id === seriesId);
+    waits = store.waitlist_entries.filter((w) => w.series_id === seriesId);
+  } else {
+    const admin = createAdminClient();
+    const [r, w] = await Promise.all([
+      admin.from("reservations").select("id").eq("series_id", seriesId),
+      admin
+        .from("waitlist_entries")
+        .select("status, fulfilled_reservation_id")
+        .eq("series_id", seriesId),
+    ]);
+    res = r.data ?? [];
+    waits = w.data ?? [];
   }
-
-  const admin = createAdminClient();
-  const [res, waits] = await Promise.all([
-    admin
-      .from("reservations")
-      .select("id", { count: "exact", head: true })
-      .eq("series_id", seriesId),
-    admin
-      .from("waitlist_entries")
-      .select("id", { count: "exact", head: true })
-      .eq("series_id", seriesId),
-  ]);
-  return (res.count ?? 0) + (waits.count ?? 0);
+  const ids = new Set(res.map((r) => r.id));
+  return res.length + waits.filter((w) => !waitCountedByReservation(w, ids)).length;
 }
 
 export { localDayString };

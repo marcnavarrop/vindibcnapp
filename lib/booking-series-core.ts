@@ -112,3 +112,23 @@ export function summarize(occurrences: ResolvedOccurrence[]) {
     unavailable: occurrences.filter((o) => o.status === "sense_places").length,
   };
 }
+
+/**
+ * ¿Aquesta espera ja la compta la seva reserva?
+ *
+ * Una espera de sèrie que rep plaça deixa una reserva AMB el `series_id` de la
+ * sèrie (des que la promoció l'hereta). Si es comptessin totes dues, cada
+ * sessió que ha entrat des de la cua valdria per dues ocurrències i una sèrie
+ * de deu es quedaria curta. Es mira l'id exacte i no només l'estat: una espera
+ * complerta d'abans, amb la reserva fora de la sèrie, encara ha de comptar.
+ */
+export function waitCountedByReservation(
+  w: { status: string; fulfilled_reservation_id: string | null },
+  seriesReservationIds: Set<string>,
+): boolean {
+  return (
+    w.status === "fulfilled" &&
+    !!w.fulfilled_reservation_id &&
+    seriesReservationIds.has(w.fulfilled_reservation_id)
+  );
+}

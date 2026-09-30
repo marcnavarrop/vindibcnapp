@@ -7,6 +7,8 @@
  *     cancel·lar-ne una de passada, i això cridava la promoció).
  *   · C — La reserva que surt d'una espera de SÈRIE és de la sèrie: cancel·lar
  *     la sèrie la cancel·la i torna la sessió al bo.
+ *   · La sessió que entra des de la cua no compta DOS cops per al total de la
+ *     sèrie (la reserva i l'espera complerta): l'allargament no s'atura abans.
  *   · Les esperes d'una sessió passada caduquen ('expired') i deixen tancar la
  *     sèrie que només tenia aquestes.
  *
@@ -31,6 +33,7 @@ const { promoteFromWaitlist, listWaitlistForClient } = await import("../lib/data
 const { resolveSeries, commitSeries, listActiveSeries, cancelSeries } = await import(
   "../lib/data/booking-series"
 );
+const { extendSeriesForSubscription } = await import("../lib/data/series-extension");
 const { centerLocalToInstant, centerDateStr, centerWeekday, addDaysStr, centerToday } = await import(
   "../lib/center-time"
 );
@@ -154,6 +157,31 @@ try {
     check(
       !getStore().reservations.some((x) => x.client_id === PERE.client && x.scheduled_at < new Date().toISOString()),
       "no es crea cap reserva al passat",
+    );
+  }
+
+  console.log("\nUna sessió de la cua compta una sola vegada");
+  {
+    // Sèrie de 4 que s'allarga sola: 3 setmanes a la cua i la primera entra.
+    const s3 = await serieALaCua("14:00");
+    const s = getStore();
+    const row = s.booking_series.find((x) => x.id === s3)!;
+    row.auto_extend = true;
+    row.occurrence_count = 4;
+    saveStore(s);
+    const m = getStore().reservations.find(
+      (r) => r.client_id === MARTA.client && r.scheduled_at === at("14:00"),
+    )!;
+    await cancelClientReservation(MARTA.profile, m.id);
+    check(
+      getStore().reservations.some((r) => r.series_id === s3 && r.client_id === PERE.client && r.status === "booked"),
+      "(preparació) la primera setmana entra des de la cua, dins de la sèrie",
+    );
+    const out = await extendSeriesForSubscription({ clientId: PERE.client, serviceType: "ep_individual" } as never);
+    const o = out.find((x) => x.seriesId === s3);
+    check(
+      o?.created === 1 && !o.skipped,
+      `l'allargament veu 3 de 4 i n'afegeix 1 (${o?.skipped ?? `${o?.created} creades`})`,
     );
   }
 
