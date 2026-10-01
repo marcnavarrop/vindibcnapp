@@ -194,6 +194,7 @@ export async function joinWaitlist(input: {
       serviceType: input.serviceType,
       trainerId: input.trainerId,
       assignedTrainerId: client.assigned_trainer_id ?? null,
+      clientId: client.id,
     });
 
     const bono = store.bonos.find(
@@ -262,6 +263,7 @@ export async function joinWaitlist(input: {
     serviceType: input.serviceType,
     trainerId: input.trainerId,
     assignedTrainerId: client.assigned_trainer_id ?? null,
+    clientId: client.id,
   });
 
   const { data: bonos } = await admin
@@ -465,6 +467,7 @@ export async function promoteFromWaitlist(freed: {
           serviceType: c.service_type,
           trainerId,
           assignedTrainerId: assignedOf.get(c.client_id) ?? null,
+          clientId: c.client_id,
         }) !== "ok"
       )
         continue;
@@ -649,6 +652,7 @@ async function promoteMock(
         serviceType: c.service_type,
         trainerId: freed.trainerId,
         assignedTrainerId: assigned,
+        clientId: c.client_id,
       }) !== "ok"
     )
       continue;

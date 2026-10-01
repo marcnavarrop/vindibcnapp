@@ -634,7 +634,8 @@
       "failed": "No se ha podido completar la operación. Inténtalo de nuevo.",
       "tooLate": "Ya no se puede cancelar esta reserva (hay que hacerlo con al menos {hours} h de antelación). Contacta con el centro si tienes una urgencia.",
       "notYourTrainer": "Las sesiones individuales y en pareja solo puedes reservarlas con tu entrenador.",
-      "noAssignedTrainer": "Aún no tienes entrenador asignado. Habla con el centro para que te asignen uno y poder reservar sesiones individuales o en pareja."
+      "noAssignedTrainer": "Aún no tienes entrenador asignado. Habla con el centro para que te asignen uno y poder reservar sesiones individuales o en pareja.",
+      "trainerUnavailable": "Este profesional no tiene horas disponibles para ti."
     },
     "days": [
       "Lu",

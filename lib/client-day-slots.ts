@@ -65,6 +65,8 @@ export type DaySlotsInput = {
   trainerIds: string[];
   reservations: SlotReservation[];
   assignedTrainerId: string | null;
+  /** La fitxa del client: demo amb demo, real amb real (`lib/demo-accounts.ts`). */
+  clientId?: string | null;
   /** Instant de referència, en mil·lisegons. Arriba del servidor. */
   nowMs: number;
   /** Antelació mínima per reservar (configuració del centre). */
@@ -170,7 +172,12 @@ export function hoursFor(p: Prepared, day: string, service: ServiceType): HourRo
   const earliest = input.nowMs + input.minBookingHours * 3_600_000;
   const trainers = input.trainerIds.filter(
     (t) =>
-      clientBookingScope({ serviceType: service, trainerId: t, assignedTrainerId: input.assignedTrainerId }) === "ok",
+      clientBookingScope({
+        serviceType: service,
+        trainerId: t,
+        assignedTrainerId: input.assignedTrainerId,
+        clientId: input.clientId ?? null,
+      }) === "ok",
   );
   const rows: HourRow[] = [];
 

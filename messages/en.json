@@ -634,7 +634,8 @@
       "failed": "We couldn't complete that. Please try again.",
       "tooLate": "This booking can no longer be cancelled (it needs at least {hours} h notice). Contact the centre if it's urgent.",
       "notYourTrainer": "You can only book 1-to-1 and pairs sessions with your trainer.",
-      "noAssignedTrainer": "You don't have an assigned trainer yet. Talk to the centre so they can assign you one and you can book 1-to-1 or pairs sessions."
+      "noAssignedTrainer": "You don't have an assigned trainer yet. Talk to the centre so they can assign you one and you can book 1-to-1 or pairs sessions.",
+      "trainerUnavailable": "This professional has no times available for you."
     },
     "days": [
       "Mon",

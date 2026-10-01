@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { UserRole } from "@/types/database";
+import { DEMO_CLIENT_PROFILE_ID, DEMO_TRAINER_IDS } from "@/lib/demo-accounts";
 
 /**
  * Mode PRE: saltar entre els comptes de demostració sense tornar a entrar.
@@ -67,7 +68,7 @@ export type DemoAccount = {
 export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
   {
     slug: "entrenador",
-    id: "5119e112-74af-4c85-862b-829f6d726ea2",
+    id: DEMO_TRAINER_IDS[0],
     email: "demo.entrenador@vindibcn.com",
     label: "Entrenador Demo",
     role: "trainer",
@@ -75,7 +76,7 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
   },
   {
     slug: "fisio",
-    id: "1c36928b-0668-4377-a5d8-c7befb2d78bc",
+    id: DEMO_TRAINER_IDS[1],
     email: "demo.fisio@vindibcn.com",
     label: "Fisio Demo",
     role: "trainer",
@@ -83,7 +84,7 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
   },
   {
     slug: "client",
-    id: "d3b42dcb-7c11-4431-abc0-723b21add106",
+    id: DEMO_CLIENT_PROFILE_ID,
     email: "demo.client@vindibcn.com",
     label: "Client Demo",
     role: "client",

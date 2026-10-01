@@ -164,6 +164,7 @@ async function extendOne(s: SeriesToExtend): Promise<ExtensionOutcome> {
     stopsForTrainerChange(
       { auto_extend: true, service_type: s.serviceType, base_trainer_id: s.baseTrainerId },
       s.assignedTrainerId,
+      s.clientId,
     )
   )
     return { ...empty, skipped: "trainerChanged" };

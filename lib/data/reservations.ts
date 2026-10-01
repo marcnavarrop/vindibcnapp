@@ -47,6 +47,7 @@ import type {
 } from "@/types/database";
 import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 import { assertClientBookingScope } from "@/lib/booking-scope";
+import { demoCompatible, isDemoClient } from "@/lib/demo-accounts";
 
 /**
  * Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio.
@@ -529,6 +530,20 @@ export async function listUpcomingReservations(input: {
  * El tipus obliga a dir-ho, en comptes de deixar-ho a un `if` que algú pugui
  * oblidar.
  */
+/**
+ * Comptes demo i reals no es barregen tampoc quan reserva l'equip (admin o
+ * professional): el Client Demo només amb professionals demo, i un client real
+ * mai amb un de demo (`lib/demo-accounts.ts`).
+ */
+function assertDemoSeparated(clientId: string, trainerId: string | null): void {
+  if (!demoCompatible(clientId, trainerId))
+    throw new Error(
+      isDemoClient(clientId)
+        ? "El Client Demo només pot reservar amb professionals demo."
+        : "Els professionals demo no tenen agenda per a clients reals.",
+    );
+}
+
 export type ReservationInput = {
   trainerId: string | null;
   scheduledAt: string; // ISO
@@ -794,6 +809,7 @@ export async function createReservation(
         `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
       );
     const clientId = bono ? bono.client_id : input.clientId!;
+    assertDemoSeparated(clientId, input.trainerId);
     const serviceType = bono ? bono.service_type : input.serviceType!;
     assertRepeatable(serviceType, weeks);
     // El permís, com al camí real: fins ara la simulació no el mirava, i un
@@ -897,6 +913,7 @@ export async function createReservation(
   }
 
   const clientId = bono ? bono.client_id : input.clientId!;
+  assertDemoSeparated(clientId, input.trainerId);
   const serviceType = bono ? bono.service_type : input.serviceType!;
   assertRepeatable(serviceType, weeks);
 
@@ -1444,6 +1461,7 @@ export async function createClientReservation(
       serviceType,
       trainerId,
       assignedTrainerId: client.assigned_trainer_id ?? null,
+      clientId: client.id,
     });
     const bono = store.bonos
       .filter(
@@ -1541,6 +1559,7 @@ export async function createClientReservation(
     serviceType,
     trainerId,
     assignedTrainerId: client.assigned_trainer_id ?? null,
+    clientId: client.id,
   });
 
   // 1b. El client no pot tenir dues reserves confirmades a la mateixa hora.

@@ -6,6 +6,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { demoCompatible } from "@/lib/demo-accounts";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { listActiveTrialHolds } from "@/lib/data/trial-bookings";
 import { isBonoExpired } from "@/lib/data/bonos";
@@ -232,7 +233,7 @@ export async function getClientCenterData(
           mateName: mateNameFor(r.service_type, name),
         };
       });
-    return {
+    return demoScoped({
       clientId: client.id,
       assignedTrainerId: client.assigned_trainer_id ?? null,
       bonoTypes,
@@ -241,7 +242,7 @@ export async function getClientCenterData(
       rules,
       blocks: await listAllBlocksLite(fromISO),
       reservations: [...reservations, ...holdReservations],
-    };
+    });
   }
 
   const admin = createAdminClient();
@@ -321,7 +322,7 @@ export async function getClientCenterData(
     mateName: mateNameFor(r.service_type, r.client?.profile?.full_name),
   }));
 
-  return {
+  return demoScoped({
     clientId: client.id,
     assignedTrainerId: client.assigned_trainer_id ?? null,
     bonoTypes,
@@ -330,5 +331,23 @@ export async function getClientCenterData(
     rules,
     blocks,
     reservations: [...reservations, ...holdReservations],
+  });
+}
+
+/**
+ * Comptes demo i reals, separats (`lib/demo-accounts.ts`): un client real no
+ * veu els professionals demo (ni les seves regles, bloquejos o sessions), i el
+ * Client Demo només veu els demo. Les reserves PRÒPIES es queden sempre: són
+ * el seu historial. El servidor ho torna a comprovar en reservar
+ * (`clientBookingScope`).
+ */
+function demoScoped(d: ClientCenterData): ClientCenterData {
+  const ok = (trainerId: string | null) => demoCompatible(d.clientId, trainerId);
+  return {
+    ...d,
+    trainers: d.trainers.filter((t) => ok(t.id)),
+    rules: d.rules.filter((r) => ok(r.trainerId)),
+    blocks: d.blocks.filter((b) => ok(b.trainerId)),
+    reservations: d.reservations.filter((r) => r.isOwn || ok(r.trainerId)),
   };
 }

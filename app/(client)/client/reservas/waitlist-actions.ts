@@ -20,7 +20,7 @@ import type { ServiceType } from "@/types/database";
  * quin idioma llegeix el client. El text el posa la pantalla.
  */
 export type ReservaErrorCode =
-  | "unauthorized" | "noTrainer" | "badService" | "noDate" | "noReservation" | "noSession" | "noEntry" | "noClient" | "noSeries" | "noLimit" | "nothingToConfirm" | "tooLate" | "notYourTrainer" | "noAssignedTrainer" | "failed";
+  | "unauthorized" | "noTrainer" | "badService" | "noDate" | "noReservation" | "noSession" | "noEntry" | "noClient" | "noSeries" | "noLimit" | "nothingToConfirm" | "tooLate" | "notYourTrainer" | "noAssignedTrainer" | "trainerUnavailable" | "failed";
 
 export type WaitlistState = { errorCode?: ReservaErrorCode; ok?: boolean };
 

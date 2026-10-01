@@ -464,6 +464,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "Un cop creat, el nom es veu però no es toca. El que sí que pots canviar sempre és la foto i l'especialitat.",
         },
+        {
+          t: "note",
+          text: "L'Entrenador Demo i el Fisio Demo són comptes de proves: cap client real els veu ni hi pot reservar (tampoc grup ni fisioteràpia), i /prova no n'ofereix cap hora. El Client Demo, al revés, només reserva amb ells. Tampoc es poden barrejar des de «+ Nova reserva».",
+        },
         { t: "h", text: "Canviar-li el correu d'accés" },
         {
           t: "p",

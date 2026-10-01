@@ -37,7 +37,8 @@
     "community:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/community-check.mts",
     "paid:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/paid-check.mts",
     "contact:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/contact-check.mts",
-    "emailchange:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailchange-check.mts"
+    "emailchange:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailchange-check.mts",
+    "demo:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/demo-check.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

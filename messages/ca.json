@@ -634,7 +634,8 @@
       "failed": "No s'ha pogut completar l'operació. Torna-ho a provar.",
       "tooLate": "Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys {hours} h d'antelació). Contacta amb el centre si tens una urgència.",
       "notYourTrainer": "Les sessions individuals i en parella només les pots reservar amb el teu entrenador.",
-      "noAssignedTrainer": "Encara no tens entrenador assignat. Parla amb el centre perquè te n'assignin un per poder reservar sessions individuals o en parella."
+      "noAssignedTrainer": "Encara no tens entrenador assignat. Parla amb el centre perquè te n'assignin un per poder reservar sessions individuals o en parella.",
+      "trainerUnavailable": "Aquest professional no té hores disponibles per a tu."
     },
     "days": [
       "Dl",

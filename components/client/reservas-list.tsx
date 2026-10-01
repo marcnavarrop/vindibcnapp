@@ -427,6 +427,7 @@ export function ReservasList({
         trainerIds: data.trainers.map((x) => x.id),
         reservations: data.reservations,
         assignedTrainerId: data.assignedTrainerId,
+        clientId: data.clientId,
         nowMs,
         minBookingHours,
         openingHour,

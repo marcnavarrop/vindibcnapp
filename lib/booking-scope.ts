@@ -33,6 +33,7 @@
  * servidor per rebutjar-ho encara que algú enviï el formulari a mà.
  */
 import type { ServiceType } from "@/types/database";
+import { demoCompatible } from "@/lib/demo-accounts";
 
 /** Els serveis que només es poden fer amb l'entrenador assignat. */
 export const ASSIGNED_ONLY_SERVICES: readonly ServiceType[] = [
@@ -49,14 +50,22 @@ export function requiresAssignedTrainer(serviceType: ServiceType): boolean {
  *   · `noAssignedTrainer`: el client no té entrenador i el servei en demana.
  *   · `notAssignedTrainer`: el professional no és el seu entrenador.
  */
-export type BookingScope = "ok" | "noAssignedTrainer" | "notAssignedTrainer";
+export type BookingScope = "ok" | "noAssignedTrainer" | "notAssignedTrainer" | "demoMismatch";
 
 export function clientBookingScope(input: {
   serviceType: ServiceType;
   /** `null` = «m'és igual qui» (només passa a la cua). */
   trainerId: string | null;
   assignedTrainerId: string | null;
+  /**
+   * La fitxa del client (`clients.id`): els comptes demo i els reals no es
+   * barregen (`lib/demo-accounts.ts`). Obligatori a posta: el compilador
+   * assenyala qualsevol camí que se n'oblidi. `null` = no se sap (pantalla).
+   */
+  clientId: string | null;
 }): BookingScope {
+  // Demo amb demo, real amb real, per a TOTS els serveis.
+  if (!demoCompatible(input.clientId, input.trainerId)) return "demoMismatch";
   if (!requiresAssignedTrainer(input.serviceType)) return "ok";
   if (!input.assignedTrainerId) return "noAssignedTrainer";
   // A la cua, «m'és igual qui» en un servei d'assignat vol dir el seu
@@ -75,7 +84,9 @@ export class BookingScopeError extends Error {
     super(
       scope === "noAssignedTrainer"
         ? "Encara no tens entrenador assignat: no pots reservar aquest servei."
-        : "Aquest servei només el pots reservar amb el teu entrenador.",
+        : scope === "demoMismatch"
+          ? "Aquest professional no està disponible."
+          : "Aquest servei només el pots reservar amb el teu entrenador.",
     );
     this.name = "BookingScopeError";
   }
@@ -96,13 +107,14 @@ export function assertClientBookingScope(
  */
 export function scopeErrorCode(
   e: unknown,
-): "notYourTrainer" | "noAssignedTrainer" | null {
+): "notYourTrainer" | "noAssignedTrainer" | "trainerUnavailable" | null {
   const scope =
     e instanceof BookingScopeError
       ? e.scope
-      : e === "noAssignedTrainer" || e === "notAssignedTrainer"
+      : e === "noAssignedTrainer" || e === "notAssignedTrainer" || e === "demoMismatch"
         ? e
         : null;
   if (!scope) return null;
+  if (scope === "demoMismatch") return "trainerUnavailable";
   return scope === "noAssignedTrainer" ? "noAssignedTrainer" : "notYourTrainer";
 }

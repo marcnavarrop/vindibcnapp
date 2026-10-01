@@ -5,6 +5,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { listAllTrainerRulesLite } from "@/lib/data/availability";
+import { publicTrainer } from "@/lib/demo-accounts";
 import { listAllBlocksLite } from "@/lib/data/availability-blocks";
 import {
   datetimeLocalToInstant,
@@ -262,9 +263,11 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
     // Només el que pot tapar una hora oferible: el que encara no ha acabat.
     listAllBlocksLite(new Date()),
   ]);
-  // Només regles que ofereixen com a mínim el servei de prova (ep_individual).
+  // Només regles que ofereixen com a mínim el servei de prova (ep_individual),
+  // i mai d'un professional demo (`lib/demo-accounts.ts`): /prova és per a
+  // gent de fora.
   const rules = allRules
-    .filter((r) => r.serviceTypes.includes(TRIAL_SERVICE))
+    .filter((r) => r.serviceTypes.includes(TRIAL_SERVICE) && publicTrainer(r.trainerId))
     .map((r) => ({
       ...r,
       serviceTypes: r.serviceTypes.filter((s) =>
@@ -450,8 +453,10 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
   const phone = input.phone.trim();
   const scheduledAt = when.toISOString();
   const expiresAt = computeTrialExpiry(nowMs, when.getTime());
-  const rules = (await listAllTrainerRulesLite()).filter((r) =>
-    r.serviceTypes.includes(TRIAL_SERVICE),
+  // El mateix filtre que la pantalla: una prova MAI cau a un professional demo,
+  // encara que algú enviï l'hora d'una franja seva a mà.
+  const rules = (await listAllTrainerRulesLite()).filter(
+    (r) => r.serviceTypes.includes(TRIAL_SERVICE) && publicTrainer(r.trainerId),
   );
   const allBlocks = await listAllBlocksLite(new Date());
 

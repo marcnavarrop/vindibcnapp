@@ -415,6 +415,7 @@ function findAlternative(
         serviceType: req.serviceType,
         trainerId: t,
         assignedTrainerId: ctx.assignedTrainerId,
+        clientId: ctx.clientId,
       }) !== "ok"
     )
       continue;
@@ -507,11 +508,13 @@ function sumSessions(bons: { remaining_sessions: number }[]): number {
 function scopeCheck(
   req: SeriesRequest,
   assignedTrainerId: string | null,
+  clientId: string,
 ): { error: string; scope: Exclude<BookingScope, "ok"> } | null {
   const scope = clientBookingScope({
     serviceType: req.serviceType,
     trainerId: req.trainerId,
     assignedTrainerId,
+    clientId,
   });
   return scope === "ok"
     ? null
@@ -582,7 +585,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     const client = store.clients.find((c) => c.profile_id === req.profileId);
     if (!client) return { ...empty, error: "Client no trobat." };
     const assignedTrainerId = client.assigned_trainer_id ?? null;
-    const scoped = scopeCheck(req, assignedTrainerId);
+    const scoped = scopeCheck(req, assignedTrainerId, client.id);
     if (scoped) return { ...empty, ...scoped };
     // TOTS els bons utilitzables, en ordre de consum. La primera reserva
     // gastarà del primer; quan s'acabi, la següent seguirà pel de darrere.
@@ -668,7 +671,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     .maybeSingle();
   if (!client) return { ...empty, error: "Client no trobat." };
   const assignedTrainerId = client.assigned_trainer_id ?? null;
-  const scoped = scopeCheck(req, assignedTrainerId);
+  const scoped = scopeCheck(req, assignedTrainerId, client.id);
   if (scoped) return { ...empty, ...scoped };
 
   const [{ data: bonos }, { data: res }, holds, { data: pros }, rules, blocks] =
@@ -871,6 +874,7 @@ export async function applyOccurrences(
           serviceType: req.serviceType,
           trainerId: o.requestedTrainerId,
           assignedTrainerId: ctx.assignedTrainerId,
+          clientId: ctx.clientId,
         }) !== "ok"
       ) {
         failed++;
@@ -1137,6 +1141,7 @@ export type SeriesSummary = {
 export function stopsForTrainerChange(
   s: { auto_extend?: boolean | null; service_type: ServiceType; base_trainer_id: string | null },
   assignedTrainerId: string | null,
+  clientId: string | null,
 ): boolean {
   if (!s.auto_extend || !s.base_trainer_id) return false;
   return (
@@ -1144,6 +1149,7 @@ export function stopsForTrainerChange(
       serviceType: s.service_type,
       trainerId: s.base_trainer_id,
       assignedTrainerId,
+      clientId,
     }) !== "ok"
   );
 }
@@ -1157,6 +1163,7 @@ export function stopsForTrainerChange(
 function waitsBlocked(
   s: { service_type: ServiceType; base_trainer_id: string | null },
   assignedTrainerId: string | null,
+  clientId: string | null,
 ): boolean {
   if (!s.base_trainer_id) return false;
   return (
@@ -1164,6 +1171,7 @@ function waitsBlocked(
       serviceType: s.service_type,
       trainerId: s.base_trainer_id,
       assignedTrainerId,
+      clientId,
     }) !== "ok"
   );
 }
@@ -1219,7 +1227,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
       const waiting = store.waitlist_entries.filter(
         (w) => w.series_id === s.id && w.status === "waiting",
       ).length;
-      const stopped = stopsForTrainerChange(s, assigned);
+      const stopped = stopsForTrainerChange(s, assigned, clientId);
       if (future.length === 0 && waiting === 0) {
         if (stopped || !(await canStillGrow(s, clientId))) {
           s.status = "completed";
@@ -1235,7 +1243,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
         nextAt: future[0]?.scheduled_at ?? null,
         stoppedTrainerChanged: stopped,
         waiting,
-        waitingBlocked: waiting > 0 && waitsBlocked(s, assigned),
+        waitingBlocked: waiting > 0 && waitsBlocked(s, assigned, clientId),
       });
     }
 
@@ -1283,7 +1291,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
   for (const s of series) {
     const future = (res ?? []).filter((r) => r.series_id === s.id);
     const waiting = (waits ?? []).filter((w) => w.series_id === s.id).length;
-    const stopped = stopsForTrainerChange(s, assigned);
+    const stopped = stopsForTrainerChange(s, assigned, clientId);
     // Una sèrie que només té esperes també surt: fins ara s'amagava (no tenia
     // cap reserva futura) i el client no la podia ni veure ni cancel·lar.
     if (future.length === 0 && waiting === 0) {
@@ -1298,7 +1306,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
       nextAt: future[0]?.scheduled_at ?? null,
       stoppedTrainerChanged: stopped,
       waiting,
-      waitingBlocked: waiting > 0 && waitsBlocked(s, assigned),
+      waitingBlocked: waiting > 0 && waitsBlocked(s, assigned, clientId),
     });
   }
 
