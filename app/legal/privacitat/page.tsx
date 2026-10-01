@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { H, RICH, Prevalence } from "@/components/legal/legal-text";
+import { getCenterContact } from "@/lib/data/center-settings";
+import { H, RICH, legalValues, Prevalence } from "@/components/legal/legal-text";
 import { LegalDraftBanner } from "@/components/legal-draft-banner";
 
 /**
@@ -22,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PrivacitatPage() {
   const t = await getTranslations("legalPages.privacitat");
   const g = await getTranslations("legalPages");
+  const v = legalValues(await getCenterContact());
 
   return (
     <>
@@ -30,7 +32,7 @@ export default async function PrivacitatPage() {
       <p className="text-xs text-brand-muted">{g("draftVersion")}</p>
 
       <H>{t("h1")}</H>
-      <p>{t("p1")}</p>
+      <p>{t.rich("p1", v)}</p>
 
       <H>{t("h2")}</H>
       <p>{t("p2")}</p>
@@ -57,7 +59,7 @@ export default async function PrivacitatPage() {
       <p>{t.rich("p7", RICH)}</p>
 
       <H>{t("h8")}</H>
-      <p>{t("p8")}</p>
+      <p>{t.rich("p8", v)}</p>
 
       <Prevalence text={g("prevalence")} />
     </>

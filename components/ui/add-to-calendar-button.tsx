@@ -1,6 +1,7 @@
 "use client";
 
 import { TAP } from "@/lib/utils";
+import { useCenterContact } from "@/components/center-contact-line";
 import { useState, useRef, useEffect } from "react";
 import {
   buildCalendarEvent,
@@ -43,6 +44,8 @@ export function AddToCalendarButton({
   text,
 }: Props) {
   const tall = touch ? "min-h-11 " : "";
+  // L'adreça del centre, de Configuració (el context el posa l'AppShell).
+  const address = useCenterContact()?.address ?? null;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -58,7 +61,7 @@ export function AddToCalendarButton({
   }, [open]);
 
   function downloadIcs() {
-    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt, text });
+    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt, text, address });
     const blob = new Blob([buildIcsContent(event)], {
       type: "text/calendar;charset=utf-8",
     });
@@ -72,7 +75,7 @@ export function AddToCalendarButton({
   }
 
   function openGoogle() {
-    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt, text });
+    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt, text, address });
     window.open(buildGoogleCalendarUrl(event), "_blank", "noopener");
     setOpen(false);
   }

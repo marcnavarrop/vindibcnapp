@@ -20,19 +20,24 @@
  */
 
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
+import { contactText, type PublicContact } from "@/lib/center-contact";
 
 /**
- * Com contactar amb el centre.
- *
- * PLACEHOLDER A SUBSTITUIR. Mateix patró que les pàgines legals
- * ([NOM_RESPONSABLE], [NIF]…), però en una sola constant i no repartit pel text:
- * el dia que hi hagi el correu i el telèfon de debò, es canvia AQUÍ i prou.
+ * Com contactar amb el centre: el que l'admin ha posat a Configuració → Centre
+ * (0100), via `ManualSettings.contact`.
  *
  * L'app no té cap canal de contacte propi per al client —el botó de suport és
  * només per a l'equip—, així que aquesta és l'única sortida que el manual li pot
- * donar quan alguna cosa no es pot resoldre sol.
+ * donar quan alguna cosa no es pot resoldre sol. Sense telèfon ni correu, les
+ * frases es queden sense el contacte («avisa el centre.»): mai un text
+ * provisional ni uns parèntesis buits. El visor converteix el telèfon i el
+ * correu en enllaços.
  */
-export const CONTACTE_CENTRE = "[CONTACTE_CENTRE]";
+const ALSO_WHATSAPP: Record<Locale, string> = {
+  ca: "també per WhatsApp",
+  es: "también por WhatsApp",
+  en: "also on WhatsApp",
+};
 
 /** Un tros de manual. Prou tipus per dir el que un manual necessita dir. */
 export type Block =
@@ -85,6 +90,8 @@ export type ManualSettings = {
   referralDiscountPercent: number;
   referralRewardReferee: boolean;
   modules: { comunitat: boolean; documents: boolean; sessionsProva: boolean };
+  /** El contacte del centre (Configuració → Centre). Buit: les frases van sense. */
+  contact: PublicContact;
   /** Es pot pagar amb targeta ara mateix (Stripe configurat i fora de simulació). */
   cardPayments: boolean;
   documentsMaxMb: number;
@@ -127,6 +134,11 @@ export function buildClientManual(
   locale: Locale = DEFAULT_LOCALE,
 ): Chapter[] {
   const T = (t: Tr) => t[locale];
+  // El contacte del centre dins d'una frase, en l'idioma de la frase: « (…)» o
+  // «: …» si n'hi ha, i res si no (la frase s'aguanta igual).
+  const ct = (l: Locale) => contactText(s.contact, ALSO_WHATSAPP[l]);
+  const paren = (l: Locale) => (ct(l) ? ` (${ct(l)})` : "");
+  const colon = (l: Locale) => (ct(l) ? `: ${ct(l)}` : "");
 
   const chapters: (Chapter & { when?: boolean })[] = [
     // ─────────────────────────── 1 ───────────────────────────
@@ -650,9 +662,9 @@ export function buildClientManual(
               {
                 t: "warn",
                 text: T({
-                  ca: `Si passa una hora i el bo segueix sense sortir tot i que el banc t'ha cobrat, avisa el centre (${CONTACTE_CENTRE}). El que no s'ha de fer és tornar a pagar.`,
-                  es: `Si pasa una hora y el bono sigue sin salir aunque el banco te haya cobrado, avisa al centro (${CONTACTE_CENTRE}). Lo que no hay que hacer es volver a pagar.`,
-                  en: `If an hour goes by and the pass still hasn't appeared even though the bank has charged you, let the centre know (${CONTACTE_CENTRE}). What you shouldn't do is pay again.`,
+                  ca: `Si passa una hora i el bo segueix sense sortir tot i que el banc t'ha cobrat, avisa el centre${paren("ca")}. El que no s'ha de fer és tornar a pagar.`,
+                  es: `Si pasa una hora y el bono sigue sin salir aunque el banco te haya cobrado, avisa al centro${paren("es")}. Lo que no hay que hacer es volver a pagar.`,
+                  en: `If an hour goes by and the pass still hasn't appeared even though the bank has charged you, let the centre know${paren("en")}. What you shouldn't do is pay again.`,
                 }),
               },
               {
@@ -978,9 +990,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: `Si el codi no s'accepta, el missatge et diu per què: que no existeix, que ja s'ha bescanviat, que ha caducat, que s'ha anul·lat o que el centre encara no n'ha confirmat el cobrament. En els tres últims casos no has fet res malament i qui ho pot resoldre és el centre (${CONTACTE_CENTRE}).`,
-            es: `Si el código no se acepta, el mensaje te dice por qué: que no existe, que ya se ha canjeado, que ha caducado, que se ha anulado o que el centro todavía no ha confirmado su cobro. En los tres últimos casos no has hecho nada mal y quien lo puede resolver es el centro (${CONTACTE_CENTRE}).`,
-            en: `If the code isn't accepted, the message tells you why: it doesn't exist, it's already been redeemed, it has expired, it was cancelled, or the centre hasn't confirmed payment for it yet. In the last three cases you've done nothing wrong and the centre is who can sort it out (${CONTACTE_CENTRE}).`,
+            ca: `Si el codi no s'accepta, el missatge et diu per què: que no existeix, que ja s'ha bescanviat, que ha caducat, que s'ha anul·lat o que el centre encara no n'ha confirmat el cobrament. En els tres últims casos no has fet res malament i qui ho pot resoldre és el centre${paren("ca")}.`,
+            es: `Si el código no se acepta, el mensaje te dice por qué: que no existe, que ya se ha canjeado, que ha caducado, que se ha anulado o que el centro todavía no ha confirmado su cobro. En los tres últimos casos no has hecho nada mal y quien lo puede resolver es el centro${paren("es")}.`,
+            en: `If the code isn't accepted, the message tells you why: it doesn't exist, it's already been redeemed, it has expired, it was cancelled, or the centre hasn't confirmed payment for it yet. In the last three cases you've done nothing wrong and the centre is who can sort it out${paren("en")}.`,
           }),
         },
       ],
@@ -1238,9 +1250,9 @@ export function buildClientManual(
         {
           t: "warn",
           text: T({
-            ca: `Les reserves es poden cancel·lar fins a ${s.minCancellationHours} h abans. Passat aquest punt el botó desapareix i l'app t'explica per què. Si tens una urgència, parla amb el centre (${CONTACTE_CENTRE}): la política de cancel·lació la porta el centre, no l'app.`,
-            es: `Las reservas se pueden cancelar hasta ${s.minCancellationHours} h antes. Pasado ese punto el botón desaparece y la app te explica por qué. Si tienes una urgencia, habla con el centro (${CONTACTE_CENTRE}): la política de cancelación la lleva el centro, no la app.`,
-            en: `Bookings can be cancelled up to ${s.minCancellationHours} h beforehand. Past that point the button disappears and the app explains why. If you have an emergency, talk to the centre (${CONTACTE_CENTRE}): the cancellation policy belongs to the centre, not to the app.`,
+            ca: `Les reserves es poden cancel·lar fins a ${s.minCancellationHours} h abans. Passat aquest punt el botó desapareix i l'app t'explica per què. Si tens una urgència, parla amb el centre${paren("ca")}: la política de cancel·lació la porta el centre, no l'app.`,
+            es: `Las reservas se pueden cancelar hasta ${s.minCancellationHours} h antes. Pasado ese punto el botón desaparece y la app te explica por qué. Si tienes una urgencia, habla con el centro${paren("es")}: la política de cancelación la lleva el centro, no la app.`,
+            en: `Bookings can be cancelled up to ${s.minCancellationHours} h beforehand. Past that point the button disappears and the app explains why. If you have an emergency, talk to the centre${paren("en")}: the cancellation policy belongs to the centre, not to the app.`,
           }),
         },
         {
@@ -2393,9 +2405,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: `Si passa una hora i segueix sense aparèixer, avisa el centre: ${CONTACTE_CENTRE}.`,
-            es: `Si pasa una hora y sigue sin aparecer, avisa al centro: ${CONTACTE_CENTRE}.`,
-            en: `If an hour goes by and it still hasn't appeared, let the centre know: ${CONTACTE_CENTRE}.`,
+            ca: `Si passa una hora i segueix sense aparèixer, avisa el centre${colon("ca")}.`,
+            es: `Si pasa una hora y sigue sin aparecer, avisa al centro${colon("es")}.`,
+            en: `If an hour goes by and it still hasn't appeared, let the centre know${colon("en")}.`,
           }),
         },
         {
@@ -2409,9 +2421,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: `Les cancel·lacions es tanquen ${s.minCancellationHours} h abans de la sessió. Passat aquest punt el botó desapareix i l'app t'ho explica. Si tens una urgència de debò, parla amb el centre (${CONTACTE_CENTRE}): la decisió és seva, no de l'app.`,
-            es: `Las cancelaciones se cierran ${s.minCancellationHours} h antes de la sesión. Pasado ese punto el botón desaparece y la app te lo explica. Si tienes una urgencia de verdad, habla con el centro (${CONTACTE_CENTRE}): la decisión es suya, no de la app.`,
-            en: `Cancellations close ${s.minCancellationHours} h before the session. Past that point the button disappears and the app explains why. If you have a genuine emergency, talk to the centre (${CONTACTE_CENTRE}): the decision is theirs, not the app's.`,
+            ca: `Les cancel·lacions es tanquen ${s.minCancellationHours} h abans de la sessió. Passat aquest punt el botó desapareix i l'app t'ho explica. Si tens una urgència de debò, parla amb el centre${paren("ca")}: la decisió és seva, no de l'app.`,
+            es: `Las cancelaciones se cierran ${s.minCancellationHours} h antes de la sesión. Pasado ese punto el botón desaparece y la app te lo explica. Si tienes una urgencia de verdad, habla con el centro${paren("es")}: la decisión es suya, no de la app.`,
+            en: `Cancellations close ${s.minCancellationHours} h before the session. Past that point the button disappears and the app explains why. If you have a genuine emergency, talk to the centre${paren("en")}: the decision is theirs, not the app's.`,
           }),
         },
         {
@@ -2477,9 +2489,15 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: `Escriu o truca al centre: ${CONTACTE_CENTRE}. L'app no té cap bústia de contacte pròpia, així que aquesta és la via.`,
-            es: `Escribe o llama al centro: ${CONTACTE_CENTRE}. La app no tiene ningún buzón de contacto propio, así que esta es la vía.`,
-            en: `Write to or ring the centre: ${CONTACTE_CENTRE}. The app has no contact inbox of its own, so this is the way.`,
+            ca: ct("ca")
+              ? `Escriu o truca al centre: ${ct("ca")}. L'app no té cap bústia de contacte pròpia, així que aquesta és la via.`
+              : "Parla-ho amb el centre: l'app no té cap bústia de contacte pròpia.",
+            es: ct("es")
+              ? `Escribe o llama al centro: ${ct("es")}. La app no tiene ningún buzón de contacto propio, así que esta es la vía.`
+              : "Háblalo con el centro: la app no tiene ningún buzón de contacto propio.",
+            en: ct("en")
+              ? `Write to or ring the centre: ${ct("en")}. The app has no contact inbox of its own, so this is the way.`
+              : "Talk to the centre about it: the app has no contact inbox of its own.",
           }),
         },
       ],

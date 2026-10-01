@@ -1071,7 +1071,8 @@
       "settings": "Configuración",
       "privacy": "Política de Privacidad",
       "managePlain": "Gestiona tus avisos: {url}",
-      "privacyPlain": "Política de Privacidad: {url}"
+      "privacyPlain": "Política de Privacidad: {url}",
+      "contact": "Contacto"
     },
     "reservationConfirmed": {
       "subject": "Reserva confirmada · VindiBCN",
@@ -1186,7 +1187,8 @@
       "heading": "¡Bienvenido/a a VindiBCN!",
       "intro": "Nos alegra mucho tenerte con nosotros. Desde tu área podrás reservar sesiones, comprar bonos y consultar tus ejercicios.",
       "cta": "Entra en tu área",
-      "outro": "Cualquier duda, responde a este correo o habla con el centro. ¡Nos vemos pronto!"
+      "outro": "Cualquier duda, responde a este correo o habla con el centro. ¡Nos vemos pronto!",
+      "outroNoReply": "Cualquier duda, habla con el centro. ¡Nos vemos pronto!"
     },
     "sessions": "{count, plural, one {# sesión} other {# sesiones}}",
     "subscriptionRenewed": {
@@ -1268,7 +1270,7 @@
       "metaTitle": "Aviso Legal · VindiBCN",
       "title": "Aviso Legal",
       "h1": "1. Titular",
-      "p1": "Este sitio web es titularidad de [NOM_RESPONSABLE], con NIF [NIF] y domicilio en [ADREÇA]. Contacto: [EMAIL_CONTACTE].",
+      "p1": "Este sitio web es titularidad de {name, select, none {VindiBCN} other {{name}}}{nif, select, none {} other {, con NIF {nif}}}{address, select, none {} other { y domicilio en {address}}}.{email, select, none {} other { Contacto: <mail>{email}</mail>.}}",
       "h2": "2. Objeto",
       "p2": "Este sitio ofrece la gestión de servicios de entrenamiento personal y fisioterapia (reservas, bonos y seguimiento) para los clientes del centro.",
       "h3": "3. Condiciones de uso",
@@ -1284,7 +1286,7 @@
       "metaTitle": "Política de Privacidad · VindiBCN",
       "title": "Política de Privacidad",
       "h1": "1. Responsable del tratamiento",
-      "p1": "[NOM_RESPONSABLE], con NIF [NIF] y domicilio en [ADREÇA]. Correo de contacto: [EMAIL_CONTACTE].",
+      "p1": "{name, select, none {VindiBCN} other {{name}}}{nif, select, none {} other {, con NIF {nif}}}{address, select, none {} other { y domicilio en {address}}}.{email, select, none {} other { Correo de contacto: <mail>{email}</mail>.}}",
       "h2": "2. Qué datos tratamos",
       "p2": "Datos identificativos y de contacto (nombre, correo electrónico, teléfono), fecha de nacimiento, género y datos físicos (altura, peso) y objetivos. En el caso de clientes que reciben fisioterapia, datos de salud vinculados al seguimiento terapéutico. También datos de la relación de servicio: bonos, reservas y pagos.",
       "h3": "3. Finalidades",
@@ -1302,7 +1304,7 @@
       "h7": "7. Tus derechos",
       "p7": "Puedes ejercer los derechos de <b>acceso</b>, <b>rectificación</b>, <b>supresión</b>, <b>oposición</b>, <b>portabilidad</b> y <b>limitación</b> del tratamiento, así como <b>retirar el consentimiento</b> en cualquier momento. También puedes presentar una reclamación ante la Agencia Española de Protección de Datos (AEPD).",
       "h8": "8. Cómo ejercerlos",
-      "p8": "Escribe a [EMAIL_CONTACTE] indicando el derecho que quieres ejercer y adjuntando una copia de un documento identificativo."
+      "p8": "{email, select, none {Escribe al centro} other {Escribe a <mail>{email}</mail>}} indicando el derecho que quieres ejercer y adjuntando una copia de un documento identificativo."
     },
     "cookies": {
       "metaTitle": "Política de Cookies · VindiBCN",
@@ -1321,5 +1323,10 @@
       "body": "Este texto todavía está pendiente de revisión legal y puede cambiar. Si tienes cualquier duda sobre tus datos o tus derechos, escribe al centro y te la resolvemos.",
       "devNote": "[Solo en desarrollo] Un asesor debe revisarlo y rellenar los campos entre corchetes antes de darlo por bueno."
     }
+  },
+  "contact": {
+    "label": "Contacto del centro",
+    "whatsapp": "WhatsApp",
+    "alsoWhatsapp": "también por WhatsApp"
   }
 }

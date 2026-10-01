@@ -63,6 +63,8 @@ const BASE = {
   documentsMaxMb: 10,
   trialMinAdvanceHours: 24,
   trialMaxAdvanceDays: 30,
+  // Amb contacte complet (Configuració → Centre, 0100)…
+  contact: { phone: "+34 931 23 45 67", whatsapp: true, email: "recepcio@exemple.cat", address: "Carrer Gran, 1, 08012 Barcelona" },
 };
 
 const FLIPPED = {
@@ -78,6 +80,8 @@ const FLIPPED = {
   referralProgramActive: false,
   cardPayments: false,
   modules: { comunitat: false, documents: false, sessionsProva: false },
+  // …i sense: les frases han d'aguantar-se soles.
+  contact: { phone: null, whatsapp: false, email: null, address: null },
 };
 
 /**
@@ -192,6 +196,26 @@ for (const [name, settings] of [
         errors++;
       }
     });
+
+  // 2b. Cap text provisional ni restes d'un contacte buit: «[CONTACTE_CENTRE]»,
+  // uns parèntesis buits, «: .» o «centre ()».
+  const withContact = settings.contact.phone || settings.contact.email;
+  for (const l of LOCALES)
+    strings(built[l]).forEach((s) => {
+      if (/\[[A-Z_]{3,}\]|\(\s*\)|:\s*\.|\s\.$/.test(s)) {
+        console.error(`✗ [${name}] text provisional o contacte buit a ${l}: «${s.slice(0, 90)}»`);
+        errors++;
+      }
+    });
+  // I amb contacte, que hi surti on toca (les 7 frases que el porten).
+  if (withContact)
+    for (const l of LOCALES) {
+      const n = strings(built[l]).filter((s) => s.includes("931 23 45 67") && s.includes("recepcio@exemple.cat")).length;
+      if (n < 6) {
+        console.error(`✗ [${name}] a ${l} el contacte surt a ${n} frases (n'hi esperava almenys 6)`);
+        errors++;
+      }
+    }
 
   // 3. Quant queda per traduir.
   const ca = strings(built.ca);

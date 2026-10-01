@@ -22,6 +22,7 @@ import {
   mockRegisterAction,
 } from "@/app/(auth)/register/actions";
 import type { Gender } from "@/types/database";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 const GENDERS: Gender[] = ["home", "dona", "altre", "ns_nc"];
 
@@ -388,6 +389,8 @@ export function RegisterPanel() {
           {t("signIn")}
         </Link>
       </p>
+      {/* Per a qui es troba un problema donant-se d'alta. Sense contacte, res. */}
+      <CenterContactLine />
     </div>
   );
 }

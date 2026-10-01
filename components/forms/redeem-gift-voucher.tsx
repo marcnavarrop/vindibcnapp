@@ -8,6 +8,7 @@ import {
 } from "@/app/(client)/client/bonos/redeem-actions";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 /**
  * "Tens un codi de regal?"
@@ -64,6 +65,10 @@ export function RedeemGiftVoucher() {
 
       {state.errorCode && (
         <p className="mt-3 text-sm text-error">{t(`errors.${state.errorCode}`)}</p>
+      )}
+      {/* Els que només pot resoldre el centre, amb com contactar-hi. */}
+      {(state.errorCode === "cancelled" || state.errorCode === "expired" || state.errorCode === "pending_payment") && (
+        <CenterContactLine className="mt-1" />
       )}
     </section>
   );

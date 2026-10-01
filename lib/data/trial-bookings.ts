@@ -15,7 +15,7 @@ import {
   centerDayStart,
   centerToday,
 } from "@/lib/center-time";
-import { CENTER_EMAIL } from "@/lib/email";
+import { internalNotifyEmail } from "@/lib/data/center-settings";
 import { notify, getProfileContact } from "@/lib/notifications";
 import {
   isServiceAvailableOn,
@@ -76,12 +76,14 @@ async function notifyTrialRequested(input: {
         data: { ...data, name: trainer.name ?? "" },
       });
   }
-  // Al correu general del centre (operatiu: ignora preferències d'usuari).
-  if (CENTER_EMAIL)
+  // Al correu dels avisos interns (operatiu: ignora preferències d'usuari):
+  // notify_email, si no el de contacte, si no CENTER_EMAIL.
+  const centerEmail = await internalNotifyEmail();
+  if (centerEmail)
     await notify(
       {
         type: "trial_request",
-        recipient: { profileId: null, email: CENTER_EMAIL, phone: null, name: "Centre" },
+        recipient: { profileId: null, email: centerEmail, phone: null, name: "Centre" },
         data: { ...data, name: "" },
       },
       { ignorePreferences: true },

@@ -4,6 +4,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
 import { ChangePasswordForm } from "@/components/forms/change-password-form";
 import { CenterSettingsForm } from "@/components/forms/center-settings-form";
+import { addressOf } from "@/lib/center-contact";
 import { ColorsForm } from "@/components/forms/colors-form";
 import { CenterCatalog } from "@/components/forms/center-catalog";
 import { getColorPalette } from "@/lib/data/colors";
@@ -50,7 +51,12 @@ export default async function AdminConfigPage({
   const tabs = [
     {
       label: "Centre",
-      content: <CenterSettingsForm settings={centerSettings} />,
+      content: (
+        <CenterSettingsForm
+          settings={centerSettings}
+          senderEmail={addressOf(process.env.NOTIFICATIONS_FROM_EMAIL ?? "onboarding@resend.dev")}
+        />
+      ),
     },
     /*
       Va just després de "Centre" perquè són veïns de tema, i es diu "Registre

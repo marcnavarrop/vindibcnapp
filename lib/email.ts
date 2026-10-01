@@ -12,7 +12,10 @@ import { USE_MOCK } from "@/lib/config";
  *                              literalment, sense re-embolcallar. Per defecte, el
  *                              domini de proves de Resend (onboarding@resend.dev)
  *                              perquè no trenqui en local.
- *   CENTER_EMAIL            — (opcional) correu general del centre per a avisos.
+ *   CENTER_EMAIL            — (opcional) ÚLTIM recurs per als avisos interns, si
+ *                              a Configuració → Centre no hi ha ni el correu
+ *                              dels avisos ni el de contacte
+ *                              (`internalNotifyEmail`).
  *   ALLOW_REAL_EMAILS       — "true" per deixar enviar de veritat des de fora
  *                              de producció. Sense ella, cap procés que no
  *                              sigui la producció de Vercel envia res.
@@ -29,8 +32,6 @@ function fromAddress(): string {
   return process.env.NOTIFICATIONS_FROM_EMAIL ?? "onboarding@resend.dev";
 }
 
-/** Adreça del centre per als avisos interns (opcional). */
-export const CENTER_EMAIL = process.env.CENTER_EMAIL ?? null;
 
 /**
  * ¿Aquest procés té permís per enviar correus DE VERITAT?
@@ -73,6 +74,8 @@ export async function sendEmail(input: {
   subject: string;
   html: string;
   text?: string;
+  /** On van les respostes (el correu de contacte del centre). Sense, cap. */
+  replyTo?: string | null;
 }): Promise<SendResult> {
   // En mode demo mai enviem de veritat: hi ha RESEND_API_KEY en entorns de
   // desenvolupament, i sense aquest tall una alta de prova enviava correus
@@ -104,6 +107,7 @@ export async function sendEmail(input: {
         subject: input.subject,
         html: input.html,
         ...(input.text ? { text: input.text } : {}),
+        ...(input.replyTo ? { reply_to: input.replyTo } : {}),
       }),
     });
     if (!res.ok) {
@@ -132,7 +136,7 @@ export type BatchResult =
   | { ok: true; ids: (string | undefined)[] }
   | { ok: false; error: string; kind: "quota" | "rate" | "other"; retryAfterMs?: number };
 
-export type BatchEmail = { to: string; subject: string; html: string; text?: string };
+export type BatchEmail = { to: string; subject: string; html: string; text?: string; replyTo?: string | null };
 
 /** Màxim de correus per crida a /emails/batch (límit de Resend). */
 export const RESEND_BATCH_MAX = 100;
@@ -177,6 +181,7 @@ export async function sendEmailBatch(
           subject: e.subject,
           html: e.html,
           ...(e.text ? { text: e.text } : {}),
+          ...(e.replyTo ? { reply_to: e.replyTo } : {}),
         })),
       ),
     });

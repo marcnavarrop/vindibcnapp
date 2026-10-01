@@ -826,6 +826,17 @@
     <h3>14.1 Centre</h3>
     <p>Va per blocs i <strong>el botó de desar és un de sol, al final</strong>. El que canviïs aquí canvia com es comporten les tres àrees a l'instant.</p>
     <ul class="checklist">
+      <li><strong>Contacte del centre</strong> <span class="flag">Nou</span> (primer bloc de Configuració → Centre, 0100). Amb tot buit: el manual del client diu «avisa el centre» sense res més, /prova i el registre no porten cap línia, les pàgines legals diuen «titularitat de VindiBCN.» i «Escriu al centre…», i en cap lloc surt un [CLAUDÀTOR] ni uns parèntesis buits. Omple-ho:
+        <ul>
+          <li>Telèfon «931234567» → es desa «+34 931 23 45 67»; «93 123 4» dona error. Correu en majúscules → es desa en minúscules. NIF en minúscules → en majúscules</li>
+          <li>Escriu com a correu de contacte (o d'avisos) el del remitent dels avisos («hola@…»): avís en vermell «Aquesta bústia només envia avisos automàtics i no es llegeix»</li>
+          <li>La vista prèvia ensenya la frase del manual i el peu dels correus, amb enllaços tel:, WhatsApp (si està marcat) i mailto:</li>
+          <li>Manual del client (ca/es/en): les frases d'«avisa el centre» porten el telèfon i el correu com a enllaços. /prova, el registre i els avisos del client que diuen «parla amb el centre» (sense bo, sense professional, cancel·lació fora de termini, val anul·lat/caducat/sense cobrar, pagament que no arriba) porten «Contacte del centre: …»</li>
+          <li>Correus a clients i visitants: el peu porta «Contacte: …» i, si hi ha correu de contacte, «respondre» va a aquesta bústia (Reply-To). Sense correu de contacte, cap correu diu «respon a aquest correu». Els del professional i de l'admin no porten contacte</li>
+          <li>Les sol·licituds de prova i les altes arriben al correu dels avisos interns; buit, al de contacte; buits tots dos, a la variable CENTER_EMAIL</li>
+          <li>Pàgines legals amb el titular, el NIF, l'adreça i el correu (enllaç). El val de regal en PDF porta el contacte al peu. «Afegir al calendari» posa l'adreça a l'esdeveniment</li>
+        </ul>
+      </li>
       <li><strong>Horari i reserves</strong>: obertura i tancament (és la franja que pinten <strong>tots</strong> els calendaris), antelació mínima per reservar i <strong>antelació mínima per cancel·lar</strong></li>
       <li><strong>Bons</strong>: llindar de "bo a punt d'esgotar-se", <strong>caducitat dels bons</strong> (només val per als que es venguin a partir d'ara), <strong>anul·lació dels pendents no cobrats a temps</strong> (amb el termini en hores des de la primera reserva) i <strong>venda de vals de regal</strong> amb la seva validesa</li>
       <li><strong>Notificacions</strong>: hora local a partir de la qual surten els avisos del dia</li>

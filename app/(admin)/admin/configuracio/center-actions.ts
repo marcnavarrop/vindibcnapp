@@ -3,6 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { updateCenterSettings } from "@/lib/data/center-settings";
+import {
+  normalizeEmail,
+  normalizePhone,
+  normalizeTaxId,
+  normalizeText,
+  type CenterContact,
+} from "@/lib/center-contact";
 
 export type CenterSettingsState = { error?: string; ok?: boolean };
 
@@ -82,6 +89,30 @@ export async function updateCenterSettingsAction(
   if (subscriptionsEnabled && subscriptionExtraSessionsMax === null)
     return { error: "Les sessions extra han de ser entre 0 i 10." };
 
+  // El contacte del centre (0100). Cada camp es valida i es normalitza aquí;
+  // la base ho torna a comprovar amb els seus checks.
+  const str = (k: string) => String(fd.get(k) ?? "");
+  const checks = {
+    phone: normalizePhone(str("contactPhone")),
+    email: normalizeEmail(str("contactEmail")),
+    notifyEmail: normalizeEmail(str("notifyEmail")),
+    address: normalizeText(str("address"), 5, 200, "L'adreça"),
+    legalName: normalizeText(str("legalName"), 2, 200, "El titular"),
+    taxId: normalizeTaxId(str("taxId")),
+  };
+  for (const [k, r] of Object.entries(checks))
+    if ("error" in r) return { error: k === "notifyEmail" ? `Correu dels avisos interns: ${r.error}` : r.error };
+  const val = (r: { value: string | null } | { error: string }) => ("value" in r ? r.value : null);
+  const contact: CenterContact = {
+    phone: val(checks.phone),
+    whatsapp: !!val(checks.phone) && fd.get("contactWhatsapp") === "true",
+    email: val(checks.email),
+    notifyEmail: val(checks.notifyEmail),
+    address: val(checks.address),
+    legalName: val(checks.legalName),
+    taxId: val(checks.taxId),
+  };
+
   const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);
   if (reminderHourLocal === null)
     return { error: "L'hora dels recordatoris ha de ser entre 0 i 23." };
@@ -106,6 +137,7 @@ export async function updateCenterSettingsAction(
       subscriptionsEnabled,
       subscriptionExtraSessionsMax: subscriptionExtraSessionsMax ?? undefined,
       reminderHourLocal,
+      contact,
       modules: {
         comunitat: fd.get("moduleComunitat") === "true",
         sessionsProva: fd.get("moduleSessionsProva") === "true",

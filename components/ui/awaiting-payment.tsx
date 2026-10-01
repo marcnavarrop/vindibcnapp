@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/spinner";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 /**
  * "Estem confirmant el pagament."
@@ -50,6 +51,7 @@ export function AwaitingPayment({
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-border bg-white p-8 text-center">
         <p className="text-lg font-bold text-brand-dark">{t("slowTitle")}</p>
         <p className="max-w-sm text-sm text-brand-muted">{t("slowBody")}</p>
+        <CenterContactLine />
         <Link
           href={fallbackHref}
           className={`mt-2 inline-flex rounded-lg bg-brand-purple px-4 py-2 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}

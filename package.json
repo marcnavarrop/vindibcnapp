@@ -35,7 +35,8 @@
     "legal:snapshot": "node scripts/legal-snapshot.mjs",
     "voucher:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/voucher-snapshot.mts",
     "community:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/community-check.mts",
-    "paid:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/paid-check.mts"
+    "paid:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/paid-check.mts",
+    "contact:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/contact-check.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

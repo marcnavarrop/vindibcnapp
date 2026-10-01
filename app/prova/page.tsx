@@ -9,6 +9,7 @@ import { resolveLocale } from "@/lib/i18n/resolve";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,10 @@ export default async function ProvaPage() {
         openingHour={centerSettings.openingHour}
         closingHour={centerSettings.closingHour}
       />
+
+      {/* Qui demana una prova encara no té compte: si ha de canviar o anul·lar
+          l'hora, aquesta és la via. Sense contacte configurat, no surt. */}
+      <CenterContactLine className="mt-8 border-t border-brand-border pt-4" />
     </main>
   );
 }

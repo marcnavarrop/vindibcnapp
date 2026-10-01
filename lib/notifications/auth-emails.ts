@@ -3,6 +3,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
 import { appLink } from "@/lib/notifications/brand";
 import { renderInviteEmail, renderRecoveryEmail } from "@/lib/notifications/templates";
+import { getCenterContact } from "@/lib/data/center-settings";
+import { publicContact } from "@/lib/center-contact";
 import { writeLog } from "@/lib/notifications/log";
 import { toLocale, type Locale } from "@/lib/i18n/config";
 import type { UserRole } from "@/types/database";
@@ -61,12 +63,13 @@ async function sendInvite(
   name: string | null,
   tokenHash: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const { subject, html, text } = renderInviteEmail({
+  const { subject, html, text, replyTo } = renderInviteEmail({
     name,
     url: callbackUrl(tokenHash, "invite"),
     locale: await localeForProfile(profileId),
+    contact: publicContact(await getCenterContact()),
   });
-  const res = await sendEmail({ to: email, subject, html, text });
+  const res = await sendEmail({ to: email, subject, html, text, replyTo });
   await writeLog({
     profileId,
     recipient: email,
@@ -192,13 +195,14 @@ export async function sendPasswordRecovery(email: string): Promise<void> {
   // El correu bo és `auth.users.email` (i, dins de l'app, `profiles.email`, que
   // el segueix des de la 0077). Vegeu la capçalera d'aquella migració.
   const name = (data.user?.user_metadata?.full_name as string | undefined) ?? null;
-  const { subject, html, text } = renderRecoveryEmail({
+  const { subject, html, text, replyTo } = renderRecoveryEmail({
     name,
     url: callbackUrl(data.properties.hashed_token, "recovery"),
     // El perfil ja està resolt aquí: `generateLink` ens torna l'usuari.
     locale: await localeForProfile(data.user?.id ?? null),
+    contact: publicContact(await getCenterContact()),
   });
-  const res = await sendEmail({ to: email, subject, html, text });
+  const res = await sendEmail({ to: email, subject, html, text, replyTo });
   await writeLog({
     profileId: data.user?.id ?? null,
     recipient: email,

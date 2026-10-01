@@ -5,8 +5,13 @@ import {
 } from "@/lib/labels";
 import type { ServiceType } from "@/types/database";
 
-const CENTER_LOCATION =
-  "Vindi BCN, Carrer de la Mare de Déu dels Desemparats, 14-16, Gràcia, 08012 Barcelona";
+/**
+ * On és la sessió: «VindiBCN, <adreça>» amb l'adreça de Configuració → Centre
+ * (0100); sense adreça, només el nom.
+ */
+export function calendarLocation(address: string | null | undefined): string {
+  return address ? `VindiBCN, ${address}` : "VindiBCN";
+}
 
 export type CalendarEvent = {
   title: string;
@@ -27,11 +32,14 @@ export function buildCalendarEvent({
   otherPartyName,
   scheduledAt,
   text,
+  address,
 }: {
   serviceType: ServiceType;
   otherPartyName: string | null;
   scheduledAt: string | Date;
   text?: CalendarEventText;
+  /** L'adreça del centre (vegeu `calendarLocation`). */
+  address?: string | null;
 }): CalendarEvent {
   const start = new Date(scheduledAt);
   const serviceLabel = SERVICE_LABELS[serviceType];
@@ -52,7 +60,7 @@ export function buildCalendarEvent({
     title,
     start,
     durationMinutes: SESSION_DURATION_MINUTES,
-    location: CENTER_LOCATION,
+    location: calendarLocation(address),
     description,
   };
 }

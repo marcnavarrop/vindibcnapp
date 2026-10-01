@@ -6,6 +6,8 @@ import { getStore, saveStore } from "@/lib/mock/store";
 import { renderEmail } from "@/lib/notifications/templates";
 import { RESEND_BATCH_MAX, sendEmailBatch, type BatchEmail, type BatchResult } from "@/lib/email";
 import { toLocale } from "@/lib/i18n/config";
+import { getCenterContact } from "@/lib/data/center-settings";
+import { EMPTY_CONTACT, publicContact } from "@/lib/center-contact";
 import type { NotificationRecipient } from "@/lib/notifications/types";
 
 /**
@@ -103,6 +105,8 @@ export async function deliverCommunity(
   if (noEmail.length) await finish(noEmail.map((q) => q.row));
 
   const withEmail = queued.filter((q) => q.recipient.email);
+  // El contacte del centre, un cop per a tots els lots: peu i Reply-To.
+  const contact = publicContact(await getCenterContact().catch(() => EMPTY_CONTACT));
   for (let i = 0; i < withEmail.length; i += RESEND_BATCH_MAX) {
     const lot = withEmail.slice(i, i + RESEND_BATCH_MAX);
     let res: BatchResult;
@@ -110,13 +114,16 @@ export async function deliverCommunity(
       res = { ok: false, kind: "quota", error: quotaError };
     } else {
       const emails = lot.map(({ recipient }) => {
-        const { subject, html, text } = renderEmail({
-          type: "community",
-          recipient,
-          relatedId: post.announcementId,
-          data: { name: recipient.name ?? "", title: post.title, body: post.body },
-        });
-        return { to: recipient.email!, subject, html, text };
+        const { subject, html, text, replyTo } = renderEmail(
+          {
+            type: "community",
+            recipient,
+            relatedId: post.announcementId,
+            data: { name: recipient.name ?? "", title: post.title, body: post.body },
+          },
+          contact,
+        );
+        return { to: recipient.email!, subject, html, text, replyTo };
       });
       const key = `community-${post.announcementId}-${i / RESEND_BATCH_MAX}`;
       res = await send(emails, key);

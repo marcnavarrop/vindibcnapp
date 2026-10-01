@@ -1071,7 +1071,8 @@
       "settings": "Settings",
       "privacy": "Privacy Policy",
       "managePlain": "Manage your alerts: {url}",
-      "privacyPlain": "Privacy Policy: {url}"
+      "privacyPlain": "Privacy Policy: {url}",
+      "contact": "Contact"
     },
     "reservationConfirmed": {
       "subject": "Booking confirmed · VindiBCN",
@@ -1186,7 +1187,8 @@
       "heading": "Welcome to VindiBCN!",
       "intro": "We're really glad to have you with us. From your area you can book sessions, buy passes and check your exercises.",
       "cta": "Go to my area",
-      "outro": "If you have any questions, reply to this email or talk to the centre. See you soon!"
+      "outro": "If you have any questions, reply to this email or talk to the centre. See you soon!",
+      "outroNoReply": "If you have any questions, talk to the centre. See you soon!"
     },
     "sessions": "{count, plural, one {# session} other {# sessions}}",
     "subscriptionRenewed": {
@@ -1268,7 +1270,7 @@
       "metaTitle": "Legal Notice · VindiBCN",
       "title": "Legal Notice",
       "h1": "1. Owner",
-      "p1": "This website is owned by [NOM_RESPONSABLE], with tax identification number (NIF) [NIF] and registered address at [ADREÇA]. Contact: [EMAIL_CONTACTE].",
+      "p1": "This website is owned by {name, select, none {VindiBCN} other {{name}}}{nif, select, none {} other {, with tax identification number (NIF) {nif}}}{address, select, none {} other { and registered address at {address}}}.{email, select, none {} other { Contact: <mail>{email}</mail>.}}",
       "h2": "2. Purpose",
       "p2": "This site provides the management of personal training and physiotherapy services (bookings, session packages and progress tracking) for the centre's clients.",
       "h3": "3. Terms of use",
@@ -1284,7 +1286,7 @@
       "metaTitle": "Privacy Policy · VindiBCN",
       "title": "Privacy Policy",
       "h1": "1. Data controller",
-      "p1": "[NOM_RESPONSABLE], with tax identification number (NIF) [NIF] and registered address at [ADREÇA]. Contact email: [EMAIL_CONTACTE].",
+      "p1": "{name, select, none {VindiBCN} other {{name}}}{nif, select, none {} other {, with tax identification number (NIF) {nif}}}{address, select, none {} other { and registered address at {address}}}.{email, select, none {} other { Contact email: <mail>{email}</mail>.}}",
       "h2": "2. What data we process",
       "p2": "Identification and contact data (name, email address, telephone), date of birth, gender and physical data (height, weight) and goals. In the case of clients receiving physiotherapy, health data linked to therapeutic follow-up. Also data relating to the service relationship: session packages, bookings and payments.",
       "h3": "3. Purposes",
@@ -1302,7 +1304,7 @@
       "h7": "7. Your rights",
       "p7": "You may exercise the rights of <b>access</b>, <b>rectification</b>, <b>erasure</b>, <b>objection</b>, <b>portability</b> and <b>restriction</b> of processing, as well as <b>withdrawing your consent</b> at any time. You may also lodge a complaint with the Spanish Data Protection Agency (Agencia Española de Protección de Datos, AEPD).",
       "h8": "8. How to exercise them",
-      "p8": "Write to [EMAIL_CONTACTE] stating the right you wish to exercise and attaching a copy of an identity document."
+      "p8": "{email, select, none {Write to the centre} other {Write to <mail>{email}</mail>}} stating the right you wish to exercise and attaching a copy of an identity document."
     },
     "cookies": {
       "metaTitle": "Cookie Policy · VindiBCN",
@@ -1321,5 +1323,10 @@
       "body": "This text is still pending legal review and may change. If you have any questions about your data or your rights, write to the centre and we'll answer them.",
       "devNote": "[Development only] A legal adviser must review it and fill in the bracketed fields before it can be considered final."
     }
+  },
+  "contact": {
+    "label": "Centre contact",
+    "whatsapp": "WhatsApp",
+    "alsoWhatsapp": "also on WhatsApp"
   }
 }

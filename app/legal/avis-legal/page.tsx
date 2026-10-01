@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { H, RICH, Prevalence } from "@/components/legal/legal-text";
+import { getCenterContact } from "@/lib/data/center-settings";
+import { H, RICH, legalValues, Prevalence } from "@/components/legal/legal-text";
 import { LegalDraftBanner } from "@/components/legal-draft-banner";
 
 /**
  * ⚠️ BORRADOR LEGAL — TEXT DE PARTIDA, NO DEFINITIU.
- * Pendent de revisió per un assessor legal. Ompliu els [CLAUDÀTORS].
+ * Pendent de revisió per un assessor legal. El titular, el NIF, l'adreça i el
+ * correu de contacte surten de Configuració → Centre (0100, `legalValues`).
  *
  * El text viu a `messages/*.json`, sota `legalPages.avisLegal`. El català és
  * l'original i les altres dues llengües en són traduccions: així ho diu la
@@ -19,6 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AvisLegalPage() {
   const t = await getTranslations("legalPages.avisLegal");
   const g = await getTranslations("legalPages");
+  const v = legalValues(await getCenterContact());
 
   return (
     <>
@@ -27,7 +30,7 @@ export default async function AvisLegalPage() {
       <p className="text-xs text-brand-muted">{g("draftVersion")}</p>
 
       <H>{t("h1")}</H>
-      <p>{t("p1")}</p>
+      <p>{t.rich("p1", v)}</p>
 
       <H>{t("h2")}</H>
       <p>{t("p2")}</p>

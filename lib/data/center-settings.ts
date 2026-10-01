@@ -2,6 +2,7 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { slotOf, slotToHour } from "@/lib/availability-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { EMPTY_CONTACT, type CenterContact } from "@/lib/center-contact";
 
 export type CenterSettings = {
   minCancellationHours: number;
@@ -60,6 +61,11 @@ export type CenterSettings = {
     sessionsProva: boolean;
     documents: boolean;
   };
+  /**
+   * El contacte del centre (0100): telèfon, correu que es llegeix, correu dels
+   * avisos interns, adreça i dades legals. Vegeu `lib/center-contact.ts`.
+   */
+  contact: CenterContact;
 };
 
 const DEFAULT: CenterSettings = {
@@ -84,6 +90,7 @@ const DEFAULT: CenterSettings = {
   subscriptionsEnabled: false,
   subscriptionExtraSessionsMax: 1,
   modules: { comunitat: true, sessionsProva: true, documents: true },
+  contact: EMPTY_CONTACT,
 };
 
 /**
@@ -145,6 +152,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
         sessionsProva: cs?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
         documents: cs?.module_documents_enabled ?? DEFAULT.modules.documents,
       },
+      contact: contactOf(cs),
     };
   }
 
@@ -163,7 +171,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     .from("center_settings")
     // Literal inline a propòsit: amb una constant, Supabase perd la inferència.
     .select(
-      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, pending_payment_cancel_enabled, pending_payment_cancel_hours, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled, gift_vouchers_enabled, gift_voucher_expiry_months, waitlist_enabled, subscriptions_enabled, subscription_extra_sessions_max",
+      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, pending_payment_cancel_enabled, pending_payment_cancel_hours, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled, gift_vouchers_enabled, gift_voucher_expiry_months, waitlist_enabled, subscriptions_enabled, subscription_extra_sessions_max, contact_phone, contact_whatsapp, contact_email, notify_email, address, legal_name, tax_id",
     )
     .single();
 
@@ -192,6 +200,34 @@ export async function getCenterSettings(): Promise<CenterSettings> {
       sessionsProva: data?.module_sessions_prova_enabled ?? DEFAULT.modules.sessionsProva,
       documents: data?.module_documents_enabled ?? DEFAULT.modules.documents,
     },
+    contact: contactOf(data),
+  };
+}
+
+/** Les columnes de la 0100 → `CenterContact`. Buit és null. */
+function contactOf(
+  r:
+    | {
+        contact_phone?: string | null;
+        contact_whatsapp?: boolean | null;
+        contact_email?: string | null;
+        notify_email?: string | null;
+        address?: string | null;
+        legal_name?: string | null;
+        tax_id?: string | null;
+      }
+    | null
+    | undefined,
+): CenterContact {
+  const v = (x: string | null | undefined) => (x && x.trim() ? x : null);
+  return {
+    phone: v(r?.contact_phone),
+    whatsapp: !!r?.contact_phone && !!r?.contact_whatsapp,
+    email: v(r?.contact_email),
+    notifyEmail: v(r?.notify_email),
+    address: v(r?.address),
+    legalName: v(r?.legal_name),
+    taxId: v(r?.tax_id),
   };
 }
 
@@ -225,6 +261,7 @@ export async function updateCenterSettings(
       module_comunitat_enabled: DEFAULT.modules.comunitat,
       module_sessions_prova_enabled: DEFAULT.modules.sessionsProva,
       module_documents_enabled: DEFAULT.modules.documents,
+      ...contactRow(EMPTY_CONTACT),
       created_at: now,
       updated_at: now,
     };
@@ -250,6 +287,7 @@ export async function updateCenterSettings(
     if (input.modules?.comunitat !== undefined) cs.module_comunitat_enabled = input.modules.comunitat;
     if (input.modules?.sessionsProva !== undefined) cs.module_sessions_prova_enabled = input.modules.sessionsProva;
     if (input.modules?.documents !== undefined) cs.module_documents_enabled = input.modules.documents;
+    if (input.contact) Object.assign(cs, contactRow(input.contact));
     cs.updated_at = now;
     saveStore(store);
     return;
@@ -279,7 +317,34 @@ export async function updateCenterSettings(
     ...(input.modules?.comunitat !== undefined && { module_comunitat_enabled: input.modules.comunitat }),
     ...(input.modules?.sessionsProva !== undefined && { module_sessions_prova_enabled: input.modules.sessionsProva }),
     ...(input.modules?.documents !== undefined && { module_documents_enabled: input.modules.documents }),
+    ...(input.contact && contactRow(input.contact)),
     updated_at: new Date().toISOString(),
   });
   if (error) throw new Error(error.message);
+}
+
+function contactRow(c: CenterContact) {
+  return {
+    contact_phone: c.phone,
+    contact_whatsapp: !!c.phone && c.whatsapp,
+    contact_email: c.email,
+    notify_email: c.notifyEmail,
+    address: c.address,
+    legal_name: c.legalName,
+    tax_id: c.taxId,
+  };
+}
+
+/** Només el contacte (per a qui no necessita la resta de la configuració). */
+export async function getCenterContact(): Promise<CenterContact> {
+  return (await getCenterSettings()).contact;
+}
+
+/**
+ * On van els avisos interns (proves, altes): el correu dels avisos; si no n'hi
+ * ha, el de contacte; si tampoc, la variable CENTER_EMAIL de l'entorn.
+ */
+export async function internalNotifyEmail(): Promise<string | null> {
+  const c = await getCenterContact();
+  return c.notifyEmail ?? c.email ?? process.env.CENTER_EMAIL ?? null;
 }

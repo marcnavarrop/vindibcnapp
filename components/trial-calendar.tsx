@@ -24,6 +24,7 @@ import {
 import type { PublicTrialData } from "@/lib/data/trial-bookings";
 import { freeServicesAt, occupancyFromSlotKeys, type OccupancyLookup } from "@/lib/free-slots";
 import type { TrialFormState } from "@/app/prova/actions";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -329,6 +330,7 @@ function RequestModal({
                 ),
               })}
             </p>
+            <CenterContactLine className="text-xs" />
             <button
               type="button"
               onClick={onClose}

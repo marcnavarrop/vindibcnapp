@@ -7,6 +7,8 @@ import {
   VOUCHER_MIME,
   type GiftVoucherPdfInput,
 } from "@/lib/invoices/gift-voucher-pdf";
+import { getCenterContact } from "@/lib/data/center-settings";
+import { publicContact } from "@/lib/center-contact";
 
 /**
  * El PDF del val al Storage. Mateix criteri que les factures de liquidació i
@@ -42,7 +44,7 @@ export async function uploadGiftVoucherPdf(opts: {
   content: GiftVoucherPdfInput;
 }): Promise<string> {
   const path = voucherStoragePath(opts.buyerClientId, opts.voucherId);
-  const bytes = await renderGiftVoucherPdf(opts.content);
+  const bytes = await renderGiftVoucherPdf(await withContact(opts.content));
 
   // En simulació no hi ha Storage: la ruta es desa igualment perquè la UI es
   // comporti igual, i el fitxer es torna a generar en descarregar-lo.
@@ -65,7 +67,7 @@ export async function giftVoucherSignedUrl(
   content: GiftVoucherPdfInput,
 ): Promise<string> {
   if (USE_MOCK) {
-    const bytes = await renderGiftVoucherPdf(content);
+    const bytes = await renderGiftVoucherPdf(await withContact(content));
     return `data:${VOUCHER_MIME};base64,${Buffer.from(bytes).toString("base64")}`;
   }
 
@@ -78,4 +80,14 @@ export async function giftVoucherSignedUrl(
   if (error || !data?.signedUrl)
     throw new Error("No s'ha pogut generar l'enllaç de descàrrega.");
   return data.signedUrl;
+}
+
+/**
+ * El contacte del centre al peu del val, el d'ara. Un val ja desat porta el que
+ * hi havia el dia que es va generar.
+ */
+async function withContact(content: GiftVoucherPdfInput): Promise<GiftVoucherPdfInput> {
+  if (content.contact !== undefined) return content;
+  const contact = await getCenterContact().catch(() => null);
+  return { ...content, contact: contact ? publicContact(contact) : null };
 }

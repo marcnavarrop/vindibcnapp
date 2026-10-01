@@ -1548,6 +1548,28 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "La primera pestanya de Configuració, i la pantalla amb més conseqüències de tota l'app: el que canviïs aquí canvia com es comporten les tres àrees per a tothom, a l'instant. Va per blocs; el botó de desar és un de sol, al final.",
         },
+        { t: "h", text: "Contacte del centre" },
+        {
+          t: "p",
+          text: "El primer bloc: com et poden trobar els clients i la gent de fora. És l'única font: el que hi posis surt al manual del client, a les seves pantalles quan un avís li diu que parli amb el centre, a /prova, al registre, al peu dels correus que reben clients i visitants, a les pàgines legals, al val de regal en PDF i a l'esdeveniment quan algú afegeix una sessió al seu calendari. El telèfon i el correu hi surten com a enllaços que es poden tocar.",
+        },
+        {
+          t: "dl",
+          items: [
+            ["Telèfon", "Amb 9 xifres s'hi posa el +34; d'un altre país, escriu-hi el prefix. Es desa net i es veu agrupat («931 23 45 67»). Si té WhatsApp, marca-ho i al costat hi sortirà un enllaç per escriure-hi."],
+            ["Correu de contacte", "La bústia que el centre LLEGEIX. Els correus als clients porten aquesta adreça com a «respondre a»: si un client respon, li arriba aquí. Si la deixes buida, els correus no conviden a respondre."],
+            ["Correu per als avisos interns", "On arriben les sol·licituds de prova i les altes noves. Buit: el correu de contacte."],
+            ["Adreça, titular i NIF", "Per a les pàgines legals (i l'adreça, també per al calendari)."],
+          ],
+        },
+        {
+          t: "warn",
+          text: "No hi posis l'adreça que envia els avisos automàtics (la de «hola@»): aquesta bústia no es llegeix. Si l'escrius, la pantalla t'avisa.",
+        },
+        {
+          t: "note",
+          text: "El que deixis buit no surt enlloc: ni una línia buida ni un text pendent. Sense telèfon ni correu, les frases del manual diuen «avisa el centre» i prou, i el peu dels correus no porta contacte. La vista prèvia del bloc t'ensenya com quedarà.",
+        },
         { t: "h", text: "Horari i reserves" },
         {
           t: "dl",

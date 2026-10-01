@@ -1,3 +1,4 @@
+import { displayPhone, hasContact, telHref, type PublicContact } from "@/lib/center-contact";
 import type { Block, Chapter } from "@/lib/help/client-manual";
 
 /**
@@ -43,9 +44,12 @@ const CA_LABELS: ManualLabels = {
 export function HelpManual({
   chapters,
   labels = CA_LABELS,
+  contact,
 }: {
   chapters: Chapter[];
   labels?: ManualLabels;
+  /** El contacte del centre: el telèfon i el correu del text es tornen enllaços. */
+  contact?: PublicContact;
 }) {
   return (
     <div className="print-manual flex flex-col gap-10">
@@ -59,7 +63,7 @@ export function HelpManual({
           </h2>
           <div className="flex flex-col gap-4">
             {c.blocks.map((b, j) => (
-              <BlockView key={j} block={b} labels={labels} />
+              <BlockView key={j} block={b} labels={labels} contact={contact} />
             ))}
           </div>
         </section>
@@ -110,10 +114,13 @@ function TableOfContents({
 function BlockView({
   block: b,
   labels,
+  contact,
 }: {
   block: Block;
   labels: ManualLabels;
+  contact?: PublicContact;
 }) {
+  const R = (text: string) => <Rich text={text} contact={contact} />;
   switch (b.t) {
     case "h":
       return (
@@ -121,13 +128,13 @@ function BlockView({
       );
 
     case "p":
-      return <p className="text-sm leading-relaxed text-brand-charcoal">{b.text}</p>;
+      return <p className="text-sm leading-relaxed text-brand-charcoal">{R(b.text)}</p>;
 
     case "ul":
       return (
         <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm leading-relaxed text-brand-charcoal">
           {b.items.map((it, i) => (
-            <li key={i}>{it}</li>
+            <li key={i}>{R(it)}</li>
           ))}
         </ul>
       );
@@ -136,7 +143,7 @@ function BlockView({
       return (
         <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm leading-relaxed text-brand-charcoal">
           {b.items.map((it, i) => (
-            <li key={i}>{it}</li>
+            <li key={i}>{R(it)}</li>
           ))}
         </ol>
       );
@@ -148,7 +155,7 @@ function BlockView({
             <div key={i} data-nobreak className="px-4 py-2.5 text-sm">
               <dt className="font-bold text-brand-dark">{term}</dt>
               <dd className="mt-0.5 leading-relaxed text-brand-charcoal">
-                {desc}
+                {R(desc)}
               </dd>
             </div>
           ))}
@@ -160,7 +167,7 @@ function BlockView({
     case "note":
       return (
         <aside className="rounded-xl border-l-4 border-brand-purple bg-brand-purple/5 px-4 py-3 text-sm leading-relaxed text-brand-charcoal">
-          {b.text}
+          {R(b.text)}
         </aside>
       );
 
@@ -168,7 +175,7 @@ function BlockView({
       return (
         <aside className="rounded-xl border-l-4 border-brand-orange bg-brand-orange/5 px-4 py-3 text-sm leading-relaxed text-brand-charcoal">
           <span className="font-bold">{labels.warnPrefix}</span>
-          {b.text}
+          {R(b.text)}
         </aside>
       );
 
@@ -213,4 +220,37 @@ function BlockView({
         </div>
       );
   }
+}
+
+/**
+ * El text d'un bloc amb el telèfon i el correu del centre convertits en
+ * enllaços (tel: i mailto:). Sense contacte, el text tal qual.
+ */
+function Rich({ text, contact }: { text: string; contact?: PublicContact }) {
+  if (!contact || !hasContact(contact)) return <>{text}</>;
+  const links: [string, string][] = [];
+  if (contact.phone) links.push([displayPhone(contact.phone), telHref(contact.phone)]);
+  if (contact.email) links.push([contact.email, `mailto:${contact.email}`]);
+  const re = new RegExp(`(${links.map(([t]) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`);
+  const parts = text.split(re);
+  if (parts.length === 1) return <>{text}</>;
+  return (
+    <>
+      {parts.map((part, i) => {
+        const link = links.find(([t]) => t === part);
+        return link ? (
+          <a
+            key={i}
+            href={link[1]}
+            className="font-bold break-words text-brand-purple underline decoration-brand-purple/30 underline-offset-2"
+            data-contact-link
+          >
+            {part}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        );
+      })}
+    </>
+  );
 }

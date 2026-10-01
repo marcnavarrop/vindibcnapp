@@ -2,7 +2,9 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
-import { sendEmail, CENTER_EMAIL } from "@/lib/email";
+import { sendEmail } from "@/lib/email";
+import { getCenterContact, internalNotifyEmail } from "@/lib/data/center-settings";
+import { publicContact } from "@/lib/center-contact";
 import { renderWelcomeEmail } from "@/lib/notifications/templates";
 import { appLink } from "@/lib/notifications/brand";
 import { writeLog } from "@/lib/notifications/log";
@@ -86,12 +88,13 @@ async function sendWelcome(
   locale?: string | null,
 ): Promise<void> {
   if (!email) return;
-  const { subject, html, text } = renderWelcomeEmail({
+  const { subject, html, text, replyTo } = renderWelcomeEmail({
     name,
     url: appLink("/client"),
     locale: toLocale(locale),
+    contact: publicContact(await getCenterContact()),
   });
-  const res = await sendEmail({ to: email, subject, html, text });
+  const res = await sendEmail({ to: email, subject, html, text, replyTo });
   await writeLog({
     profileId,
     recipient: email,
@@ -135,12 +138,14 @@ async function notifyAdmins(
       data: { ...data, name: a.full_name ?? "" },
     });
   }
-  // Correu general del centre (operatiu: ignora preferències d'usuari).
-  if (CENTER_EMAIL)
+  // Correu dels avisos interns (operatiu: ignora preferències d'usuari):
+  // notify_email, si no el de contacte, si no CENTER_EMAIL.
+  const centerEmail = await internalNotifyEmail();
+  if (centerEmail)
     await notify(
       {
         type: "new_client_registered",
-        recipient: { profileId: null, email: CENTER_EMAIL, phone: null, name: "Centre" },
+        recipient: { profileId: null, email: centerEmail, phone: null, name: "Centre" },
         data: { ...data, name: "" },
       },
       { ignorePreferences: true },

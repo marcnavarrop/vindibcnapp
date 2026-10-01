@@ -25,6 +25,7 @@ import { GiftCta, ReferralCta } from "@/components/client/growth-cards";
 import { formatLongDate } from "@/lib/labels";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/lib/i18n/config";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 export const dynamic = "force-dynamic";
 
@@ -70,9 +71,10 @@ export default async function ClientHome() {
           welcome={t("welcome")}
           today={formatLongDate(new Date(), locale)}
         />
-        <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-          {t("noClientRecord")}
-        </p>
+        <div className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
+          <p>{t("noClientRecord")}</p>
+          <CenterContactLine className="mt-2" />
+        </div>
       </main>
     );
   }

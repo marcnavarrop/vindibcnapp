@@ -8,6 +8,7 @@ import {
 } from "@/app/(client)/client/documents/actions";
 import { assertModuleEnabled } from "@/lib/data/module-guard";
 import { getTranslations } from "next-intl/server";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,10 @@ export default async function ClientDocumentsPage() {
           deleteAction={deleteDocumentAction}
         />
       ) : (
-        <p className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
-          {t("noClientRecord")}
-        </p>
+        <div className="rounded-2xl border border-brand-border bg-white p-6 text-sm text-brand-muted">
+          <p>{t("noClientRecord")}</p>
+          <CenterContactLine className="mt-2" />
+        </div>
       )}
     </main>
   );

@@ -1,6 +1,8 @@
 import "server-only";
 import { sendEmail } from "@/lib/email";
 import { renderEmail } from "@/lib/notifications/templates";
+import { getCenterContact } from "@/lib/data/center-settings";
+import { publicContact } from "@/lib/center-contact";
 import type { NotificationEvent, NotificationLogStatus } from "@/lib/notifications/types";
 import type { NotificationRecipient } from "@/lib/notifications/types";
 
@@ -22,8 +24,10 @@ export async function sendViaEmail(
 ): Promise<ChannelResult> {
   if (!recipient.email)
     return { status: "failed", error: "Sense adreça de correu" };
-  const { subject, html, text } = renderEmail(event);
-  const res = await sendEmail({ to: recipient.email, subject, html, text });
+  // El contacte del centre: el peu i el Reply-To dels correus a clients.
+  const contact = publicContact(await getCenterContact());
+  const { subject, html, text, replyTo } = renderEmail(event, contact);
+  const res = await sendEmail({ to: recipient.email, subject, html, text, replyTo });
   return res.ok
     ? { status: "sent", providerId: res.id }
     : { status: "failed", error: res.error };

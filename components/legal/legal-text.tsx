@@ -13,6 +13,32 @@ export const RICH = {
   b: (chunks: ReactNode) => <strong>{chunks}</strong>,
 };
 
+/**
+ * Els valors de les pàgines legals que surten de Configuració → Centre (0100):
+ * titular, NIF, adreça i correu de contacte. Buit → «none», i el text tria la
+ * frase sense aquell tros (vegeu `legalPages.*.p1` i `p8`). Mai un [CLAUDÀTOR].
+ */
+export function legalValues(c: {
+  legalName: string | null;
+  taxId: string | null;
+  address: string | null;
+  email: string | null;
+}) {
+  const email = c.email ?? "none";
+  return {
+    ...RICH,
+    name: c.legalName ?? "none",
+    nif: c.taxId ?? "none",
+    address: c.address ?? "none",
+    email,
+    mail: (chunks: ReactNode) => (
+      <a href={`mailto:${email}`} className="font-bold text-brand-purple underline">
+        {chunks}
+      </a>
+    ),
+  };
+}
+
 export function H({ children }: { children: ReactNode }) {
   return <h2 className="mt-4 text-lg font-bold text-brand-dark">{children}</h2>;
 }

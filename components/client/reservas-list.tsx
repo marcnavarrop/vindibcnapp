@@ -58,6 +58,7 @@ import { centerDateStr } from "@/lib/center-time";
 /** Quants dies ensenya la tira: d'avui a tres setmanes vista. */
 export { STRIP_DAYS } from "@/lib/client-day-slots";
 import { STRIP_DAYS } from "@/lib/client-day-slots";
+import { CenterContactLine } from "@/components/center-contact-line";
 /** Les properes que surten de cop a la capçalera; la resta, amb «Veure-les totes». */
 const UPCOMING_SHOWN = 3;
 
@@ -475,6 +476,7 @@ export function ReservasList({
     return (
       <div className="rounded-xl border border-brand-border bg-white p-4">
         <p className="text-sm text-brand-muted">{tr("noBonos")}</p>
+        <CenterContactLine className="mt-1" />
         <Link
           href="/client/bonos"
           className={`mt-3 inline-flex min-h-11 items-center rounded-lg bg-brand-purple px-4 text-sm font-bold text-white active:bg-brand-purple-dark ${TAP}`}
@@ -540,6 +542,7 @@ export function ReservasList({
               ? tr("noTrainer.bodyOthers")
               : tr("noTrainer.bodyOnly")}
           </p>
+          <CenterContactLine className="mt-1" />
         </div>
       ) : (
         <>

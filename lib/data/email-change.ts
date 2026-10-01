@@ -1,4 +1,6 @@
 import "server-only";
+import { getCenterContact } from "@/lib/data/center-settings";
+import { publicContact } from "@/lib/center-contact";
 import { createHash, randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { passwordIsCorrect } from "@/lib/data/reauth";
@@ -154,16 +156,19 @@ export async function requestEmailChange(input: {
   if (insErr) return "failed";
 
   // Enllaç al correu NOU. És l'únic dels dos que porta acció.
+  const contact = publicContact(await getCenterContact());
   const rendered = renderEmailChangeEmail({
     name: input.name,
     url: appLink(`/auth/confirm-email?r=${secret}`),
     locale: input.locale,
+    contact,
   });
   const res = await sendEmail({
     to: newEmail,
     subject: rendered.subject,
     html: rendered.html,
     text: rendered.text,
+    replyTo: rendered.replyTo,
   });
   await writeLog({
     profileId: input.profileId,
@@ -183,12 +188,14 @@ export async function requestEmailChange(input: {
     oldEmail: currentEmail,
     newEmail,
     locale: input.locale,
+    contact,
   });
   const alertRes = await sendEmail({
     to: currentEmail,
     subject: alert.subject,
     html: alert.html,
     text: alert.text,
+    replyTo: alert.replyTo,
   });
   await writeLog({
     profileId: input.profileId,

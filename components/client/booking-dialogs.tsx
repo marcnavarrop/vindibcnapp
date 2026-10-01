@@ -20,6 +20,7 @@ import {
   type WaitlistState,
 } from "@/app/(client)/client/reservas/waitlist-actions";
 import { canCancelAt } from "@/lib/cancellation";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 /**
  * Els diàlegs de reservar, de la teva sessió i de la cua.
@@ -596,9 +597,10 @@ export function OwnModal({
             </button>
           )
         ) : (
-          <p className="mt-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
-            {t("own.tooLate", { hours: minCancellationHours })}
-          </p>
+          <div className="mt-5 rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
+            <p>{t("own.tooLate", { hours: minCancellationHours })}</p>
+            <CenterContactLine className="mt-1 text-xs" />
+          </div>
         ))}
       {!confirming && !recurrent && (
         <button type="button" onClick={onClose} className={`mt-3 w-full ${QUIET}`}>

@@ -6,6 +6,7 @@ import { staticI18n } from "@/lib/i18n/no-request";
 import { deOf, formatDate } from "@/lib/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { ServiceType } from "@/types/database";
+import { contactText, type PublicContact } from "@/lib/center-contact";
 
 /**
  * El PDF del val de regal.
@@ -115,6 +116,11 @@ export type GiftVoucherPdfInput = {
    * ser una font que doni el mateix resultat des dels quatre camins.
    */
   locale?: Locale | null;
+  /**
+   * El contacte del centre (Configuració → Centre): qui rep el val sovint no té
+   * compte i no té cap altra manera de trobar-lo. Sense, no s'hi posa res.
+   */
+  contact?: PublicContact | null;
 };
 
 export async function renderGiftVoucherPdf(
@@ -296,6 +302,14 @@ export async function renderGiftVoucherPdf(
     size: 9,
     color: MUTED,
   });
+  const contactLine = input.contact ? contactText(input.contact, i.ns("contact")("whatsapp")) : null;
+  if (contactLine)
+    drawText(ctx, contactLine, {
+      x: RIGHT - widthOf(ctx, contactLine, 8.5),
+      y: footerTop - 54,
+      size: 8.5,
+      color: MUTED,
+    });
 
   return doc.save();
 }

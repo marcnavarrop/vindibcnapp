@@ -11,6 +11,7 @@ import {
 import { getTranslations } from "next-intl/server";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { buildClientManual } from "@/lib/help/client-manual";
+import { publicContact } from "@/lib/center-contact";
 import { HelpManual } from "@/components/client/help-manual";
 import { PrintManualButton } from "@/components/client/print-manual-button";
 import { BackToTop } from "@/components/client/back-to-top";
@@ -74,6 +75,7 @@ export default async function ClientAjudaPage() {
       documentsMaxMb: DOCUMENT_MAX_MB,
       trialMinAdvanceHours: TRIAL_MIN_ADVANCE_HOURS,
       trialMaxAdvanceDays: TRIAL_MAX_ADVANCE_DAYS,
+      contact: publicContact(settings.contact),
     },
     locale,
   );
@@ -90,6 +92,7 @@ export default async function ClientAjudaPage() {
 
       <HelpManual
         chapters={chapters}
+        contact={publicContact(settings.contact)}
         labels={{
           toc: t("toc"),
           tocAria: t("tocAria"),

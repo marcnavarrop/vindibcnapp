@@ -1,4 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { CenterContactProvider } from "@/components/center-contact-line";
+import { publicContact } from "@/lib/center-contact";
 import { PreModeBanner } from "@/components/pre-mode-banner";
 import { SupportFab } from "@/components/support-fab";
 import { getViewer } from "@/lib/auth";
@@ -93,7 +95,7 @@ export async function AppShell({
             que és el mateix criteri que el `SupportFab` de sota. Quan el mode
             està apagat no pinta res. */}
         <PreModeBanner />
-        {children}
+        <CenterContactProvider contact={publicContact(settings.contact)}>{children}</CenterContactProvider>
       </div>
 
       {/* Accés ràpid al suport des de qualsevol pantalla de les àrees internes.

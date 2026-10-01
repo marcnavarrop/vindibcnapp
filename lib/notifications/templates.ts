@@ -10,6 +10,7 @@ import {
   emailLogoUrl,
   EMAIL_LOGO_SIZE,
 } from "@/lib/notifications/brand";
+import { displayPhone, hasContact, telHref, whatsappHref, type PublicContact } from "@/lib/center-contact";
 
 /** Escapa text per evitar injecció d'HTML des de dades d'usuari. */
 function esc(s: string): string {
@@ -63,7 +64,7 @@ function ctaButton(cta: Cta): string {
   </table>`;
 }
 
-function footer(kind: FooterKind, i: StaticI18n): string {
+function footer(kind: FooterKind, i: StaticI18n, contact?: PublicContact | null): string {
   const f = i.ns("emails.footer");
   const privacy = appLink("/legal/privacitat");
   let prefsLine = "";
@@ -86,6 +87,7 @@ function footer(kind: FooterKind, i: StaticI18n): string {
     <p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:${BRAND.muted};">
       <strong style="color:${BRAND.charcoal};">${CENTER_NAME}</strong> · ${f("tagline")}
     </p>
+    ${contactFooterHtml(kind, i, contact)}
     <p style="margin:0;font-size:12px;line-height:1.5;color:${BRAND.muted};">
       ${prefsLine ? `${prefsLine}&nbsp;·&nbsp;` : ""}<a href="${privacy}" style="color:${BRAND.muted};text-decoration:underline;">${f("privacy")}</a>
     </p>
@@ -110,7 +112,7 @@ function brandHeader(): string {
   return `<img src="${emailLogoUrl()}" width="${width}" height="${height}" alt="${CENTER_NAME}" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:${BRAND.white};">`;
 }
 
-function layout(block: Block, i: StaticI18n): string {
+function layout(block: Block, i: StaticI18n, contact?: PublicContact | null): string {
   const bodyParts: string[] = [];
   bodyParts.push(
     `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:${BRAND.dark};font-weight:800;">${esc(block.heading)}</h1>`,
@@ -130,7 +132,7 @@ function layout(block: Block, i: StaticI18n): string {
           ${brandHeader()}
         </td></tr>
         <tr><td style="padding:30px 32px 8px;">${bodyParts.join("")}</td></tr>
-        ${footer(block.footer, i)}
+        ${footer(block.footer, i, contact)}
       </table>
     </td></tr>
   </table>
@@ -138,7 +140,7 @@ function layout(block: Block, i: StaticI18n): string {
 }
 
 /** Versió text pla a partir dels mateixos continguts (entregabilitat + fallback). */
-function plain(block: Block, i: StaticI18n): string {
+function plain(block: Block, i: StaticI18n, contact?: PublicContact | null): string {
   const lines: string[] = [block.heading, ""];
   lines.push(...block.intro);
   if (block.details && block.details.length) {
@@ -155,6 +157,8 @@ function plain(block: Block, i: StaticI18n): string {
   }
   const f = i.ns("emails.footer");
   lines.push("", "—", `${CENTER_NAME} · ${f("tagline")}`);
+  const contactLine = contactFooterText(block.footer, i, contact);
+  if (contactLine) lines.push(contactLine);
   if (block.footer === "client")
     lines.push(f("managePlain", { url: appLink("/client/configuracio") }));
   else if (block.footer === "trainer")
@@ -165,7 +169,57 @@ function plain(block: Block, i: StaticI18n): string {
 
 // ─────────────────────────── Plantilles per esdeveniment ───────────────────────────
 
-export type RenderedEmail = { subject: string; html: string; text: string };
+export type RenderedEmail = {
+  subject: string;
+  html: string;
+  text: string;
+  /**
+   * La bústia on van les respostes: el correu de contacte del centre, i NOMÉS
+   * en els correus a clients i visitants, i NOMÉS si està informat. El
+   * remitent (NOTIFICATIONS_FROM_EMAIL) no es llegeix: sense aquest camp, no
+   * s'ha de convidar ningú a respondre.
+   */
+  replyTo: string | null;
+};
+
+/** Qui rep aquest peu és de fora (client o visitant): se li ensenya el contacte. */
+const OUTSIDE: FooterKind[] = ["client", "visitor", "plain"];
+
+function replyToFor(block: Block, contact: PublicContact | null | undefined): string | null {
+  return OUTSIDE.includes(block.footer) && contact?.email ? contact.email : null;
+}
+
+/** Es pot convidar a «respondre a aquest correu»? Només si hi ha on arribar. */
+function canReply(contact: PublicContact | null | undefined): boolean {
+  return !!contact?.email;
+}
+
+/** La línia de contacte del peu (HTML), o res. */
+function contactFooterHtml(kind: FooterKind, i: StaticI18n, contact: PublicContact | null | undefined): string {
+  if (!OUTSIDE.includes(kind) || !contact || !hasContact(contact)) return "";
+  const f = i.ns("emails.footer");
+  const wa = i.ns("contact")("whatsapp");
+  const link = (href: string, text: string) =>
+    `<a href="${href}" style="color:${BRAND.purple};text-decoration:underline;">${esc(text)}</a>`;
+  const parts: string[] = [];
+  if (contact.phone)
+    parts.push(
+      link(telHref(contact.phone), displayPhone(contact.phone)) +
+        (contact.whatsapp ? ` (${link(whatsappHref(contact.phone), wa)})` : ""),
+    );
+  if (contact.email) parts.push(link(`mailto:${contact.email}`, contact.email));
+  return `<p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:${BRAND.muted};" data-contact>${esc(f("contact"))}: ${parts.join(" · ")}</p>`;
+}
+
+/** La mateixa línia, en text pla. */
+function contactFooterText(kind: FooterKind, i: StaticI18n, contact: PublicContact | null | undefined): string | null {
+  if (!OUTSIDE.includes(kind) || !contact || !hasContact(contact)) return null;
+  const f = i.ns("emails.footer");
+  const parts: string[] = [];
+  if (contact.phone) parts.push(displayPhone(contact.phone) + (contact.whatsapp ? ` (${i.ns("contact")("whatsapp")})` : ""));
+  if (contact.email) parts.push(contact.email);
+  return `${f("contact")}: ${parts.join(" · ")}`;
+}
 
 /** Email d'invitació (crear contrasenya) amb la marca. */
 export function renderInviteEmail(input: {
@@ -173,6 +227,8 @@ export function renderInviteEmail(input: {
   url: string;
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
+  /** El contacte del centre: peu i Reply-To. */
+  contact?: PublicContact | null;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
   const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
@@ -188,8 +244,9 @@ export function renderInviteEmail(input: {
   };
   return {
     subject: "Benvingut/da a VindiBCN — crea la teva contrasenya",
-    html: layout(block, i),
-    text: plain(block, i),
+    html: layout(block, i, input.contact),
+    text: plain(block, i, input.contact),
+    replyTo: replyToFor(block, input.contact),
   };
 }
 
@@ -199,6 +256,8 @@ export function renderRecoveryEmail(input: {
   url: string;
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
+  /** El contacte del centre: peu i Reply-To. */
+  contact?: PublicContact | null;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
   const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
@@ -214,8 +273,9 @@ export function renderRecoveryEmail(input: {
   };
   return {
     subject: "Restablir la teva contrasenya — VindiBCN",
-    html: layout(block, i),
-    text: plain(block, i),
+    html: layout(block, i, input.contact),
+    text: plain(block, i, input.contact),
+    replyTo: replyToFor(block, input.contact),
   };
 }
 
@@ -225,6 +285,8 @@ export function renderWelcomeEmail(input: {
   url: string;
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
+  /** El contacte del centre: peu i Reply-To. */
+  contact?: PublicContact | null;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
   const te = i.ns("emails");
@@ -236,13 +298,15 @@ export function renderWelcomeEmail(input: {
     heading: t("heading"),
     intro: [hola, t("intro")],
     cta: { label: t("cta"), url: input.url },
-    outro: [t("outro")],
+    // «Respon a aquest correu» només si hi ha on arribar (vegeu `canReply`).
+    outro: [canReply(input.contact) ? t("outro") : t("outroNoReply")],
     footer: "client",
   };
   return {
     subject: t("subject"),
-    html: layout(block, i),
-    text: plain(block, i),
+    html: layout(block, i, input.contact),
+    text: plain(block, i, input.contact),
+    replyTo: replyToFor(block, input.contact),
   };
 }
 
@@ -261,6 +325,8 @@ export function renderEmailChangeEmail(input: {
   url: string;
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
+  /** El contacte del centre: peu i Reply-To. */
+  contact?: PublicContact | null;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
   const te = i.ns("emails");
@@ -277,8 +343,9 @@ export function renderEmailChangeEmail(input: {
   };
   return {
     subject: t("subject"),
-    html: layout(block, i),
-    text: plain(block, i),
+    html: layout(block, i, input.contact),
+    text: plain(block, i, input.contact),
+    replyTo: replyToFor(block, input.contact),
   };
 }
 
@@ -300,6 +367,8 @@ export function renderEmailChangeAlertEmail(input: {
   newEmail: string;
   /** Idioma de qui el rep. Sense res, català. */
   locale?: Locale | null;
+  /** El contacte del centre: peu i Reply-To. */
+  contact?: PublicContact | null;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
   const te = i.ns("emails");
@@ -315,12 +384,17 @@ export function renderEmailChangeAlertEmail(input: {
   };
   return {
     subject: t("subject"),
-    html: layout(block, i),
-    text: plain(block, i),
+    html: layout(block, i, input.contact),
+    text: plain(block, i, input.contact),
+    replyTo: replyToFor(block, input.contact),
   };
 }
 
-export function renderEmail(event: NotificationEvent): RenderedEmail {
+export function renderEmail(
+  event: NotificationEvent,
+  /** El contacte del centre: peu i Reply-To dels correus a clients i visitants. */
+  contact?: PublicContact | null,
+): RenderedEmail {
   // L'idioma surt del DESTINATARI, no de qui envia. Un mateix esdeveniment
   // —les novetats de la comunitat— arriba a clients i professionals dins del
   // mateix bucle, i cadascú l'ha de rebre en el seu.
@@ -488,7 +562,9 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
             ],
             details: rows([["Data i hora", when]]),
             outro: [
-              "T'hi esperem! Arriba uns minuts abans amb roba còmoda. Si tens qualsevol dubte, respon a aquest correu.",
+              canReply(contact)
+                ? "T'hi esperem! Arriba uns minuts abans amb roba còmoda. Si tens qualsevol dubte, respon a aquest correu."
+                : "T'hi esperem! Arriba uns minuts abans amb roba còmoda.",
             ],
             footer: "visitor",
           }
@@ -907,7 +983,12 @@ export function renderEmail(event: NotificationEvent): RenderedEmail {
     }
   }
 
-  return { subject, html: layout(block, i), text: plain(block, i) };
+  return {
+    subject,
+    html: layout(block, i, contact),
+    text: plain(block, i, contact),
+    replyTo: replyToFor(block, contact),
+  };
 }
 
 /** Construeix files de detall, ometent les que no tinguin valor. */

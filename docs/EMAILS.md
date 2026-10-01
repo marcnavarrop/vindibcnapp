@@ -32,14 +32,14 @@ dependemos del envío de emails de Supabase.
 | `reservation_confirmed` / `reservation_cancelled` | cliente | ✅ |
 | `reservation_rescheduled` | cliente (solo cuando el **equipo** le cambia la hora; el cliente no puede reprogramar) | ✅ siempre |
 | `session_reminder` | cliente | ❌ (opt-in) |
-| `trial_request` | entrenador del hueco + `CENTER_EMAIL` | ❌ (opt-in) |
+| `trial_request` | entrenador del hueco + correo de avisos internos (`internalNotifyEmail`) | ❌ (opt-in) |
 | `trial_status` | visitante de la prueba | ✅ |
 | `bono_low` | cliente (al cruzar el umbral configurable; **no** si el bono tiene `auto_renew`) | ❌ |
 | `bono_auto_renewed` | cliente (bono agotado con renovación pedida: nace uno pendiente) | ✅ siempre |
 | `community` | clientes/entrenadores que lo activen | ❌ |
 | `trainer_booking_received` / `trainer_booking_cancelled` | entrenador (solo si la acción la hace el **cliente**) | ✅ |
 | `trainer_daily_agenda` | entrenador (opt-in) | ❌ |
-| `new_client_registered` | admins con la pref + `CENTER_EMAIL` | ✅ |
+| `new_client_registered` | admins con la pref + correo de avisos internos (`internalNotifyEmail`) | ✅ |
 
 ### Cambio de hora (`reservation_rescheduled`)
 
@@ -85,6 +85,23 @@ dependemos del envío de emails de Supabase.
   300` en `admin/community/new`); `after()` cuenta dentro. Un lote tarda ~1 s.
 - Prueba: `npm run community:check` (simulación, transporte falso, 1.200
   destinatarios).
+
+### Contacto del centro y Reply-To (0100)
+
+- `center_settings`: `contact_phone`, `contact_whatsapp`, `contact_email`,
+  `notify_email`, `address`, `legal_name`, `tax_id`. Se editan en Configuració →
+  Centre; `lib/center-contact.ts` valida y pinta.
+- **Remitente ≠ contacto.** `NOTIFICATIONS_FROM_EMAIL` (hola@…) solo envía; nadie
+  lo lee. `contact_email` es el buzón que el centro lee.
+- **Reply-To = `contact_email`**, solo en correos a clientes y visitantes
+  (pie `client`, `visitor`, `plain`) y solo si está relleno
+  (`RenderedEmail.replyTo`). Sin él, ningún texto invita a responder
+  (`welcome.outro` → `outroNoReply`; la prueba confirmada, sin la frase).
+- **Pie:** «Contacte: tel · (WhatsApp) · mailto» en esos mismos correos; nunca
+  en los del profesional o el admin.
+- **Avisos internos** (`trial_request`, `new_client_registered`):
+  `notify_email` → `contact_email` → `CENTER_EMAIL`.
+- Prueba: `npm run contact:check`.
 
 ### Cron diario
 
@@ -223,7 +240,7 @@ producción y ninguna visible para `tsc`, el lint ni el build:
 | `NOTIFICATIONS_FROM_EMAIL` | remitente, p. ej. `VindiBCN <hola@vindibcn.com>` (acepta `Nom <email>`) |
 | `NEXT_PUBLIC_APP_URL` | base de los enlaces/CTA (`https://vindibcnapp.vercel.app`) |
 | `CRON_SECRET` | protege `/api/cron/reminders` |
-| `CENTER_EMAIL` *(opcional)* | correo del centro para avisos de `trial_request` |
+| `CENTER_EMAIL` *(opcional)* | ÚLTIMO recurso de los avisos internos, si en Configuració no hay ni `notify_email` ni `contact_email` |
 | `EMAIL_LOGO_URL` *(opcional)* | logo del email; por defecto `/logo_vindi.png` del dominio |
 
 ---

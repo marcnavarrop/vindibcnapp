@@ -5,6 +5,8 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { updateCenterSettingsAction } from "@/app/(admin)/admin/configuracio/center-actions";
 import type { CenterSettings } from "@/lib/data/center-settings";
 import { TAP } from "@/lib/utils";
+import { ContactLinks } from "@/components/center-contact-line";
+import { normalizeEmail, normalizePhone } from "@/lib/center-contact";
 
 /** Bloc temàtic: títol, descripció i barra esquerra. Tots els ajustos de la
  *  pàgina n'usen un, perquè cap secció es vegi diferent de les altres només
@@ -113,8 +115,76 @@ function NumField({
   );
 }
 
-export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
+/** Camp de text amb etiqueta i ajuda. */
+function TextField({
+  name,
+  label,
+  help,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  error,
+}: {
+  name: string;
+  label: string;
+  help: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  error?: string | null;
+}) {
+  return (
+    <div>
+      <label htmlFor={name} className="mb-1 block text-sm font-bold text-brand-dark">
+        {label}
+      </label>
+      <p className="mb-2 text-xs text-brand-muted">{help}</p>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={!!error || undefined}
+        aria-describedby={error ? `${name}-error` : undefined}
+        className="w-full max-w-md rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none aria-[invalid]:border-error"
+      />
+      {error && (
+        <p id={`${name}-error`} className="mt-1 text-xs text-error">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function CenterSettingsForm({
+  settings,
+  senderEmail,
+}: {
+  settings: CenterSettings;
+  /** El remitent dels avisos automàtics (NOTIFICATIONS_FROM_EMAIL): no es llegeix. */
+  senderEmail: string | null;
+}) {
   const [state, action] = useActionState(updateCenterSettingsAction, {});
+  const c = settings.contact;
+  const [phone, setPhone] = useState(c.phone ?? "");
+  const [whatsapp, setWhatsapp] = useState(c.whatsapp);
+  const [email, setEmail] = useState(c.email ?? "");
+  const [notifyEmail, setNotifyEmail] = useState(c.notifyEmail ?? "");
+  const [address, setAddress] = useState(c.address ?? "");
+  const [legalName, setLegalName] = useState(c.legalName ?? "");
+  const [taxId, setTaxId] = useState(c.taxId ?? "");
+  // Validació en directe (la definitiva és la del servidor).
+  const phoneCheck = normalizePhone(phone);
+  const emailCheck = normalizeEmail(email);
+  const notifyCheck = normalizeEmail(notifyEmail);
+  const previewPhone = "value" in phoneCheck ? phoneCheck.value : null;
+  const previewEmail = "value" in emailCheck ? emailCheck.value : null;
+  const isSender = (v: string) => !!senderEmail && v.trim().toLowerCase() === senderEmail;
   const [trainersSeColleagues, setTrainersSeColleagues] = useState(
     settings.trainersSeColleaguesReservations,
   );
@@ -147,6 +217,108 @@ export function CenterSettingsForm({ settings }: { settings: CenterSettings }) {
       action={action}
       className="flex flex-col gap-6 rounded-2xl border border-brand-border bg-white p-6"
     >
+      <Group
+        title="Contacte del centre"
+        desc="Com et poden contactar els clients i qui visita /prova. Surt al manual del client, a les seves pantalles quan cal parlar amb el centre, al peu dels correus, a les pàgines legals i al val de regal. El que deixis buit no surt enlloc."
+      >
+        <TextField
+          name="contactPhone"
+          label="Telèfon"
+          help="Amb 9 xifres s'hi posa el +34. Si és d'un altre país, escriu-hi el prefix."
+          value={phone}
+          onChange={setPhone}
+          type="tel"
+          placeholder="931 23 45 67"
+          error={"error" in phoneCheck ? phoneCheck.error : null}
+        />
+        <label className="-mt-2 flex items-center gap-2 text-sm text-brand-dark">
+          <input
+            type="checkbox"
+            checked={whatsapp && !!previewPhone}
+            disabled={!previewPhone}
+            onChange={(e) => setWhatsapp(e.target.checked)}
+            className="h-4 w-4 accent-brand-purple"
+          />
+          Aquest telèfon té WhatsApp
+        </label>
+        <input type="hidden" name="contactWhatsapp" value={whatsapp && previewPhone ? "true" : "false"} />
+        <TextField
+          name="contactEmail"
+          label="Correu de contacte"
+          help="La bústia que el centre llegeix de debò. Els correus als clients s'hi podran respondre."
+          value={email}
+          onChange={setEmail}
+          type="email"
+          placeholder="recepcio@…"
+          error={"error" in emailCheck ? emailCheck.error : null}
+        />
+        {isSender(email) && (
+          <p role="alert" className="-mt-3 rounded-lg bg-error/5 px-3 py-2 text-sm font-bold text-error" data-sender-warning>
+            Aquesta bústia només envia avisos automàtics i no es llegeix. Posa-hi la que el centre llegeix.
+          </p>
+        )}
+        <TextField
+          name="notifyEmail"
+          label="Correu per als avisos interns"
+          help="On arriben les sol·licituds de prova i les altes noves. Buit: el correu de contacte."
+          value={notifyEmail}
+          onChange={setNotifyEmail}
+          type="email"
+          placeholder={email || "avisos@…"}
+          error={"error" in notifyCheck ? notifyCheck.error : null}
+        />
+        {isSender(notifyEmail) && (
+          <p role="alert" className="-mt-3 rounded-lg bg-error/5 px-3 py-2 text-sm font-bold text-error" data-sender-warning>
+            Aquesta bústia només envia avisos automàtics i no es llegeix. Posa-hi la que el centre llegeix.
+          </p>
+        )}
+        <TextField
+          name="address"
+          label="Adreça"
+          help="Una línia. Surt a les pàgines legals i a l'esdeveniment quan algú afegeix una sessió al seu calendari."
+          value={address}
+          onChange={setAddress}
+          placeholder="Carrer…, 08012 Barcelona"
+        />
+        <TextField
+          name="legalName"
+          label="Titular (pàgines legals)"
+          help="El nom de la persona o l'empresa responsable del web i de les dades."
+          value={legalName}
+          onChange={setLegalName}
+        />
+        <TextField
+          name="taxId"
+          label="NIF / CIF del titular"
+          help="Lletres i xifres, sense espais."
+          value={taxId}
+          onChange={setTaxId}
+        />
+        <div className="rounded-xl bg-brand-bg p-4" data-contact-preview>
+          <p className="text-xs font-bold tracking-wide text-brand-muted uppercase">Així ho veurà el client</p>
+          {previewPhone || previewEmail ? (
+            <div className="mt-2 flex flex-col gap-2 text-sm text-brand-charcoal">
+              <p>
+                <span className="text-brand-muted">Al manual: </span>«Si passa una hora i segueix sense aparèixer, avisa el centre:{" "}
+                <ContactLinks
+                  contact={{ phone: previewPhone, whatsapp: whatsapp && !!previewPhone, email: previewEmail, address: null }}
+                  whatsappLabel="també per WhatsApp"
+                />
+                .»
+              </p>
+              <p>
+                <span className="text-brand-muted">Al peu dels correus: </span>
+                <ContactLinks contact={{ phone: previewPhone, whatsapp: whatsapp && !!previewPhone, email: previewEmail, address: null }} />
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-brand-muted">
+              Sense telèfon ni correu, el client no veu cap línia de contacte: les frases del manual diuen «avisa el centre» sense res més, i el peu dels correus no en porta.
+            </p>
+          )}
+        </div>
+      </Group>
+
       <Group
         title="Horari i reserves"
         desc="La franja que mostren tots els calendaris i quanta antelació cal per reservar o cancel·lar."

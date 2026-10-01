@@ -19,6 +19,7 @@ import { formatDate } from "@/lib/labels";
 import { getTranslations } from "next-intl/server";
 import type { ConsentStatus } from "@/lib/data/consents";
 import type { Locale } from "@/lib/i18n/config";
+import { CenterContactLine } from "@/components/center-contact-line";
 
 export const dynamic = "force-dynamic";
 
@@ -166,6 +167,7 @@ async function PrivacySection({
             {t("healthGiven", {
               date: formatDate(consent.healthDataAt, locale),
             })}
+            <CenterContactLine className="mt-1" />
           </span>
         ) : (
           <>
