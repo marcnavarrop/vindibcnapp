@@ -236,6 +236,8 @@ targeta de prova `4242 4242 4242 4242`.
 
 ## Documentació relacionada
 
+- **`docs/ARQUITECTURA.md`**: la visió tècnica per a un revisor extern (model de
+  seguretat, integritat financera, decisions d'enginyeria amb fitxer i migració).
 - **`docs/EMAILS.md`**: tots els correus, qui els rep, si es poden apagar, el
   contacte i el Reply-To, i el correu de la comunitat.
 - **`docs/vindiapp-guia-de-proves.html`**: la guia de proves per pantalla, amb el
