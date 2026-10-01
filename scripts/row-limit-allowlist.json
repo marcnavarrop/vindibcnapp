@@ -1,0 +1,494 @@
+{
+  "lib/data/announcements.ts::listAnnouncements::announcements": {
+    "category": "pendent",
+    "reason": "Tots els anuncis del tauler; creix cada setmana. Pàgines quan avisi."
+  },
+  "lib/data/availability-blocks.ts::listAllBlocksLite::availability_blocks": {
+    "category": "acotada",
+    "reason": "Només els que acaben després de `from` (la finestra de qui crida)."
+  },
+  "lib/data/availability-blocks.ts::listBlocksForAdmin::availability_blocks": {
+    "category": "acotada",
+    "reason": "Finestra de l'agenda (from/to)."
+  },
+  "lib/data/availability-blocks.ts::listBlocksLite::availability_blocks": {
+    "category": "pendent",
+    "reason": "Tot l'històric de bloquejos d'UN professional; creix amb els anys."
+  },
+  "lib/data/availability-blocks.ts::listOwnBlocksInRange::availability_blocks": {
+    "category": "acotada",
+    "reason": "Un professional i la finestra de l'agenda."
+  },
+  "lib/data/availability-blocks.ts::listUpcomingBlocks::availability_blocks": {
+    "category": "acotada",
+    "reason": "Els futurs d'un professional."
+  },
+  "lib/data/availability-orphans.ts::loadCommitments::bonos": {
+    "category": "acotada",
+    "reason": "Per ids dels compromisos d'un professional."
+  },
+  "lib/data/availability-orphans.ts::loadCommitments::clients": {
+    "category": "acotada",
+    "reason": "Per ids dels compromisos d'un professional."
+  },
+  "lib/data/availability-orphans.ts::loadCommitments::reservations": {
+    "category": "acotada",
+    "reason": "Les futures d'un professional."
+  },
+  "lib/data/availability-orphans.ts::loadCommitments::trial_bookings": {
+    "category": "acotada",
+    "reason": "Les actives futures d'un professional."
+  },
+  "lib/data/availability-orphans.ts::loadCommitments::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Les esperes futures d'un professional."
+  },
+  "lib/data/availability.ts::listAllTrainerRulesLite::availability_rules": {
+    "category": "acotada",
+    "reason": "Regles d'horari de tots els professionals: configuració, poques files."
+  },
+  "lib/data/availability.ts::listAvailabilityLite::availability_rules": {
+    "category": "acotada",
+    "reason": "Regles d'un professional."
+  },
+  "lib/data/availability.ts::listAvailabilityRules::availability_rules": {
+    "category": "acotada",
+    "reason": "Regles d'un professional."
+  },
+  "lib/data/bonus.ts::listPayouts::bonus_payouts": {
+    "category": "pendent",
+    "reason": "Tots els pagaments de bonus; creix cada mes."
+  },
+  "lib/data/bonus.ts::listTiers::bonus_tiers": {
+    "category": "acotada",
+    "reason": "Configuració del bonus."
+  },
+  "lib/data/bonus.ts::listWeights::bonus_service_weights": {
+    "category": "acotada",
+    "reason": "Configuració del bonus."
+  },
+  "lib/data/bonus.ts::listWorkerSettings::bonus_worker_settings": {
+    "category": "acotada",
+    "reason": "Una fila per professional."
+  },
+  "lib/data/booking-series.ts::cancelSeries::reservations": {
+    "category": "acotada",
+    "reason": "Les futures d'una sèrie."
+  },
+  "lib/data/booking-series.ts::countPlacedOccurrences::reservations": {
+    "category": "acotada",
+    "reason": "Una sèrie."
+  },
+  "lib/data/booking-series.ts::countPlacedOccurrences::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Una sèrie."
+  },
+  "lib/data/booking-series.ts::listActiveSeries::booking_series": {
+    "category": "acotada",
+    "reason": "Les sèries d'un client."
+  },
+  "lib/data/booking-series.ts::listActiveSeries::reservations": {
+    "category": "acotada",
+    "reason": "Les futures de les sèries d'un client."
+  },
+  "lib/data/booking-series.ts::listActiveSeries::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Les esperes de les sèries d'un client."
+  },
+  "lib/data/booking-series.ts::loadContext::bonos": {
+    "category": "acotada",
+    "reason": "Els bons d'un client d'un servei."
+  },
+  "lib/data/booking-series.ts::loadContext::profiles": {
+    "category": "acotada",
+    "reason": "Els professionals."
+  },
+  "lib/data/booking-series.ts::loadContext::reservations": {
+    "category": "pendent",
+    "reason": "Reserves 'booked' de tot el centre des d'avui, per resoldre una sèrie. Mateix cas que el calendari del client."
+  },
+  "lib/data/centers.ts::listCenters::centers": {
+    "category": "acotada",
+    "reason": "Configuració: els centres."
+  },
+  "lib/data/client-calendar.ts::getClientCenterData::bonos": {
+    "category": "acotada",
+    "reason": "Els bons d'un client."
+  },
+  "lib/data/client-calendar.ts::getClientCenterData::profiles": {
+    "category": "acotada",
+    "reason": "Els professionals."
+  },
+  "lib/data/client-calendar.ts::getClientCenterData::reservations": {
+    "category": "pendent",
+    "reason": "IMPORTANT: totes les reserves del centre des d'aquesta setmana, per pintar l'ocupació del calendari del client. Amb sèries llargues pot passar de 1000; tallada, ensenyaria lliures hores ocupades (el servidor ho rebutja igual en reservar)."
+  },
+  "lib/data/client-dashboard.ts::listTrainerCards::profiles": {
+    "category": "acotada",
+    "reason": "Els professionals."
+  },
+  "lib/data/client-documents.ts::deleteAllClientDocuments::client_documents": {
+    "category": "acotada",
+    "reason": "Els documents d'un client."
+  },
+  "lib/data/client-documents.ts::listClientDocuments::client_documents": {
+    "category": "acotada",
+    "reason": "Els documents d'un client."
+  },
+  "lib/data/client-exercises.ts::listClientExercises::client_exercises": {
+    "category": "acotada",
+    "reason": "Els exercicis d'un client."
+  },
+  "lib/data/client-tags.ts::createClientTag::client_tags": {
+    "category": "acotada",
+    "reason": "Totes les etiquetes, per no repetir-ne el nom: configuració, poques."
+  },
+  "lib/data/client-tags.ts::listClientTags::client_tags": {
+    "category": "acotada",
+    "reason": "Les etiquetes: configuració, poques."
+  },
+  "lib/data/client-tags.ts::listClientTagsWithUsage::client_tag_assignments": {
+    "category": "pendent",
+    "reason": "Totes les assignacions d'etiquetes, per comptar l'ús: creix amb els clients. Caldria un recompte per etiqueta a la base."
+  },
+  "lib/data/client-tags.ts::listClientTagsWithUsage::client_tags": {
+    "category": "acotada",
+    "reason": "Les etiquetes: configuració, poques."
+  },
+  "lib/data/client-tags.ts::listClientTagsWithUsage::promotions": {
+    "category": "acotada",
+    "reason": "Les ofertes que fan servir una etiqueta: poques."
+  },
+  "lib/data/client-tags.ts::listTagIdsForClient::client_tag_assignments": {
+    "category": "acotada",
+    "reason": "Les etiquetes d'un client."
+  },
+  "lib/data/client-tags.ts::listTagsOfClient::client_tag_assignments": {
+    "category": "acotada",
+    "reason": "Les etiquetes d'un client."
+  },
+  "lib/data/clients.ts::listClients::clients": {
+    "category": "acotada",
+    "reason": "La cartera d'UN professional (obligatori des de 7a155f8)."
+  },
+  "lib/data/clients.ts::listTrainers::profiles": {
+    "category": "acotada",
+    "reason": "Els professionals."
+  },
+  "lib/data/colors.ts::assignInitialProColor::professional_colors": {
+    "category": "acotada",
+    "reason": "Un color per professional."
+  },
+  "lib/data/colors.ts::getColorPalette::professional_colors": {
+    "category": "acotada",
+    "reason": "Un color per professional."
+  },
+  "lib/data/colors.ts::getColorPalette::profiles": {
+    "category": "acotada",
+    "reason": "Els professionals."
+  },
+  "lib/data/colors.ts::getColorPalette::service_type_colors": {
+    "category": "acotada",
+    "reason": "Un color per servei."
+  },
+  "lib/data/completed-sessions.ts::completedSessions::reservations": {
+    "category": "acotada",
+    "reason": "Un professional i un mes."
+  },
+  "lib/data/consents.ts::getConsentStatus::consents": {
+    "category": "acotada",
+    "reason": "Els consentiments d'un usuari."
+  },
+  "lib/data/dashboard.ts::gather::bonos": {
+    "category": "pendent",
+    "reason": "Bons actius per sota del llindar de tot el centre (targeta d'Inici). Creix amb els clients."
+  },
+  "lib/data/dashboard.ts::gather::profiles": {
+    "category": "acotada",
+    "reason": "Els professionals."
+  },
+  "lib/data/dashboard.ts::gather::reservations": {
+    "category": "acotada",
+    "reason": "La setmana en curs."
+  },
+  "lib/data/dashboard.ts::gatherTrainer::bonos": {
+    "category": "acotada",
+    "reason": "Els bons baixos dels clients d'un professional."
+  },
+  "lib/data/dashboard.ts::gatherTrainer::reservations": {
+    "category": "acotada",
+    "reason": "La setmana d'un professional."
+  },
+  "lib/data/exercise-categories.ts::listExerciseCategories::exercise_categories": {
+    "category": "acotada",
+    "reason": "Configuració: categories."
+  },
+  "lib/data/exercise-progress.ts::listAllProgressForClient::exercise_progress": {
+    "category": "acotada",
+    "reason": "El progrés d'un exercici d'un client."
+  },
+  "lib/data/exercises.ts::listExercises::exercises": {
+    "category": "pendent",
+    "reason": "Tota la biblioteca d'exercicis; creix poc a poc."
+  },
+  "lib/data/gdpr-delete.ts::deleteClient::payments": {
+    "category": "acotada",
+    "reason": "Els pagaments d'un client (RGPD)."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::bonos": {
+    "category": "acotada",
+    "reason": "Un client (RGPD): l'exportació ha de ser sencera."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::client_documents": {
+    "category": "acotada",
+    "reason": "Un client (RGPD)."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::client_exercises": {
+    "category": "acotada",
+    "reason": "Un client (RGPD)."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::consents": {
+    "category": "acotada",
+    "reason": "Un client (RGPD)."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::exercise_progress": {
+    "category": "acotada",
+    "reason": "Un client (RGPD)."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::payments": {
+    "category": "acotada",
+    "reason": "Un client (RGPD)."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::reservations": {
+    "category": "acotada",
+    "reason": "Un client (RGPD)."
+  },
+  "lib/data/gift-vouchers.ts::listGiftVouchersAdmin::gift_vouchers": {
+    "category": "pendent",
+    "reason": "Tots els vals de regal."
+  },
+  "lib/data/gift-vouchers.ts::listGiftVouchersBought::gift_vouchers": {
+    "category": "acotada",
+    "reason": "Els vals que ha comprat un client."
+  },
+  "lib/data/gift-vouchers.ts::listVouchersPendingPayment::gift_vouchers": {
+    "category": "acotada",
+    "reason": "Els pendents de pagament no caducats: duren dies."
+  },
+  "lib/data/polls.ts::getPollResult::poll_options": {
+    "category": "acotada",
+    "reason": "Les opcions d'una enquesta."
+  },
+  "lib/data/polls.ts::getPollResult::poll_responses": {
+    "category": "pendent",
+    "reason": "Totes les respostes d'UNA enquesta: tantes com clients que responen."
+  },
+  "lib/data/polls.ts::listPolls::poll_responses": {
+    "category": "pendent",
+    "reason": "Les respostes de totes les enquestes llistades, per comptar-les. Caldria poll_option_counts."
+  },
+  "lib/data/polls.ts::listPolls::polls": {
+    "category": "pendent",
+    "reason": "Totes les enquestes."
+  },
+  "lib/data/polls.ts::listPollsForClient::poll_responses": {
+    "category": "acotada",
+    "reason": "Les respostes d'un client."
+  },
+  "lib/data/polls.ts::listPollsForClient::polls": {
+    "category": "pendent",
+    "reason": "Totes les enquestes, per al client."
+  },
+  "lib/data/promotions.ts::getClientAudience::bonos": {
+    "category": "acotada",
+    "reason": "Els bons d'un client."
+  },
+  "lib/data/promotions.ts::listActivePromotions::promotions": {
+    "category": "acotada",
+    "reason": "Les ofertes vigents avui."
+  },
+  "lib/data/promotions.ts::listPromotions::promotions": {
+    "category": "pendent",
+    "reason": "Totes les ofertes."
+  },
+  "lib/data/referral.ts::listReferralRewardsAdmin::referral_rewards": {
+    "category": "pendent",
+    "reason": "Totes les recompenses de referits."
+  },
+  "lib/data/registration.ts::notifyAdmins::profiles": {
+    "category": "acotada",
+    "reason": "Els admins (dos)."
+  },
+  "lib/data/reminders.ts::cancelOverduePendingBonos::bonos": {
+    "category": "acotada",
+    "reason": "Pendents vençuts: el cron els tanca cada dia."
+  },
+  "lib/data/reminders.ts::listExpiringBonoTargets::bonos": {
+    "category": "acotada",
+    "reason": "Els que caduquen en una finestra de dies."
+  },
+  "lib/data/reminders.ts::listTomorrowReminderTargets::reservations": {
+    "category": "acotada",
+    "reason": "Les de demà."
+  },
+  "lib/data/reminders.ts::listTomorrowReminderTargets::trial_bookings": {
+    "category": "acotada",
+    "reason": "Les de demà."
+  },
+  "lib/data/reminders.ts::listTomorrowTrainerAgendas::notification_preferences": {
+    "category": "acotada",
+    "reason": "Els professionals amb l'agenda per correu."
+  },
+  "lib/data/reminders.ts::listTomorrowTrainerAgendas::reservations": {
+    "category": "acotada",
+    "reason": "Les de demà dels professionals."
+  },
+  "lib/data/reminders.ts::listTomorrowTrainerAgendas::trial_bookings": {
+    "category": "acotada",
+    "reason": "Les de demà dels professionals."
+  },
+  "lib/data/reschedule-options.ts::getRescheduleOptionsData::reservations": {
+    "category": "acotada",
+    "reason": "Un professional i un dia."
+  },
+  "lib/data/reservation-detail.ts::getReservationDetail::reservations": {
+    "category": "acotada",
+    "reason": "Les d'una sèrie."
+  },
+  "lib/data/reservations.ts::fetchOccupants::reservations": {
+    "category": "acotada",
+    "reason": "Una franja d'un professional."
+  },
+  "lib/data/series-extension.ts::listSeriesToExtend::booking_series": {
+    "category": "acotada",
+    "reason": "Les sèries d'un client i un servei."
+  },
+  "lib/data/series-extension.ts::listSeriesToExtend::reservations": {
+    "category": "acotada",
+    "reason": "Per ids de sèrie."
+  },
+  "lib/data/series-extension.ts::listSeriesToExtend::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Per ids de sèrie."
+  },
+  "lib/data/services.ts::listServices::services": {
+    "category": "acotada",
+    "reason": "Configuració: el catàleg."
+  },
+  "lib/data/session-notes.ts::getNotesForReservations::session_notes": {
+    "category": "acotada",
+    "reason": "Per ids de reserva, en lots de 100."
+  },
+  "lib/data/session-notes.ts::resolveNames::profiles": {
+    "category": "acotada",
+    "reason": "Per ids dels autors de les notes que s'ensenyen."
+  },
+  "lib/data/settlements.ts::listRates::service_rates": {
+    "category": "acotada",
+    "reason": "Configuració: tarifes."
+  },
+  "lib/data/settlements.ts::listSettlements::settlements": {
+    "category": "pendent",
+    "reason": "Totes les liquidacions; creix cada mes."
+  },
+  "lib/data/slot-booking.ts::listBookableClients::clients": {
+    "category": "acotada",
+    "reason": "La cartera d'un professional."
+  },
+  "lib/data/slot-booking.ts::pickUsableBono::bonos": {
+    "category": "acotada",
+    "reason": "Els bons d'un client d'un servei."
+  },
+  "lib/data/slot-booking.ts::searchBookableClients::clients": {
+    "category": "acotada",
+    "reason": "Els clients dels ≤20 perfils ja trobats (CLIENT_SEARCH_LIMIT)."
+  },
+  "lib/data/subscriptions.ts::getCycleExtras::bonos": {
+    "category": "acotada",
+    "reason": "Els extres d'un cicle d'una subscripció."
+  },
+  "lib/data/subscriptions.ts::listSubscriptions::subscriptions": {
+    "category": "pendent",
+    "reason": "Totes les subscripcions."
+  },
+  "lib/data/subscriptions.ts::listSubscriptionsDueForRenewal::subscriptions": {
+    "category": "acotada",
+    "reason": "Les que vencen avui: el cron les processa cada dia."
+  },
+  "lib/data/subscriptions.ts::listSubscriptionsDueForResume::subscriptions": {
+    "category": "acotada",
+    "reason": "Les que es reprenen avui: el cron les processa cada dia."
+  },
+  "lib/data/support.ts::listSupportTickets::support_tickets": {
+    "category": "pendent",
+    "reason": "Tots els tiquets de suport."
+  },
+  "lib/data/trainers.ts::listTrainersDetailed::clients": {
+    "category": "pendent",
+    "reason": "IMPORTANT: llegeix TOTS els clients per comptar quants en porta cada professional. Creix amb el centre; caldria un recompte a la base."
+  },
+  "lib/data/trainers.ts::listTrainersDetailed::profiles": {
+    "category": "acotada",
+    "reason": "Els professionals."
+  },
+  "lib/data/trial-bookings.ts::createTrialBooking::trial_bookings": {
+    "category": "acotada",
+    "reason": "Les d'un correu o telèfon (antiabús)."
+  },
+  "lib/data/trial-bookings.ts::fetchActiveHoldsAt::trial_bookings": {
+    "category": "acotada",
+    "reason": "Una franja d'un professional."
+  },
+  "lib/data/trial-bookings.ts::fetchAllActiveHolds::trial_bookings": {
+    "category": "acotada",
+    "reason": "Les proves actives futures: duren hores o dies."
+  },
+  "lib/data/trial-bookings.ts::getPublicTrialData::reservations": {
+    "category": "pendent",
+    "reason": "IMPORTANT: reserves 'booked' de tot el centre des d'ara, per amagar a /prova les hores ocupades. Mateix cas que el calendari del client."
+  },
+  "lib/data/trial-bookings.ts::getPublicTrialData::trial_bookings": {
+    "category": "acotada",
+    "reason": "Les proves actives futures: duren hores o dies."
+  },
+  "lib/data/trial-bookings.ts::listActiveTrialHolds::trial_bookings": {
+    "category": "acotada",
+    "reason": "Finestra de l'agenda."
+  },
+  "lib/data/waitlist.ts::countWaitingForTrainer::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Un professional i una finestra de dies."
+  },
+  "lib/data/waitlist.ts::joinWaitlist::bonos": {
+    "category": "acotada",
+    "reason": "Els bons d'un client d'un servei."
+  },
+  "lib/data/waitlist.ts::joinWaitlist::reservations": {
+    "category": "acotada",
+    "reason": "Una franja."
+  },
+  "lib/data/waitlist.ts::listWaitingForAdmin::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Finestra de dies; les passades caduquen."
+  },
+  "lib/data/waitlist.ts::listWaitlistForClient::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Les esperes d'un client."
+  },
+  "lib/data/waitlist.ts::promoteFromWaitlist::bonos": {
+    "category": "acotada",
+    "reason": "Els bons d'un client d'un servei."
+  },
+  "lib/data/waitlist.ts::promoteFromWaitlist::clients": {
+    "category": "acotada",
+    "reason": "Per ids dels candidats d'una franja."
+  },
+  "lib/data/waitlist.ts::promoteFromWaitlist::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Una franja."
+  },
+  "lib/notifications/community.ts::optedInRecipients::notification_preferences": {
+    "category": "pendent",
+    "reason": "IMPORTANT: tots els destinataris del correu de la comunitat. Amb més de 1000, els que passin del tall NO rebrien l'anunci."
+  }
+}

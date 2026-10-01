@@ -12,13 +12,32 @@
  *
  * El sostre es llegeix de `SUPABASE_MAX_ROWS` perquè ha de coincidir amb el
  * del projecte. Si algun dia s'hi canvia, s'ha de canviar tots dos llocs.
+ *
+ * DOS NIVELLS (des del «sostre de 1000»):
+ *
+ *   · «s'hi acosta»: una resposta de 500 files o més (`SUPABASE_ROWS_WARN`).
+ *     Les llistes que creixen amb el centre ja van per pàgines de 50; les que
+ *     no (vals, referits, suport, enquestes, anuncis, liquidacions, bonus,
+ *     subscripcions…) estan anotades a `scripts/row-limit-check.mjs` com a
+ *     pendents. Aquest avís és el senyal per passar-les a pàgines abans que
+ *     arribin al sostre.
+ *   · «retallada»: la resposta porta tantes files com el sostre, i n'hi pot
+ *     haver més que no han arribat.
  */
 
 const DEFAULT_MAX_ROWS = 1000;
+const DEFAULT_WARN_ROWS = 500;
 
 export function maxRows(): number {
   const n = Number.parseInt(process.env.SUPABASE_MAX_ROWS ?? "", 10);
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_ROWS;
+}
+
+/** A partir de quantes files una resposta «s'hi acosta». Mai per sobre del sostre. */
+export function warnRows(): number {
+  const n = Number.parseInt(process.env.SUPABASE_ROWS_WARN ?? "", 10);
+  const v = Number.isFinite(n) && n > 0 ? n : DEFAULT_WARN_ROWS;
+  return Math.min(v, maxRows());
 }
 
 /** "reservations", "rpc/cancel_reservation"… o null si no és una crida REST. */
@@ -55,6 +74,10 @@ export const rowCapFetch: typeof fetch = async (input, init) => {
     if (rows !== null && rows >= maxRows()) {
       console.warn(
         `[supabase] resposta retallada al sostre de ${maxRows()} files: ${tableOf(urlOf(input)) ?? "?"}`,
+      );
+    } else if (rows !== null && rows >= warnRows()) {
+      console.warn(
+        `[supabase] resposta de ${rows} files, s'acosta al sostre de ${maxRows()}: ${tableOf(urlOf(input)) ?? "?"} (cal passar-la a pàgines)`,
       );
     }
   } catch {

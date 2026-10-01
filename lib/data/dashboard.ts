@@ -205,7 +205,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
   if (USE_MOCK) {
     const [rules, blocks] = await Promise.all([
       listAllTrainerRulesLite(),
-      listAllBlocksLite(),
+      listAllBlocksLite(win.weekFrom),
     ]);
     const store = getStore();
     const clientNames = new Map<string, string>();
@@ -287,7 +287,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
   const [rules, blocks, pay, pend, low, res, triHappened, triConverted, tra] =
     await Promise.all([
       listAllTrainerRulesLite(),
-      listAllBlocksLite(),
+      listAllBlocksLite(win.weekFrom),
       // Els ingressos els compta la base (`payments_by_month`, 0095), amb la
       // sessió de l'admin: abans es portaven les files des de l'1 del mes
       // anterior i es sumaven aquí, i un mes de més de 1000 cobraments hauria

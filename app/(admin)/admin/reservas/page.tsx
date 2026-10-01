@@ -63,7 +63,7 @@ export default async function ReservasPage({
       getCenterSettings(),
       // Per als forats reals de cada professional.
       listAllTrainerRulesLite(),
-      listAllBlocksLite(),
+      listAllBlocksLite(from),
       // Els bloquejos amb el motiu, per pintar-los: una consulta només de
       // l'admin, a part de la que alimenta /prova i el calendari del client.
       listBlocksForAdmin({ from, to }),

@@ -231,7 +231,7 @@ export async function getClientCenterData(
       bonoSessions,
       trainers,
       rules,
-      blocks: await listAllBlocksLite(),
+      blocks: await listAllBlocksLite(fromISO),
       reservations: [...reservations, ...holdReservations],
     };
   }
@@ -257,7 +257,7 @@ export async function getClientCenterData(
       .eq("client_id", client.id),
     admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer"),
     listAllTrainerRulesLite(),
-    listAllBlocksLite(),
+    listAllBlocksLite(fromISO),
     // El nom del client s'incorpora a la consulta, però NOMÉS surt d'aquí per
     // a les reserves de grup (vegeu `mateNameFor`). La consulta va amb el
     // client de servei, com tota la resta d'aquest fitxer: qui decideix què es

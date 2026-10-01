@@ -86,23 +86,36 @@ export async function listBlocksLite(
 }
 
 /**
- * Bloqueos de TODOS los profesionales (calendario global del cliente).
+ * Bloquejos de TOTS els professionals que acaben DESPRÉS de `from` (el
+ * calendari del client, /prova, les sèries, les agendes i el tauler).
  *
  * Client de SERVEI pel mateix motiu que `listAllTrainerRulesLite`: /prova és
  * pública i amb el de sessió un visitant no en rebia cap.
+ *
+ * `from` és OBLIGATORI. Abans es portava tot l'històric, sense ordre: al tall
+ * de 1000 files podia caure qualsevol bloqueig, també unes vacances futures, i
+ * /prova o el calendari haurien ofert una hora que no existeix. Els bloquejos
+ * passats no serveixen per a res d'això; cada crida diu des d'on mira (ara, el
+ * dilluns de la setmana o l'inici de la finestra de l'agenda).
  */
-export async function listAllBlocksLite(): Promise<TrainerBlockLite[]> {
+export async function listAllBlocksLite(from: Date | string): Promise<TrainerBlockLite[]> {
+  const fromISO = typeof from === "string" ? from : from.toISOString();
   if (USE_MOCK) {
-    return getStore().availability_blocks.map((b) => ({
-      trainerId: b.trainer_id,
-      startAt: b.start_at,
-      endAt: b.end_at,
-    }));
+    return getStore()
+      .availability_blocks.filter((b) => b.end_at > fromISO)
+      .sort((a, b) => a.start_at.localeCompare(b.start_at))
+      .map((b) => ({
+        trainerId: b.trainer_id,
+        startAt: b.start_at,
+        endAt: b.end_at,
+      }));
   }
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("availability_blocks")
-    .select("trainer_id, start_at, end_at");
+    .select("trainer_id, start_at, end_at")
+    .gt("end_at", fromISO)
+    .order("start_at", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((b) => ({
     trainerId: b.trainer_id,

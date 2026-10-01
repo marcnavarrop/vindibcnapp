@@ -587,7 +587,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       store.profiles.filter((p) => p.role === "trainer").map((p) => [p.id, p.full_name ?? "—"]),
     );
     const rules = await listAllTrainerRulesLite();
-    const blocks = await listAllBlocksLite();
+    const blocks = await listAllBlocksLite(since);
     return {
       bonoId: bons[0].id,
       sessionsRemaining: sumSessions(bons),
@@ -673,7 +673,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       fetchAllActiveHolds(admin),
       admin.from("profiles").select("id, full_name").eq("role", "trainer"),
       listAllTrainerRulesLite(),
-      listAllBlocksLite(),
+      listAllBlocksLite(since),
     ]);
 
   // Ja vénen ordenats per `purchased_at`: l'ordre en què es gastaran.

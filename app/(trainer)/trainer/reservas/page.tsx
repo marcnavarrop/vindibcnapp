@@ -68,7 +68,7 @@ export default async function TrainerReservasPage({
       listTrainers(),
       trainerId ? listClients(trainerId) : Promise.resolve([]),
       listAllTrainerRulesLite(),
-      listAllBlocksLite(),
+      listAllBlocksLite(from),
       listActiveTrialHolds({ from, to }),
       getColorPalette(),
     ]);

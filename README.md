@@ -216,9 +216,30 @@ middleware.ts                     # control de acceso por rol
 
 ## Scripts
 
-| Comando         | Acción                          |
-| --------------- | ------------------------------- |
-| `npm run dev`   | Servidor de desarrollo          |
-| `npm run build` | Build de producción             |
-| `npm start`     | Sirve el build de producción    |
-| `npm run lint`  | ESLint                          |
+| Comando              | Acción                                                        |
+| -------------------- | ------------------------------------------------------------- |
+| `npm run dev`        | Servidor de desarrollo                                        |
+| `npm run build`      | Build de producción (antes pasa `rows:check`, vía `prebuild`) |
+| `npm start`          | Sirve el build de producción                                  |
+| `npm run lint`       | ESLint                                                        |
+| `npm run rows:check` | Ninguna lectura nueva sin límite (ver abajo)                 |
+| `npm run *:check`    | Comprobaciones en modo simulación (`payments`, `clients`, `bonos`, `blocks`, `waitlist`, `scope`, `series`…) |
+
+## El tope de 1000 filas
+
+Supabase corta cada lectura a 1000 filas (Settings → API → Max rows) **sin
+avisar**. Tres piezas lo vigilan:
+
+- **Las listas que crecen con el centro van por páginas**: pagos, clientes,
+  bonos e histórico de pruebas usan cursor, «Carregar més» y un contador con
+  `count: exact`. Los totales (pagos, «Pendent de cobrament») los calcula la
+  base (`payments_summary`, `payments_by_month`, `bonos_summary`; 0095 y 0097).
+- **`scripts/row-limit-check.mjs`** (`npm run rows:check`, y en cada build):
+  cada `.from(…).select(…)` sin `.limit`/`.range`/`.single`/`head` tiene que
+  estar en `scripts/row-limit-allowlist.json` como `acotada` (filtrada por id,
+  cliente, ventana…) o `pendent` (crece con el centro; se pagina cuando avise el
+  log). Una lectura nueva sin anotar hace fallar el build.
+- **`lib/supabase/row-cap.ts`** deja un aviso en los logs cuando una respuesta
+  trae 500 filas o más («s'acosta al sostre», `SUPABASE_ROWS_WARN`) y cuando
+  llega al tope (`SUPABASE_MAX_ROWS`, 1000). Ese aviso es la señal para paginar
+  una lista `pendent`.

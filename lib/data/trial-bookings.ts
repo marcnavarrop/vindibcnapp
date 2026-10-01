@@ -255,7 +255,8 @@ export type PublicTrialData = {
 export async function getPublicTrialData(): Promise<PublicTrialData> {
   const [allRules, allBlocks] = await Promise.all([
     listAllTrainerRulesLite(),
-    listAllBlocksLite(),
+    // Només el que pot tapar una hora oferible: el que encara no ha acabat.
+    listAllBlocksLite(new Date()),
   ]);
   // Només regles que ofereixen com a mínim el servei de prova (ep_individual).
   const rules = allRules
@@ -434,7 +435,7 @@ export async function createTrialBooking(input: CreateTrialInput): Promise<void>
   const rules = (await listAllTrainerRulesLite()).filter((r) =>
     r.serviceTypes.includes(TRIAL_SERVICE),
   );
-  const allBlocks = await listAllBlocksLite();
+  const allBlocks = await listAllBlocksLite(new Date());
 
   if (USE_MOCK) {
     const store = getStore();
