@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { CircleAlert, Hourglass } from "lucide-react";
 import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
@@ -118,6 +119,7 @@ export function AdminWeek({
   proHref,
   onOpen,
   onFree,
+  highlight,
 }: {
   days: WeekDay[];
   now: Date;
@@ -129,8 +131,29 @@ export function AdminWeek({
   onOpen: (e: Entry) => void;
   /** Tocar un forat: la mitja hora tocada. Sense, el forat no es pot tocar. */
   onFree?: (at: Date, services: ServiceType[], proId: string) => void;
+  /** La mitja hora que s'està creant (la fulla de crear oberta): es marca. */
+  highlight?: { proId: string; at: Date } | null;
 }) {
   const { cols, total } = buildAxis(days);
+  /*
+   * El globus en passar el ratón (o en arribar-hi amb el teclat): el detall de
+   * la peça, que a la franja no hi cap. Va dins del tauler, que és relatiu.
+   */
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<{ lines: string[]; x: number; y: number } | null>(null);
+  const showTip = (el: HTMLElement, lines: string[]) => {
+    const box = boardRef.current?.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    if (!box) return;
+    const x = Math.min(Math.max(0, r.left - box.left), box.width - 260);
+    setTip({ lines, x, y: r.bottom - box.top + 4 });
+  };
+  const tipHandlers = (lines: string[]) => ({
+    onMouseEnter: (ev: React.MouseEvent<HTMLElement>) => showTip(ev.currentTarget, lines),
+    onFocus: (ev: React.FocusEvent<HTMLElement>) => showTip(ev.currentTarget, lines),
+    onMouseLeave: () => setTip(null),
+    onBlur: () => setTip(null),
+  });
   // Posició (en %) d'un slot dins de l'àrea del temps.
   const pct = (slot: number): number => {
     const h = slot / 2;
@@ -145,9 +168,9 @@ export function AdminWeek({
   const span = (a: number, b: number) => ({ left: `${pct(a)}%`, width: `${Math.max(0, pct(b) - pct(a))}%` });
 
   return (
-    <div className="rounded-xl border border-brand-border bg-white" data-week>
-      {/* L'eix */}
-      <div className="flex border-b border-brand-border" data-week-axis>
+    <div ref={boardRef} className="relative rounded-xl border border-brand-border bg-white" data-week>
+      {/* L'eix: es queda a dalt en fer scroll. */}
+      <div className="sticky top-0 z-20 flex rounded-t-xl border-b border-brand-border bg-white" data-week-axis>
         <div className="w-32 shrink-0 border-r border-brand-border" />
         <div className="relative h-6 flex-1">
           {cols.map((c) =>
@@ -213,15 +236,38 @@ export function AdminWeek({
                     key={`b${b.from}`}
                     className="absolute inset-y-0.5 z-[2] flex items-center overflow-hidden rounded border border-[#d9cfdb] bg-[repeating-linear-gradient(135deg,rgba(100,34,99,.10)_0_5px,transparent_5px_10px)] px-1.5 text-[11.5px] font-bold whitespace-nowrap text-brand-purple-dark"
                     style={span(b.from, b.to)}
-                    title={`Bloquejat ${slotHHMM(Math.floor(b.from))}–${slotHHMM(Math.ceil(b.to))}${b.reason ? ` · ${b.reason}` : ""}`}
+                    {...tipHandlers([
+                      `${l.pro.name} · bloquejat ${slotHHMM(Math.floor(b.from))}–${slotHHMM(Math.ceil(b.to))}`,
+                      b.reason ? `Motiu: ${b.reason}` : "Sense motiu",
+                    ])}
                     data-week-block
                   >
                     <span className="truncate">{b.reason || "Bloquejat"}</span>
                   </span>
                 ))}
                 {l.free.map((f) => (
-                  <FreeBlock key={`r${f.from}`} f={f} day={d.date} pro={l.pro} style={span(f.from, f.to)} onFree={onFree} />
+                  <FreeBlock
+                    key={`r${f.from}`}
+                    f={f}
+                    day={d.date}
+                    pro={l.pro}
+                    style={span(f.from, f.to)}
+                    onFree={onFree}
+                    tip={tipHandlers([
+                      `${l.pro.name} · ${dayFmt.format(d.date)} · lliure ${slotHHMM(f.from)}–${slotHHMM(f.to)}`,
+                      `Hi cap: ${f.services.map((x) => SERVICE_LABELS[x]).join(", ")}`,
+                      ...(onFree ? ["Toca l'hora on vols crear la sessió."] : []),
+                    ])}
+                  />
                 ))}
+                {highlight && highlight.proId === l.pro.id && localKey(highlight.at) === d.key && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-y-0.5 z-[3] rounded border-2 border-[#15803d] bg-[rgba(22,163,74,.22)]"
+                    style={span(slotOf(highlight.at), slotOf(highlight.at) + 2)}
+                    data-week-pick
+                  />
+                )}
                 {l.entries.map((e) => (
                   <EntryBlock
                     key={e.id}
@@ -232,6 +278,7 @@ export function AdminWeek({
                     past={e.end.getTime() <= now.getTime()}
                     style={span(slotOf(e.start), slotOf(e.end) || 48)}
                     onOpen={onOpen}
+                    tip={tipHandlers}
                   />
                 ))}
                 {d.isToday && (
@@ -259,8 +306,26 @@ export function AdminWeek({
           )}
         </section>
       ))}
+      {tip && (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute z-30 w-64 rounded-lg bg-brand-dark px-3 py-2 text-[12.5px] leading-snug text-white shadow-lg"
+          style={{ left: tip.x, top: tip.y }}
+          data-week-tip
+        >
+          {tip.lines.map((t, i) => (
+            <p key={i} className={i === 0 ? "font-bold" : "text-white/80"}>
+              {t}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
+}
+
+function localKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function DayHeader({ d, href }: { d: WeekDay; href: string }) {
@@ -283,7 +348,7 @@ function DayHeader({ d, href }: { d: WeekDay; href: string }) {
   if (s.freeHours) parts.push(`${s.freeHours.toLocaleString("ca-ES")} h lliures`);
   return (
     <div
-      className="flex h-7 items-center gap-3 border-t border-b border-t-[#e9e4ec] border-b-[#f0edf1] bg-[#faf8fb] px-2 text-[12.5px]"
+      className="sticky top-6 z-10 flex h-7 items-center gap-3 border-t border-b border-t-[#e9e4ec] border-b-[#f0edf1] bg-[#faf8fb] px-2 text-[12.5px]"
       data-week-head
     >
       <span className={clsx("shrink-0 text-[13px] font-bold whitespace-nowrap uppercase", d.isToday ? "text-brand-purple" : "text-brand-dark")}>
@@ -317,6 +382,7 @@ function EntryBlock({
   past,
   style,
   onOpen,
+  tip,
 }: {
   e: Entry;
   palette: ColorPalette;
@@ -325,10 +391,12 @@ function EntryBlock({
   past: boolean;
   style: React.CSSProperties;
   onOpen: (e: Entry) => void;
+  tip: (lines: string[]) => Record<string, unknown>;
 }) {
   const at = hhmmFmt.format(e.start);
   let label: React.ReactNode;
   let aria: string;
+  let lines: string[];
   let look: React.CSSProperties = {};
   let cls = "";
   if (e.kind === "group") {
@@ -344,6 +412,10 @@ function EntryBlock({
       </>
     );
     aria = `Grup ${at}, ${e.list.length} de ${GROUP_CAPACITY}${waiting ? `, ${waiting} en espera` : ""}`;
+    lines = [
+      `Grup · ${at} · ${e.list.length}/${GROUP_CAPACITY}${waiting ? ` · +${waiting} en espera` : ""}`,
+      e.list.map((r) => shortName(r.clientName)).join(", "),
+    ];
   } else if (e.kind === "trial") {
     const pending = e.t.status === "pending";
     if (pending) {
@@ -360,23 +432,26 @@ function EntryBlock({
       </>
     );
     aria = `Prova ${pending ? "pendent" : "confirmada"} ${at}, ${e.t.fullName}`;
+    lines = [`Prova ${pending ? "pendent de resposta" : "confirmada"} · ${at}`, `${e.t.fullName} · ${SERVICE_LABELS[e.t.serviceType]}`];
   } else {
     const c = colorOfService(palette, e.r.serviceType);
     look = { backgroundColor: `${c}26`, boxShadow: `inset 3px 0 0 ${c}` };
     label = <span className="truncate">{shortName(e.r.clientName)}</span>;
     aria = `${at}, ${e.r.clientName}, ${SERVICE_LABELS[e.r.serviceType]}`;
+    lines = [`${at} · ${e.r.clientName}`, SERVICE_LABELS[e.r.serviceType]];
   }
   if (toMark) {
     // Anell sòlid + icona: «per marcar» s'entén sense color.
     look = { ...look, boxShadow: `inset 0 0 0 2px ${ATTENTION}` };
     aria += ", per marcar";
+    lines.push("Per marcar: ja ha passat i segueix reservada.");
   }
   return (
     <button
       type="button"
       onClick={() => onOpen(e)}
       aria-label={aria}
-      title={aria}
+      {...tip(lines)}
       data-week-entry={e.kind}
       data-to-mark={toMark || undefined}
       className={clsx(
@@ -399,12 +474,14 @@ function FreeBlock({
   pro,
   style,
   onFree,
+  tip,
 }: {
   f: FreeRun;
   day: Date;
   pro: { id: string; name: string };
   style: React.CSSProperties;
   onFree?: (at: Date, services: ServiceType[], proId: string) => void;
+  tip: Record<string, unknown>;
 }) {
   const label = f.services.map((s) => SHORT[s]).join(" · ");
   const desc = `${pro.name} · lliure ${slotHHMM(f.from)}–${slotHHMM(f.to)} · ${f.services.map((s) => SERVICE_LABELS[s]).join(", ")}`;
@@ -412,7 +489,7 @@ function FreeBlock({
     "absolute inset-y-0.5 z-[2] flex items-center overflow-hidden rounded border-[1.5px] border-dashed border-[rgba(22,163,74,.55)] bg-[rgba(22,163,74,.06)] px-1.5 text-[11.5px] font-bold whitespace-nowrap";
   if (!onFree)
     return (
-      <span className={cls} style={{ ...style, color: FREE_INK }} title={desc} data-week-free>
+      <span className={cls} style={{ ...style, color: FREE_INK }} {...tip} data-week-free>
         <span className="truncate">{label}</span>
       </span>
     );
@@ -421,7 +498,7 @@ function FreeBlock({
       type="button"
       className={clsx(cls, "text-left hover:bg-[rgba(22,163,74,.14)]", TAP)}
       style={{ ...style, color: FREE_INK }}
-      title={`${desc}. Toca l'hora on vols crear la sessió.`}
+      {...tip}
       aria-label={`${desc}. Crear una sessió`}
       data-week-free
       onClick={(ev) => {

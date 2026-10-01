@@ -590,6 +590,32 @@ export function AdminGrid({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWeek, now === null, nav.weekStart, nav.today, trainers, hidden, service, reservations, trials, rules, blocks, centerBlocks, occupancy, waiting, palette]);
   const shownCount = trainers.filter((p) => !hidden.has(p.id)).length;
+  // Els totals de la setmana de cada professional, als botons del filtre: les
+  // sessions (un grup, una) i l'ocupació de la setmana (`agendaLoad`, la de
+  // l'Inici). Només a la setmana.
+  const weekTotals = useMemo(() => {
+    const m = new Map<string, { sessions: number; load: number | null }>();
+    if (!isWeek || !now) return m;
+    const keys = Array.from({ length: 7 }, (_, i) => localDateStr(addDays(weekStart, i)));
+    const keySet = new Set(keys);
+    for (const p of trainers) {
+      const groupsSeen = new Set<string>();
+      let sessions = 0;
+      for (const r of reservations) {
+        if (r.trainerId !== p.id || r.status === "cancelled") continue;
+        if (!keySet.has(localDateStr(new Date(r.scheduledAt)))) continue;
+        if (r.serviceType === "grupo_reducido") {
+          if (groupsSeen.has(r.scheduledAt)) continue;
+          groupsSeen.add(r.scheduledAt);
+        }
+        sessions++;
+      }
+      m.set(p.id, { sessions, load: agendaLoad({ trainerId: p.id, rules, blocks, reservations, days: keys }) });
+    }
+    return m;
+    // `weekStart` es deriva de `nav.weekStart`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWeek, now === null, nav.weekStart, trainers, reservations, rules, blocks]);
   const laneHeight = shownCount <= 4 ? 28 : shownCount <= 6 ? 26 : 24;
   const weekLabel = (() => {
     const fmt = new Intl.DateTimeFormat("ca-ES", { day: "numeric", month: "short" });
@@ -883,6 +909,14 @@ export function AdminGrid({
                   style={{ backgroundColor: p.id === NONE ? "#9a9a9e" : colorOfPro(palette, p.id) }}
                 />
                 {p.name}
+                {isWeek && weekTotals.has(p.id) && (
+                  <span className="hidden text-xs font-medium text-brand-muted lg:inline" data-pro-week>
+                    {(() => {
+                      const t = weekTotals.get(p.id)!;
+                      return `· ${t.sessions} ses.${t.load === null ? "" : ` · ${Math.round(t.load * 100)} %`}`;
+                    })()}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -959,12 +993,18 @@ export function AdminGrid({
               dayHref={(k) => `${nav.basePath}?dia=${k}`}
               proHref={(k, id) => `${nav.basePath}?dia=${k}&pro=${encodeURIComponent(id)}`}
               onOpen={open}
+              // El forat diu el professional i el dia; el toc, la mitja hora.
+              onFree={(at, services, proId) => {
+                const pro = trainerOf(proId);
+                if (pro) setCreating({ at, services: service && services.includes(service) ? [service] : services, trainer: pro });
+              }}
+              highlight={creating ? { proId: creating.trainer.id, at: creating.at } : null}
             />
           ) : (
             <NoneVisible />
           )}
           <p className="mt-3 text-xs text-brand-muted">
-            Toca una sessió, un grup o una prova per obrir-ne la fitxa, i «Obrir el dia» o el nom d&apos;un professional per anar a aquell dia.
+            Toca un forat lliure a l&apos;hora on vols crear-hi una reserva, una sessió, un grup o una prova per obrir-ne la fitxa, i «Obrir el dia» o el nom d&apos;un professional per anar a aquell dia.
           </p>
         </div>
       )}

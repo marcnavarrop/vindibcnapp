@@ -541,14 +541,14 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ["Un grup", "Una sola peça taronja amb l'ocupació («3/4») i, si està ple i hi ha gent esperant, «+2». Tocant-la, la llista dels apuntats i dels que esperen."],
             ["Per marcar", "Un anell blau fosc i el cercle amb l'exclamació: passada, encara reservada i dels últims 30 dies."],
             ["Prova pendent", "Vora blau fosc discontínua i el rellotge de sorra. Tocant-la, l'acceptes o la rebutges."],
-            ["Lliure", "Verd discontinu, amb els serveis que hi caben («EP · Par.»)."],
+            ["Lliure", "Verd discontinu, amb els serveis que hi caben («EP · Par.»). Tocant-lo a l'hora que vols s'obre la fulla de crear-hi una reserva, amb el professional, el dia i la mitja hora tocada; mentre la fulla és oberta, la mitja hora queda marcada a la franja. Amb un servei triat al filtre, només s'ofereix aquell."],
             ["Bloquejat", "Ratllat, amb el motiu."],
             ["Fora d'horari", "El fons gris de la franja. Si un professional no té ni horari ni res aquell dia, no té franja: surt a la línia «Sense horari aquest dia»."],
           ],
         },
         {
           t: "p",
-          text: "«Obrir el dia →» porta a la vista de dia d'aquell dia, i el nom d'una franja, al dia amb aquell professional marcat. Els filtres de professional i de servei manen igual que al dia; la cerca de client no hi és (per buscar un client, la Llista). Al mòbil no hi ha «Setmana»: un enllaç a la setmana obert al mòbil ensenya el dia.",
+          text: "«Obrir el dia →» porta a la vista de dia d'aquell dia, i el nom d'una franja, al dia amb aquell professional marcat. Passant el ratolí per sobre de qualsevol peça surt un globus amb el detall: el client i el servei, els apuntats d'un grup, les hores i els serveis d'un forat o el motiu d'un bloqueig. Els botons de cada professional, a dalt, diuen el total de la setmana: les sessions (un grup compta com una) i l'ocupació. Els filtres de professional i de servei manen igual que al dia; la cerca de client no hi és (per buscar un client, la Llista). En fer scroll, les hores i la capçalera del dia es queden a dalt. Al mòbil no hi ha «Setmana»: un enllaç a la setmana obert al mòbil ensenya el dia.",
         },
         { t: "h", text: "Pròxim forat" },
         {
