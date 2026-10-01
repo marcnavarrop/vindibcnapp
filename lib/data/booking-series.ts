@@ -1,4 +1,5 @@
 import "server-only";
+import { fetchAllRows } from "@/lib/supabase/fetch-all";
 import { SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -561,6 +562,20 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
   // com a fetes s'hi queden per sempre—, i amb el tall de la base a 1000 files
   // el planificador hauria vist lliures forats que no ho són.
   const since = centerDayStart(centerToday()).toISOString();
+  // FINS A LA DARRERA OCURRÈNCIA de la sèrie (+2 dies: les alternatives poden
+  // caure el mateix dia, amb un altre professional). Abans no tenia final, i
+  // amb el tall de 1000 files la sèrie d'una setmana de l'any vinent podia
+  // veure lliure una hora ocupada. Ara té final i es llegeix per pàgines.
+  const occ = generateOccurrences({
+    first: new Date(req.firstAt),
+    frequency: req.frequency,
+    endDate: req.endDate ?? null,
+    occurrenceCount: req.occurrenceCount ?? null,
+  });
+  const lastAt = occ.length ? occ[occ.length - 1].getTime() : Number.NaN;
+  const until = new Date(
+    (Number.isFinite(lastAt) ? lastAt : Date.now() + 400 * 86_400_000) + 2 * 86_400_000,
+  ).toISOString();
 
   if (USE_MOCK) {
     const store = getStore();
@@ -597,7 +612,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       // planificador comptés diferent, provar-ho en local no voldria dir res.
       slots: [
         ...store.reservations
-          .filter((r) => r.status === "booked" && r.scheduled_at >= since)
+          .filter((r) => r.status === "booked" && r.scheduled_at >= since && r.scheduled_at < until)
           .map((r) => ({
             trainer_id: r.trainer_id,
             scheduled_at: r.scheduled_at,
@@ -630,7 +645,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
             (r) =>
               r.client_id === client.id &&
               r.status === "booked" &&
-              r.scheduled_at >= since,
+              r.scheduled_at >= since &&
+              r.scheduled_at < until,
           )
           .map((r) => [
             new Date(r.scheduled_at).getTime(),
@@ -665,11 +681,20 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
         .in("status", ["active", "pending_payment"])
         .gt("remaining_sessions", 0)
         .order("purchased_at", { ascending: true }),
-      admin
-        .from("reservations")
-        .select("trainer_id, scheduled_at, service_type, client_id, series_id")
-        .eq("status", "booked")
-        .gte("scheduled_at", since),
+      fetchAllRows((a, b) =>
+        admin
+          .from("reservations")
+          .select("id, trainer_id, scheduled_at, service_type, client_id, series_id")
+          .eq("status", "booked")
+          .gte("scheduled_at", since)
+          .lt("scheduled_at", until)
+          .order("scheduled_at", { ascending: true })
+          .order("id", { ascending: true })
+          .range(a, b),
+      ).then(
+        (data) => ({ data, error: null }),
+        (e: unknown) => ({ data: null, error: e as Error }),
+      ),
       fetchAllActiveHolds(admin),
       admin.from("profiles").select("id, full_name").eq("role", "trainer"),
       listAllTrainerRulesLite(),

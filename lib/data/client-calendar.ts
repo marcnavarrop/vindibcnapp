@@ -1,5 +1,7 @@
 import "server-only";
-import { addDaysStr, centerDayStart, centerWeekStart } from "@/lib/center-time";
+import { addDaysStr, centerDayStart, centerToday, centerWeekStart } from "@/lib/center-time";
+import { fetchAllRows } from "@/lib/supabase/fetch-all";
+import { STRIP_DAYS } from "@/lib/client-day-slots";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
@@ -164,6 +166,12 @@ export async function getClientCenterData(
   // hora, i aquesta finestra és en la del centre.
   const windowFrom = centerDayStart(addDaysStr(centerWeekStart(), -1));
   const fromISO = windowFrom.toISOString();
+  // FINS AL FINAL DE LA TIRA (+1 dia de marge): és tot el que el client pot
+  // veure i reservar. Abans no tenia final, i amb sèries llargues l'ocupació
+  // del centre podia passar de 1000 files i quedar tallada: el calendari
+  // hauria ensenyat lliures hores ocupades. Ara té final i es llegeix per
+  // pàgines (`fetchAllRows`), així que és sencera per gran que sigui.
+  const toISO = centerDayStart(addDaysStr(centerToday(), STRIP_DAYS + 1)).toISOString();
 
   // Les proves 'pending'/'confirmed' ocupen el forat: es mostren com a
   // reserves anònimes ('booked', isOwn=false) perquè el client no pugui
@@ -210,7 +218,7 @@ export async function getClientCenterData(
       serviceTypes: r.service_types ?? [],
     }));
     const reservations = store.reservations
-      .filter((r) => r.status !== "cancelled" && r.scheduled_at >= fromISO)
+      .filter((r) => r.status !== "cancelled" && r.scheduled_at >= fromISO && r.scheduled_at < toISO)
       .map((r) => {
         const c = store.clients.find((x) => x.id === r.client_id);
         const name = store.profiles.find((p) => p.id === c?.profile_id)?.full_name;
@@ -262,14 +270,23 @@ export async function getClientCenterData(
     // a les reserves de grup (vegeu `mateNameFor`). La consulta va amb el
     // client de servei, com tota la resta d'aquest fitxer: qui decideix què es
     // publica és aquesta projecció, no la RLS.
-    admin
-      .from("reservations")
-      .select(
-        `id, client_id, trainer_id, scheduled_at, service_type, status,
-         client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
-      )
-      .neq("status", "cancelled")
-      .gte("scheduled_at", fromISO),
+    fetchAllRows((a, b) =>
+      admin
+        .from("reservations")
+        .select(
+          `id, client_id, trainer_id, scheduled_at, service_type, status,
+           client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
+        )
+        .neq("status", "cancelled")
+        .gte("scheduled_at", fromISO)
+        .lt("scheduled_at", toISO)
+        .order("scheduled_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(a, b),
+    ).then(
+      (data) => ({ data, error: null }),
+      (e: unknown) => ({ data: null, error: e as Error }),
+    ),
   ]);
 
   const bonoSessions = sessionsByService(bonoRows.data ?? []);

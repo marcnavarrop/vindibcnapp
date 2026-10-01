@@ -261,6 +261,13 @@ export function hoursFor(p: Prepared, day: string, service: ServiceType): HourRo
   return rows;
 }
 
+/**
+ * Quants dies ensenya la tira de Reserves del client. Viu aquí i no al
+ * component perquè el servidor (`getClientCenterData`) també el necessita: és
+ * fins on ha de portar l'ocupació del centre.
+ */
+export const STRIP_DAYS = 21;
+
 /** Els dies de la tira: d'avui en endavant, en hora del centre. */
 export function stripDays(today: string, count: number): string[] {
   return Array.from({ length: count }, (_, i) => addDaysStr(today, i));

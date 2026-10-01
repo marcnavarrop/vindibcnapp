@@ -56,7 +56,8 @@ import { centerDateStr } from "@/lib/center-time";
  */
 
 /** Quants dies ensenya la tira: d'avui a tres setmanes vista. */
-export const STRIP_DAYS = 21;
+export { STRIP_DAYS } from "@/lib/client-day-slots";
+import { STRIP_DAYS } from "@/lib/client-day-slots";
 /** Les properes que surten de cop a la capçalera; la resta, amb «Veure-les totes». */
 const UPCOMING_SHOWN = 3;
 

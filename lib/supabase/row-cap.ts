@@ -71,11 +71,14 @@ export const rowCapFetch: typeof fetch = async (input, init) => {
   const res = await fetch(input, init);
   try {
     const rows = rowsInRange(res.headers.get("content-range"));
-    if (rows !== null && rows >= maxRows()) {
+    // Una lectura per pàgines a propòsit (`fetchAllRows`, `.range()`) porta
+    // `offset`: les pàgines plenes no estan retallades, i n'hi ha més darrere.
+    const paged = /[?&]offset=\d/.test(urlOf(input));
+    if (!paged && rows !== null && rows >= maxRows()) {
       console.warn(
         `[supabase] resposta retallada al sostre de ${maxRows()} files: ${tableOf(urlOf(input)) ?? "?"}`,
       );
-    } else if (rows !== null && rows >= warnRows()) {
+    } else if (!paged && rows !== null && rows >= warnRows()) {
       console.warn(
         `[supabase] resposta de ${rows} files, s'acosta al sostre de ${maxRows()}: ${tableOf(urlOf(input)) ?? "?"} (cal passar-la a pàgines)`,
       );

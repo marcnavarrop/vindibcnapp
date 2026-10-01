@@ -1,4 +1,5 @@
 import "server-only";
+import { fetchAllRows } from "@/lib/supabase/fetch-all";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -10,6 +11,7 @@ import {
   centerDateStr,
   centerWeekday,
   centerSlot,
+  addDaysStr,
   centerDayStart,
   centerToday,
 } from "@/lib/center-time";
@@ -286,10 +288,11 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
   if (USE_MOCK) {
     const store = getStore();
     const now = Date.now();
-    // Mateixa finestra que la consulta real: des d'avui.
+    // Mateixa finestra que la consulta real: d'avui fins on es pot demanar.
     const since = centerDayStart(centerToday()).toISOString();
+    const until = centerDayStart(addDaysStr(centerToday(), TRIAL_MAX_ADVANCE_DAYS + 1)).toISOString();
     for (const r of store.reservations)
-      if (r.status === "booked" && r.scheduled_at >= since)
+      if (r.status === "booked" && r.scheduled_at >= since && r.scheduled_at < until)
         addBusy(r.trainer_id, r.scheduled_at);
     for (const t of store.trial_bookings)
       if (isActiveHold(t, now) && t.scheduled_at >= since)
@@ -304,12 +307,25 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
   // sempre. Sense el filtre, amb el tall de la base a 1000 files, la pàgina
   // hauria ensenyat lliures franges que no ho són.
   const since = centerDayStart(centerToday()).toISOString();
+  // Fins on es pot demanar una prova (+1 dia de marge): més enllà no s'ofereix
+  // res. Abans no tenia final; ara té final i es llegeix per pàgines, i
+  // l'ocupació és sencera per moltes reserves que tingui el centre.
+  const until = centerDayStart(addDaysStr(centerToday(), TRIAL_MAX_ADVANCE_DAYS + 1)).toISOString();
   const [res, trials] = await Promise.all([
-    admin
-      .from("reservations")
-      .select("trainer_id, scheduled_at")
-      .eq("status", "booked")
-      .gte("scheduled_at", since),
+    fetchAllRows((a, b) =>
+      admin
+        .from("reservations")
+        .select("id, trainer_id, scheduled_at")
+        .eq("status", "booked")
+        .gte("scheduled_at", since)
+        .lt("scheduled_at", until)
+        .order("scheduled_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(a, b),
+    ).then(
+      (data) => ({ data, error: null }),
+      (e: unknown) => ({ data: null, error: e as Error }),
+    ),
     admin
       .from("trial_bookings")
       .select("trainer_id, scheduled_at, status, expires_at")

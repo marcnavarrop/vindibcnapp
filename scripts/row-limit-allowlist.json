@@ -103,10 +103,6 @@
     "category": "acotada",
     "reason": "Els professionals."
   },
-  "lib/data/booking-series.ts::loadContext::reservations": {
-    "category": "pendent",
-    "reason": "Reserves 'booked' de tot el centre des d'avui, per resoldre una sèrie. Mateix cas que el calendari del client."
-  },
   "lib/data/centers.ts::listCenters::centers": {
     "category": "acotada",
     "reason": "Configuració: els centres."
@@ -118,10 +114,6 @@
   "lib/data/client-calendar.ts::getClientCenterData::profiles": {
     "category": "acotada",
     "reason": "Els professionals."
-  },
-  "lib/data/client-calendar.ts::getClientCenterData::reservations": {
-    "category": "pendent",
-    "reason": "IMPORTANT: totes les reserves del centre des d'aquesta setmana, per pintar l'ocupació del calendari del client. Amb sèries llargues pot passar de 1000; tallada, ensenyaria lliures hores ocupades (el servidor ho rebutja igual en reservar)."
   },
   "lib/data/client-dashboard.ts::listTrainerCards::profiles": {
     "category": "acotada",
@@ -442,10 +434,6 @@
   "lib/data/trial-bookings.ts::fetchAllActiveHolds::trial_bookings": {
     "category": "acotada",
     "reason": "Les proves actives futures: duren hores o dies."
-  },
-  "lib/data/trial-bookings.ts::getPublicTrialData::reservations": {
-    "category": "pendent",
-    "reason": "IMPORTANT: reserves 'booked' de tot el centre des d'ara, per amagar a /prova les hores ocupades. Mateix cas que el calendari del client."
   },
   "lib/data/trial-bookings.ts::getPublicTrialData::trial_bookings": {
     "category": "acotada",

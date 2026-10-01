@@ -225,7 +225,7 @@ middleware.ts                     # control de acceso por rol
 | `npm run actions:check` | Toda acción de servidor mira quién la llama (ver abajo)  |
 | `npm run roles:check` | Quién puede usar las acciones que escriben con la clave de servicio (simulación) |
 | `npm run rows:check` | Ninguna lectura nueva sin límite (ver abajo)                 |
-| `npm run *:check`    | Comprobaciones en modo simulación (`payments`, `clients`, `bonos`, `blocks`, `waitlist`, `scope`, `series`…) |
+| `npm run *:check`    | Comprobaciones en modo simulación (`payments`, `clients`, `bonos`, `blocks`, `occupancy`, `waitlist`, `scope`, `series`…) |
 
 ## El tope de 1000 filas
 
@@ -236,6 +236,10 @@ avisar**. Tres piezas lo vigilan:
   bonos e histórico de pruebas usan cursor, «Carregar més» y un contador con
   `count: exact`. Los totales (pagos, «Pendent de cobrament») los calcula la
   base (`payments_summary`, `payments_by_month`, `bonos_summary`; 0095 y 0097).
+- **Las lecturas que tienen que ser completas** (la ocupación del calendario del
+  cliente, `/prova` y las series; los destinatarios de un correo) usan una
+  ventana con final y **`fetchAllRows`** (`lib/supabase/fetch-all.ts`): leen
+  por páginas con `.range()` hasta la última, por muchas filas que haya.
 - **`scripts/row-limit-check.mjs`** (`npm run rows:check`, y en cada build):
   cada `.from(…).select(…)` sin `.limit`/`.range`/`.single`/`head` tiene que
   estar en `scripts/row-limit-allowlist.json` como `acotada` (filtrada por id,
