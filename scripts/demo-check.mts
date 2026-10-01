@@ -122,6 +122,7 @@ try {
   const pub = await getPublicTrialData();
   check(!pub.rules.some((r) => DEMO_TRAINER_IDS.includes(r.trainerId)), "cap regla d'un professional demo");
   check(pub.rules.some((r) => r.trainerId === LAIA), "la Laia sí");
+  check(!pub.busy.some((k) => DEMO_TRAINER_IDS.some((id) => k.startsWith(id))), "ni l'ocupació dels professionals demo (la pàgina és pública)");
   // Dissabte a les 10: només el té l'Entrenador Demo.
   let sat = addDaysStr(centerToday(), 2);
   while (centerWeekday(centerLocalToInstant(sat, "12:00")) !== 5) sat = addDaysStr(sat, 1);

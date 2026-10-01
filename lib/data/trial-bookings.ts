@@ -276,8 +276,12 @@ export async function getPublicTrialData(): Promise<PublicTrialData> {
     }));
 
   const busy = new Set<string>();
+  // Només l'ocupació dels professionals que /prova ofereix: la de la resta
+  // (els demo, o qui no fa EP individual) no hi pinta res i no ha de sortir a
+  // una pàgina pública.
+  const offered = new Set(rules.map((r) => r.trainerId));
   const addBusy = (trainerId: string | null, iso: string) => {
-    if (!trainerId) return;
+    if (!trainerId || !offered.has(trainerId)) return;
     // Clau en SLOT de mitja hora del CENTRE: el calendari públic la busca amb
     // el dia i el slot que pinta, i les regles del centre estan en aquesta hora.
     //
