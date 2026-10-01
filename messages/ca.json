@@ -167,7 +167,9 @@
       "emptyCta": "Compra'n un",
       "emptyTail": "per començar a reservar.",
       "noExpiry": "Sense data de caducitat",
-      "expiresOn": "Caduca el {date}"
+      "expiresOn": "Caduca el {date}",
+      "sessionsLeft": "{left} / {total} sessions",
+      "sessionsUsed": "{used} de {total} sessions consumides"
     },
     "upcoming": {
       "title": "Properes reserves",
@@ -176,7 +178,8 @@
       "bookOne": "Reserva una sessió"
     },
     "community": "Comunitat",
-    "nextSession": "Pròxima sessió"
+    "nextSession": "Pròxima sessió",
+    "withTrainer": "Amb {name}"
   },
   "brand": {
     "headline": "El teu centre, al teu abast",
@@ -238,6 +241,15 @@
       "past_due": "Aturada per impagament",
       "cancelled": "Cancel·lada",
       "paused": "Congelada"
+    },
+    "calendar": {
+      "button": "Afegir al calendari",
+      "other": "Outlook / altres (.ics)",
+      "title": "{service} · VindiBCN",
+      "titleWith": "{service} amb {name} · VindiBCN",
+      "description": "{service} a VindiBCN.",
+      "descriptionWith": "Sessió amb {name}. {service} a VindiBCN.",
+      "file": "sessio-vindibcn"
     }
   },
   "picker": {

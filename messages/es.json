@@ -167,7 +167,9 @@
       "emptyCta": "Compra uno",
       "emptyTail": "para empezar a reservar.",
       "noExpiry": "Sin fecha de caducidad",
-      "expiresOn": "Caduca el {date}"
+      "expiresOn": "Caduca el {date}",
+      "sessionsLeft": "{left} / {total} sesiones",
+      "sessionsUsed": "{used} de {total} sesiones consumidas"
     },
     "upcoming": {
       "title": "Próximas reservas",
@@ -176,7 +178,8 @@
       "bookOne": "Reserva una sesión"
     },
     "community": "Comunidad",
-    "nextSession": "Próxima sesión"
+    "nextSession": "Próxima sesión",
+    "withTrainer": "Con {name}"
   },
   "brand": {
     "headline": "Tu centro, a tu alcance",
@@ -238,6 +241,15 @@
       "past_due": "Parada por impago",
       "cancelled": "Cancelada",
       "paused": "Congelada"
+    },
+    "calendar": {
+      "button": "Añadir al calendario",
+      "other": "Outlook / otros (.ics)",
+      "title": "{service} · VindiBCN",
+      "titleWith": "{service} con {name} · VindiBCN",
+      "description": "{service} en VindiBCN.",
+      "descriptionWith": "Sesión con {name}. {service} en VindiBCN.",
+      "file": "sesion-vindibcn"
     }
   },
   "picker": {

@@ -167,7 +167,9 @@
       "emptyCta": "Buy one",
       "emptyTail": "to start booking.",
       "noExpiry": "No expiry date",
-      "expiresOn": "Expires {date}"
+      "expiresOn": "Expires {date}",
+      "sessionsLeft": "{left} / {total} sessions",
+      "sessionsUsed": "{used} of {total} sessions used"
     },
     "upcoming": {
       "title": "Upcoming bookings",
@@ -176,7 +178,8 @@
       "bookOne": "Book a session"
     },
     "community": "Community",
-    "nextSession": "Next session"
+    "nextSession": "Next session",
+    "withTrainer": "With {name}"
   },
   "brand": {
     "headline": "Your centre, within reach",
@@ -238,6 +241,15 @@
       "past_due": "Paused, unpaid",
       "cancelled": "Cancelled",
       "paused": "On hold"
+    },
+    "calendar": {
+      "button": "Add to calendar",
+      "other": "Outlook / other (.ics)",
+      "title": "{service} · VindiBCN",
+      "titleWith": "{service} with {name} · VindiBCN",
+      "description": "{service} at VindiBCN.",
+      "descriptionWith": "Session with {name}. {service} at VindiBCN.",
+      "file": "vindibcn-session"
     }
   },
   "picker": {

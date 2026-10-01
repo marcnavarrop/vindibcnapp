@@ -16,25 +16,38 @@ export type CalendarEvent = {
   description: string;
 };
 
+/**
+ * El títol i la descripció ja escrits, en l'idioma de qui ho afegeix al seu
+ * calendari. Sense, català: és el que veuen l'admin i el professional.
+ */
+export type CalendarEventText = { title: string; description: string };
+
 export function buildCalendarEvent({
   serviceType,
   otherPartyName,
   scheduledAt,
+  text,
 }: {
   serviceType: ServiceType;
   otherPartyName: string | null;
   scheduledAt: string | Date;
+  text?: CalendarEventText;
 }): CalendarEvent {
   const start = new Date(scheduledAt);
   const serviceLabel = SERVICE_LABELS[serviceType];
   const isTraining = (TRAINING_SERVICES as ServiceType[]).includes(serviceType);
   const prefix = isTraining ? "💪 " : "";
-  const title = otherPartyName
-    ? `${prefix}${serviceLabel} amb ${otherPartyName} · VindiBCN`
-    : `${prefix}${serviceLabel} · VindiBCN`;
-  const description = otherPartyName
-    ? `Sessió amb ${otherPartyName}. ${serviceLabel} a VindiBCN.`
-    : `${serviceLabel} a VindiBCN.`;
+  const title =
+    prefix +
+    (text?.title ??
+      (otherPartyName
+        ? `${serviceLabel} amb ${otherPartyName} · VindiBCN`
+        : `${serviceLabel} · VindiBCN`));
+  const description =
+    text?.description ??
+    (otherPartyName
+      ? `Sessió amb ${otherPartyName}. ${serviceLabel} a VindiBCN.`
+      : `${serviceLabel} a VindiBCN.`);
   return {
     title,
     start,

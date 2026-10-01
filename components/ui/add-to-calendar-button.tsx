@@ -6,7 +6,19 @@ import {
   buildCalendarEvent,
   buildGoogleCalendarUrl,
   buildIcsContent,
+  type CalendarEventText,
 } from "@/lib/calendar-links";
+
+/**
+ * Els textos, en l'idioma de qui mira. Sense, català (admin i professional);
+ * el client hi passa els seus des de `ClientAddToCalendarButton`.
+ */
+export type CalendarButtonText = CalendarEventText & {
+  button: string;
+  other: string;
+  /** Nom del fitxer .ics, sense l'extensió. */
+  file: string;
+};
 import type { ServiceType } from "@/types/database";
 
 type Props = {
@@ -19,6 +31,7 @@ type Props = {
    * fulles del client al mòbil; la resta de pantalles es queden com eren.
    */
   touch?: boolean;
+  text?: CalendarButtonText;
 };
 
 export function AddToCalendarButton({
@@ -27,6 +40,7 @@ export function AddToCalendarButton({
   scheduledAt,
   className = "",
   touch = false,
+  text,
 }: Props) {
   const tall = touch ? "min-h-11 " : "";
   const [open, setOpen] = useState(false);
@@ -44,21 +58,21 @@ export function AddToCalendarButton({
   }, [open]);
 
   function downloadIcs() {
-    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt });
+    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt, text });
     const blob = new Blob([buildIcsContent(event)], {
       type: "text/calendar;charset=utf-8",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "sessio-vindibcn.ics";
+    a.download = `${text?.file ?? "sessio-vindibcn"}.ics`;
     a.click();
     URL.revokeObjectURL(url);
     setOpen(false);
   }
 
   function openGoogle() {
-    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt });
+    const event = buildCalendarEvent({ serviceType, otherPartyName, scheduledAt, text });
     window.open(buildGoogleCalendarUrl(event), "_blank", "noopener");
     setOpen(false);
   }
@@ -71,7 +85,7 @@ export function AddToCalendarButton({
         className={`${tall}flex items-center gap-1.5 rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs font-bold text-brand-charcoal hover:border-brand-purple hover:text-brand-purple active:bg-brand-bg ${TAP}`}
       >
         <CalendarIcon />
-        Afegir al calendari
+        {text?.button ?? "Afegir al calendari"}
       </button>
 
       {open && (
@@ -98,7 +112,7 @@ export function AddToCalendarButton({
             className={`${tall}flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-charcoal hover:bg-brand-bg active:bg-brand-border ${TAP}`}
           >
             <OutlookIcon />
-            Outlook / altres (.ics)
+            {text?.other ?? "Outlook / altres (.ics)"}
           </button>
         </div>
       )}

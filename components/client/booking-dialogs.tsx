@@ -9,7 +9,7 @@ import { CENTER_TZ } from "@/lib/config";
 import type { ServiceType } from "@/types/database";
 import type { ReservaErrorCode } from "@/app/(client)/client/reservas/waitlist-actions";
 import type { FormState } from "@/app/(client)/client/reservas/actions";
-import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
+import { ClientAddToCalendarButton } from "@/components/client/client-add-to-calendar-button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import { WeeklyRepeat, type WeeklySeed } from "@/components/client/weekly-repeat";
@@ -315,7 +315,7 @@ export function CreateModal({
           <GroupMates mates={mates} label={t("book.with")} />
         </dl>
         <div className="mt-5 flex flex-col items-center gap-3">
-          <AddToCalendarButton
+          <ClientAddToCalendarButton
             touch
             serviceType={service}
             otherPartyName={trainerName}
@@ -518,7 +518,7 @@ export function OwnModal({
       </dl>
       {!confirming && (
         <div className="mt-4">
-          <AddToCalendarButton
+          <ClientAddToCalendarButton
             touch
             serviceType={service}
             otherPartyName={trainerNameFull}

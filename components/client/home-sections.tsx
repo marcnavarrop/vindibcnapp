@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Avatar } from "@/components/ui/avatar";
 import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
 import { Badge } from "@/components/ui/badge";
-import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
+import { ClientAddToCalendarButton } from "@/components/client/client-add-to-calendar-button";
 import { CancelReservationButton } from "@/components/forms/cancel-reservation-button";
 import { colorOfPro, type ColorPalette } from "@/lib/colors";
 import {
@@ -190,7 +190,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
                         {tl(b.serviceType)}
                       </p>
                       <p className="text-xs text-brand-muted">
-                        {b.remainingSessions} / {b.totalSessions} sessions
+                        {t("sessionsLeft", { left: b.remainingSessions, total: b.totalSessions })}
                       </p>
                     </div>
                   </div>
@@ -204,7 +204,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
                 <div
                   className="h-1.5 overflow-hidden rounded-full bg-brand-bg"
                   role="img"
-                  aria-label={`${used} de ${b.totalSessions} sessions consumides`}
+                  aria-label={t("sessionsUsed", { used, total: b.totalSessions })}
                 >
                   <div
                     className="h-full rounded-full bg-brand-purple"
@@ -243,8 +243,9 @@ export async function UpcomingReservations({
   palette: ColorPalette;
   minCancellationHours: number;
 }) {
-  const [tu, tl, locale] = await Promise.all([
+  const [tu, th, tl, locale] = await Promise.all([
     getTranslations("home.upcoming"),
+    getTranslations("home"),
     getTranslations("labels.service"),
     getLocale() as Promise<Locale>,
   ]);
@@ -311,12 +312,12 @@ export async function UpcomingReservations({
                     color={colorOfPro(palette, r.trainerId)}
                   />
                   <span className="hidden text-xs text-brand-muted sm:inline">
-                    Amb {firstName(r.trainerName)}
+                    {th("withTrainer", { name: firstName(r.trainerName) })}
                   </span>
                 </div>
 
                 <div className="ml-auto flex shrink-0 items-center gap-2">
-                  <AddToCalendarButton
+                  <ClientAddToCalendarButton
                     serviceType={r.serviceType}
                     otherPartyName={r.trainerName}
                     scheduledAt={r.scheduledAt}
@@ -383,12 +384,12 @@ export async function NextSessionCard({
           color={colorOfPro(palette, reservation.trainerId)}
         />
         <span className="text-sm text-brand-muted">
-          Amb {firstName(reservation.trainerName)}
+          {t("withTrainer", { name: firstName(reservation.trainerName) })}
         </span>
       </div>
 
       <div className="mt-4">
-        <AddToCalendarButton
+        <ClientAddToCalendarButton
           serviceType={reservation.serviceType}
           otherPartyName={reservation.trainerName}
           scheduledAt={reservation.scheduledAt}
