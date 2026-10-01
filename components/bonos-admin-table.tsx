@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
 import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
@@ -9,7 +9,9 @@ import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
 import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { cancelBlockFor } from "@/lib/bono-rules";
-import type { BonoListItem } from "@/lib/data/bonos";
+import type { BonoFilter, BonoListItem } from "@/lib/data/bonos";
+import { LoadMoreFooter, useLoadMore } from "@/components/server-list";
+import { loadMoreBonosAction } from "@/app/actions/bono-list-actions";
 import type { BonoStatus } from "@/types/database";
 
 const STATUS_TONE: Record<
@@ -26,55 +28,54 @@ const STATUS_TONE: Record<
   unpaid: "danger",
 };
 
-type Filter = "all" | "pending_payment" | "unpaid" | "active";
-
-const FILTERS: { key: Filter; label: string }[] = [
+const FILTERS: { key: BonoFilter; label: string }[] = [
   { key: "all", label: "Tots" },
   { key: "pending_payment", label: "Pendents de pagament" },
   { key: "unpaid", label: "Decaiguts sense cobrar" },
   { key: "active", label: "Actius" },
 ];
 
+/**
+ * La llista de bons de l'admin, per pàgines.
+ *
+ * El filtre va a l'adreça (`?estat=`) i es fa a la base (`listBonosPage`); els
+ * comptadors dels filtres arriben del servidor (`countCollectableByStatus`),
+ * amb el mateix criteri que la piloteta del menú. Abans es portaven tots els
+ * bons i es comptava i filtrava aquí, i amb més de 1000 tot quedava curt.
+ */
 export function BonosAdminTable({
-  bonos,
+  initialRows,
+  initialCursor,
+  total,
+  filter,
+  counts,
   today,
 }: {
-  bonos: BonoListItem[];
+  initialRows: BonoListItem[];
+  initialCursor: string | null;
+  total: number | null;
+  filter: BonoFilter;
+  /** Tot el centre, no la pàgina carregada: la cua és la del centre. */
+  counts: { pending_payment: number; unpaid: number };
   /** Dia del CENTRE. Ve del servidor: el navegador pot anar en una altra zona. */
   today: string;
 }) {
-  const [filter, setFilter] = useState<Filter>("all");
-
-  /*
-   * Els comptadors dels filtres, un per cada estat COBRABLE. Sumen el mateix
-   * que la piloteta del menú —«Pendents» + «Decaiguts»—, i cadascun diu les
-   * files que ensenya el seu filtre. Abans només es comptaven els pendents, i
-   * el menú i la pàgina haurien dit dos números diferents.
-   *
-   * Sobre `bonos` sencer, no sobre el filtrat: la cua és la de tot el centre.
-   */
-  const counts = useMemo(() => {
-    const c = { pending_payment: 0, unpaid: 0 };
-    for (const b of bonos)
-      if (b.status === "pending_payment" || b.status === "unpaid") c[b.status]++;
-    return c;
-  }, [bonos]);
-  const filtered = useMemo(
-    () => (filter === "all" ? bonos : bonos.filter((b) => b.status === filter)),
-    [bonos, filter],
-  );
-
   return (
     <div>
-      {/* La piloteta del menú es posa al dia amb el que ensenya aquesta taula,
-          en entrar-hi i cada cop que un cobrament o una anul·lació la repinta. */}
+      {/* La piloteta del menú es posa al dia amb aquests comptadors, en entrar
+          i cada cop que un cobrament o una anul·lació repinta la pàgina. */}
       <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
-      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5">
+      <nav
+        aria-label="Filtre d'estat"
+        className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5"
+      >
         {FILTERS.map((f) => (
-          <button
+          <Link
             key={f.key}
-            type="button"
-            onClick={() => setFilter(f.key)}
+            href={f.key === "all" ? "/admin/bonos" : `/admin/bonos?estat=${f.key}`}
+            replace
+            scroll={false}
+            aria-current={filter === f.key ? "page" : undefined}
             className={clsx(
               "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
               filter === f.key
@@ -90,12 +91,43 @@ export function BonosAdminTable({
                   {counts[f.key]}
                 </span>
               )}
-          </button>
+          </Link>
         ))}
-      </div>
+      </nav>
 
+      <BonosAdminRows
+        key={filter}
+        initialRows={initialRows}
+        initialCursor={initialCursor}
+        total={total}
+        filter={filter}
+        today={today}
+      />
+    </div>
+  );
+}
+
+function BonosAdminRows({
+  initialRows,
+  initialCursor,
+  total,
+  filter,
+  today,
+}: {
+  initialRows: BonoListItem[];
+  initialCursor: string | null;
+  total: number | null;
+  filter: BonoFilter;
+  today: string;
+}) {
+  const list = useLoadMore(initialRows, initialCursor, (cursor) =>
+    loadMoreBonosAction({ filter }, cursor),
+  );
+
+  return (
+    <>
       <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-        <table className="w-full min-w-[44rem] text-left text-sm">
+        <table className="w-full min-w-[44rem] text-left text-sm" data-testid="bonos-table">
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Client</th>
@@ -108,7 +140,7 @@ export function BonosAdminTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((b) => (
+            {list.items.map((b) => (
               <tr
                 key={b.id}
                 className="border-b border-brand-border last:border-0"
@@ -193,7 +225,7 @@ export function BonosAdminTable({
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {list.items.length === 0 && (
               <tr>
                 <td
                   colSpan={7}
@@ -206,6 +238,15 @@ export function BonosAdminTable({
           </tbody>
         </table>
       </div>
-    </div>
+      <LoadMoreFooter
+        shown={list.items.length}
+        total={total}
+        noun="bons"
+        hasMore={list.hasMore}
+        pending={list.pending}
+        error={list.error}
+        onLoadMore={list.loadMore}
+      />
+    </>
   );
 }

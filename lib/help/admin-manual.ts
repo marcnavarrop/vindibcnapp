@@ -154,7 +154,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Pendent de cobrament",
-              "Import i nombre de bons en estat «Pendent de pagament». Es posa taronja si n'hi ha algun. És la xifra que et diu quants diners hi ha compromesos i no ingressats.",
+              "Import i nombre de bons per cobrar: els «Pendent de pagament» que no han caducat i els «Decaigut sense cobrar» (que no caduquen). És la mateixa cua que la piloteta de «Bons» del menú i que els dos comptadors de la pantalla de Bons. Es posa taronja si n'hi ha algun. És la xifra que et diu quants diners hi ha compromesos i no ingressats, i la compta la base de dades, exacta per molts bons que hi hagi.",
             ],
             [
               "Bons a punt d'esgotar-se",
@@ -867,7 +867,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Tots els bons del centre, amb el client, el servei, les sessions, el preu, la caducitat i l'estat. Els filtres de dalt —Tots, Pendents de pagament, Decaiguts sense cobrar i Actius— són la manera ràpida d'anar al que et fa falta; el de pendents porta un comptador taronja quan n'hi ha.",
+          text: "Tots els bons del centre, del més nou al més antic, amb el client, el servei, les sessions, el preu, la caducitat i l'estat. Els filtres de dalt —Tots, Pendents de pagament, Decaiguts sense cobrar i Actius— són la manera ràpida d'anar al que et fa falta; els de pendents i decaiguts porten un comptador taronja quan n'hi ha, i entre tots dos sumen la piloteta del menú. La llista en carrega 50 de cop: a sota diu quants en veus del total i «Carregar més» n'afegeix 50 més. El filtre queda a l'adreça. Si cobres o anul·les un bo, la llista torna a començar des del principi amb l'estat nou.",
         },
         { t: "h", text: "Els sis estats" },
         {

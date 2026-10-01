@@ -182,7 +182,7 @@
 
     <h3>1.1 Inici <span class="flag">Refet</span></h3>
     <ul class="checklist">
-      <li><strong>Sis xifres</strong>, totes clicables (et porten a la pantalla d'on surten): Ingressos del mes (amb % vs mes anterior), <strong>Pendent de cobrament</strong>, <strong>Bons a punt d'esgotar-se</strong>, Sessions (avui / setmana), <strong>Ocupació setmanal</strong> i <strong>Conversió de proves</strong></li>
+      <li><strong>Sis xifres</strong>, totes clicables (et porten a la pantalla d'on surten): Ingressos del mes (amb % vs mes anterior), <strong>Pendent de cobrament</strong> (<span class="flag">Corregit</span> pendents no caducats + decaiguts: ha de quadrar amb la piloteta de «Bons»; abans comptava també els pendents caducats i deixava fora els decaiguts), <strong>Bons a punt d'esgotar-se</strong>, Sessions (avui / setmana), <strong>Ocupació setmanal</strong> i <strong>Conversió de proves</strong></li>
       <li>Les dues que es poden posar taronges (pendent de cobrament, bons baixos) només ho fan <strong>quan hi ha alguna cosa a fer</strong> — comprova-ho cobrant un bo pendent i veient com es calma</li>
       <li><strong>Quatre accions ràpides</strong>: Nou client, Nova reserva, Bons pendents, Vals de regal</li>
       <li><strong>"El que espera resposta"</strong>: sol·licituds de prova pendents amb compte enrere, vals de regal per cobrar, recompenses de referit per aplicar. <strong>Si no hi ha res de les tres coses, la secció no es pinta</strong> (comprova-ho també)</li>
@@ -296,6 +296,8 @@
       <li>Botó <strong>"Anul·lar"</strong> a les files que s'hi poden anul·lar. L'admin, a diferència del professional, <strong>sí que pot anul·lar un bo ja cobrat</strong> si està intacte — el quadre avisa que el cobrament segueix al llibre i que la devolució es fa fora de l'app</li>
       <li>Segueix sense sortir a: bons amb sessions gastades, bons de subscripció, i els estats que no són "actiu" ni "pendent"</li>
       <li>Un bo anul·lat passa a <strong>"Cancel·lat"</strong> en vermell i es queda sense cap botó</li>
+      <li><strong>Per pàgines</strong> <span class="flag">Nou</span>: del més nou al més antic, 50 de cop, «N de M bons» i «Carregar més» fins que desapareix. El filtre d'estat va a l'adreça (<code>?estat=</code>) i el fa el servidor. Els comptadors de «Pendents» i «Decaiguts» sumen la piloteta del menú</li>
+      <li>Cobra un pendent des del filtre «Pendents»: la fila desapareix del filtre, el comptador baixa en un i <strong>el «Pendent de cobrament» d'Inici</strong> baixa en el seu preu</li>
     </ul>
     <ul class="checklist">
       <li>Un bo "Pendent de pagament" (comprat amb "Pagar al centre") <strong>ja es pot fer servir per reservar a l'instant</strong></li>
@@ -438,8 +440,8 @@
     <ul class="checklist">
       <li>La pantalla "Bons" del menú <strong>ja no és només de consulta</strong>: segueix ensenyant tots els bons del centre, però ara s'hi pot filtrar i cobrar</li>
       <li>Conmutador <strong>"Els meus / Tots"</strong> a dalt, igual que a la llista de Clients. <strong>Arrenca a "Els meus"</strong></li>
-      <li>Filtres per estat a sota: Tots, Pendents de pagament, Decaiguts sense cobrar, Actius. El <strong>comptador taronja de pendents només compta els teus</strong> — comprova que no quadra amb el de l'admin si hi ha pendents d'un company</li>
-      <li>Cercador per <strong>nom de client o servei</strong>; el recompte de la dreta segueix el filtre</li>
+      <li>Filtres per estat a sota: Tots, Pendents de pagament, Decaiguts sense cobrar, Actius. <span class="flag">Corregit</span> Els <strong>comptadors taronja són de tot el centre</strong> (des de la 0085 pots cobrar qualsevol bo): han de <strong>quadrar amb els de l'admin i amb la piloteta del menú</strong>, també si hi ha pendents d'un company</li>
+      <li><span class="flag">Nou</span> Cercador per <strong>nom de client</strong> (sense accents, paraules en qualsevol ordre) i desplegable <strong>«Servei»</strong> al costat; es combinen amb «Els meus / Tots» i l'estat, i tot queda a l'adreça. 50 bons per pàgina amb «Carregar més» i «N de M bons»</li>
       <li>Columnes: Client, Servei, Sessions (amb "(N ja consumides)" als pendents), Preu, <strong>Caduca</strong> i Estat</li>
       <li><strong>"Marcar com pagat" ara surt a TOTES les files pendents</strong>, també a les d'un client d'un company. Posa't a "Tots", busca el bo pendent d'un altre professional i comprova que sí que el pots cobrar (era el contrari fins ara)</li>
       <li><strong>"Anul·lar"</strong> al costat. Només surt si el bo està <strong>pendent de pagament</strong> i <strong>intacte</strong> (restants = totals). Comprova que NO surt a: un pendent amb sessions gastades, un bo ja actiu, i un bo de subscripció</li>

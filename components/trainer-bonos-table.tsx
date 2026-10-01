@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
+import { SERVICE_LABELS, SERVICE_TYPES, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
 import {
   markTrainerBonoPaidAction,
   cancelTrainerBonoAction,
@@ -12,8 +14,10 @@ import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
 import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { cancelBlockFor } from "@/lib/bono-rules";
-import type { BonoListItem } from "@/lib/data/bonos";
-import type { BonoStatus } from "@/types/database";
+import type { BonoFilter, BonoListItem } from "@/lib/data/bonos";
+import { LoadMoreFooter, useLoadMore, useUrlQuery } from "@/components/server-list";
+import { loadMoreBonosAction } from "@/app/actions/bono-list-actions";
+import type { BonoStatus, ServiceType } from "@/types/database";
 
 /**
  * Els bons del centre, vistos pel professional.
@@ -33,11 +37,18 @@ import type { BonoStatus } from "@/types/database";
  * d'anul·lació (`cancelBlockFor`), que també fa servir el servidor. El dia que
  * canviï què fan, les tres pantalles ho diran igual.
  *
- * ELS DOS FILTRES SÓN DE LA CASA
+ * ELS FILTRES SÓN DE LA CASA, I VAN AL SERVIDOR
  *
  * El conmutador "Els meus / Tots" és el mateix de `TrainerClientsTable` i el
  * filtre per estat és el de `BonosAdminTable`. Es comença per "Els meus"
  * perquè és la feina pròpia; el centre sencer és a un clic.
+ *
+ * Tots van a l'adreça i els fa la base (`listBonosPage`): estat, «Els meus»,
+ * el nom del client i el servei. La llista va per pàgines i els comptadors
+ * són els de TOT el centre (`countCollectableByStatus`, la piloteta). Abans es
+ * portaven tots els bons del centre i es filtrava aquí. La cerca de text era
+ * per client O servei; a la base, el nom és dos nivells més avall i no es pot
+ * barrejar amb el servei en una sola condició: el servei és un desplegable.
  */
 
 const STATUS_TONE: Record<
@@ -54,35 +65,170 @@ const STATUS_TONE: Record<
   unpaid: "danger",
 };
 
-type Filter = "all" | "pending_payment" | "unpaid" | "active";
-
-const FILTERS: { key: Filter; label: string }[] = [
+const FILTERS: { key: BonoFilter; label: string }[] = [
   { key: "all", label: "Tots" },
   { key: "pending_payment", label: "Pendents de pagament" },
   { key: "unpaid", label: "Decaiguts sense cobrar" },
   { key: "active", label: "Actius" },
 ];
 
+type View = {
+  scope: "mine" | "all";
+  filter: BonoFilter;
+  q: string;
+  serviceType: ServiceType | null;
+};
+
 export function TrainerBonosTable({
-  bonos,
-  myClientIds,
+  initialRows,
+  initialCursor,
+  total,
+  view,
+  counts,
   today,
 }: {
-  bonos: BonoListItem[];
-  /**
-   * Els clients assignats a qui mira. Des de la 0085 NO decideix cap permís
-   * —cobrar i anul·lar ja no depenen de l'assignació—: només alimenta el
-   * conmutador "Els meus / Tots", que és una comoditat de lectura.
-   */
-  myClientIds: string[];
+  initialRows: BonoListItem[];
+  initialCursor: string | null;
+  total: number | null;
+  /** Els filtres amb què el servidor ha pintat aquesta pàgina. */
+  view: View;
+  /** Tot el centre (la piloteta), no només «Els meus». */
+  counts: { pending_payment: number; unpaid: number };
   /** Dia del CENTRE. Ve del servidor: el navegador pot anar en una altra zona. */
   today: string;
 }) {
-  const [scope, setScope] = useState<"mine" | "all">("mine");
-  const [filter, setFilter] = useState<Filter>("all");
-  const [query, setQuery] = useState("");
+  const search = useUrlQuery();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [switching, startSwitch] = useTransition();
+  const href = (next: Partial<View>) => {
+    const v = { ...view, ...next };
+    const p = new URLSearchParams();
+    if (v.scope === "all") p.set("tots", "1");
+    if (v.filter !== "all") p.set("estat", v.filter);
+    if (v.serviceType) p.set("servei", v.serviceType);
+    if (v.q) p.set("q", v.q);
+    const qs = p.toString();
+    return qs ? `${pathname}?${qs}` : pathname;
+  };
+  const pill = (active: boolean) =>
+    clsx(
+      "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
+      active ? "bg-brand-purple text-white" : "text-brand-muted hover:text-brand-dark",
+      TAP,
+    );
 
-  const mine = useMemo(() => new Set(myClientIds), [myClientIds]);
+  return (
+    <div>
+      {/* La piloteta del menú es posa al dia amb aquests comptadors, en entrar
+          i cada cop que un cobrament o una anul·lació repinta la pàgina. */}
+      <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <nav aria-label="Quins bons" className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
+          {(["mine", "all"] as const).map((s) => (
+            <Link
+              key={s}
+              href={href({ scope: s })}
+              replace
+              scroll={false}
+              aria-current={view.scope === s ? "page" : undefined}
+              className={pill(view.scope === s)}
+            >
+              {s === "mine" ? "Els meus" : "Tots"}
+            </Link>
+          ))}
+        </nav>
+        <input
+          type="search"
+          value={search.value}
+          onChange={(e) => search.setValue(e.target.value)}
+          placeholder="Cerca per client…"
+          aria-label="Cerca bons per client"
+          className="w-full max-w-sm rounded-lg border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
+        />
+        <label className="flex items-center gap-2 text-sm text-brand-muted">
+          <span className="whitespace-nowrap">Servei</span>
+          <select
+            value={view.serviceType ?? ""}
+            onChange={(e) =>
+              startSwitch(() =>
+                router.replace(href({ serviceType: (e.target.value || null) as ServiceType | null }), {
+                  scroll: false,
+                }),
+              )
+            }
+            className="min-h-11 rounded-lg border border-brand-border bg-white px-3 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
+          >
+            <option value="">Tots</option>
+            {SERVICE_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {SERVICE_LABELS[t]}
+              </option>
+            ))}
+          </select>
+        </label>
+        {(search.pending || switching) && (
+          <span className="text-sm text-brand-muted" aria-live="polite">
+            Buscant…
+          </span>
+        )}
+      </div>
+
+      <nav aria-label="Filtre d'estat" className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5">
+        {FILTERS.map((f) => (
+          <Link
+            key={f.key}
+            href={href({ filter: f.key })}
+            replace
+            scroll={false}
+            aria-current={view.filter === f.key ? "page" : undefined}
+            className={pill(view.filter === f.key)}
+          >
+            {f.label}
+            {(f.key === "pending_payment" || f.key === "unpaid") &&
+              counts[f.key] > 0 && (
+                <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+                  {counts[f.key]}
+                </span>
+              )}
+          </Link>
+        ))}
+      </nav>
+
+      <TrainerBonosRows
+        key={`${view.scope}|${view.filter}|${view.serviceType ?? ""}|${view.q}`}
+        initialRows={initialRows}
+        initialCursor={initialCursor}
+        total={total}
+        view={view}
+        today={today}
+        dim={search.pending || switching}
+      />
+    </div>
+  );
+}
+
+function TrainerBonosRows({
+  initialRows,
+  initialCursor,
+  total,
+  view,
+  today,
+  dim,
+}: {
+  initialRows: BonoListItem[];
+  initialCursor: string | null;
+  total: number | null;
+  view: View;
+  today: string;
+  dim: boolean;
+}) {
+  const list = useLoadMore(initialRows, initialCursor, (cursor) =>
+    loadMoreBonosAction(
+      { filter: view.filter, q: view.q, serviceType: view.serviceType, scope: view.scope },
+      cursor,
+    ),
+  );
 
   /**
    * Cobrar ja no depèn de qui tingui el client assignat (0085): qui té la
@@ -109,97 +255,15 @@ export function TrainerBonosTable({
       false,
     ) === null;
 
-  /*
-   * Els comptadors dels filtres, un per cada estat COBRABLE. Sumen el mateix
-   * que la piloteta del menú —«Pendents» + «Decaiguts»—, i cadascun diu les
-   * files que ensenya el seu filtre. Abans només es comptaven els pendents, i
-   * el menú i la pàgina haurien dit dos números diferents.
-   *
-   * Sobre `bonos` sencer, no sobre el filtrat: la cua és la de tot el centre.
-   */
-  const counts = useMemo(() => {
-    const c = { pending_payment: 0, unpaid: 0 };
-    for (const b of bonos)
-      if (b.status === "pending_payment" || b.status === "unpaid") c[b.status]++;
-    return c;
-  }, [bonos]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return bonos
-      .filter((b) => (scope === "mine" ? mine.has(b.clientId) : true))
-      .filter((b) => filter === "all" || b.status === filter)
-      .filter(
-        (b) =>
-          !q ||
-          b.clientName.toLowerCase().includes(q) ||
-          SERVICE_LABELS[b.serviceType].toLowerCase().includes(q),
-      );
-  }, [bonos, scope, mine, filter, query]);
-
   return (
-    <div>
-      {/* La piloteta del menú es posa al dia amb el que ensenya aquesta taula,
-          en entrar-hi i cada cop que un cobrament o una anul·lació la repinta. */}
-      <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
-          {(["mine", "all"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setScope(s)}
-              className={clsx(
-                "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
-                scope === s
-                  ? "bg-brand-purple text-white"
-                  : "text-brand-muted hover:text-brand-dark",
-                TAP,
-              )}
-            >
-              {s === "mine" ? "Els meus" : "Tots"}
-            </button>
-          ))}
-        </div>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca per client o servei…"
-          className="w-full max-w-sm rounded-lg border border-brand-border bg-white px-3 py-2.5 text-sm text-brand-charcoal outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
-        />
-        <span className="text-sm whitespace-nowrap text-brand-muted">
-          {filtered.length} {filtered.length === 1 ? "bo" : "bons"}
-        </span>
-      </div>
-
-      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => setFilter(f.key)}
-            className={clsx(
-              "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
-              filter === f.key
-                ? "bg-brand-purple text-white"
-                : "text-brand-muted hover:text-brand-dark",
-              TAP,
-            )}
-          >
-            {f.label}
-            {(f.key === "pending_payment" || f.key === "unpaid") &&
-              counts[f.key] > 0 && (
-                <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
-                  {counts[f.key]}
-                </span>
-              )}
-          </button>
-        ))}
-      </div>
-
-      <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-        <table className="w-full min-w-[44rem] text-left text-sm">
+    <>
+      <div
+        className={clsx(
+          "overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity",
+          dim && "opacity-60",
+        )}
+      >
+        <table className="w-full min-w-[44rem] text-left text-sm" data-testid="bonos-table">
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Client</th>
@@ -212,7 +276,7 @@ export function TrainerBonosTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((b) => (
+            {list.items.map((b) => (
               <tr
                 key={b.id}
                 className="border-b border-brand-border last:border-0"
@@ -281,13 +345,13 @@ export function TrainerBonosTable({
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {list.items.length === 0 && (
               <tr>
                 <td
                   colSpan={7}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
-                  {scope === "mine"
+                  {view.scope === "mine"
                     ? "Cap bo teu en aquest filtre. Prova amb «Tots»."
                     : "Sense bons en aquest filtre."}
                 </td>
@@ -296,6 +360,15 @@ export function TrainerBonosTable({
           </tbody>
         </table>
       </div>
-    </div>
+      <LoadMoreFooter
+        shown={list.items.length}
+        total={total}
+        noun="bons"
+        hasMore={list.hasMore}
+        pending={list.pending}
+        error={list.error}
+        onLoadMore={list.loadMore}
+      />
+    </>
   );
 }

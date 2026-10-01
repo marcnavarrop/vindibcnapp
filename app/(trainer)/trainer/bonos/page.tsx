@@ -1,21 +1,45 @@
 import { getViewer } from "@/lib/auth";
-import { listBonos } from "@/lib/data/bonos";
-import { listClients } from "@/lib/data/clients";
+import {
+  BONO_FILTERS,
+  countCollectableByStatus,
+  listBonosPage,
+  type BonoFilter,
+} from "@/lib/data/bonos";
 import { centerToday } from "@/lib/center-time";
+import { SERVICE_TYPES } from "@/lib/labels";
 import { TrainerBonosTable } from "@/components/trainer-bonos-table";
+import type { ServiceType } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
-export default async function TrainerBonosPage() {
+export default async function TrainerBonosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tots?: string; estat?: string; q?: string; servei?: string }>;
+}) {
   const viewer = await getViewer();
-  const trainerId = viewer?.id;
+  // Sense sessió no hi ha «els meus»: amb un id buit el filtre desapareixeria.
+  if (!viewer) return null;
 
-  // Els bons de tot el centre i, a part, quins clients són meus. La RLS ja
-  // deixa veure-ho tot per coordinació. Des de la 0085 la segona no decideix
-  // cap permís: només alimenta el commutador «Els meus / Tots».
-  const [bonos, mine] = await Promise.all([
-    listBonos(),
-    trainerId ? listClients(trainerId) : Promise.resolve([]),
+  const { tots, estat, q: rawQ, servei } = await searchParams;
+  const view = {
+    scope: tots === "1" ? ("all" as const) : ("mine" as const),
+    filter: BONO_FILTERS.includes(estat as BonoFilter) ? (estat as BonoFilter) : ("all" as BonoFilter),
+    q: (rawQ ?? "").trim().slice(0, 60),
+    serviceType: SERVICE_TYPES.includes(servei as ServiceType) ? (servei as ServiceType) : null,
+  };
+
+  // Els bons del centre per pàgines, amb els filtres a la base. La RLS ja
+  // deixa veure-ho tot per coordinació (0005); «Els meus» és una comoditat de
+  // lectura i va amb el SEU id. Els comptadors són de tot el centre.
+  const [page, counts] = await Promise.all([
+    listBonosPage({
+      filter: view.filter,
+      q: view.q,
+      serviceType: view.serviceType,
+      assignedTrainerId: view.scope === "mine" ? viewer.id : null,
+    }),
+    countCollectableByStatus(),
   ]);
 
   return (
@@ -30,8 +54,11 @@ export default async function TrainerBonosPage() {
       {/* El dia del CENTRE, no el del navegador: la taula l'usa per dir si un
           bo decaigut ja ha passat de data abans de cobrar-lo. */}
       <TrainerBonosTable
-        bonos={bonos}
-        myClientIds={mine.map((c) => c.id)}
+        initialRows={page.items}
+        initialCursor={page.nextCursor}
+        total={page.total}
+        view={view}
+        counts={counts}
         today={centerToday()}
       />
     </main>

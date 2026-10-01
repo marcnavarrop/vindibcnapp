@@ -15,6 +15,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerToday } from "@/lib/center-time";
 import { cancelBlockFor, CANCEL_BLOCK_LABELS } from "@/lib/bono-rules";
 import { SERVICE_LABELS } from "@/lib/labels";
+import { matchesName, nameWords, wordRegex } from "@/lib/client-search-match";
 import { isSubscriptionOnly } from "@/lib/subscription-rules";
 import type { ServiceType, BonoStatus, PaymentMethod } from "@/types/database";
 
@@ -139,61 +140,186 @@ function clientName(clientId: string, store: Store): string {
   return profile?.full_name ?? "—";
 }
 
-export async function listBonos(): Promise<BonoListItem[]> {
+/** Bons per pàgina de les llistes de bons (admin i professional). */
+export const BONOS_PAGE_SIZE = 50;
+
+/** Els filtres de les dues pantalles de bons. */
+export type BonoFilter = "all" | "pending_payment" | "unpaid" | "active";
+export const BONO_FILTERS: BonoFilter[] = ["all", "pending_payment", "unpaid", "active"];
+
+export type BonosPage = {
+  items: BonoListItem[];
+  nextCursor: string | null;
+  /** Quants en surten amb aquests filtres. Només a la primera pàgina. */
+  total: number | null;
+};
+
+// Van dins d'un filtre de PostgREST: la data, entre cometes i només amb els
+// caràcters d'una marca de temps; l'id, lletres, xifres i guions.
+const CURSOR_TS = /^\d{4}-\d{2}-\d{2}[T ][\d:.]+(Z|[+-]\d{2}(:?\d{2})?)?$/;
+const CURSOR_ID = /^[A-Za-z0-9-]{1,64}$/;
+
+function encodeBonosCursor(createdAt: string, id: string): string {
+  return Buffer.from(JSON.stringify([createdAt, id])).toString("base64url");
+}
+
+function decodeBonosCursor(c: string): { createdAt: string; id: string } | null {
+  try {
+    const v = JSON.parse(Buffer.from(c, "base64url").toString("utf8"));
+    if (!Array.isArray(v) || v.length !== 2) return null;
+    const [createdAt, id] = v;
+    if (typeof createdAt !== "string" || !CURSOR_TS.test(createdAt)) return null;
+    if (typeof id !== "string" || !CURSOR_ID.test(id)) return null;
+    return { createdAt, id };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Una pàgina de bons, del més nou al més antic, amb els filtres fets a la BASE.
+ *
+ * Abans les dues pantalles portaven TOTS els bons del centre i filtraven al
+ * navegador: al tall de 1000 files, els més antics no haurien sortit i els
+ * comptadors s'haurien quedat curts. Ara: cursor sobre (created_at, id), que
+ * són els índexs de la 0097; 50 per pàgina; el total amb `count: exact` a la
+ * primera pàgina. Els comptadors dels filtres no surten d'aquí:
+ * `countCollectableByStatus`.
+ *
+ * Amb la sessió de qui mira: la RLS de `bonos` deixa veure-ho tot a l'admin i
+ * al professional (coordinació, 0005).
+ */
+export async function listBonosPage(opts: {
+  filter?: BonoFilter;
+  /** Paraules del nom del client (sense accents, en qualsevol ordre). */
+  q?: string;
+  serviceType?: ServiceType | null;
+  /** «Els meus» del professional: només els bons dels seus clients. */
+  assignedTrainerId?: string | null;
+  cursor?: string | null;
+  limit?: number;
+}): Promise<BonosPage> {
   await sweepExpiredBonos();
+
+  const limit = Math.min(Math.max(opts.limit ?? BONOS_PAGE_SIZE, 1), 200);
+  const filter = opts.filter && BONO_FILTERS.includes(opts.filter) ? opts.filter : "all";
+  const q = (opts.q ?? "").trim().slice(0, 60);
+  const after = opts.cursor ? decodeBonosCursor(opts.cursor) : null;
+  if (opts.cursor && !after) throw new Error("Cursor de bons no vàlid.");
+
+  type Item = { item: BonoListItem; createdAt: string };
+  let rows: Item[];
+  let total: number | null = null;
 
   if (USE_MOCK) {
     const store = getStore();
-    return store.bonos.map((b) => ({
-      id: b.id,
-      clientId: b.client_id,
-      clientName: clientName(b.client_id, store),
-      serviceType: b.service_type,
-      totalSessions: b.total_sessions,
-      remainingSessions: b.remaining_sessions,
-      price: b.price,
-      status: b.status,
-      expiresAt: b.expires_at ?? null,
-      subscriptionId: b.subscription_id ?? null,
+    const all = store.bonos
+      .filter((b) => filter === "all" || b.status === filter)
+      .filter((b) => !opts.serviceType || b.service_type === opts.serviceType)
+      .filter(
+        (b) =>
+          !opts.assignedTrainerId ||
+          store.clients.find((c) => c.id === b.client_id)?.assigned_trainer_id === opts.assignedTrainerId,
+      )
+      .filter((b) => !q || matchesName(clientName(b.client_id, store), q))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+    total = after ? null : all.length;
+    rows = all
+      .filter(
+        (b) =>
+          !after ||
+          b.created_at < after.createdAt ||
+          (b.created_at === after.createdAt && b.id < after.id),
+      )
+      .slice(0, limit + 1)
+      .map((b) => ({
+        createdAt: b.created_at,
+        item: {
+          id: b.id,
+          clientId: b.client_id,
+          clientName: clientName(b.client_id, store),
+          serviceType: b.service_type,
+          totalSessions: b.total_sessions,
+          remainingSessions: b.remaining_sessions,
+          price: b.price,
+          status: b.status,
+          expiresAt: b.expires_at ?? null,
+          subscriptionId: b.subscription_id ?? null,
+        },
+      }));
+  } else if (opts.assignedTrainerId && !UUID.test(opts.assignedTrainerId)) {
+    // Un id que no és un uuid el rebutjaria Postgres amb un error: no és de ningú.
+    rows = [];
+    total = 0;
+  } else {
+    const supabase = await createClient();
+    let query = supabase
+      .from("bonos")
+      .select(
+        `id, client_id, service_type, total_sessions, remaining_sessions, price, status, expires_at, subscription_id, created_at,
+         client:clients!bonos_client_id_fkey!inner(
+           assigned_trainer_id,
+           profile:profiles!clients_profile_id_fkey!inner(full_name)
+         )`,
+        // El total només a la primera pàgina: amb el cursor comptaria els que queden.
+        after ? undefined : { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit + 1);
+    if (filter !== "all") query = query.eq("status", filter);
+    if (opts.serviceType) query = query.eq("service_type", opts.serviceType);
+    if (opts.assignedTrainerId) query = query.eq("client.assigned_trainer_id", opts.assignedTrainerId);
+    for (const w of nameWords(q)) query = query.filter("client.profile.full_name", "imatch", wordRegex(w));
+    if (after)
+      query = query.or(
+        `created_at.lt."${after.createdAt}",and(created_at.eq."${after.createdAt}",id.lt.${after.id})`,
+      );
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+    total = after ? null : (count ?? null);
+
+    type Row = {
+      id: string;
+      client_id: string;
+      service_type: ServiceType;
+      total_sessions: number;
+      remaining_sessions: number;
+      price: number;
+      status: BonoStatus;
+      expires_at: string | null;
+      subscription_id: string | null;
+      created_at: string;
+      client: { profile: { full_name: string | null } | null } | null;
+    };
+    rows = (data as unknown as Row[]).map((r) => ({
+      createdAt: r.created_at,
+      item: {
+        id: r.id,
+        clientId: r.client_id,
+        clientName: r.client?.profile?.full_name ?? "—",
+        serviceType: r.service_type,
+        totalSessions: r.total_sessions,
+        remainingSessions: r.remaining_sessions,
+        price: r.price,
+        status: r.status,
+        expiresAt: r.expires_at,
+        subscriptionId: r.subscription_id,
+      },
     }));
   }
 
-  // ── Backend real (verificar al conectar Supabase). ──
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("bonos")
-    .select(
-      `id, client_id, service_type, total_sessions, remaining_sessions, price, status, expires_at, subscription_id,
-       client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
-    )
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-
-  type Row = {
-    id: string;
-    client_id: string;
-    service_type: ServiceType;
-    total_sessions: number;
-    remaining_sessions: number;
-    price: number;
-    status: BonoStatus;
-    expires_at: string | null;
-    subscription_id: string | null;
-    client: { profile: { full_name: string | null } | null } | null;
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  return {
+    items: page.map((r) => r.item),
+    nextCursor: rows.length > limit && last ? encodeBonosCursor(last.createdAt, last.item.id) : null,
+    total,
   };
-  return (data as unknown as Row[]).map((r) => ({
-    id: r.id,
-    clientId: r.client_id,
-    clientName: r.client?.profile?.full_name ?? "—",
-    serviceType: r.service_type,
-    totalSessions: r.total_sessions,
-    remainingSessions: r.remaining_sessions,
-    price: r.price,
-    status: r.status,
-    expiresAt: r.expires_at,
-    subscriptionId: r.subscription_id,
-  }));
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type BonoInput = {
   clientId: string;
@@ -724,7 +850,7 @@ export async function createPaidBono(input: {
  *
  * Un bo compta si està en un estat COBRABLE (`COLLECTABLE`: pendent o decaigut
  * per impagament) i no ha caducat. Els 'pending_payment' amb la data passada
- * NO hi compten: `listBonos` els escombra a 'expired' abans de llegir, o sigui
+ * NO hi compten: `listBonosPage` els escombra a 'expired' abans de llegir, o sigui
  * que ni la taula de l'equip ni «Els meus bons» del client els ensenyen com a
  * cobrables. Aquí no s'escombra —això corre dins del layout, i el layout no ha
  * d'escriure res—, però es filtra igual. Els 'unpaid' no caduquen (no són
@@ -745,6 +871,11 @@ async function countCollectableNow(scope: {
   /** Només els bons d'aquest client. Sense, tot el centre. */
   clientId?: string;
   /**
+   * Només un dels dos estats cobrables (per als comptadors de cada filtre).
+   * Sense, tots dos: la piloteta.
+   */
+  status?: "pending_payment" | "unpaid";
+  /**
    * Qui pregunta a Supabase: vegeu el comentari de cada crida. És una funció
    * perquè en simulació no se n'ha de crear cap.
    */
@@ -758,7 +889,7 @@ async function countCollectableNow(scope: {
     return getStore().bonos.filter(
       (b) =>
         (scope.clientId === undefined || b.client_id === scope.clientId) &&
-        COLLECTABLE.includes(b.status) &&
+        (scope.status === undefined ? COLLECTABLE.includes(b.status) : b.status === scope.status) &&
         !isBonoExpired({ status: b.status, expires_at: b.expires_at ?? null }, today),
     ).length;
   }
@@ -767,7 +898,7 @@ async function countCollectableNow(scope: {
   let query = supabase
     .from("bonos")
     .select("id", { count: "exact", head: true })
-    .in("status", COLLECTABLE)
+    .in("status", scope.status === undefined ? COLLECTABLE : [scope.status])
     .or(`status.eq.unpaid,expires_at.is.null,expires_at.gte.${today}`);
   if (scope.clientId !== undefined) query = query.eq("client_id", scope.clientId);
   const { count, error } = await query;
@@ -804,9 +935,10 @@ export async function countCollectableBonos(clientId: string): Promise<number> {
  *
  * AMB EL CLIENT DE SESSIÓ, NO AMB EL DE SERVEI
  *
- * És el mateix client que fa servir `listBonos`, que és d'on la taula treu el
- * número amb què després corregeix la piloteta. Comptats amb la mateixa
- * visibilitat, el número del menú i el de la taula no poden discrepar. La
+ * És el mateix client que fa servir `listBonosPage`, i la mateixa funció que
+ * dona els comptadors dels filtres (`countCollectableByStatus`), amb què la
+ * taula corregeix la piloteta. Comptats amb la mateixa visibilitat i el
+ * mateix criteri, el número del menú i el de la taula no poden discrepar. La
  * `bonos_select` de la 0005 inclou `is_trainer()`, o sigui que el professional
  * hi veu tots els bons del centre i el recompte no es queda curt.
  */
@@ -814,6 +946,61 @@ export async function countCenterCollectableBonos(): Promise<number> {
   return countCollectableNow({
     supabase: createClient,
   });
+}
+
+/**
+ * Els comptadors dels filtres «Pendents de pagament» i «Decaiguts sense
+ * cobrar», a les pantalles de bons de l'admin i del professional.
+ *
+ * Mateix criteri i mateix client que la piloteta (`countCenterCollectableBonos`),
+ * separat per estat: la suma dels dos és la piloteta, i cada número diu les
+ * files que ensenya el seu filtre. Abans es comptaven sobre la llista sencera
+ * al navegador, i amb més de 1000 bons haurien quedat curts.
+ */
+export async function countCollectableByStatus(): Promise<{
+  pending_payment: number;
+  unpaid: number;
+}> {
+  const [pending_payment, unpaid] = await Promise.all([
+    countCollectableNow({ supabase: createClient, status: "pending_payment" }),
+    countCollectableNow({ supabase: createClient, status: "unpaid" }),
+  ]);
+  return { pending_payment, unpaid };
+}
+
+/**
+ * El «Pendent de cobrament» d'Inici: quants bons i quin import hi ha per
+ * cobrar a tot el centre.
+ *
+ * El compta la base (`bonos_summary`, 0097), sumant les files
+ * 'pending_payment' i 'unpaid' de l'estat EFECTIU (els pendents caducats per
+ * data ja hi consten com a 'expired'). És exactament el criteri de
+ * `countCollectableNow`: el que diu Inici és el que diu la piloteta. Abans
+ * Inici sumava només els 'pending_payment', caducats inclosos, i no els
+ * 'unpaid'. Només l'admin: amb la seva sessió.
+ */
+export async function getCollectableSummary(): Promise<{ count: number; total: number }> {
+  if (USE_MOCK) {
+    const today = centerToday();
+    const xs = getStore().bonos.filter(
+      (b) =>
+        COLLECTABLE.includes(b.status) &&
+        !isBonoExpired({ status: b.status, expires_at: b.expires_at ?? null }, today),
+    );
+    return {
+      count: xs.length,
+      total: Math.round(xs.reduce((sum, b) => sum + b.price, 0) * 100) / 100,
+    };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("bonos_summary");
+  if (error) throw error;
+  const rows = (data ?? []).filter((r) => r.status === "pending_payment" || r.status === "unpaid");
+  return {
+    count: rows.reduce((sum, r) => sum + Number(r.n), 0),
+    total: Math.round(rows.reduce((sum, r) => sum + Number(r.amount), 0) * 100) / 100,
+  };
 }
 
 /**

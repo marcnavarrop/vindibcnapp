@@ -61,6 +61,18 @@ export function useLoadMore<T extends { id: string }>(
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // Si el servidor torna a pintar la primera pàgina (una acció d'una fila
+  // —cobrar, anul·lar— fa `revalidatePath`), es torna a començar des d'ella:
+  // si no, la fila cobrada seguiria dient l'estat d'abans. Les pàgines de més
+  // que s'haguessin carregat es tornen a demanar amb «Carregar més».
+  const [seen, setSeen] = useState(initial);
+  if (seen !== initial) {
+    setSeen(initial);
+    setItems(initial);
+    setCursor(initialCursor);
+    setError(null);
+  }
+
   const loadMore = () => {
     if (!cursor) return;
     setError(null);

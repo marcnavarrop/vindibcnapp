@@ -12,7 +12,7 @@ import {
   listAllBlocksLite,
   listBlocksLite,
 } from "@/lib/data/availability-blocks";
-import { isBonoExpired } from "@/lib/data/bonos";
+import { getCollectableSummary, isBonoExpired } from "@/lib/data/bonos";
 import {
   availableSlotsOn,
   slotsFor,
@@ -127,6 +127,8 @@ export type DashboardPart =
 
 type Raw = {
   revenue: RawRevenue;
+  /** Bons per cobrar a tot el centre (`bonos_summary`, 0097). */
+  collectable: { count: number; total: number };
   bonos: RawBono[];
   reservations: RawReservation[];
   trials: RawTrials;
@@ -235,9 +237,9 @@ async function gather(lowThreshold: number): Promise<Raw> {
       serviceType: b.service_type,
       expiresAt: b.expires_at,
     });
-    const pending = fail("bonos", ["pendingBonos", "lowBonos"])
-      ? []
-      : store.bonos.filter((b) => b.status === "pending_payment").map(toRaw);
+    const collectable = fail("bonos", ["pendingBonos", "lowBonos"])
+      ? { count: 0, total: 0 }
+      : await getCollectableSummary();
     const low = failed.has("lowBonos")
       ? []
       : store.bonos
@@ -258,7 +260,8 @@ async function gather(lowThreshold: number): Promise<Raw> {
 
     return {
       revenue,
-      bonos: [...pending, ...low],
+      collectable,
+      bonos: low,
       reservations,
       trials,
       clientNames,
@@ -293,7 +296,12 @@ async function gather(lowThreshold: number): Promise<Raw> {
         (rows) => ({ data: rows, error: null }),
         (e: unknown) => ({ data: null, error: { message: e instanceof Error ? e.message : String(e) } }),
       ),
-      admin.from("bonos").select(BONO_SELECT).eq("status", "pending_payment"),
+      // El «Pendent de cobrament» el compta la base (0097), amb el mateix
+      // criteri que la piloteta: pendents no caducats i decaiguts.
+      getCollectableSummary().then(
+        (data) => ({ data, error: null }),
+        (e: unknown) => ({ data: null, error: { message: e instanceof Error ? e.message : String(e) } }),
+      ),
       admin
         .from("bonos")
         .select(BONO_SELECT)
@@ -335,10 +343,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
     client: { profile: { full_name: string | null } | null } | null;
   };
   const clientNames = new Map<string, string>();
-  const bonos = [
-    ...((pend.data ?? []) as unknown as BonoRow[]),
-    ...((low.data ?? []) as unknown as BonoRow[]),
-  ].map((b) => {
+  const bonos = ((low.data ?? []) as unknown as BonoRow[]).map((b) => {
     clientNames.set(b.client_id, b.client?.profile?.full_name ?? "—");
     return {
       id: b.id,
@@ -356,6 +361,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
 
   return {
     revenue: pay.data ? toRevenue(pay.data) : { current: 0, previous: 0 },
+    collectable: pend.data ?? { count: 0, total: 0 },
     bonos,
     reservations: (res.data ?? []).map((r) => ({
       trainerId: r.trainer_id,
@@ -443,11 +449,9 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
     previous > 0 ? ((current - previous) / previous) * 100 : null;
 
   // ── 2. Bonos pendents de cobrament ──
-  const pending = raw.bonos.filter((b) => b.status === "pending_payment");
-  const pendingBonos = {
-    total: pending.reduce((s, b) => s + b.price, 0),
-    count: pending.length,
-  };
+  // Pendents no caducats i decaiguts, comptats per la base: el mateix número
+  // que la piloteta del menú (abans, només els pendents i també els caducats).
+  const pendingBonos = raw.collectable;
 
   // ── 3. Bonos a punt d'esgotar-se ──
   // Mateix criteri que l'avís bono_low (1 sessió). S'inclou el 0 per si algun

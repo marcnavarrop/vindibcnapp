@@ -387,7 +387,7 @@ export type SubscriptionWithClient = Subscription & { clientName: string };
 /**
  * Totes les subscripcions, per al panell de l'admin. Les vives primer.
  *
- * El nom del client ve al MATEIX join, com fa `listBonos`: una taula que ha
+ * El nom del client ve al MATEIX join, com fa `listBonosPage`: una taula que ha
  * d'ensenyar noms i demana els noms a part acaba fent una consulta per fila el
  * dia que algú hi afegeix una columna.
  */

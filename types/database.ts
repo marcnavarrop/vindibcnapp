@@ -1932,6 +1932,14 @@ export interface Database {
         Returns: { month: string; total: number; n: number }[];
       };
       /**
+       * Quants bons i quin import hi ha a cada estat EFECTIU (els caducats per
+       * data compten com a 'expired'), amb els buits a zero (0097). Només admin.
+       */
+      bonos_summary: {
+        Args: Record<never, never>;
+        Returns: { status: BonoStatus; n: number; amount: number }[];
+      };
+      /**
        * Reclama una sessió extra del cicle en curs (0073). Serialitza per
        * subscripció amb un advisory lock i crea un bo d'1 sessió en
        * 'pending_payment' — també quan es pagarà amb targeta: el que es reclama
