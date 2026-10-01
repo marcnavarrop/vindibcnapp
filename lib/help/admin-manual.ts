@@ -825,6 +825,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "warn",
           text: "Una sol·licitud pendent PRE-BLOQUEJA la franja: mentre no la contestes, ningú més no la pot reservar. Per això surt al plafó d'atenció de l'inici amb un compte enrere.",
         },
+        {
+          t: "p",
+          text: "La pantalla té dues parts. A dalt, «Pendents», ordenades per la que caduca abans. A sota, l'«Històric» (les acceptades, rebutjades, caducades, fetes…), de la prova més recent a la més antiga: en carrega 50 de cop, diu quantes en veus del total i «Carregar més» n'afegeix 50 més. Quan acceptes o rebutges una pendent, passa a l'històric.",
+        },
         { t: "h", text: "Respondre-la" },
         {
           t: "dl",

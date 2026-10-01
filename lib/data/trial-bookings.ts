@@ -636,11 +636,10 @@ export type TrialBookingItem = {
   createdAt: string;
 };
 
-/** Llista de proves (opcionalment només d'un entrenador). Aplica caducitat. */
 /**
  * Les sol·licituds de prova que esperen resposta. LECTURA PURA: no escombra.
  *
- * Mateix motiu que als vals de regal: `listTrialBookings` marca com a
+ * Mateix motiu que als vals de regal: `listTrialHistoryPage` marca com a
  * caducades les que ja ho estan, i l'inici la cridava per pintar "Atenció
  * immediata". Obrir la pantalla d'entrada escrivia a la base.
  *
@@ -666,6 +665,7 @@ export async function listPendingTrialRequests(
           (!trainerId || t.trainer_id === trainerId),
       )
       .sort((a, b) => a.expires_at.localeCompare(b.expires_at))
+      .slice(0, PENDING_TRIALS_LIMIT)
       .map((t) => ({
         id: t.id,
         fullName: t.full_name,
@@ -690,7 +690,10 @@ export async function listPendingTrialRequests(
     )
     .eq("status", "pending")
     .gt("expires_at", nowISO)
-    .order("expires_at", { ascending: true });
+    .order("expires_at", { ascending: true })
+    // Caduquen en hores: mai n'hi haurà tantes. El tope és perquè cap lectura
+    // quedi sense límit; si s'hi arriba, la pantalla ho diu.
+    .limit(PENDING_TRIALS_LIMIT);
   if (trainerId) query = query.eq("trainer_id", trainerId);
   const { data, error } = await query;
   if (error) throw error;
@@ -711,59 +714,118 @@ export async function listPendingTrialRequests(
   }));
 }
 
-export async function listTrialBookings(
-  trainerId?: string,
-): Promise<TrialBookingItem[]> {
-  if (USE_MOCK) {
-    const store = getStore();
-    if (sweepExpiredMock(store)) saveStore(store);
-    const nameOf = (id: string | null) =>
-      id ? (store.profiles.find((p) => p.id === id)?.full_name ?? null) : null;
-    return store.trial_bookings
-      .filter((t) => !trainerId || t.trainer_id === trainerId)
-      .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))
-      .map((t) => ({
-        id: t.id,
-        fullName: t.full_name,
-        email: t.email,
-        phone: t.phone,
-        trainerId: t.trainer_id,
-        trainerName: nameOf(t.trainer_id),
-        scheduledAt: t.scheduled_at,
-        serviceType: t.service_type,
-        status: t.status,
-        expiresAt: t.expires_at,
-        convertedClientId: t.converted_client_id,
-        createdAt: t.created_at,
-      }));
-  }
+/** Proves de l'històric per pàgina. */
+export const TRIAL_HISTORY_PAGE_SIZE = 50;
 
-  const admin = createAdminClient();
-  await sweepExpiredReal(admin);
-  let query = admin
-    .from("trial_bookings")
-    .select(
-      "id, full_name, email, phone, trainer_id, scheduled_at, service_type, status, expires_at, converted_client_id, created_at, trainer:profiles!trial_bookings_trainer_id_fkey(full_name)",
-    )
-    .order("scheduled_at", { ascending: true });
-  if (trainerId) query = query.eq("trainer_id", trainerId);
-  const { data, error } = await query;
-  if (error) throw error;
-  type Row = TrialRow & { trainer: { full_name: string | null } | null };
-  return (data as unknown as Row[]).map((t) => ({
+/** Tope de pendents a la pantalla: caduquen en hores, mai n'hi haurà tantes. */
+export const PENDING_TRIALS_LIMIT = 200;
+
+const TRIAL_CURSOR_TS = /^\d{4}-\d{2}-\d{2}[T ][\d:.]+(Z|[+-]\d{2}(:?\d{2})?)?$/;
+const TRIAL_CURSOR_ID = /^[A-Za-z0-9-]{1,64}$/;
+
+function toTrialItem(
+  t: TrialRow,
+  trainerName: string | null,
+): TrialBookingItem {
+  return {
     id: t.id,
     fullName: t.full_name,
     email: t.email,
     phone: t.phone,
     trainerId: t.trainer_id,
-    trainerName: t.trainer?.full_name ?? null,
+    trainerName,
     scheduledAt: t.scheduled_at,
     serviceType: t.service_type,
     status: t.status,
     expiresAt: t.expires_at,
     convertedClientId: t.converted_client_id,
     createdAt: t.created_at,
-  }));
+  };
+}
+
+/**
+ * L'històric de proves (totes les que ja no estan pendents), per pàgines: de
+ * la més recent a la més antiga.
+ *
+ * Abans la pantalla portava TOTES les proves per ordre de data ascendent
+ * (`listTrialBookings`) i en separava les pendents al servidor de l'app: al
+ * tall de 1000 files, les primeres a caure haurien estat les més noves, i amb
+ * elles les pendents. Ara les pendents tenen la seva consulta
+ * (`listPendingTrialRequests`) i l'històric va per pàgines amb un cursor sobre
+ * (scheduled_at, id); el total, amb `count: exact` a la primera.
+ *
+ * Abans de llegir, marca com a caducades les pendents que ja ho són (com feia
+ * la pantalla): així no surten com a pendents ni es perden de l'històric.
+ */
+export async function listTrialHistoryPage(opts: {
+  cursor?: string | null;
+  limit?: number;
+}): Promise<{ items: TrialBookingItem[]; nextCursor: string | null; total: number | null }> {
+  const limit = Math.min(Math.max(opts.limit ?? TRIAL_HISTORY_PAGE_SIZE, 1), 200);
+  let after: { at: string; id: string } | null = null;
+  if (opts.cursor) {
+    try {
+      const v = JSON.parse(Buffer.from(opts.cursor, "base64url").toString("utf8"));
+      if (
+        Array.isArray(v) && v.length === 2 &&
+        typeof v[0] === "string" && TRIAL_CURSOR_TS.test(v[0]) &&
+        typeof v[1] === "string" && TRIAL_CURSOR_ID.test(v[1])
+      )
+        after = { at: v[0], id: v[1] };
+    } catch {
+      // es rebutja a sota
+    }
+    if (!after) throw new Error("Cursor de proves no vàlid.");
+  }
+
+  let rows: TrialBookingItem[];
+  let total: number | null = null;
+
+  if (USE_MOCK) {
+    const store = getStore();
+    if (sweepExpiredMock(store)) saveStore(store);
+    const nameOf = (id: string | null) =>
+      id ? (store.profiles.find((p) => p.id === id)?.full_name ?? null) : null;
+    const all = store.trial_bookings
+      .filter((t) => t.status !== "pending")
+      .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at) || b.id.localeCompare(a.id));
+    total = after ? null : all.length;
+    rows = all
+      .filter((t) => !after || t.scheduled_at < after.at || (t.scheduled_at === after.at && t.id < after.id))
+      .slice(0, limit + 1)
+      .map((t) => toTrialItem(t, nameOf(t.trainer_id)));
+  } else {
+    const admin = createAdminClient();
+    await sweepExpiredReal(admin);
+    let query = admin
+      .from("trial_bookings")
+      .select(
+        "id, full_name, email, phone, trainer_id, scheduled_at, service_type, status, expires_at, converted_client_id, created_at, trainer:profiles!trial_bookings_trainer_id_fkey(full_name)",
+        after ? undefined : { count: "exact" },
+      )
+      .neq("status", "pending")
+      .order("scheduled_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit + 1);
+    if (after)
+      query = query.or(`scheduled_at.lt."${after.at}",and(scheduled_at.eq."${after.at}",id.lt.${after.id})`);
+    const { data, error, count } = await query;
+    if (error) throw error;
+    total = after ? null : (count ?? null);
+    type Row = TrialRow & { trainer: { full_name: string | null } | null };
+    rows = (data as unknown as Row[]).map((t) => toTrialItem(t, t.trainer?.full_name ?? null));
+  }
+
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  return {
+    items: page,
+    nextCursor:
+      rows.length > limit && last
+        ? Buffer.from(JSON.stringify([last.scheduledAt, last.id])).toString("base64url")
+        : null,
+    total,
+  };
 }
 
 /**
