@@ -119,7 +119,7 @@ export function CalFerTray({
     <section
       data-inbox
       aria-label="Cal fer"
-      className="mb-3 rounded-xl border border-brand-orange/40 bg-white md:mb-4"
+      className="mb-3 rounded-xl border border-[#1e3a5f]/30 bg-white md:mb-4"
     >
       <button
         type="button"
@@ -136,7 +136,7 @@ export function CalFerTray({
         {total > 0 && (
           <span
             data-inbox-count
-            className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-orange px-1.5 text-xs font-bold text-white"
+            className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#1e3a5f] px-1.5 text-xs font-bold text-white"
           >
             {total}
           </span>

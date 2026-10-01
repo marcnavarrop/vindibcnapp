@@ -44,7 +44,16 @@ export const SVC_ICON: Record<ServiceType, React.ReactNode> = {
   ),
 };
 
-export const TRIAL_COLOR = "#ff6d17"; // taronja de marca per a les proves
+/**
+ * El color de «cal fer alguna cosa» a tota l'agenda: «per marcar», les proves
+ * i «Cal fer». Blau fosc, lluny del taronja, que és només del grup (el color
+ * del seu servei a tota l'app). Sempre va amb un signe que no depèn del color:
+ * l'anell i el cercle amb l'exclamació, o la vora discontínua i el rellotge de
+ * sorra de la prova pendent.
+ */
+export const ATTENTION = "#1e3a5f";
+/** Les proves, del color de l'atenció (abans, taronja). */
+export const TRIAL_COLOR = ATTENTION;
 
 export function TrialModal({
   t,

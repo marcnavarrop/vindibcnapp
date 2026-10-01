@@ -6,6 +6,7 @@ import { CircleAlert, Hourglass } from "lucide-react";
 import { GROUP_CAPACITY, SERVICE_LABELS } from "@/lib/labels";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import { TAP, clsx } from "@/lib/utils";
+import { ATTENTION } from "@/components/agenda-pieces";
 import type { Entry, FreeRun } from "@/components/trainer-grid";
 import type { ServiceType } from "@/types/database";
 
@@ -29,8 +30,7 @@ import type { ServiceType } from "@/types/database";
  * no xoca amb cap servei.
  */
 
-/** El color de «cal fer alguna cosa»: blau fosc, lluny del taronja del grup. */
-export const ATTENTION = "#1e3a5f";
+export { ATTENTION };
 const FREE_INK = "#15803d";
 
 const SHORT: Record<ServiceType, string> = {
@@ -422,8 +422,9 @@ function EntryBlock({
       cls = "border-[1.5px] border-dashed bg-white";
       look = { borderColor: ATTENTION, color: ATTENTION };
     } else {
-      const c = colorOfService(palette, e.t.serviceType);
-      look = { backgroundColor: `${c}26`, boxShadow: `inset 3px 0 0 ${c}` };
+      // Confirmada: vora sòlida, com a la vista de dia.
+      cls = "border-[1.5px] border-solid";
+      look = { borderColor: ATTENTION, backgroundColor: `${ATTENTION}12` };
     }
     label = (
       <>

@@ -577,7 +577,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Per marcar",
-              "Vora taronja: la sessió ja ha passat i segueix com a reservada. És feina pendent de qui la va donar; si cal, la pots marcar tu des de la fitxa. Només les dels últims 30 dies, com «Sense marcar» de l'Inici: les més antigues surten com una sessió passada qualsevol.",
+              "Anell blau fosc i l'etiqueta «Per marcar» amb el cercle de l'exclamació: la sessió ja ha passat i segueix com a reservada. És feina pendent de qui la va donar; si cal, la pots marcar tu des de la fitxa. Només les dels últims 30 dies, com «Sense marcar» de l'Inici: les més antigues surten com una sessió passada qualsevol.",
             ],
             [
               "Lliure",
@@ -589,9 +589,13 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Prova",
-              "Una sol·licitud de sessió de prova, a l'hora que ocupa. Tocant-la, l'acceptes o la rebutges.",
+              "Una sol·licitud de sessió de prova, a l'hora que ocupa, en blau fosc amb «PROVA». Pendent de resposta: vora discontínua i el rellotge de sorra; confirmada, vora sòlida. Tocant-la, l'acceptes o la rebutges.",
             ],
           ],
+        },
+        {
+          t: "note",
+          text: "A tota l'agenda (el dia, la setmana i la del professional) el taronja és només dels grups, el color del seu servei. El que demana feina va en blau fosc i sempre amb un signe que s'entén sense color: l'anell i el cercle amb l'exclamació per a «per marcar», la vora discontínua i el rellotge de sorra per a una prova pendent. La línia de l'hora d'ara segueix sent taronja.",
         },
         { t: "h", text: "Els filtres" },
         {

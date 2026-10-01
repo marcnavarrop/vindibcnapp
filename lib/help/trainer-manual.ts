@@ -358,7 +358,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Per marcar",
-              "Vora taronja i l'etiqueta «Per marcar»: la sessió ja ha passat, segueix com a reservada, la pots marcar tu i és dels últims 30 dies, els mateixos que «Cal fer». No s'atenua com la resta del passat, perquè és feina pendent. Es resol a la seva fitxa amb «Marcar feta» (o cancel·lant-la, si no es va fer), o des de «Cal fer», a dalt.",
+              "Anell blau fosc i l'etiqueta «Per marcar» amb el cercle de l'exclamació: la sessió ja ha passat, segueix com a reservada, la pots marcar tu i és dels últims 30 dies, els mateixos que «Cal fer». No s'atenua com la resta del passat, perquè és feina pendent. Es resol a la seva fitxa amb «Marcar feta» (o cancel·lant-la, si no es va fer), o des de «Cal fer», a dalt.",
             ],
             [
               "Bloquejat",
@@ -372,7 +372,15 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
               "+N en espera",
               "En un grup ple teu, quanta gent espera plaça a la llista d'espera. Només el número: qui són no surt aquí. Si algú cancel·la, la plaça passa sola al primer de la cua.",
             ],
+            [
+              "Prova",
+              "Una sol·licitud de sessió de prova, en blau fosc amb «PROVA». Pendent de resposta: vora discontínua i el rellotge de sorra; confirmada, vora sòlida.",
+            ],
           ],
+        },
+        {
+          t: "note",
+          text: "El taronja és només dels grups. El que demana feina («per marcar», una prova per respondre, «Cal fer») va en blau fosc i sempre amb un signe que s'entén sense color. La línia de l'hora d'ara segueix sent taronja.",
         },
         { t: "h", text: "Els forats lliures" },
         {
@@ -544,7 +552,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Com et surten" },
         {
           t: "p",
-          text: "Les que cauen a la teva disponibilitat te surten a dos llocs: a «Atenció immediata» de l'Inici i al calendari, com una targeta taronja amb «PROVA». Tocant-les hi tens les dades de qui la demana i dos botons, «Acceptar» i «Rebutjar».",
+          text: "Les que cauen a la teva disponibilitat te surten a dos llocs: a «Atenció immediata» de l'Inici i al calendari, com una targeta blau fosc amb «PROVA», la vora discontínua i el rellotge de sorra. Tocant-les hi tens les dades de qui la demana i dos botons, «Acceptar» i «Rebutjar».",
         },
         {
           t: "warn",

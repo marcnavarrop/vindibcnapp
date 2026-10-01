@@ -29,7 +29,8 @@ import {
 } from "@/lib/trainer-grid-layout";
 import { colorOfService, type ColorPalette } from "@/lib/colors";
 import { ReservationSheet, LockIcon } from "@/components/reservation-sheet";
-import { SVC_ICON, TRIAL_COLOR, TrialModal } from "@/components/agenda-pieces";
+import { ATTENTION, SVC_ICON, TRIAL_COLOR, TrialModal } from "@/components/agenda-pieces";
+import { CircleAlert, Hourglass } from "lucide-react";
 import { CreateSlotSheet } from "@/components/create-slot-sheet";
 import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
 import type { ReservationListItem } from "@/lib/data/reservations";
@@ -775,7 +776,8 @@ export function Grid({
               <div
                 className={clsx(
                   "mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold",
-                  isToday ? "bg-brand-orange text-white" : "text-brand-dark",
+                  // Avui, en lila: el taronja és dels grups (i de la línia de l'hora d'ara).
+                  isToday ? "bg-brand-purple text-white" : "text-brand-dark",
                 )}
               >
                 {d.date.getDate()}
@@ -1119,6 +1121,7 @@ function EntryCard({
         onClick={onClick}
         data-entry={e.id}
         aria-label={`${time} · Prova · ${e.t.fullName} · ${pending ? "Pendent" : "Confirmada"}`}
+        data-trial-pending={pending || undefined}
         className={clsx(
           "absolute z-10 flex flex-col items-start gap-0.5 rounded-md px-1.5 py-1 text-left text-xs",
           past && "opacity-60",
@@ -1126,11 +1129,14 @@ function EntryCard({
         )}
         style={{
           ...style,
-          backgroundColor: `${TRIAL_COLOR}1a`,
+          // Pendent: vora discontínua i rellotge de sorra; confirmada, vora
+          // sòlida. Es distingeixen sense color.
+          backgroundColor: pending ? "#ffffff" : `${TRIAL_COLOR}12`,
           border: `1.5px ${pending ? "dashed" : "solid"} ${TRIAL_COLOR}`,
         }}
       >
-        <span className="rounded px-1 font-bold text-white" style={{ backgroundColor: TRIAL_COLOR }}>
+        <span className="flex items-center gap-1 rounded px-1 font-bold text-white" style={{ backgroundColor: TRIAL_COLOR }}>
+          {pending && <Hourglass aria-hidden className="h-3 w-3" />}
           {compact ? "P" : "PROVA"}
         </span>
         {compact ? (
@@ -1170,8 +1176,9 @@ function EntryCard({
       className={clsx(
         "absolute z-10 flex flex-col items-start gap-0.5 rounded-md px-1.5 py-1 text-left text-xs leading-tight",
         // El que està per marcar no s'atenua: és feina pendent, no història.
+        // Anell sòlid blau fosc i el cercle amb l'exclamació (`ATTENTION`).
         past && !toMark && "opacity-60",
-        toMark && "ring-2 ring-brand-orange ring-inset",
+        toMark && "ring-2 ring-[#1e3a5f] ring-inset",
         TAP_SURFACE,
       )}
       style={{ ...style, backgroundColor: `${color}1f`, borderLeft: `3px solid ${color}` }}
@@ -1201,7 +1208,7 @@ function EntryCard({
             <span className="font-bold break-words text-brand-dark">
               {shortName(e.r.clientName)}
               {e.r.isComplimentary && (
-                <span className="ml-1 rounded-full bg-brand-orange px-1 font-bold text-white" title="Cortesia">
+                <span className="ml-1 rounded-full bg-brand-dark px-1 font-bold text-white" title="Cortesia">
                   C
                 </span>
               )}
@@ -1221,7 +1228,10 @@ function EntryCard({
             </span>
           )}
           {toMark ? (
-            <span className="rounded bg-brand-orange px-1 font-bold text-white">Per marcar</span>
+            <span className="flex items-center gap-1 rounded px-1 font-bold text-white" style={{ backgroundColor: ATTENTION }} data-mark-label>
+              <CircleAlert aria-hidden className="h-3 w-3 shrink-0" />
+              Per marcar
+            </span>
           ) : waiting > 0 ? (
             <span className="font-bold text-brand-orange-dark">+{waiting} en espera</span>
           ) : null}
