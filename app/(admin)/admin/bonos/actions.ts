@@ -5,6 +5,7 @@ import { getClient } from "@/lib/data/clients";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createBono, markBonoPaid, cancelBono } from "@/lib/data/bonos";
+import type { MarkPaidState } from "@/components/forms/mark-bono-paid-button";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType, PaymentMethod } from "@/types/database";
@@ -106,13 +107,23 @@ export async function createGroupSubscriptionAction(
 }
 
 /** Marca un bono pendiente como pagado (en efectivo, en el centro). */
-export async function markBonoPaidAction(formData: FormData) {
-  if (!(await requireRole("admin"))) return;
+export async function markBonoPaidAction(
+  _prev: MarkPaidState,
+  formData: FormData,
+): Promise<MarkPaidState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const bonoId = String(formData.get("bonoId") ?? "");
-  if (!bonoId) return;
-  await markBonoPaid(bonoId);
+  if (!bonoId) return { error: "Falta el bo." };
+  try {
+    await markBonoPaid(bonoId);
+  } catch (e) {
+    // El motiu arriba a la pantalla tal qual: un missatge clar en comptes de
+    // la pàgina d'error genèrica (en producció, Next n'amaga el text).
+    return { error: e instanceof Error ? e.message : "No s'ha pogut cobrar." };
+  }
   revalidatePath("/admin/bonos");
   revalidatePath("/admin/pagos");
+  return { error: null, done: true };
 }
 
 /**

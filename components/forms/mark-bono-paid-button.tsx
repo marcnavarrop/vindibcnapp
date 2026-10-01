@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -29,6 +29,9 @@ import type { BonoStatus, ServiceType } from "@/types/database";
  * L'explicació de cada cas era un `title` que només veia qui hi passava el
  * ratolí per sobre; ara és la descripció del diàleg, que la llegeix tothom.
  */
+/** El que torna l'acció: el motiu si no s'ha cobrat, `done` si sí. */
+export type MarkPaidState = { error: string | null; done?: boolean };
+
 export function MarkBonoPaidButton({
   action,
   bonoId,
@@ -41,7 +44,7 @@ export function MarkBonoPaidButton({
   expired = false,
 }: {
   /** L'acció de servidor de cada àrea: la seva RLS i les seves rutes a revalidar. */
-  action: (formData: FormData) => void | Promise<void>;
+  action: (prev: MarkPaidState, formData: FormData) => Promise<MarkPaidState>;
   bonoId: string;
   /** Sense nom no es pinta la fila: a la fitxa del client ja se sap de qui és. */
   clientName?: string;
@@ -54,6 +57,18 @@ export function MarkBonoPaidButton({
   expired?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [state, formAction] = useActionState(action, { error: null });
+  // Cobrat: es tanca. Si no, el diàleg queda obert amb el motiu.
+  useEffect(() => {
+    if (state.done) setOpen(false);
+  }, [state]);
+  // En tancar el diàleg, el motiu d'abans ja no s'ensenya en tornar-lo a obrir.
+  const [dismissed, setDismissed] = useState<MarkPaidState | null>(null);
+  const close = () => {
+    setDismissed(state);
+    setOpen(false);
+  };
+  const error = state !== dismissed ? state.error : null;
 
   const isUnpaid = status === "unpaid";
   const label = !isUnpaid
@@ -84,7 +99,7 @@ export function MarkBonoPaidButton({
 
       <ConfirmDialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={close}
         title="Confirmes el cobrament?"
         description={description}
         actions={
@@ -92,11 +107,11 @@ export function MarkBonoPaidButton({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={close}
             >
               Cancel·lar
             </Button>
-            <form action={action}>
+            <form action={formAction}>
               <input type="hidden" name="bonoId" value={bonoId} />
               <SubmitButton pendingLabel="Cobrant…">Sí, {label.toLowerCase()}</SubmitButton>
             </form>
@@ -131,6 +146,12 @@ export function MarkBonoPaidButton({
             </dd>
           </div>
         </dl>
+
+        {error && (
+          <p role="alert" className="mt-4 rounded-lg bg-error/5 px-3 py-2 text-sm font-bold text-error">
+            {error}
+          </p>
+        )}
 
         <p className="mt-4 text-xs text-brand-muted">
           El pagament s&apos;anota com a efectiu. Un cop fet no es pot desfer des

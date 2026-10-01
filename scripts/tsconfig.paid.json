@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.roles.json",
+  "compilerOptions": {
+    "paths": {
+      "@/lib/supabase/server": ["./shims/supabase-server.ts"],
+      "@/lib/supabase/admin": ["./shims/supabase-admin.ts"],
+      "@/*": ["../*"],
+      "server-only": ["./shims/server-only.ts"],
+      "next/headers": ["./shims/next-headers.ts"],
+      "next/cache": ["./shims/next-cache.ts"],
+      "next/navigation": ["./shims/next-navigation.ts"]
+    }
+  }
+}

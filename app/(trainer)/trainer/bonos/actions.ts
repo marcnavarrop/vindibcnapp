@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getViewer, requireRole } from "@/lib/auth";
 import { createBono, markBonoPaid, getBonoClientId, cancelBono } from "@/lib/data/bonos";
+import type { MarkPaidState } from "@/components/forms/mark-bono-paid-button";
 import { getClient } from "@/lib/data/clients";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
@@ -106,22 +107,28 @@ export async function createTrainerGroupSubscriptionAction(
  * `bonos_trainer_collect_any`, que fixa d'on pot venir el bo i on ha d'acabar.
  */
 export async function markTrainerBonoPaidAction(
+  _prev: MarkPaidState,
   formData: FormData,
-): Promise<void> {
+): Promise<MarkPaidState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "trainer") return;
+  if (!viewer || viewer.role !== "trainer") return { error: "No autoritzat." };
 
   const bonoId = String(formData.get("bonoId") ?? "");
-  if (!bonoId) return;
+  if (!bonoId) return { error: "Falta el bo." };
 
   // El client ja no decideix si es pot cobrar, però sí quina fitxa s'ha de
   // refrescar: el bo cobrat hi surt amb l'estat nou.
   const clientId = await getBonoClientId(bonoId);
 
-  await markBonoPaid(bonoId);
+  try {
+    await markBonoPaid(bonoId);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "No s'ha pogut cobrar." };
+  }
 
   if (clientId) revalidatePath(`/trainer/clients/${clientId}`);
   revalidatePath("/trainer/bonos");
+  return { error: null, done: true };
 }
 
 /**

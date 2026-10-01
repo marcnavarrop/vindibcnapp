@@ -1312,6 +1312,15 @@ export type BonoPayment = {
   stripeCheckoutSessionId?: string | null;
 };
 
+const NOT_FOUND = "No s'ha trobat aquest bo. No s'ha anotat cap pagament.";
+const NOT_COLLECTABLE =
+  "Aquest bo ja està cobrat o ja no es pot cobrar. No s'ha anotat cap pagament.";
+
+/**
+ * Cobra un bo pendent o decaigut. Llança —i NO anota cap pagament— si el bo no
+ * existeix, si ja no es pot cobrar o si l'actualització no ha canviat
+ * exactament una fila.
+ */
 export async function markBonoPaid(
   bonoId: string,
   payment: BonoPayment = { method: "cash" },
@@ -1319,9 +1328,8 @@ export async function markBonoPaid(
   if (USE_MOCK) {
     const store = getStore();
     const bono = store.bonos.find((b) => b.id === bonoId);
-    if (!bono) throw new Error("Bo no trobat.");
-    if (!COLLECTABLE.includes(bono.status))
-      throw new Error("Aquest bo no es pot cobrar.");
+    if (!bono) throw new Error(NOT_FOUND);
+    if (!COLLECTABLE.includes(bono.status)) throw new Error(NOT_COLLECTABLE);
 
     bono.status = "active";
     if (payment.stripeCheckoutSessionId)
@@ -1341,11 +1349,10 @@ export async function markBonoPaid(
     .select("id, client_id, price, status, service_type, total_sessions")
     .eq("id", bonoId)
     .single();
-  if (bErr || !bono) throw new Error("Bo no trobat.");
-  if (!COLLECTABLE.includes(bono.status))
-    throw new Error("Aquest bo no es pot cobrar.");
+  if (bErr || !bono) throw new Error(NOT_FOUND);
+  if (!COLLECTABLE.includes(bono.status)) throw new Error(NOT_COLLECTABLE);
 
-  const { error: uErr } = await supabase
+  const { data: updated, error: uErr } = await supabase
     .from("bonos")
     .update({
       status: "active",
@@ -1356,8 +1363,14 @@ export async function markBonoPaid(
     .eq("id", bonoId)
     // El mateix filtre que la comprovació de sobre, però a la consulta: si dos
     // cobraments arriben alhora, només un troba el bo per cobrar.
-    .in("status", COLLECTABLE);
+    .in("status", COLLECTABLE)
+    // Les files que ha canviat de debò. Sense això, un bo que algú altre acaba
+    // de cobrar —o que la RLS no deixa tocar— no canviava res però el pagament
+    // s'anotava igual: diners al llibre sense cap bo activat.
+    .select("id");
   if (uErr) throw uErr;
+  if ((updated ?? []).length !== 1)
+    throw new Error(NOT_COLLECTABLE);
 
   await recordBonoPayment(bono, payment);
   // Generate referral rewards if this is the first paid bono for this client

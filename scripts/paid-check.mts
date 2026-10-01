@@ -1,0 +1,118 @@
+/**
+ * Cobrar un bo: o s'activa EXACTAMENT un bo i s'anota el pagament, o falla amb
+ * un motiu clar i no s'anota res.
+ *
+ *   npm run paid:check
+ *
+ * Prova la branca REAL de `markBonoPaid` (la de Supabase, no la de la
+ * simulació) contra un Supabase de memòria (`scripts/shims/fake-supabase.ts`):
+ * no toca cap base. Els casos:
+ *
+ *   · l'admin (efectiu) i el webhook de Stripe (targeta) cobren com sempre;
+ *   · el professional també: la seva RLS (`bonos_trainer_collect_any`)
+ *     li deixa cobrar un bo cobrable de qualsevol client;
+ *   · un bo ja cobrat o inexistent → error, cap pagament;
+ *   · dos cobraments alhora: el bo es llegeix pendent però, quan s'actualitza,
+ *     algú altre ja l'ha cobrat → 0 files → error, cap pagament (abans
+ *     s'anotava un segon pagament);
+ *   · la RLS no deixa actualitzar → 0 files → error, cap pagament.
+ *
+ * Les accions (`markBonoPaidAction`, `markTrainerBonoPaidAction`) amb el seu
+ * missatge a la pantalla es proven a part, en simulació i amb Playwright.
+ */
+process.env.NEXT_PUBLIC_SUPABASE_URL = "https://fake.supabase.test";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "fake";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "fake";
+delete process.env.NEXT_PUBLIC_USE_MOCK;
+
+type Row = Record<string, unknown>;
+const fake = {
+  tables: {} as Record<string, Row[]>,
+  hooks: {} as { beforeUpdate?: (t: string, rows: Row[]) => void; canUpdate?: (t: string, r: Row) => boolean },
+};
+(globalThis as { __fakeDb?: unknown }).__fakeDb = fake;
+
+const { USE_MOCK } = await import("../lib/config");
+const { markBonoPaid } = await import("../lib/data/bonos");
+
+let fallides = 0;
+const check = (cond: boolean, msg: string) => {
+  console.log(`  ${cond ? "✓" : "✗"} ${msg}`);
+  if (!cond) fallides++;
+};
+
+const bono = (id: string, status: string): Row => ({
+  id, client_id: "c-1", price: 120, status, service_type: "ep_individual", total_sessions: 10, remaining_sessions: 10,
+});
+const reset = (...bonos: Row[]) => {
+  fake.tables = { bonos, payments: [], clients: [{ id: "c-1", referred_by: null }], referral_rewards: [], subscriptions: [] };
+  fake.hooks = {};
+};
+const pays = () => fake.tables.payments ?? [];
+const status = (id: string) => fake.tables.bonos.find((b) => b.id === id)?.status;
+const attempt = async (id: string, payment?: Parameters<typeof markBonoPaid>[1]) => {
+  try {
+    await markBonoPaid(id, payment);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+};
+
+console.log(`\nBranca real (USE_MOCK = ${USE_MOCK})`);
+check(!USE_MOCK, "es prova la branca de Supabase, no la de la simulació");
+
+console.log("\nCobra com sempre");
+for (const st of ["pending_payment", "unpaid"]) {
+  reset(bono("b1", st));
+  const e = await attempt("b1");
+  check(!e && status("b1") === "active" && pays().length === 1 && pays()[0].amount === 120 && pays()[0].method === "cash",
+    `admin/professional, bo ${st}: actiu i 1 pagament de 120 € en efectiu${e ? ` (${e})` : ""}`);
+}
+reset(bono("b1", "pending_payment"));
+{
+  const e = await attempt("b1", { method: "card", stripePaymentId: "pi_1", stripeCheckoutSessionId: "cs_1" });
+  check(!e && status("b1") === "active" && pays().length === 1 && pays()[0].method === "card" && fake.tables.bonos[0].stripe_checkout_session_id === "cs_1",
+    "Stripe (targeta): actiu, 1 pagament amb targeta i la sessió desada al bo");
+}
+// El professional cobra un bo d'un client que no és seu: la seva RLS ho permet
+// mentre el bo sigui cobrable (bonos_trainer_collect_any).
+reset(bono("b1", "pending_payment"));
+fake.hooks.canUpdate = (t, r) => t !== "bonos" || ["pending_payment", "unpaid"].includes(String(r.status));
+{
+  const e = await attempt("b1");
+  check(!e && status("b1") === "active" && pays().length === 1, "professional, amb la RLS de cobrar: actiu i 1 pagament");
+}
+
+console.log("\nFalla amb un motiu clar i no anota res");
+reset(bono("b1", "active"));
+{
+  const e = await attempt("b1");
+  check(e === "Aquest bo ja està cobrat o ja no es pot cobrar. No s'ha anotat cap pagament." && pays().length === 0, `ja cobrat: «${e}»`);
+}
+reset(bono("b1", "pending_payment"));
+{
+  const e = await attempt("no-existeix");
+  check(e === "No s'ha trobat aquest bo. No s'ha anotat cap pagament." && pays().length === 0, `inexistent: «${e}»`);
+}
+reset(bono("b1", "pending_payment"));
+fake.hooks.beforeUpdate = (t, rows) => { if (t === "bonos") rows[0].status = "active"; };
+{
+  const e = await attempt("b1");
+  check(!!e && pays().length === 0, `cobrament simultani (el llegeix pendent, però ja està cobrat en actualitzar): «${e}», 0 pagaments`);
+}
+reset(bono("b1", "pending_payment"));
+fake.hooks.canUpdate = () => false;
+{
+  const e = await attempt("b1");
+  check(!!e && status("b1") === "pending_payment" && pays().length === 0, `la RLS no deixa actualitzar: «${e}», el bo segueix pendent i 0 pagaments`);
+}
+reset(bono("b1", "pending_payment"));
+{
+  await attempt("b1", { method: "card", stripePaymentId: "pi_1", stripeCheckoutSessionId: "cs_1" });
+  const e = await attempt("b1", { method: "card", stripePaymentId: "pi_1", stripeCheckoutSessionId: "cs_1" });
+  check(!!e && pays().length === 1, "webhook de Stripe repetit: el segon llança (el webhook ho tracta com a duplicat) i segueix havent-hi 1 pagament");
+}
+
+console.log(fallides === 0 ? "\nTot correcte.\n" : `\n${fallides} comprovacions han fallat.\n`);
+process.exit(fallides === 0 ? 0 : 1);
