@@ -184,25 +184,47 @@ export function ReservationsView({
           "mb-2 gap-2 md:mb-4 md:gap-3",
         )}
       >
-        <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
-          {(["calendar", "list"] as const).map((v) => (
-            <Link
-              key={v}
-              href={v === "calendar" ? nav.href.calendar : nav.href.list}
-              aria-current={view === v ? "page" : undefined}
-              className={clsx(
-                // 44 px d'alt al mòbil, com la resta de botons que es toquen
-                // amb el dit; a l'ordinador, la mida de sempre.
-                "flex min-h-11 items-center rounded-md px-3 text-sm font-bold transition-colors md:min-h-0 md:py-1.5",
-                view === v
-                  ? "bg-brand-purple text-white"
-                  : "text-brand-muted hover:text-brand-dark",
-                TAP,
-              )}
-            >
-              {v === "calendar" ? "Calendari" : "Llista"}
-            </Link>
-          ))}
+        <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5" data-view-switch>
+          {(calendar === "admin" ? (["calendar", "week", "list"] as const) : (["calendar", "list"] as const)).map((v) => {
+            // A l'admin, «Setmana» només a l'ordinador (lg). Al mòbil, una
+            // adreça amb ?vista=setmana es veu com el calendari de dia: el
+            // botó «Calendari» hi surt marcat.
+            const on =
+              view === v || (v === "calendar" && view === "week");
+            return (
+              <Link
+                key={v}
+                href={v === "calendar" ? nav.href.calendar : v === "week" ? nav.href.week : nav.href.list}
+                aria-current={view === v ? "page" : undefined}
+                data-view={v}
+                className={clsx(
+                  // 44 px d'alt al mòbil, com la resta de botons que es toquen
+                  // amb el dit; a l'ordinador, la mida de sempre.
+                  "min-h-11 items-center rounded-md px-3 text-sm font-bold transition-colors md:min-h-0 md:py-1.5",
+                  v === "week" ? "hidden lg:flex" : "flex",
+                  on ? "bg-brand-purple text-white" : "text-brand-muted hover:text-brand-dark",
+                  // «Calendari» marcat per la setmana: només fins a lg.
+                  v === "calendar" && view === "week" && "lg:bg-transparent lg:text-brand-muted lg:hover:text-brand-dark",
+                  TAP,
+                )}
+              >
+                {v === "calendar" ? (
+                  calendar === "admin" ? (
+                    <>
+                      <span className="lg:hidden">Calendari</span>
+                      <span className="hidden lg:inline">Dia</span>
+                    </>
+                  ) : (
+                    "Calendari"
+                  )
+                ) : v === "week" ? (
+                  "Setmana"
+                ) : (
+                  "Llista"
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Només té sentit per a qui TÉ disponibilitat pròpia: el professional. */}
@@ -306,7 +328,7 @@ export function ReservationsView({
           openingHour={openingHour ?? 7}
           closingHour={closingHour ?? 22}
         />
-      ) : view === "calendar" && calendar === "admin" && createFromSlotAction ? (
+      ) : (view === "calendar" || view === "week") && calendar === "admin" && createFromSlotAction ? (
         <AdminGrid
           nav={nav}
           palette={palette}

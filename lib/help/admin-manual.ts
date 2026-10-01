@@ -247,7 +247,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Ocupació per professional" },
         {
           t: "p",
-          text: "Les mateixes franges de la xifra d'ocupació, obertes per persona. Qui no té cap disponibilitat definida no hi surt: no seria un 0 %, seria una divisió per zero.",
+          text: "Les mateixes franges de la xifra d'ocupació, obertes per persona. Qui no té cap disponibilitat definida no hi surt: no seria un 0 %, seria una divisió per zero. El càlcul és el de la tira i la setmana de l'agenda (vegeu «L'agenda de reserves»).",
         },
       ],
     },
@@ -506,7 +506,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Totes les reserves del centre, de tots els professionals. Es veu de dues maneres, amb el selector de dalt: Calendari o Llista.",
+          text: "Totes les reserves del centre, de tots els professionals. A l'ordinador es veu de tres maneres, amb el selector de dalt: Dia, Setmana o Llista. Al mòbil, de dues: Calendari (el dia) o Llista.",
         },
         {
           t: "p",
@@ -519,11 +519,36 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "La tira de la setmana" },
         {
           t: "p",
-          text: "A dalt de l'agenda, cinc caselles: de dilluns a divendres de la setmana del dia que mires. Cada casella té una barra per professional encès, del seu color, que s'omple segons la part del seu horari d'aquell dia que ja no és lliure (sessions, grups i proves; les hores bloquejades no compten). A sota, quants grups hi ha plens i quanta gent espera plaça («1 ple · 2 en espera»), o un guionet si no n'hi ha cap. Tocant una casella vas a aquell dia.",
+          text: "A dalt de l'agenda, cinc caselles: de dilluns a divendres de la setmana del dia que mires. Cada casella té una barra per professional encès, del seu color, que s'omple amb la seva ocupació d'aquell dia. A sota, quants grups hi ha plens i quanta gent espera plaça («1 ple · 2 en espera»), o un guionet si no n'hi ha cap. Tocant una casella vas a aquell dia.",
         },
         {
           t: "note",
-          text: "La barra no diu quantes sessions hi ha, sinó quant queda: un professional amb poques hores i totes plenes surt ple, i un amb moltes hores i dues sessions surt gairebé buit. Els percentatges exactes els llegeix el lector de pantalla.",
+          text: "L'ocupació és la mateixa xifra a tot arreu (l'Inici, la tira i la setmana): de les mitges hores de l'horari del professional que no estan bloquejades, quantes cobreix una sessió reservada o feta. Un grup compta la seva hora sencera, tingui 1 o 4 apuntats; les cancel·lades i les proves no compten.",
+        },
+        {
+          t: "note",
+          text: "La barra no diu quantes sessions hi ha, sinó quina part de l'horari està agafada: un professional amb poques hores i totes plenes surt ple, i un amb moltes hores i dues sessions surt gairebé buit. Els percentatges exactes els llegeix el lector de pantalla.",
+        },
+        { t: "h", text: "La setmana (només a l'ordinador)" },
+        {
+          t: "p",
+          text: "«Setmana» ensenya la setmana sencera del centre en una pantalla: cada dia és una banda i, a dins, una franja per professional amb les hores d'esquerra a dreta. A l'esquerra de cada franja, el nom i l'ocupació d'aquell dia en %. A la capçalera de cada dia, el resum: sessions, grups plens i gent en espera, sessions per marcar i hores lliures. Les fletxes canvien de setmana i «Aquesta setmana» torna a la d'ara. El dissabte i el diumenge només hi surten si algú hi té horari o alguna cosa.",
+        },
+        {
+          t: "dl",
+          items: [
+            ["Una sessió", "Del color del seu servei, amb el nom del client. Les fetes, apagades. Tocant-la s'obre la mateixa fitxa que al dia."],
+            ["Un grup", "Una sola peça taronja amb l'ocupació («3/4») i, si està ple i hi ha gent esperant, «+2». Tocant-la, la llista dels apuntats i dels que esperen."],
+            ["Per marcar", "Un anell blau fosc i el cercle amb l'exclamació: passada, encara reservada i dels últims 30 dies."],
+            ["Prova pendent", "Vora blau fosc discontínua i el rellotge de sorra. Tocant-la, l'acceptes o la rebutges."],
+            ["Lliure", "Verd discontinu, amb els serveis que hi caben («EP · Par.»)."],
+            ["Bloquejat", "Ratllat, amb el motiu."],
+            ["Fora d'horari", "El fons gris de la franja. Si un professional no té ni horari ni res aquell dia, no té franja: surt a la línia «Sense horari aquest dia»."],
+          ],
+        },
+        {
+          t: "p",
+          text: "«Obrir el dia →» porta a la vista de dia d'aquell dia, i el nom d'una franja, al dia amb aquell professional marcat. Els filtres de professional i de servei manen igual que al dia; la cerca de client no hi és (per buscar un client, la Llista). Al mòbil no hi ha «Setmana»: un enllaç a la setmana obert al mòbil ensenya el dia.",
         },
         { t: "h", text: "Pròxim forat" },
         {
@@ -552,7 +577,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Per marcar",
-              "Vora taronja: la sessió ja ha passat i segueix com a reservada. És feina pendent de qui la va donar; si cal, la pots marcar tu des de la fitxa.",
+              "Vora taronja: la sessió ja ha passat i segueix com a reservada. És feina pendent de qui la va donar; si cal, la pots marcar tu des de la fitxa. Només les dels últims 30 dies, com «Sense marcar» de l'Inici: les més antigues surten com una sessió passada qualsevol.",
             ],
             [
               "Lliure",

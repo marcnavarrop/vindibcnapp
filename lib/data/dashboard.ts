@@ -14,10 +14,8 @@ import {
 } from "@/lib/data/availability-blocks";
 import { getCollectableSummary, isBonoExpired } from "@/lib/data/bonos";
 import {
-  availableSlotsOn,
   slotsFor,
   slotToHHMM,
-  weekdayOfDay,
   isInstantBlocked,
   blocksOf,
   type AvailabilityRuleLite,
@@ -35,6 +33,7 @@ import {
   addDaysStr,
 } from "@/lib/center-time";
 import { mockFails } from "@/lib/mock/faults";
+import { COUNTS_AS_OCCUPIED, occupancyOf } from "@/lib/occupancy";
 import { paymentsByMonth, type MonthRevenue } from "@/lib/data/payments";
 import type { BonoStatus, ServiceType, TrialStatus } from "@/types/database";
 
@@ -145,8 +144,8 @@ const MONTHS = [
 ];
 
 /** Comptabilitza una reserva com a sessió feta o compromesa. */
-const COUNTS_AS_SESSION = (status: string) =>
-  status === "booked" || status === "completed";
+// Una sola definició: la mateixa que fa servir l'ocupació (`lib/occupancy.ts`).
+const COUNTS_AS_SESSION = COUNTS_AS_OCCUPIED;
 
 /** Proves que realment van arribar a fer-se (base de la conversió). */
 const TRIAL_HAPPENED_STATUSES: TrialStatus[] = ["confirmed", "completed"];
@@ -397,40 +396,12 @@ function currentWeekDays(now: Date): string[] {
 }
 
 /**
- * Ocupació d'un professional en uns dies concrets.
- *
- * Slots = hores amb regla activa, menys les tapades per un bloqueig. Qui crida
- * diu què compta com a reservat (`isBooked`) perquè el tauler d'admin fa la
- * cerca per professional dins d'un conjunt global i el del professional només
- * té les seves: el càlcul, que és el que ha de coincidir, és el mateix.
+ * Bloquejat segons el servidor: l'inici del slot, en hora del centre, cau dins
+ * d'un bloqueig. El càlcul de l'ocupació és el de `lib/occupancy.ts`.
  */
-function occupancyOf(
-  rules: AvailabilityRuleLite[],
-  blocks: AvailabilityBlockLite[],
-  weekDays: string[],
-  isBooked: (day: string, slot: number) => boolean,
-): { slots: number; booked: number; pct: number } {
-  let slots = 0;
-  let booked = 0;
-
-  for (const day of weekDays) {
-    // Sense Date pel mig: el dia i el dia de la setmana van explícits, que és
-    // l'única manera que no depengui de la zona horària del procés.
-    //
-    // Es compten els slots COBERTS per l'horari, no els inicis possibles: això
-    // és capacitat. Abans es comptaven hores i ara mitges hores, o sigui que el
-    // denominador es dobla — però el numerador també, perquè una reserva d'una
-    // hora marca els dos slots que ocupa. La proporció no es mou.
-    for (const slot of availableSlotsOn(rules, day, weekdayOfDay(day))) {
-      // El bloqueig és un instant real: cal l'hora del centre convertida.
-      const slotInstant = centerLocalToInstant(day, slotToHHMM(slot));
-      if (isInstantBlocked(blocks, slotInstant)) continue;
-      slots++;
-      if (isBooked(day, slot)) booked++;
-    }
-  }
-
-  return { slots, booked, pct: slots > 0 ? (booked / slots) * 100 : 0 };
+function centerBlocked(blocks: AvailabilityBlockLite[]) {
+  return (day: string, slot: number) =>
+    isInstantBlocked(blocks, centerLocalToInstant(day, slotToHHMM(slot)));
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboard> {
@@ -511,8 +482,8 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   for (const trainerId of trainerIds) {
     const { slots, booked, pct } = occupancyOf(
       raw.rules.filter((r) => r.trainerId === trainerId),
-      blocksOf(raw.blocks, trainerId),
       weekDays,
+      centerBlocked(blocksOf(raw.blocks, trainerId)),
       (day, h) => bookedKeys.has(`${trainerId}|${day}|${h}`),
     );
 
@@ -804,7 +775,7 @@ export async function getTrainerDashboard(
     );
 
   // ── Ocupació de la seva disponibilitat aquesta setmana ──
-  const occupancy = occupancyOf(raw.rules, raw.blocks, weekDays, (day, h) =>
+  const occupancy = occupancyOf(raw.rules, weekDays, centerBlocked(raw.blocks), (day, h) =>
     bookedKeys.has(`${day}|${h}`),
   );
 

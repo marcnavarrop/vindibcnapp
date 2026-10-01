@@ -44,7 +44,7 @@ export default async function ReservasPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   // Només la setmana del calendari o els dies de la llista: vegeu `agendaWindow`.
-  const win = agendaWindow("/admin/reservas", await searchParams);
+  const win = agendaWindow("/admin/reservas", await searchParams, { week: true });
   const { nav } = win;
   // Al calendari, a més, de avui a quinze dies: «Pròxim forat» busca el primer
   // forat lliure de cada professional en les dues setmanes vinents, i per saber
@@ -52,9 +52,10 @@ export default async function ReservasPage({
   const today = centerToday();
   const lookFrom = centerDayStart(today);
   const lookTo = centerDayStart(addDaysStr(today, 15));
-  const from =
-    nav.view === "calendar" && lookFrom < win.from ? lookFrom : win.from;
-  const to = nav.view === "calendar" && lookTo > win.to ? lookTo : win.to;
+  // (També en mode «Setmana»: al mòbil s'hi veu la vista de dia.)
+  const calendarLike = nav.view !== "list";
+  const from = calendarLike && lookFrom < win.from ? lookFrom : win.from;
+  const to = calendarLike && lookTo > win.to ? lookTo : win.to;
   const [reservations, trainers, trials, centerSettings, allAvailability, allBlocks, centerBlocks, palette, waiting] =
     await Promise.all([
       listReservationsInRange({ from, to }),
@@ -85,7 +86,10 @@ export default async function ReservasPage({
   return (
     <>
       <GroupTabs tabs={TABS} />
-      <main className="mx-auto max-w-5xl px-4 pt-3 pb-6 md:p-6">
+      {/* La setmana, a l'ordinador, aprofita tota l'amplada que deixa el menú. */}
+      <main
+        className={`mx-auto px-4 pt-3 pb-6 md:p-6 ${nav.view === "week" ? "max-w-5xl lg:max-w-7xl" : "max-w-5xl"}`}
+      >
         {/* Al mòbil, una sola fila, com la del professional: l'agenda ha de
             començar tan amunt com es pugui. El suport va aquí dins i no
             flotant, que tapava la columna de la dreta. */}

@@ -20,6 +20,9 @@ import {
  *                         ha `setmana`, el dilluns d'aquella setmana. Amb `dia`
  *                         i sense `setmana`, la setmana és la del dia.
  *   ?vista=llista         la llista en comptes del calendari.
+ *   ?vista=setmana        la setmana sencera del centre (només l'admin, i només
+ *                         a l'ordinador: al mòbil es veu la vista de dia). Fa
+ *                         servir la mateixa finestra que el calendari.
  *   ?enrere=60            dies enrere de la llista (per defecte 30).
  *   ?endavant=60          dies endavant de la llista (per defecte 30).
  *
@@ -27,7 +30,7 @@ import {
  * no hagi de saber res de dies del centre.
  */
 
-export type AgendaView = "calendar" | "list";
+export type AgendaView = "calendar" | "week" | "list";
 
 /** Dies de la llista per defecte, i el que afegeix cada "Veure'n més". */
 export const LIST_STEP_DAYS = 30;
@@ -55,6 +58,8 @@ export type AgendaNav = {
   basePath: string;
   href: {
     calendar: string;
+    /** La setmana que es mira, en mode «Setmana». */
+    week: string;
     list: string;
     prevWeek: string;
     nextWeek: string;
@@ -90,6 +95,7 @@ function href(
 ): string {
   const q = new URLSearchParams();
   if (p.vista === "list") q.set("vista", "llista");
+  if (p.vista === "week") q.set("vista", "setmana");
   if (p.setmana) q.set("setmana", p.setmana);
   if (p.enrere && p.enrere !== LIST_STEP_DAYS) q.set("enrere", String(p.enrere));
   if (p.endavant && p.endavant !== LIST_STEP_DAYS) q.set("endavant", String(p.endavant));
@@ -97,8 +103,15 @@ function href(
   return s ? `${base}?${s}` : base;
 }
 
-export function agendaWindow(basePath: string, params: Params): AgendaWindow {
-  const view: AgendaView = first(params.vista) === "llista" ? "list" : "calendar";
+export function agendaWindow(
+  basePath: string,
+  params: Params,
+  /** `week`: la pàgina té mode «Setmana» (l'admin). Sense, `?vista=setmana` és el calendari. */
+  opts: { week?: boolean } = {},
+): AgendaWindow {
+  const vista = first(params.vista);
+  const view: AgendaView =
+    vista === "llista" ? "list" : vista === "setmana" && opts.week ? "week" : "calendar";
   const today = centerToday();
   const currentWeek = centerWeekStart(today);
   const dia = parseDayParam(params.dia);
@@ -126,10 +139,18 @@ export function agendaWindow(basePath: string, params: Params): AgendaWindow {
     basePath,
     href: {
       calendar: href(basePath, { setmana: weekParam }),
+      week: href(basePath, { vista: "week", setmana: weekParam }),
       list: href(basePath, { vista: "list", enrere: back, endavant: ahead }),
-      prevWeek: href(basePath, { setmana: addDaysStr(weekStart, -7) }),
-      nextWeek: href(basePath, { setmana: addDaysStr(weekStart, 7) }),
-      today: href(basePath, {}),
+      // A la setmana, canviar de setmana s'hi queda.
+      prevWeek: href(basePath, {
+        vista: view === "week" ? "week" : undefined,
+        setmana: addDaysStr(weekStart, -7) === currentWeek ? undefined : addDaysStr(weekStart, -7),
+      }),
+      nextWeek: href(basePath, {
+        vista: view === "week" ? "week" : undefined,
+        setmana: addDaysStr(weekStart, 7) === currentWeek ? undefined : addDaysStr(weekStart, 7),
+      }),
+      today: href(basePath, { vista: view === "week" ? "week" : undefined }),
       moreBack:
         back < LIST_MAX_DAYS
           ? href(basePath, { vista: "list", enrere: back + LIST_STEP_DAYS, endavant: ahead })

@@ -358,7 +358,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Per marcar",
-              "Vora taronja i l'etiqueta «Per marcar»: la sessió ja ha passat, segueix com a reservada i la pots marcar tu. No s'atenua com la resta del passat, perquè és feina pendent. Es resol a la seva fitxa amb «Marcar feta» (o cancel·lant-la, si no es va fer), o des de «Cal fer», a dalt.",
+              "Vora taronja i l'etiqueta «Per marcar»: la sessió ja ha passat, segueix com a reservada, la pots marcar tu i és dels últims 30 dies, els mateixos que «Cal fer». No s'atenua com la resta del passat, perquè és feina pendent. Es resol a la seva fitxa amb «Marcar feta» (o cancel·lant-la, si no es va fer), o des de «Cal fer», a dalt.",
             ],
             [
               "Bloquejat",

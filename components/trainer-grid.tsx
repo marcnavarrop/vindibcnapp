@@ -1,5 +1,6 @@
 "use client";
 
+import { INBOX_DAYS } from "@/lib/inbox-window";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
@@ -165,6 +166,15 @@ export type DayInfo = {
  * del professional (els seus i els dels companys) i la de l'admin (cada
  * columna).
  */
+/**
+ * ¿Prou recent per demanar que es marqui? Els últims `INBOX_DAYS` dies, com
+ * «Cal fer» del professional i «Sense marcar» de l'Inici de l'admin. Una sessió
+ * més antiga sense marcar es veu com una sessió passada, sense l'avís.
+ */
+export function isToMarkAge(start: Date, now: Date | null): boolean {
+  return !!now && start.getTime() >= now.getTime() - INBOX_DAYS * 86_400_000;
+}
+
 export function freeRunsOf(input: {
   trainerId: string;
   rules: TrainerRuleLite[];
@@ -1023,9 +1033,12 @@ function DayColumn({
         const e = byId.get(p.id)!;
         const b = box(slotFloat(e.start), slotFloat(e.end) || 48);
         const past = now ? e.end.getTime() <= now.getTime() : false;
-        // «Per marcar»: ja ha passat, segueix reservada i la pots marcar tu.
+        // «Per marcar»: ja ha passat, segueix reservada, la pots marcar tu i és
+        // dels últims `INBOX_DAYS` dies, la mateixa finestra que «Cal fer» i
+        // l'Inici de l'admin (`isToMarkAge`).
         const toMark =
           past &&
+          isToMarkAge(e.start, now) &&
           (e.kind === "res"
             ? e.r.status === "booked" && manageable.has(e.r.id)
             : e.kind === "group"

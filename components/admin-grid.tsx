@@ -13,6 +13,7 @@ import {
   type TrainerRuleLite,
 } from "@/lib/availability-slots";
 import { occupancyFromSessions } from "@/lib/free-slots";
+import { agendaLoad } from "@/lib/agenda-load";
 import { colorOfPro, type ColorPalette } from "@/lib/colors";
 import { ReservationSheet } from "@/components/reservation-sheet";
 import { TrialModal } from "@/components/agenda-pieces";
@@ -25,9 +26,11 @@ import {
   NavLink,
   FREE_COLOR,
   freeRunsOf,
+  isToMarkAge,
   type DayInfo,
   type Entry,
 } from "@/components/trainer-grid";
+import { AdminWeek, type WeekDay, type WeekLane } from "@/components/admin-week";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import type { SessionNote } from "@/lib/data/session-notes";
@@ -359,36 +362,22 @@ export function AdminGrid({
 
   /*
    * LA TIRA DE LA SETMANA (dl–dv). Per a cada dia i cada professional encès,
-   * quina part del seu horari ja no és lliure: dels inicis de mitja hora dins
-   * del seu horari (sense comptar els bloquejats), quants ja no surten com a
-   * forat. I del dia sencer, quants grups són plens i quanta gent espera.
+   * la seva ocupació (`agendaLoad`: la mateixa xifra que l'Inici i el mode
+   * «Setmana»). I del dia sencer, quants grups són plens i quanta gent espera.
    */
   const weekStart = parseDay(nav.weekStart);
   const strip = useMemo(() => {
     if (!now) return [];
-    const epoch = new Date(0); // el dia sencer, també el que ja ha passat
     const shown = visible.filter((p) => p.id !== NONE);
     return Array.from({ length: 5 }, (_, i) => {
       const d = addDays(weekStart, i);
       const key = localDateStr(d);
-      const w = weekdayOf(d);
-      const pros = shown.map((p) => {
-        const starts = new Set<number>();
-        for (const r of rules)
-          if (r.trainerId === p.id && ruleApplies(r, key, w))
-            for (let slot = r.startSlot; slot < r.endSlot; slot++) {
-              const at = new Date(d);
-              at.setHours(0, slot * 30, 0, 0);
-              const end = at.getTime() + SESSION_DURATION_MINUTES * 60_000;
-              const blocked = blocks.some(
-                (b) => b.trainerId === p.id && new Date(b.startAt).getTime() < end && new Date(b.endAt).getTime() > at.getTime(),
-              );
-              if (!blocked) starts.add(slot);
-            }
-        const free = freeRunsOf({ trainerId: p.id, rules, blocks, occupancy, date: d, key, wd: w, now: epoch })
-          .reduce((n, f) => n + (f.lastStart - f.from + 1), 0);
-        return { id: p.id, name: p.name, pct: starts.size ? Math.max(0, Math.min(1, 1 - free / starts.size)) : null };
-      });
+      // L'ocupació és la de l'Inici (`lib/occupancy.ts`), en hora del navegador.
+      const pros = shown.map((p) => ({
+        id: p.id,
+        name: p.name,
+        pct: agendaLoad({ trainerId: p.id, rules, blocks, reservations, days: [key] }),
+      }));
       const groups = new Map<string, number>();
       for (const r of reservations)
         if (
@@ -462,6 +451,151 @@ export function AdminGrid({
       ),
     };
   };
+
+  /*
+   * EL MODE «SETMANA» (només a l'ordinador; vegeu `admin-week.tsx`). Les
+   * mateixes peces que el dia: les entrades agrupades igual, els forats de
+   * `freeRunsOf`, els bloquejos amb el motiu i l'ocupació de `agendaLoad`.
+   */
+  const isWeek = nav.view === "week";
+  const weekDays = useMemo<WeekDay[]>(() => {
+    if (!isWeek || !now) return [];
+    const end = (s: Date) => new Date(s.getTime() + SESSION_DURATION_MINUTES * 60_000);
+    // Les entrades de la setmana, per dia i professional. Un grup, una entrada.
+    const byKey = new Map<string, Entry[]>();
+    const push = (k: string, e: Entry) => (byKey.get(k) ?? byKey.set(k, []).get(k)!).push(e);
+    const groups = new Map<string, ReservationListItem[]>();
+    for (const r of reservations) {
+      if (r.status === "cancelled") continue;
+      const s = new Date(r.scheduledAt);
+      const k = `${localDateStr(s)}|${r.trainerId ?? NONE}`;
+      if (r.serviceType === "grupo_reducido") {
+        const g = `${k}|${r.scheduledAt}`;
+        (groups.get(g) ?? groups.set(g, []).get(g)!).push(r);
+      } else push(k, { kind: "res", id: r.id, start: s, end: end(s), own: true, r });
+    }
+    for (const [g, list] of groups) {
+      const s = new Date(list[0].scheduledAt);
+      push(g.split("|").slice(0, 2).join("|"), {
+        kind: "group",
+        id: `g:${g}`,
+        start: s,
+        end: end(s),
+        own: true,
+        list: [...list].sort((a, b) => a.clientName.localeCompare(b.clientName)),
+      });
+    }
+    for (const t of trials) {
+      const s = new Date(t.scheduledAt);
+      push(`${localDateStr(s)}|${t.trainerId ?? NONE}`, { kind: "trial", id: `t:${t.id}`, start: s, end: end(s), own: true, t });
+    }
+    const svcOf = (e: Entry): ServiceType =>
+      e.kind === "res" ? e.r.serviceType : e.kind === "group" ? "grupo_reducido" : e.t.serviceType;
+
+    const shown = trainers.filter((p) => !hidden.has(p.id));
+    const out: WeekDay[] = [];
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(weekStart, i);
+      const key = localDateStr(date);
+      const wd = weekdayOf(date);
+      // El cap de setmana només hi surt si algú hi té horari o alguna cosa.
+      if (
+        i >= 5 &&
+        !rules.some((r) => shown.some((p) => p.id === r.trainerId) && ruleApplies(r, key, wd)) &&
+        ![...shown, { id: NONE }].some((p) => byKey.has(`${key}|${p.id}`))
+      )
+        continue;
+      const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = addDays(dayStart, 1);
+      const lanes: WeekLane[] = [];
+      const off: string[] = [];
+      const lanePros = [
+        ...shown,
+        ...(!hidden.has(NONE) && byKey.has(`${key}|${NONE}`) ? [{ id: NONE, name: "Sense professional" }] : []),
+      ];
+      for (const p of lanePros) {
+        const entries = (byKey.get(`${key}|${p.id}`) ?? []).filter((e) => !service || svcOf(e) === service);
+        const schedule = rules
+          .filter((r) => r.trainerId === p.id && ruleApplies(r, key, wd))
+          .map((r) => [r.startSlot, r.endSlot] as [number, number]);
+        const laneBlocks = centerBlocks
+          .filter((b) => b.trainerId === p.id)
+          .map((b) => ({ s: new Date(b.startAt), e: new Date(b.endAt), reason: b.reason }))
+          .filter((b) => b.s < dayEnd && b.e > dayStart)
+          .map((b) => ({
+            from: b.s <= dayStart ? 0 : slotFloat(b.s),
+            to: b.e >= dayEnd ? 48 : slotFloat(b.e),
+            reason: b.reason,
+          }));
+        if (!schedule.length && !entries.length && !laneBlocks.length) {
+          off.push(p.name.split(/\s+/)[0]);
+          continue;
+        }
+        const free =
+          p.id === NONE
+            ? []
+            : freeRunsOf({ trainerId: p.id, rules, blocks, occupancy, date, key, wd, now }).filter(
+                (f) => !service || f.services.includes(service),
+              );
+        const toMark = new Set(
+          entries
+            .filter(
+              (e) =>
+                e.end.getTime() <= now.getTime() &&
+                isToMarkAge(e.start, now) &&
+                (e.kind === "res"
+                  ? e.r.status === "booked"
+                  : e.kind === "group" && e.list.some((r) => r.status === "booked")),
+            )
+            .map((e) => e.id),
+        );
+        lanes.push({
+          pro: { id: p.id, name: p.name.split(/\s+/)[0], color: p.id === NONE ? "#9a9a9e" : colorOfPro(palette, p.id) },
+          load: p.id === NONE ? null : agendaLoad({ trainerId: p.id, rules, blocks, reservations, days: [key] }),
+          schedule,
+          entries,
+          free,
+          blocks: laneBlocks,
+          toMark,
+          waiting: new Map(
+            waiting
+              .filter((w) => w.trainerId === p.id)
+              .map((w) => [new Date(w.at).getTime(), w.names.length] as const),
+          ),
+        });
+      }
+      const all = lanes.flatMap((l) => l.entries);
+      const freeSlots = new Set<string>();
+      for (const l of lanes) for (const f of l.free) for (let x = f.from; x < f.to; x++) freeSlots.add(`${l.pro.id}|${x}`);
+      out.push({
+        key,
+        date,
+        isToday: key === nav.today,
+        lanes,
+        off,
+        summary: {
+          sessions: all.filter((e) => e.kind !== "trial").length,
+          full: all.filter((e) => e.kind === "group" && e.list.length >= GROUP_CAPACITY).length,
+          waiting: waiting
+            .filter((w) => lanes.some((l) => l.pro.id === w.trainerId) && localDateStr(new Date(w.at)) === key)
+            .reduce((n, w) => n + w.names.length, 0),
+          toMark: lanes.reduce((n, l) => n + l.toMark.size, 0),
+          freeHours: freeSlots.size / 2,
+        },
+      });
+    }
+    return out;
+    // `weekStart` es deriva de `nav.weekStart`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWeek, now === null, nav.weekStart, nav.today, trainers, hidden, service, reservations, trials, rules, blocks, centerBlocks, occupancy, waiting, palette]);
+  const shownCount = trainers.filter((p) => !hidden.has(p.id)).length;
+  const laneHeight = shownCount <= 4 ? 28 : shownCount <= 6 ? 26 : 24;
+  const weekLabel = (() => {
+    const fmt = new Intl.DateTimeFormat("ca-ES", { day: "numeric", month: "short" });
+    const last = weekDays.length ? weekDays[weekDays.length - 1].date : addDays(weekStart, 4);
+    return `${fmt.format(weekStart)} – ${fmt.format(last)}`;
+  })();
 
   // Mòbil: tres alhora, amb una finestra que es mou.
   /*
@@ -579,8 +713,31 @@ export function AdminGrid({
   const filtering = hidden.size > 0 || !!service || !!q;
   const filterSummary = `${visible.length}/${pros.length}${service ? ` · ${SERVICE_LABELS[service]}` : ""}${q ? " · client" : ""}`;
 
+  // En mode «Setmana», tot el que és del dia només es veu per sota de lg (el
+  // mòbil i la tauleta): a l'ordinador hi ha la setmana.
+  const dayOnly = isWeek ? "lg:hidden" : undefined;
+
   return (
     <div>
+      {/* ── La setmana: navegació (només a l'ordinador) ───────────────────── */}
+      {isWeek && (
+        <div className="mb-3 hidden items-center gap-2 lg:flex" data-week-nav>
+          <NavLink label="Setmana anterior" href={nav.href.prevWeek}>‹</NavLink>
+          <Link
+            href={nav.href.today}
+            aria-current={nav.isCurrentWeek ? "page" : undefined}
+            className={`flex h-9 items-center rounded-lg border border-brand-border bg-white px-3 text-sm font-bold text-brand-charcoal hover:bg-brand-bg ${TAP}`}
+          >
+            Aquesta setmana
+          </Link>
+          <NavLink label="Setmana següent" href={nav.href.nextWeek}>›</NavLink>
+          <span className="ml-1 text-sm font-bold text-brand-dark" data-week-label>
+            {weekLabel}
+          </span>
+        </div>
+      )}
+
+      <div className={dayOnly}>
       {/* ── El dia ────────────────────────────────────────────────────────── */}
       <div className="mb-2 flex items-center justify-between gap-2 md:mb-3 md:gap-3">
         {dayNav}
@@ -696,6 +853,8 @@ export function AdminGrid({
         )}
       </div>
 
+      </div>
+
       {/* ── Filtres: qui es veu, quin servei i quin client ─────────────────── */}
       <div
         id="agenda-filtres"
@@ -748,12 +907,17 @@ export function AdminGrid({
             placeholder="Busca un client…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="min-h-11 min-w-40 flex-1 rounded-lg border border-brand-border bg-white px-3 text-sm md:min-h-9 md:max-w-xs md:flex-none"
+            className={clsx(
+              "min-h-11 min-w-40 flex-1 rounded-lg border border-brand-border bg-white px-3 text-sm md:min-h-9 md:max-w-xs md:flex-none",
+              // A la setmana no hi ha cerca de client: per això, la llista.
+              isWeek && "lg:hidden",
+            )}
           />
           <div className="md:hidden">{showAllButton}</div>
         </div>
       </div>
 
+      <div className={dayOnly}>
       {/* ── Mòbil: tres professionals alhora ──────────────────────────────── */}
       <div className="md:hidden" data-grid="mobile">
         {!now ? (
@@ -779,6 +943,31 @@ export function AdminGrid({
       <p className="mt-3 text-xs text-brand-muted">
         Toca un forat lliure per crear-hi una reserva amb aquell professional i aquella hora, o una sessió per obrir-ne la fitxa. Un grup amb places et deixa apuntar-hi qualsevol client.
       </p>
+      </div>
+
+      {/* ── La setmana (només a l'ordinador) ──────────────────────────────── */}
+      {isWeek && (
+        <div className="hidden lg:block" data-grid="week">
+          {!now ? (
+            <GridPlaceholder />
+          ) : weekDays.length && shownCount ? (
+            <AdminWeek
+              days={weekDays}
+              now={now}
+              palette={palette}
+              laneHeight={laneHeight}
+              dayHref={(k) => `${nav.basePath}?dia=${k}`}
+              proHref={(k, id) => `${nav.basePath}?dia=${k}&pro=${encodeURIComponent(id)}`}
+              onOpen={open}
+            />
+          ) : (
+            <NoneVisible />
+          )}
+          <p className="mt-3 text-xs text-brand-muted">
+            Toca una sessió, un grup o una prova per obrir-ne la fitxa, i «Obrir el dia» o el nom d&apos;un professional per anar a aquell dia.
+          </p>
+        </div>
+      )}
 
       {selected && (
         <ReservationSheet
