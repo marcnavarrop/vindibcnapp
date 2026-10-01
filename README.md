@@ -1,270 +1,245 @@
 # VindiBCN
 
-Aplicación web de gestión para un centro de entrenamiento personal y
-fisioterapia: clientes, bonos, reservas y pagos. Sustituye a Trainingym.
+L'app de gestió d'un centre d'entrenament personal i fisioteràpia de Barcelona:
+clients, bons i subscripcions, reserves i sèries, llista d'espera, sessions de
+prova, cobraments, liquidacions i comunitat, amb tres àrees (administració,
+professional i client). Substitueix Trainingym.
 
-**Stack:** Next.js 15 (App Router, TypeScript) · Tailwind CSS · Supabase
-(base de datos + Auth) · Vercel (hosting) · Stripe (cobro con tarjeta).
+En producció: **<https://vindibcnapp.vercel.app>**
 
-> Estado: **MVP funcional**. Autenticación por roles, gestión de clientes,
-> bonos, reservas (con repetición semanal), catálogo de servicios, biblioteca
-> de ejercicios y progreso, registro de cobros y tablón de comunidad — todo
-> con lógica de negocio real sobre Supabase. El cobro con tarjeta va por Stripe
-> Checkout. Pendiente principal: pulido del diseño de marca.
+## Stack
 
-## Módulos
+- **Next.js 15** (App Router, TypeScript, Server Actions) i Tailwind CSS.
+- **Supabase**: Postgres amb RLS, Auth i Storage (regió eu-west-1).
+- **Vercel**: allotjament, funcions a Dublín (`dub1`) i el cron diari
+  (`vercel.json`: `/api/cron/reminders`, cada dia a les 18:00 UTC).
+- **Resend**: tots els correus (avisos, comptes, comunitat).
+- **Stripe**: pagament amb targeta per Checkout allotjat (bons, vals de regal,
+  subscripcions).
+- **next-intl**: l'àrea del client i les pàgines públiques en català, castellà i
+  anglès (`messages/`). L'administració i el professional, en català fix.
 
-| Módulo                     | Estado                                                        |
-| -------------------------- | ------------------------------------------------------------- |
-| Auth y roles               | ✅ Completo (admin / trainer / client, rutas protegidas)       |
-| Clientes                   | ✅ Completo (CRUD, asignación de entrenador/a, ficha)          |
-| Bonos                      | ✅ Completo (alta con precio y servicio asociado)              |
-| Reservas                   | ✅ Completo (agenda, crear/cancelar, repetición semanal)       |
-| Catálogo de servicios      | ✅ Completo (CRUD de servicios y precios)                      |
-| Ejercicios y progreso      | ✅ Completo (biblioteca + mediciones por cliente)              |
-| Comunidad (anuncios)       | ✅ Completo (tablón con CRUD, feed para entrenadores/as)       |
-| Pagos                      | ✅ Registro de cobros (al vender un bono y alta manual, efectivo/tarjeta) |
-| Stripe (cobro online)      | ✅ Checkout alojado en compra de bono y vales de regalo        |
+## Posar-ho en marxa en local
 
-## Modo simulación (mock) vs. real
+### Requisits
 
-[`lib/config.ts`](lib/config.ts) expone `USE_MOCK`, que decide si la app usa
-un almacén en memoria de datos de prueba o Supabase de verdad:
-
-- Está en **mock** mientras `NEXT_PUBLIC_SUPABASE_URL` falte o sea el
-  placeholder de previsualización (útil para desarrollar sin backend).
-- Pasa a **real** automáticamente en cuanto pongas una URL de Supabase válida
-  en `.env.local`. No hay que tocar código.
-- Puedes forzar el mock con `NEXT_PUBLIC_USE_MOCK=true`.
-
----
-
-## Requisitos
-
-- Node.js 18.18+ (recomendado 20+)
-- Una cuenta de [Supabase](https://supabase.com) con un proyecto creado
-- (Opcional, para migraciones por CLI) [Supabase CLI](https://supabase.com/docs/guides/cli)
-
-## 1. Instalar dependencias
+- Node.js 20 o superior i `npm`.
+- Per treballar contra dades reals: un projecte de Supabase. Sense, l'app arrenca
+  en mode simulació (vegeu més avall).
+- Opcional: la [CLI de Stripe](https://stripe.com/docs/stripe-cli) per provar el
+  webhook en local.
 
 ```bash
 npm install
+cp .env.local.example .env.local   # i omple-hi els valors
+npm run dev                        # http://localhost:3000
 ```
 
-## 2. Variables de entorno
+### Variables d'entorn
 
-Copia el ejemplo y rellena los valores reales de tu proyecto Supabase
-(Project Settings → API):
+`.env.local` és al `.gitignore` i no s'ha de pujar mai. `.env.local.example`
+explica cada variable amb més detall.
 
-```bash
-cp .env.local.example .env.local
-```
+| Variable | Per a què serveix |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del projecte de Supabase. Buida o de mostra → mode simulació. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clau pública; la protegeix la RLS. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Secreta, només servidor.** Salta la RLS. Mai amb `NEXT_PUBLIC_`. |
+| `RESEND_API_KEY` | Clau de Resend. Sense, no s'envia cap correu. |
+| `NOTIFICATIONS_FROM_EMAIL` | Remitent dels avisos automàtics («VindiBCN <hola@…>»). **Aquesta bústia no es llegeix**: per rebre respostes hi ha el correu de contacte de Configuració. |
+| `ALLOW_REAL_EMAILS` | `true` per enviar correus de debò fora de la producció de Vercel. Per defecte, fora de producció no surt res i queda al `notification_log` com a `failed`. |
+| `NEXT_PUBLIC_APP_URL` | Domini de l'app per als enllaços i el logo dels correus. A Vercel es dedueix sol; en local, cal. |
+| `NEXT_PUBLIC_SITE_URL` | Opcional. Origen per a les URL de tornada de Stripe, si no coincideix amb el host. |
+| `STRIPE_SECRET_KEY` | **Secreta.** Sense, el botó «Pagar amb targeta» no surt i només hi ha «Pagar al centre». |
+| `STRIPE_WEBHOOK_SECRET` | Secret de signatura de `/api/webhooks/stripe`. El de local (`stripe listen`) no és el de producció. |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Declarada per coincidir amb Vercel; avui el codi no la fa servir. |
+| `CRON_SECRET` | Autentica les crides a `/api/cron/*`. |
+| `CENTER_EMAIL` | **Només l'últim recurs** dels avisos interns (proves, altes). Primer van al «Correu per als avisos interns» i, si és buit, al correu de contacte, tots dos de Configuració → Centre. |
+| `CENTER_TIMEZONE` | Opcional. Zona horària del centre (per defecte, `Europe/Madrid`). |
+| `SUPABASE_MAX_ROWS` / `SUPABASE_ROWS_WARN` | Opcionals. El sostre de files del projecte (1000) i a partir de quantes es deixa un avís als registres (500). |
+| `EMAIL_LOGO_URL` | Opcional. URL fixa del logo dels correus. |
+| `NEXT_PUBLIC_USE_MOCK` | `true` força el mode simulació. |
+| `MOCK_FAIL` | Opcional, només simulació: fa fallar a posta parts de la càrrega per provar els missatges d'error. |
 
-| Variable                        | Dónde encontrarla                     | Uso                                   |
-| ------------------------------- | ------------------------------------- | ------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | API → Project URL                     | Cliente y servidor                    |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | API → anon public                     | Cliente (protegida por RLS)           |
-| `SUPABASE_SERVICE_ROLE_KEY`     | API → service_role (**secreta**)      | Solo servidor; salta la RLS           |
+`VERCEL_ENV` i `VERCEL_PROJECT_PRODUCTION_URL` les posa Vercel; no s'han
+d'escriure. El contacte del centre (telèfon, correu que es llegeix, adreça,
+dades legals) **no** és una variable: és a Configuració → Centre (`center_settings`).
 
-> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` nunca debe exponerse en el navegador ni
-> llevar el prefijo `NEXT_PUBLIC_`. `.env.local` está en `.gitignore`.
+### El mode simulació (mock)
 
-## 3. Aplicar la migración de base de datos
+`USE_MOCK` (`lib/config.ts`) decideix si l'app fa servir Supabase o un magatzem
+de proves:
 
-El esquema vive en [`supabase/migrations/`](supabase/migrations/) y se aplica
-en orden:
+- S'activa sol si `NEXT_PUBLIC_SUPABASE_URL` falta o és de mostra, i es força
+  amb `NEXT_PUBLIC_USE_MOCK=true`.
+- Les dades surten de `lib/mock/seed.ts` i es desen a
+  `<tmpdir>/vindibcn-mock.json`: el que es prova hi queda. Per tornar a començar,
+  esborra aquest fitxer.
+- El rol es tria amb la galeta `vindi_mock_role` (`admin`, `trainer`, `client`) i
+  l'idioma, amb `vindi_locale`.
+- En simulació no s'envia cap correu ni hi ha pagament amb targeta.
+- Els `npm run *:check` treballen sobre aquest mateix magatzem i el deixen tal
+  com era.
 
-| Migración                       | Contenido                                              |
-| ------------------------------- | ------------------------------------------------------ |
-| `0001_initial_schema.sql`       | `profiles`, `clients`, `bonos`, `reservations`, `payments`, enums, RLS y el trigger que crea un perfil al registrarse |
-| `0002_services.sql`             | Catálogo de servicios y precios                        |
-| `0003_exercises_progress.sql`   | Biblioteca de ejercicios y mediciones de progreso      |
-| `0004_community.sql`            | Tablón de anuncios de la comunidad                     |
-
-Incluyen sus enums y las políticas de **Row Level Security** correspondientes.
-
-**Opción A — SQL Editor (rápida, sin instalar nada):**
-abre el SQL Editor de tu proyecto en supabase.com, pega el contenido del
-archivo y ejecútalo.
-
-**Opción B — Supabase CLI (recomendada para el equipo):**
-
-```bash
-supabase link --project-ref <tu-project-ref>
-supabase db push
-```
-
-Para desarrollo 100% local con Docker:
-
-```bash
-supabase start      # levanta Postgres + Studio en local
-supabase db reset   # aplica todas las migraciones de /supabase/migrations
-```
-
-## 4. (Opcional) Regenerar los tipos de la base de datos
-
-`types/database.ts` está escrito a mano de momento. Cuando tengas el proyecto
-en marcha, puedes regenerarlo automáticamente:
-
-```bash
-# desde un proyecto remoto
-npx supabase gen types typescript --project-id <tu-project-ref> > types/database.ts
-
-# o desde el Supabase local
-npx supabase gen types typescript --local > types/database.ts
-```
-
-## 5. Arrancar en local
-
-```bash
-npm run dev
-```
-
-Abre [http://localhost:3000](http://localhost:3000).
-
----
-
-## Pago con tarjeta (Stripe Checkout)
-
-Hay dos formas de pagar un bono o un vale de regalo: **pagar al centro** (crea
-el registro en `pending_payment` y lo activa el admin al cobrar) o **pagar con
-tarjeta**, que usa [Stripe Checkout](https://stripe.com/docs/payments/checkout)
-alojado — la página de pago es de Stripe, así que los datos de la tarjeta no
-pasan nunca por este dominio.
-
-**La regla que ordena todo el flujo:** pulsar "Pagar amb targeta" **no crea
-nada**. El bono o el vale nacen cuando Stripe confirma el cobro mediante el
-webhook `checkout.session.completed`. La redirección de vuelta no vale como
-prueba de pago (se puede cerrar la pestaña, o escribir la URL de éxito a mano),
-así que la pantalla de confirmación sólo *consulta* si el webhook ya ha pasado y
-espera si todavía no.
-
-| Pieza                                   | Papel                                              |
-| --------------------------------------- | -------------------------------------------------- |
-| `lib/stripe.ts`                         | Cliente de Stripe, interruptor y origen público     |
-| `lib/data/stripe-checkout.ts`           | Abre la sesión y cumple el pago (única fuente)      |
-| `app/api/webhooks/stripe/route.ts`      | Verifica la firma y despacha el evento              |
-| `/client/bonos/confirmacio`             | Vuelta del pago de un bono                          |
-| `/client/regals/confirmacio`            | Vuelta del pago de un vale                          |
-
-Un evento de Stripe puede llegar **más de una vez**. La protección no es una
-comprobación en el código sino un índice **único** sobre
-`stripe_checkout_session_id` en `bonos` y en `gift_vouchers` (migración `0054`):
-el segundo intento rebota con un `23505` que el webhook lee como "ya estaba
-hecho" y responde 200. Mismo criterio que el aforo de grupos: la garantía la da
-la base, no la suerte.
-
-El webhook queda **fuera del `matcher` del middleware** a propósito, como
-`/api/cron/*`: lo autentica la firma de Stripe, no una sesión, y no llama a
-`getViewer()`.
-
-Si faltan las claves de Stripe, el botón de tarjeta simplemente no aparece y
-sólo se ofrece "Pagar al centre". En modo simulación tampoco se ofrece.
-
-### Probarlo en local
-
-```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-```
-
-El `whsec_...` que imprime ese comando es el `STRIPE_WEBHOOK_SECRET` **de
-local**, distinto del que da el Dashboard al registrar el endpoint de
-producción. Tarjeta de prueba: `4242 4242 4242 4242`, cualquier fecha futura y
-cualquier CVC.
-
-## Roles y rutas protegidas
-
-La autenticación usa Supabase Auth con tres roles: `admin`, `trainer`,
-`client`. El [`middleware.ts`](middleware.ts) protege cada área y redirige
-según el rol:
-
-| Ruta        | Rol requerido | Si no cumple                          |
-| ----------- | ------------- | ------------------------------------- |
-| `/admin/*`  | `admin`       | → su propia área, o `/login` sin sesión |
-| `/trainer/*`| `trainer`     | → su propia área, o `/login` sin sesión |
-| `/client/*` | `client`      | → su propia área, o `/login` sin sesión |
-
-Al registrarse, el trigger crea el perfil con rol **`client`** por defecto.
-Para crear un **admin** o **trainer**, cambia el campo `role` en la tabla
-`profiles` desde Supabase Studio (o pásalo en `raw_user_meta_data.role` al
-hacer el alta).
-
-## Estructura del proyecto
+## Estructura
 
 ```
 app/
-  (auth)/login, (auth)/register   # autenticación
-  (admin)/admin                   # área admin: clientes, bonos, reservas,
-                                  #   serveis, exercicis, community, pagos
-  (trainer)/trainer               # área trainer → /trainer
-  (client)/client                 # área cliente → /client
-components/                       # componentes compartidos (forms, tablas, UI)
+  (admin)/admin/        àrea de l'administració
+  (trainer)/trainer/    àrea del professional
+  (client)/client/      àrea del client (traduïda)
+  (auth)/, auth/        accés, registre, contrasenya, confirmació de correu
+  prova/                sessió de prova pública (sense compte)
+  legal/                avís legal, privacitat i galetes
+  api/                  webhook de Stripe i cron
+  actions/              accions de servidor compartides entre àrees
+components/             components; components/ui/ són les peces bàsiques
 lib/
-  config.ts                       # USE_MOCK (mock vs. Supabase real)
-  auth.ts                         # getViewer() y helpers de sesión
-  data/                           # capa de datos por módulo (clients, bonos,
-                                  #   reservations, services, exercises,
-                                  #   measurements, announcements, payments…)
-  mock/                           # almacén y seed para el modo simulación
-  supabase/client.ts              # cliente para el navegador
-  supabase/server.ts              # cliente para Server Components / Actions
-  supabase/middleware.ts          # refresco de sesión en el middleware
-types/database.ts                 # tipos de la BD
-supabase/migrations/              # migraciones SQL
-middleware.ts                     # control de acceso por rol
+  data/                 capa de dades per mòdul (una funció per lectura o
+                        escriptura; aquí hi ha el «què es pot fer» de debò)
+  help/                 els tres manuals dins de l'app (client, professional,
+                        admin), construïts amb els ajustos reals del centre
+  notifications/        avisos: plantilles, log, canal de correu, comunitat
+  mock/                 magatzem i dades de la simulació
+  supabase/             clients de Supabase, lectura per pàgines i avís del sostre
+  i18n/                 configuració dels idiomes
+  *.ts                  regles pures compartides (franges, ocupació, abast de
+                        reserva, comptes demo, contacte del centre…)
+messages/               diccionaris ca/es/en (next-intl)
+i18n/                   càrrega del diccionari per petició
+types/database.ts       tipus de la base (escrits a mà)
+supabase/migrations/    migracions SQL, numerades
+scripts/                comprovacions (`*:check`) i eines de suport
+docs/                   documentació de treball (correus, guia de proves)
+middleware.ts           accés per rol a /admin, /trainer i /client
 ```
 
-## Scripts
+### Rols i rutes
 
-| Comando              | Acción                                                        |
-| -------------------- | ------------------------------------------------------------- |
-| `npm run dev`        | Servidor de desarrollo                                        |
-| `npm run build`      | Build de producción (antes pasa `rows:check` y `actions:check`, vía `prebuild`) |
-| `npm start`          | Sirve el build de producción                                  |
-| `npm run lint`       | ESLint                                                        |
-| `npm run actions:check` | Toda acción de servidor mira quién la llama (ver abajo)  |
-| `npm run roles:check` | Quién puede usar las acciones que escriben con la clave de servicio (simulación) |
-| `npm run rows:check` | Ninguna lectura nueva sin límite (ver abajo)                 |
-| `npm run *:check`    | Comprobaciones en modo simulación (`payments`, `clients`, `bonos`, `blocks`, `occupancy`, `waitlist`, `scope`, `series`…) |
+`middleware.ts` protegeix cada àrea: `/admin/*` només admin, `/trainer/*`
+només professional, `/client/*` només client; qualsevol altre rol va a la seva
+àrea, i sense sessió, a `/login`. El registre crea perfils de **client**; els
+professionals els crea l'admin des de Persones → Professionals.
 
-## El tope de 1000 filas
+El middleware **no** protegeix les accions de servidor: vegeu les normes de la
+casa.
 
-Supabase corta cada lectura a 1000 filas (Settings → API → Max rows) **sin
-avisar**. Tres piezas lo vigilan:
+## Migracions
 
-- **Las listas que crecen con el centro van por páginas**: pagos, clientes,
-  bonos e histórico de pruebas usan cursor, «Carregar més» y un contador con
-  `count: exact`. Los totales (pagos, «Pendent de cobrament») los calcula la
-  base (`payments_summary`, `payments_by_month`, `bonos_summary`; 0095 y 0097).
-- **Las lecturas que tienen que ser completas** (la ocupación del calendario del
-  cliente, `/prova` y las series; los destinatarios de un correo) usan una
-  ventana con final y **`fetchAllRows`** (`lib/supabase/fetch-all.ts`): leen
-  por páginas con `.range()` hasta la última, por muchas filas que haya.
-- **`scripts/row-limit-check.mjs`** (`npm run rows:check`, y en cada build):
-  cada `.from(…).select(…)` sin `.limit`/`.range`/`.single`/`head` tiene que
-  estar en `scripts/row-limit-allowlist.json` como `acotada` (filtrada por id,
-  cliente, ventana…) o `pendent` (crece con el centro; se pagina cuando avise el
-  log). Una lectura nueva sin anotar hace fallar el build.
-- **`lib/supabase/row-cap.ts`** deja un aviso en los logs cuando una respuesta
-  trae 500 filas o más («s'acosta al sostre», `SUPABASE_ROWS_WARN`) y cuando
-  llega al tope (`SUPABASE_MAX_ROWS`, 1000). Ese aviso es la señal para paginar
-  una lista `pendent`.
+- Viuen a `supabase/migrations/`, numerades amb quatre xifres i un nom
+  descriptiu (`0100_center_contact.sql`). La següent és la següent xifra; no es
+  reaprofiten números.
+- **Les aplica sempre en Marc, a mà**, abans del push del codi que les fa
+  servir. El codi no s'apuja fins que la migració és a producció. Cada migració
+  ha de ser **idempotent** (`if not exists`, `drop … if exists`, `create or
+  replace`) i s'assaja abans (PGlite) amb els casos bons i dolents.
+- Patró de seguretat de les funcions:
+  - `security definer` només quan cal saltar la RLS, sempre amb
+    `set search_path = public`.
+  - `revoke execute … from public, anon` **abans** del `grant execute … to
+    authenticated`: Postgres dona l'execució a tothom per defecte.
+  - Les comprovacions d'admin, amb `coalesce(public.is_admin(), false)`:
+    `is_admin()` torna `NULL` sense perfil (la clau de servei, una sessió
+    estranya), i `if not NULL` no entra.
+- La RLS es prova al SQL Editor fent-se passar per un usuari (`set_config` de
+  `request.jwt.claims` + `set local role authenticated`), dins d'una transacció
+  que acaba en `rollback`.
 
-## Permisos de las acciones de servidor
+## Comprovacions
 
-Una acción de servidor (`"use server"`) se puede invocar **por su id desde
-cualquier página**: el middleware de `/admin/*` o `/trainer/*` no la protege.
-Las que escriben con la clave de servicio no tienen otra barrera; las que van
-con la sesión dependen solo de la RLS.
+En simulació i sense tocar cap base ni enviar res. Les dues primeres corren
+soles a cada build (`prebuild`):
 
-- **`requireRole(...)`** (`lib/auth.ts`) va en la primera línea de cada acción
-  no pública: devuelve el usuario si tiene uno de los roles, o `null`, y la
-  acción responde «No autoritzat.».
-- **`scripts/actions-check.mjs`** (`npm run actions:check`, y en cada build):
-  cada acción exportada tiene que llamar a `requireRole` o `getViewer` (o a una
-  función del mismo fichero que lo haga), o estar en
-  `scripts/public-actions.json` con su motivo (registro, contraseña, prueba…).
-- **`scripts/roles-check.mts`** (`npm run roles:check`) llama a las acciones
-  sensibles con cada rol en modo simulación y mira si han escrito: comprueba
-  que la condición sea la correcta (p. ej. un profesional, solo para sus
-  clientes).
+| Ordre | Què protegeix |
+| --- | --- |
+| `npm run rows:check` | **(prebuild)** Cap lectura nova sense límit: tot `.select` sense `.limit`/`.range`/`.single`/`head` ha de ser a `scripts/row-limit-allowlist.json`. |
+| `npm run actions:check` | **(prebuild)** Cap acció de servidor sense mirar qui la crida (`requireRole`/`getViewer`), llevat de les públiques de `scripts/public-actions.json`. |
+| `npm run roles:check` | Qui pot fer servir de debò les accions que escriuen amb la clau de servei. |
+| `npm run i18n:check` | Cada clau `t("…")` existeix i ca/es/en tenen el mateix arbre. |
+| `npm run manual:check` | El manual del client té la mateixa estructura als tres idiomes, sense textos provisionals, amb contacte i sense. |
+| `npm run scope:check` | Amb qui pot reservar un client, a tots els camins del servidor. |
+| `npm run demo:check` | Comptes demo i reals separats (calendari, cua, sèries, l'equip, /prova). |
+| `npm run slots:check` | El pas d'hores a mitges hores no ha mogut cap resposta. |
+| `npm run dayslots:check` | La llista d'hores del client diu el mateix que el servidor, a qualsevol zona. |
+| `npm run free:check` | Els forats «lliures» de les pantalles són els que el servidor acceptaria. |
+| `npm run grid:check` | La geometria de la rejilla del professional. |
+| `npm run availability:check` | La validació de servidor de les franges de disponibilitat. |
+| `npm run occupancy:check` | L'ocupació del calendari del client, /prova i les sèries, sencera i amb final. |
+| `npm run blocks:check` | Els bloquejos es llegeixen per finestra, no tot l'històric. |
+| `npm run series:check` | Les sèries i les alternatives entenen la mitja hora. |
+| `npm run series:bonos` | L'assistent de sèries compta tots els bons del client. |
+| `npm run waitlist:check` | La llista d'espera: mai promociona a una sessió passada, les esperes de sèrie són de la sèrie, i la sessió que entra no compta dos cops. |
+| `npm run search:check` | El buscador de clients (accents, majúscules). |
+| `npm run clients:check` | La llista de clients per pàgines, amb cerca i filtres al servidor. |
+| `npm run payments:check` | Els pagaments per pàgines i els totals. |
+| `npm run bonos:check` | Els bons per pàgines, els comptadors i el «Pendent de cobrament». |
+| `npm run paid:check` | Cobrar un bo: o s'activa exactament un bo i s'anota el pagament, o error i res anotat. |
+| `npm run community:check` | El correu de la comunitat arriba a tothom, en lots, i cap fallada queda en silenci. |
+| `npm run contact:check` | El contacte del centre: format, peu i Reply-To dels correus, pàgines legals, avisos interns. |
+| `npm run emailchange:check` | El canvi de correu d'un professional que inicia l'admin. |
+
+**Si falla el `prebuild`**, el build s'atura i Vercel no publica res:
+
+- `rows:check`: la lectura nova s'acota (`.limit`, `.range`, un filtre per id o
+  per finestra, o `fetchAllRows` de `lib/supabase/fetch-all.ts`) o s'anota a
+  `row-limit-allowlist.json` com a `acotada` o `pendent`, amb el motiu. Si diu
+  «JA NO EXISTEIX», cal treure l'entrada.
+- `actions:check`: la primera línia de l'acció ha de ser
+  `const viewer = await requireRole(...); if (!viewer) return …`. Si és pública a
+  propòsit, s'anota a `public-actions.json` amb el motiu.
+
+Altres eines, per comparar abans i després d'un canvi: `npm run
+emails:snapshot` (tots els correus a disc, per fer-ne un `diff`), `emails:review`
+(una pàgina amb cada correu en els tres idiomes de costat), `legal:snapshot` (el
+text visible de les pàgines legals), `voucher:snapshot` (el PDF del val) i
+`i18n:inventory` (els textos que arriben a l'àrea del client).
+
+## Normes de la casa
+
+- **`requireRole(...)` a la primera línia de cada acció de servidor** no pública.
+  Una acció es pot cridar pel seu id des de qualsevol pàgina: el middleware no la
+  protegeix, i les que escriuen amb la clau de servei no tenen cap més barrera.
+  `actions:check` ho exigeix i `roles:check` comprova que la condició és la bona.
+- **Cap lectura sense límit.** Supabase talla cada resposta a 1000 files sense
+  avisar. Les llistes que creixen van per pàgines («Carregar més»); els totals els
+  calcula la base (`payments_summary`, `payments_by_month`, `bonos_summary`); les
+  lectures que han de ser completes van amb finestra i `fetchAllRows`. La resta,
+  anotada a `row-limit-allowlist.json`. `lib/supabase/row-cap.ts` deixa un avís
+  als registres a partir de 500 files.
+- **Comptes demo només entre ells.** L'Entrenador Demo, el Fisio Demo i el Client
+  Demo (`lib/demo-accounts.ts`) no es barregen amb comptes reals: cap client real
+  els veu ni hi reserva, /prova no n'ofereix hores i l'equip no els pot creuar.
+  «Admin Demo» (`vindibcn@gmail.com`) **no** és un compte demo: és l'admin real
+  d'en Raul.
+- **Correus.** El remitent no es llegeix; el Reply-To és el correu de contacte
+  del centre, i només si n'hi ha. Fora de la producció de Vercel no surt res
+  (`ALLOW_REAL_EMAILS`). Tot queda al `notification_log`.
+- **Push directe a `main`** quan tot és verd: Vercel desplega sol. **Parada
+  abans del push** si el canvi toca diners (cobraments, bons, pagaments),
+  permisos o RLS, o comptes, i sempre que hi hagi una migració (primer
+  l'aplica en Marc).
+- **Cada canvi visible**: Playwright a 375 i 1280 px, textos en ca/es/en on els
+  vegi el client, i els manuals (`lib/help`) i la guia de proves al dia.
+
+### Pagament amb targeta (Stripe)
+
+Prémer «Pagar amb targeta» **no crea res**. El bo o el val neixen quan arriba el
+webhook `checkout.session.completed` a `app/api/webhooks/stripe/route.ts`, que
+verifica la signatura i crida `lib/data/stripe-checkout.ts`. La pantalla de
+tornada només consulta si el webhook ja ha passat. Un mateix esdeveniment pot
+arribar dues vegades: l'índex únic de `stripe_checkout_session_id` (0054) fa que
+el segon reboti (`23505`) i es respongui 200. El webhook, com `/api/cron/*`,
+queda fora del middleware: l'autentica la signatura, no una sessió.
+
+En local: `stripe listen --forward-to localhost:3000/api/webhooks/stripe` i la
+targeta de prova `4242 4242 4242 4242`.
+
+## Documentació relacionada
+
+- **`docs/EMAILS.md`**: tots els correus, qui els rep, si es poden apagar, el
+  contacte i el Reply-To, i el correu de la comunitat.
+- **`docs/vindiapp-guia-de-proves.html`**: la guia de proves per pantalla, amb el
+  que és nou o s'ha corregit marcat.
+- **Manuals dins de l'app** (`lib/help/`): el del client a `/client/ajuda` (en
+  tres idiomes), el del professional a `/trainer/ajuda` i el de l'administració
+  a `/admin/ajuda`. Es construeixen amb els ajustos reals del centre.
