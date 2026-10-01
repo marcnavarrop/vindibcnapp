@@ -1233,13 +1233,17 @@
       "heading": "Confirm your new email",
       "intro": "You asked to use this address to sign in to VindiBCN. Click the button to confirm:",
       "cta": "Confirm new email",
-      "outro": "If you didn't ask for this, ignore this email: nothing changes without that click."
+      "outro": "If you didn't ask for this, ignore this email: nothing changes without that click.",
+      "introByAdmin": "The centre's administration has asked for this address to be your email for signing in to VindiBCN. Click the button to confirm it's yours:",
+      "outroByAdmin": "If you weren't expecting this change, ignore this email and talk to the centre: nothing changes without this click."
     },
     "emailChangeAlert": {
       "subject": "A change of your account email was requested — VindiBCN",
       "heading": "Someone asked to change your sign-in email",
       "intro": "Someone asked to change the sign-in email of your account from {old} to {new}. We are telling you here so you know.",
-      "outro": "If this was you, there's nothing to do in this email: the change is finished from the new mailbox. If it was NOT you, write to us straight away and change your password: someone may have got into your account."
+      "outro": "If this was you, there's nothing to do in this email: the change is finished from the new mailbox. If it was NOT you, write to us straight away and change your password: someone may have got into your account.",
+      "introByAdmin": "The centre's administration has asked to change your account's sign-in email from {old} to {new}. The change will only happen if it's confirmed from the new inbox.",
+      "outroByAdmin": "You don't need to do anything. If you weren't expecting it, talk to the centre."
     }
   },
   "voucherPdf": {

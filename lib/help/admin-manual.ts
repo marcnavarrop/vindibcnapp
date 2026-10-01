@@ -462,7 +462,16 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Editar-lo" },
         {
           t: "p",
-          text: "Un cop creat, el nom i el correu es veuen però no es toquen. El que sí que pots canviar sempre és la foto i l'especialitat.",
+          text: "Un cop creat, el nom es veu però no es toca. El que sí que pots canviar sempre és la foto i l'especialitat.",
+        },
+        { t: "h", text: "Canviar-li el correu d'accés" },
+        {
+          t: "p",
+          text: "A sota de la fitxa, «Correu d'accés». No el canvies tu directament: escrius el correu nou i «Enviar l'enllaç de confirmació» li envia un enllaç a aquella bústia. El canvi es fa quan el professional hi fa clic (val 24 hores), i així queda comprovat que la bústia és seva. Al correu d'ara li arriba un avís sense cap enllaç. A partir d'aquí entra amb el correu nou i la mateixa contrasenya, i els avisos li arriben allà. Les seves reserves, liquidacions i notes no es mouen.",
+        },
+        {
+          t: "note",
+          text: "Mentre no el confirma, la fitxa diu a quina adreça s'ha enviat i té «Anul·lar l'enllaç». Un correu que ja fa servir un altre compte del centre no s'accepta, i entre dos enviaments cal esperar 5 minuts. Només val per als professionals: els clients es canvien el correu ells mateixos des de la seva àrea.",
         },
         {
           t: "note",

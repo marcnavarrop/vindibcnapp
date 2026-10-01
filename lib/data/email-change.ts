@@ -5,6 +5,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { passwordIsCorrect } from "@/lib/data/reauth";
 import { USE_MOCK } from "@/lib/config";
+import { requireRole } from "@/lib/auth";
 import { appLink } from "@/lib/notifications/brand";
 import {
   renderEmailChangeEmail,
@@ -54,6 +55,9 @@ export type EmailChangeError =
   | "noAccount"
   | "tooSoon"
   | "failed"
+  // Només per al canvi que inicia l'admin.
+  | "unauthorized"
+  | "notTrainer"
   // Mode demo: no hi ha compte real per comprovar la contrasenya ni per
   // canviar-li el correu. Es diu tal qual, no com un error.
   | "demo";
@@ -120,6 +124,71 @@ export async function requestEmailChange(input: {
   if (!(await passwordIsCorrect(currentEmail, input.password)))
     return "wrongPassword";
 
+  return startEmailChange({ ...input, newEmail, currentEmail, byAdmin: false });
+}
+
+/**
+ * El canvi del correu d'un PROFESSIONAL, iniciat per l'administració.
+ *
+ * El mateix flux que el de cadascú, amb dues diferències:
+ *
+ *   · No hi ha contrasenya: qui ho demana és l'admin, no la persona. La porta
+ *     és `requireRole("admin")`, aquí mateix i a l'acció (defensa en
+ *     profunditat: aquesta funció no s'ha de poder fer servir des d'un altre
+ *     camí sense mirar qui crida).
+ *   · Només per a perfils de professional. Un client es canvia el correu ell
+ *     mateix, i el d'un admin no es toca des d'aquí.
+ *
+ * El que NO canvia és el que fa segur el flux: l'enllaç va NOMÉS al correu
+ * nou —el professional confirma que la bústia és seva—, el correu vell rep un
+ * avís sense cap acció, i sense el clic no canvia res. Els textos diuen que ho
+ * ha demanat l'administració.
+ */
+export async function requestEmailChangeByAdmin(input: {
+  profileId: string;
+  newEmail: string;
+}): Promise<EmailChangeError | null> {
+  if (!(await requireRole("admin"))) return "unauthorized";
+  const newEmail = input.newEmail.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return "invalid";
+  if (USE_MOCK) return "demo";
+
+  const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("profiles")
+    .select("email, full_name, role")
+    .eq("id", input.profileId)
+    .maybeSingle();
+  if (!target?.email) return "noAccount";
+  if (target.role !== "trainer") return "notTrainer";
+  const currentEmail = target.email.trim().toLowerCase();
+  if (newEmail === currentEmail) return "same";
+
+  return startEmailChange({
+    profileId: input.profileId,
+    currentEmail,
+    name: target.full_name,
+    // El professional treballa en català fix a tota l'app (i els seus correus).
+    locale: null,
+    newEmail,
+    byAdmin: true,
+  });
+}
+
+/**
+ * La part comuna: correu lliure, espera mínima, una sola petició viva, el
+ * secret, l'enllaç al correu nou i l'avís al vell. `newEmail` i `currentEmail`
+ * arriben ja normalitzats i validats.
+ */
+async function startEmailChange(input: {
+  profileId: string;
+  currentEmail: string;
+  name: string | null;
+  locale: Locale | null;
+  newEmail: string;
+  byAdmin: boolean;
+}): Promise<EmailChangeError | null> {
+  const { newEmail, currentEmail } = input;
   const admin = createAdminClient();
 
   // Correu ja fet servir. El missatge que veurà qui ho demani és genèric ("no
@@ -162,6 +231,7 @@ export async function requestEmailChange(input: {
     url: appLink(`/auth/confirm-email?r=${secret}`),
     locale: input.locale,
     contact,
+    byAdmin: input.byAdmin,
   });
   const res = await sendEmail({
     to: newEmail,
@@ -189,6 +259,7 @@ export async function requestEmailChange(input: {
     newEmail,
     locale: input.locale,
     contact,
+    byAdmin: input.byAdmin,
   });
   const alertRes = await sendEmail({
     to: currentEmail,

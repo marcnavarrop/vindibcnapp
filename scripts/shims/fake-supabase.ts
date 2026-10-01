@@ -37,6 +37,14 @@ class Query implements PromiseLike<Res> {
   neq(c: string, v: unknown) { this.filters.push((r) => r[c] !== v); return this; }
   in(c: string, v: unknown[]) { this.filters.push((r) => v.includes(r[c])); return this; }
   is(c: string, v: unknown) { this.filters.push((r) => (r[c] ?? null) === v); return this; }
+  gt(c: string, v: string) { this.filters.push((r) => String(r[c]) > v); return this; }
+  gte(c: string, v: string) { this.filters.push((r) => String(r[c]) >= v); return this; }
+  lt(c: string, v: string) { this.filters.push((r) => String(r[c]) < v); return this; }
+  ilike(c: string, v: string) {
+    const re = new RegExp(`^${v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*")}$`, "i");
+    this.filters.push((r) => re.test(String(r[c] ?? "")));
+    return this;
+  }
   limit(n: number) { this.lim = n; return this; }
   single() { this.one = "single"; return this; }
   maybeSingle() { this.one = "maybe"; return this; }
@@ -94,6 +102,9 @@ export function fakeClient() {
   return {
     from: (table: string) => wrap(new Query(table)),
     rpc: async () => ({ data: null, error: null }),
-    auth: { getUser: async () => ({ data: { user: null }, error: null }) },
+    // La sessió: `globalThis.__fakeUser` ({ id, email }) o ningú.
+    auth: {
+      getUser: async () => ({ data: { user: (globalThis as { __fakeUser?: unknown }).__fakeUser ?? null }, error: null }),
+    },
   };
 }

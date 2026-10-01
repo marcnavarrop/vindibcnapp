@@ -1233,13 +1233,17 @@
       "heading": "Confirma tu correo nuevo",
       "intro": "Has pedido usar esta dirección para entrar en VindiBCN. Haz clic en el botón para confirmarlo:",
       "cta": "Confirmar el correo nuevo",
-      "outro": "Si no lo has pedido tú, ignora este correo: sin este clic no cambia nada."
+      "outro": "Si no lo has pedido tú, ignora este correo: sin este clic no cambia nada.",
+      "introByAdmin": "La administración del centro ha pedido que esta dirección sea tu correo para entrar en VindiBCN. Haz clic en el botón para confirmar que es tuya:",
+      "outroByAdmin": "Si no esperabas este cambio, ignora este correo y habla con el centro: sin este clic no cambia nada."
     },
     "emailChangeAlert": {
       "subject": "Se ha pedido cambiar el correo de tu cuenta — VindiBCN",
       "heading": "Se ha pedido cambiar tu correo de acceso",
       "intro": "Alguien ha pedido cambiar el correo de acceso de tu cuenta de {old} a {new}. Te lo contamos aquí para que estés al tanto.",
-      "outro": "Si has sido tú, no tienes que hacer nada en este correo: el cambio se termina desde el buzón nuevo. Si NO has sido tú, escríbenos enseguida y cambia la contraseña: alguien podría haber entrado en tu cuenta."
+      "outro": "Si has sido tú, no tienes que hacer nada en este correo: el cambio se termina desde el buzón nuevo. Si NO has sido tú, escríbenos enseguida y cambia la contraseña: alguien podría haber entrado en tu cuenta.",
+      "introByAdmin": "La administración del centro ha pedido cambiar el correo de acceso de tu cuenta de {old} a {new}. El cambio solo se hará si se confirma desde el buzón nuevo.",
+      "outroByAdmin": "No tienes que hacer nada. Si no lo esperabas, habla con el centro."
     }
   },
   "voucherPdf": {

@@ -327,6 +327,8 @@ export function renderEmailChangeEmail(input: {
   locale?: Locale | null;
   /** El contacte del centre: peu i Reply-To. */
   contact?: PublicContact | null;
+  /** L'ha demanat l'administració (canvi del correu d'un professional). */
+  byAdmin?: boolean;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
   const te = i.ns("emails");
@@ -336,9 +338,9 @@ export function renderEmailChangeEmail(input: {
     : te("greetingPlain");
   const block: Block = {
     heading: t("heading"),
-    intro: [hola, t("intro")],
+    intro: [hola, input.byAdmin ? t("introByAdmin") : t("intro")],
     cta: { label: t("cta"), url: input.url },
-    outro: [t("outro")],
+    outro: [input.byAdmin ? t("outroByAdmin") : t("outro")],
     footer: "plain",
   };
   return {
@@ -369,6 +371,8 @@ export function renderEmailChangeAlertEmail(input: {
   locale?: Locale | null;
   /** El contacte del centre: peu i Reply-To. */
   contact?: PublicContact | null;
+  /** L'ha demanat l'administració (canvi del correu d'un professional). */
+  byAdmin?: boolean;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
   const te = i.ns("emails");
@@ -378,8 +382,13 @@ export function renderEmailChangeAlertEmail(input: {
     : te("greetingPlain");
   const block: Block = {
     heading: t("heading"),
-    intro: [hola, t("intro", { old: input.oldEmail, new: input.newEmail })],
-    outro: [t("outro")],
+    intro: [
+      hola,
+      input.byAdmin
+        ? t("introByAdmin", { old: input.oldEmail, new: input.newEmail })
+        : t("intro", { old: input.oldEmail, new: input.newEmail }),
+    ],
+    outro: [input.byAdmin ? t("outroByAdmin") : t("outro")],
     footer: "plain",
   };
   return {

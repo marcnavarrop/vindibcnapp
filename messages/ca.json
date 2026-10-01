@@ -1233,13 +1233,17 @@
       "heading": "Confirma el teu correu nou",
       "intro": "Has demanat fer servir aquesta adreça per entrar a VindiBCN. Fes clic al botó per confirmar-ho:",
       "cta": "Confirmar el correu nou",
-      "outro": "Si no ho has demanat tu, ignora aquest correu: sense aquest clic no canvia res."
+      "outro": "Si no ho has demanat tu, ignora aquest correu: sense aquest clic no canvia res.",
+      "introByAdmin": "L'administració del centre ha demanat que aquesta adreça sigui el teu correu per entrar a VindiBCN. Fes clic al botó per confirmar que és teva:",
+      "outroByAdmin": "Si no esperaves aquest canvi, ignora aquest correu i parla amb el centre: sense aquest clic no canvia res."
     },
     "emailChangeAlert": {
       "subject": "S'ha demanat canviar el correu del teu compte — VindiBCN",
       "heading": "S'ha demanat canviar el teu correu d'accés",
       "intro": "Algú ha demanat canviar el correu d'accés del teu compte de {old} a {new}. T'ho expliquem aquí perquè en quedis assabentat.",
-      "outro": "Si has estat tu, no has de fer res en aquest correu: el canvi s'acaba des de la bústia nova. Si NO has estat tu, escriu-nos de seguida i canvia la contrasenya: algú podria haver entrat al teu compte."
+      "outro": "Si has estat tu, no has de fer res en aquest correu: el canvi s'acaba des de la bústia nova. Si NO has estat tu, escriu-nos de seguida i canvia la contrasenya: algú podria haver entrat al teu compte.",
+      "introByAdmin": "L'administració del centre ha demanat canviar el correu d'accés del teu compte de {old} a {new}. El canvi només es farà si es confirma des de la bústia nova.",
+      "outroByAdmin": "No has de fer res. Si no ho esperaves, parla amb el centre."
     }
   },
   "voucherPdf": {

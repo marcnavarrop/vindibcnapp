@@ -86,7 +86,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "El que no pots canviar tu" },
         {
           t: "p",
-          text: "El teu nom, el teu correu d'accés, la teva foto i la teva especialitat els gestiona l'administració des de la seva fitxa de professionals. Si n'hi ha algun que està malament, demana-ho: aquí no hi ha cap formulari per fer-ho. El que sí que pots canviar tu és la contrasenya i quins avisos vols rebre, tots dos a Configuració.",
+          text: "El teu nom, el teu correu d'accés, la teva foto i la teva especialitat els gestiona l'administració des de la seva fitxa de professionals. Si n'hi ha algun que està malament, demana-ho: aquí no hi ha cap formulari per fer-ho. Si et canvien el correu, et arriba un enllaç a la bústia nova: el canvi només es fa quan hi fas clic, i després entres amb el correu nou i la mateixa contrasenya. El que sí que pots canviar tu és la contrasenya i quins avisos vols rebre, tots dos a Configuració.",
         },
       ],
     },

@@ -5,6 +5,8 @@ import { updateTrainerSpecialtyAction } from "@/app/(admin)/admin/entrenadors/ac
 import { getTrainer } from "@/lib/data/trainers";
 import { avatarUrl } from "@/lib/data/avatars";
 import { TAP } from "@/lib/utils";
+import { TrainerEmailForm } from "@/components/forms/trainer-email-form";
+import { getPendingEmailChange } from "@/lib/data/email-change";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +19,10 @@ export default async function EditTrainerPage({
   const trainer = await getTrainer(id);
   if (!trainer) notFound();
 
-  const currentAvatar = await avatarUrl(trainer.avatarPath);
+  const [currentAvatar, pendingEmail] = await Promise.all([
+    avatarUrl(trainer.avatarPath),
+    getPendingEmailChange(id),
+  ]);
   const action = updateTrainerSpecialtyAction.bind(null, id);
 
   return (
@@ -44,6 +49,8 @@ export default async function EditTrainerPage({
           submitLabel="Desar"
           cancelHref="/admin/entrenadors"
         />
+
+        <TrainerEmailForm trainerId={id} currentEmail={trainer.email} pending={pendingEmail} />
       </main>
   );
 }
