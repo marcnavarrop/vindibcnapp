@@ -28,6 +28,13 @@ import type { Locale } from "@/lib/i18n/config";
  * completar el canvi. L'avís que hauria de ser la xarxa de seguretat és el
  * botó que remata el robatori si algú ha agafat la sessió.
  *
+ * I L'AJUST «SECURE EMAIL CHANGE» TAMPOC HO ARREGLA. Verificat a mà dues
+ * vegades (setembre de 2026), amb adreces inequívoques identificades per la
+ * capçalera To: i no per l'assumpte: amb l'ajust ACTIVAT al panell de Supabase,
+ * un sol clic des de QUALSEVOL de les dues bústies completava el canvi, sense
+ * la doble confirmació que promet. No es pot comprovar des del codi; no hi
+ * confiïs encara que el panell digui que està actiu.
+ *
  * Aquí el fem nosaltres: enllaç només al correu nou, avís sense cap acció al
  * vell, i tot en l'idioma de qui ho rep.
  *

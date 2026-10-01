@@ -175,6 +175,14 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   GoTrue s'encunya i es gasta al servidor perquè `verifyOtp` no accepta els de
   canvi de correu. L'admin el pot iniciar per a un professional
   (`requestEmailChangeByAdmin`), amb la mateixa confirmació a la bústia nova.
+
+  L'ajust «Secure email change» del panell de Supabase no ho resol: es va
+  **verificar a mà dues vegades al setembre de 2026**, amb adreces inequívoques
+  identificades per la capçalera `To:` (no per l'assumpte), que amb l'ajust
+  activat un sol clic des de qualsevol de les dues bústies completava el canvi,
+  sense la doble confirmació que promet. És una verificació manual, no res que es
+  pugui comprovar des del codi; el comentari de `lib/data/email-change.ts` la
+  recull perquè no es perdi.
 - **El mode PRE** (`lib/pre-mode.ts`): l'admin salta entre els comptes demo amb
   una sessió de veritat (`generateLink` + `verifyOtp` al servidor), no amb un
   «veure com si fos», que hauria obligat a fabricar capçaleres d'identitat; el
