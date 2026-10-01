@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole } from "@/lib/auth";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -34,6 +36,9 @@ export async function createTrainerAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  // Només l'admin: crea un compte de PROFESSIONAL amb la clau de servei.
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
   const str = (k: string) =>
     ((formData.get(k) as string | null) ?? "").trim();
   const input: TrainerInput = {
@@ -81,6 +86,11 @@ export async function updateTrainerSpecialtyAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  // Només l'admin. L'especialitat va amb la sessió (la RLS la frena), però la
+  // foto s'escriu amb la clau de servei: sense això, qualsevol sessió podia
+  // canviar o esborrar la foto de qualsevol perfil.
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
   const specialty = parseSpecialty(formData);
   if (!specialty) return { error: "Tria una especialitat." };
 

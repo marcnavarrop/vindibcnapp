@@ -15,13 +15,14 @@ import {
 import { parseReservationForm } from "@/lib/data/reservation-input";
 import { datetimeLocalToInstant } from "@/lib/center-time";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
-import { getViewer } from "@/lib/auth";
+import { getViewer, requireRole } from "@/lib/auth";
 import { bookFromSlot } from "@/lib/data/slot-create";
 
 export async function createReservationAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   // El parseig viu a `lib/data/reservation-input.ts`: aquesta acció i la del
   // seu company eren dues còpies del mateix, i amb la cortesia haurien passat
   // a ser dues còpies més llargues.
@@ -47,6 +48,7 @@ export async function cancelReservationAction(
   _prev: ReservationActionState,
   formData: FormData,
 ): Promise<ReservationActionState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Falta la reserva." };
   try {
@@ -63,6 +65,7 @@ export async function completeReservationAction(
   _prev: ReservationActionState,
   formData: FormData,
 ): Promise<ReservationActionState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Falta la reserva." };
   try {
@@ -78,6 +81,7 @@ export async function rescheduleReservationAction(
   _prev: ReservationActionState,
   formData: FormData,
 ): Promise<ReservationActionState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const id = String(formData.get("id") ?? "");
   // Dues maneres d'arribar: un inici triat de la llista (ISO, rejilla del
   // professional) o el camp de data i hora (en hora del centre).

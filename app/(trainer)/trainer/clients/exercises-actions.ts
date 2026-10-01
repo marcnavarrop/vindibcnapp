@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getViewer } from "@/lib/auth";
+import { getViewer, requireRole } from "@/lib/auth";
 import {
   assignExercise,
   removeClientExercise,
@@ -34,6 +34,7 @@ export async function removeExerciseTrainerAction(
   clientId: string,
   formData: FormData,
 ) {
+  if (!(await requireRole("trainer"))) return;
   const id = String(formData.get("id") ?? "");
   if (id) await removeClientExercise(id);
   revalidatePath(`/trainer/clients/${clientId}`);

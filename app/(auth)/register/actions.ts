@@ -58,8 +58,15 @@ export async function mockRegisterAction(input: {
 export async function recordRegistrationConsentAction(
   userId: string,
 ): Promise<void> {
-  if (!userId) return;
-  await recordConsent(userId, "privacy");
+  // Només el consentiment de qui té la sessió. Escriu amb la clau de servei i
+  // fins ara acceptava qualsevol `userId`: es podien inventar consentiments
+  // d'altres persones al registre RGPD. Just després del `signUp` ja hi ha
+  // sessió perquè l'Auth del projecte confirma el correu sol
+  // (`mailer_autoconfirm`); si algun dia es demana confirmar-lo, aquí no hi
+  // hauria sessió i caldria desar el consentiment en confirmar.
+  const viewer = await getViewer();
+  if (!viewer || !userId || viewer.id !== userId) return;
+  await recordConsent(viewer.id, "privacy");
 }
 
 /**

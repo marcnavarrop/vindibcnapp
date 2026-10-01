@@ -1,5 +1,6 @@
 "use server";
 
+import { requireRole } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -45,6 +46,7 @@ export async function createServiceAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const input = parse(formData);
   const error = validate(input);
   if (error) return { error };
@@ -62,6 +64,7 @@ export async function updateServiceAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const input = parse(formData);
   const error = validate(input);
   if (error) return { error };
@@ -75,6 +78,7 @@ export async function updateServiceAction(
 }
 
 export async function toggleServiceAction(formData: FormData) {
+  if (!(await requireRole("admin"))) return;
   const id = String(formData.get("id") ?? "");
   const active = formData.get("active") === "true";
   if (id) await setServiceActive(id, active);

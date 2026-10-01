@@ -138,3 +138,24 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     specialty: profile.specialty ?? null,
   };
 });
+
+/**
+ * Qui crida, si té un dels rols; null si no (o si no hi ha sessió).
+ *
+ * VA A LA PRIMERA LÍNIA DE CADA ACCIÓ DE SERVIDOR QUE NO SIGUI PÚBLICA. Una
+ * acció es pot invocar pel seu id des de qualsevol pàgina: el middleware de
+ * /admin/* o /trainer/* no la protegeix. Les que escriuen amb la clau de
+ * servei no tenen cap altra barrera, i les que van amb la sessió depenen de
+ * la RLS, que és la segona.
+ *
+ * Torna null en comptes de llançar perquè cada acció respon a la seva manera
+ * («No autoritzat.» dins d'un FormState, `{ ok: false }`…) i un error llançat
+ * trencaria el formulari. `scripts/actions-check.mjs` comprova que hi és.
+ *
+ *   const viewer = await requireRole("admin");
+ *   if (!viewer) return { error: "No autoritzat." };
+ */
+export async function requireRole(...roles: UserRole[]): Promise<Viewer | null> {
+  const viewer = await getViewer();
+  return viewer && roles.includes(viewer.role) ? viewer : null;
+}

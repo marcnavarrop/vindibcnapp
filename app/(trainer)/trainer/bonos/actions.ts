@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getViewer } from "@/lib/auth";
+import { getViewer, requireRole } from "@/lib/auth";
 import { createBono, markBonoPaid, getBonoClientId, cancelBono } from "@/lib/data/bonos";
 import { getClient } from "@/lib/data/clients";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
@@ -19,6 +19,7 @@ export async function createTrainerBonoAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await requireRole("trainer"))) return { error: "No autoritzat." };
   const serviceType = formData.get("serviceType") as ServiceType | null;
   // Mateix motiu que a l'acció d'admin: `createBono` mira la casella del
   // paquet, i des de la 0086 això no es pot deduir del tipus de servei.

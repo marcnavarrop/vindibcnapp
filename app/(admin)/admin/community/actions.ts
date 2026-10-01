@@ -9,7 +9,7 @@ import {
   type AnnouncementInput,
 } from "@/lib/data/announcements";
 import { notifyCommunity } from "@/lib/notifications/community";
-import { getViewer } from "@/lib/auth";
+import { getViewer, requireRole } from "@/lib/auth";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
 function parse(formData: FormData): AnnouncementInput {
@@ -53,6 +53,7 @@ export async function updateAnnouncementAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const input = parse(formData);
   const error = validate(input);
   if (error) return { error };
@@ -67,6 +68,7 @@ export async function updateAnnouncementAction(
 }
 
 export async function deleteAnnouncementAction(formData: FormData) {
+  if (!(await requireRole("admin"))) return;
   const id = String(formData.get("id") ?? "");
   if (id) await deleteAnnouncement(id);
   revalidatePath("/admin/community");

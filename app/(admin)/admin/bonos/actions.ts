@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole } from "@/lib/auth";
+import { getClient } from "@/lib/data/clients";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createBono, markBonoPaid, cancelBono } from "@/lib/data/bonos";
@@ -12,6 +14,7 @@ export async function createBonoAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const serviceType = formData.get("serviceType") as ServiceType | null;
   // El desplegable de `BonoForm` sempre ha enviat el paquet triat; fins a la
   // 0086 ningú el llegia perquè la regla es podia respondre amb el tipus. Ara
@@ -74,6 +77,17 @@ export async function createGroupSubscriptionAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  // L'admin, per a qualsevol client; el professional, només per als SEUS (la
+  // mateixa condició que `createTrainerGroupSubscriptionAction`, que és la que
+  // fa servir la seva pantalla). La subscripció s'escriu amb la clau de servei i
+  // emet un bo pendent que ja permet reservar: fins ara no hi havia cap barrera.
+  const viewer = await requireRole("admin", "trainer");
+  if (!viewer) return { error: "No autoritzat." };
+  if (viewer.role === "trainer") {
+    const client = await getClient(clientId);
+    if (!client || client.assignedTrainerId !== viewer.id)
+      return { error: "Aquest client no és teu." };
+  }
   const serviceId = String(formData.get("serviceId") ?? "");
   if (!serviceId) return { error: "Tria un paquet." };
 
@@ -93,6 +107,7 @@ export async function createGroupSubscriptionAction(
 
 /** Marca un bono pendiente como pagado (en efectivo, en el centro). */
 export async function markBonoPaidAction(formData: FormData) {
+  if (!(await requireRole("admin"))) return;
   const bonoId = String(formData.get("bonoId") ?? "");
   if (!bonoId) return;
   await markBonoPaid(bonoId);
@@ -110,6 +125,7 @@ export async function markBonoPaidAction(formData: FormData) {
  * trencaria l'històric que la 0016 va decidir conservar.
  */
 export async function cancelBonoAction(formData: FormData) {
+  if (!(await requireRole("admin"))) return;
   const bonoId = String(formData.get("bonoId") ?? "");
   if (!bonoId) return;
   await cancelBono(bonoId, { isAdmin: true });

@@ -938,6 +938,15 @@
       <li>És el canal cap al desenvolupador, <strong>no</strong> per parlar amb l'equip ni amb els clients</li>
     </ul>
 
+    <h3>20.1 Permisos de les accions <span class="flag">Nou</span></h3>
+    <p>Cada acció comprova qui la crida (<code>requireRole</code>); <code>npm run actions:check</code> i <code>npm run roles:check</code> ho proven abans de cada desplegament. A producció, només amb el que es pot fer des de la pantalla:</p>
+    <ul class="checklist">
+      <li><strong>Admin</strong>: crear, editar, activar/desactivar i esborrar una oferta; donar d'alta un professional i un client (i esborrar-los després de la prova); canviar l'especialitat i la foto d'un professional; donar d'alta una subscripció al centre. Tot ha de funcionar igual que abans</li>
+      <li><strong>Professional</strong>: crear un bo i una subscripció al centre per a un client SEU (funciona); a /trainer/bonos, cobrar i anul·lar com sempre; reservar, cancel·lar, completar i moure les seves sessions; esborrar una nota seva</li>
+      <li><strong>Client</strong>: registrar-se (el consentiment de privacitat queda desat: es veu a «Exportar dades»), demanar una prova, i reservar i cancel·lar les seves sessions com sempre</li>
+      <li>Cap pantalla no ha de dir «No autoritzat.» quan qui la fa servir és qui toca. Si n'apareix un, anota la pantalla i el rol</li>
+    </ul>
+
     <h2 id="pendent"><span class="num">21</span> Coses que encara no funcionen</h2>
     <p>Aquesta llista ha encongit molt des d'agost: <strong>el pagament amb targeta, les reserves recurrents i el multi-idioma ja hi són</strong>.</p>
     <table class="status-table">

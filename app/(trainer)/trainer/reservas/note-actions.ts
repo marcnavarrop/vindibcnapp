@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getViewer } from "@/lib/auth";
+import { getViewer, requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { USE_MOCK } from "@/lib/config";
 import { getStore } from "@/lib/mock/store";
@@ -80,6 +80,7 @@ export async function saveSessionNoteAction(
 
 /** Esborra la nota. La RLS només ho deixa fer al professional d'aquella sessió. */
 export async function deleteSessionNoteAction(formData: FormData) {
+  if (!(await requireRole("trainer"))) return;
   const id = String(formData.get("reservationId") ?? "");
   if (!id) return;
   await deleteSessionNote(id);

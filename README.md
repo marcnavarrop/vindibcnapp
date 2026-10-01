@@ -219,9 +219,11 @@ middleware.ts                     # control de acceso por rol
 | Comando              | Acción                                                        |
 | -------------------- | ------------------------------------------------------------- |
 | `npm run dev`        | Servidor de desarrollo                                        |
-| `npm run build`      | Build de producción (antes pasa `rows:check`, vía `prebuild`) |
+| `npm run build`      | Build de producción (antes pasa `rows:check` y `actions:check`, vía `prebuild`) |
 | `npm start`          | Sirve el build de producción                                  |
 | `npm run lint`       | ESLint                                                        |
+| `npm run actions:check` | Toda acción de servidor mira quién la llama (ver abajo)  |
+| `npm run roles:check` | Quién puede usar las acciones que escriben con la clave de servicio (simulación) |
 | `npm run rows:check` | Ninguna lectura nueva sin límite (ver abajo)                 |
 | `npm run *:check`    | Comprobaciones en modo simulación (`payments`, `clients`, `bonos`, `blocks`, `waitlist`, `scope`, `series`…) |
 
@@ -243,3 +245,22 @@ avisar**. Tres piezas lo vigilan:
   trae 500 filas o más («s'acosta al sostre», `SUPABASE_ROWS_WARN`) y cuando
   llega al tope (`SUPABASE_MAX_ROWS`, 1000). Ese aviso es la señal para paginar
   una lista `pendent`.
+
+## Permisos de las acciones de servidor
+
+Una acción de servidor (`"use server"`) se puede invocar **por su id desde
+cualquier página**: el middleware de `/admin/*` o `/trainer/*` no la protege.
+Las que escriben con la clave de servicio no tienen otra barrera; las que van
+con la sesión dependen solo de la RLS.
+
+- **`requireRole(...)`** (`lib/auth.ts`) va en la primera línea de cada acción
+  no pública: devuelve el usuario si tiene uno de los roles, o `null`, y la
+  acción responde «No autoritzat.».
+- **`scripts/actions-check.mjs`** (`npm run actions:check`, y en cada build):
+  cada acción exportada tiene que llamar a `requireRole` o `getViewer` (o a una
+  función del mismo fichero que lo haga), o estar en
+  `scripts/public-actions.json` con su motivo (registro, contraseña, prueba…).
+- **`scripts/roles-check.mts`** (`npm run roles:check`) llama a las acciones
+  sensibles con cada rol en modo simulación y mira si han escrito: comprueba
+  que la condición sea la correcta (p. ej. un profesional, solo para sus
+  clientes).

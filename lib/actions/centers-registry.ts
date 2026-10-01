@@ -1,5 +1,6 @@
 "use server";
 
+import { requireRole } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { createCenter, renameCenter } from "@/lib/data/centers";
 
@@ -29,6 +30,7 @@ export async function createCenterAction(
   _prev: CenterFormState,
   fd: FormData,
 ): Promise<CenterFormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const name = String(fd.get("name") ?? "").trim();
   if (!name) return { error: "El nom és obligatori." };
   try {
@@ -45,6 +47,7 @@ export async function renameCenterAction(
   _prev: CenterFormState,
   fd: FormData,
 ): Promise<CenterFormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const id = String(fd.get("id") ?? "");
   const name = String(fd.get("name") ?? "").trim();
   if (!id || !name) return { error: "Falten dades." };

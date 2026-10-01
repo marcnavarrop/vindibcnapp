@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getViewer } from "@/lib/auth";
+import { getViewer, requireRole } from "@/lib/auth";
 import {
   createClientTag,
   renameClientTag,
@@ -27,6 +27,7 @@ export async function createTagAction(
   _prev: TagFormState,
   fd: FormData,
 ): Promise<TagFormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const name = String(fd.get("name") ?? "").trim();
   if (!name) return { error: "El nom és obligatori." };
   try {
@@ -43,6 +44,7 @@ export async function renameTagAction(
   _prev: TagFormState,
   fd: FormData,
 ): Promise<TagFormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const id = String(fd.get("id") ?? "");
   const name = String(fd.get("name") ?? "").trim();
   if (!id || !name) return { error: "Falten dades." };
@@ -61,6 +63,7 @@ export async function deleteTagAction(
   _prev: TagFormState,
   fd: FormData,
 ): Promise<TagFormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const id = String(fd.get("id") ?? "");
   if (!id) return { error: "Falta l'etiqueta." };
   try {

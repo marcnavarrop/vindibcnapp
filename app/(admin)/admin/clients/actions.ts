@@ -1,5 +1,7 @@
 "use server";
 
+import { requireRole } from "@/lib/auth";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -38,6 +40,10 @@ export async function createClientAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  // Només l'admin (cap pantalla de professional dona d'alta clients): crea el
+  // compte i envia la invitació amb la clau de servei.
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
   const input = parse(formData);
   const error = validate(input, true);
   if (error) return { error };
@@ -68,6 +74,7 @@ export async function updateClientAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const input = parse(formData);
   const error = validate(input, false);
   if (error) return { error };

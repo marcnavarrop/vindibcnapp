@@ -1,5 +1,6 @@
 "use server";
 
+import { requireRole } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -18,6 +19,13 @@ import type {
   PromotionScope,
   ServiceType,
 } from "@/types/database";
+
+/*
+ * Les quatre accions d'aquest fitxer són NOMÉS de l'admin (`requireRole`): les
+ * ofertes s'escriuen amb la clau de servei i entren al preu que es cobra
+ * (`quoteBonoPurchase`). Fins ara no miraven qui cridava, i qualsevol sessió
+ * podia crear un descompte del 100 %.
+ */
 
 export type OfertaFormState = { error?: string };
 
@@ -122,6 +130,8 @@ export async function createOfertaAction(
   _prev: OfertaFormState,
   fd: FormData,
 ): Promise<OfertaFormState> {
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
   try {
     const parsed = await parseInput(fd);
     if (!parsed.ok) return { error: parsed.error };
@@ -170,6 +180,8 @@ export async function updateOfertaAction(
   _prev: OfertaFormState,
   fd: FormData,
 ): Promise<OfertaFormState> {
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
   try {
     const parsed = await parseInput(fd);
     if (!parsed.ok) return { error: parsed.error };
@@ -215,6 +227,7 @@ export async function updateOfertaAction(
 }
 
 export async function toggleOfertaAction(fd: FormData): Promise<void> {
+  if (!(await requireRole("admin"))) return;
   const id     = fd.get("id") as string;
   const active = fd.get("active") === "true";
   try {
@@ -229,6 +242,7 @@ export async function toggleOfertaAction(fd: FormData): Promise<void> {
 }
 
 export async function deleteOfertaAction(fd: FormData): Promise<void> {
+  if (!(await requireRole("admin"))) return;
   const id = fd.get("id") as string;
   try {
     await deletePromotion(id);

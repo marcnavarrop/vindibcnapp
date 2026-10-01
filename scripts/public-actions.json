@@ -1,0 +1,23 @@
+{
+  "app/(auth)/forgot-password/actions.ts::requestPasswordResetAction": {
+    "reason": "Recuperar la contrasenya: sense sessió per definició. Té límit d'intents per correu i IP (allowPasswordReset)."
+  },
+  "app/(auth)/register/actions.ts::mockRegisterAction": {
+    "reason": "Registre en mode demo; fora de la simulació llança i no fa res."
+  },
+  "app/(auth)/register/actions.ts::notifyNewRegistrationAction": {
+    "reason": "Registre: actua sobre l'usuari de la sessió que torna supabase.auth.getUser(), mai sobre un id que arribi."
+  },
+  "app/(auth)/register/actions.ts::validateRegistrationAction": {
+    "reason": "Registre: només valida els camps del formulari; no llegeix ni escriu res."
+  },
+  "app/auth/confirm-email/actions.ts::confirmEmailChangeAction": {
+    "reason": "Confirmar un canvi de correu amb el secret de l'enllaç: qui el té és qui l'ha rebut."
+  },
+  "app/prova/actions.ts::requestTrialAction": {
+    "reason": "Demanar una sessió de prova és públic (visitants). Antiabús per correu i telèfon, i la franja es torna a comprovar al servidor."
+  },
+  "lib/actions/pre-mode.ts::returnToAdminAction": {
+    "reason": "Tornar del mode PRE: es crida des de la sessió d'una compte demo i la protegeix el bitllet de tornada xifrat (ha de ser l'admin que el va armar)."
+  }
+}

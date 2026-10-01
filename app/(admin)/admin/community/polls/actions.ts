@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getViewer } from "@/lib/auth";
+import { getViewer, requireRole } from "@/lib/auth";
 import { createPoll, closePoll, deletePoll } from "@/lib/data/polls";
 
 export async function createPollAction(formData: FormData) {
@@ -30,6 +30,7 @@ export async function createPollAction(formData: FormData) {
 }
 
 export async function closePollAction(formData: FormData) {
+  if (!(await requireRole("admin"))) return;
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   await closePoll(id);
@@ -37,6 +38,7 @@ export async function closePollAction(formData: FormData) {
 }
 
 export async function deletePollAction(formData: FormData) {
+  if (!(await requireRole("admin"))) return;
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   await deletePoll(id);

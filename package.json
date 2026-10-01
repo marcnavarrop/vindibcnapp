@@ -5,7 +5,7 @@
   "packageManager": "npm@11.12.1",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/row-limit-check.mjs",
+    "prebuild": "node scripts/row-limit-check.mjs && node scripts/actions-check.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -20,6 +20,8 @@
     "search:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/search-check.mts",
     "scope:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/scope-check.mts",
     "dayslots:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/day-slots-check.mts",
+    "roles:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/roles-check.mts",
+    "actions:check": "node scripts/actions-check.mjs",
     "rows:check": "node scripts/row-limit-check.mjs",
     "blocks:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/blocks-check.mts",
     "bonos:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/bonos-check.mts",
