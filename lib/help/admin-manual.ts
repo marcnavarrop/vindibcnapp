@@ -1501,7 +1501,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "«Veure resultats» ensenya els recomptes. «Tancar» la deixa visible però ja no admet respostes; «Eliminar» la treu, amb les respostes incloses.",
+          text: "A la llista, «N respostes» és el nombre de PERSONES que l'han contestada: en una de selecció múltiple, qui en marca dues compta una vegada. «Veure resultats» ensenya els vots de cada opció i qui els ha fet. «Tancar» la deixa visible però ja no admet respostes; «Eliminar» la treu, amb les respostes incloses.",
         },
         {
           t: "note",

@@ -1966,6 +1966,11 @@ export interface Database {
         Args: { p_poll_ids: string[] };
         Returns: { option_id: string; votes: number }[];
       };
+      /** Persones diferents que han respost cada enquesta. Migració 0099. */
+      poll_respondent_counts: {
+        Args: { p_poll_ids: string[] };
+        Returns: { poll_id: string; respondents: number }[];
+      };
     };
     Enums: {
       user_role: UserRole;

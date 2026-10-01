@@ -72,6 +72,8 @@ export type PollForClient = {
   myOptionIds: string[]; // empty = not voted yet
   /** Total de vots emesos a l'enquesta, per calcular els percentatges. */
   totalVotes: number;
+  /** Persones que l'han resposta (en selecció múltiple, menys que els vots). */
+  respondents: number;
   /**
    * Si l'enquesta ja no accepta respostes, decidit AL SERVIDOR.
    *
@@ -100,21 +102,12 @@ export async function listPolls(): Promise<PollListItem[]> {
     .order("created_at", { ascending: false });
   if (error) throw error;
 
-  // Un recompte per enquesta a la base (índex poll_responses_poll_idx), en
-  // comptes de portar totes les respostes: amb més de 1000, el sostre les
-  // retallava i el número sortia curt.
+  // Quantes PERSONES han respost cada enquesta (no quants vots: en una de
+  // selecció múltiple, qui en marca dues compta una vegada). Una sola crida;
+  // el recompte el fa la base (0099).
   if ((data ?? []).length === 0) return [];
-  const countMap = new Map<string, number>();
-  await Promise.all(
-    (data ?? []).map(async (p) => {
-      const { count, error } = await supabase
-        .from("poll_responses")
-        .select("id", { count: "exact", head: true })
-        .eq("poll_id", p.id);
-      if (error) throw error;
-      countMap.set(p.id, count ?? 0);
-    }),
-  );
+  const countMap = await respondentCounts(supabase, (data ?? []).map((p) => p.id));
+  if (!countMap) throw new Error("No s'han pogut comptar les respostes de les enquestes.");
 
   return (data ?? []).map((p) => ({
     id: p.id,
@@ -261,7 +254,10 @@ export async function listPollsForClient(
     .in("poll_id", pollIds);
   if (rErr) throw rErr;
 
-  const countByOption = await voteCounts(supabase, pollIds);
+  const [countByOption, respondents] = await Promise.all([
+    voteCounts(supabase, pollIds),
+    respondentCounts(supabase, pollIds),
+  ]);
 
   const myMap = new Map<string, string[]>();
   for (const r of myResponses ?? []) {
@@ -301,6 +297,10 @@ export async function listPollsForClient(
       (n, o) => n + (countByOption.get(o.id) ?? 0),
       0,
     ),
+    // Sense la funció (0099 sense aplicar), els vots: és el que deia abans.
+    respondents:
+      respondents?.get(p.id) ??
+      (respondents ? 0 : (p.poll_options ?? []).reduce((n, o) => n + (countByOption.get(o.id) ?? 0), 0)),
     closed: !p.active || (p.closes_at != null && p.closes_at < centerToday()),
   }));
 }
@@ -328,6 +328,25 @@ async function voteCounts(
   if (error) return out;
   for (const row of (data ?? []) as { option_id: string; votes: number }[])
     out.set(row.option_id, Number(row.votes));
+  return out;
+}
+
+/**
+ * Quantes persones diferents han respost cada enquesta (RPC de la 0099, pel
+ * mateix motiu que `voteCounts`: la RLS no deixa veure les respostes dels
+ * altres). `null` si la funció no hi és o falla.
+ */
+async function respondentCounts(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  pollIds: string[],
+): Promise<Map<string, number> | null> {
+  const { data, error } = await supabase.rpc("poll_respondent_counts", {
+    p_poll_ids: pollIds,
+  });
+  if (error) return null;
+  const out = new Map<string, number>();
+  for (const row of (data ?? []) as { poll_id: string; respondents: number }[])
+    out.set(row.poll_id, Number(row.respondents));
   return out;
 }
 
@@ -361,6 +380,9 @@ function listPollsForClientMock(clientId: string): PollForClient[] {
           .filter((r) => r.poll_id === p.id && r.client_id === clientId)
           .map((r) => r.option_id),
         totalVotes: options.reduce((n, o) => n + o.voteCount, 0),
+        respondents: new Set(
+          store.poll_responses.filter((r) => r.poll_id === p.id).map((r) => r.client_id),
+        ).size,
         closed: !p.active || (p.closes_at != null && p.closes_at < today),
       };
     });

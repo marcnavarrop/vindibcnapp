@@ -345,6 +345,8 @@
       <li>Anuncis: crea'n un i comprova que el client i el professional el veuen. Surt signat amb qui el va escriure</li>
       <li><strong>Correu de l'anunci:</strong> amb algun client apuntat a «Novetats de la comunitat», en publicar-ne un, sota l'anunci surt <strong>«Correu: enviat a N de M»</strong>. Si n'hi ha de fallits, en vermell i amb el motiu (p. ex. «Límit diari de correus de Resend esgotat»). Va a tothom qui l'ha activat, sense el tall de 500 d'abans, en lots de 100 i un cop l'admin ja té la pantalla</li>
       <li>Enquestes: opció única o múltiple i, opcionalment, <strong>dia de tancament automàtic</strong></li>
+      <li><strong>«N respostes» compta persones, no vots</strong> <span class="flag">Corregit</span>: en una de selecció múltiple, un client que en marca dues compta una vegada (a la llista de l'admin i a la targeta del client). Abans comptava els vots</li>
+      <li><strong>Només l'admin escriu anuncis</strong> <span class="flag">Nou</span> (RLS, 0098): el professional els llegeix com sempre a /trainer/comunitat</li>
       <li><strong>"Veure resultats" ensenya els percentatges i, desplegant cada opció, els noms de qui l'ha votada.</strong> Per al client són anònims: ell només veu els percentatges</li>
       <li>"Tancar" la deixa visible sense admetre respostes; "Eliminar" se l'endú amb les respostes</li>
     </ul>
@@ -855,10 +857,10 @@
       <li>Les <strong>dates i hores</strong> han de canviar de format amb l'idioma, però sempre en <strong>24 h i amb el dia al davant</strong> (l'anglès va en format britànic a posta)</li>
       <li>Comprova els plurals: "1 sessió" i no "1 sessions", i el "/sessió" del preu per sessió</li>
       <li>Canvia l'idioma d'un client i comprova que <strong>el proper correu li arriba traduït</strong></li>
+      <li><strong>«Afegir al calendari»</strong> <span class="flag">Corregit</span>: en castellà i anglès, el botó, les opcions i l'esdeveniment que queda al calendari (títol, descripció i nom del fitxer .ics) surten en l'idioma del client. També el «Amb Laia» de la pròxima sessió i de les properes reserves, i el «6 / 10 sessions» de les targetes de bons, que eren en català fix. Al professional i a l'admin, segueix en català</li>
       <li>Comprova que admin i professional <strong>segueixen en català</strong> encara que el navegador estigui en un altre idioma</li>
       <li>Si mai falta una traducció, ha de sortir <strong>el català</strong>, no una clau tècnica ni un buit</li>
     </ul>
-      <li><strong>«Afegir al calendari»</strong> <span class="flag">Corregit</span>: en castellà i anglès, el botó, les opcions i l'esdeveniment que queda al calendari (títol, descripció i nom del fitxer .ics) surten en l'idioma del client. També el «Amb Laia» de la pròxima sessió i de les properes reserves, i el «6 / 10 sessions» de les targetes de bons, que eren en català fix. Al professional i a l'admin, segueix en català</li>
 
     <h2 id="notif"><span class="num">17</span> Notificacions <span class="new-badge">Reescrit</span></h2>
     <p>Correus reals des de <code>hola@vindibcn.com</code>. Cada persona tria els seus des de Configuració → Notificacions… <strong>però no tots es poden apagar</strong>.</p>

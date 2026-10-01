@@ -109,7 +109,7 @@ export function PollCard({ poll }: { poll: PollForClient }) {
           })}
           <p className="mt-1 text-xs text-brand-muted">
             {showResults
-              ? t("answeredWithCount", { count: poll.totalVotes })
+              ? t("answeredWithCount", { count: poll.respondents })
               : t("answered")}
           </p>
         </div>
