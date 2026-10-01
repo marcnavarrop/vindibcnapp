@@ -21,3 +21,8 @@ export default function NewAnnouncementPage() {
       </main>
   );
 }
+
+// El correu als apuntats a la comunitat s'envia a `after()`, dins d'aquesta
+// mateixa funció: 300 s (el màxim del pla Hobby amb Fluid) donen per a molts
+// més lots dels que calen (cada lot de 100 tarda ~1 s).
+export const maxDuration = 300;

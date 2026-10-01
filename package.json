@@ -33,7 +33,8 @@
     "emails:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/email-snapshot.mts",
     "emails:review": "node scripts/email-review.mjs",
     "legal:snapshot": "node scripts/legal-snapshot.mjs",
-    "voucher:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/voucher-snapshot.mts"
+    "voucher:snapshot": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/voucher-snapshot.mts",
+    "community:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/community-check.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

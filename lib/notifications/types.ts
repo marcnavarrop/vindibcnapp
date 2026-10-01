@@ -65,7 +65,8 @@ export type NotificationEventType =
  */
 export type NotificationChannel = "email";
 
-export type NotificationLogStatus = "sent" | "failed" | "skipped_preference";
+/** "queued": el correu de la comunitat, apuntat però encara no enviat. */
+export type NotificationLogStatus = "sent" | "failed" | "skipped_preference" | "queued";
 
 /** Destinatari (pot ser un visitant sense compte: profileId = null). */
 export type NotificationRecipient = {

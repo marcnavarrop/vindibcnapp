@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -8,8 +9,8 @@ import {
   deleteAnnouncement,
   type AnnouncementInput,
 } from "@/lib/data/announcements";
-import { notifyCommunity } from "@/lib/notifications/community";
-import { getViewer, requireRole } from "@/lib/auth";
+import { deliverCommunity, queueCommunity } from "@/lib/notifications/community";
+import { requireRole } from "@/lib/auth";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
 function parse(formData: FormData): AnnouncementInput {
@@ -33,8 +34,9 @@ export async function createAnnouncementAction(
   const error = validate(input);
   if (error) return { error };
 
-  const viewer = await getViewer();
-  if (!viewer) return { error: "Sessió no vàlida." };
+  // Només l'admin: publicar envia un correu a tota la comunitat.
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
 
   let announcementId: string;
   try {
@@ -42,10 +44,21 @@ export async function createAnnouncementAction(
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en publicar." };
   }
-  // Avisa qui tingui la comunitat activada (best-effort, no bloqueja).
-  await notifyCommunity({ announcementId, title: input.title, body: input.body });
+  // El correu: aquí només s'apunten els destinataris (el total es veu de
+  // seguida a l'anunci); l'enviament va a `after()`, quan l'admin ja té la
+  // resposta. Si no es poden ni apuntar, l'anunci queda publicat i la
+  // pantalla ho diu.
+  const post = { announcementId, title: input.title, body: input.body };
+  let mailFailed = false;
+  try {
+    const queued = await queueCommunity(post);
+    if (queued.length) after(() => deliverCommunity(post, queued));
+  } catch (e) {
+    console.error("[community] no s'ha pogut preparar el correu", e);
+    mailFailed = true;
+  }
   revalidatePath("/admin/community");
-  redirect("/admin/community");
+  redirect(mailFailed ? "/admin/community?correu=error" : "/admin/community");
 }
 
 export async function updateAnnouncementAction(

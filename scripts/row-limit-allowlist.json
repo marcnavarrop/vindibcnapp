@@ -474,9 +474,5 @@
   "lib/data/waitlist.ts::promoteFromWaitlist::waitlist_entries": {
     "category": "acotada",
     "reason": "Una franja."
-  },
-  "lib/notifications/community.ts::optedInRecipients::notification_preferences": {
-    "category": "pendent",
-    "reason": "IMPORTANT: tots els destinataris del correu de la comunitat. Amb més de 1000, els que passin del tall NO rebrien l'anunci."
   }
 }

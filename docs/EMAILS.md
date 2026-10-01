@@ -62,6 +62,30 @@ dependemos del envío de emails de Supabase.
   **0021**), fila creada por trigger al crear cada `profile`. UI en Configuració
   (client / trainer / admin), agrupadas ("La meva agenda" para el profesional).
 
+### Novedades de la comunidad (`community`)
+
+- `lib/notifications/community.ts`, en dos pasos desde `createAnnouncementAction`
+  (solo admin):
+  1. `queueCommunity`: lee los apuntados (`community_email = true`) **por
+     páginas** y deja una fila `queued` por persona en `notification_log`. Sin
+     tope (antes, 500).
+  2. `deliverCommunity`, en `after()`: lotes de 100 con `POST /emails/batch`
+     (`sendEmailBatch` en `lib/email.ts`), cada uno con su idioma, y cada fila
+     pasa a `sent` (con `provider_id`) o `failed` (con el motivo).
+- Límites de Resend: 10 peticiones/s (cabecera `ratelimit-policy: 10;w=1`) y la
+  cuota diaria/mensual del plan, **compartida con el resto de avisos**. No se
+  puede leer por la API sin enviar. `rate_limit_exceeded` → espera `retry-after`
+  y reintenta (hasta 3, con `Idempotency-Key` por lote). `daily_quota_exceeded` /
+  `monthly_quota_exceeded` → ese lote y todos los siguientes quedan `failed` con
+  «Límit diari/mensual de correus de Resend esgotat», sin más llamadas.
+- La lista de Comunitat enseña «Correu: enviat a N de M» (recuentos `head` del
+  log) en los anuncios del último mes. `queued` más de 15 min = el proceso se
+  paró.
+- Duración: Vercel Hobby con Fluid compute, 300 s por función (`maxDuration =
+  300` en `admin/community/new`); `after()` cuenta dentro. Un lote tarda ~1 s.
+- Prueba: `npm run community:check` (simulación, transporte falso, 1.200
+  destinatarios).
+
 ### Cron diario
 
 - `app/api/cron/reminders/route.ts` — recordatorios de sesión del día siguiente

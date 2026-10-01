@@ -5,21 +5,28 @@ import { listPolls } from "@/lib/data/polls";
 import { deleteAnnouncementAction } from "@/app/(admin)/admin/community/actions";
 import { closePollAction, deletePollAction } from "@/app/(admin)/admin/community/polls/actions";
 import { formatDate } from "@/lib/labels";
+import { getCommunityDelivery, type CommunityDelivery } from "@/lib/notifications/community";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommunityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; correu?: string }>;
 }) {
-  const { tab } = await searchParams;
+  const { tab, correu } = await searchParams;
   const activeTab = tab === "polls" ? "polls" : "announcements";
 
   const [announcements, polls] = await Promise.all([
     listAnnouncements(),
     listPolls(),
   ]);
+  // Com ha anat el correu: només dels anuncis d'aquest últim mes (els vells
+  // ja no interessen, i així els recomptes no creixen amb l'historial).
+  const recent = announcements
+    .filter((a) => Date.now() - Date.parse(a.createdAt) < 30 * 86_400_000)
+    .map((a) => a.id);
+  const delivery = await getCommunityDelivery(recent);
 
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -41,6 +48,13 @@ export default async function CommunityPage({
           </Link>
         )}
       </div>
+
+      {correu === "error" && (
+        <p className="mb-6 rounded-xl border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">
+          L&apos;anunci s&apos;ha publicat, però no s&apos;ha pogut preparar el correu
+          a la comunitat. No s&apos;ha enviat a ningú.
+        </p>
+      )}
 
       {/* Tabs */}
       <div className="mb-6 inline-flex rounded-lg border border-brand-border bg-white p-0.5">
@@ -87,6 +101,7 @@ export default async function CommunityPage({
                 <p className="mt-2 text-sm whitespace-pre-wrap text-brand-charcoal">
                   {a.body}
                 </p>
+                <DeliveryLine d={delivery.get(a.id)} createdAt={a.createdAt} />
                 <div className="mt-3 flex items-center gap-4">
                   <Link
                     href={`/admin/community/${a.id}/edit`}
@@ -179,5 +194,33 @@ export default async function CommunityPage({
         )
       )}
     </main>
+  );
+}
+
+/**
+ * «Correu: enviat a 120 de 150». «Enviat» vol dir que Resend l'ha acceptat;
+ * si després rebota, es veu a Resend, no aquí.
+ */
+function DeliveryLine({ d, createdAt }: { d?: CommunityDelivery; createdAt: string }) {
+  if (!d || d.total === 0) return null;
+  // Un enviament dura segons. Si al cap de 15 minuts encara en queden
+  // d'apuntats, el procés es va aturar i ja no sortiran.
+  const stuck = d.queued > 0 && Date.now() - Date.parse(createdAt) > 15 * 60_000;
+  const bad = d.failed > 0 || stuck;
+  return (
+    <div
+      data-testid="community-delivery"
+      className={`mt-3 rounded-lg px-3 py-2 text-xs ${bad ? "bg-error/5 text-error" : "bg-brand-bg text-brand-muted"}`}
+    >
+      <p className="font-bold">
+        Correu: enviat a {d.sent} de {d.total}
+        {d.failed > 0 && ` · ${d.failed} fallit${d.failed !== 1 ? "s" : ""}`}
+        {d.queued > 0 && (stuck ? ` · ${d.queued} sense enviar` : ` · enviant-ne ${d.queued}…`)}
+      </p>
+      {d.failed > 0 && d.firstError && (
+        <p className="mt-0.5 break-words">Motiu: {d.firstError.split(" · ")[0].slice(0, 160)}</p>
+      )}
+      {stuck && <p className="mt-0.5">L&apos;enviament es va aturar abans d&apos;acabar.</p>}
+    </div>
   );
 }

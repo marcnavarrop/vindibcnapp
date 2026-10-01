@@ -1488,7 +1488,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "Els clients que tinguin activat l'avís de comunitat reben un correu quan es publica un anunci nou. Ve apagat per defecte, així que no ho rebrà tothom.",
+          text: "Els clients i professionals que tinguin activat l'avís de comunitat reben un correu quan es publica un anunci nou. Ve apagat per defecte, així que no ho rebrà tothom.",
+        },
+        {
+          t: "p",
+          text: "Sota cada anunci de l'últim mes surt com ha anat el correu: «Correu: enviat a 120 de 150». Si n'hi ha de fallits, la línia surt en vermell amb el motiu; el més habitual és «Límit diari de correus de Resend esgotat», que vol dir que aquell dia el centre ja havia enviat tots els correus que permet el pla, i els que falten no surten. «Enviat» vol dir que Resend l'ha acceptat: si després rebota, es veu a Resend. Mentre s'envia, la línia diu «enviant-ne…»; si al cap d'un quart d'hora encara en queden, diu que l'enviament es va aturar.",
         },
         { t: "h", text: "Enquestes" },
         {

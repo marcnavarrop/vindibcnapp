@@ -116,3 +116,106 @@ export async function sendEmail(input: {
     return { ok: false, error: e instanceof Error ? e.message : "error d'enviament" };
   }
 }
+
+/**
+ * Resultat d'un lot. Si falla, falla SENCER (Resend valida el lot abans
+ * d'enviar-ne cap), i `kind` diu què fer amb els que queden:
+ *
+ *   · "quota" — s'ha esgotat el límit diari o mensual del pla. Els lots que
+ *     venen darrere fallarien igual: no es proven.
+ *   · "rate"  — massa peticions per segon (10/s al pla de Resend). Es torna a
+ *     provar després d'esperar `retryAfterMs`.
+ *   · "other" — qualsevol altra cosa: aquest lot es dona per fallit i es
+ *     continua amb el següent.
+ */
+export type BatchResult =
+  | { ok: true; ids: (string | undefined)[] }
+  | { ok: false; error: string; kind: "quota" | "rate" | "other"; retryAfterMs?: number };
+
+export type BatchEmail = { to: string; subject: string; html: string; text?: string };
+
+/** Màxim de correus per crida a /emails/batch (límit de Resend). */
+export const RESEND_BATCH_MAX = 100;
+
+/**
+ * Envia fins a 100 correus en UNA crida (`POST /emails/batch`). Cada correu
+ * compta igual contra el límit diari del pla; el que s'estalvia són crides
+ * (el límit de 10 per segon) i temps.
+ *
+ * `idempotencyKey`: si el mateix lot es torna a enviar amb la mateixa clau en
+ * 24 h, Resend no el duplica. Mai llança.
+ */
+export async function sendEmailBatch(
+  emails: BatchEmail[],
+  idempotencyKey?: string,
+): Promise<BatchResult> {
+  if (emails.length === 0) return { ok: true, ids: [] };
+  if (emails.length > RESEND_BATCH_MAX)
+    return { ok: false, kind: "other", error: `Lot de ${emails.length} correus: el màxim és ${RESEND_BATCH_MAX}` };
+  if (USE_MOCK) return { ok: true, ids: emails.map(() => "mock") };
+  if (!realSendAllowed())
+    return {
+      ok: false,
+      kind: "other",
+      error: "Enviament bloquejat fora de producció (posa ALLOW_REAL_EMAILS=true si el vols de debò)",
+    };
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { ok: false, kind: "other", error: "RESEND_API_KEY no configurada" };
+
+  try {
+    const res = await fetch("https://api.resend.com/emails/batch", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+      },
+      body: JSON.stringify(
+        emails.map((e) => ({
+          from: fromAddress(),
+          to: e.to,
+          subject: e.subject,
+          html: e.html,
+          ...(e.text ? { text: e.text } : {}),
+        })),
+      ),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      return { ok: false, ...classifyResendError(res.status, body, res.headers.get("retry-after")) };
+    }
+    const json = (await res.json().catch(() => null)) as { data?: { id?: string }[] } | null;
+    return { ok: true, ids: emails.map((_, i) => json?.data?.[i]?.id) };
+  } catch (e) {
+    return { ok: false, kind: "other", error: e instanceof Error ? e.message : "error d'enviament" };
+  }
+}
+
+/**
+ * Llegeix l'error de Resend. Els de límit tornen 429 amb un `name`:
+ * `daily_quota_exceeded` / `monthly_quota_exceeded` (el pla) o
+ * `rate_limit_exceeded` (peticions per segon). Exportada per a les proves.
+ */
+export function classifyResendError(
+  status: number,
+  body: string,
+  retryAfter: string | null,
+): { error: string; kind: "quota" | "rate" | "other"; retryAfterMs?: number } {
+  let name = "";
+  try {
+    name = String((JSON.parse(body) as { name?: unknown }).name ?? "");
+  } catch {
+    // cos que no és JSON
+  }
+  const raw = `Resend ${status}: ${body.slice(0, 300)}`;
+  if (/quota/i.test(name) || (status === 429 && /quota/i.test(body)))
+    return {
+      kind: "quota",
+      error: `Límit ${/monthly/i.test(name + body) ? "mensual" : "diari"} de correus de Resend esgotat · ${raw}`,
+    };
+  if (status === 429) {
+    const secs = Number(retryAfter);
+    return { kind: "rate", error: `Massa peticions a Resend · ${raw}`, retryAfterMs: (Number.isFinite(secs) && secs > 0 ? secs : 1) * 1000 };
+  }
+  return { kind: "other", error: raw };
+}
