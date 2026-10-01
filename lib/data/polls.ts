@@ -1,6 +1,7 @@
 import "server-only";
 import { centerToday } from "@/lib/center-time";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/fetch-all";
 import { USE_MOCK } from "@/lib/config";
 import { getStore, saveStore } from "@/lib/mock/store";
 
@@ -99,20 +100,21 @@ export async function listPolls(): Promise<PollListItem[]> {
     .order("created_at", { ascending: false });
   if (error) throw error;
 
-  // Count responses per poll
-  const ids = (data ?? []).map((p) => p.id);
-  if (ids.length === 0) return [];
-
-  const { data: counts, error: cErr } = await supabase
-    .from("poll_responses")
-    .select("poll_id")
-    .in("poll_id", ids);
-  if (cErr) throw cErr;
-
+  // Un recompte per enquesta a la base (índex poll_responses_poll_idx), en
+  // comptes de portar totes les respostes: amb més de 1000, el sostre les
+  // retallava i el número sortia curt.
+  if ((data ?? []).length === 0) return [];
   const countMap = new Map<string, number>();
-  for (const r of counts ?? []) {
-    countMap.set(r.poll_id, (countMap.get(r.poll_id) ?? 0) + 1);
-  }
+  await Promise.all(
+    (data ?? []).map(async (p) => {
+      const { count, error } = await supabase
+        .from("poll_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("poll_id", p.id);
+      if (error) throw error;
+      countMap.set(p.id, count ?? 0);
+    }),
+  );
 
   return (data ?? []).map((p) => ({
     id: p.id,
@@ -148,13 +150,19 @@ export async function getPollResult(id: string): Promise<PollResult | null> {
     client_id: string;
     client: { profile: { full_name: string | null } | null } | null;
   };
-  const { data: responses, error: rErr } = await supabase
-    .from("poll_responses")
-    .select(
-      "option_id, client_id, client:clients!poll_responses_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))",
-    )
-    .eq("poll_id", id);
-  if (rErr) throw rErr;
+  // Totes les respostes d'aquesta enquesta (cal el nom de cada votant), per
+  // pàgines: amb més de 1000, el sostre les retallava i els percentatges
+  // sortien malament sense dir res.
+  const responses = await fetchAllRows<ResponseRow>((from, to) =>
+    supabase
+      .from("poll_responses")
+      .select(
+        "option_id, client_id, client:clients!poll_responses_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))",
+      )
+      .eq("poll_id", id)
+      .order("id")
+      .range(from, to) as unknown as PromiseLike<{ data: ResponseRow[] | null; error: { message: string } | null }>,
+  );
 
   return {
     id: poll.id,
@@ -164,7 +172,7 @@ export async function getPollResult(id: string): Promise<PollResult | null> {
     closesAt: poll.closes_at ?? null,
     createdAt: poll.created_at,
     options: (options ?? []).map((o) => {
-      const votes = ((responses ?? []) as unknown as ResponseRow[]).filter(
+      const votes = responses.filter(
         (r) => r.option_id === o.id,
       );
       return {

@@ -139,10 +139,6 @@
     "category": "acotada",
     "reason": "Les etiquetes: configuració, poques."
   },
-  "lib/data/client-tags.ts::listClientTagsWithUsage::client_tag_assignments": {
-    "category": "pendent",
-    "reason": "Totes les assignacions d'etiquetes, per comptar l'ús: creix amb els clients. Caldria un recompte per etiqueta a la base."
-  },
   "lib/data/client-tags.ts::listClientTagsWithUsage::client_tags": {
     "category": "acotada",
     "reason": "Les etiquetes: configuració, poques."
@@ -270,14 +266,6 @@
   "lib/data/polls.ts::getPollResult::poll_options": {
     "category": "acotada",
     "reason": "Les opcions d'una enquesta."
-  },
-  "lib/data/polls.ts::getPollResult::poll_responses": {
-    "category": "pendent",
-    "reason": "Totes les respostes d'UNA enquesta: tantes com clients que responen."
-  },
-  "lib/data/polls.ts::listPolls::poll_responses": {
-    "category": "pendent",
-    "reason": "Les respostes de totes les enquestes llistades, per comptar-les. Caldria poll_option_counts."
   },
   "lib/data/polls.ts::listPolls::polls": {
     "category": "pendent",
@@ -414,10 +402,6 @@
   "lib/data/support.ts::listSupportTickets::support_tickets": {
     "category": "pendent",
     "reason": "Tots els tiquets de suport."
-  },
-  "lib/data/trainers.ts::listTrainersDetailed::clients": {
-    "category": "pendent",
-    "reason": "IMPORTANT: llegeix TOTS els clients per comptar quants en porta cada professional. Creix amb el centre; caldria un recompte a la base."
   },
   "lib/data/trainers.ts::listTrainersDetailed::profiles": {
     "category": "acotada",

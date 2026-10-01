@@ -74,18 +74,27 @@ export async function listClientTagsWithUsage(): Promise<ClientTagWithUsage[]> {
   }
 
   const supabase = await createClient();
-  const [tags, assignments, promos] = await Promise.all([
+  const [tags, promos] = await Promise.all([
     supabase.from("client_tags").select("*"),
-    supabase.from("client_tag_assignments").select("tag_id"),
     supabase.from("promotions").select("name, audience_tag_id").not("audience_tag_id", "is", null),
   ]);
   if (tags.error) throw tags.error;
-  if (assignments.error) throw assignments.error;
   if (promos.error) throw promos.error;
 
+  // Un recompte per etiqueta a la base (índex client_tag_assignments_tag), en
+  // comptes de portar totes les assignacions: amb més de 1000, el sostre les
+  // retallava i l'ús sortia curt.
   const counts = new Map<string, number>();
-  for (const a of assignments.data ?? [])
-    counts.set(a.tag_id, (counts.get(a.tag_id) ?? 0) + 1);
+  await Promise.all(
+    (tags.data ?? []).map(async (t) => {
+      const { count, error } = await supabase
+        .from("client_tag_assignments")
+        .select("tag_id", { count: "exact", head: true })
+        .eq("tag_id", t.id);
+      if (error) throw error;
+      counts.set(t.id, count ?? 0);
+    }),
+  );
 
   const names = new Map<string, string[]>();
   for (const p of promos.data ?? []) {

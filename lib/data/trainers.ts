@@ -51,26 +51,27 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
   }
 
   const supabase = await createClient();
-  const [{ data: trainers, error: tErr }, { data: clients, error: cErr }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, full_name, email, specialty, avatar_path")
-        .eq("role", "trainer")
-        .order("full_name"),
-      supabase.from("clients").select("assigned_trainer_id"),
-    ]);
+  const { data: trainers, error: tErr } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, specialty, avatar_path")
+    .eq("role", "trainer")
+    .order("full_name");
   if (tErr) throw tErr;
-  if (cErr) throw cErr;
 
+  // Un recompte per professional a la base (amb l'índex de
+  // assigned_trainer_id), en comptes de portar tots els clients per comptar-los
+  // aquí: amb més de 1000, el sostre els retallava i el número sortia curt.
   const counts = new Map<string, number>();
-  for (const c of clients ?? []) {
-    if (c.assigned_trainer_id)
-      counts.set(
-        c.assigned_trainer_id,
-        (counts.get(c.assigned_trainer_id) ?? 0) + 1,
-      );
-  }
+  await Promise.all(
+    (trainers ?? []).map(async (t) => {
+      const { count, error } = await supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .eq("assigned_trainer_id", t.id);
+      if (error) throw error;
+      counts.set(t.id, count ?? 0);
+    }),
+  );
 
   return (trainers ?? []).map((t) => ({
     id: t.id,
