@@ -281,7 +281,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Les dues accions de cada fila" },
         {
           t: "p",
-          text: "A la dreta de cada client hi ha la icona de WhatsApp (només si té telèfon) i «Reenviar invitació», que li torna a enviar el correu per crear la contrasenya. Queden fora de l'enllaç de la fila a posta: si hi fossin a dins, tocar-los obriria la fitxa en comptes de fer el que diuen.",
+          text: "A la dreta de cada client hi ha la icona de WhatsApp (només si té telèfon) i «Reenviar invitació», que li torna a enviar el correu per crear la contrasenya. Queden fora de l'enllaç de la fila a posta: si hi fossin a dins, tocar-los obriria la fitxa en comptes de fer el que diuen. Al mòbil, cada client és una targeta: el nom i el WhatsApp a dalt, el correu i «Reenviar invitació» a sota, i el professional, els bons actius i les sessions al final. Tota la targeta obre la fitxa, menys aquests dos botons.",
         },
         { t: "h", text: "Donar d'alta un client" },
         {

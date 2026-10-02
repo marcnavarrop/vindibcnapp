@@ -207,7 +207,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "El botó de WhatsApp" },
         {
           t: "p",
-          text: "A la dreta de cada fila hi ha la icona de WhatsApp, que obre una conversa amb aquell client. Només surt si el client té telèfon apuntat. És una cel·la a part de la resta a posta: si estigués dins de l'enllaç, tocar-la obriria la fitxa i no la conversa.",
+          text: "A la dreta de cada fila hi ha la icona de WhatsApp, que obre una conversa amb aquell client. Només surt si el client té telèfon apuntat. És una cel·la a part de la resta a posta: si estigués dins de l'enllaç, tocar-la obriria la fitxa i no la conversa. Al mòbil, cada client és una targeta: el nom i el WhatsApp a dalt, i a sota el professional, els bons actius i les sessions. Tota la targeta obre la fitxa, menys la icona.",
         },
       ],
     },

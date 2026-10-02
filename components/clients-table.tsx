@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ClientsPageItem } from "@/lib/data/clients";
 import { ResendInviteButton } from "@/components/resend-invite-button";
+import { ClientCard } from "@/components/client-card";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 import { LoadMoreFooter, useLoadMore, useUrlQuery } from "@/components/server-list";
 import { loadMoreClientsAction } from "@/app/actions/client-list-actions";
@@ -130,11 +131,38 @@ function ClientsRows({
     loadMoreClientsAction({ q, trainerId }, cursor),
   );
 
+  const empty = q
+    ? "No s'ha trobat cap client amb aquesta cerca."
+    : !trainerFilter
+      ? "Encara no hi ha cap client."
+      : trainerFilter.name
+        ? `${trainerFilter.name} no té cap client assignat.`
+        : "Aquest professional ja no existeix.";
+
   return (
     <>
+      {/* Al mòbil, targetes; a partir de 768 px, la taula. */}
+      <ul className={clsx("flex flex-col gap-2 transition-opacity md:hidden", dim && "opacity-60")} data-testid="clients-cards">
+        {list.items.map((c) => (
+          <ClientCard
+            key={c.id}
+            c={c}
+            href={`/admin/clients/${c.id}`}
+            subline={
+              <>
+                <span className="min-w-0 truncate">{c.email}</span>
+                <ResendInviteButton profileId={c.profileId} inCard />
+              </>
+            }
+          />
+        ))}
+        {list.items.length === 0 && (
+          <li className="rounded-2xl border border-brand-border bg-white px-4 py-8 text-center text-sm text-brand-muted">{empty}</li>
+        )}
+      </ul>
       <div
         className={clsx(
-          "overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity",
+          "hidden overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity md:block",
           dim && "opacity-60",
         )}
       >
@@ -207,13 +235,7 @@ function ClientsRows({
                   colSpan={6}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
-                  {q
-                    ? "No s'ha trobat cap client amb aquesta cerca."
-                    : !trainerFilter
-                      ? "Encara no hi ha cap client."
-                      : trainerFilter.name
-                        ? `${trainerFilter.name} no té cap client assignat.`
-                        : "Aquest professional ja no existeix."}
+                  {empty}
                 </td>
               </tr>
             )}

@@ -7,6 +7,7 @@ import { useTransition } from "react";
 import { clsx, TAP_SURFACE } from "@/lib/utils";
 import type { ClientsPageItem } from "@/lib/data/clients";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
+import { ClientCard } from "@/components/client-card";
 import { LoadMoreFooter, useLoadMore, useUrlQuery } from "@/components/server-list";
 import { loadMoreClientsAction } from "@/app/actions/client-list-actions";
 
@@ -137,11 +138,23 @@ function TrainerClientsRows({
     loadMoreClientsAction({ q, scope, professionalId }, cursor),
   );
 
+  const empty = q ? "No s'ha trobat cap client amb aquesta cerca." : "Sense clients.";
+
   return (
     <>
+      {/* Al mòbil, targetes (la mateixa que l'admin, sense el correu); a
+          partir de 768 px, la taula. */}
+      <ul className={clsx("flex flex-col gap-2 transition-opacity md:hidden", dim && "opacity-60")} data-testid="clients-cards">
+        {list.items.map((c) => (
+          <ClientCard key={c.id} c={c} href={`/trainer/clients/${c.id}`} />
+        ))}
+        {list.items.length === 0 && (
+          <li className="rounded-2xl border border-brand-border bg-white px-4 py-8 text-center text-sm text-brand-muted">{empty}</li>
+        )}
+      </ul>
       <div
         className={clsx(
-          "overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity",
+          "hidden overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity md:block",
           dim && "opacity-60",
         )}
       >
@@ -202,7 +215,7 @@ function TrainerClientsRows({
                   colSpan={5}
                   className="px-4 py-8 text-center text-sm text-brand-muted"
                 >
-                  {q ? "No s'ha trobat cap client amb aquesta cerca." : "Sense clients."}
+                  {empty}
                 </td>
               </tr>
             )}
