@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SERVICE_LABELS, formatEur, formatDate } from "@/lib/labels";
 import { TAP } from "@/lib/utils";
+import { MoreMenu } from "@/components/ui/more-menu";
 import {
   adminCancelSubscriptionAction,
   adminChangePriceAction,
@@ -136,8 +137,27 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-        <table className="w-full min-w-[56rem] text-sm">
+      {/* Al mòbil, targetes; a partir de 768 px, la taula. */}
+      <ul className="flex flex-col gap-2 md:hidden" data-testid="subs-cards">
+        {filtered.map((r) => (
+          <SubscriptionCard
+            key={r.id}
+            r={r}
+            onPrice={() => setPricing(r)}
+            onPause={() => setPausing(r)}
+            onResume={() => setResuming(r)}
+            onCancel={() => setCancelling(r)}
+          />
+        ))}
+        {filtered.length === 0 && (
+          <li className="rounded-2xl border border-brand-border bg-white px-4 py-8 text-center text-sm text-brand-muted">
+            Cap subscripció en aquest filtre.
+          </li>
+        )}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-2xl border border-brand-border bg-white md:block">
+        <table className="w-full min-w-[56rem] text-sm" data-testid="subs-table">
           <thead className="bg-brand-bg text-left text-xs font-bold tracking-wide text-brand-muted uppercase">
             <tr>
               <th className="px-4 py-3">Client</th>
@@ -439,5 +459,101 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
         </div>
       </ConfirmDialog>
     </div>
+  );
+}
+
+type Act = { label: string; onSelect: () => void; danger?: boolean; primary?: boolean };
+
+/**
+ * UNA SUBSCRIPCIÓ, AL MÒBIL. Fins a tres accions per fila no hi cabien: es veu
+ * la que toca segons l'estat —«Reprendre» si està congelada, «Congelar» si
+ * està activa, «Donar de baixa» si és l'única— i la resta van a «Més ▾». Totes
+ * obren la mateixa confirmació que a la taula.
+ */
+function SubscriptionCard({
+  r,
+  onPrice,
+  onPause,
+  onResume,
+  onCancel,
+}: {
+  r: SubscriptionRow;
+  onPrice: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onCancel: () => void;
+}) {
+  // En l'ordre de la taula; la primera que és `primary` va a la vista.
+  const acts: Act[] = [];
+  if (r.status === "paused") acts.push({ label: "Reprendre", onSelect: onResume, primary: true });
+  if (r.status === "active") acts.push({ label: "Congelar", onSelect: onPause, primary: true });
+  if (r.paymentMethod === "cash" && r.status === "active") acts.push({ label: "Canviar preu", onSelect: onPrice });
+  if (r.status !== "cancelled" && !r.cancelAtPeriodEnd) acts.push({ label: "Donar de baixa", onSelect: onCancel, danger: true });
+  const main = acts.find((a) => a.primary) ?? (acts.length === 1 ? acts[0] : null);
+  const rest = acts.filter((a) => a !== main);
+  const unpaid = r.cycleBonoStatus === "pending_payment" || r.cycleBonoStatus === "unpaid";
+
+  return (
+    <li className="flex flex-col gap-1 rounded-2xl border border-brand-border bg-white px-3.5 py-3" data-testid="sub-card">
+      <div className="flex items-start justify-between gap-3">
+        <Link
+          href={`/admin/clients/${r.clientId}`}
+          className="min-w-0 truncate font-bold text-brand-dark underline decoration-brand-border underline-offset-4 hover:text-brand-purple"
+        >
+          {r.clientName}
+        </Link>
+        <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+      </div>
+      {/* Una línia cadascuna, sense partir: el paquet es retalla abans que
+          el preu, i «aquest mes» no hi és perquè les xifres ja ho diuen. */}
+      <p className="flex min-w-0 items-baseline justify-between gap-3 text-sm text-brand-muted">
+        <span className="min-w-0 truncate text-brand-charcoal">{r.packageName}</span>
+        <span className="shrink-0 tabular-nums">
+          {formatEur(r.unitPrice)}/mes · {r.paymentMethod === "card" ? "Targeta" : "Al centre"}
+        </span>
+      </p>
+      <p className="truncate text-[13px] text-brand-muted">
+        {r.status === "paused" ? (
+          <>
+            <span className="text-brand-purple">Aturada</span> ·{" "}
+            {r.resumeOn ? `es reprèn el ${formatDate(r.resumeOn)}` : "sense data de represa"}
+          </>
+        ) : (
+          <>
+            {/* «/N»: si el nom del paquet es retalla, les sessions del mes hi són igual. */}
+            <span className="font-bold text-brand-purple">{r.sessionsLeft}</span>/{r.sessionsPerCycle} disponibles
+            {r.extrasMax > 0 && r.extrasUsed > 0 && ` · ${r.extrasUsed}/${r.extrasMax} extra`}
+            {r.status !== "cancelled" && r.nextRenewalOn && ` · renova el ${formatDate(r.nextRenewalOn)}`}
+          </>
+        )}
+      </p>
+      {(unpaid && r.status !== "paused") || (r.cancelAtPeriodEnd && r.status !== "cancelled") ? (
+        <p className="text-[13px] font-bold text-brand-orange">
+          {[unpaid && r.status !== "paused" && "mes sense cobrar", r.cancelAtPeriodEnd && r.status !== "cancelled" && "no es renovarà"]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      ) : null}
+      {(main || rest.length > 0) && (
+        <div className="mt-1.5 flex items-center gap-2">
+          {main && (
+            <button
+              type="button"
+              onClick={main.onSelect}
+              className={`h-11 flex-1 rounded-lg px-4 text-sm font-bold ${
+                main.danger
+                  ? "border border-error/40 text-error hover:bg-error/5"
+                  : main.label === "Reprendre"
+                    ? "bg-brand-purple text-white hover:bg-brand-purple-light"
+                    : "bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20"
+              } ${TAP}`}
+            >
+              {main.label}
+            </button>
+          )}
+          <MoreMenu items={rest} />
+        </div>
+      )}
+    </li>
   );
 }

@@ -1064,6 +1064,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           ],
         },
         {
+          t: "p",
+          text: "Al mòbil, cada subscripció és una targeta i les accions no hi caben totes: es veu la que toca segons l'estat (Congelar si està activa, Reprendre si està congelada, Donar de baixa si és l'única) i la resta són a «Més ▾». Cada una obre la mateixa confirmació que a l'ordinador.",
+        },
+        {
           t: "warn",
           text: "Amb les que es paguen amb targeta hi ha dues diferències. El preu no es pot canviar des d'aquí (el governa la passarel·la). I per congelar-les cal indicar OBLIGATÒRIAMENT la data de represa: sense ella, el cobrament tornaria sol quan s'acabés el termini màxim de la passarel·la.",
         },
