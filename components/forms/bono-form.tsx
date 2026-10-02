@@ -207,7 +207,7 @@ export function BonoForm({
                 defaultValue="cash"
                 options={[
                   { value: "cash", label: "Efectiu" },
-                  { value: "card", label: "Targeta" },
+                  { value: "card", label: "Targeta (TPV)" },
                   { value: "none", label: "No registrar ara" },
                 ]}
               />

@@ -42,6 +42,20 @@ export function Header({ name, today }: { name: string; today: string }) {
   );
 }
 
+/**
+ * On porta «Pendent de cobrament» (i l'accés «Bons pendents»): a Bons amb el
+ * filtre ja posat, perquè els pendents no quedin al final de «Tots».
+ *
+ * La xifra suma pendents i decaiguts, i Bons els té en dos filtres. S'obre el
+ * dels pendents si n'hi ha —són la feina de cada dia, al taulell—; si només hi
+ * ha decaiguts, el seu. L'altre filtre segueix al costat amb el seu comptador.
+ */
+export function collectableHref(c: { pending: number; unpaid: number }): string {
+  if (c.pending > 0) return "/admin/bonos?estat=pending_payment";
+  if (c.unpaid > 0) return "/admin/bonos?estat=unpaid";
+  return "/admin/bonos";
+}
+
 // ─────────────────────────── Mètriques ───────────────────────────
 
 /**
@@ -104,7 +118,7 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
         pendingBonos.count === 1
           ? "1 bo per cobrar al centre"
           : `${pendingBonos.count} bons per cobrar al centre`,
-      href: "/admin/bonos",
+      href: collectableHref(pendingBonos),
       // Només crida l'atenció si hi ha alguna cosa a cobrar.
       warn: pendingBonos.count > 0,
     },
@@ -237,11 +251,16 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
  * mirar els vals, que és l'únic diner que entra sense passar per una fitxa de
  * client i el que més fàcil és oblidar.
  */
-export function QuickActions() {
+export function QuickActions({
+  pendingHref = "/admin/bonos",
+}: {
+  /** On porta «Bons pendents»: el mateix filtre que «Pendent de cobrament». */
+  pendingHref?: string;
+}) {
   const actions: { icon: IconName; label: string; href: string }[] = [
     { icon: "user", label: "Nou client", href: "/admin/clients/new" },
     { icon: "calendarPlus", label: "Nova reserva", href: "/admin/reservas" },
-    { icon: "ticket", label: "Bons pendents", href: "/admin/bonos" },
+    { icon: "ticket", label: "Bons pendents", href: pendingHref },
     { icon: "gift", label: "Vals de regal", href: "/admin/vals-regal" },
   ];
 

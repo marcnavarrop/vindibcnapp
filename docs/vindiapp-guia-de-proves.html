@@ -318,13 +318,15 @@
       <li>Un bo anul·lat passa a <strong>"Cancel·lat"</strong> en vermell i es queda sense cap botó</li>
       <li><strong>Per pàgines</strong> <span class="flag">Nou</span>: del més nou al més antic, 50 de cop, «N de M bons» i «Carregar més» fins que desapareix. El filtre d'estat va a l'adreça (<code>?estat=</code>) i el fa el servidor. Els comptadors de «Pendents» i «Decaiguts» sumen la piloteta del menú</li>
       <li>Cobra un pendent des del filtre «Pendents»: la fila desapareix del filtre, el comptador baixa en un i <strong>el «Pendent de cobrament» d'Inici</strong> baixa en el seu preu</li>
+      <li><strong>Des d'Inici, ja filtrat</strong> <span class="flag">Nou</span>: la targeta «Pendent de cobrament» i l'accés «Bons pendents» obren Bons amb «Pendents de pagament» posat. Si només n'hi ha de decaiguts, obren «Decaiguts sense cobrar». Sense res per cobrar, obren «Tots»</li>
     </ul>
     <ul class="checklist">
       <li>Un bo "Pendent de pagament" (comprat amb "Pagar al centre") <strong>ja es pot fer servir per reservar a l'instant</strong></li>
       <li><strong>"Marcar com pagat" ja no és un sol clic</strong>: obre un diàleg amb client, servei, sessions i import, i avisa que un cop fet <strong>no es pot desfer des de cap pantalla</strong></li>
       <li><strong>Si el bo ja no es pot cobrar</strong> <span class="flag">Nou</span> (algú l'acaba de cobrar en una altra pestanya, o l'han anul·lat): el diàleg es queda obert i diu en vermell «Aquest bo ja està cobrat o ja no es pot cobrar. No s'ha anotat cap pagament.» A Pagaments no hi ha cap apunt nou. Abans, en aquest cas, el pagament s'anotava igualment. Prova-ho amb dues pestanyes obertes sobre el mateix bo pendent</li>
       <li>Sobre un bo <strong>decaigut</strong> per impagament, el botó canvia: <strong>"Cobrar i recuperar"</strong> (torna el bo amb les sessions que li quedaven; les reserves cancel·lades <strong>no</strong> tornen) o <strong>"Només cobrar"</strong> si ja ha passat de data</li>
-      <li>Cobrar un bo pot fer tres coses més alhora: generar una recompensa de referit, reprendre una subscripció aturada i anotar un pagament en efectiu</li>
+      <li><strong>Com ha pagat?</strong> <span class="flag">Nou</span>: al diàleg, «Efectiu» ve marcat i l'altra opció és «Targeta (TPV)». Cobra'n un en efectiu (dos tocs, com abans) i un altre amb targeta: a Pagaments, el primer surt com a efectiu i el segon com a targeta, i el total «amb targeta» de dalt puja. Torna a obrir el diàleg després d'un cobrament amb targeta: ha de tornar a sortir «Efectiu» marcat</li>
+      <li>Cobrar un bo pot fer tres coses més alhora: generar una recompensa de referit, reprendre una subscripció aturada i anotar el pagament amb el mètode triat</li>
       <li>Indicador de risc en taronja si s'han consumit sessions abans de pagar</li>
     </ul>
 
@@ -625,6 +627,7 @@
     <ul class="checklist">
       <li>Bons i pagaments → Vals de regal. <strong>Cinc estats</strong>: Pendent de pagament, Actiu, Bescanviat, Caducat, Anul·lat</li>
       <li>Tres accions: <strong>PDF</strong> (reimprimir o reenviar), <strong>Marcar com pagat</strong> (només als pendents) i <strong>Anul·lar</strong> (no surt als bescanviats)</li>
+      <li><strong>«Marcar com pagat» ja no és un sol toc</strong> <span class="flag">Nou</span>: obre el mateix diàleg que un bo (val, comprador, paquet, import i «Com ha pagat?», amb «Efectiu» marcat). <strong>Amb dues pestanyes</strong> sobre el mateix val pendent, cobra'l a la primera i després a la segona: la segona ha de dir en vermell «Aquest val ja està cobrat o ja no es pot cobrar. No s'ha anotat cap pagament.», i a Pagaments hi ha d'haver <strong>un sol</strong> apunt. Abans se n'anotaven dos</li>
       <li>Els pendents han de sortir al plafó <strong>"El que espera resposta"</strong> de l'Inici</li>
       <li>Desactiva la venda a Configuració → Centre i comprova que <strong>els clients no en poden comprar de nous però els que ja hi ha es continuen cobrant i bescanviant</strong>, i que la pantalla no desapareix del menú</li>
       <li>La taula no s'ha de sortir de la pantalla al mòbil</li>

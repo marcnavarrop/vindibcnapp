@@ -12,6 +12,7 @@ import {
   Header,
   KpiRow,
   QuickActions,
+  collectableHref,
   Attention,
   TodayAtCentre,
   OccupancyByTrainer,
@@ -63,7 +64,7 @@ export default async function AdminHome() {
 
       <KpiRow d={d} />
 
-      <QuickActions />
+      <QuickActions pendingHref={collectableHref(d.pendingBonos)} />
 
       {/* Va per damunt de l'agenda del dia: si hi ha alguna cosa que caduca,
           es veu abans de posar-se a mirar les sessions. Si no hi ha res, no

@@ -158,7 +158,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Pendent de cobrament",
-              "Import i nombre de bons per cobrar: els «Pendent de pagament» que no han caducat i els «Decaigut sense cobrar» (que no caduquen). És la mateixa cua que la piloteta de «Bons» del menú i que els dos comptadors de la pantalla de Bons. Es posa taronja si n'hi ha algun. És la xifra que et diu quants diners hi ha compromesos i no ingressats, i la compta la base de dades, exacta per molts bons que hi hagi.",
+              "Import i nombre de bons per cobrar: els «Pendent de pagament» que no han caducat i els «Decaigut sense cobrar» (que no caduquen). És la mateixa cua que la piloteta de «Bons» del menú i que els dos comptadors de la pantalla de Bons. Es posa taronja si n'hi ha algun. És la xifra que et diu quants diners hi ha compromesos i no ingressats, i la compta la base de dades, exacta per molts bons que hi hagi. Tocant-la vas a Bons amb el filtre ja posat: «Pendents de pagament» si n'hi ha, i si només n'hi ha de decaiguts, «Decaiguts sense cobrar». L'accés «Bons pendents» porta al mateix lloc.",
             ],
             [
               "Bons a punt d'esgotar-se",
@@ -938,12 +938,12 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "El desplegable «Cobrament» decideix com neix: «Efectiu» o «Targeta» l'activen i anoten el pagament al moment; «No registrar ara» el deixa pendent de pagament.",
+          text: "El desplegable «Cobrament» decideix com neix: «Efectiu» o «Targeta (TPV)» l'activen i anoten el pagament al moment; «No registrar ara» el deixa pendent de pagament.",
         },
         { t: "h", text: "Cobrar-ne un" },
         {
           t: "p",
-          text: "El botó de la fila no cobra al primer clic: obre un resum amb el client, el servei, les sessions i l'import, i has de confirmar. Va així perquè cobrar fa quatre coses que no es desfan des de cap pantalla —activa el bo, anota un pagament en efectiu, genera les recompenses de referit si en toquen i reprèn la subscripció si el bo n'era d'una—.",
+          text: "El botó de la fila no cobra al primer clic: obre un resum amb el client, el servei, les sessions i l'import, i, a sota, «Com ha pagat?»: «Efectiu» ve marcat i «Targeta (TPV)» és l'altra opció. Cobrar en efectiu són dos tocs; amb targeta, un més. Va així perquè cobrar fa quatre coses que no es desfan des de cap pantalla —activa el bo, anota el pagament amb el mètode triat, genera les recompenses de referit si en toquen i reprèn la subscripció si el bo n'era d'una—.",
         },
         {
           t: "dl",
@@ -1095,9 +1095,9 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         {
           t: "ul",
           items: [
-            "De vendre un bo triant «Efectiu» o «Targeta» al formulari.",
-            "De cobrar un bo pendent des de la pantalla de Bons (sempre com a efectiu).",
-            "De cobrar un val de regal.",
+            "De vendre un bo triant «Efectiu» o «Targeta (TPV)» al formulari.",
+            "De cobrar un bo pendent des de la pantalla de Bons, amb el mètode triat al quadre (efectiu o targeta del TPV).",
+            "De cobrar un val de regal, igual: efectiu o targeta del TPV.",
             "De la renovació mensual d'una subscripció.",
             "D'una alta manual amb «+ Nou pagament».",
           ],
@@ -1158,7 +1158,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Marcar com pagat",
-              "El cobra i el deixa llest per bescanviar. Només surt als pendents.",
+              "Obre el mateix quadre que cobrar un bo: el resum, «Com ha pagat?» (efectiu o targeta del TPV) i «Sí, marcar com pagat». El deixa llest per bescanviar. Només surt als pendents.",
             ],
             [
               "Anul·lar",

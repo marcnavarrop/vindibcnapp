@@ -1,5 +1,6 @@
 "use server";
 
+import { parseCounterMethod, BAD_METHOD } from "@/lib/counter-payment";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getViewer, requireRole } from "@/lib/auth";
@@ -115,13 +116,15 @@ export async function markTrainerBonoPaidAction(
 
   const bonoId = String(formData.get("bonoId") ?? "");
   if (!bonoId) return { error: "Falta el bo." };
+  const method = parseCounterMethod(formData.get("method"));
+  if (!method) return { error: BAD_METHOD };
 
   // El client ja no decideix si es pot cobrar, però sí quina fitxa s'ha de
   // refrescar: el bo cobrat hi surt amb l'estat nou.
   const clientId = await getBonoClientId(bonoId);
 
   try {
-    await markBonoPaid(bonoId);
+    await markBonoPaid(bonoId, { method });
   } catch (e) {
     return { error: e instanceof Error ? e.message : "No s'ha pogut cobrar." };
   }

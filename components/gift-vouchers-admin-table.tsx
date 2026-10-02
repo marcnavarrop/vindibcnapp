@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmInline } from "@/components/ui/confirm-inline";
+import { MarkVoucherPaidButton } from "@/components/forms/mark-voucher-paid-button";
 import {
   SERVICE_LABELS,
   GIFT_VOUCHER_STATUS_LABELS,
@@ -141,15 +142,14 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                       PDF
                     </a>
                     {v.status === "pending_payment" && (
-                      <form action={markGiftVoucherPaidAction}>
-                        <input type="hidden" name="voucherId" value={v.id} />
-                        <button
-                          type="submit"
-                          className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold whitespace-nowrap text-white hover:bg-brand-purple-light ${TAP}`}
-                        >
-                          Marcar com pagat
-                        </button>
-                      </form>
+                      <MarkVoucherPaidButton
+                        action={markGiftVoucherPaidAction}
+                        voucherId={v.id}
+                        code={v.code}
+                        buyerName={v.buyerName}
+                        packageName={v.packageName}
+                        price={v.price}
+                      />
                     )}
                     {/* Un val bescanviat ja no es toca: el bo existeix i té
                         sessions que algú pot haver començat a fer servir. */}

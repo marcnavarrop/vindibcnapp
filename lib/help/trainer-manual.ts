@@ -241,7 +241,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "«Marcar com pagat» demana confirmació abans de fer res: el primer clic obre un resum amb el servei, les sessions i l'import, i fins que no el confirmes no s'ha cobrat res. Un cop confirmat, el bo passa a actiu, les sessions queden disponibles a l'instant i s'anota un pagament en efectiu. Això sí que no es desfà des d'aquí: si t'equivoques de bo, avisa l'administració.",
+          text: "«Marcar com pagat» demana confirmació abans de fer res: el primer clic obre un resum amb el servei, les sessions i l'import, i fins que no el confirmes no s'ha cobrat res. Al mateix quadre tries com ha pagat: «Efectiu» ve marcat i l'altra opció és «Targeta (TPV)». Un cop confirmat, el bo passa a actiu, les sessions queden disponibles a l'instant i s'anota el pagament amb el mètode triat. Això sí que no es desfà des d'aquí: si t'equivoques de bo, avisa l'administració.",
         },
         { t: "h", text: "Reserves" },
         {
@@ -757,7 +757,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Abans de cobrar, un quadre et demana confirmació i et diu exactament què passarà: quin client, quin servei, quantes sessions i quin import. Cobrar activa el bo, anota un pagament en efectiu i, si el bo era el mes d'una subscripció aturada, la torna a posar en marxa. Res d'això es desfà des d'aquí: si t'equivoques de bo, cal avisar l'administració.",
+          text: "Abans de cobrar, un quadre et demana confirmació i et diu exactament què passarà: quin client, quin servei, quantes sessions i quin import. Hi tries com ha pagat —«Efectiu», que ve marcat, o «Targeta (TPV)»—. Cobrar activa el bo, anota el pagament amb aquest mètode i, si el bo era el mes d'una subscripció aturada, la torna a posar en marxa. Res d'això es desfà des d'aquí: si t'equivoques de bo, cal avisar l'administració.",
         },
         {
           t: "p",

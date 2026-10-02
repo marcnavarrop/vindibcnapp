@@ -186,6 +186,7 @@ function BonosAdminRows({
                   <div className="flex justify-end gap-2">
                     {(b.status === "pending_payment" || b.status === "unpaid") && (
                       <MarkBonoPaidButton
+                        admin
                         action={markBonoPaidAction}
                         bonoId={b.id}
                         clientName={b.clientName}

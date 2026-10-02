@@ -12,7 +12,7 @@ import {
   listAllBlocksLite,
   listBlocksLite,
 } from "@/lib/data/availability-blocks";
-import { getCollectableSummary, isBonoExpired } from "@/lib/data/bonos";
+import { getCollectableSummary, isBonoExpired, type CollectableSummary } from "@/lib/data/bonos";
 import {
   slotsFor,
   slotToHHMM,
@@ -63,7 +63,7 @@ export type AdminDashboard = {
     changePct: number | null;
     previousMonthLabel: string;
   };
-  pendingBonos: { total: number; count: number };
+  pendingBonos: CollectableSummary;
   lowBonos: LowBono[];
   sessions: { today: number; week: number };
   occupancy: {
@@ -127,7 +127,7 @@ export type DashboardPart =
 type Raw = {
   revenue: RawRevenue;
   /** Bons per cobrar a tot el centre (`bonos_summary`, 0097). */
-  collectable: { count: number; total: number };
+  collectable: CollectableSummary;
   bonos: RawBono[];
   reservations: RawReservation[];
   trials: RawTrials;
@@ -237,7 +237,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
       expiresAt: b.expires_at,
     });
     const collectable = fail("bonos", ["pendingBonos", "lowBonos"])
-      ? { count: 0, total: 0 }
+      ? { count: 0, total: 0, pending: 0, unpaid: 0 }
       : await getCollectableSummary();
     const low = failed.has("lowBonos")
       ? []
@@ -360,7 +360,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
 
   return {
     revenue: pay.data ? toRevenue(pay.data) : { current: 0, previous: 0 },
-    collectable: pend.data ?? { count: 0, total: 0 },
+    collectable: pend.data ?? { count: 0, total: 0, pending: 0, unpaid: 0 },
     bonos,
     reservations: (res.data ?? []).map((r) => ({
       trainerId: r.trainer_id,

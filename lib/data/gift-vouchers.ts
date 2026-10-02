@@ -9,7 +9,7 @@ import { createPayment } from "@/lib/data/payments";
 import { centerToday } from "@/lib/center-time";
 import { SERVICE_LABELS } from "@/lib/labels";
 import { isSubscriptionOnly } from "@/lib/subscription-rules";
-import type { GiftVoucherStatus, ServiceType } from "@/types/database";
+import type { GiftVoucherStatus, PaymentMethod, ServiceType } from "@/types/database";
 
 /**
  * Vals de regal.
@@ -653,21 +653,32 @@ export async function setGiftVoucherPdfPath(id: string, path: string): Promise<v
  * L'admin confirma que ha cobrat el val: passa a 'active' i, a partir d'aquí,
  * ja es pot bescanviar. Es registra el cobrament com el d'un bo, perquè els
  * diners que entren al centre siguin els mateixos miri's on es miri.
+ *
+ * Tot o res, com `markBonoPaid`: si l'actualització no canvia EXACTAMENT una
+ * fila, no s'anota cap pagament. Abans el comentari ja ho prometia («només un
+ * arriba a canviar la fila») però el codi no mirava quantes n'havia canviat:
+ * dos clics alhora —o dues pestanyes— activaven el val un cop i anotaven el
+ * cobrament dues vegades.
+ *
+ * `method` és el que s'ha triat al diàleg: efectiu o targeta del TPV. El val
+ * pagat amb targeta per internet no passa per aquí: el crea el webhook.
  */
-export async function markGiftVoucherPaid(id: string): Promise<void> {
+export async function markGiftVoucherPaid(
+  id: string,
+  method: PaymentMethod = "cash",
+): Promise<void> {
   if (USE_MOCK) {
     const store = getStore();
     const v = store.gift_vouchers.find((x) => x.id === id);
-    if (!v) throw new Error("Val no trobat.");
-    if (v.status !== "pending_payment")
-      throw new Error("Aquest val no està pendent de pagament.");
+    if (!v) throw new Error(VOUCHER_NOT_FOUND);
+    if (v.status !== "pending_payment") throw new Error(VOUCHER_NOT_COLLECTABLE);
     v.status = "active";
     saveStore(store);
     await createPayment({
       clientId: v.buyer_client_id,
       bonoId: null,
       amount: Number(v.price),
-      method: "cash",
+      method,
       concept: voucherConcept(v.service_type, v.total_sessions, v.code),
     });
     return;
@@ -679,27 +690,33 @@ export async function markGiftVoucherPaid(id: string): Promise<void> {
     .select("id, status, price, buyer_client_id, service_type, total_sessions, code")
     .eq("id", id)
     .maybeSingle();
-  if (!v) throw new Error("Val no trobat.");
-  if (v.status !== "pending_payment")
-    throw new Error("Aquest val no està pendent de pagament.");
+  if (!v) throw new Error(VOUCHER_NOT_FOUND);
+  if (v.status !== "pending_payment") throw new Error(VOUCHER_NOT_COLLECTABLE);
 
-  const { error } = await admin
+  const { data: updated, error } = await admin
     .from("gift_vouchers")
     .update({ status: "active" })
     .eq("id", id)
-    // Condició de cursa: si dos administradors el marquen alhora, només un
-    // arriba a canviar la fila i només es registra un cobrament.
-    .eq("status", "pending_payment");
-  if (error) throw new Error("No s'ha pogut marcar com a pagat.");
+    // Condició de cursa: si dos cobraments arriben alhora, només un troba el
+    // val pendent...
+    .eq("status", "pending_payment")
+    // ...i les files que ha canviat de debò diuen quin.
+    .select("id");
+  if (error) throw new Error("No s'ha pogut marcar com a pagat. No s'ha anotat cap pagament.");
+  if ((updated ?? []).length !== 1) throw new Error(VOUCHER_NOT_COLLECTABLE);
 
   await createPayment({
     clientId: v.buyer_client_id,
     bonoId: null,
     amount: Number(v.price),
-    method: "cash",
+    method,
     concept: voucherConcept(v.service_type, v.total_sessions, v.code),
   });
 }
+
+const VOUCHER_NOT_FOUND = "No s'ha trobat aquest val. No s'ha anotat cap pagament.";
+const VOUCHER_NOT_COLLECTABLE =
+  "Aquest val ja està cobrat o ja no es pot cobrar. No s'ha anotat cap pagament.";
 
 /** Concepte comptable del cobrament d'un val. */
 export function voucherConcept(

@@ -979,7 +979,19 @@ export async function countCollectableByStatus(): Promise<{
  * Inici sumava només els 'pending_payment', caducats inclosos, i no els
  * 'unpaid'. Només l'admin: amb la seva sessió.
  */
-export async function getCollectableSummary(): Promise<{ count: number; total: number }> {
+export type CollectableSummary = {
+  count: number;
+  total: number;
+  /**
+   * El desglose del mateix número, per saber quin filtre de Bons obrir des
+   * d'Inici: amb pendents, «Pendents de pagament»; si només n'hi ha de
+   * decaiguts, «Decaiguts sense cobrar».
+   */
+  pending: number;
+  unpaid: number;
+};
+
+export async function getCollectableSummary(): Promise<CollectableSummary> {
   if (USE_MOCK) {
     const today = centerToday();
     const xs = getStore().bonos.filter(
@@ -990,6 +1002,8 @@ export async function getCollectableSummary(): Promise<{ count: number; total: n
     return {
       count: xs.length,
       total: Math.round(xs.reduce((sum, b) => sum + b.price, 0) * 100) / 100,
+      pending: xs.filter((b) => b.status === "pending_payment").length,
+      unpaid: xs.filter((b) => b.status === "unpaid").length,
     };
   }
 
@@ -997,9 +1011,13 @@ export async function getCollectableSummary(): Promise<{ count: number; total: n
   const { data, error } = await supabase.rpc("bonos_summary");
   if (error) throw error;
   const rows = (data ?? []).filter((r) => r.status === "pending_payment" || r.status === "unpaid");
+  const n = (status: string) =>
+    rows.filter((r) => r.status === status).reduce((sum, r) => sum + Number(r.n), 0);
   return {
     count: rows.reduce((sum, r) => sum + Number(r.n), 0),
     total: Math.round(rows.reduce((sum, r) => sum + Number(r.amount), 0) * 100) / 100,
+    pending: n("pending_payment"),
+    unpaid: n("unpaid"),
   };
 }
 
@@ -1299,7 +1317,8 @@ const COLLECTABLE: BonoStatus[] = ["pending_payment", "unpaid"];
  * Com s'ha cobrat el bo.
  *
  * Per defecte, en efectiu al centre: és el que feia aquesta funció des de
- * sempre i el que fan els botons d'admin i professional, que no li passen res.
+ * sempre. Els botons d'admin i professional hi passen el que s'ha triat al
+ * diàleg: efectiu o targeta del TPV (`lib/counter-payment.ts`).
  *
  * Amb targeta hi arriba des del webhook de Stripe, i llavors porta els dos
  * identificadors: el del pagament —que és el que fa el registre IDEMPOTENT, per
@@ -1382,10 +1401,10 @@ export async function markBonoPaid(
 /**
  * Anota el cobrament del bo, pel camí que toqui.
  *
- * Amb targeta va per `createSystemPayment`, que l'índex únic de
+ * El de Stripe va per `createSystemPayment`, que l'índex únic de
  * `stripe_payment_id` (0054) fa idempotent: si el webhook arriba dos cops, el
- * segon no anota res i no passa res. En efectiu, per `createPayment` de tota la
- * vida, que és el que ha fet una persona al taulell.
+ * segon no anota res i no passa res. El del taulell —efectiu o TPV— per
+ * `createPayment` de tota la vida, que és el que ha fet una persona.
  */
 async function recordBonoPayment(
   bono: {
@@ -1403,13 +1422,16 @@ async function recordBonoPayment(
     amount: bono.price,
     concept: bonoConcept(bono.service_type, bono.total_sessions),
   };
-  if (payment.method === "card")
+  // Només el que ve de Stripe porta els seus identificadors, i només això va
+  // per la clau de servei. Una targeta del TPV la cobra una persona amb sessió
+  // i passa per la RLS, com l'efectiu.
+  if (payment.stripePaymentId || payment.stripeCheckoutSessionId)
     await createSystemPayment({
       ...common,
       method: "card",
       stripePaymentId: payment.stripePaymentId ?? null,
     });
-  else await createPayment({ ...common, method: "cash" });
+  else await createPayment({ ...common, method: payment.method });
 }
 
 /**

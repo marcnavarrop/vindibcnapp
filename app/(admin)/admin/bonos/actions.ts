@@ -1,5 +1,6 @@
 "use server";
 
+import { parseCounterMethod, BAD_METHOD } from "@/lib/counter-payment";
 import { requireRole } from "@/lib/auth";
 import { getClient } from "@/lib/data/clients";
 import { revalidatePath } from "next/cache";
@@ -106,7 +107,7 @@ export async function createGroupSubscriptionAction(
   redirect(`/admin/clients/${clientId}`);
 }
 
-/** Marca un bono pendiente como pagado (en efectivo, en el centro). */
+/** Marca un bo com a pagat al taulell: en efectiu o amb la targeta del TPV. */
 export async function markBonoPaidAction(
   _prev: MarkPaidState,
   formData: FormData,
@@ -114,8 +115,10 @@ export async function markBonoPaidAction(
   if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   const bonoId = String(formData.get("bonoId") ?? "");
   if (!bonoId) return { error: "Falta el bo." };
+  const method = parseCounterMethod(formData.get("method"));
+  if (!method) return { error: BAD_METHOD };
   try {
-    await markBonoPaid(bonoId);
+    await markBonoPaid(bonoId, { method });
   } catch (e) {
     // El motiu arriba a la pantalla tal qual: un missatge clar en comptes de
     // la pàgina d'error genèrica (en producció, Next n'amaga el text).

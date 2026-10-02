@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CounterMethodChoice } from "@/components/forms/counter-method-choice";
 import { SERVICE_LABELS, formatEur } from "@/lib/labels";
 import { TAP } from "@/lib/utils";
-import type { BonoStatus, ServiceType } from "@/types/database";
+import type { BonoStatus, PaymentMethod, ServiceType } from "@/types/database";
 
 /**
  * Cobrar un bo, en dos temps.
@@ -42,6 +43,7 @@ export function MarkBonoPaidButton({
   totalSessions,
   status,
   expired = false,
+  admin = false,
 }: {
   /** L'acció de servidor de cada àrea: la seva RLS i les seves rutes a revalidar. */
   action: (prev: MarkPaidState, formData: FormData) => Promise<MarkPaidState>;
@@ -55,8 +57,17 @@ export function MarkBonoPaidButton({
   status: BonoStatus;
   /** Decaigut i, a més, ja passat de data. El dia el mana el servidor. */
   expired?: boolean;
+  /**
+   * Qui cobra. Només canvia què fer si t'equivoques: l'admin ho esmena ell
+   * mateix; el professional ho ha de dir a l'administració.
+   */
+  admin?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  // Cada vegada que s'obre torna a ser efectiu: és el cas de cada dia, i un
+  // «targeta» que quedés triat d'un cobrament anterior s'anotaria malament.
+  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const formId = useId();
   const [state, formAction] = useActionState(action, { error: null });
   // Cobrat: es tanca. Si no, el diàleg queda obert amb el motiu.
   useEffect(() => {
@@ -78,7 +89,7 @@ export function MarkBonoPaidButton({
       : "Cobrar i recuperar";
 
   const description = !isUnpaid
-    ? "Encara no s'ha cobrat res. En confirmar, el bo passa a actiu, les seves sessions queden disponibles a l'instant i s'anota un pagament en efectiu."
+    ? "Encara no s'ha cobrat res. En confirmar, el bo passa a actiu, les seves sessions queden disponibles a l'instant i s'anota el pagament amb el mètode que triïs."
     : expired
       ? "El cobrament s'anota i, si el bo és d'una subscripció, la torna a posar en marxa. El bo NO es recupera: ja ha passat de data."
       : "Recupera el bo amb les sessions que li quedaven. Les reserves que es van cancel·lar en decaure NO tornen: s'han de tornar a demanar.";
@@ -87,7 +98,10 @@ export function MarkBonoPaidButton({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setMethod("cash");
+          setOpen(true);
+        }}
         className={`rounded-md px-2.5 py-1 text-xs font-bold whitespace-nowrap text-white ${
           isUnpaid
             ? "bg-brand-orange hover:opacity-90"
@@ -111,7 +125,7 @@ export function MarkBonoPaidButton({
             >
               No, torna
             </Button>
-            <form action={formAction}>
+            <form id={formId} action={formAction}>
               <input type="hidden" name="bonoId" value={bonoId} />
               <SubmitButton pendingLabel="Cobrant…">Sí, {label.toLowerCase()}</SubmitButton>
             </form>
@@ -147,6 +161,8 @@ export function MarkBonoPaidButton({
           </div>
         </dl>
 
+        <CounterMethodChoice form={formId} value={method} onChange={setMethod} />
+
         {error && (
           <p role="alert" className="mt-4 rounded-lg bg-error/5 px-3 py-2 text-sm font-bold text-error">
             {error}
@@ -154,9 +170,10 @@ export function MarkBonoPaidButton({
         )}
 
         <p className="mt-4 text-xs text-brand-muted">
-          El pagament s&apos;anota com a efectiu. Un cop fet no es pot desfer des
-          d&apos;aquí: si t&apos;equivoques de bo, cal avisar
-          l&apos;administració.
+          Un cop fet no es pot desfer des d&apos;aquí.{" "}
+          {admin
+            ? "Si t'equivoques de bo, anul·la'l i corregeix el pagament a Pagaments."
+            : "Si t'equivoques de bo, cal avisar l'administració."}
         </p>
       </ConfirmDialog>
     </>

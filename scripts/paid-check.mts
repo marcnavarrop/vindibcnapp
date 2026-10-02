@@ -15,7 +15,12 @@
  *   · dos cobraments alhora: el bo es llegeix pendent però, quan s'actualitza,
  *     algú altre ja l'ha cobrat → 0 files → error, cap pagament (abans
  *     s'anotava un segon pagament);
- *   · la RLS no deixa actualitzar → 0 files → error, cap pagament.
+ *   · la RLS no deixa actualitzar → 0 files → error, cap pagament;
+ *   · el mètode del taulell: efectiu o targeta del TPV, tots dos amb la sessió
+ *     (passen per la RLS); només el de Stripe va per la clau de servei;
+ *   · cobrar un val de regal: el mateix tot o res (abans, dos cobraments alhora
+ *     n'anotaven dos) i amb el mètode triat;
+ *   · un mètode que no és ni efectiu ni targeta no s'accepta.
  *
  * Les accions (`markBonoPaidAction`, `markTrainerBonoPaidAction`) amb el seu
  * missatge a la pantalla es proven a part, en simulació i amb Playwright.
@@ -29,11 +34,14 @@ type Row = Record<string, unknown>;
 const fake = {
   tables: {} as Record<string, Row[]>,
   hooks: {} as { beforeUpdate?: (t: string, rows: Row[]) => void; canUpdate?: (t: string, r: Row) => boolean },
+  writes: [] as { table: string; op: string; via: string }[],
 };
 (globalThis as { __fakeDb?: unknown }).__fakeDb = fake;
 
 const { USE_MOCK } = await import("../lib/config");
 const { markBonoPaid } = await import("../lib/data/bonos");
+const { markGiftVoucherPaid } = await import("../lib/data/gift-vouchers");
+const { parseCounterMethod } = await import("../lib/counter-payment");
 
 let fallides = 0;
 const check = (cond: boolean, msg: string) => {
@@ -47,6 +55,7 @@ const bono = (id: string, status: string): Row => ({
 const reset = (...bonos: Row[]) => {
   fake.tables = { bonos, payments: [], clients: [{ id: "c-1", referred_by: null }], referral_rewards: [], subscriptions: [] };
   fake.hooks = {};
+  fake.writes = [];
 };
 const pays = () => fake.tables.payments ?? [];
 const status = (id: string) => fake.tables.bonos.find((b) => b.id === id)?.status;
@@ -112,6 +121,64 @@ reset(bono("b1", "pending_payment"));
   await attempt("b1", { method: "card", stripePaymentId: "pi_1", stripeCheckoutSessionId: "cs_1" });
   const e = await attempt("b1", { method: "card", stripePaymentId: "pi_1", stripeCheckoutSessionId: "cs_1" });
   check(!!e && pays().length === 1, "webhook de Stripe repetit: el segon llança (el webhook ho tracta com a duplicat) i segueix havent-hi 1 pagament");
+}
+
+console.log("\nEl mètode del taulell");
+const payVia = () => fake.writes.filter((w) => w.table === "payments" && w.op === "insert").map((w) => w.via);
+reset(bono("b1", "pending_payment"));
+{
+  const e = await attempt("b1", { method: "card" });
+  const p = pays()[0];
+  check(!e && status("b1") === "active" && pays().length === 1 && p.method === "card" && !p.stripe_payment_id,
+    `targeta del TPV: actiu i 1 pagament amb targeta sense identificador de Stripe${e ? ` (${e})` : ""}`);
+  check(payVia().join() === "session", `targeta del TPV: l'anota la sessió (RLS), no la clau de servei (${payVia().join()})`);
+}
+reset(bono("b1", "pending_payment"));
+{
+  await attempt("b1", { method: "cash" });
+  check(pays()[0]?.method === "cash" && payVia().join() === "session", "efectiu: amb la sessió, com sempre");
+}
+reset(bono("b1", "pending_payment"));
+{
+  await attempt("b1", { method: "card", stripePaymentId: "pi_2", stripeCheckoutSessionId: "cs_2" });
+  check(payVia().join() === "admin", `Stripe: l'anota la clau de servei (${payVia().join()})`);
+}
+check(parseCounterMethod(null) === "cash" && parseCounterMethod("") === "cash", "sense camp de mètode (una pestanya d'abans): efectiu");
+check(parseCounterMethod("cash") === "cash" && parseCounterMethod("card") === "card", "«cash» i «card» s'accepten tal qual");
+check(parseCounterMethod("bizum") === null && parseCounterMethod("CARD") === null, "qualsevol altra cosa: no es cobra (l'acció torna l'error)");
+
+console.log("\nCobrar un val de regal");
+const val = (status: string): Row => ({ id: "v1", status, price: 190, buyer_client_id: "c-1", service_type: "ep_individual", total_sessions: 4, code: "VINDI-AAAA-BBBB" });
+const resetVal = (status: string) => {
+  fake.tables = { gift_vouchers: [val(status)], payments: [] };
+  fake.hooks = {};
+  fake.writes = [];
+};
+const valStatus = () => fake.tables.gift_vouchers[0].status;
+const attemptVal = async (m?: "cash" | "card") => {
+  try { await markGiftVoucherPaid("v1", m); return null; } catch (e) { return e instanceof Error ? e.message : String(e); }
+};
+resetVal("pending_payment");
+{
+  const e = await attemptVal("card");
+  check(!e && valStatus() === "active" && pays().length === 1 && pays()[0].method === "card" && pays()[0].amount === 190,
+    `targeta del TPV: actiu i 1 pagament de 190 € amb targeta${e ? ` (${e})` : ""}`);
+}
+resetVal("pending_payment");
+{
+  const e = await attemptVal();
+  check(!e && pays().length === 1 && pays()[0].method === "cash", "sense mètode: efectiu, com abans");
+}
+resetVal("pending_payment");
+fake.hooks.beforeUpdate = (t, rows) => { if (t === "gift_vouchers") rows[0].status = "active"; };
+{
+  const e = await attemptVal("cash");
+  check(!!e && pays().length === 0, `cobrament simultani del val: «${e}», 0 pagaments (abans n'anotava un altre)`);
+}
+resetVal("active");
+{
+  const e = await attemptVal("cash");
+  check(e === "Aquest val ja està cobrat o ja no es pot cobrar. No s'ha anotat cap pagament." && pays().length === 0, `val ja cobrat: «${e}»`);
 }
 
 console.log(fallides === 0 ? "\nTot correcte.\n" : `\n${fallides} comprovacions han fallat.\n`);

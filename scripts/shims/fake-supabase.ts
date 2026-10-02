@@ -3,7 +3,9 @@
 //
 // `globalThis.__fakeDb` té les taules; `__fakeDb.hooks.beforeUpdate(table,
 // rows)` pot canviar les files abans d'una actualització (un cobrament que
-// arriba alhora) i `hooks.canUpdate(table, row)` fa de RLS.
+// arriba alhora) i `hooks.canUpdate(table, row)` fa de RLS. Si hi ha
+// `__fakeDb.writes`, s'hi apunta cada escriptura amb el client que l'ha feta
+// («session» o «admin», la clau de servei): així es pot provar quin camí pren.
 type Row = Record<string, unknown>;
 type Db = {
   tables: Record<string, Row[]>;
@@ -11,7 +13,9 @@ type Db = {
     beforeUpdate?: (table: string, rows: Row[]) => void;
     canUpdate?: (table: string, row: Row) => boolean;
   };
+  writes?: { table: string; op: string; via: Via }[];
 };
+type Via = "session" | "admin";
 const db = (): Db => (globalThis as { __fakeDb?: Db }).__fakeDb!;
 
 type Res = { data: unknown; error: unknown; count?: number | null };
@@ -24,7 +28,7 @@ class Query implements PromiseLike<Res> {
   private one: "single" | "maybe" | null = null;
   private head = false;
   private lim: number | null = null;
-  constructor(private table: string) {}
+  constructor(private table: string, private via: Via) {}
   select(_cols?: string, opts?: { head?: boolean }) {
     if (this.op !== "select") this.returning = true;
     if (opts?.head) this.head = true;
@@ -52,6 +56,7 @@ class Query implements PromiseLike<Res> {
   private run() {
     const all = this.rows();
     let data: Row[] = [];
+    if (this.op !== "select") db().writes?.push({ table: this.table, op: this.op, via: this.via });
     if (this.op === "insert") {
       const items = (Array.isArray(this.payload) ? this.payload : [this.payload!]).map((p) => ({ id: crypto.randomUUID(), ...p }));
       all.push(...items);
@@ -98,9 +103,9 @@ function wrap(q: Query): Query {
   });
 }
 
-export function fakeClient() {
+export function fakeClient(via: Via = "session") {
   return {
-    from: (table: string) => wrap(new Query(table)),
+    from: (table: string) => wrap(new Query(table, via)),
     rpc: async () => ({ data: null, error: null }),
     // La sessió: `globalThis.__fakeUser` ({ id, email }) o ningú.
     auth: {
