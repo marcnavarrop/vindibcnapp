@@ -130,7 +130,7 @@ export default async function OfertesPage({
                       )}
                     </p>
                   </div>
-                  <span className="font-bold text-brand-orange">
+                  <span className="font-bold text-brand-purple-dark">
                     {formatDiscountLabel(p.discountType, p.discountValue)}
                   </span>
                   <span className="text-brand-muted">

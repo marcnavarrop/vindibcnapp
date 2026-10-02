@@ -1,3 +1,4 @@
+import { Tag } from "lucide-react";
 import { formatEur } from "@/lib/labels";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
 import type { EffectivePrice } from "@/lib/data/promotions";
@@ -63,12 +64,14 @@ export function PriceDisplay({
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
       <span className="flex items-center gap-1.5">
-        <span
-          className="rounded-full bg-brand-orange px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase"
-        >
+        {/* El descompte (pas 7): lila fosc amb l'etiqueta, perfilat i no ple
+            perquè no es confongui amb la «Novetat». El preu d'abans, ratllat a
+            sota, és el que el fa entendre sense color. */}
+        <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-brand-purple-dark uppercase ring-1 ring-brand-purple-dark ring-inset">
+          <Tag aria-hidden className="h-2.5 w-2.5" strokeWidth={2.6} />
           {ep.discountLabel}
         </span>
-        <span className={`${textFinal} text-brand-orange`}>
+        <span className={`${textFinal} text-brand-purple-dark`}>
           {formatEur(ep.finalPrice, locale)}
         </span>
       </span>

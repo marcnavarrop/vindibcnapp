@@ -58,7 +58,7 @@ export default async function ComprarBonoPage() {
   // carregar amb un camp que no li diu res.
   const t = await getTranslations("bonos");
   const BONO_TABS = [
-    { href: "/client/bonos", label: t("tabBuy"), accent: true },
+    { href: "/client/bonos", label: t("tabBuy") },
     { href: "/client/bonos/meus", label: t("tabMine") },
   ];
 
@@ -158,11 +158,11 @@ export default async function ComprarBonoPage() {
       {settings.giftVouchersEnabled && (
         <Link
           href="/client/regals"
-          className={`mt-8 flex items-center gap-4 rounded-2xl border border-brand-border bg-white p-4 hover:border-brand-orange active:bg-brand-bg ${TAP_SURFACE}`}
+          className={`mt-8 flex items-center gap-4 rounded-2xl border border-brand-border bg-white p-4 hover:border-brand-purple active:bg-brand-bg ${TAP_SURFACE}`}
         >
           <span
             aria-hidden
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-brand-purple"
           >
             <Gift className="h-5 w-5" />
           </span>
@@ -174,7 +174,7 @@ export default async function ComprarBonoPage() {
               {t("buy.giftCtaDesc")}
             </span>
           </span>
-          <span aria-hidden className="ml-auto text-brand-orange">
+          <span aria-hidden className="ml-auto text-brand-purple">
             →
           </span>
         </Link>

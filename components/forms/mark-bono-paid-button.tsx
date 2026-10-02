@@ -105,11 +105,9 @@ export function MarkBonoPaidButton({
           setMethod("cash");
           setOpen(true);
         }}
-        className={`${fullWidth ? "h-11 w-full rounded-lg px-4 text-sm" : "rounded-md px-2.5 py-1 text-xs"} font-bold whitespace-nowrap text-white ${
-          isUnpaid
-            ? "bg-brand-orange hover:opacity-90"
-            : "bg-brand-purple hover:bg-brand-purple-light"
-        } ${TAP}`}
+        // El mateix lila per a «Marcar com pagat» i «Cobrar i recuperar»: el
+        // text ja diu quin és quin, i el taronja és només dels grups (pas 7).
+        className={`${fullWidth ? "h-11 w-full rounded-lg px-4 text-sm" : "rounded-md px-2.5 py-1 text-xs"} bg-brand-purple font-bold whitespace-nowrap text-white hover:bg-brand-purple-light ${TAP}`}
       >
         {label}
       </button>

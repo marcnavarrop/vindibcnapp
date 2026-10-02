@@ -139,7 +139,7 @@ export function TrialRow({ t }: { t: TrialRowView }) {
         {canConvert && (
           <Link
             href={`/admin/clients/new?trial=${t.id}`}
-            className={`rounded-md bg-brand-orange px-2.5 py-1.5 text-xs font-bold text-white hover:opacity-90 ${TAP}`}
+            className={`rounded-md bg-brand-purple px-2.5 py-1.5 text-xs font-bold text-white hover:bg-brand-purple-light ${TAP}`}
           >
             Convertir en client
           </Link>

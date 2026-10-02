@@ -263,7 +263,7 @@ export function ReservationSheet({
                         <button
                           type="submit"
                           disabled={busy}
-                          className={`shrink-0 rounded-lg bg-brand-orange px-3 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60 ${TAP}`}
+                          className={`shrink-0 rounded-lg bg-brand-purple px-3 py-1.5 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-60 ${TAP}`}
                         >
                           Desar
                         </button>

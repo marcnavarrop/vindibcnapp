@@ -1,6 +1,6 @@
 import { clsx, TAP } from "@/lib/utils";
 
-type Variant = "primary" | "accent" | "outline";
+type Variant = "primary" | "attention" | "outline";
 
 /*
  * `hover:` no existeix al mòbil: no hi ha ratolí, i entre que es toca i la
@@ -8,14 +8,17 @@ type Variant = "primary" | "accent" | "outline";
  * el que fa que el botó se senti.
  *
  * Cada variant s'enfosqueix amb el seu propi to i no amb una opacitat general:
- * el lila sobre blanc i el taronja sobre blanc no reaccionen igual, i abaixar
+ * el lila sobre blanc i el blau sobre blanc no reaccionen igual, i abaixar
  * l'opacitat deixaria veure el fons a través del botó.
  */
 const VARIANTS: Record<Variant, string> = {
   primary:
     "bg-brand-purple text-white hover:bg-brand-purple-light active:bg-brand-purple-dark disabled:opacity-50",
-  accent:
-    "bg-brand-orange text-white hover:opacity-90 active:bg-brand-orange-dark disabled:opacity-50",
+  // Abans «accent», en taronja. Des del pas 7 el taronja és només dels grups:
+  // el botó que mereix una mica més de compte (armar el mode PRE) va en el
+  // blau d'atenció.
+  attention:
+    "bg-attention text-white hover:opacity-90 active:opacity-80 disabled:opacity-50",
   outline:
     "border border-brand-border bg-white text-brand-charcoal hover:bg-brand-bg active:bg-brand-border",
 };

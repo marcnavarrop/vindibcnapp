@@ -459,7 +459,7 @@ function NavLink({
         // prémer-la puja més per notar-se igual.
         TAP,
         active
-          ? "border-brand-orange bg-white/15 text-white active:bg-white/25"
+          ? "border-white bg-white/15 text-white active:bg-white/25"
           : "border-transparent text-white/80 hover:bg-white/10 hover:text-white active:bg-white/20",
       )}
     >

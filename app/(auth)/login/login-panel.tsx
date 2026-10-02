@@ -203,14 +203,14 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full rounded-xl bg-brand-orange px-4 py-3 text-sm font-bold text-white hover:opacity-90 active:bg-brand-orange-dark disabled:opacity-60 ${TAP}`}
+          className={`w-full rounded-xl bg-brand-purple px-4 py-3 text-sm font-bold text-white hover:bg-brand-purple-light active:bg-brand-purple-dark disabled:opacity-60 ${TAP}`}
         >
           {loading ? t("submitting") : t("submit")}
         </button>
 
         <Link
           href="/register"
-          className={`w-full rounded-xl border border-brand-orange px-4 py-3 text-center text-sm font-bold text-brand-orange hover:bg-brand-orange/5 active:bg-brand-orange/15 ${TAP}`}
+          className={`w-full rounded-xl border border-brand-purple px-4 py-3 text-center text-sm font-bold text-brand-purple hover:bg-brand-purple/5 active:bg-brand-purple/15 ${TAP}`}
         >
           {t("createAccount")}
         </Link>

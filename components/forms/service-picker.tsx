@@ -204,7 +204,7 @@ export function ServiceTypeStep({
                 </p>
                 <p className="mt-0.5 text-xs text-brand-muted">
                   {t("from")}{" "}
-                  <span className={hasDiscount ? "font-bold text-brand-orange" : ""}>
+                  <span className={hasDiscount ? "font-bold text-brand-purple-dark" : ""}>
                     {formatEur(minPrice, locale)}
                   </span>
                 </p>

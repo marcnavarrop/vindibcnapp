@@ -8,15 +8,13 @@ import { SectionTabsFrame, sectionTabClass } from "@/components/ui/section-tabs"
 export type RouteTab = {
   href: string;
   label: string;
-  /** Quan la pestanya NO és activa, es pinta en color de accent (taronja). */
-  accent?: boolean;
 };
 
 /**
  * Barra de pestanyes horitzontal basada en rutes.
  * Les del client (Bons: Comprar bo nou · Els meus bons), amb la mateixa forma
- * que les de l'equip. La de conversió, en taronja quan no és l'activa (el color
- * es decideix al pas 7).
+ * que les de l'equip. Totes iguals: la de compra deixa de ser taronja al pas 7,
+ * que deixa el taronja només per als grups.
  */
 export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
   // Aquest component només surt a l'àrea de client, que va dins del proveïdor
@@ -47,7 +45,7 @@ export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
           <Link
             key={tab.href}
             href={tab.href}
-            className={sectionTabClass(active, tab.accent)}
+            className={sectionTabClass(active)}
             aria-current={active ? "page" : undefined}
           >
             {tab.label}

@@ -184,7 +184,7 @@ export function ReschedulePicker({
                     className={clsx(
                       "min-h-11 rounded-lg border text-sm font-bold",
                       active
-                        ? "border-brand-orange bg-brand-orange text-white"
+                        ? "border-brand-purple bg-brand-purple text-white"
                         : "border-brand-border bg-white text-brand-charcoal hover:bg-brand-bg",
                       TAP_SURFACE,
                     )}
@@ -201,7 +201,7 @@ export function ReschedulePicker({
             <button
               type="submit"
               disabled={!pick || pending}
-              className={`w-full rounded-lg bg-brand-orange px-3 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50 ${TAP_SURFACE}`}
+              className={`w-full rounded-lg bg-brand-purple px-3 py-2 text-sm font-bold text-white hover:bg-brand-purple-light disabled:opacity-50 ${TAP_SURFACE}`}
             >
               {pending
                 ? "Movent…"

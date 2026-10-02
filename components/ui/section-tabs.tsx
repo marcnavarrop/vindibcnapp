@@ -53,16 +53,14 @@ export function SectionTabsFrame({
 }
 
 /** Les classes d'una pestanya del selector, enllaç o botó. */
-export function sectionTabClass(active: boolean, accent = false): string {
+export function sectionTabClass(active: boolean): string {
   return clsx(
     "inline-flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-bold whitespace-nowrap lg:h-9",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple",
     TAP,
     active
       ? "bg-brand-purple text-white active:bg-brand-purple-dark"
-      : accent
-        ? "text-brand-orange-text hover:bg-brand-bg active:bg-brand-orange/10"
-        : "text-brand-tab hover:bg-brand-bg hover:text-brand-dark active:bg-brand-border",
+      : "text-brand-tab hover:bg-brand-bg hover:text-brand-dark active:bg-brand-border",
   );
 }
 

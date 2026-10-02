@@ -95,7 +95,7 @@ export function PreModeForm({
         <input type="hidden" name="on" value={armed ? "0" : "1"} />
         <SubmitButton
           pendingLabel={armed ? "Apagant…" : "Armant…"}
-          variant={armed ? "outline" : "accent"}
+          variant={armed ? "outline" : "attention"}
         >
           {armed ? "Apagar el mode PRE" : "Armar el mode PRE"}
         </SubmitButton>

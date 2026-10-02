@@ -905,7 +905,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Convertir en client" },
         {
           t: "p",
-          text: "El botó taronja «Convertir en client» obre l'alta amb el nom, el correu, el telèfon i el professional ja posats, i amb la nota general «Prové d'una sessió de prova». Un cop convertida, la fila ho indica i el botó desapareix.",
+          text: "El botó lila «Convertir en client» obre l'alta amb el nom, el correu, el telèfon i el professional ja posats, i amb la nota general «Prové d'una sessió de prova». Un cop convertida, la fila ho indica i el botó desapareix.",
         },
         {
           t: "p",

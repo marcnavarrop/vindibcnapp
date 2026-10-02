@@ -26,11 +26,6 @@
      de 14 px. Aquest fa 6,6:1 i 6,2:1, i segueix sent clarament més suau que
      la pestanya activa (lila i subratllada). */
   --color-brand-tab: #5c5c60;
-  /* La pestanya «Comprar bo nou» del client, quan no és l'activa: el taronja
-     de marca hi feia 2,6:1. Aquest és el mateix taronja enfosquit fins a 5:1
-     sobre el fons gris. Si al pas del color el taronja deixa de ser d'aquí, se
-     n'anirà amb ell. */
-  --color-brand-orange-text: #b8470c;
   --color-brand-border: #eaeaea;
   --color-brand-bg: #f7f7f7;
 

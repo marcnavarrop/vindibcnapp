@@ -275,7 +275,7 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
                       <button
                         type="button"
                         onClick={() => setCancelling(r)}
-                        className={`rounded-md bg-brand-orange px-2.5 py-1 text-xs font-bold text-white hover:opacity-90 ${TAP}`}
+                        className={`rounded-md border border-error/40 bg-white px-2.5 py-1 text-xs font-bold text-error hover:bg-error-bg ${TAP}`}
                       >
                         Donar de baixa
                       </button>

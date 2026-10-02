@@ -33,7 +33,7 @@ export default async function ClientBonosPage() {
   const cycle = subscription ? await getCycleState(subscription) : null;
   const cycleBono = cycle?.cycleBono ?? null;
   const BONO_TABS = [
-    { href: "/client/bonos", label: t("tabBuy"), accent: true },
+    { href: "/client/bonos", label: t("tabBuy") },
     { href: "/client/bonos/meus", label: t("tabMine") },
   ];
 
