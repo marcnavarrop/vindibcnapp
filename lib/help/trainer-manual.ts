@@ -71,6 +71,10 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat com a pestanya germana), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt. A més a més, a totes les pantalles hi ha el botó rodó de suport a baix a la dreta (a Reserves, el botó «Suport» de dalt), que s'explica al seu capítol.",
         },
         {
+          t: "p",
+          text: "Tot el que no es pot desfer pregunta abans. El primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà; fins que no toques «Sí, …» no passa res, i «No, torna» ho deixa tal com era. Quan cal veure un resum abans de decidir —un cobrament, una baixa—, la pregunta surt en un quadre a part, amb les mateixes dues respostes.",
+        },
+        {
           t: "note",
           text: "Aquesta àrea és sempre en català. L'única part de l'app que es tradueix és la del client, i és a posta: la fan servir persones que no formen part de l'equip.",
         },
@@ -247,7 +251,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Exercicis" },
         {
           t: "p",
-          text: "Els exercicis que té assignats i, si el client és teu, el formulari per assignar-ne un de la biblioteca amb una nota de pauta al costat («3 sèries de 12, dos cops/setmana» és l'exemple que hi surt). També pots treure'n un amb el botó «Treure».",
+          text: "Els exercicis que té assignats i, si el client és teu, el formulari per assignar-ne un de la biblioteca amb una nota de pauta al costat («3 sèries de 12, dos cops/setmana» és l'exemple que hi surt). També pots treure'n un amb «Treure»: pregunta abans, perquè s'endú el progrés que s'hi hagi registrat.",
         },
         {
           t: "note",
@@ -256,7 +260,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Progrés" },
         {
           t: "p",
-          text: "Les mesures registrades per a cada exercici assignat: data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne. És on es veu si el que li has posat està funcionant.",
+          text: "Les mesures registrades per a cada exercici assignat: data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne (pregunta abans). És on es veu si el que li has posat està funcionant.",
         },
         { t: "h", text: "Documents" },
         {
@@ -718,7 +722,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Crear-ne un" },
         {
           t: "p",
-          text: "Amb «+ Nou exercici». Demana el nom, la categoria, una descripció i, opcionalment, un vídeo: o bé l'enllaç a un de YouTube, o bé un fitxer que puges tu. Els exercicis existents s'editen i s'esborren des de la mateixa fitxa.",
+          text: "Amb «+ Nou exercici». Demana el nom, la categoria, una descripció i, opcionalment, un vídeo: o bé l'enllaç a un de YouTube, o bé un fitxer que puges tu. Els exercicis existents s'editen i s'esborren des de la mateixa fitxa. Esborrar-ne un el treu també de tots els clients que el tenen assignat, amb el seu progrés; per això pregunta abans.",
         },
         { t: "h", text: "Categories" },
         {

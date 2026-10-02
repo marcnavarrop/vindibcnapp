@@ -78,7 +78,7 @@ export function CancelBonoButton({
               variant="outline"
               onClick={() => setOpen(false)}
             >
-              Cancel·lar
+              No, torna
             </Button>
             <form action={action}>
               <input type="hidden" name="bonoId" value={bonoId} />

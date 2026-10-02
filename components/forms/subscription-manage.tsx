@@ -156,7 +156,7 @@ export function SubscriptionManage({
                 onClick={() => setAskingExtra(false)}
                 className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
               >
-                {t("cancel")}
+                {t("goBack")}
               </button>
               <form action={centerAction}>
                 <SubmitButton pendingLabel={t("subscriptionExtraClaiming")}>

@@ -125,6 +125,7 @@
       <p><strong>Els pagaments són segurs de provar.</strong> Stripe està en <strong>mode test</strong>: no es cobra ni un cèntim de veritat, per molt que la pantalla digui imports. Es paga amb la targeta de prova <code>4242 4242 4242 4242</code>.</p>
       <p><strong>La resta de dades ja no són totes de mentida.</strong> A la base hi conviuen clients de demostració i persones reals (el mateix Marc, entre d'altres). Prova, clica i experimenta lliurement amb els comptes demo; però abans d'editar, esborrar o cancel·lar res des de la fitxa d'un client, mira de qui és.</p>
       <p><strong>Comptes demo i reals, separats</strong> <span class="flag">Nou</span>: un client real no veu ni pot reservar (calendari, llista d'espera, sèries, alternatives) amb l'<strong>Entrenador Demo</strong> ni el <strong>Fisio Demo</strong>, tampoc grup ni fisioteràpia, que són oberts a qualsevol professional; i el <strong>Client Demo</strong> només veu i reserva professionals demo. /prova no ofereix cap hora dels professionals demo. L'equip tampoc ho barreja: reservar el Client Demo amb la Laia o un client real amb l'Entrenador Demo dona error. Comprova-ho entrant amb el teu compte de client (amb un bo de grup) i, amb el mode PRE, amb el Client Demo.</p>
+      <p><strong>Tot el que no es pot desfer pregunta abans</strong> <span class="flag">Nou</span>: el primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà, i fins a «Sí, …» no passa res; «No, torna» ho deixa com era. És el mateix «Sí, cancel·la / No, torna» de l'agenda. Prova'l a: un anunci i una enquesta (eliminar i tancar), un exercici de la biblioteca i una categoria buida, un exercici assignat i un registre de progrés a la fitxa, un bloqueig, una etiqueta, una oferta (abans era el quadre del navegador), un val de regal, la nota d'una sessió i, com a client, un document. Als quadres de cobrar, anul·lar un bo, subscripcions, factures i compres, el botó de no fer res ara diu «No, torna» en lloc de «Cancel·lar».</p>
     </div>
 
     <p>On és l'app:</p>
@@ -357,6 +358,7 @@
       <li>Crea'n un amb nom, <strong>categoria</strong>, descripció i vídeo: prova les dues maneres, <strong>pujar un fitxer</strong> (des del mòbil) i <strong>enganxar una adreça</strong> (YouTube, Vimeo)</li>
       <li><strong>Categories</strong>: pantalla pròpia, a la qual s'arriba des de la biblioteca. Crea'n una, filtra-hi</li>
       <li>L'assignació no es fa aquí sinó a la fitxa del client → Exercicis</li>
+      <li><strong>Eliminar pregunta abans</strong> <span class="flag">Nou</span> i avisa que el treu també dels clients que el tenen assignat, amb el seu progrés. Prova «No, torna»: l'exercici hi continua</li>
     </ul>
 
     <h3>1.13 Comunitat → Anuncis / Enquestes</h3>
@@ -367,7 +369,7 @@
       <li><strong>«N respostes» compta persones, no vots</strong> <span class="flag">Corregit</span>: en una de selecció múltiple, un client que en marca dues compta una vegada (a la llista de l'admin i a la targeta del client). Abans comptava els vots</li>
       <li><strong>Només l'admin escriu anuncis</strong> <span class="flag">Nou</span> (RLS, 0098): el professional els llegeix com sempre a /trainer/comunitat</li>
       <li><strong>"Veure resultats" ensenya els percentatges i, desplegant cada opció, els noms de qui l'ha votada.</strong> Per al client són anònims: ell només veu els percentatges</li>
-      <li>"Tancar" la deixa visible sense admetre respostes; "Eliminar" se l'endú amb les respostes</li>
+      <li>"Tancar" la deixa visible sense admetre respostes; "Eliminar" se l'endú amb les respostes. <strong>Totes dues pregunten abans</strong> <span class="flag">Nou</span>, i també «Eliminar» un anunci</li>
     </ul>
     <div class="note"><strong>Compte amb què promets:</strong> si dius als clients que una enquesta és anònima, recorda que tu sí que veus qui ha votat què.</div>
 

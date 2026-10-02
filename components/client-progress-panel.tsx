@@ -1,3 +1,4 @@
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { centerToday } from "@/lib/center-time";
 import { addProgressAction, deleteProgressAction } from "@/app/actions/client-progress-actions";
 import type { AssignedExercise } from "@/lib/data/client-exercises";
@@ -71,16 +72,18 @@ export function ClientProgressPanel({
                       <span className="text-brand-muted">{ep.notes}</span>
                     )}
                     {canManage && (
-                      <form action={deleteProgressAction} className="ml-auto">
-                        <input type="hidden" name="id" value={ep.id} />
-                        <input type="hidden" name="redirectPath" value={redirectPath} />
-                        <button
-                          type="submit"
-                          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
-                        >
-                          Eliminar
-                        </button>
-                      </form>
+                      <div className="ml-auto">
+                        <ConfirmInline
+                          compact
+                          action={deleteProgressAction}
+                          fields={{ id: ep.id, redirectPath }}
+                          trigger="Eliminar"
+                          triggerClassName={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
+                          question={`Eliminar el registre del ${formatDate(ep.recordedAt)}?`}
+                          confirmLabel="Sí, elimina"
+                          pendingLabel="Eliminant…"
+                        />
+                      </div>
                     )}
                   </div>
                 ))}

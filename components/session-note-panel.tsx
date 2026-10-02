@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -140,13 +141,19 @@ export function SessionNotePanel({
               Cancel·lar
             </Button>
             {note && (
-              <button
-                type="submit"
-                formAction={deleteSessionNoteAction}
-                className={`text-xs font-bold tracking-wide text-error uppercase hover:underline ${TAP}`}
-              >
-                Esborrar
-              </button>
+              /* Dins del formulari de la nota: el «Sí» és un `formAction`
+                 i els camps (la reserva) ja hi són. */
+              <ConfirmInline
+                compact
+                inParentForm
+                action={deleteSessionNoteAction}
+                trigger="Esborrar"
+                triggerClassName={`text-xs font-bold tracking-wide text-error uppercase hover:underline ${TAP}`}
+                question="Esborrar la nota?"
+                consequence="El client deixarà de veure-la."
+                confirmLabel="Sí, esborra"
+                pendingLabel="Esborrant…"
+              />
             )}
           </div>
         </form>

@@ -109,7 +109,7 @@ export function MarkBonoPaidButton({
               variant="outline"
               onClick={close}
             >
-              Cancel·lar
+              No, torna
             </Button>
             <form action={formAction}>
               <input type="hidden" name="bonoId" value={bonoId} />

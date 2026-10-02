@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Trash2 } from "lucide-react";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import {
   createExerciseCategoryAction,
   deleteExerciseCategoryAction,
@@ -95,19 +96,20 @@ export function ExerciseCategoriesManager({
 
                 <div className="ml-auto">
                   {c.exerciseCount === 0 ? (
-                    <form action={deleteAction}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <SubmitButton
-                        variant="outline"
-                        pendingLabel="Esborrant…"
-                        className="!px-2.5 !py-1 !text-xs"
-                      >
+                    <ConfirmInline
+                      compact
+                      action={deleteAction}
+                      fields={{ id: c.id }}
+                      trigger={
                         <span className="inline-flex items-center gap-1.5">
                           <Trash2 className="h-3.5 w-3.5" aria-hidden />
                           Esborrar
                         </span>
-                      </SubmitButton>
-                    </form>
+                      }
+                      question={`Esborrar la categoria «${c.name}»?`}
+                      confirmLabel="Sí, esborra"
+                      pendingLabel="Esborrant…"
+                    />
                   ) : (
                     <span className="text-xs text-brand-muted">
                       En ús: no es pot esborrar

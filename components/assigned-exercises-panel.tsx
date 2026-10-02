@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { TAP } from "@/lib/utils";
 import {
   VideoIndicator,
@@ -98,15 +99,21 @@ export function AssignedExercisesPanel({
                   onPlay={() => setPlaying(a)}
                 />
                 {canManage && (
-                  <form action={removeAction} className="ml-auto">
-                    <input type="hidden" name="id" value={a.id} />
-                    <button
-                      type="submit"
-                      className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
-                    >
-                      Treure
-                    </button>
-                  </form>
+                  <div className="ml-auto">
+                    {/* Treure-lo s'endú el progrés: `exercise_progress` penja
+                        de l'assignació amb `on delete cascade`. */}
+                    <ConfirmInline
+                      compact
+                      action={removeAction}
+                      fields={{ id: a.id }}
+                      trigger="Treure"
+                      triggerClassName={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
+                      question={`Treure «${a.name}»?`}
+                      consequence="També s'esborra el progrés que s'hi hagi registrat."
+                      confirmLabel="Sí, treu-lo"
+                      pendingLabel="Traient…"
+                    />
+                  </div>
                 )}
               </div>
             </div>

@@ -75,7 +75,7 @@ export function GenerateInvoiceButton({
         actions={
           <>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              {existingInvoice ? "Tancar" : "Cancel·lar"}
+              {existingInvoice ? "Tancar" : "No, torna"}
             </Button>
             {/* Amb una factura ja generada la base de dades ho rebutjarà: val
                 més no oferir un botó condemnat a fallar. */}

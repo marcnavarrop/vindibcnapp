@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { OrphansConfirm } from "@/components/orphans-confirm";
 import type { AvailabilityBlock } from "@/lib/data/availability-blocks";
@@ -123,15 +124,17 @@ export function AvailabilityBlocksManager({
                       Ja iniciat
                     </span>
                   ) : (
-                    <form action={deleteAction}>
-                      <input type="hidden" name="id" value={b.id} />
-                      <button
-                        type="submit"
-                        className={`text-xs font-bold tracking-wide text-error uppercase hover:underline ${TAP}`}
-                      >
-                        Eliminar
-                      </button>
-                    </form>
+                    <ConfirmInline
+                      compact
+                      action={deleteAction}
+                      fields={{ id: b.id }}
+                      trigger="Eliminar"
+                      triggerClassName={`text-xs font-bold tracking-wide text-error uppercase hover:underline ${TAP}`}
+                      question="Eliminar aquest bloqueig?"
+                      consequence="Aquestes hores tornen a ser reservables segons la disponibilitat."
+                      confirmLabel="Sí, elimina"
+                      pendingLabel="Eliminant…"
+                    />
                   )}
                 </li>
               );

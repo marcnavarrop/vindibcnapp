@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TAP } from "@/lib/utils";
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { listAnnouncements } from "@/lib/data/announcements";
 import { listPolls } from "@/lib/data/polls";
 import { deleteAnnouncementAction } from "@/app/(admin)/admin/community/actions";
@@ -109,15 +110,17 @@ export default async function CommunityPage({
                   >
                     Editar
                   </Link>
-                  <form action={deleteAnnouncementAction}>
-                    <input type="hidden" name="id" value={a.id} />
-                    <button
-                      type="submit"
-                      className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
-                    >
-                      Eliminar
-                    </button>
-                  </form>
+                  <ConfirmInline
+                    compact
+                    action={deleteAnnouncementAction}
+                    fields={{ id: a.id }}
+                    trigger="Eliminar"
+                    triggerClassName={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
+                    question="Eliminar aquest anunci?"
+                    consequence="Desapareix del tauler de clients i professionals. Els correus que ja s'hagin enviat no es poden retirar."
+                    confirmLabel="Sí, elimina"
+                    pendingLabel="Eliminant…"
+                  />
                 </div>
               </article>
             ))}
@@ -168,25 +171,33 @@ export default async function CommunityPage({
                     Veure resultats
                   </Link>
                   {p.active && (
-                    <form action={closePollAction}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <button
-                        type="submit"
-                        className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
-                      >
-                        Tancar
-                      </button>
-                    </form>
+                    <ConfirmInline
+                      compact
+                      action={closePollAction}
+                      fields={{ id: p.id }}
+                      trigger="Tancar"
+                      triggerClassName={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
+                      question="Tancar aquesta enquesta?"
+                      consequence="Ningú més hi podrà respondre, i no es pot tornar a obrir."
+                      confirmLabel="Sí, tanca-la"
+                      pendingLabel="Tancant…"
+                    />
                   )}
-                  <form action={deletePollAction}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <button
-                      type="submit"
-                      className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
-                    >
-                      Eliminar
-                    </button>
-                  </form>
+                  <ConfirmInline
+                    compact
+                    action={deletePollAction}
+                    fields={{ id: p.id }}
+                    trigger="Eliminar"
+                    triggerClassName={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
+                    question="Eliminar aquesta enquesta?"
+                    consequence={
+                      p.responseCount > 0
+                        ? `S'esborren també ${p.responseCount === 1 ? "la resposta que té" : `les ${p.responseCount} respostes que té`}.`
+                        : undefined
+                    }
+                    confirmLabel="Sí, elimina"
+                    pendingLabel="Eliminant…"
+                  />
                 </div>
               </article>
             ))}

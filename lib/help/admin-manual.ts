@@ -107,6 +107,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           text: "A totes les pantalles hi ha, a més, el botó rodó de suport a baix a la dreta: obre un tiquet des d'on siguis, sense perdre el que estaves fent. És la drecera del mateix canal que hi ha al menú, a Suport, i s'explica al seu capítol.",
         },
         {
+          t: "p",
+          text: "Tot el que no es pot desfer pregunta abans. El primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà; fins que no toques «Sí, …» no passa res, i «No, torna» ho deixa tal com era. Quan cal veure un resum abans de decidir —un cobrament, una baixa—, la pregunta surt en un quadre a part, amb les mateixes dues respostes.",
+        },
+        {
           t: "note",
           text: "Aquesta àrea és sempre en català. L'única part de l'app que es tradueix és la del client, i és a posta: la fan servir persones que no formen part de l'equip.",
         },
@@ -1158,7 +1162,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Anul·lar",
-              "El deixa fora de joc. No surt als bescanviats: aquell bo ja existeix i pot tenir sessions començades.",
+              "El deixa fora de joc, després de preguntar-ho. Si el val ja estava cobrat, l'app no retorna els diners: es fa a part. No surt als bescanviats: aquell bo ja existeix i pot tenir sessions començades.",
             ],
           ],
         },
@@ -1337,7 +1341,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "«Desactivar» l'apaga sense perdre-la —serveix per tornar-la a engegar l'any que ve—; «Eliminar» la treu del tot.",
+          text: "«Desactivar» l'apaga sense perdre-la —serveix per tornar-la a engegar l'any que ve—; «Eliminar» la treu del tot, després de preguntar-ho. Els bons ja comprats no canvien: el preu queda desat a cada bo.",
         },
       ],
     },
@@ -1491,6 +1495,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "La biblioteca d'exercicis del centre. És compartida: la mateixa que veuen i editen els professionals des de la seva àrea. Un exercici no és de qui el va crear, és de la casa.",
         },
+        {
+          t: "p",
+          text: "Eliminar un exercici de la biblioteca el treu també de tots els clients que el tenen assignat, amb el progrés que s'hi hagi registrat. Per això la pantalla t'ho diu i pregunta abans.",
+        },
         { t: "h", text: "Crear-ne un" },
         {
           t: "p",
@@ -1543,7 +1551,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "A la llista, «N respostes» és el nombre de PERSONES que l'han contestada: en una de selecció múltiple, qui en marca dues compta una vegada. «Veure resultats» ensenya els vots de cada opció i qui els ha fet. «Tancar» la deixa visible però ja no admet respostes; «Eliminar» la treu, amb les respostes incloses.",
+          text: "A la llista, «N respostes» és el nombre de PERSONES que l'han contestada: en una de selecció múltiple, qui en marca dues compta una vegada. «Veure resultats» ensenya els vots de cada opció i qui els ha fet. «Tancar» la deixa visible però ja no admet respostes; «Eliminar» la treu, amb les respostes incloses. Totes dues coses pregunten abans, i una enquesta tancada no es pot tornar a obrir.",
         },
         {
           t: "note",

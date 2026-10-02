@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { useActionState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -112,21 +113,29 @@ export function TagCatalog({
                     </span>
                   )}
 
-                  <form action={deleteFormAction} className="ml-auto">
-                    <input type="hidden" name="id" value={t.id} />
-                    <PendingTextButton
-                      pendingLabel="Esborrant…"
+                  <div className="ml-auto">
+                    <ConfirmInline
+                      compact
+                      action={deleteFormAction}
+                      fields={{ id: t.id }}
+                      trigger="Esborrar"
                       disabled={inUseByPromotions}
-                      title={
+                      triggerTitle={
                         inUseByPromotions
                           ? "Hi ha ofertes dirigides a aquesta etiqueta. Canvia-les primer."
                           : undefined
                       }
-                      className={`text-brand-muted hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-brand-muted ${TAP}`}
-                    >
-                      Esborrar
-                    </PendingTextButton>
-                  </form>
+                      triggerClassName={`inline-flex shrink-0 items-center gap-1.5 text-xs font-bold tracking-wide uppercase text-brand-muted hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-brand-muted ${TAP}`}
+                      question={`Esborrar l'etiqueta «${t.name}»?`}
+                      consequence={
+                        t.clientCount > 0
+                          ? `Es treu ${t.clientCount === 1 ? "de l'únic client que la porta" : `dels ${t.clientCount} clients que la porten`}.`
+                          : undefined
+                      }
+                      confirmLabel="Sí, esborra"
+                      pendingLabel="Esborrant…"
+                    />
+                  </div>
                 </div>
               );
             })}

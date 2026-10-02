@@ -288,11 +288,11 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
               onClick={() => setCancelling(null)}
               className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
             >
-              Cancel·lar
+              No, torna
             </button>
             <form action={cancelAction} onSubmit={() => setCancelling(null)}>
               <input type="hidden" name="subscriptionId" value={cancelling?.id ?? ""} />
-              <SubmitButton pendingLabel="Donant de baixa…">Donar de baixa</SubmitButton>
+              <SubmitButton pendingLabel="Donant de baixa…">Sí, dona de baixa</SubmitButton>
             </form>
           </>
         }
@@ -319,12 +319,12 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
               onClick={() => setPausing(null)}
               className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
             >
-              Cancel·lar
+              No, torna
             </button>
             <form action={pauseAction} onSubmit={() => setPausing(null)}>
               <input type="hidden" name="subscriptionId" value={pausing?.id ?? ""} />
               <input type="hidden" name="resumeOn" id="admin-resume-on" />
-              <SubmitButton pendingLabel="Congelant…">Congelar</SubmitButton>
+              <SubmitButton pendingLabel="Congelant…">Sí, congela-la</SubmitButton>
             </form>
           </>
         }
@@ -374,11 +374,11 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
               onClick={() => setResuming(null)}
               className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
             >
-              Cancel·lar
+              No, torna
             </button>
             <form action={resumeAction} onSubmit={() => setResuming(null)}>
               <input type="hidden" name="subscriptionId" value={resuming?.id ?? ""} />
-              <SubmitButton pendingLabel="Reprenent…">Reprendre</SubmitButton>
+              <SubmitButton pendingLabel="Reprenent…">Sí, reprèn-la</SubmitButton>
             </form>
           </>
         }
@@ -403,7 +403,7 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
               onClick={() => setPricing(null)}
               className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark ${TAP}`}
             >
-              Cancel·lar
+              No, torna
             </button>
             <form action={priceAction} onSubmit={() => setPricing(null)}>
               <input type="hidden" name="subscriptionId" value={pricing?.id ?? ""} />

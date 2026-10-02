@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import {
   SERVICE_LABELS,
   GIFT_VOUCHER_STATUS_LABELS,
@@ -153,15 +154,23 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                     {/* Un val bescanviat ja no es toca: el bo existeix i té
                         sessions que algú pot haver començat a fer servir. */}
                     {v.status !== "redeemed" && v.status !== "cancelled" && (
-                      <form action={cancelGiftVoucherAction}>
-                        <input type="hidden" name="voucherId" value={v.id} />
-                        <button
-                          type="submit"
-                          className={`rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold whitespace-nowrap text-brand-muted hover:border-error hover:text-error ${TAP}`}
-                        >
-                          Anul·lar
-                        </button>
-                      </form>
+                      /* Anul·lar no retorna res: si el val estava pagat, el
+                         retorn dels diners es fa fora de l'app. Es diu abans. */
+                      <ConfirmInline
+                        compact
+                        action={cancelGiftVoucherAction}
+                        fields={{ voucherId: v.id }}
+                        trigger="Anul·lar"
+                        triggerClassName={`rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold whitespace-nowrap text-brand-muted hover:border-error hover:text-error ${TAP}`}
+                        question={`Anul·lar el val ${v.code}?`}
+                        consequence={
+                          v.status === "active"
+                            ? "El codi deixa de funcionar. L'app no retorna els diners: si cal, es fa a part."
+                            : "El codi deixa de funcionar."
+                        }
+                        confirmLabel="Sí, anul·la"
+                        pendingLabel="Anul·lant…"
+                      />
                     )}
                   </div>
                 </td>

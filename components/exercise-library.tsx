@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Film, ExternalLink, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { TAP, TAP_SURFACE, clsx, normalizeForSearch } from "@/lib/utils";
 import type { Exercise } from "@/lib/data/exercises";
 import type { ExerciseCategoryItem } from "@/lib/data/exercise-categories";
@@ -381,15 +382,20 @@ function ExerciseCard({
             >
               Editar
             </Link>
-            <form action={deleteAction}>
-              <input type="hidden" name="id" value={e.id} />
-              <button
-                type="submit"
-                className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error active:opacity-70 ${TAP}`}
-              >
-                Eliminar
-              </button>
-            </form>
+            {/* Esborrar-lo de la biblioteca el treu també de cada client que
+                el té assignat, amb el seu progrés: `client_exercises` i
+                `exercise_progress` hi pengen amb `on delete cascade`. */}
+            <ConfirmInline
+              compact
+              action={deleteAction}
+              fields={{ id: e.id }}
+              trigger="Eliminar"
+              triggerClassName={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error active:opacity-70 ${TAP}`}
+              question={`Eliminar «${e.name}» de la biblioteca?`}
+              consequence="També es treu a tots els clients que el tenen assignat, amb el progrés que hi hagin registrat."
+              confirmLabel="Sí, elimina"
+              pendingLabel="Eliminant…"
+            />
           </div>
         )}
       </div>

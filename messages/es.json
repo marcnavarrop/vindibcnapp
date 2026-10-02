@@ -306,7 +306,7 @@
       "confirmCardBody": "Te llevamos a la página de pago de Stripe. El bono se crea cuando el pago se confirme; si no acabas de pagar, no se crea nada.",
       "accept": "Acepto las",
       "acceptLink": "condiciones de compra",
-      "cancel": "Cancelar",
+      "goBack": "No, volver",
       "confirm": "Confirmar",
       "buying": "Comprando…",
       "goingToStripe": "Yendo a Stripe…",
@@ -389,7 +389,7 @@
       "limitReached": "Ya has usado todas las sesiones extra de este mes.",
       "staleCycle": "La suscripción acaba de renovarse. Vuelve a cargar la página.",
       "failed": "No se ha podido añadir la sesión extra.",
-      "cancel": "Cancelar",
+      "goBack": "No, volver",
       "close": "Cerrar",
       "subscriptionPaused": "El centro ha congelado tu suscripción. No tienes que pagar nada mientras esté así, y el tiempo parado no lo pierdes: al reanudarla, la renovación se retrasa los mismos días.",
       "subscriptionPausedUntil": "Se reanudará el {date}.",
@@ -993,9 +993,6 @@
     "cancel": "Cancelar",
     "download": "Descargar",
     "delete": "Eliminar",
-    "sure": "¿Seguro?",
-    "yes": "Sí",
-    "no": "No",
     "downloadFailed": "No se ha podido descargar el documento.",
     "errors": {
       "unauthenticated": "No autenticado.",
@@ -1006,7 +1003,12 @@
       "badId": "Documento no válido.",
       "uploadFailed": "No se ha podido subir el archivo.",
       "deleteFailed": "No se ha podido eliminar el documento."
-    }
+    },
+    "deleteQuestion": "¿Eliminar «{name}»?",
+    "deleteConsequence": "El centro tampoco podrá verlo.",
+    "deleteYes": "Sí, elimínalo",
+    "deleting": "Eliminando…",
+    "deleteBack": "No, volver"
   },
   "help": {
     "title": "Ayuda",

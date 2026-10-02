@@ -306,7 +306,7 @@
       "confirmCardBody": "Et portem a la pàgina de pagament de Stripe. El bo es crea quan el pagament es confirmi; si no acabes de pagar, no es crea res.",
       "accept": "Accepto les",
       "acceptLink": "condicions de compra",
-      "cancel": "Cancel·lar",
+      "goBack": "No, torna",
       "confirm": "Confirmar",
       "buying": "Comprant…",
       "goingToStripe": "Anant a Stripe…",
@@ -389,7 +389,7 @@
       "limitReached": "Ja has fet servir totes les sessions extra d'aquest mes.",
       "staleCycle": "La subscripció s'acaba de renovar. Torna a carregar la pàgina.",
       "failed": "No s'ha pogut afegir la sessió extra.",
-      "cancel": "Cancel·lar",
+      "goBack": "No, torna",
       "close": "Tancar",
       "subscriptionPaused": "El centre ha congelat la teva subscripció. No has de pagar res mentre estigui així, i el temps aturat no el perds: en reprendre-la, la renovació es retarda els mateixos dies.",
       "subscriptionPausedUntil": "Es reprendrà el {date}.",
@@ -993,9 +993,6 @@
     "cancel": "Cancel·lar",
     "download": "Descarregar",
     "delete": "Eliminar",
-    "sure": "Segur?",
-    "yes": "Sí",
-    "no": "No",
     "downloadFailed": "No s'ha pogut descarregar el document.",
     "errors": {
       "unauthenticated": "No autenticat.",
@@ -1006,7 +1003,12 @@
       "badId": "Document no vàlid.",
       "uploadFailed": "No s'ha pogut pujar el fitxer.",
       "deleteFailed": "No s'ha pogut eliminar el document."
-    }
+    },
+    "deleteQuestion": "Eliminar «{name}»?",
+    "deleteConsequence": "El centre tampoc el podrà veure.",
+    "deleteYes": "Sí, elimina'l",
+    "deleting": "Eliminant…",
+    "deleteBack": "No, torna"
   },
   "help": {
     "title": "Ajuda",

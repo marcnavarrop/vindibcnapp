@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { TAP } from "@/lib/utils";
 import { useActionState, useState, useRef, useTransition } from "react";
 import { useTranslations, useLocale } from "next-intl";
@@ -202,7 +203,6 @@ function DocumentRow({
   const t = useTranslations("documents");
   const te = useTranslations("documents.errors");
   const locale = useLocale() as Locale;
-  const [confirming, setConfirming] = useState(false);
   const [deleteState, deleteFormAction, deleting] = useActionState(
     async (prev: DocFormState, formData: FormData) => {
       const result = await deleteAction(prev, formData);
@@ -244,50 +244,33 @@ function DocumentRow({
         </span>
       </div>
 
-      {confirming ? (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-brand-muted">{t("sure")}</span>
-          <form action={deleteFormAction}>
-            <input type="hidden" name="documentId" value={doc.id} />
-            <button
-              type="submit"
-              disabled={deleting}
-              className={`rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80 disabled:opacity-50 active:opacity-70 ${TAP}`}
-            >
-              {t("yes")}
-            </button>
-          </form>
-          <button
-            type="button"
-            onClick={() => setConfirming(false)}
-            className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
-          >
-            {t("no")}
-          </button>
-          {deleteState.errorCode && (
-            <span className="text-xs text-error">
-              {te(deleteState.errorCode!)}
-            </span>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 ml-auto">
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={isPending}
-            className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50 active:opacity-70 ${TAP}`}
-          >
-            {isPending ? "…" : t("download")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className={`text-xs font-bold tracking-wide text-error uppercase hover:opacity-70 active:opacity-50 ${TAP}`}
-          >
-            {t("delete")}
-          </button>
-        </div>
+      <div className="ml-auto flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={isPending}
+          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50 active:opacity-70 ${TAP}`}
+        >
+          {isPending ? "…" : t("download")}
+        </button>
+        <ConfirmInline
+          compact
+          action={deleteFormAction}
+          fields={{ documentId: doc.id }}
+          pending={deleting || undefined}
+          trigger={t("delete")}
+          triggerClassName={`text-xs font-bold tracking-wide text-error uppercase hover:opacity-70 active:opacity-50 ${TAP}`}
+          question={t("deleteQuestion", { name: doc.fileName })}
+          consequence={t("deleteConsequence")}
+          confirmLabel={t("deleteYes")}
+          pendingLabel={t("deleting")}
+          backLabel={t("deleteBack")}
+        />
+      </div>
+      {deleteState.errorCode && (
+        <span className="w-full text-right text-xs text-error">
+          {te(deleteState.errorCode!)}
+        </span>
       )}
     </div>
   );

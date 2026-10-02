@@ -306,7 +306,7 @@
       "confirmCardBody": "We'll take you to Stripe's payment page. The package is created once the payment is confirmed; if you don't complete it, nothing is created.",
       "accept": "I accept the",
       "acceptLink": "terms of purchase",
-      "cancel": "Cancel",
+      "goBack": "No, go back",
       "confirm": "Confirm",
       "buying": "Buying…",
       "goingToStripe": "Going to Stripe…",
@@ -389,7 +389,7 @@
       "limitReached": "You've used all this month's extra sessions.",
       "staleCycle": "The subscription has just renewed. Please reload the page.",
       "failed": "The extra session could not be added.",
-      "cancel": "Cancel",
+      "goBack": "No, go back",
       "close": "Close",
       "subscriptionPaused": "The centre has put your subscription on hold. You pay nothing while it is, and you don't lose the time: when it resumes, your renewal moves back by the same number of days.",
       "subscriptionPausedUntil": "It will resume on {date}.",
@@ -993,9 +993,6 @@
     "cancel": "Cancel",
     "download": "Download",
     "delete": "Delete",
-    "sure": "Sure?",
-    "yes": "Yes",
-    "no": "No",
     "downloadFailed": "We couldn't download the document.",
     "errors": {
       "unauthenticated": "Not signed in.",
@@ -1006,7 +1003,12 @@
       "badId": "That document isn't valid.",
       "uploadFailed": "We couldn't upload the file.",
       "deleteFailed": "We couldn't delete the document."
-    }
+    },
+    "deleteQuestion": "Delete “{name}”?",
+    "deleteConsequence": "The centre won't be able to see it either.",
+    "deleteYes": "Yes, delete it",
+    "deleting": "Deleting…",
+    "deleteBack": "No, go back"
   },
   "help": {
     "title": "Help",
