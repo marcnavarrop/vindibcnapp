@@ -100,7 +100,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Moure't per l'app" },
         {
           t: "p",
-          text: `El menú de l'esquerra té ${s.modules.comunitat ? "onze" : "deu"} entrades. Cinc són grups —Persones, Reserves, Bons i pagaments, Catàleg i Facturació—: s'obren i mostren les seves pantalles, que després es repeteixen com a pestanyes a dalt de cada una. Les altres ${s.modules.comunitat ? "sis" : "cinc"} són pantalles soltes: Inici, Exercicis, ${s.modules.comunitat ? "Comunitat, " : ""}Configuració, Suport i Ajuda. En un mòbil el menú s'obre amb el botó de dalt i hi surten totes les pantalles de cada grup, a sota del seu nom: s'hi va d'un toc, sense passar per les pestanyes.`,
+          text: `El menú de l'esquerra té ${s.modules.comunitat ? "onze" : "deu"} entrades. Cinc són grups —Persones, Reserves, Bons i pagaments, Catàleg i Facturació—: s'obren i mostren les seves pantalles, que després es repeteixen a dalt de cada una com a selector, just a sobre del títol. La pantalla en què ets surt plena de lila; a l'ordinador, a l'esquerra, hi ha el nom del grup tal com surt al menú. Al mòbil, si no caben en una fila, salten a una segona: no se n'amaga mai cap. Les altres ${s.modules.comunitat ? "sis" : "cinc"} són pantalles soltes: Inici, Exercicis, ${s.modules.comunitat ? "Comunitat, " : ""}Configuració, Suport i Ajuda. En un mòbil el menú s'obre amb el botó de dalt i hi surten totes les pantalles de cada grup, a sota del seu nom: s'hi va d'un toc, sense passar per les pestanyes.`,
         },
         {
           t: "p",
@@ -869,7 +869,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: `La tercera pestanya del grup Reserves. Recull les sol·licituds que arriben de la pàgina pública de prova gratuïta. Qui la demana encara no és client: hi deixa el nom, el telèfon i el correu, i tria un forat entre ${hores(s.trialMinAdvanceHours)} i ${s.trialMaxAdvanceDays} dies vista.`,
+          text: `La tercera pestanya del grup Reserves (al mòbil, la pestanya diu «Proves» perquè hi càpiguen les tres). Recull les sol·licituds que arriben de la pàgina pública de prova gratuïta. Qui la demana encara no és client: hi deixa el nom, el telèfon i el correu, i tria un forat entre ${hores(s.trialMinAdvanceHours)} i ${s.trialMaxAdvanceDays} dies vista.`,
         },
         {
           t: "warn",

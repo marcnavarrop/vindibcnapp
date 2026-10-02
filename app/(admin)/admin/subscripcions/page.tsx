@@ -50,8 +50,8 @@ export default async function AdminSubscriptionsPage() {
 
   return (
     <>
-      <GroupTabs tabs={BONS_TABS} />
       <main className="mx-auto max-w-6xl p-6">
+        <GroupTabs tabs={BONS_TABS} />
         <h1 className="mb-1 text-2xl text-brand-dark">Subscripcions</h1>
         <p className="mb-6 text-sm text-brand-muted">
           La quota mensual dels paquets marcats «Només per subscripció». Cada client es renova el dia del

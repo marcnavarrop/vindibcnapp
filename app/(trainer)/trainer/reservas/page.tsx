@@ -134,8 +134,8 @@ export default async function TrainerReservasPage({
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl px-4 pt-3 pb-6 md:p-6">
+        <GroupTabs tabs={TABS} className="mb-2 md:mb-5" />
         {/* Al mòbil, una sola fila: el calendari ha de començar tan amunt com
             es pugui. La descripció només a l'ordinador (també és al manual). */}
         <div className="mb-3 flex items-center justify-between gap-2 md:mb-6 md:gap-4">

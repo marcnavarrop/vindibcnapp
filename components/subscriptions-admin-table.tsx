@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -104,27 +105,25 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2">
+      <FilterChips label="Filtre d'estat" className="">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             type="button"
             onClick={() => setFilter(f.key)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-bold ${TAP} ${
-              filter === f.key
-                ? "bg-brand-purple text-white"
-                : "bg-brand-bg text-brand-muted hover:text-brand-dark"
-            }`}
+            aria-pressed={filter === f.key}
+            className={filterChipClass(filter === f.key)}
           >
+            <ChipCheck on={filter === f.key} />
             {f.label}
             {f.key === "past_due" && pastDue > 0 && (
-              <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-xs text-white">
+              <span className="rounded-full bg-brand-orange px-1.5 text-xs text-white">
                 {pastDue}
               </span>
             )}
           </button>
         ))}
-      </div>
+      </FilterChips>
 
       {(cancelState.error || priceState.error || pauseState.error || resumeState.error) && (
         <p className="text-sm text-error">

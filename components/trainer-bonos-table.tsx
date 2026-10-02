@@ -1,9 +1,10 @@
 "use client";
 
+import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { TAP, clsx } from "@/lib/utils";
+import { clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SERVICE_LABELS, SERVICE_TYPES, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
 import {
@@ -111,12 +112,7 @@ export function TrainerBonosTable({
     const qs = p.toString();
     return qs ? `${pathname}?${qs}` : pathname;
   };
-  const pill = (active: boolean) =>
-    clsx(
-      "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
-      active ? "bg-brand-purple text-white" : "text-brand-muted hover:text-brand-dark",
-      TAP,
-    );
+  const pill = filterChipClass;
 
   return (
     <div>
@@ -124,7 +120,7 @@ export function TrainerBonosTable({
           i cada cop que un cobrament o una anul·lació repinta la pàgina. */}
       <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <nav aria-label="Quins bons" className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
+        <FilterChips label="Quins bons" prefix="Mostra:" className="">
           {(["mine", "all"] as const).map((s) => (
             <Link
               key={s}
@@ -134,10 +130,11 @@ export function TrainerBonosTable({
               aria-current={view.scope === s ? "page" : undefined}
               className={pill(view.scope === s)}
             >
+              <ChipCheck on={view.scope === s} />
               {s === "mine" ? "Els meus" : "Tots"}
             </Link>
           ))}
-        </nav>
+        </FilterChips>
         <input
           type="search"
           value={search.value}
@@ -174,7 +171,7 @@ export function TrainerBonosTable({
         )}
       </div>
 
-      <nav aria-label="Filtre d'estat" className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5">
+      <FilterChips label="Filtre d'estat">
         {FILTERS.map((f) => (
           <Link
             key={f.key}
@@ -184,16 +181,17 @@ export function TrainerBonosTable({
             aria-current={view.filter === f.key ? "page" : undefined}
             className={pill(view.filter === f.key)}
           >
+            <ChipCheck on={view.filter === f.key} />
             {f.label}
             {(f.key === "pending_payment" || f.key === "unpaid") &&
               counts[f.key] > 0 && (
-                <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+                <span className="rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
                   {counts[f.key]}
                 </span>
               )}
           </Link>
         ))}
-      </nav>
+      </FilterChips>
 
       <TrainerBonosRows
         key={`${view.scope}|${view.filter}|${view.serviceType ?? ""}|${view.q}`}

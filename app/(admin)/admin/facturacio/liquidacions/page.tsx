@@ -58,8 +58,8 @@ export default async function LiquidacionsPage({
 
   return (
     <>
-      <GroupTabs tabs={FACTURACIO_TABS} />
       <main className="mx-auto max-w-5xl p-6">
+        <GroupTabs tabs={FACTURACIO_TABS} />
         <h1 className="mb-1 text-2xl text-brand-dark">Liquidacions</h1>
         <p className="mb-6 text-sm text-brand-muted">
           Càlcul del que correspon a cada professional segons les sessions

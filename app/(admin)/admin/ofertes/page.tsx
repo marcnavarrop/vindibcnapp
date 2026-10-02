@@ -80,8 +80,8 @@ export default async function OfertesPage({
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
+        <GroupTabs tabs={TABS} />
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl text-brand-dark">Ofertes i descomptes</h1>
         <Link

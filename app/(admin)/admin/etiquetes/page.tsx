@@ -20,8 +20,8 @@ export default async function EtiquetesPage() {
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
+        <GroupTabs tabs={TABS} />
         <h1 className="text-2xl text-brand-dark">Etiquetes de client</h1>
         <p className="mt-1 mb-6 text-sm text-brand-muted">
           Text lliure, per agrupar clients i dirigir-los ofertes. S&apos;assignen

@@ -22,17 +22,11 @@ export default async function PagosPage() {
 
   return (
     <>
-      <GroupTabs tabs={BONS_TABS} />
       <main className="mx-auto max-w-5xl p-6">
+        <GroupTabs tabs={BONS_TABS} />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <Link
-              href="/admin"
-              className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
-            >
-              ← Tornar
-            </Link>
-            <h1 className="mt-1 text-2xl text-brand-dark">Pagaments</h1>
+            <h1 className="text-2xl text-brand-dark">Pagaments</h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <span

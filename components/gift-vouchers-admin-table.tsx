@@ -1,7 +1,8 @@
 "use client";
 
+import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
 import { useMemo, useState } from "react";
-import { TAP, clsx } from "@/lib/utils";
+import { TAP } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { MarkVoucherPaidButton } from "@/components/forms/mark-voucher-paid-button";
@@ -55,29 +56,25 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
 
   return (
     <div>
-      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5">
+      <FilterChips label="Filtre d'estat">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             type="button"
             onClick={() => setFilter(f.key)}
-            className={clsx(
-              "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
-              filter === f.key
-                ? "bg-brand-purple text-white"
-                : "text-brand-muted hover:text-brand-dark",
-              TAP,
-            )}
+            aria-pressed={filter === f.key}
+            className={filterChipClass(filter === f.key)}
           >
+            <ChipCheck on={filter === f.key} />
             {f.label}
             {f.key === "pending_payment" && pendingCount > 0 && (
-              <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+              <span className="rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
                 {pendingCount}
               </span>
             )}
           </button>
         ))}
-      </div>
+      </FilterChips>
 
       <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
         <table className="w-full min-w-[48rem] text-left text-sm">

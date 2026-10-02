@@ -407,7 +407,7 @@ export default async function TrainerClientDetailPage({
       {centerCollectable !== null && (
         <CollectableBonosAnnouncer count={centerCollectable} />
       )}
-      <InPageTabs tabs={tabs} />
+      <InPageTabs tabs={tabs} legacy />
     </main>
   );
 }

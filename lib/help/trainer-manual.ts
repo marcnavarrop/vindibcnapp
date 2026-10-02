@@ -68,7 +68,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Moure't per l'app" },
         {
           t: "p",
-          text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat com a pestanya germana), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt, i Reserves hi surt obert amb les seves dues pantalles. El suport és sempre a mà, sense tapar res: al mòbil, la icona de la boia a la barra lila de dalt; a l'ordinador, «Obrir un tiquet» al peu del menú (a Reserves, el botó «Suport» de dalt). S'explica al seu capítol.",
+          text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat al selector de dalt de la pantalla), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt, i Reserves hi surt obert amb les seves dues pantalles. El suport és sempre a mà, sense tapar res: al mòbil, la icona de la boia a la barra lila de dalt; a l'ordinador, «Obrir un tiquet» al peu del menú (a Reserves, el botó «Suport» de dalt). S'explica al seu capítol.",
         },
         {
           t: "p",
@@ -147,7 +147,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Properes reserves" },
         {
           t: "p",
-          text: "L'agenda immediata en format llista. Porta un conmutador per veure només les teves o les de tot el centre, útil per saber qui hi ha a la sala a la mateixa hora.",
+          text: "L'agenda immediata en format llista. Porta el filtre «Mostra: Els meus · Tots» per veure només les teves o les de tot el centre, útil per saber qui hi ha a la sala a la mateixa hora.",
         },
         { t: "h", text: "El teu bonus" },
         {
@@ -182,7 +182,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "La llista de persones del centre, per ordre alfabètic. S'obre amb «Els meus» seleccionat; el botó «Tots» ensenya la resta. N'hi surten 50 de cop: a sota diu quants en veus del total («50 de 74 clients») i «Carregar més» n'afegeix 50 més.",
+          text: "La llista de persones del centre, per ordre alfabètic. A dalt, el filtre «Mostra: Els meus · Tots»: s'obre amb «Els meus» marcat (✓) i «Tots» ensenya la resta. N'hi surten 50 de cop: a sota diu quants en veus del total («50 de 74 clients») i «Carregar més» n'afegeix 50 més.",
         },
         {
           t: "p",
@@ -748,7 +748,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Els dos filtres" },
         {
           t: "p",
-          text: "A dalt hi ha el conmutador «Els meus / Tots», igual que a la llista de Clients. Arrenca a «Els meus», els bons dels teus clients; «Tots» ensenya el centre sencer. A sota, els filtres per estat: Tots, Pendents de pagament, Decaiguts sense cobrar i Actius. Els comptadors taronja dels pendents i dels decaiguts són de TOT el centre, no només dels teus: és la mateixa cua que la piloteta de «Bons» del menú, perquè pots cobrar qualsevol bo pendent, sigui de qui sigui el client. El cercador busca pel nom del client (sense accents i en qualsevol ordre) i, al costat, el desplegable «Servei» filtra per servei. La llista en carrega 50 de cop i «Carregar més» n'afegeix 50 més.",
+          text: "A dalt hi ha el filtre «Mostra: Els meus · Tots», igual que a la llista de Clients. Arrenca a «Els meus», els bons dels teus clients; «Tots» ensenya el centre sencer. A sota, els filtres per estat: Tots, Pendents de pagament, Decaiguts sense cobrar i Actius. Els comptadors taronja dels pendents i dels decaiguts són de TOT el centre, no només dels teus: és la mateixa cua que la piloteta de «Bons» del menú, perquè pots cobrar qualsevol bo pendent, sigui de qui sigui el client. El cercador busca pel nom del client (sense accents i en qualsevol ordre) i, al costat, el desplegable «Servei» filtra per servei. La llista en carrega 50 de cop i «Carregar més» n'afegeix 50 més.",
         },
         { t: "h", text: "Cobrar un bo" },
         {

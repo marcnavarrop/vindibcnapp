@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TAP, clsx } from "@/lib/utils";
+import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
 import { Badge } from "@/components/ui/badge";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
 import { SERVICE_LABELS, RESERVATION_STATUS_LABELS, formatDate } from "@/lib/labels";
@@ -35,24 +35,22 @@ export function TrainerUpcomingReservations({
         <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
           Properes reserves
         </h2>
-        <div className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
+        {/* Un filtre de la llista, no unes pestanyes: la mateixa forma que
+            «Els meus · Tots» de Clients i de Bons. */}
+        <FilterChips label="Quines reserves" prefix="Mostra:" className="">
           {(["mine", "all"] as const).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setScope(s)}
-              className={clsx(
-                "rounded-md px-3 py-1 text-xs font-bold transition-colors",
-                scope === s
-                  ? "bg-brand-purple text-white"
-                  : "text-brand-muted hover:text-brand-dark",
-                TAP,
-              )}
+              aria-pressed={scope === s}
+              className={filterChipClass(scope === s)}
             >
+              <ChipCheck on={scope === s} />
               {s === "mine" ? "Els meus" : "Tots"}
             </button>
           ))}
-        </div>
+        </FilterChips>
       </div>
 
       <div className="divide-y divide-brand-border">

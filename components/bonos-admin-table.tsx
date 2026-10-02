@@ -1,7 +1,7 @@
 "use client";
 
+import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
 import Link from "next/link";
-import { TAP, clsx } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
 import { markBonoPaidAction, cancelBonoAction } from "@/app/(admin)/admin/bonos/actions";
@@ -65,10 +65,7 @@ export function BonosAdminTable({
       {/* La piloteta del menú es posa al dia amb aquests comptadors, en entrar
           i cada cop que un cobrament o una anul·lació repinta la pàgina. */}
       <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
-      <nav
-        aria-label="Filtre d'estat"
-        className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-brand-border bg-white p-0.5"
-      >
+      <FilterChips label="Filtre d'estat">
         {FILTERS.map((f) => (
           <Link
             key={f.key}
@@ -76,24 +73,19 @@ export function BonosAdminTable({
             replace
             scroll={false}
             aria-current={filter === f.key ? "page" : undefined}
-            className={clsx(
-              "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
-              filter === f.key
-                ? "bg-brand-purple text-white"
-                : "text-brand-muted hover:text-brand-dark",
-              TAP,
-            )}
+            className={filterChipClass(filter === f.key)}
           >
+            <ChipCheck on={filter === f.key} />
             {f.label}
             {(f.key === "pending_payment" || f.key === "unpaid") &&
               counts[f.key] > 0 && (
-                <span className="ml-1.5 rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+                <span className="rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
                   {counts[f.key]}
                 </span>
               )}
           </Link>
         ))}
-      </nav>
+      </FilterChips>
 
       <BonosAdminRows
         key={filter}

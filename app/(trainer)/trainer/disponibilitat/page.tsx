@@ -38,8 +38,8 @@ export default async function TrainerDisponibilitatPage() {
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
+        <GroupTabs tabs={TABS} />
       <h1 className="mb-1 text-2xl text-brand-dark">Disponibilitat</h1>
       <p className="mb-6 text-sm text-brand-muted">
         Defineix els teus horaris. Els clients només podran reservar dins

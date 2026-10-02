@@ -125,6 +125,8 @@
       <p><strong>Els pagaments són segurs de provar.</strong> Stripe està en <strong>mode test</strong>: no es cobra ni un cèntim de veritat, per molt que la pantalla digui imports. Es paga amb la targeta de prova <code>4242 4242 4242 4242</code>.</p>
       <p><strong>La resta de dades ja no són totes de mentida.</strong> A la base hi conviuen clients de demostració i persones reals (el mateix Marc, entre d'altres). Prova, clica i experimenta lliurement amb els comptes demo; però abans d'editar, esborrar o cancel·lar res des de la fitxa d'un client, mira de qui és.</p>
       <p><strong>Comptes demo i reals, separats</strong> <span class="flag">Nou</span>: un client real no veu ni pot reservar (calendari, llista d'espera, sèries, alternatives) amb l'<strong>Entrenador Demo</strong> ni el <strong>Fisio Demo</strong>, tampoc grup ni fisioteràpia, que són oberts a qualsevol professional; i el <strong>Client Demo</strong> només veu i reserva professionals demo. /prova no ofereix cap hora dels professionals demo. L'equip tampoc ho barreja: reservar el Client Demo amb la Laia o un client real amb l'Entrenador Demo dona error. Comprova-ho entrant amb el teu compte de client (amb un bo de grup) i, amb el mode PRE, amb el Client Demo.</p>
+      <p><strong>Pestanyes de secció a la vista</strong> <span class="flag">Nou</span>: a les 18 pantalles dels grups (Persones, Reserves, Bons i pagaments, Catàleg, Facturació i el Reserves del professional), les pestanyes són ara un selector <strong>dins del contingut, just a sobre del títol</strong>, i la pantalla en què ets surt plena de lila. A l'ordinador, a l'esquerra, el nom del grup tal com surt al menú. Al mòbil, si no caben, <strong>salten a una segona fila</strong> (Bons i pagaments, les configuracions): comprova que Vals de regal i Referits es veuen sense lliscar. A Reserves del mòbil la tercera diu <strong>«Proves»</strong>; el menú i el títol segueixen dient «Sessions de prova». Les pestanyes de Configuració <strong>recorden on eres</strong> en recarregar. La fitxa del client conserva les pestanyes d'abans. El «← Tornar» de sis pàgines ja no hi és.</p>
+      <p><strong>Filtres que no semblen pestanyes</strong> <span class="flag">Nou</span>: Bons (admin i professional), Vals de regal i Subscripcions porten «Filtre:» davant, en pastilles petites amb ✓ a la triada. «Els meus · Tots» del professional (Clients, Bons i Properes reserves de l'Inici) és ara «Mostra:». Comunitat: «Anuncis · Enquestes» té la forma de les pestanyes, perquè són dues llistes.</p>
       <p><strong>Esborrat · Desfer</strong> <span class="flag">Nou</span>: un registre de progrés, la nota d'una sessió i una franja de disponibilitat que no deixa cap reserva fora ja no pregunten: s'esborren al moment i a baix surt «… esborrat · Desfer» uns 8 segons (es queda mentre hi tens el dit o el ratolí). «Desfer» ho torna a posar tal com era; comprova-ho recarregant. Una franja que sí que deixa reserves fora segueix aturant-se a la llista de reserves, i allà no hi ha «Desfer».</p>
       <p><strong>El menú del mòbil ensenya el que hi ha dins de cada grup</strong> <span class="flag">Nou</span>: Persones, Reserves, Bons i pagaments, Catàleg i Facturació surten com a títol amb totes les seves pantalles a sota (Vals de regal i Referits, d'un toc). A l'ordinador, el menú encara no canvia. Les pestanyes de dalt <strong>no actives</strong> es llegeixen més fosques (contrast AA).</p>
       <p><strong>Client: «No, torna» a tot arreu</strong> <span class="flag">Nou</span>: cancel·lar una sèrie al calendari i cancel·lar una reserva des de l'Inici diuen ara «Sí, cancel·la / No, torna» (abans, «Deixar-ho estar» i «Segur? Sí / No»), en els tres idiomes.</p>
@@ -421,14 +423,14 @@
     <h3>3.1 Inici</h3>
     <ul class="checklist">
       <li>Targetes KPI del seu dia a dia, amb la capçalera "avui" en <strong>hora del centre</strong></li>
-      <li>"Properes reserves" amb toggle <strong>"Els meus / Tots"</strong> — en "Tots" veus les dels companys (sense poder-les tocar)</li>
+      <li>"Properes reserves" amb el filtre <strong>«Mostra: Els meus · Tots»</strong> — en "Tots" veus les dels companys (sense poder-les tocar)</li>
       <li>Botó <strong>"Afegir al calendari"</strong> a cada reserva pròpia (Google/Apple/Outlook)</li>
       <li>Si té el bonus actiu: panell <strong>"El teu bonus"</strong> amb període actual, unitats acumulades, tram i import estimat</li>
     </ul>
 
     <h3>3.2 Clients <span class="flag">Ampliat</span></h3>
     <ul class="checklist">
-      <li>Toggle "Els meus / Tots" — veus la fitxa completa de qualsevol client (coordinació), però només edites/reserves els teus assignats</li>
+      <li>Filtre «Mostra: Els meus · Tots» — veus la fitxa completa de qualsevol client (coordinació), però només edites/reserves els teus assignats</li>
       <li><span class="flag">Nou</span> Com la de l'admin: 50 per pàgina amb «Carregar més», cerca al servidor (nom, correu, telèfon). A «Tots», el desplegable <strong>«Professional»</strong> ensenya la cartera d'un company (abans es feia escrivint el seu nom al cercador)</li>
       <li>Icona de <strong>WhatsApp</strong> a la llista i a la fitxa</li>
       <li><strong>Pots canviar el professional assignat d'un client</strong>, també si no és teu (secció 13)</li>
@@ -470,7 +472,7 @@
     <h3>3.4 Bons <span class="flag">Nou: filtra i cobra</span></h3>
     <ul class="checklist">
       <li>La pantalla "Bons" del menú <strong>ja no és només de consulta</strong>: segueix ensenyant tots els bons del centre, però ara s'hi pot filtrar i cobrar</li>
-      <li>Conmutador <strong>"Els meus / Tots"</strong> a dalt, igual que a la llista de Clients. <strong>Arrenca a "Els meus"</strong></li>
+      <li>Filtre <strong>«Mostra: Els meus · Tots»</strong> a dalt, igual que a la llista de Clients. <strong>Arrenca a "Els meus"</strong></li>
       <li>Filtres per estat a sota: Tots, Pendents de pagament, Decaiguts sense cobrar, Actius. <span class="flag">Corregit</span> Els <strong>comptadors taronja són de tot el centre</strong> (des de la 0085 pots cobrar qualsevol bo): han de <strong>quadrar amb els de l'admin i amb la piloteta del menú</strong>, també si hi ha pendents d'un company</li>
       <li><span class="flag">Nou</span> Cercador per <strong>nom de client</strong> (sense accents, paraules en qualsevol ordre) i desplegable <strong>«Servei»</strong> al costat; es combinen amb «Els meus / Tots» i l'estat, i tot queda a l'adreça. 50 bons per pàgina amb «Carregar més» i «N de M bons»</li>
       <li>Columnes: Client, Servei, Sessions (amb "(N ja consumides)" als pendents), Preu, <strong>Caduca</strong> i Estat</li>

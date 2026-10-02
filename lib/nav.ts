@@ -36,6 +36,11 @@ export type NavItem = {
   exact?: boolean;
   icon?: NavIcon;
   /**
+   * El nom curt per a la pestanya del MÒBIL, quan el sencer no hi cap. Només
+   * la pestanya: el menú i el títol de la pàgina segueixen dient el nom sencer.
+   */
+  shortLabel?: string;
+  /**
    * Drecera cap a un tros d'una altra pàgina. No s'il·lumina mai encara que la
    * ruta coincideixi: qui mana sobre l'estat actiu és l'entrada de la pàgina.
    *
@@ -105,7 +110,9 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
       children: [
         { href: "/admin/reservas", label: "Reserves" },
         { href: "/admin/disponibilitat", label: "Disponibilitat" },
-        { href: "/admin/prova", label: "Sessions de prova" },
+        // «Proves» al mòbil: amb el nom sencer, les tres pestanyes de Reserves
+        // no caben en una fila de 375 px i l'agenda baixaria uns 55 px.
+        { href: "/admin/prova", label: "Sessions de prova", shortLabel: "Proves" },
       ],
     },
     {
@@ -235,6 +242,16 @@ export function moduleOfPath(pathname: string): keyof ModuleFlags | null {
     if (prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`)))
       return mod;
   }
+  return null;
+}
+
+/**
+ * El grup (nom i pantalles) d'una ruta, per a les pestanyes de dalt. Font única
+ * amb el menú: el nom que surt a sobre de les pestanyes és el del menú.
+ */
+export function groupOf(role: Role, href: string): NavGroup | null {
+  for (const e of NAV_GROUPS[role])
+    if (isNavGroup(e) && e.children.some((c) => c.href === href)) return e;
   return null;
 }
 

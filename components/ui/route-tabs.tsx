@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { clsx, TAP } from "@/lib/utils";
+import { SectionTabsFrame, sectionTabClass } from "@/components/ui/section-tabs";
 
 export type RouteTab = {
   href: string;
@@ -14,8 +14,9 @@ export type RouteTab = {
 
 /**
  * Barra de pestanyes horitzontal basada en rutes.
- * Versió lleugera de GroupTabs amb suport per a una pestanya de conversió
- * ressaltada en taronja quan no és la pestanya activa.
+ * Les del client (Bons: Comprar bo nou · Els meus bons), amb la mateixa forma
+ * que les de l'equip. La de conversió, en taronja quan no és l'activa (el color
+ * es decideix al pas 7).
  */
 export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
   // Aquest component només surt a l'àrea de client, que va dins del proveïdor
@@ -39,30 +40,20 @@ export function RouteTabs({ tabs }: { tabs: RouteTab[] }) {
     );
 
   return (
-    <div className="mb-6 border-b border-brand-border">
-      <nav className="flex overflow-x-auto" aria-label={t("sectionTabs")}>
-        {tabs.map((tab) => {
-          const active = tab.href === activeHref;
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={clsx(
-                "shrink-0 border-b-2 px-4 py-3 text-sm font-bold whitespace-nowrap",
-                TAP,
-                active
-                  ? "border-brand-purple text-brand-purple active:bg-brand-purple/10"
-                  : tab.accent
-                    ? "border-transparent text-brand-orange-text hover:opacity-80 active:bg-brand-orange/10"
-                    : "border-transparent text-brand-tab hover:text-brand-dark active:bg-brand-bg",
-              )}
-              aria-current={active ? "page" : undefined}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
+    <SectionTabsFrame label={t("sectionTabs")}>
+      {tabs.map((tab) => {
+        const active = tab.href === activeHref;
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={sectionTabClass(active, tab.accent)}
+            aria-current={active ? "page" : undefined}
+          >
+            {tab.label}
+          </Link>
+        );
+      })}
+    </SectionTabsFrame>
   );
 }

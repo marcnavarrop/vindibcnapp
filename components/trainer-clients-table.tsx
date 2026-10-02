@@ -1,9 +1,10 @@
 "use client";
 
+import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { clsx, TAP, TAP_SURFACE } from "@/lib/utils";
+import { clsx, TAP_SURFACE } from "@/lib/utils";
 import type { ClientsPageItem } from "@/lib/data/clients";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 import { LoadMoreFooter, useLoadMore, useUrlQuery } from "@/components/server-list";
@@ -52,7 +53,7 @@ export function TrainerClientsTable({
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <nav aria-label="Quins clients" className="inline-flex rounded-lg border border-brand-border bg-white p-0.5">
+        <FilterChips label="Quins clients" prefix="Mostra:" className="">
           {(["mine", "all"] as const).map((s) => (
             <Link
               key={s}
@@ -60,18 +61,13 @@ export function TrainerClientsTable({
               replace
               scroll={false}
               aria-current={scope === s ? "page" : undefined}
-              className={clsx(
-                "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
-                scope === s
-                  ? "bg-brand-purple text-white"
-                  : "text-brand-muted hover:text-brand-dark",
-                TAP,
-              )}
+              className={filterChipClass(scope === s)}
             >
+              <ChipCheck on={scope === s} />
               {s === "mine" ? "Els meus" : "Tots"}
             </Link>
           ))}
-        </nav>
+        </FilterChips>
         <input
           type="search"
           value={search.value}

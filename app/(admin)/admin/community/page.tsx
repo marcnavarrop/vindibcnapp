@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SectionTabsFrame, sectionTabClass } from "@/components/ui/section-tabs";
 import { TAP } from "@/lib/utils";
 import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { listAnnouncements } from "@/lib/data/announcements";
@@ -58,7 +59,9 @@ export default async function CommunityPage({
       )}
 
       {/* Tabs */}
-      <div className="mb-6 inline-flex rounded-lg border border-brand-border bg-white p-0.5">
+      {/* Anuncis i Enquestes són dues llistes diferents, no un filtre de la
+          mateixa: van amb la forma de les pestanyes. */}
+      <SectionTabsFrame label="Anuncis o enquestes">
         {([
           { key: "announcements", label: "Anuncis" },
           { key: "polls", label: "Enquestes" },
@@ -66,21 +69,18 @@ export default async function CommunityPage({
           <Link
             key={key}
             href={`/admin/community${key === "polls" ? "?tab=polls" : ""}`}
-            className={`rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
-              activeTab === key
-                ? "bg-brand-purple text-white"
-                : "text-brand-muted hover:text-brand-dark"
-            } ${TAP}`}
+            aria-current={activeTab === key ? "page" : undefined}
+            className={sectionTabClass(activeTab === key)}
           >
             {label}
             {key === "polls" && polls.length > 0 && (
-              <span className="ml-1.5 rounded-full bg-brand-purple/20 px-1.5 py-0.5 text-[10px] font-bold text-brand-purple">
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${activeTab === key ? "bg-white/20 text-white" : "bg-brand-purple/20 text-brand-purple"}`}>
                 {polls.length}
               </span>
             )}
           </Link>
         ))}
-      </div>
+      </SectionTabsFrame>
 
       {/* Announcements tab */}
       {activeTab === "announcements" && (

@@ -116,8 +116,8 @@ export default async function BonusPage() {
 
   return (
     <>
-      <GroupTabs tabs={FACTURACIO_TABS} />
       <main className="mx-auto max-w-5xl p-6">
+        <GroupTabs tabs={FACTURACIO_TABS} />
         <h1 className="mb-1 text-2xl text-brand-dark">Bonus per volum</h1>
         <p className="mb-6 text-sm text-brand-muted">
           Cada sessió completada val unes unitats segons el servei. Les unitats

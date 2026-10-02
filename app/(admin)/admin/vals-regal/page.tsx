@@ -22,15 +22,9 @@ export default async function AdminGiftVouchersPage() {
 
   return (
     <>
-      <GroupTabs tabs={BONS_TABS} />
       <main className="mx-auto max-w-6xl p-6">
-        <Link
-          href="/admin"
-          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
-        >
-          ← Tornar
-        </Link>
-        <h1 className="mt-1 mb-1 text-2xl text-brand-dark">Vals de regal</h1>
+        <GroupTabs tabs={BONS_TABS} />
+        <h1 className="mb-1 text-2xl text-brand-dark">Vals de regal</h1>
         <p className="mb-6 text-sm text-brand-muted">
           Un val no es pot bescanviar fins que el marques com a pagat.
         </p>

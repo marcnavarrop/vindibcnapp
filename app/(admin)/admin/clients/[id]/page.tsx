@@ -347,7 +347,7 @@ export default async function ClientDetailPage({
 
       {needsHealthConsent && <HealthConsentWarning />}
 
-      <InPageTabs tabs={tabs} />
+      <InPageTabs tabs={tabs} legacy />
     </main>
   );
 }

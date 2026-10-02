@@ -30,17 +30,11 @@ export default async function ClientsPage({
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
+        <GroupTabs tabs={TABS} />
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <Link
-              href="/admin"
-              className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
-            >
-              ← Tornar
-            </Link>
-            <h1 className="mt-1 text-2xl text-brand-dark">Clients</h1>
+            <h1 className="text-2xl text-brand-dark">Clients</h1>
           </div>
           <Link
             href="/admin/clients/new"

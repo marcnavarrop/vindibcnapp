@@ -85,23 +85,17 @@ export default async function ReservasPage({
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
       {/* La setmana, a l'ordinador, aprofita tota l'amplada que deixa el menú. */}
       <main
         className={`mx-auto px-4 pt-3 pb-6 md:p-6 ${nav.view === "week" ? "max-w-5xl lg:max-w-7xl" : "max-w-5xl"}`}
       >
+        <GroupTabs tabs={TABS} className="mb-2 md:mb-5" />
         {/* Al mòbil, una sola fila, com la del professional: l'agenda ha de
             començar tan amunt com es pugui. El suport va aquí dins i no
             flotant, que tapava la columna de la dreta. */}
         <div className="mb-3 flex items-center justify-between gap-2 md:mb-6 md:gap-4">
           <div>
-            <Link
-              href="/admin"
-              className={`hidden text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple md:inline ${TAP}`}
-            >
-              ← Tornar
-            </Link>
-            <h1 className="text-2xl text-brand-dark md:mt-1">
+            <h1 className="text-2xl text-brand-dark">
               Agenda<span className="hidden sm:inline"> de reserves</span>
             </h1>
           </div>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   listPendingTrialRequests,
   listTrialHistoryPage,
@@ -8,7 +7,6 @@ import { GroupTabs } from "@/components/ui/group-tabs";
 import { TrialHistory, TrialRow } from "@/components/admin/trial-rows";
 import { toTrialRowView } from "@/lib/trial-row";
 import { assertModuleEnabled } from "@/lib/data/module-guard";
-import { TAP } from "@/lib/utils";
 
 const TABS = [
   { href: "/admin/reservas", label: "Reserves" },
@@ -29,15 +27,9 @@ export default async function AdminProvaPage() {
 
   return (
     <>
-      <GroupTabs tabs={TABS} />
       <main className="mx-auto max-w-5xl p-6">
-      <Link
-        href="/admin"
-        className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
-      >
-        ← Tornar
-      </Link>
-      <h1 className="mt-1 mb-1 text-2xl text-brand-dark">Sessions de prova</h1>
+        <GroupTabs tabs={TABS} />
+      <h1 className="mb-1 text-2xl text-brand-dark">Sessions de prova</h1>
       <p className="mb-6 text-sm text-brand-muted">
         Sol·licituds de sessió de prova gratuïta. Les pendents pre-bloquegen el
         forat fins que es confirmen, es rebutgen o caduquen.

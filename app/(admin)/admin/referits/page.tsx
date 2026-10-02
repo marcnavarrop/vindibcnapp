@@ -30,8 +30,8 @@ export default async function AdminReferitsPage() {
 
   return (
     <>
-      <GroupTabs tabs={BONS_TABS} />
       <main className="mx-auto max-w-4xl p-6">
+        <GroupTabs tabs={BONS_TABS} />
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="mb-1 text-2xl text-brand-dark">Referits</h1>
