@@ -16,8 +16,7 @@
      mantiene pulsado (`active:`). En móvil no hay hover, así que este es el
      único aviso visual de que el toque se ha registrado. */
   --color-brand-purple-dark: #4a1749;
-  --color-brand-orange: #ff6d17; /* acento */
-  --color-brand-orange-dark: #d95410; /* mismo papel, para la variante acento */
+  --color-brand-orange: #ff6d17; /* marca (logo) i GRUPS: des del pas 7, res més. Per a text, group-ink */
   --color-brand-dark: #1b1d1f;
   --color-brand-charcoal: #303133;
   --color-brand-muted: #777777;

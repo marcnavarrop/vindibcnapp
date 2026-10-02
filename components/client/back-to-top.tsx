@@ -60,7 +60,7 @@ export function BackToTop() {
             : "smooth",
         })
       }
-      className={`fixed right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-white text-brand-muted shadow-md transition-opacity duration-200 hover:text-brand-purple focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 sm:right-6 bottom-4 sm:bottom-6 print:hidden ${visible ? "opacity-100" : "pointer-events-none opacity-0"} ${TAP}`}
+      className={`fixed right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-white text-brand-muted shadow-md transition-opacity duration-200 hover:text-brand-purple focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple focus-visible:ring-offset-2 sm:right-6 bottom-4 sm:bottom-6 print:hidden ${visible ? "opacity-100" : "pointer-events-none opacity-0"} ${TAP}`}
     >
       <span className="sr-only">Torna a dalt</span>
       <ArrowUp className="h-4 w-4" aria-hidden />

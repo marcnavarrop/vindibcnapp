@@ -1761,7 +1761,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Professionals",
-              "Pinta les franges de disponibilitat a l'agenda i el calendari que veu el client. Un color per persona.",
+              "Pinta les franges de disponibilitat a l'agenda i el calendari que veu el client. Un color per persona. Als professionals nous ja no se'ls dona el taronja: és el color dels grups. Qui ja el tenia el conserva fins que el canviï.",
             ],
           ],
         },

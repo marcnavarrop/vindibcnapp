@@ -92,7 +92,7 @@ export function TagCatalog({
                     />
                     <PendingTextButton
                       pendingLabel="Desant…"
-                      className={`text-brand-purple hover:text-brand-orange disabled:opacity-50 ${TAP}`}
+                      className={`text-brand-purple hover:text-brand-purple-dark hover:underline disabled:opacity-50 ${TAP}`}
                     >
                       Desar
                     </PendingTextButton>

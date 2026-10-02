@@ -818,6 +818,7 @@ export function Grid({
           )}
           {nowVisible && (
             <div
+              data-now
               className="absolute right-0.5 z-10 -translate-y-1/2 rounded bg-brand-orange px-1 text-xs font-bold text-white"
               style={{ top: v.y(nowSlot) }}
             >
@@ -1074,6 +1075,7 @@ function DayColumn({
       {/* Ara */}
       {isToday && now && nowY > 0 && nowY < v.height && (
         <div
+          data-now
           className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-brand-orange"
           style={{ top: nowY }}
         >
@@ -1233,7 +1235,7 @@ function EntryCard({
               Per marcar
             </span>
           ) : waiting > 0 ? (
-            <span className="font-bold text-brand-orange-dark">+{waiting} en espera</span>
+            <span className="font-bold text-group-ink">+{waiting} en espera</span>
           ) : null}
         </>
       )}
@@ -1351,7 +1353,7 @@ export function EntryListSheet({
             <ol className="mt-2 flex flex-col gap-1 text-sm">
               {waitlist.map((n, i) => (
                 <li key={i} className="flex gap-2 rounded-lg bg-brand-bg px-3 py-2">
-                  <span className="font-bold text-brand-orange-dark">{i + 1}.</span>
+                  <span className="font-bold text-group-ink">{i + 1}.</span>
                   <span className="text-brand-dark">{n}</span>
                 </li>
               ))}

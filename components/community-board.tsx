@@ -95,7 +95,7 @@ export async function CommunityBoard({
               key={a.id}
               className="flex gap-3 rounded-2xl border border-brand-border bg-white p-5 transition-colors hover:border-brand-purple/40"
             >
-              <div className="w-1 shrink-0 self-stretch rounded-full bg-brand-orange" />
+              <div className="w-1 shrink-0 self-stretch rounded-full bg-brand-purple/30" />
               <div className="flex flex-1 flex-col">
                 <div className="flex items-center gap-2.5">
                   <Avatar initial={authorInitial(a.authorName, t("team"))} />

@@ -297,7 +297,7 @@ export function GiftVoucherForm({
                     <Link
                       href="/legal/avis-legal"
                       target="_blank"
-                      className="font-bold text-brand-purple underline hover:text-brand-orange"
+                      className="font-bold text-brand-purple underline hover:text-brand-purple-dark hover:underline"
                     >
                       {tb("acceptLink")}
                     </Link>
@@ -412,7 +412,7 @@ export function VoucherReady({
           {t("findAgainPre")}{" "}
           <Link
             href="/client/regals"
-            className="font-bold text-brand-purple underline hover:text-brand-orange"
+            className="font-bold text-brand-purple underline hover:text-brand-purple-dark hover:underline"
           >
             {t("title")}
           </Link>
@@ -454,7 +454,7 @@ export function VoucherReady({
 
       <Link
         href="/client/bonos/meus"
-        className="self-start text-sm font-bold text-brand-purple hover:text-brand-orange"
+        className="self-start text-sm font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
       >
         {t("backToBonos")}
       </Link>

@@ -384,7 +384,7 @@ export function BuyBonoForm({
                   </p>
                   <Link
                     href="/client/bonos/meus"
-                    className="mt-2 inline-flex text-sm font-bold text-brand-purple underline hover:text-brand-orange"
+                    className="mt-2 inline-flex text-sm font-bold text-brand-purple underline hover:text-brand-purple-dark hover:underline"
                   >
                     {t("groupAlreadySubscribedCta")}
                   </Link>
@@ -536,7 +536,7 @@ export function BuyBonoForm({
                     <Link
                       href="/legal/avis-legal"
                       target="_blank"
-                      className="font-bold text-brand-purple underline hover:text-brand-orange"
+                      className="font-bold text-brand-purple underline hover:text-brand-purple-dark hover:underline"
                     >
                       {t("acceptLink")}
                     </Link>

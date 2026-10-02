@@ -154,7 +154,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
         </h2>
         <Link
           href="/client/bonos/meus"
-          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline"
         >
           {t("seeAll")}
         </Link>
@@ -165,7 +165,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
           {t("empty")}{" "}
           <Link
             href="/client/bonos"
-            className="font-bold text-brand-purple hover:text-brand-orange"
+            className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
           >
             {t("emptyCta")}
           </Link>{" "}
@@ -258,7 +258,7 @@ export async function UpcomingReservations({
         </h2>
         <Link
           href="/client/reservas"
-          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange"
+          className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline"
         >
           {tu("seeAll")}
         </Link>
@@ -269,7 +269,7 @@ export async function UpcomingReservations({
           {tu("none")}{" "}
           <Link
             href="/client/reservas"
-            className="font-bold text-brand-purple hover:text-brand-orange"
+            className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
           >
             {tu("bookOne")}
           </Link>

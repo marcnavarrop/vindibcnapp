@@ -192,7 +192,7 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
         <div className="flex justify-end">
           <Link
             href="/forgot-password"
-            className="text-sm font-medium text-brand-purple hover:text-brand-orange"
+            className="text-sm font-medium text-brand-purple hover:text-brand-purple-dark hover:underline"
           >
             {t("forgot")}
           </Link>

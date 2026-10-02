@@ -106,7 +106,7 @@ export default async function CommunityPage({
                 <div className="mt-3 flex items-center gap-4">
                   <Link
                     href={`/admin/community/${a.id}/edit`}
-                    className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+                    className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
                   >
                     Editar
                   </Link>
@@ -166,7 +166,7 @@ export default async function CommunityPage({
                 <div className="mt-3 flex items-center gap-4">
                   <Link
                     href={`/admin/community/polls/${p.id}`}
-                    className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+                    className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
                   >
                     Veure resultats
                   </Link>

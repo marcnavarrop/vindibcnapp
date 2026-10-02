@@ -365,7 +365,7 @@ function DayHeader({ d, href }: { d: WeekDay; href: string }) {
       </span>
       <Link
         href={href}
-        className={`ml-auto shrink-0 text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+        className={`ml-auto shrink-0 text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
         data-week-open-day
       >
         Obrir el dia →
@@ -408,7 +408,8 @@ function EntryBlock({
         <span className="rounded-sm bg-white px-1 text-[#b8470c]">
           {e.list.length}/{GROUP_CAPACITY}
         </span>
-        {waiting > 0 && <span className="rounded-sm bg-brand-orange px-1 text-white">+{waiting}</span>}
+        {/* Blanc sobre el taronja del grup feia 2,8:1; sobre l'enfosquit, 5,3. */}
+        {waiting > 0 && <span className="rounded-sm bg-group-ink px-1 text-white">+{waiting}</span>}
       </>
     );
     aria = `Grup ${at}, ${e.list.length} de ${GROUP_CAPACITY}${waiting ? `, ${waiting} en espera` : ""}`;

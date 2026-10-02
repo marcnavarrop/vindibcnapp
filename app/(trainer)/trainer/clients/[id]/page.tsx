@@ -153,7 +153,7 @@ export default async function TrainerClientDetailPage({
             canManage && (
               <Link
                 href={`/trainer/bonos/new?clientId=${client.id}`}
-                className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+                className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
               >
                 + Afegir bo
               </Link>
@@ -246,7 +246,7 @@ export default async function TrainerClientDetailPage({
             canManage && (
               <Link
                 href="/trainer/reservas/new"
-                className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+                className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
               >
                 + Nova reserva
               </Link>

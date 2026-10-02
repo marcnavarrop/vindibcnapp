@@ -191,7 +191,7 @@ export function ExerciseForm({
           <button
             type="button"
             onClick={() => setCreatingCategory(true)}
-            className={`self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+            className={`self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
           >
             + Crear categoria nova
           </button>

@@ -72,7 +72,7 @@ export default function NewPollPage() {
           <button
             type="button"
             onClick={addOption}
-            className={`self-start text-xs font-bold text-brand-purple hover:text-brand-orange ${TAP}`}
+            className={`self-start text-xs font-bold text-brand-purple hover:text-brand-purple-dark hover:underline ${TAP}`}
           >
             + Afegir opció
           </button>

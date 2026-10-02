@@ -3,8 +3,8 @@
  *
  * Viu aquí i no dins de cada camp perquè el pinten `Field`, `SelectField`,
  * `TextAreaField` i `PasswordField`, i han de fer-ho exactament igual: mateix
- * color, mateix espai, mateixa mida. Amb quatre còpies, el dia que canviï el
- * to de taronja canviaria a tres llocs.
+ * color, mateix espai, mateixa mida. Amb quatre còpies, el dia que canviés el
+ * to canviaria a tres llocs (i va canviar: al pas 7, de taronja a lila).
  *
  * `aria-hidden` a posta: el camp ja porta l'atribut `required` i és això el que
  * llegeix un lector de pantalla ("obligatori"). L'asterisc és la versió visual
@@ -12,7 +12,7 @@
  */
 export function RequiredMark() {
   return (
-    <span aria-hidden className="ml-0.5 text-brand-orange">
+    <span aria-hidden className="ml-0.5 text-brand-purple">
       *
     </span>
   );
@@ -28,7 +28,7 @@ export function RequiredMark() {
 export function RequiredNote({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-xs text-brand-muted">
-      <span aria-hidden className="text-brand-orange">
+      <span aria-hidden className="text-brand-purple">
         *
       </span>{" "}
       {children}

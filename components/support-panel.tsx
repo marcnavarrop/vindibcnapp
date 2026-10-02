@@ -187,7 +187,7 @@ function Description({ text }: { text: string }) {
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className={`mt-1 text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP_SURFACE}`}
+          className={`mt-1 text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP_SURFACE}`}
         >
           {expanded ? "Veure menys" : "Veure més"}
         </button>

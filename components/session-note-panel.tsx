@@ -86,7 +86,7 @@ export function SessionNotePanel({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
         >
           + Nota de la sessió
         </button>
@@ -96,7 +96,7 @@ export function SessionNotePanel({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className={`mt-1 self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+          className={`mt-1 self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
         >
           Editar la nota
         </button>

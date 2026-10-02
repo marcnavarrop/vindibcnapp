@@ -77,7 +77,7 @@ export function whatsappNumber(phone: string | null | undefined): string | null 
  * ha dues versions d'això.
  *
  * NO porta el color: cada botó té el seu fons i s'enfosqueix amb el to que li
- * toca (`active:bg-brand-purple-dark`, `active:bg-brand-orange-dark`…). Aquí hi
+ * toca (`active:bg-brand-purple-dark`…). Aquí hi
  * ha el que és igual per a tots: l'encongiment, la durada i treure el destacat
  * blau que iOS i Android pinten pel seu compte.
  */

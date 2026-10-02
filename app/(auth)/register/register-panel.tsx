@@ -205,7 +205,7 @@ export function RegisterPanel() {
           {t("createdBody")}{" "}
           <Link
             href="/login"
-            className={`font-bold text-brand-purple hover:text-brand-orange ${TAP}`}
+            className={`font-bold text-brand-purple hover:text-brand-purple-dark hover:underline ${TAP}`}
           >
             {t("createdSignIn")}
           </Link>
@@ -355,7 +355,7 @@ export function RegisterPanel() {
             <Link
               href="/legal/privacitat"
               target="_blank"
-              className="font-bold text-brand-purple hover:text-brand-orange"
+              className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
             >
               {t("privacyPolicy")}
             </Link>{" "}
@@ -363,7 +363,7 @@ export function RegisterPanel() {
             <Link
               href="/legal/avis-legal"
               target="_blank"
-              className="font-bold text-brand-purple hover:text-brand-orange"
+              className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
             >
               {t("legalNotice")}
             </Link>
@@ -384,7 +384,7 @@ export function RegisterPanel() {
         {t("haveAccount")}{" "}
         <Link
           href="/login"
-          className={`font-bold text-brand-purple hover:text-brand-orange ${TAP}`}
+          className={`font-bold text-brand-purple hover:text-brand-purple-dark hover:underline ${TAP}`}
         >
           {t("signIn")}
         </Link>

@@ -112,7 +112,7 @@ export default async function EntrenadorsPage() {
                       <Link
                         href={`/admin/clients?trainer=${t.id}`}
                         title={`Veure els clients de ${t.fullName}`}
-                        className={`font-bold text-brand-purple underline decoration-brand-purple/30 underline-offset-2 hover:text-brand-orange hover:decoration-brand-orange/40 ${TAP}`}
+                        className={`font-bold text-brand-purple underline decoration-brand-purple/30 underline-offset-2 hover:text-brand-purple-dark hover:underline hover:decoration-brand-purple-dark/40 ${TAP}`}
                       >
                         {t.clientCount}
                       </Link>
@@ -125,7 +125,7 @@ export default async function EntrenadorsPage() {
                       <ResendInviteButton profileId={t.id} />
                       <Link
                         href={`/admin/entrenadors/${t.id}/edit`}
-                        className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+                        className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
                       >
                         Editar
                       </Link>

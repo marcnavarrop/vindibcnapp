@@ -59,7 +59,7 @@ export function TrainerEmailForm({
           </p>
           <form action={cancelTrainerEmailChangeAction}>
             <input type="hidden" name="trainerId" value={trainerId} />
-            <button type="submit" className={`text-sm font-bold text-brand-purple hover:text-brand-orange ${TAP}`}>
+            <button type="submit" className={`text-sm font-bold text-brand-purple hover:text-brand-purple-dark hover:underline ${TAP}`}>
               Anul·lar l&apos;enllaç
             </button>
           </form>

@@ -140,7 +140,7 @@ export default async function OfertesPage({
                   <div className="ml-auto flex items-center gap-3">
                     <Link
                       href={`/admin/ofertes/${p.id}/edit`}
-                      className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+                      className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
                     >
                       Editar
                     </Link>

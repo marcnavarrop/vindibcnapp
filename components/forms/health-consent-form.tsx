@@ -39,7 +39,7 @@ export function HealthConsentForm() {
               <Link
                 href="/legal/privacitat"
                 target="_blank"
-                className="font-bold text-brand-purple hover:text-brand-orange"
+                className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
               >
                 {chunks}
               </Link>

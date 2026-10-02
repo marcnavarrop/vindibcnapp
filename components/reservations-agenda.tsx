@@ -299,7 +299,7 @@ function Section({
         <Link
           href={moreHref}
           scroll={false}
-          className={`mt-3 inline-block text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+          className={`mt-3 inline-block text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
         >
           Veure&apos;n més (30 dies)
         </Link>

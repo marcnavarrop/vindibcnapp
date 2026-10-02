@@ -280,7 +280,7 @@ export function ExerciseLibrary({
         {manage && (
           <Link
             href={`${basePath}/categories`}
-            className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+            className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
           >
             Gestionar categories →
           </Link>
@@ -302,7 +302,7 @@ export function ExerciseLibrary({
               setQuery("");
               setCategoryId("all");
             }}
-            className={`font-bold text-brand-purple underline hover:text-brand-orange active:opacity-70 ${TAP}`}
+            className={`font-bold text-brand-purple underline hover:text-brand-purple-dark hover:underline active:opacity-70 ${TAP}`}
           >
             {texts.seeAll}
           </button>
@@ -378,7 +378,7 @@ function ExerciseCard({
           <div className="ml-auto flex items-center gap-3">
             <Link
               href={`${basePath}/${e.id}/edit`}
-              className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+              className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
             >
               Editar
             </Link>

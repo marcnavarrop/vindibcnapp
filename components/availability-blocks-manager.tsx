@@ -107,7 +107,7 @@ export function AvailabilityBlocksManager({
                     <p className="text-sm font-bold text-brand-dark">
                       {fmtRange(b.startAt, b.endAt)}
                       {started && (
-                        <span className="ml-2 rounded-full bg-brand-orange/15 px-2 py-0.5 text-[10px] font-bold text-brand-orange uppercase">
+                        <span className="ml-2 rounded-full bg-brand-purple/10 px-2 py-0.5 text-[10px] font-bold text-brand-purple uppercase">
                           En curs
                         </span>
                       )}

@@ -116,7 +116,7 @@ function CenterRow({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className={`ml-auto text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+            className={`ml-auto text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
           >
             Reanomenar
           </button>

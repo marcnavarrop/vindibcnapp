@@ -201,7 +201,7 @@ export function ReservationSheet({
 
             <Link
               href={clientHref}
-              className={`self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP}`}
+              className={`self-start text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
             >
               Fitxa del client →
             </Link>

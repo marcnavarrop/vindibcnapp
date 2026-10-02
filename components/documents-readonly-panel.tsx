@@ -85,7 +85,7 @@ function ReadonlyDocumentRow({ doc }: { doc: ClientDocument }) {
         type="button"
         onClick={handleDownload}
         disabled={isPending}
-        className={`ml-auto text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50 ${TAP}`}
+        className={`ml-auto text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline disabled:opacity-50 ${TAP}`}
       >
         {isPending ? "…" : "Descarregar"}
       </button>

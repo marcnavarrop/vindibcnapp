@@ -106,7 +106,7 @@ export default async function RegalsPage() {
                 {v.pdfPath && (
                   <a
                     href={`/client/regals/${v.id}/pdf`}
-                    className="ml-auto text-xs font-bold text-brand-purple hover:text-brand-orange"
+                    className="ml-auto text-xs font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
                   >
                     {t("historyDownload")}
                   </a>

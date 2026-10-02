@@ -49,7 +49,7 @@ export function Avatar({
   return (
     <div
       aria-hidden
-      style={{ ...box, backgroundColor: color ?? "var(--color-brand-orange)" }}
+      style={{ ...box, backgroundColor: color ?? "var(--color-brand-purple-light)" }}
       className={clsx(
         "flex shrink-0 items-center justify-center rounded-full font-bold text-white",
         className,

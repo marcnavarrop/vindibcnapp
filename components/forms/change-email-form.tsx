@@ -71,7 +71,7 @@ export function ChangeEmailForm({
           <form action={cancelEmailChangeAction}>
             <button
               type="submit"
-              className="text-sm font-bold text-brand-purple hover:text-brand-orange"
+              className="text-sm font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
             >
               {t("cancel")}
             </button>

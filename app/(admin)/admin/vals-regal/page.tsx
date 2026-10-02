@@ -39,7 +39,7 @@ export default async function AdminGiftVouchersPage() {
             a activar a{" "}
             <Link
               href="/admin/configuracio"
-              className={`font-bold text-brand-purple underline hover:text-brand-orange ${TAP}`}
+              className={`font-bold text-brand-purple underline hover:text-brand-purple-dark hover:underline ${TAP}`}
             >
               Configuració → Centre
             </Link>

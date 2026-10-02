@@ -13,7 +13,9 @@
  */
 export const PRO_PALETTE = [
   "#642263", // lila de marca
-  "#ff6d17", // taronja d'accent
+  // Aquí hi havia el taronja (#ff6d17) i s'ha tret al pas 7 del pla d'UX: a
+  // tota l'app el taronja és el color dels grups. Els professionals que ja el
+  // tenen desat el conserven; només deixa de donar-se als nous.
   "#1d8a8a", // verd-blau
   "#965495", // lila clar
   "#b45309", // ambre fosc

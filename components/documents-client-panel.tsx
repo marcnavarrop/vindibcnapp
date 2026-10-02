@@ -95,7 +95,7 @@ export function DocumentsClientPanel({
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange active:opacity-70 ${TAP}`}
+              className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline active:opacity-70 ${TAP}`}
             >
               {t("add")}
             </button>
@@ -249,7 +249,7 @@ function DocumentRow({
           type="button"
           onClick={handleDownload}
           disabled={isPending}
-          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange disabled:opacity-50 active:opacity-70 ${TAP}`}
+          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline disabled:opacity-50 active:opacity-70 ${TAP}`}
         >
           {isPending ? "…" : t("download")}
         </button>

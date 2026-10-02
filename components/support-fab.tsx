@@ -271,7 +271,7 @@ export function SupportFab({
                 <Link
                   href={basePath}
                   onClick={() => setOpen(false)}
-                  className={`mt-3 inline-block text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-orange ${TAP_SURFACE}`}
+                  className={`mt-3 inline-block text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP_SURFACE}`}
                 >
                   Veure tot l&apos;historial →
                 </Link>
