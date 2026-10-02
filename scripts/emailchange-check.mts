@@ -83,6 +83,13 @@ check((await action(LAIA.id, "sense-arrova")).error === "Aquest correu no sembla
 check((await action(LAIA.id, " LAIA@vindibcn.com ")).error === "És el correu que ja té.", "el mateix (majúscules i espais inclosos)");
 check((await action(LAIA.id, "Ana@Exemple.cat")).error === "Aquest correu ja el fa servir un altre compte del centre.", "el d'un altre compte");
 check(reqs().length === 0 && sent.length === 0, "cap d'aquests ha creat res ni ha enviat res");
+// Els comodins d'ilike: «_» és un caràcter de debò, no «qualsevol caràcter».
+fake.tables.profiles.push({ id: "u-x", email: "anaxp@exemple.cat", role: "client", full_name: "Anna X" });
+{
+  const r2 = await action(LAIA.id, "ana_p@exemple.cat");
+  check(!r2.error && r2.sentTo === "ana_p@exemple.cat", `«ana_p@…» no és «anaxp@…»: es pot fer servir (${r2.error ?? r2.sentTo})`);
+}
+reset(); as(ADMIN);
 
 console.log("\nEl bo");
 const r = await action(LAIA.id, "LaiaMillans02@gmail.com ");

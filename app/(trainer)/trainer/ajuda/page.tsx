@@ -62,7 +62,7 @@ export default async function TrainerAjudaPage() {
       <HelpManual chapters={chapters} />
 
       {/* A sobre del botó de suport, que en aquesta àrea ocupa la cantonada. */}
-      <BackToTop aboveFab />
+      <BackToTop />
     </main>
   );
 }

@@ -4,11 +4,10 @@ import { TAP } from "@/lib/utils";
 import { OPEN_SUPPORT_EVENT } from "@/lib/support-events";
 
 /**
- * El suport, dins de la pàgina en comptes de flotant.
+ * El suport, dins de la pàgina (l'agenda, al costat de «+ Nova»).
  *
- * On hi ha aquest botó, `data-support-inline` fa que el CSS amagui el flotant
- * (globals.css): a la rejilla del professional tapava la columna de la dreta.
- * Obre el mateix panell, així que no es perd res.
+ * On hi ha aquest botó, `data-support-inline` fa que el CSS amagui l'accés del
+ * marc (globals.css): no n'hi ha d'haver dos. Obre el mateix panell.
  */
 export function SupportInlineButton() {
   return (

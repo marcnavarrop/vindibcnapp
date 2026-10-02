@@ -31,6 +31,7 @@ import { CommunityBadge } from "@/components/community-badge";
 import { BonosBadge } from "@/components/bonos-badge";
 import { ExercisesBadge } from "@/components/exercises-badge";
 import { StaffBonosBadge } from "@/components/staff-bonos-badge";
+import { SupportTrigger } from "@/components/support-trigger";
 import type { ClientBadgeCounts } from "@/lib/data/client-badges";
 import {
   NAV_GROUPS,
@@ -179,6 +180,11 @@ export function AppSidebar({
           </Link>
         </div>
         <div className="flex items-center gap-2">
+          {/* El suport de l'equip viu aquí i no flotant sobre el contingut:
+              vegeu `SupportTrigger`. El client no en té. */}
+          {role !== "client" && (
+            <SupportTrigger variant="bar" showOpenCount={role === "admin"} />
+          )}
           <Avatar name={fullName} email={email} url={avatarUrl} />
           {role === "client" ? (
             <TranslatedSignOut compact />
@@ -219,6 +225,7 @@ export function AppSidebar({
               modules={modules}
               badges={badges}
               staffBonos={staffBonos}
+              expandGroups
             />
           </div>
         </div>
@@ -237,6 +244,7 @@ function SidebarContent({
   modules,
   badges,
   staffBonos,
+  expandGroups = false,
 }: {
   role: Role;
   specialty: Specialty | null;
@@ -249,6 +257,12 @@ function SidebarContent({
   modules: ModuleFlags;
   badges: ClientBadgeCounts | null;
   staffBonos: number | null;
+  /**
+   * Al calaix del mòbil, cada grup surt obert: el seu nom com a títol i, a
+   * sota, totes les seves pantalles. A l'escriptori el grup segueix sent una
+   * entrada (les germanes són a les pestanyes de dalt) fins que hi toqui.
+   */
+  expandGroups?: boolean;
 }) {
   /*
    * On va la piloteta de bons per cobrar de l'equip: a l'entrada que porta a la
@@ -279,6 +293,31 @@ function SidebarContent({
       <nav className="flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1">
           {filterNavByModules(NAV_GROUPS[role], modules).map((entry) => {
+            if (isNavGroup(entry) && expandGroups) {
+              // Al mòbil, el que hi ha dins de cada grup es veu sense entrar-hi:
+              // abans, «Vals de regal» o «Referits» eren pestanyes que ni tan
+              // sols cabien a la pantalla. El títol no és enllaç; la primera
+              // pantalla del grup és just a sota, a un toc com abans.
+              return (
+                <li key={entry.label} className="mt-2 first:mt-0">
+                  <GroupHeading label={entry.label} icon={entry.icon} />
+                  <ul className="flex flex-col gap-0.5">
+                    {entry.children.map((c) => (
+                      <li key={c.href}>
+                        <NavLink
+                          href={c.href}
+                          label={c.label}
+                          indent
+                          touch
+                          active={pathname === c.href || pathname.startsWith(`${c.href}/`)}
+                          badge={staffBadgeFor(c.href)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            }
             if (isNavGroup(entry)) {
               const active = entry.children.some(
                 (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
@@ -287,6 +326,7 @@ function SidebarContent({
                 <li key={entry.label}>
                   <NavLink
                     href={entry.children[0].href}
+                  touch={expandGroups}
                     label={entry.label}
                     icon={entry.icon}
                     active={active}
@@ -307,6 +347,7 @@ function SidebarContent({
               <li key={entry.label}>
                 <NavLink
                   href={entry.href}
+                  touch={expandGroups}
                   /* Amb clau, el text surt del diccionari; sense, es queda el
                      català. Així l'admin i el professional no s'assabenten. */
                   label={
@@ -350,6 +391,11 @@ function SidebarContent({
         // un enllaç que no porta enlloc és pitjor que cap enllaç.
         profileHref={role === "client" ? CLIENT_PROFILE_PATH : null}
         translated={role === "client"}
+        support={
+          role !== "client" ? (
+            <SupportTrigger variant="sidebar" showOpenCount={role === "admin"} />
+          ) : null
+        }
       />
 
       <div className="flex flex-wrap gap-x-2 gap-y-1 px-1 text-[10px] text-white/40">
@@ -379,11 +425,17 @@ function NavLink({
   icon,
   active,
   badge,
+  indent = false,
+  touch = false,
 }: {
   href: string;
   label: React.ReactNode;
   icon?: NavIcon;
   active: boolean;
+  /** Pantalla d'un grup al calaix del mòbil: sense icona, alineada amb el text. */
+  indent?: boolean;
+  /** Al calaix del mòbil: alçada mínima de 44 px. */
+  touch?: boolean;
   /** Piloteta a la dreta de l'entrada, si en porta. */
   badge?: React.ReactNode;
 }) {
@@ -394,6 +446,13 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       className={clsx(
         "flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-sm font-bold",
+        // Al calaix del mòbil, 44 px: el mínim per tocar amb el dit. A
+        // l'escriptori es queden a 40, que és el que fa que el menú sencer
+        // càpiga a 800 px d'alt sense haver de desplaçar-lo.
+        touch && "min-h-11",
+        // 19 px d'icona + 12 de separació: el text queda a la mateixa línia
+        // que el de les entrades amb icona.
+        indent && "pl-[2.6rem]",
         // Sobre el lila del menú els tons `brand-*-dark` no es veurien: aquí
         // el llenguatge és la veladura blanca, que és la que ja fa servir el
         // `hover`. La entrada activa parteix d'un blanc més alt, així que en
@@ -420,6 +479,17 @@ function NavLink({
   );
 }
 
+/** El nom d'un grup al calaix del mòbil: un títol, no un enllaç. */
+function GroupHeading({ label, icon }: { label: string; icon?: NavIcon }) {
+  const Icon = icon ? NAV_ICONS[icon] : null;
+  return (
+    <span className="flex items-center gap-3 px-4 pt-2 pb-1 text-xs font-bold tracking-widest text-white/60 uppercase">
+      {Icon && <Icon size={16} strokeWidth={2} aria-hidden className="shrink-0" />}
+      {label}
+    </span>
+  );
+}
+
 /**
  * Peu del menú: qui ha entrat i com sortir.
  *
@@ -434,6 +504,7 @@ function SidebarFooter({
   avatarUrl,
   profileHref,
   translated,
+  support,
 }: {
   fullName: string;
   email: string;
@@ -441,6 +512,8 @@ function SidebarFooter({
   profileHref: string | null;
   /** Només l'àrea de client té diccionari: la resta es queda en català. */
   translated?: boolean;
+  /** L'accés al suport de l'equip, just a sobre del compte. */
+  support?: React.ReactNode;
 }) {
   const identity = (
     <>
@@ -483,7 +556,10 @@ function SidebarFooter({
   );
 
   return (
-    <div className="flex flex-col gap-3 border-t border-white/10 px-1 pt-4">
+    // `gap-2` i no `gap-3`: amb «Obrir un tiquet» al peu, el menú de l'admin
+    // (onze entrades) no cabia a 800 px d'alt per 4 px.
+    <div className="flex flex-col gap-2 border-t border-white/10 px-1 pt-4">
+      {support}
       {profileHref ? (
         <Link
           href={profileHref}

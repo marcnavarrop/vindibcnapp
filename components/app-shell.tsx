@@ -3,6 +3,7 @@ import { CenterContactProvider } from "@/components/center-contact-line";
 import { publicContact } from "@/lib/center-contact";
 import { PreModeBanner } from "@/components/pre-mode-banner";
 import { SupportFab } from "@/components/support-fab";
+import { UndoToaster } from "@/components/undo-toaster";
 import { getViewer } from "@/lib/auth";
 import { getCenterSettings } from "@/lib/data/center-settings";
 import { avatarUrl } from "@/lib/data/avatars";
@@ -92,16 +93,22 @@ export async function AppShell({
       <div className="lg:pl-64 print:pl-0">
         {/* El distintiu del mode PRE, a la columna del contingut i no a la
             pàgina: aquí surt a les tres àrees i no se'n pot quedar cap sense,
-            que és el mateix criteri que el `SupportFab` de sota. Quan el mode
+            que és el mateix criteri que el panell de suport de sota. Quan el mode
             està apagat no pinta res. */}
         <PreModeBanner />
         <CenterContactProvider contact={publicContact(settings.contact)}>{children}</CenterContactProvider>
       </div>
 
-      {/* Accés ràpid al suport des de qualsevol pantalla de les àrees internes.
-          Va aquí i no a cada pàgina: així no se'n pot quedar cap sense.
+      {/* El panell de suport de les àrees internes. L'obre `SupportTrigger`,
+          que és al marc (barra de dalt al mòbil, peu del menú a l'ordinador):
+          ja no flota sobre el contingut. Va aquí i no a cada pàgina: així no
+          se'n pot quedar cap sense.
           El client NO el veu: el suport és un canal de l'equip cap a qui
           desenvolupa, i la RLS ni tan sols el deixaria obrir cap tiquet. */}
+      {/* «Esborrat · Desfer»: aquí, al marc, perquè l'avís sobrevisqui al
+          refresc de la pàgina que fa l'esborrat. */}
+      <UndoToaster />
+
       {role !== "client" && (
         <SupportFab
           basePath={`/${role}/suport`}

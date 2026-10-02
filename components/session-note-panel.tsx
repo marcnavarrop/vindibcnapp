@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfirmInline } from "@/components/ui/confirm-inline";
+import { UndoableDelete } from "@/components/ui/undoable-delete";
 import { useActionState, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -141,18 +141,19 @@ export function SessionNotePanel({
               Cancel·lar
             </Button>
             {note && (
-              /* Dins del formulari de la nota: el «Sí» és un `formAction`
-                 i els camps (la reserva) ja hi són. */
-              <ConfirmInline
-                compact
-                inParentForm
+              /* Una nota es refà exactament amb el mateix «Desar»: sense
+                 pregunta, i «Desfer» durant uns segons. És un botó i no un
+                 enviament del formulari: el que es recupera és la nota DESADA,
+                 no el que hi hagi escrit ara al quadre. */
+              <UndoableDelete
                 action={deleteSessionNoteAction}
-                trigger="Esborrar"
-                triggerClassName={`text-xs font-bold tracking-wide text-error uppercase hover:underline ${TAP}`}
-                question="Esborrar la nota?"
-                consequence="El client deixarà de veure-la."
-                confirmLabel="Sí, esborra"
-                pendingLabel="Esborrant…"
+                fields={{ reservationId }}
+                restore={(fd) => saveSessionNoteAction({}, fd)}
+                restoreFields={{ reservationId, body: note.body }}
+                message="Nota esborrada."
+                label="Esborrar"
+                onDone={() => setOpen(false)}
+                className={`text-xs font-bold tracking-wide text-error uppercase hover:underline disabled:opacity-60 ${TAP}`}
               />
             )}
           </div>

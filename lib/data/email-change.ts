@@ -1,3 +1,4 @@
+import { findAccountByEmail } from "@/lib/data/account-email";
 import "server-only";
 import { getCenterContact } from "@/lib/data/center-settings";
 import { publicContact } from "@/lib/center-contact";
@@ -201,13 +202,11 @@ async function startEmailChange(input: {
   // Correu ja fet servir. El missatge que veurà qui ho demani és genèric ("no
   // es pot fer servir") a posta: dir "ja té compte" convertiria el formulari en
   // un detector de clients del centre.
-  const { data: taken } = await admin
-    .from("profiles")
-    .select("id")
-    .ilike("email", newEmail)
-    .limit(1)
-    .maybeSingle();
-  if (taken) return "taken";
+  // `findAccountByEmail`, la mateixa de l'alta: compara sense espais ni
+  // majúscules i escapa els comodins d'`ilike`. Abans es passava el correu tal
+  // qual a `ilike`, i un «_» hi feia de comodí: «ana_p@…» es donava per ocupat
+  // si existia «anaxp@…».
+  if (await findAccountByEmail(newEmail)) return "taken";
 
   // Cooldown: mirat sobre les peticions, no sobre el log d'enviaments, perquè
   // una petició compta encara que el correu no hagi arribat a sortir.

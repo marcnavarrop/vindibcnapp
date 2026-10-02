@@ -1,6 +1,7 @@
 "use client";
 
 import { TAP, TAP_SURFACE } from "@/lib/utils";
+import { setBadge } from "@/lib/badge-store";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -29,28 +30,6 @@ const STATUS_TONE: Record<SupportStatus, "warn" | "info" | "success"> = {
   in_progress: "info",
   resolved: "success",
 };
-
-function LifebuoyIcon() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="3.6" />
-      <line x1="14.6" y1="9.4" x2="18.4" y2="5.6" />
-      <line x1="5.6" y1="18.4" x2="9.4" y2="14.6" />
-      <line x1="14.6" y1="14.6" x2="18.4" y2="18.4" />
-      <line x1="5.6" y1="5.6" x2="9.4" y2="9.4" />
-    </svg>
-  );
-}
 
 function CloseIcon() {
   return (
@@ -117,6 +96,12 @@ function QuickTicketForm({ onCreated }: { onCreated: () => void }) {
  * amb el marc, cada pantalla de l'app pagaria una consulta que gairebé mai es
  * mira.
  */
+/**
+ * El PANELL de suport (alta ràpida i els últims tiquets propis). El nom ve de
+ * quan era un botó flotant; ara no pinta cap botó: l'obre `SupportTrigger`, que
+ * viu al marc (barra de dalt al mòbil, peu del menú a l'ordinador), o el botó
+ * propi d'una pàgina, tots amb `OPEN_SUPPORT_EVENT`.
+ */
 export function SupportFab({
   basePath,
   /**
@@ -132,12 +117,13 @@ export function SupportFab({
   const [tickets, setTickets] = useState<SupportTicket[] | null>(null);
   /** Puja a cada obertura; reinicia el formulari via `key`. */
   const [openCount, setOpenCount] = useState(0);
-  /** Tiquets oberts de tot l'equip. `null` mentre no se sap. */
-  const [pending, setPending] = useState<number | null>(null);
 
   const loadPending = useCallback(() => {
     if (!showOpenCount) return;
-    openTicketCountAction().then(setPending, () => setPending(null));
+    openTicketCountAction().then(
+      (n) => setBadge("supportOpen", n),
+      () => {},
+    );
   }, [showOpenCount]);
 
   const load = useCallback(() => {
@@ -162,7 +148,7 @@ export function SupportFab({
     if (!showOpenCount) return;
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent<SupportChangedDetail>).detail;
-      if (typeof detail?.open === "number") setPending(detail.open);
+      if (typeof detail?.open === "number") setBadge("supportOpen", detail.open);
     };
     window.addEventListener(SUPPORT_CHANGED, onChange);
     return () => window.removeEventListener(SUPPORT_CHANGED, onChange);
@@ -185,11 +171,9 @@ export function SupportFab({
   }, [open]);
 
   /*
-   * Obrir des de fora. Una pàgina amb molt contingut tàctil a baix a la dreta
-   * (la rejilla del professional) no vol el botó flotant a sobre: hi posa el
-   * seu, marcat amb `data-support-inline`, que llança aquest esdeveniment, i el
-   * CSS (globals.css) amaga el flotant NOMÉS en aquella pàgina. El panell és
-   * el mateix; la resta de pantalles no canvien.
+   * L'única manera d'obrir-lo: aquest esdeveniment. El llancen l'accés del
+   * marc (`SupportTrigger`) i el botó propi de l'agenda (`SupportInlineButton`,
+   * amb `data-support-inline`, que fa que el CSS amagui el del marc allà).
    */
   useEffect(() => {
     const onOpen = () => {
@@ -200,51 +184,9 @@ export function SupportFab({
     return () => window.removeEventListener(OPEN_SUPPORT_EVENT, onOpen);
   }, []);
 
-  /** El número de la piloteta, o `null` si no n'hi ha d'haver cap. */
-  const badge = showOpenCount && pending !== null && pending > 0 ? pending : null;
 
   return (
     <>
-      {/* ── Botó ──
-          z-30: per sobre del contingut, però per sota dels modals i del calaix
-          del menú (z-40/z-50), que no ha de quedar amb un botó a sobre.
-          A l'esquerra hi ha el sidebar i el "Tancar sessió": aquest va a la
-          dreta i no els tapa ni en mòbil, on el menú és un calaix. */}
-      <button
-        type="button"
-        data-support-fab
-        onClick={() => {
-          setOpen((v) => !v);
-          setOpenCount((n) => n + 1);
-        }}
-        aria-expanded={open}
-        aria-label={
-          open
-            ? "Tancar el suport"
-            : badge
-              ? `Obrir el suport (${badge} ${badge === 1 ? "tiquet obert" : "tiquets oberts"})`
-              : "Obrir el suport"
-        }
-        className={`fixed right-4 bottom-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand-purple text-white shadow-lg transition-colors hover:bg-brand-purple-light focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 sm:right-6 sm:bottom-6 active:opacity-70 ${TAP}`}
-      >
-        {open ? <CloseIcon /> : <LifebuoyIcon />}
-
-        {/* ── Piloteta ──
-            Amb el panell obert no hi és: allà sota ja es veu la llista, i un
-            número sobre la creu de tancar només faria soroll. El compte ja va
-            a l'`aria-label` del botó, així que aquí sobra per a qui escolta.
-            Va a fora del botó rodó (`-top-1 -right-1`) perquè la icona de
-            dins no li ha de deixar lloc. */}
-        {!open && badge !== null && (
-          <span
-            aria-hidden
-            className="absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-brand-bg bg-brand-orange px-1 text-[11px] font-bold text-white"
-          >
-            {badge > 9 ? "9+" : badge}
-          </span>
-        )}
-      </button>
-
       {open && (
         <>
           {/* Fons: tanca en tocar fora i, en mòbil, separa el panell de la
@@ -262,7 +204,7 @@ export function SupportFab({
             role="dialog"
             aria-modal="true"
             aria-label="Suport"
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col overflow-hidden rounded-t-2xl border border-brand-border bg-white shadow-xl sm:inset-x-auto sm:right-6 sm:bottom-24 sm:w-96 sm:rounded-2xl"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col overflow-hidden rounded-t-2xl border border-brand-border bg-white shadow-xl sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-96 sm:rounded-2xl"
           >
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-brand-border bg-brand-purple px-5 py-3 text-white">
               <div>

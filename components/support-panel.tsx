@@ -303,7 +303,7 @@ export function SupportPanel({
     if (state.ok) setOpen(false);
   }, [state.ok]);
 
-  // Quants n'hi ha d'oberts, per avisar-ne la piloteta del botó flotant. La
+  // Quants n'hi ha d'oberts, per avisar-ne la piloteta de l'accés ràpid. La
   // dependència és el NÚMERO i no la llista: el servidor torna un array nou a
   // cada `revalidatePath`, i amb l'array l'avís sortiria a cada refresc encara
   // que no hagués canviat res.

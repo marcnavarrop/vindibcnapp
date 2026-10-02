@@ -14,7 +14,7 @@ import type { SupportTicket } from "@/lib/data/support";
 export type { SupportFormState };
 
 /**
- * Alta des del widget flotant, compartida per les dues àrees.
+ * Alta des del panell ràpid, compartida per les dues àrees.
  *
  * L'àrea i la ruta a refrescar es dedueixen del rol de la sessió, no d'una
  * prop que enviï el client: el navegador no ha de poder dir des d'on diu que
@@ -52,7 +52,7 @@ export async function listMyRecentTicketsAction(): Promise<SupportTicket[]> {
 }
 
 /**
- * El nombre de tiquets oberts per a la piloteta del botó flotant.
+ * El nombre de tiquets oberts per a la piloteta de l'accés ràpid.
  *
  * Només per a l'admin: és ell qui els resol. Al professional la piloteta li
  * diria quants tiquets seus segueixen oberts, que no és una feina pendent

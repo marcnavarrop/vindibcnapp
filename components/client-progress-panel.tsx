@@ -1,4 +1,4 @@
-import { ConfirmInline } from "@/components/ui/confirm-inline";
+import { UndoableDelete } from "@/components/ui/undoable-delete";
 import { centerToday } from "@/lib/center-time";
 import { addProgressAction, deleteProgressAction } from "@/app/actions/client-progress-actions";
 import type { AssignedExercise } from "@/lib/data/client-exercises";
@@ -73,15 +73,23 @@ export function ClientProgressPanel({
                     )}
                     {canManage && (
                       <div className="ml-auto">
-                        <ConfirmInline
-                          compact
+                        {/* Es refà exactament amb l'alta: sense pregunta, i
+                            «Desfer» durant uns segons. */}
+                        <UndoableDelete
                           action={deleteProgressAction}
                           fields={{ id: ep.id, redirectPath }}
-                          trigger="Eliminar"
-                          triggerClassName={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error ${TAP}`}
-                          question={`Eliminar el registre del ${formatDate(ep.recordedAt)}?`}
-                          confirmLabel="Sí, elimina"
-                          pendingLabel="Eliminant…"
+                          restore={addProgressAction}
+                          restoreFields={{
+                            clientExerciseId: a.id,
+                            recordedAt: ep.recordedAt,
+                            weightKg: String(ep.weightKg),
+                            reps: ep.reps != null ? String(ep.reps) : "",
+                            notes: ep.notes ?? "",
+                            redirectPath,
+                          }}
+                          message={`Registre del ${formatDate(ep.recordedAt)} esborrat.`}
+                          label="Eliminar"
+                          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-error disabled:opacity-60 ${TAP}`}
                         />
                       </div>
                     )}

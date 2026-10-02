@@ -68,11 +68,11 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Moure't per l'app" },
         {
           t: "p",
-          text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat com a pestanya germana), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt. A més a més, a totes les pantalles hi ha el botó rodó de suport a baix a la dreta (a Reserves, el botó «Suport» de dalt), que s'explica al seu capítol.",
+          text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat com a pestanya germana), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt, i Reserves hi surt obert amb les seves dues pantalles. El suport és sempre a mà, sense tapar res: al mòbil, la icona de la boia a la barra lila de dalt; a l'ordinador, «Obrir un tiquet» al peu del menú (a Reserves, el botó «Suport» de dalt). S'explica al seu capítol.",
         },
         {
           t: "p",
-          text: "Tot el que no es pot desfer pregunta abans. El primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà; fins que no toques «Sí, …» no passa res, i «No, torna» ho deixa tal com era. Quan cal veure un resum abans de decidir —un cobrament, una baixa—, la pregunta surt en un quadre a part, amb les mateixes dues respostes.",
+          text: "Tot el que no es pot desfer pregunta abans. El primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà; fins que no toques «Sí, …» no passa res, i «No, torna» ho deixa tal com era. Quan cal veure un resum abans de decidir —un cobrament, una baixa—, la pregunta surt en un quadre a part, amb les mateixes dues respostes. El que es pot tornar a posar tal com era —un registre de progrés, la nota d'una sessió, una franja de disponibilitat que no deixa cap reserva fora— no pregunta: s'esborra al moment i, a baix, surt «Esborrat · Desfer» uns segons.",
         },
         {
           t: "note",
@@ -260,7 +260,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Progrés" },
         {
           t: "p",
-          text: "Les mesures registrades per a cada exercici assignat: data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne (pregunta abans). És on es veu si el que li has posat està funcionant.",
+          text: "Les mesures registrades per a cada exercici assignat: data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne: s'esborra al moment i, uns segons, surt «Desfer». És on es veu si el que li has posat està funcionant.",
         },
         { t: "h", text: "Documents" },
         {
@@ -628,7 +628,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Les regles ja creades surten agrupades per dia de la setmana, i cadascuna es pot editar —hores, serveis i vigència— o esborrar. Si el canvi deixa reserves sense on caure, la pantalla t'atura abans de desar: ho explica «Quan un canvi deixa reserves fora», més avall.",
+          text: "Les regles ja creades surten agrupades per dia de la setmana, i cadascuna es pot editar —hores, serveis i vigència— o esborrar. Si esborrar-la no deixa cap reserva fora, s'esborra al moment i surt «Desfer» uns segons. Si el canvi deixa reserves sense on caure, la pantalla t'atura abans de desar: ho explica «Quan un canvi deixa reserves fora», més avall.",
         },
         { t: "h", text: "Per a unes vacances, un bloqueig" },
         {
@@ -882,7 +882,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "El botó rodó lila de baix a la dreta hi és a totes les pantalles de la teva àrea, menys a Reserves: allà taparia el calendari, i en el seu lloc hi ha el botó «Suport» al costat de «+ Nova reserva», que obre el mateix. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'administració del centre ni amb els clients.",
+          text: "L'accés ràpid hi és a totes les pantalles de la teva àrea, sense tapar res: la icona de la boia a la barra lila de dalt al mòbil, i «Obrir un tiquet» al peu del menú a l'ordinador. A Reserves és el botó «Suport» al costat de «+ Nova reserva», que obre el mateix. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'administració del centre ni amb els clients.",
         },
         { t: "h", text: "Obrir un tiquet" },
         {

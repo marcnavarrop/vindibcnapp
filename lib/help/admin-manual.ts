@@ -100,15 +100,15 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Moure't per l'app" },
         {
           t: "p",
-          text: `El menú de l'esquerra té ${s.modules.comunitat ? "onze" : "deu"} entrades. Cinc són grups —Persones, Reserves, Bons i pagaments, Catàleg i Facturació—: s'obren i mostren les seves pantalles, que després es repeteixen com a pestanyes a dalt de cada una. Les altres ${s.modules.comunitat ? "sis" : "cinc"} són pantalles soltes: Inici, Exercicis, ${s.modules.comunitat ? "Comunitat, " : ""}Configuració, Suport i Ajuda. En un mòbil el menú s'obre amb el botó de dalt.`,
+          text: `El menú de l'esquerra té ${s.modules.comunitat ? "onze" : "deu"} entrades. Cinc són grups —Persones, Reserves, Bons i pagaments, Catàleg i Facturació—: s'obren i mostren les seves pantalles, que després es repeteixen com a pestanyes a dalt de cada una. Les altres ${s.modules.comunitat ? "sis" : "cinc"} són pantalles soltes: Inici, Exercicis, ${s.modules.comunitat ? "Comunitat, " : ""}Configuració, Suport i Ajuda. En un mòbil el menú s'obre amb el botó de dalt i hi surten totes les pantalles de cada grup, a sota del seu nom: s'hi va d'un toc, sense passar per les pestanyes.`,
         },
         {
           t: "p",
-          text: "A totes les pantalles hi ha, a més, el botó rodó de suport a baix a la dreta: obre un tiquet des d'on siguis, sense perdre el que estaves fent. És la drecera del mateix canal que hi ha al menú, a Suport, i s'explica al seu capítol.",
+          text: "El suport és sempre a mà, sense tapar res: al mòbil, la icona de la boia a la barra lila de dalt; a l'ordinador, «Obrir un tiquet» al peu del menú. Obre un tiquet des d'on siguis, sense perdre el que estaves fent. És la drecera del mateix canal que hi ha al menú, a Suport, i s'explica al seu capítol.",
         },
         {
           t: "p",
-          text: "Tot el que no es pot desfer pregunta abans. El primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà; fins que no toques «Sí, …» no passa res, i «No, torna» ho deixa tal com era. Quan cal veure un resum abans de decidir —un cobrament, una baixa—, la pregunta surt en un quadre a part, amb les mateixes dues respostes.",
+          text: "Tot el que no es pot desfer pregunta abans. El primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà; fins que no toques «Sí, …» no passa res, i «No, torna» ho deixa tal com era. Quan cal veure un resum abans de decidir —un cobrament, una baixa—, la pregunta surt en un quadre a part, amb les mateixes dues respostes. El que es pot tornar a posar tal com era —un registre de progrés, la nota d'una sessió, una franja de disponibilitat que no deixa cap reserva fora— no pregunta: s'esborra al moment i, a baix, surt «Esborrat · Desfer» uns segons.",
         },
         {
           t: "note",
@@ -780,7 +780,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Cada franja es pot editar —hores, serveis i vigència— o esborrar. Si el canvi deixa reserves sense on caure, la pantalla t'atura abans de desar: ho explica «Quan un canvi deixa reserves fora», més avall.",
+          text: "Cada franja es pot editar —hores, serveis i vigència— o esborrar. Si esborrar-la no deixa cap reserva fora, s'esborra al moment i surt «Desfer» uns segons. Si el canvi deixa reserves sense on caure, la pantalla t'atura abans de desar: ho explica «Quan un canvi deixa reserves fora», més avall.",
         },
         { t: "h", text: "Per a unes vacances, un bloqueig" },
         {
@@ -1910,11 +1910,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Dues portes al mateix canal: la pantalla Suport del menú, que és on es fa el seguiment, i el botó rodó lila de baix a la dreta, que hi és a totes les pantalles de la teva àrea per obrir un tiquet sense moure't d'on ets. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'equip ni amb els clients.",
+          text: "Dues portes al mateix canal: la pantalla Suport del menú, que és on es fa el seguiment, i l'accés ràpid, que hi és a totes les pantalles de la teva àrea per obrir un tiquet sense moure't d'on ets: la icona de la boia a la barra de dalt al mòbil, i «Obrir un tiquet» al peu del menú a l'ordinador. És el canal cap a qui desenvolupa l'app: errors, dubtes i idees de millora. No és el canal per parlar amb l'equip ni amb els clients.",
         },
         {
           t: "note",
-          text: "Si hi ha tiquets oberts, el botó rodó porta el número a sobre. Compta els que encara no ha mirat ningú, no els que ja s'estan resolent: per això baixa quan en mous un a «En curs». El professional no el veu —ell reporta, no resol—.",
+          text: "Si hi ha tiquets oberts, l'accés ràpid porta el número. Compta els que encara no ha mirat ningú, no els que ja s'estan resolent: per això baixa quan en mous un a «En curs». El professional no el veu —ell reporta, no resol—.",
         },
         { t: "h", text: "Obrir un tiquet" },
         {

@@ -49,7 +49,7 @@ export function InPageTabs({
                 TAP,
                 active === i
                   ? "border-brand-purple text-brand-purple active:bg-brand-purple/10"
-                  : "border-transparent text-brand-muted hover:text-brand-dark active:bg-brand-bg",
+                  : "border-transparent text-brand-tab hover:text-brand-dark active:bg-brand-bg",
               )}
             >
               {tab.label}

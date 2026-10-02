@@ -112,7 +112,7 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
 /**
  * Els darrers tiquets OBERTS PER UN MATEIX.
  *
- * Sempre els propis, també per a l'admin: el widget flotant és accés ràpid al
+ * Sempre els propis, també per a l'admin: el panell ràpid és accés ràpid al
  * que has reportat tu. La vista de gestió de tot l'equip segueix sent la
  * pàgina completa, que és on l'admin hi treballa.
  */
@@ -226,7 +226,7 @@ export async function setSupportTicketStatus(
 }
 
 /**
- * Quants tiquets hi ha OBERTS, per a la piloteta del botó flotant.
+ * Quants tiquets hi ha OBERTS, per a la piloteta de l'accés ràpid.
  *
  * Compta només `open`, no `open + in_progress`, encara que la safata de
  * l'admin s'obri filtrada per totes dues. Són dues preguntes diferents: la

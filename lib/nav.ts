@@ -147,9 +147,9 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     // Suport SÍ que és al menú de l'admin, i NO al del professional. No és un
     // oblit ni una excepció: són dues feines diferents amb el mateix canal.
     // El professional REPORTA —des d'on sigui que trobi el problema, que és
-    // el que fa el botó flotant—; l'admin GESTIONA la safata de tot l'equip,
+    // el que fa l'accés ràpid del marc—; l'admin GESTIONA la safata de tot l'equip,
     // que és una feina que es fa asseguda i de tant en tant, sobre la llista
-    // sencera. El botó flotant segueix a les dues àrees per a l'alta ràpida.
+    // sencera. L'accés ràpid (`SupportTrigger`) segueix a les dues àrees.
     { href: "/admin/suport", label: "Suport", icon: "lifebuoy" },
     // L'última, com al client i al professional i pel mateix motiu: no és una
     // àrea on es faci res, és on s'hi va quan alguna de les altres no s'entén.

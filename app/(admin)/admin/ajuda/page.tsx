@@ -80,7 +80,7 @@ export default async function AdminAjudaPage() {
       <HelpManual chapters={chapters} />
 
       {/* A sobre del botó de suport, que en aquesta àrea ocupa la cantonada. */}
-      <BackToTop aboveFab />
+      <BackToTop />
     </main>
   );
 }

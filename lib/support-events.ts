@@ -1,7 +1,7 @@
 /**
  * Avís, dins de la pestanya, de quants tiquets de suport queden oberts.
  *
- * La piloteta del botó flotant i la safata de `/admin/suport` viuen a dos
+ * La piloteta de l'accés ràpid i la safata de `/admin/suport` viuen a dos
  * llocs de l'arbre que no es parlen: el botó és al marc comú (el layout) i la
  * llista és a la pàgina. Quan l'admin resol un tiquet, el `revalidatePath` de
  * l'acció torna a pintar la PÀGINA —els recomptes hi queden bé— però no toca
@@ -36,7 +36,7 @@ export function announceSupportChange(open: number): void {
 }
 
 /**
- * Obre el panell de suport des d'un botó que no és el flotant (vegeu
+ * Obre el panell de suport des de qualsevol botó (vegeu
  * `SupportInlineButton`). Mateix motiu que l'avís de dalt: els dos botons no
  * comparteixen cap pare.
  */

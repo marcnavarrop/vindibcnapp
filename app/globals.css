@@ -21,6 +21,16 @@
   --color-brand-dark: #1b1d1f;
   --color-brand-charcoal: #303133;
   --color-brand-muted: #777777;
+  /* Text de les pestanyes NO actives. El muted fa 4,48:1 sobre blanc i 4,1:1
+     sobre el fons gris de la pàgina: per sota del mínim AA (4,5:1) per a text
+     de 14 px. Aquest fa 6,6:1 i 6,2:1, i segueix sent clarament més suau que
+     la pestanya activa (lila i subratllada). */
+  --color-brand-tab: #5c5c60;
+  /* La pestanya «Comprar bo nou» del client, quan no és l'activa: el taronja
+     de marca hi feia 2,6:1. Aquest és el mateix taronja enfosquit fins a 5:1
+     sobre el fons gris. Si al pas del color el taronja deixa de ser d'aquí, se
+     n'anirà amb ell. */
+  --color-brand-orange-text: #b8470c;
   --color-brand-border: #eaeaea;
   --color-brand-bg: #f7f7f7;
 
@@ -43,7 +53,7 @@ body {
 }
 
 /* Una pàgina que porta el seu propi botó de suport (`SupportInlineButton`)
-   no vol el flotant a sobre del contingut: s'amaga NOMÉS allà. */
+   no en vol dos: l'accés del marc (`SupportTrigger`) s'amaga NOMÉS allà. */
 body:has([data-support-inline]) [data-support-fab] {
   display: none;
 }

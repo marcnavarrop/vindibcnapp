@@ -1,7 +1,8 @@
 "use client";
 
 import { TAP } from "@/lib/utils";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
+import { ConfirmInline } from "@/components/ui/confirm-inline";
 import { useTranslations } from "next-intl";
 import { cancelOwnReservationAction } from "@/app/(client)/client/reservas/actions";
 import { canCancelAt } from "@/lib/cancellation";
@@ -20,7 +21,6 @@ export function CancelReservationButton({
   const t = useTranslations("reservas");
   const te = useTranslations("reservas.errors");
   const [state, action] = useActionState(cancelOwnReservationAction, {});
-  const [confirming, setConfirming] = useState(false);
 
   const canCancel = canCancelAt(scheduledAt, minCancellationHours);
 
@@ -32,42 +32,21 @@ export function CancelReservationButton({
     );
   }
 
-  if (confirming) {
-    return (
-      <div className={`flex items-center gap-2 ${className}`}>
-        <span className="text-xs text-brand-muted">{t("own.sure")}</span>
-        <form action={action}>
-          <input type="hidden" name="id" value={id} />
-          <button
-            type="submit"
-            className={`rounded-md bg-error px-2 py-1 text-xs font-bold text-white hover:opacity-80 active:opacity-70 ${TAP}`}
-          >
-            {t("own.yes")}
-          </button>
-        </form>
-        <button
-          type="button"
-          onClick={() => setConfirming(false)}
-          className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
-        >
-          {t("own.no")}
-        </button>
-        {state.errorCode && (
-          <p className="text-xs text-error">{te(state.errorCode, { hours: state.errorHours ?? 0 })}</p>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className={className}>
-      <button
-        type="button"
-        onClick={() => setConfirming(true)}
-        className={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10 active:bg-error/20 ${TAP}`}
-      >
-        {t("cancel")}
-      </button>
+      {/* El mateix «Sí, cancel·la / No, torna» que la resta de l'app: abans
+          aquí era un «Segur? Sí / No» propi. */}
+      <ConfirmInline
+        compact
+        action={action}
+        fields={{ id }}
+        trigger={t("cancel")}
+        triggerClassName={`rounded-md border border-brand-border px-2 py-1 text-xs font-bold text-error hover:bg-error/10 active:bg-error/20 ${TAP}`}
+        question={t("own.confirmCancel")}
+        confirmLabel={t("own.yesCancel")}
+        pendingLabel={t("own.cancelling")}
+        backLabel={t("own.noBack")}
+      />
       {state.errorCode && (
         <p className="mt-1 max-w-[16rem] text-xs text-error">
           {te(state.errorCode, { hours: state.errorHours ?? 0 })}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { showUndo } from "@/lib/undo-toast";
 import { OrphansConfirm } from "@/components/orphans-confirm";
 import {
   WEEKDAY_SHORT,
@@ -194,6 +195,31 @@ export function AvailabilityManager({
    */
   const [deleteState, del] = useActionState(deleteAction, {});
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  /*
+   * «Esborrat · Desfer», només quan l'esborrat no ha tocat cap reserva: es
+   * recorda la franja que s'envia i si l'enviament era la confirmació de les
+   * reserves que quedaven fora («Esborrar i cancel·lar les marcades»). En
+   * aquest cas les cancel·lacions no es poden desfer, i no s'ofereix.
+   */
+  const deleting = useRef<{ rule: AvailabilityRule; confirmed: boolean } | null>(null);
+  useEffect(() => {
+    const d = deleting.current;
+    if (!deleteState.ok || !d || d.confirmed) return;
+    deleting.current = null;
+    const { rule } = d;
+    const fd = new FormData();
+    fd.append("weekdays", String(rule.weekday));
+    fd.append("startTime", rule.startTime);
+    fd.append("endTime", rule.endTime);
+    fd.append("validFrom", rule.validFrom);
+    if (rule.validUntil) fd.append("validUntil", rule.validUntil);
+    for (const st of rule.serviceTypes) fd.append("serviceTypes", st);
+    showUndo({
+      message: `Franja de ${WEEKDAY_LONG[rule.weekday].toLowerCase()} ${rule.startTime}–${rule.endTime} esborrada.`,
+      // L'alta de sempre (la mateixa comprovació de qui pot crear-la).
+      undo: async () => (await createAction({}, fd)).error ?? null,
+    });
+  }, [deleteState, createAction]);
   const [dismissedDelete, setDismissedDelete] =
     useState<AvailabilityFormState["pending"]>();
   const deletePending =
@@ -340,9 +366,12 @@ export function AvailabilityManager({
                     <form
                       key={r.id}
                       action={del}
-                      onSubmit={() => {
+                      onSubmit={(e) => {
                         setDeletingId(r.id);
                         setLast("delete");
+                        const submitter = (e.nativeEvent as SubmitEvent).submitter;
+                        const sent = new FormData(e.currentTarget, submitter);
+                        deleting.current = { rule: r, confirmed: sent.get("confirmOrphans") === "1" };
                       }}
                       className="px-5 py-3 text-sm"
                     >

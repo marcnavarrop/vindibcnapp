@@ -299,7 +299,7 @@ function CancelSeriesDialog({
                 onClick={onClose}
                 className={`rounded-lg px-4 py-2 text-sm font-bold text-brand-muted hover:text-brand-dark active:bg-brand-bg ${TAP}`}
               >
-                {t("keepIt")}
+                {t("noBack")}
               </button>
               <form action={action}>
                 <input type="hidden" name="seriesId" value={seriesId} />

@@ -125,6 +125,9 @@
       <p><strong>Els pagaments són segurs de provar.</strong> Stripe està en <strong>mode test</strong>: no es cobra ni un cèntim de veritat, per molt que la pantalla digui imports. Es paga amb la targeta de prova <code>4242 4242 4242 4242</code>.</p>
       <p><strong>La resta de dades ja no són totes de mentida.</strong> A la base hi conviuen clients de demostració i persones reals (el mateix Marc, entre d'altres). Prova, clica i experimenta lliurement amb els comptes demo; però abans d'editar, esborrar o cancel·lar res des de la fitxa d'un client, mira de qui és.</p>
       <p><strong>Comptes demo i reals, separats</strong> <span class="flag">Nou</span>: un client real no veu ni pot reservar (calendari, llista d'espera, sèries, alternatives) amb l'<strong>Entrenador Demo</strong> ni el <strong>Fisio Demo</strong>, tampoc grup ni fisioteràpia, que són oberts a qualsevol professional; i el <strong>Client Demo</strong> només veu i reserva professionals demo. /prova no ofereix cap hora dels professionals demo. L'equip tampoc ho barreja: reservar el Client Demo amb la Laia o un client real amb l'Entrenador Demo dona error. Comprova-ho entrant amb el teu compte de client (amb un bo de grup) i, amb el mode PRE, amb el Client Demo.</p>
+      <p><strong>Esborrat · Desfer</strong> <span class="flag">Nou</span>: un registre de progrés, la nota d'una sessió i una franja de disponibilitat que no deixa cap reserva fora ja no pregunten: s'esborren al moment i a baix surt «… esborrat · Desfer» uns 8 segons (es queda mentre hi tens el dit o el ratolí). «Desfer» ho torna a posar tal com era; comprova-ho recarregant. Una franja que sí que deixa reserves fora segueix aturant-se a la llista de reserves, i allà no hi ha «Desfer».</p>
+      <p><strong>El menú del mòbil ensenya el que hi ha dins de cada grup</strong> <span class="flag">Nou</span>: Persones, Reserves, Bons i pagaments, Catàleg i Facturació surten com a títol amb totes les seves pantalles a sota (Vals de regal i Referits, d'un toc). A l'ordinador, el menú encara no canvia. Les pestanyes de dalt <strong>no actives</strong> es llegeixen més fosques (contrast AA).</p>
+      <p><strong>Client: «No, torna» a tot arreu</strong> <span class="flag">Nou</span>: cancel·lar una sèrie al calendari i cancel·lar una reserva des de l'Inici diuen ara «Sí, cancel·la / No, torna» (abans, «Deixar-ho estar» i «Segur? Sí / No»), en els tres idiomes.</p>
       <p><strong>Tot el que no es pot desfer pregunta abans</strong> <span class="flag">Nou</span>: el primer toc d'«Eliminar», «Treure», «Anul·lar» o «Tancar» només diu què passarà, i fins a «Sí, …» no passa res; «No, torna» ho deixa com era. És el mateix «Sí, cancel·la / No, torna» de l'agenda. Prova'l a: un anunci i una enquesta (eliminar i tancar), un exercici de la biblioteca i una categoria buida, un exercici assignat i un registre de progrés a la fitxa, un bloqueig, una etiqueta, una oferta (abans era el quadre del navegador), un val de regal, la nota d'una sessió i, com a client, un document. Als quadres de cobrar, anul·lar un bo, subscripcions, factures i compres, el botó de no fer res ara diu «No, torna» en lloc de «Cancel·lar».</p>
     </div>
 
@@ -493,7 +496,7 @@
       <li><strong>Manté la biblioteca d'exercicis</strong>: en crea, n'edita i gestiona categories, igual que l'admin</li>
       <li>Disponibilitat: mateixa gestió que l'admin (regles setmanals + bloquejos), però només per a ell</li>
       <li>Configuració té <strong>dues</strong> pestanyes: Notificacions i Contrasenya</li>
-      <li>Botó rodó de <strong>suport</strong> a baix a la dreta de totes les pantalles (secció 20), menys a <strong>Reserves</strong>, on és el botó <strong>«Suport»</strong> de la fila del títol; i <strong>"Ajuda"</strong> al final del menú (secció 19)</li>
+      <li><strong>Suport</strong> al marc (secció 20): la icona de la boia a la barra de dalt al mòbil i «Obrir un tiquet» al peu del menú a l'ordinador; a <strong>Reserves</strong>, el botó <strong>«Suport»</strong> de la fila del títol. I <strong>"Ajuda"</strong> al final del menú (secció 19)</li>
     </ul>
 
     <h2 id="client"><span class="num">4</span> Client</h2>
@@ -971,7 +974,7 @@
 
     <h2 id="suport"><span class="num">20</span> Suport tècnic intern <span class="new-badge">Nou</span></h2>
     <ul class="checklist">
-      <li>Botó rodó lila a baix a la dreta de <strong>totes</strong> les pantalles d'admin i professional, <strong>menys a /trainer/reservas</strong>: allà taparia la rejilla i hi ha el botó «Suport» al costat de «+ Nova», que obre el mateix panell. <strong>El client no el té</strong> — comprova-ho</li>
+      <li><strong>Ja no flota</strong> <span class="flag">Nou</span>: al mòbil és la icona de la boia a la barra lila de dalt (amb el número de tiquets oberts, a l'admin); a l'ordinador, «Obrir un tiquet» al peu del menú. A Reserves (agenda) hi ha el botó «Suport» al costat de «+ Nova» i el del marc no surt. Comprova que a Bons el «Marcar com pagat» de l'última fila i, a «Nou client», el missatge d'error del peu ja no queden tapats. <strong>El client no el té</strong> — comprova-ho</li>
       <li>Obre un panell amb títol, <strong>categoria</strong> (Error, Pregunta, Suggeriment) i descripció. Es tanca amb Escape o tocant fora</li>
       <li>Hi ha també la pantalla completa amb el llistat i filtre per estat</li>
       <li><strong>L'admin veu els tiquets de tot l'equip i en mou l'estat</strong> (Obert, En curs, Resolt); el professional només els seus i <strong>no els pot moure</strong></li>
