@@ -384,7 +384,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "El taronja és només dels grups. El que demana feina («per marcar», una prova per respondre, «Cal fer») va en blau fosc i sempre amb un signe que s'entén sense color. La línia de l'hora d'ara segueix sent taronja.",
+          text: "El taronja és només dels grups. El que demana feina («per marcar», una prova per respondre, «Cal fer») va en blau fosc i sempre amb un signe que s'entén sense color. La línia de l'hora d'ara segueix sent taronja; el requadre amb l'hora, en un taronja fosc que es llegeix bé (AA).",
         },
         { t: "h", text: "Els forats lliures" },
         {

@@ -616,7 +616,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "A tota l'agenda (el dia, la setmana i la del professional) el taronja és només dels grups, el color del seu servei. El que demana feina va en blau fosc i sempre amb un signe que s'entén sense color: l'anell i el cercle amb l'exclamació per a «per marcar», la vora discontínua i el rellotge de sorra per a una prova pendent. La línia de l'hora d'ara segueix sent taronja.",
+          text: "A tota l'agenda (el dia, la setmana i la del professional) el taronja és només dels grups, el color del seu servei. El que demana feina va en blau fosc i sempre amb un signe que s'entén sense color: l'anell i el cercle amb l'exclamació per a «per marcar», la vora discontínua i el rellotge de sorra per a una prova pendent. La línia de l'hora d'ara segueix sent taronja; el requadre amb l'hora, en un taronja fosc que es llegeix bé (AA).",
         },
         { t: "h", text: "Els filtres" },
         {

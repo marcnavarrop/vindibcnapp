@@ -819,7 +819,10 @@ export function Grid({
           {nowVisible && (
             <div
               data-now
-              className="absolute right-0.5 z-10 -translate-y-1/2 rounded bg-brand-orange px-1 text-xs font-bold text-white"
+              // La línia és taronja; el recuadre de l'hora, en l'enfosquit de
+              // «+N en espera»: el blanc sobre el taronja feia 2,8:1 i sobre
+              // aquest, 5,3:1 (AA).
+              className="absolute right-0.5 z-10 -translate-y-1/2 rounded bg-group-ink px-1 text-xs font-bold text-white"
               style={{ top: v.y(nowSlot) }}
             >
               {hhmm(now!)}
