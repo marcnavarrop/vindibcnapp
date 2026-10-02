@@ -1941,6 +1941,11 @@ export interface Database {
           card_n: number;
           cash_total: number;
           cash_n: number;
+          /** 0101: la targeta del TPV (sense `stripe_payment_id`) i la d'internet. */
+          card_tpv_total: number;
+          card_tpv_n: number;
+          card_online_total: number;
+          card_online_n: number;
         }[];
       };
       /**

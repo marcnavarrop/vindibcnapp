@@ -170,6 +170,9 @@ export type PaymentsSummary = {
   total: number;
   count: number;
   card: { total: number; count: number };
+  /** La targeta, partida: al taulell (TPV) i per internet (Stripe). Sumen `card`. */
+  cardTpv: { total: number; count: number };
+  cardOnline: { total: number; count: number };
   cash: { total: number; count: number };
 };
 
@@ -183,12 +186,17 @@ export type PaymentsSummary = {
 export async function getPaymentsSummary(): Promise<PaymentsSummary> {
   if (USE_MOCK) {
     const ps = getStore().payments;
-    const of = (m?: PaymentMethod) => {
-      const xs = m ? ps.filter((p) => p.method === m) : ps;
-      return { total: round2(xs.reduce((s, p) => s + p.amount, 0)), count: xs.length };
-    };
+    const sum = (xs: typeof ps) => ({ total: round2(xs.reduce((s, p) => s + p.amount, 0)), count: xs.length });
+    const of = (m?: PaymentMethod) => sum(m ? ps.filter((p) => p.method === m) : ps);
     const all = of();
-    return { total: all.total, count: all.count, card: of("card"), cash: of("cash") };
+    return {
+      total: all.total,
+      count: all.count,
+      card: of("card"),
+      cardTpv: sum(ps.filter((p) => p.method === "card" && !p.stripe_payment_id)),
+      cardOnline: sum(ps.filter((p) => p.method === "card" && !!p.stripe_payment_id)),
+      cash: of("cash"),
+    };
   }
 
   const supabase = await createClient();
@@ -200,6 +208,8 @@ export async function getPaymentsSummary(): Promise<PaymentsSummary> {
     total: Number(r.total),
     count: Number(r.n),
     card: { total: Number(r.card_total), count: Number(r.card_n) },
+    cardTpv: { total: Number(r.card_tpv_total), count: Number(r.card_tpv_n) },
+    cardOnline: { total: Number(r.card_online_total), count: Number(r.card_online_n) },
     cash: { total: Number(r.cash_total), count: Number(r.cash_n) },
   };
 }

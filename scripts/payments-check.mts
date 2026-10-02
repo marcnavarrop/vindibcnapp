@@ -57,6 +57,8 @@ try {
       id: `pc-${String(i).padStart(3, "0")}`, client_id: "c-ana", bono_id: null,
       stripe_payment_id: null, amount: 10 + (i % 7), currency: "eur",
       method: i % 3 === 0 ? "cash" : "card", concept: null, paid_at: at, created_at: at,
+      // Una de cada cinc targetes, per internet (porta l'identificador de Stripe).
+      ...(i % 3 !== 0 && i % 5 === 0 ? { stripe_payment_id: `pi_pc_${i}` } : {}),
     } as never);
   }
   saveStore(s);
@@ -100,6 +102,15 @@ try {
     round(sum.card.total + sum.cash.total) === sum.total && sum.card.count + sum.cash.count === sum.count,
     `targeta ${sum.card.total} (${sum.card.count}) + efectiu ${sum.cash.total} (${sum.cash.count}) = total`,
   );
+  {
+    const tpv = totes.filter((p) => p.method === "card" && !p.stripe_payment_id);
+    const onl = totes.filter((p) => p.method === "card" && !!p.stripe_payment_id);
+    check(
+      sum.cardTpv.count === tpv.length && sum.cardOnline.count === onl.length && onl.length > 0 &&
+        round(sum.cardTpv.total + sum.cardOnline.total) === sum.card.total && sum.cardTpv.count + sum.cardOnline.count === sum.card.count,
+      `targeta (TPV) ${sum.cardTpv.total} (${sum.cardTpv.count}) + en línia ${sum.cardOnline.total} (${sum.cardOnline.count}) = targeta`,
+    );
+  }
 
   console.log("\nPer mesos (hora de Madrid)");
   const mesos = await paymentsByMonth(12);

@@ -46,7 +46,8 @@ export default async function PagosPage() {
 
         {summary ? (
           <p className="mt-2 text-sm text-brand-muted tabular-nums" data-testid="payments-breakdown">
-            {summary.count} pagaments · Targeta {formatEur(summary.card.total)} ({summary.card.count}) ·
+            {summary.count} pagaments · Targeta (TPV) {formatEur(summary.cardTpv.total)} ({summary.cardTpv.count}) ·
+            Targeta (en línia) {formatEur(summary.cardOnline.total)} ({summary.cardOnline.count}) ·
             Efectiu {formatEur(summary.cash.total)} ({summary.cash.count})
           </p>
         ) : (

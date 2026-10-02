@@ -1085,7 +1085,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "El registre de tot el que ha entrat: data, client, import, mètode i concepte (què es va pagar), del més recent al més antic. El mètode distingeix «Targeta (TPV)», cobrada al taulell, de «Targeta (en línia)», pagada per Stripe. Al mòbil, cada pagament és una fila de dues línies. A dalt a la dreta hi ha el total cobrat de tot l'històric i, a sota, quants pagaments són i quant s'ha cobrat amb targeta i quant en efectiu.",
+          text: "El registre de tot el que ha entrat: data, client, import, mètode i concepte (què es va pagar), del més recent al més antic. El mètode distingeix «Targeta (TPV)», cobrada al taulell, de «Targeta (en línia)», pagada per Stripe. Al mòbil, cada pagament és una fila de dues línies. A dalt a la dreta hi ha el total cobrat de tot l'històric i, a sota, quants pagaments són i quant s'ha cobrat amb la targeta del TPV, amb targeta per internet i en efectiu.",
         },
         {
           t: "p",
