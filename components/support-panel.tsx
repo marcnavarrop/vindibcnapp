@@ -74,8 +74,8 @@ const CATEGORY_STYLE: Record<
   },
 };
 
-const STATUS_TONE: Record<SupportStatus, "warn" | "info" | "success"> = {
-  open: "warn",
+const STATUS_TONE: Record<SupportStatus, "attention" | "info" | "success"> = {
+  open: "attention",
   in_progress: "info",
   resolved: "success",
 };
@@ -479,7 +479,7 @@ export function SupportPanel({
                   {setStatusAction ? (
                     <StatusPicker ticket={t} action={setStatusAction} />
                   ) : (
-                    <Badge tone={STATUS_TONE[t.status]}>
+                    <Badge tone={STATUS_TONE[t.status]} icon={t.status === "open" ? "pending" : undefined}>
                       {SUPPORT_STATUS_LABELS[t.status]}
                     </Badge>
                   )}

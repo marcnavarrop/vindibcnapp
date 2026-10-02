@@ -30,12 +30,12 @@ import type { BonoStatus } from "@/types/database";
 
 const STATUS_TONE: Record<
   BonoStatus,
-  "success" | "neutral" | "danger" | "warn"
+  "success" | "neutral" | "danger" | "attention"
 > = {
   active: "success",
   completed: "neutral",
   cancelled: "danger",
-  pending_payment: "warn",
+  pending_payment: "attention",
   // Caducat NO és neutral com "completat": s'han perdut sessions pagades.
   expired: "danger",
   // Anul·lat per impagament: també és pèrdua, i l'etiqueta n'explica el motiu.
@@ -97,7 +97,7 @@ export function BonosAdminTable({
             {f.label}
             {(f.key === "pending_payment" || f.key === "unpaid") &&
               counts[f.key] > 0 && (
-                <span className="rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+                <span className="rounded-full bg-attention px-1.5 text-[10px] text-white">
                   {counts[f.key]}
                 </span>
               )}
@@ -191,7 +191,7 @@ function BonosAdminRows({
                   <span className="text-brand-muted"> / {b.totalSessions}</span>
                   {b.status === "pending_payment" &&
                     b.totalSessions - b.remainingSessions > 0 && (
-                      <span className="ml-2 text-xs font-bold text-brand-orange">
+                      <span className="ml-2 text-xs font-bold text-attention">
                         ({b.totalSessions - b.remainingSessions} ja consumides)
                       </span>
                     )}
@@ -201,7 +201,7 @@ function BonosAdminRows({
                   {b.expiresAt ? formatDate(b.expiresAt) : "—"}
                 </td>
                 <td className="px-4 py-3">
-                  <Badge tone={STATUS_TONE[b.status]}>
+                  <Badge tone={STATUS_TONE[b.status]} icon={b.status === "pending_payment" ? "pending" : undefined}>
                     {BONO_STATUS_LABELS[b.status]}
                   </Badge>
                 </td>

@@ -173,11 +173,12 @@ export default async function TrainerClientDetailPage({
                 </span>
                 <span>{formatEur(b.price)}</span>
                 <Badge
+                  icon={b.status === "pending_payment" ? "pending" : undefined}
                   tone={
                     b.status === "active"
                       ? "success"
                       : b.status === "pending_payment"
-                        ? "warn"
+                        ? "attention"
                         : // Decaigut i caducat no són neutrals com "completat":
                           // hi ha sessions pagades que s'han perdut. Mateix
                           // criteri que les dues taules de bons.

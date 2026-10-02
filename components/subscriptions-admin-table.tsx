@@ -46,13 +46,13 @@ const STATUS_LABEL: Record<SubscriptionStatus, string> = {
   cancelled: "Cancel·lada",
 };
 
-// 'paused' va en lila i NO en taronja. El taronja d'aquesta taula vol dir
+// 'paused' va en lila i NO en blau d'atenció. El blau d'aquesta taula vol dir
 // "alguna cosa no va bé" —un mes sense cobrar—, i una congelació és una decisió
 // del centre sobre algú que està al corrent. Pintar-les igual seria fer passar
 // per avís el que no ho és.
-const STATUS_TONE: Record<SubscriptionStatus, "success" | "warn" | "neutral" | "info"> = {
+const STATUS_TONE: Record<SubscriptionStatus, "success" | "attention" | "neutral" | "info"> = {
   active: "success",
-  past_due: "warn",
+  past_due: "attention",
   paused: "info",
   cancelled: "neutral",
 };
@@ -118,7 +118,7 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
             <ChipCheck on={filter === f.key} />
             {f.label}
             {f.key === "past_due" && pastDue > 0 && (
-              <span className="rounded-full bg-brand-orange px-1.5 text-xs text-white">
+              <span className="rounded-full bg-attention px-1.5 text-xs text-white">
                 {pastDue}
               </span>
             )}
@@ -201,7 +201,7 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
                       renovació, la subscripció s'aturarà. */}
                   {(r.cycleBonoStatus === "pending_payment" ||
                     r.cycleBonoStatus === "unpaid") && (
-                    <span className="block text-xs font-bold text-brand-orange">
+                    <span className="block text-xs font-bold text-attention">
                       mes sense cobrar
                     </span>
                   )}
@@ -237,7 +237,7 @@ export function SubscriptionsAdminTable({ rows }: { rows: SubscriptionRow[] }) {
                 <td className="px-4 py-3">
                   <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
                   {r.cancelAtPeriodEnd && r.status !== "cancelled" && (
-                    <span className="mt-1 block text-xs font-bold text-brand-orange">
+                    <span className="mt-1 block text-xs font-bold text-attention">
                       no es renovarà
                     </span>
                   )}
@@ -528,7 +528,7 @@ function SubscriptionCard({
         )}
       </p>
       {(unpaid && r.status !== "paused") || (r.cancelAtPeriodEnd && r.status !== "cancelled") ? (
-        <p className="text-[13px] font-bold text-brand-orange">
+        <p className="text-[13px] font-bold text-attention">
           {[unpaid && r.status !== "paused" && "mes sense cobrar", r.cancelAtPeriodEnd && r.status !== "cancelled" && "no es renovarà"]
             .filter(Boolean)
             .join(" · ")}

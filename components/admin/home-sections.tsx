@@ -343,7 +343,7 @@ export function TodayAtCentre({
                 </p>
                 <p className="flex items-center gap-1.5 truncate text-xs text-brand-muted">
                   {SERVICE_LABELS[r.serviceType]}
-                  {r.isComplimentary && <Badge tone="warn">Cortesia</Badge>}
+                  {r.isComplimentary && <Badge tone="neutral" icon="gift">Cortesia</Badge>}
                 </p>
               </div>
 

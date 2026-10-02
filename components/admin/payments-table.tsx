@@ -93,7 +93,7 @@ export function PaymentsTable({
                 <td className="px-4 py-3">{p.clientName}</td>
                 <td className="px-4 py-3 font-bold tabular-nums">{p.amount}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  <Badge tone={p.method === "card" ? "info" : "warn"}>{p.methodLabel}</Badge>
+                  <Badge tone="neutral" icon={p.method === "card" ? "card" : "cash"}>{p.methodLabel}</Badge>
                 </td>
                 <td className="px-4 py-3 text-brand-muted">{p.concept ?? "—"}</td>
               </tr>

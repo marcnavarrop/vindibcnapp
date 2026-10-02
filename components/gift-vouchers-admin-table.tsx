@@ -22,10 +22,10 @@ import type { GiftVoucherStatus } from "@/types/database";
 
 const STATUS_TONE: Record<
   GiftVoucherStatus,
-  "success" | "neutral" | "danger" | "warn"
+  "success" | "neutral" | "danger" | "attention"
 > = {
   // Pendent és el cas que demana feina: el val no val res fins que algú cobra.
-  pending_payment: "warn",
+  pending_payment: "attention",
   active: "success",
   redeemed: "neutral",
   // Caducat i anul·lat són pèrdua, com als bons: es marquen en vermell.
@@ -68,7 +68,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
             <ChipCheck on={filter === f.key} />
             {f.label}
             {f.key === "pending_payment" && pendingCount > 0 && (
-              <span className="rounded-full bg-brand-orange px-1.5 text-[10px] text-white">
+              <span className="rounded-full bg-attention px-1.5 text-[10px] text-white">
                 {pendingCount}
               </span>
             )}
@@ -137,7 +137,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                   )}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  <Badge tone={STATUS_TONE[v.status]}>
+                  <Badge tone={STATUS_TONE[v.status]} icon={v.status === "pending_payment" ? "pending" : undefined}>
                     {GIFT_VOUCHER_STATUS_LABELS[v.status]}
                   </Badge>
                 </td>
@@ -225,7 +225,7 @@ function VoucherCard({ v }: { v: GiftVoucher }) {
     <li className="flex flex-col gap-1.5 rounded-2xl border border-brand-border bg-white px-3.5 py-3" data-testid="voucher-card">
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <span className="font-mono text-base font-bold whitespace-nowrap text-brand-purple">{v.code}</span>
-        <Badge tone={STATUS_TONE[v.status]}>{GIFT_VOUCHER_STATUS_LABELS[v.status]}</Badge>
+        <Badge tone={STATUS_TONE[v.status]} icon={v.status === "pending_payment" ? "pending" : undefined}>{GIFT_VOUCHER_STATUS_LABELS[v.status]}</Badge>
       </div>
       <p className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-sm text-brand-muted">
         <span className="font-semibold text-brand-charcoal">{v.buyerName}</span>

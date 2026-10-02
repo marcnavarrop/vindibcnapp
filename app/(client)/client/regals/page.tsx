@@ -87,11 +87,12 @@ export default async function RegalsPage() {
                 <span className="text-brand-dark">{v.packageName}</span>
                 <span className="text-brand-muted">{formatEur(v.price, locale)}</span>
                 <Badge
+                  icon={v.status === "pending_payment" ? "pending" : undefined}
                   tone={
                     v.status === "active"
                       ? "success"
                       : v.status === "pending_payment"
-                        ? "warn"
+                        ? "attention"
                         : "neutral"
                   }
                 >

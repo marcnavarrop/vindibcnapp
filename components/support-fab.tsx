@@ -25,8 +25,8 @@ import {
 import type { SupportTicket } from "@/lib/data/support";
 import type { SupportStatus } from "@/types/database";
 
-const STATUS_TONE: Record<SupportStatus, "warn" | "info" | "success"> = {
-  open: "warn",
+const STATUS_TONE: Record<SupportStatus, "attention" | "info" | "success"> = {
+  open: "attention",
   in_progress: "info",
   resolved: "success",
 };
@@ -259,7 +259,7 @@ export function SupportFab({
                           </p>
                         </div>
                         <span className="shrink-0">
-                          <Badge tone={STATUS_TONE[t.status]}>
+                          <Badge tone={STATUS_TONE[t.status]} icon={t.status === "open" ? "pending" : undefined}>
                             {SUPPORT_STATUS_LABELS[t.status]}
                           </Badge>
                         </span>

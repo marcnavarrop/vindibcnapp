@@ -12,6 +12,7 @@ import { LoadMoreFooter, useLoadMore } from "@/components/server-list";
 import type { TrialRowView } from "@/lib/trial-row";
 import type { TrialStatus } from "@/types/database";
 import { TAP } from "@/lib/utils";
+import { Badge, type BadgeIcon, type BadgeTone } from "@/components/ui/badge";
 
 /**
  * Les files de /admin/prova, ara al navegador perquè l'històric creix amb
@@ -28,14 +29,16 @@ const STATUS_LABELS: Record<TrialStatus, string> = {
   cancelled: "Cancel·lada",
 };
 
-const STATUS_STYLE: Record<TrialStatus, string> = {
-  pending: "bg-brand-orange/15 text-brand-orange",
-  confirmed: "bg-brand-purple/15 text-brand-purple",
-  rejected: "bg-error/10 text-error",
-  expired: "bg-brand-border/60 text-brand-muted",
-  completed: "bg-success/10 text-success",
-  no_show: "bg-error/10 text-error",
-  cancelled: "bg-brand-border/60 text-brand-muted",
+// La pendent, amb el rellotge de sorra: és la mateixa prova pendent que
+// l'agenda pinta en blau d'atenció (pas 7).
+const STATUS_LOOK: Record<TrialStatus, { tone: BadgeTone; icon?: BadgeIcon }> = {
+  pending: { tone: "attention", icon: "pending" },
+  confirmed: { tone: "info" },
+  rejected: { tone: "danger" },
+  expired: { tone: "neutral" },
+  completed: { tone: "success" },
+  no_show: { tone: "danger" },
+  cancelled: { tone: "neutral" },
 };
 
 /** L'històric, per pàgines: de la prova més recent a la més antiga. */
@@ -98,12 +101,10 @@ export function TrialRow({ t }: { t: TrialRowView }) {
           {t.trainerName ?? "—"} · {SERVICE_LABELS[t.serviceType]}
         </span>
       </div>
-      <span
-        className={`rounded-full px-2.5 py-1 text-xs font-bold ${STATUS_STYLE[t.status]}`}
-      >
+      <Badge tone={STATUS_LOOK[t.status].tone} icon={STATUS_LOOK[t.status].icon}>
         {STATUS_LABELS[t.status]}
         {t.convertedClientId && " · client"}
-      </span>
+      </Badge>
 
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {t.status === "pending" && (

@@ -153,7 +153,7 @@ export default async function EntrenadorsPage() {
 
 function SpecialtyBadge({ t }: { t: Trainer }) {
   return t.specialty ? (
-    <Badge tone={t.specialty === "fisioterapeuta" ? "info" : "success"}>{SPECIALTY_LABELS[t.specialty]}</Badge>
+    <Badge tone={t.specialty === "fisioterapeuta" ? "info" : "success"} icon={null}>{SPECIALTY_LABELS[t.specialty]}</Badge>
   ) : (
     <span className="text-brand-muted italic">Sense especialitat</span>
   );

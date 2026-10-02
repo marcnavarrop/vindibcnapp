@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { formatDate } from "@/lib/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { Announcement } from "@/lib/data/announcements";
+import { Badge } from "@/components/ui/badge";
 
 /** Inicial de l'autor per a l'avatar; sense nom, la del mot "equip" traduït. */
 function authorInitial(name: string | null, fallback: string): string {
@@ -69,9 +70,7 @@ export async function CommunityBoard({
       {/* Destacat: la més recent */}
       <article className="overflow-hidden rounded-2xl border border-brand-purple/30 bg-gradient-to-br from-brand-purple/10 to-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-brand-orange px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
-            {t("latest")}
-          </span>
+          <Badge tone="new">{t("latest")}</Badge>
           <span className="text-xs font-bold tracking-wide text-brand-muted uppercase">
             {formatDate(featured.createdAt, locale)}
           </span>

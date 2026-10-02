@@ -88,7 +88,7 @@ export default async function ClientBonosPage() {
                       ? "success"
                       : subscription.status === "paused"
                         ? "info"
-                        : "warn"
+                        : "attention"
                   }
                 >
                   {tsub(subscription.status)}
@@ -187,11 +187,12 @@ export default async function ClientBonosPage() {
                   </span>
                   <span>{formatEur(b.price, locale)}</span>
                   <Badge
+                    icon={b.status === "pending_payment" ? "pending" : undefined}
                     tone={
                       b.status === "active"
                         ? "success"
                         : b.status === "pending_payment"
-                          ? "warn"
+                          ? "attention"
                           : "neutral"
                     }
                   >
@@ -216,7 +217,7 @@ export default async function ClientBonosPage() {
                     {formatDate(p.paidAt, locale)}
                   </span>
                   <span className="font-bold">{formatEur(p.amount, locale)}</span>
-                  <Badge tone={p.method === "card" ? "info" : "warn"}>
+                  <Badge tone="neutral" icon={p.method === "card" ? "card" : "cash"}>
                     {tpm(p.method)}
                   </Badge>
                 </Row>

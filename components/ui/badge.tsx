@@ -1,13 +1,72 @@
+import {
+  Banknote,
+  CalendarClock,
+  CircleAlert,
+  CircleCheck,
+  CircleX,
+  CreditCard,
+  Gift,
+  Hourglass,
+  Info,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { clsx } from "@/lib/utils";
 
-type Tone = "success" | "neutral" | "danger" | "info" | "warn";
+/**
+ * ELS TONS (pas 7 del pla d'UX)
+ *
+ * - `attention`: pendent o avís. El blau fosc de l'agenda, mai el taronja.
+ * - `success`, `danger`: fet i perdut.
+ * - `info`: dades en lila (categories, etiquetes, «Futura»).
+ * - `neutral`: el que no demana res (mètode de pagament, completat).
+ * - `new`: la novetat. Lila ple amb l'espurna: es diferencia d'`info` pel
+ *   farciment i la icona.
+ *
+ * El taronja ja no és cap to: a tota l'app és només el color dels grups.
+ */
+export type BadgeTone = "success" | "neutral" | "danger" | "info" | "attention" | "new";
 
-const TONES: Record<Tone, string> = {
-  success: "bg-success/10 text-success",
-  neutral: "bg-brand-muted/10 text-brand-muted",
-  danger: "bg-error/10 text-error",
+const TONES: Record<BadgeTone, string> = {
+  success: "bg-success-bg text-success",
+  neutral: "bg-neutral-bg text-neutral-ink",
+  danger: "bg-error-bg text-error",
   info: "bg-brand-purple/10 text-brand-purple",
-  warn: "bg-brand-orange/10 text-brand-orange",
+  attention: "bg-attention-bg text-attention",
+  new: "bg-brand-purple text-white",
+};
+
+/**
+ * LA ICONA, PERQUÈ L'ESTAT NO DEPENGUI DEL COLOR
+ *
+ * En blanc i negre, el blau d'atenció, el vermell, el verd i el lila queden
+ * tots entre el 19 % i el 43 % de gris: no els separa el to. Els separa la
+ * icona. Per això els tres tons d'estat en porten una per defecte (`success`,
+ * `danger`, `attention`), i qui en vol una altra la demana: «pending» per al
+ * que espera un cobrament (el rellotge de sorra de la prova pendent, a
+ * l'agenda). `info` i `neutral` no en porten si no se'ls demana: hi van
+ * categories i etiquetes, que no són estats. `icon={null}` la treu.
+ */
+export type BadgeIcon = "pending" | "alert" | "check" | "x" | "info" | "cash" | "card" | "gift" | "calendar" | "new";
+
+const ICONS: Record<BadgeIcon, LucideIcon> = {
+  pending: Hourglass,
+  alert: CircleAlert,
+  check: CircleCheck,
+  x: CircleX,
+  info: Info,
+  cash: Banknote,
+  card: CreditCard,
+  gift: Gift,
+  calendar: CalendarClock,
+  new: Sparkles,
+};
+
+const DEFAULT_ICON: Partial<Record<BadgeTone, BadgeIcon>> = {
+  success: "check",
+  danger: "x",
+  attention: "alert",
+  new: "new",
 };
 
 /**
@@ -25,10 +84,6 @@ const TONES: Record<Tone, string> = {
  * taules ja tenen `min-w` i `overflow-x-auto`, així que el que passa és que la
  * taula es desplaça, que és el comportament que ja tenien.
  *
- * El `text-center` no fa res amb `nowrap` posat i s'hi queda igualment: és el
- * que sosté la forma si algun dia `truncate` o un `max-w` tornen a permetre
- * més d'una línia.
- *
  * ETIQUETES DE TEXT LLIURE
  *
  * Amb `nowrap`, un text prou llarg se'n surt del seu contenidor en comptes de
@@ -39,25 +94,31 @@ const TONES: Record<Tone, string> = {
 export function Badge({
   children,
   tone = "neutral",
+  icon,
   className = "",
   title,
 }: {
   children: React.ReactNode;
-  tone?: Tone;
+  tone?: BadgeTone;
+  /** Sense posar: la del to. `null`: cap. */
+  icon?: BadgeIcon | null;
   /** Per als usos amb text de longitud no controlada: `max-w-full truncate`. */
   className?: string;
   /** El text sencer quan es talla amb `truncate`. */
   title?: string;
 }) {
+  const key = icon === undefined ? DEFAULT_ICON[tone] : icon;
+  const Icon = key ? ICONS[key] : null;
   return (
     <span
       title={title}
       className={clsx(
-        "inline-block rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap text-center",
+        "inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
         TONES[tone],
         className,
       )}
     >
+      {Icon && <Icon aria-hidden className="h-3.5 w-3.5 shrink-0" strokeWidth={2.4} data-badge-icon={key} />}
       {children}
     </span>
   );

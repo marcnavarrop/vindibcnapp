@@ -134,9 +134,9 @@ export async function QuickActions() {
 // ─────────────────────────── Bons ───────────────────────────
 
 /** Un bo pendent de pagament no és cap error: es distingeix, no s'alarma. */
-const BONO_TONE: Partial<Record<BonoStatus, "success" | "warn">> = {
+const BONO_TONE: Partial<Record<BonoStatus, "success" | "attention">> = {
   active: "success",
-  pending_payment: "warn",
+  pending_payment: "attention",
 };
 
 export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
@@ -194,7 +194,7 @@ export async function ActiveBonos({ bonos }: { bonos: ClientBono[] }) {
                       </p>
                     </div>
                   </div>
-                  <Badge tone={BONO_TONE[b.status] ?? "neutral"}>
+                  <Badge tone={BONO_TONE[b.status] ?? "neutral"} icon={b.status === "pending_payment" ? "pending" : undefined}>
                     {ts(b.status)}
                   </Badge>
                 </div>

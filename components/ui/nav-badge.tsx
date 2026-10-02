@@ -43,10 +43,10 @@ export function NavBadge({
 
   return (
     <span
-      // Taronja de marca sobre el lila del menú: el mateix contrast que fa
-      // servir la vora de l'entrada activa. Els tons `brand-*-dark` d'aquí no
-      // es veurien.
-      className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange px-1.5 text-[11px] font-bold text-white"
+      // Sempre va sobre el lila del menú: píndola blanca amb el número en el
+      // blau d'atenció (11,5:1). Abans era taronja, que des del pas 7 és
+      // només dels grups (i el blanc a sobre feia 2,8:1).
+      className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[11px] font-bold text-attention"
       // L'etiqueta porta el número sencer encara que la bola digui "9+":
       // qui escolta no té cap motiu per quedar-se amb la versió escurçada.
       aria-label={label(count)}

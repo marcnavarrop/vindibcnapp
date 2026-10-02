@@ -184,7 +184,7 @@ export function ReservationSheet({
               />
               <div className="flex items-start justify-between gap-2">
                 <h2 className="text-lg font-bold text-brand-dark">{r.clientName}</h2>
-                {r.isComplimentary && <Badge tone="warn">Cortesia</Badge>}
+                {r.isComplimentary && <Badge tone="neutral" icon="gift">Cortesia</Badge>}
               </div>
               <p className="mt-1 text-sm text-brand-muted first-letter:uppercase">
                 {whenFmt.format(start)}

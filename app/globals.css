@@ -34,9 +34,28 @@
   --color-brand-border: #eaeaea;
   --color-brand-bg: #f7f7f7;
 
-  /* Semánticos */
-  --color-success: #28a745;
-  --color-error: #dc3545;
+  /* Semàntics (pas 7 del pla d'UX)
+     El taronja és NOMÉS dels grups. Cada estat té el seu color i, a les
+     etiquetes, una icona: es distingeixen també en blanc i negre. Contrast
+     WCAG del text sobre el seu fons, entre parèntesis. */
+  /* Atenció: pendent i avís. El blau de «per marcar» de l'agenda (ATTENTION
+     a agenda-pieces.tsx). Pendent porta el rellotge de sorra; avís,
+     l'exclamació. (10,0:1; 11,5:1 sobre blanc) */
+  --color-attention: #1e3a5f;
+  --color-attention-bg: #eaf0f6;
+  /* Abans #28a745: 2,8:1, no passava AA. És el verd de «lliure» de l'agenda. (4,6:1) */
+  --color-success: #15803d;
+  --color-success-bg: #eef8f1;
+  /* Abans #dc3545: 3,9:1 sobre el seu fons. (5,8:1; 6,6:1 sobre blanc) */
+  --color-error: #b42318;
+  --color-error-bg: #fdecec;
+  /* Mètode de pagament, cortesia: dades, no estats. (6,5:1) */
+  --color-neutral-ink: #55555a;
+  --color-neutral-bg: #efeff1;
+  /* El grup: el taronja i, per a text, el seu enfosquit. (5,3:1 sobre blanc,
+     i el blanc a sobre també 5,3:1) */
+  --color-group: #ff6d17;
+  --color-group-ink: #b8470c;
   /* Salud: distingue las notas clínicas del resto sin usar el naranja, que
      está reservado para lo que requiere acción del admin. */
   --color-brand-clinical: #17786d;

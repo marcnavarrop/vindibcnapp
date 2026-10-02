@@ -87,7 +87,7 @@ export function TrainerUpcomingReservations({
                 <Badge tone="info">
                   {RESERVATION_STATUS_LABELS[r.status]}
                 </Badge>
-                {r.isComplimentary && <Badge tone="warn">Cortesia</Badge>}
+                {r.isComplimentary && <Badge tone="neutral" icon="gift">Cortesia</Badge>}
                 {isOwn && (
                   <div className="ml-auto">
                     <AddToCalendarButton

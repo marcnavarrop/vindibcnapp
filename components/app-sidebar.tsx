@@ -524,7 +524,7 @@ function SidebarFooter({
             {fullName || "El meu compte"}
           </span>
           {USE_MOCK && (
-            <span className="shrink-0 rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-orange uppercase">
+            <span className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
               Demo
             </span>
           )}

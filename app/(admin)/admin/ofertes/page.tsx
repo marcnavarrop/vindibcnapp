@@ -22,10 +22,10 @@ function promotionStatus(p: {
   active: boolean;
   startsAt: string;
   endsAt: string;
-}): { label: string; tone: "success" | "warn" | "neutral" | "danger" } {
+}): { label: string; tone: "success" | "info" | "neutral" | "danger"; icon?: "calendar" } {
   const today = centerToday();
   if (!p.active) return { label: "Desactivada", tone: "neutral" };
-  if (p.startsAt > today) return { label: "Futura", tone: "warn" };
+  if (p.startsAt > today) return { label: "Futura", tone: "info", icon: "calendar" as const };
   if (p.endsAt < today) return { label: "Caducada", tone: "neutral" };
   return { label: "Activa", tone: "success" };
 }
@@ -136,7 +136,7 @@ export default async function OfertesPage({
                   <span className="text-brand-muted">
                     {p.startsAt} → {p.endsAt}
                   </span>
-                  <Badge tone={status.tone}>{status.label}</Badge>
+                  <Badge tone={status.tone} icon={status.icon}>{status.label}</Badge>
                   <div className="ml-auto flex items-center gap-3">
                     <Link
                       href={`/admin/ofertes/${p.id}/edit`}

@@ -78,7 +78,8 @@ function Dot({ n, inline = false }: { n: number; inline?: boolean }) {
     <span
       aria-hidden
       className={clsx(
-        "flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange px-1 text-[11px] font-bold text-white",
+        // Sobre el lila del marc, com les pilotetes del menú (`NavBadge`).
+        "flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-attention",
         !inline && "absolute -top-0.5 -right-0.5 border-2 border-brand-purple",
       )}
     >

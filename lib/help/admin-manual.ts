@@ -921,7 +921,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Tots els bons del centre, del més nou al més antic, amb el client, el servei, les sessions, el preu, la caducitat i l'estat. Els filtres de dalt —Tots, Pendents de pagament, Decaiguts sense cobrar i Actius— són la manera ràpida d'anar al que et fa falta; els de pendents i decaiguts porten un comptador taronja quan n'hi ha, i entre tots dos sumen la piloteta del menú. La llista en carrega 50 de cop: a sota diu quants en veus del total i «Carregar més» n'afegeix 50 més. El filtre queda a l'adreça. Si cobres o anul·les un bo, la llista torna a començar des del principi amb l'estat nou. El nom del client porta a la seva fitxa. Al mòbil, cada bo és una targeta: el client i l'estat a dalt, el servei, les sessions, el preu i la caducitat a sota i, si n'hi ha, «Marcar com pagat» a tot l'ample amb «Anul·lar» al costat; no cal lliscar de costat per veure res.",
+          text: "Tots els bons del centre, del més nou al més antic, amb el client, el servei, les sessions, el preu, la caducitat i l'estat. Els filtres de dalt —Tots, Pendents de pagament, Decaiguts sense cobrar i Actius— són la manera ràpida d'anar al que et fa falta; els de pendents i decaiguts porten un comptador blau fosc quan n'hi ha, i entre tots dos sumen la piloteta del menú. La llista en carrega 50 de cop: a sota diu quants en veus del total i «Carregar més» n'afegeix 50 més. El filtre queda a l'adreça. Si cobres o anul·les un bo, la llista torna a començar des del principi amb l'estat nou. El nom del client porta a la seva fitxa. Al mòbil, cada bo és una targeta: el client i l'estat a dalt, el servei, les sessions, el preu i la caducitat a sota i, si n'hi ha, «Marcar com pagat» a tot l'ample amb «Anul·lar» al costat; no cal lliscar de costat per veure res.",
         },
         { t: "h", text: "Els sis estats" },
         {
@@ -1036,8 +1036,8 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "dl",
           items: [
             ["Activa", "Tot en ordre."],
-            ["Aturada per impagament", "Va arribar el dia de renovar i el mes no es va cobrar. Es pinta en taronja: hi ha alguna cosa a fer."],
-            ["Congelada", "L'has aturada tu. Va en lila i no en taronja a posta: no és un problema, és una decisió."],
+            ["Aturada per impagament", "Va arribar el dia de renovar i el mes no es va cobrar. Es pinta en blau fosc amb l'exclamació: hi ha alguna cosa a fer."],
+            ["Congelada", "L'has aturada tu. Va en lila i no en blau d'avís a posta: no és un problema, és una decisió."],
             ["Cancel·lada", "Donada de baixa."],
           ],
         },

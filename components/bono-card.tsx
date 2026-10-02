@@ -10,11 +10,11 @@ import type { BonoListItem } from "@/lib/data/bonos";
 import type { BonoStatus } from "@/types/database";
 
 /** El to de cada estat, el mateix a la taula i a la targeta. */
-export const BONO_STATUS_TONE: Record<BonoStatus, "success" | "neutral" | "danger" | "warn" | "info"> = {
+export const BONO_STATUS_TONE: Record<BonoStatus, "success" | "neutral" | "danger" | "attention" | "info"> = {
   active: "success",
   completed: "neutral",
   cancelled: "danger",
-  pending_payment: "warn",
+  pending_payment: "attention",
   // Caducat NO és neutral com "completat": s'han perdut sessions pagades.
   expired: "danger",
   // Anul·lat per impagament: també és pèrdua, i l'etiqueta n'explica el motiu.
@@ -81,7 +81,7 @@ export function BonoCard({
             {b.clientName}
           </Link>
         </span>
-        <Badge tone={BONO_STATUS_TONE[b.status]}>{BONO_STATUS_LABELS[b.status]}</Badge>
+        <Badge tone={BONO_STATUS_TONE[b.status]} icon={b.status === "pending_payment" ? "pending" : undefined}>{BONO_STATUS_LABELS[b.status]}</Badge>
       </div>
       <p className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-sm text-brand-muted">
         <span className="font-semibold text-brand-charcoal">{SERVICE_LABELS[b.serviceType]}</span>
@@ -93,7 +93,7 @@ export function BonoCard({
         {!canPay && canCancel && <span className="ml-auto">{cancel("link")}</span>}
       </p>
       {b.status === "pending_payment" && consumed > 0 && (
-        <p className="text-[13px] font-semibold text-brand-orange-text">
+        <p className="text-[13px] font-semibold text-attention">
           {consumed === 1 ? "1 sessió ja consumida" : `${consumed} sessions ja consumides`} sense cobrar
         </p>
       )}

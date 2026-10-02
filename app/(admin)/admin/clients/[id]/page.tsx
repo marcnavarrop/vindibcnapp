@@ -170,7 +170,7 @@ export default async function ClientDetailPage({
               <Row key={p.id}>
                 <span className="font-bold text-brand-dark">{formatDate(p.paidAt)}</span>
                 <span className="font-bold">{formatEur(p.amount)}</span>
-                <Badge tone={p.method === "card" ? "info" : "warn"}>
+                <Badge tone="neutral" icon={p.method === "card" ? "card" : "cash"}>
                   {PAYMENT_METHOD_LABELS[p.method]}
                 </Badge>
               </Row>
