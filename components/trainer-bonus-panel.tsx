@@ -69,7 +69,7 @@ export async function TrainerBonusPanel({ trainerId }: { trainerId: string }) {
       </div>
 
       {progress.noTiers && (
-        <p className="mt-3 rounded-xl border border-brand-orange/30 bg-brand-orange/10 px-3 py-2 text-sm text-brand-orange">
+        <p className="mt-3 rounded-xl border border-attention/25 bg-attention-bg px-3 py-2 text-sm text-attention">
           El centre encara no ha configurat els trams d&apos;aquest tipus de
           període. L&apos;estimació no és definitiva.
         </p>

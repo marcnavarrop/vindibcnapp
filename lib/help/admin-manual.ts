@@ -158,11 +158,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Pendent de cobrament",
-              "Import i nombre de bons per cobrar: els «Pendent de pagament» que no han caducat i els «Decaigut sense cobrar» (que no caduquen). És la mateixa cua que la piloteta de «Bons» del menú i que els dos comptadors de la pantalla de Bons. Es posa taronja si n'hi ha algun. És la xifra que et diu quants diners hi ha compromesos i no ingressats, i la compta la base de dades, exacta per molts bons que hi hagi. Tocant-la vas a Bons amb el filtre ja posat: «Pendents de pagament» si n'hi ha, i si només n'hi ha de decaiguts, «Decaiguts sense cobrar». L'accés «Bons pendents» porta al mateix lloc.",
+              "Import i nombre de bons per cobrar: els «Pendent de pagament» que no han caducat i els «Decaigut sense cobrar» (que no caduquen). És la mateixa cua que la piloteta de «Bons» del menú i que els dos comptadors de la pantalla de Bons. Es posa en blau fosc si n'hi ha algun. És la xifra que et diu quants diners hi ha compromesos i no ingressats, i la compta la base de dades, exacta per molts bons que hi hagi. Tocant-la vas a Bons amb el filtre ja posat: «Pendents de pagament» si n'hi ha, i si només n'hi ha de decaiguts, «Decaiguts sense cobrar». L'accés «Bons pendents» porta al mateix lloc.",
             ],
             [
               "Bons a punt d'esgotar-se",
-              `Bons actius amb ${sess(s.bonoLowThreshold)} o menys. Els caducats en queden fora: la llista és de gent a qui oferir renovació, i un bo que ja no es pot fer servir no hi porta. Es posa taronja si n'hi ha cap.`,
+              `Bons actius amb ${sess(s.bonoLowThreshold)} o menys. Els caducats en queden fora: la llista és de gent a qui oferir renovació, i un bo que ja no es pot fer servir no hi porta. Es posa en blau fosc si n'hi ha cap.`,
             ],
             [
               "Sessions",
@@ -302,7 +302,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Notes clíniques",
-              "Dades de salut. Abans d'escriure-n'hi cap, comprova que el client hagi acceptat el consentiment de dades de salut: si no, la fitxa t'avisa amb un requadre taronja.",
+              "Dades de salut. Abans d'escriure-n'hi cap, comprova que el client hagi acceptat el consentiment de dades de salut: si no, la fitxa t'avisa amb un requadre blau fosc.",
             ],
             [
               "Notes generals",
@@ -409,7 +409,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "L'avís de consentiment de salut" },
         {
           t: "p",
-          text: "Si el client rep o ha rebut fisioteràpia i encara no ha acceptat el tractament de dades de salut, la fitxa mostra un requadre taronja a sota de la capçalera. Mentre hi sigui, no hi registris notes mèdiques: l'ha d'acceptar ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Si el client rep o ha rebut fisioteràpia i encara no ha acceptat el tractament de dades de salut, la fitxa mostra un requadre blau fosc a sota de la capçalera. Mentre hi sigui, no hi registris notes mèdiques: l'ha d'acceptar ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
         },
       ],
     },
@@ -1331,7 +1331,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Quan se'n solapen dues" },
         {
           t: "p",
-          text: "Si crees una oferta que trepitja una altra d'activa —mateixes dates, mateix paquet i públics que xoquen— l'app t'avisa amb un requadre taronja però la crea igualment. No és un error: solapar-ne dues pot ser el que vols.",
+          text: "Si crees una oferta que trepitja una altra d'activa —mateixes dates, mateix paquet i públics que xoquen— l'app t'avisa amb un requadre blau fosc però la crea igualment. No és un error: solapar-ne dues pot ser el que vols.",
         },
         {
           t: "p",

@@ -118,7 +118,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
             ],
             [
               "Bons a punt d'esgotar-se",
-              `Bons dels teus clients amb ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys. Si n'hi ha cap, la targeta es posa taronja: és l'avís per oferir la renovació abans que es quedin sense.`,
+              `Bons dels teus clients amb ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys. Si n'hi ha cap, la targeta es posa en blau fosc: és l'avís per oferir la renovació abans que es quedin sense.`,
             ],
             [
               "Ocupació setmanal",
@@ -156,7 +156,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "L'estimació del bonus és orientativa. Es calcula amb els pesos i els trams d'avui sobre les sessions que ja has completat, i no queda fixada fins que l'administració tanca el període. Si el centre encara no ha configurat els trams, la pantalla t'ho diu amb un avís taronja.",
+          text: "L'estimació del bonus és orientativa. Es calcula amb els pesos i els trams d'avui sobre les sessions que ja has completat, i no queda fixada fins que l'administració tanca el període. Si el centre encara no ha configurat els trams, la pantalla t'ho diu amb un avís blau fosc.",
         },
         { t: "h", text: "Bons baixos i els meus clients" },
         {
@@ -223,7 +223,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "Si el client rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la fitxa s'obre amb un avís taronja ben visible. Mentre hi sigui, no hi registris notes mèdiques ni dades de salut: ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Si el client rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la fitxa s'obre amb un avís blau fosc ben visible. Mentre hi sigui, no hi registris notes mèdiques ni dades de salut: ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
         },
         { t: "h", text: "Resum" },
         {
@@ -821,7 +821,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: `Un bo compta com a "baix" quan li queden ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys. És el llindar que fa sortir la targeta taronja de l'Inici i el que decideix l'avís que rep el client.`,
+          text: `Un bo compta com a "baix" quan li queden ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys. És el llindar que fa sortir la targeta blau fosc de l'Inici i el que decideix l'avís que rep el client.`,
         },
       ],
     },

@@ -4,8 +4,8 @@
  */
 export function HealthConsentWarning() {
   return (
-    <div className="rounded-2xl border-2 border-brand-orange bg-brand-orange/10 px-5 py-4 text-sm">
-      <p className="font-bold text-brand-orange">
+    <div className="rounded-2xl border-2 border-attention bg-attention-bg px-5 py-4 text-sm">
+      <p className="font-bold text-attention">
         Consentiment de dades de salut pendent
       </p>
       <p className="mt-1 text-brand-charcoal">

@@ -111,7 +111,7 @@ function Unmarked({ r }: { r: Loaded<UnmarkedByTrainer> }) {
               <li key={t.id ?? "cap"} data-unmarked-trainer={t.id ?? ""}>
                 <div className="flex items-baseline justify-between gap-2 text-xs">
                   <span className="truncate font-bold text-brand-charcoal">{t.name}</span>
-                  <span className="shrink-0 font-bold text-brand-orange-dark">{t.sessions.length}</span>
+                  <span className="shrink-0 font-bold text-attention">{t.sessions.length}</span>
                 </div>
                 <ul className="mt-1 flex flex-col">
                   {t.sessions.slice(0, SHOWN_PER_TRAINER).map((s) => (
@@ -164,7 +164,7 @@ function OutOfAvailabilityCard({ r }: { r: Loaded<OutOfAvailability> }) {
             <li key={t.id}>
               <Link href={`/admin/disponibilitat?trainer=${encodeURIComponent(t.id)}`} className={rowClass} data-orphans-trainer={t.id}>
                 <span className="flex-1 truncate text-brand-dark">{t.name}</span>
-                <span className="font-bold text-brand-orange-dark">{t.count}</span>
+                <span className="font-bold text-attention">{t.count}</span>
                 <span className="text-xs font-bold text-brand-purple">Revisar →</span>
               </Link>
             </li>
@@ -207,7 +207,7 @@ function FullGroups({ r }: { r: Loaded<FullGroup[]> }) {
                   <span className={g.booked >= GROUP_CAPACITY ? "font-bold text-brand-dark" : "text-brand-muted"}>
                     {g.booked}/{GROUP_CAPACITY}
                   </span>
-                  <span className="font-bold text-brand-orange-dark">+{g.waiting.length} en espera</span>
+                  <span className="font-bold text-group-ink">+{g.waiting.length} en espera</span>
                 </span>
                 <span className="truncate text-xs text-brand-muted">{g.waiting.join(", ")}</span>
               </Link>

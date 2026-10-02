@@ -203,14 +203,14 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
              */
             className={`flex h-full flex-col items-start gap-2 rounded-2xl border p-4 transition-colors sm:flex-row sm:items-center sm:gap-3 ${
               c.warn
-                ? "border-brand-orange/40 bg-brand-orange/5 hover:border-brand-orange"
+                ? "border-attention/25 bg-attention-bg hover:border-attention [&_.text-brand-muted]:text-brand-tab"
                 : "border-brand-border bg-white hover:border-brand-purple"
             }`}
           >
             <span
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                 c.warn
-                  ? "bg-brand-orange/15 text-brand-orange"
+                  ? "bg-attention/10 text-attention"
                   : "bg-brand-purple/10 text-brand-purple"
               }`}
             >
@@ -218,6 +218,13 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
             </span>
             <div className="min-w-0">
               <p className="text-xs leading-tight text-balance text-brand-muted">
+                {/* L'exclamació: en blanc i negre, el fons blau no basta per veure
+                    que la xifra demana feina (pas 7). */}
+                {c.warn && (
+                  <span className="mr-1 inline-flex align-[-2px] text-attention" data-warn-mark>
+                    <Icon name="alert" size={13} />
+                  </span>
+                )}
                 {c.label}
               </p>
               <p className="text-2xl leading-tight font-bold text-brand-dark">
@@ -272,7 +279,7 @@ export function QuickActions({
           href={a.href}
           className={`flex items-center gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-base font-bold text-brand-dark hover:border-brand-purple hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-brand-purple">
             <Icon name={a.icon} size={21} />
           </span>
           <span className="min-w-0 leading-tight text-balance">{a.label}</span>

@@ -16,16 +16,18 @@ import { TAP } from "@/lib/utils";
  */
 export function AttentionPanel({ children }: { children: React.ReactNode }) {
   return (
-    <section className="overflow-hidden rounded-2xl border-2 border-brand-orange/40 bg-brand-orange/5">
-      <div className="flex items-center gap-2.5 border-b border-brand-orange/25 px-5 py-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-orange/15 text-brand-orange">
+    // El gris de sempre (#777) fa 3,9:1 sobre aquest fons: a dins es llegeix en
+    // el gris de les pestanyes, que en fa 5,8.
+    <section className="overflow-hidden rounded-2xl border-2 border-attention/25 bg-attention-bg [&_.text-brand-muted]:text-brand-tab">
+      <div className="flex items-center gap-2.5 border-b border-attention/25 px-5 py-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-attention/10 text-attention">
           <Icon name="alert" size={16} />
         </span>
-        <h2 className="text-xs font-bold tracking-widest text-brand-orange uppercase">
+        <h2 className="text-xs font-bold tracking-widest text-attention uppercase">
           Atenció immediata
         </h2>
       </div>
-      <ul className="divide-y divide-brand-orange/20">{children}</ul>
+      <ul className="divide-y divide-attention/15">{children}</ul>
     </section>
   );
 }
@@ -50,7 +52,7 @@ export function AttentionRow({
       </div>
       <Link
         href={href}
-        className={`shrink-0 text-xs font-bold tracking-wide text-brand-orange uppercase hover:text-brand-dark ${TAP}`}
+        className={`shrink-0 text-xs font-bold tracking-wide text-attention uppercase hover:text-brand-dark ${TAP}`}
       >
         {cta} →
       </Link>

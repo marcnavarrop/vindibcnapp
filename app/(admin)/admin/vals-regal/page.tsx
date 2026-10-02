@@ -30,8 +30,8 @@ export default async function AdminGiftVouchersPage() {
         </p>
 
         {!settings.giftVouchersEnabled && (
-          <p className="mb-6 rounded-2xl border border-brand-orange/40 bg-brand-orange/5 p-4 text-sm text-brand-charcoal">
-            <strong className="text-brand-orange">
+          <p className="mb-6 rounded-2xl border border-brand-purple/25 bg-brand-purple/5 p-4 text-sm text-brand-charcoal">
+            <strong className="text-brand-purple">
               La venda de vals està desactivada.
             </strong>{" "}
             Els clients no en poden comprar de nous, però els que ja hi ha

@@ -105,7 +105,7 @@ export function TagCatalog({
 
                   {inUseByPromotions && (
                     <span
-                      className="text-xs text-brand-orange"
+                      className="text-xs text-attention"
                       title={t.promotionNames.join(", ")}
                     >
                       La fan servir {t.promotionNames.length}{" "}

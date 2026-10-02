@@ -159,7 +159,7 @@ export default async function BonusPage() {
           desc="El joc equivalent per als professionals amb tancament cada dos anys. Un bienni acumula aproximadament el doble de volum, així que els llindars solen ser més alts."
         >
           {tiersBiennial.length === 0 && (
-            <p className="mb-3 rounded-xl border border-brand-orange/30 bg-brand-orange/10 px-4 py-3 text-sm text-brand-orange">
+            <p className="mb-3 rounded-xl border border-attention/25 bg-attention-bg px-4 py-3 text-sm text-attention">
               Encara no hi ha trams biennals. Els professionals amb tancament
               biennal veuran 0 € i no se&apos;ls podrà tancar el període fins
               que n&apos;hi hagi.

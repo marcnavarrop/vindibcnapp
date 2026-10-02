@@ -34,7 +34,7 @@ export function OrphansPanel({
   if (n === 0 && !state.notice && !state.error) return null;
 
   return (
-    <section className="mb-8 rounded-2xl border border-brand-orange/40 bg-white p-6">
+    <section className="mb-8 rounded-2xl border border-attention/25 bg-white p-6">
       <h2 className="mb-1 text-lg font-bold text-brand-dark">
         {own
           ? "Reserves fora de la teva disponibilitat"

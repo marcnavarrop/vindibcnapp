@@ -198,7 +198,7 @@ export default async function LiquidacionsPage({
             )}
 
             {preview.unratedSessions > 0 && (
-              <p className="mt-3 rounded-lg bg-brand-orange/10 p-3 text-xs text-brand-orange">
+              <p className="mt-3 rounded-lg bg-attention-bg p-3 text-xs text-attention">
                 {preview.unratedSessions === 1
                   ? "1 sessió completada no s'ha comptat"
                   : `${preview.unratedSessions} sessions completades no s'han comptat`}

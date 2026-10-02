@@ -60,7 +60,7 @@ export default async function AdminSubscriptionsPage() {
           {!settings.subscriptionsEnabled && (
             <>
               {" "}
-              <strong className="text-brand-orange">
+              <strong className="text-brand-purple">
                 Ara mateix no se&apos;n poden contractar de noves
               </strong>{" "}
               (Configuració → Centre). Les que ja hi són es continuen renovant.

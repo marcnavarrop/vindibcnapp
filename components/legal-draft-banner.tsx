@@ -31,9 +31,9 @@ export async function LegalDraftBanner({ doc }: { doc: LegalDoc }) {
   return (
     <div
       role="note"
-      className="mb-6 rounded-lg border-2 border-brand-orange bg-brand-orange/10 px-4 py-3 text-sm text-brand-dark"
+      className="mb-6 rounded-lg border-2 border-attention bg-attention-bg px-4 py-3 text-sm text-brand-dark"
     >
-      <strong className="font-bold text-brand-orange">{t("title")}</strong>{" "}
+      <strong className="font-bold text-attention">{t("title")}</strong>{" "}
       {t("body")}
       {/* El detall de què falta per fer és per a l'equip, no per a qui llegeix
           la política: en producció seria soroll i confondria. */}

@@ -19,8 +19,9 @@ import { TAP } from "@/lib/utils";
  *    PRODUCCIÓ i que el que veus són dades d'un compte de proves. Avís rotund,
  *    perquè aquí confondre's té conseqüències.
  *
- * El color és el `brand-orange` de `legal-draft-banner.tsx`: en aquesta casa ja
- * vol dir "atenció, això és provisional". No se n'estrena cap.
+ * El color és el blau d'atenció (`attention`), el mateix de
+ * `legal-draft-banner.tsx` i dels avisos de tota l'app. Abans era el taronja,
+ * que des del pas 7 del pla d'UX és només dels grups.
  *
  * EL SELECTOR VIU AQUÍ DINS a posta: quan estàs fent de Client Demo, el menú
  * lateral és el del client i no hi ha cap altre lloc on posar-lo.
@@ -48,15 +49,15 @@ export async function PreModeBanner() {
         "z-20 flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 text-sm lg:sticky lg:top-0",
         "print:hidden",
         acting
-          ? "bg-brand-orange text-white"
-          : "border-b-2 border-brand-orange bg-brand-orange/10 text-brand-dark",
+          ? "bg-attention text-white"
+          : "border-b-2 border-attention bg-attention-bg text-brand-dark",
       ].join(" ")}
     >
       <span className="flex items-center gap-2">
         <span
           className={[
             "rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase",
-            acting ? "bg-white/20 text-white" : "bg-brand-orange text-white",
+            acting ? "bg-white/20 text-white" : "bg-attention text-white",
           ].join(" ")}
         >
           Mode PRE
@@ -86,7 +87,7 @@ export async function PreModeBanner() {
                 TAP,
                 acting
                   ? "border-white/40 text-white hover:bg-white/15 active:bg-white/25"
-                  : "border-brand-orange bg-white text-brand-orange hover:bg-brand-orange/10 active:bg-brand-orange/20",
+                  : "border-attention bg-white text-attention hover:bg-attention-bg active:bg-attention/20",
               ].join(" ")}
             >
               {demo.label}
@@ -98,7 +99,7 @@ export async function PreModeBanner() {
           <form action={returnToAdminAction}>
             <button
               type="submit"
-              className={`rounded-lg bg-white px-2.5 py-1.5 text-xs font-bold tracking-wide text-brand-orange uppercase hover:bg-white/90 active:bg-white/80 ${TAP}`}
+              className={`rounded-lg bg-white px-2.5 py-1.5 text-xs font-bold tracking-wide text-attention uppercase hover:bg-white/90 active:bg-white/80 ${TAP}`}
             >
               ← Tornar a {state.adminName}
             </button>
@@ -106,7 +107,7 @@ export async function PreModeBanner() {
         ) : (
           <Link
             href="/admin/configuracio"
-            className={`rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide text-brand-orange uppercase underline hover:text-brand-dark ${TAP}`}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide text-attention uppercase underline hover:text-brand-dark ${TAP}`}
           >
             Apagar
           </Link>

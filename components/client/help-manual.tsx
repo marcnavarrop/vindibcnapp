@@ -173,7 +173,7 @@ function BlockView({
 
     case "warn":
       return (
-        <aside className="rounded-xl border-l-4 border-brand-orange bg-brand-orange/5 px-4 py-3 text-sm leading-relaxed text-brand-charcoal">
+        <aside className="rounded-xl border-l-4 border-attention bg-attention-bg px-4 py-3 text-sm leading-relaxed text-brand-charcoal">
           <span className="font-bold">{labels.warnPrefix}</span>
           {R(b.text)}
         </aside>

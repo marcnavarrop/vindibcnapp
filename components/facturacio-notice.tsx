@@ -5,8 +5,8 @@
  */
 export function FacturacioNotice() {
   return (
-    <div className="mb-6 rounded-2xl border border-brand-orange/40 bg-brand-orange/5 p-4">
-      <p className="text-xs font-bold tracking-wide text-brand-orange uppercase">
+    <div className="mb-6 rounded-2xl border border-brand-purple/25 bg-brand-purple/5 p-4">
+      <p className="text-xs font-bold tracking-wide text-brand-purple uppercase">
         Càlcul orientatiu, sense validesa fiscal
       </p>
       <p className="mt-1.5 text-sm text-brand-charcoal">

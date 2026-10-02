@@ -50,7 +50,7 @@ function WorkerRow({ row }: { row: WorkerRowData }) {
                   que ningú ha configurat la taula de la seva freqüència. Es diu
                   mentre el període encara és obert i es pot arreglar. */}
               {row.current.noTiers && (
-                <p className="mt-1 text-xs font-bold text-brand-orange">
+                <p className="mt-1 text-xs font-bold text-attention">
                   No hi ha trams{" "}
                   {row.payoutFrequency === "biennial" ? "biennals" : "anuals"}{" "}
                   configurats: l&apos;import no és real i no es pot tancar el

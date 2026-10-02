@@ -75,7 +75,7 @@ export default async function TrainerFacturesPage() {
         </ul>
       )}
 
-      <p className="mt-6 rounded-2xl bg-brand-orange/10 p-4 text-xs text-brand-orange">
+      <p className="mt-6 rounded-2xl bg-brand-purple/5 p-4 text-xs text-brand-purple">
         Document provisional. El format oficial final es confirmarà amb
         l&apos;assessoria: de moment és el càlcul intern del centre sobre les
         teves sessions completades, no un document amb validesa fiscal.

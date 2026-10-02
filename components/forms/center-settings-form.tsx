@@ -517,8 +517,8 @@ export function CenterSettingsForm({
         {/* L'avís només surt quan està a punt de passar, i no sempre: un
             advertiment permanent es deixa de llegir a la tercera visita. */}
         {!subscriptions && (
-          <p className="rounded-lg border border-brand-orange/40 bg-brand-orange/5 px-3 py-2 text-sm text-brand-charcoal">
-            <strong className="text-brand-orange">
+          <p className="rounded-lg border border-attention/25 bg-attention-bg px-3 py-2 text-sm text-brand-charcoal">
+            <strong className="text-attention">
               Amb això apagat, els paquets marcats «Només per subscripció» no es
               poden vendre.
             </strong>{" "}

@@ -135,7 +135,7 @@ export function GenerateInvoiceButton({
         </div>
 
         {existingInvoice ? (
-          <p className="mt-4 rounded-lg bg-brand-orange/10 p-3 text-xs text-brand-orange">
+          <p className="mt-4 rounded-lg bg-attention-bg p-3 text-xs text-attention">
             Ja hi ha una liquidació desada d&apos;aquest professional per a
             aquest mateix període, i no se&apos;n pot generar una segona. Si cal
             refer-la, esborra abans la liquidació existent.

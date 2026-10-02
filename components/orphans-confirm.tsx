@@ -28,7 +28,7 @@ function Tag({
     <span
       className={
         tone === "warn"
-          ? "rounded bg-brand-orange/15 px-1.5 py-0.5 text-[11px] font-bold text-brand-orange"
+          ? "rounded bg-attention/10 px-1.5 py-0.5 text-[11px] font-bold text-attention"
           : "rounded bg-brand-bg px-1.5 py-0.5 text-[11px] font-bold text-brand-muted"
       }
     >
@@ -153,7 +153,7 @@ export function OrphansConfirm({
   const n =
     orphans.reservations.length + orphans.trials.length + orphans.waitlist.length;
   return (
-    <div className="w-full rounded-xl border border-brand-orange/40 bg-brand-orange/5 p-4">
+    <div className="w-full rounded-xl border border-attention/25 bg-attention-bg p-4">
       <p className="text-sm font-bold text-brand-dark">
         {what} deixa {n === 1 ? "1 compromís" : `${n} compromisos`} fora de la
         disponibilitat

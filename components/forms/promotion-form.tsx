@@ -106,7 +106,7 @@ export function PromotionForm({
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
       {showOverlap && (
-        <div className="rounded-xl border border-brand-orange/30 bg-brand-orange/10 px-4 py-3 text-sm text-brand-orange">
+        <div className="rounded-xl border border-attention/25 bg-attention-bg px-4 py-3 text-sm text-attention">
           Ja hi ha una altra oferta activa que es superposa per a algun d&apos;aquests
           serveis/paquets en les mateixes dates. S&apos;ha creat igualment — assegura&apos;t
           que és la teva intenció.
@@ -243,7 +243,7 @@ export function PromotionForm({
 
         {audience === "tag" &&
           (tags.length === 0 ? (
-            <p className="text-xs text-brand-orange">
+            <p className="text-xs text-attention">
               Encara no hi ha cap etiqueta. Crea&apos;n una a{" "}
               <Link href="/admin/etiquetes" className={`font-bold underline ${TAP}`}>
                 Etiquetes de client

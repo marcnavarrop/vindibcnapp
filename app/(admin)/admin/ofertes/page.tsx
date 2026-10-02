@@ -93,7 +93,7 @@ export default async function OfertesPage({
       </div>
 
       {sp.overlap === "1" && (
-        <div className="mb-4 rounded-xl border border-brand-orange/30 bg-brand-orange/10 px-4 py-3 text-sm text-brand-orange">
+        <div className="mb-4 rounded-xl border border-attention/25 bg-attention-bg px-4 py-3 text-sm text-attention">
           Ja hi havia una altra oferta activa que es solapava. S&apos;ha creat
           igualment — revisa que no sigui un error.
         </div>

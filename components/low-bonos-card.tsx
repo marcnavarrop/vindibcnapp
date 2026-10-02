@@ -26,20 +26,20 @@ export function LowBonosCard({
     <div
       className={`flex h-full flex-col rounded-2xl border p-4 ${
         warn
-          ? "border-brand-orange/40 bg-brand-orange/5"
+          ? "border-attention/25 bg-attention-bg [&_.text-brand-muted]:text-brand-tab"
           : "border-brand-border bg-white"
       } ${className}`}
     >
       <div
         className={`text-xs font-bold tracking-wide uppercase ${
-          warn ? "text-brand-orange" : "text-brand-muted"
+          warn ? "text-attention" : "text-brand-muted"
         }`}
       >
         Bons a punt d&apos;esgotar-se
       </div>
       <div
         className={`mt-1 text-2xl font-bold ${
-          warn ? "text-brand-orange" : "text-brand-purple"
+          warn ? "text-attention" : "text-brand-purple"
         }`}
       >
         {bonos.length}
@@ -49,7 +49,7 @@ export function LowBonosCard({
           Cap bo per sota del llindar configurat.
         </p>
       ) : (
-        <ul className="mt-2 divide-y divide-brand-orange/20">
+        <ul className="mt-2 divide-y divide-attention/15">
           {bonos.map((b) => (
             <li key={b.bonoId}>
               <Link
@@ -64,7 +64,7 @@ export function LowBonosCard({
                     {SERVICE_LABELS[b.serviceType]}
                   </span>
                 </span>
-                <span className="shrink-0 font-bold text-brand-orange">
+                <span className="shrink-0 font-bold text-attention">
                   {b.remaining === 1 ? "1 sessió" : `${b.remaining} sessions`}
                 </span>
               </Link>
