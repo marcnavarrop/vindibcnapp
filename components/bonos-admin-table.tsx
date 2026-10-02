@@ -20,6 +20,7 @@ import {
 } from "@/app/(admin)/admin/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { BonoCard } from "@/components/bono-card";
 import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { cancelBlockFor } from "@/lib/bono-rules";
 import type { BonoFilter, BonoListItem } from "@/lib/data/bonos";
@@ -140,7 +141,16 @@ function BonosAdminRows({
           n'amaga una: res no depèn de saber l'amplada al servidor. */}
       <ul className="flex flex-col gap-2 md:hidden" data-testid="bonos-cards">
         {list.items.map((b) => (
-          <BonoCard key={b.id} b={b} today={today} />
+          <BonoCard
+            key={b.id}
+            b={b}
+            today={today}
+            href={`/admin/clients/${b.clientId}`}
+            admin
+            {...actionsFor(b)}
+            payAction={markBonoPaidAction}
+            cancelAction={cancelBonoAction}
+          />
         ))}
         {list.items.length === 0 && (
           <li className="rounded-2xl border border-brand-border bg-white px-4 py-8 text-center text-sm text-brand-muted">
@@ -310,95 +320,3 @@ function actionsFor(b: BonoListItem) {
   };
 }
 
-/**
- * UN BO, AL MÒBIL. A 375 px la taula feia 880 px dins de 325: el preu, l'estat
- * i «Marcar com pagat» quedaven fora de la pantalla. La targeta ho ensenya tot:
- *
- * - a dalt, el client (enllaç a la fitxa) i l'estat;
- * - al mig, servei · sessions · preu · caducitat, i a part l'avís de sessions
- *   gastades sense cobrar;
- * - a baix, NOMÉS si hi ha res a fer, l'acció principal a tot l'ample i
- *   «Anul·lar» al costat. Un bo actiu sense res a fer són dues línies.
- */
-function BonoCard({ b, today }: { b: BonoListItem; today: string }) {
-  const { canPay, canCancel } = actionsFor(b);
-  const consumed = b.totalSessions - b.remainingSessions;
-  return (
-    <li
-      className="flex flex-col gap-1.5 rounded-2xl border border-brand-border bg-white px-3.5 py-3"
-      data-testid="bono-card"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-base font-bold text-brand-dark">
-          <ClientLink b={b} />
-        </span>
-        <Badge tone={STATUS_TONE[b.status]}>
-          {BONO_STATUS_LABELS[b.status]}
-        </Badge>
-      </div>
-      <p className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-sm text-brand-muted">
-        <span className="font-semibold text-brand-charcoal">
-          {SERVICE_LABELS[b.serviceType]}
-        </span>
-        <span className="tabular-nums">
-          {b.remainingSessions} / {b.totalSessions} sessions
-        </span>
-        <span className="tabular-nums">{formatEur(b.price)}</span>
-        {b.expiresAt && <span>caduca {formatDate(b.expiresAt)}</span>}
-        {!canPay && canCancel && (
-          <span className="ml-auto">
-            <CancelBonoButton
-              inCard="link"
-              action={cancelBonoAction}
-              bonoId={b.id}
-              clientName={b.clientName}
-              serviceType={b.serviceType}
-              price={b.price}
-              totalSessions={b.totalSessions}
-              status={b.status}
-            />
-          </span>
-        )}
-      </p>
-      {b.status === "pending_payment" && consumed > 0 && (
-        <p className="text-[13px] font-semibold text-brand-orange-text">
-          {consumed === 1
-            ? "1 sessió ja consumida"
-            : `${consumed} sessions ja consumides`}{" "}
-          sense cobrar
-        </p>
-      )}
-      {canPay && (
-        <div className="mt-1 flex items-center gap-2">
-          <div className="flex-1">
-            <MarkBonoPaidButton
-              admin
-              fullWidth
-              action={markBonoPaidAction}
-              bonoId={b.id}
-              clientName={b.clientName}
-              serviceType={b.serviceType}
-              price={b.price}
-              remainingSessions={b.remainingSessions}
-              totalSessions={b.totalSessions}
-              status={b.status}
-              expired={!!b.expiresAt && b.expiresAt < today}
-            />
-          </div>
-          {canCancel && (
-            <CancelBonoButton
-              inCard
-              action={cancelBonoAction}
-              bonoId={b.id}
-              clientName={b.clientName}
-              serviceType={b.serviceType}
-              price={b.price}
-              totalSessions={b.totalSessions}
-              status={b.status}
-            />
-          )}
-        </div>
-      )}
-    </li>
-  );
-}

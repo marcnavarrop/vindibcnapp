@@ -1129,7 +1129,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Un client compra un paquet de sessions per regalar-lo. El val porta un codi, i qui el rep el bescanvia des de la seva àrea per convertir-lo en un bo seu.",
+          text: "Un client compra un paquet de sessions per regalar-lo. El val porta un codi, i qui el rep el bescanvia des de la seva àrea per convertir-lo en un bo seu. Al mòbil, cada val és una targeta: el codi i l'estat a dalt, qui el va comprar, el paquet i el preu a sota i, si està pendent, «Marcar com pagat», amb els enllaços PDF i «Anul·lar» al costat.",
         },
         {
           t: "p",

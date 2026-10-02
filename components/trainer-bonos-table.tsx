@@ -13,6 +13,7 @@ import {
 } from "@/app/(trainer)/trainer/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { BonoCard } from "@/components/bono-card";
 import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { cancelBlockFor } from "@/lib/bono-rules";
 import type { BonoFilter, BonoListItem } from "@/lib/data/bonos";
@@ -255,9 +256,32 @@ function TrainerBonosRows({
 
   return (
     <>
+      {/* Al mòbil, la targeta compartida amb l'admin (`BonoCard`); a partir de
+          768 px, la taula. Mateixes regles: `canCollect` i `canCancel`. */}
+      <ul className={clsx("flex flex-col gap-2 transition-opacity md:hidden", dim && "opacity-60")} data-testid="bonos-cards">
+        {list.items.map((b) => (
+          <BonoCard
+            key={b.id}
+            b={b}
+            today={today}
+            href={`/trainer/clients/${b.clientId}`}
+            canPay={canCollect(b)}
+            canCancel={canCancel(b)}
+            payAction={markTrainerBonoPaidAction}
+            cancelAction={cancelTrainerBonoAction}
+          />
+        ))}
+        {list.items.length === 0 && (
+          <li className="rounded-2xl border border-brand-border bg-white px-4 py-8 text-center text-sm text-brand-muted">
+            {view.scope === "mine"
+              ? "Cap bo teu en aquest filtre. Prova amb «Tots»."
+              : "Sense bons en aquest filtre."}
+          </li>
+        )}
+      </ul>
       <div
         className={clsx(
-          "overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity",
+          "hidden overflow-x-auto rounded-2xl border border-brand-border bg-white transition-opacity md:block",
           dim && "opacity-60",
         )}
       >
@@ -280,7 +304,12 @@ function TrainerBonosRows({
                 className="border-b border-brand-border last:border-0"
               >
                 <td className="px-4 py-3 font-bold text-brand-dark">
-                  {b.clientName}
+                  <Link
+                    href={`/trainer/clients/${b.clientId}`}
+                    className="underline decoration-brand-border decoration-2 underline-offset-4 hover:text-brand-purple hover:decoration-brand-purple"
+                  >
+                    {b.clientName}
+                  </Link>
                 </td>
                 <td className="px-4 py-3">{SERVICE_LABELS[b.serviceType]}</td>
                 <td className="px-4 py-3">

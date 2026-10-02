@@ -23,6 +23,7 @@ export function MarkVoucherPaidButton({
   buyerName,
   packageName,
   price,
+  fullWidth = false,
 }: {
   action: (prev: MarkPaidState, formData: FormData) => Promise<MarkPaidState>;
   voucherId: string;
@@ -30,6 +31,8 @@ export function MarkVoucherPaidButton({
   buyerName: string;
   packageName: string;
   price: number;
+  /** A la targeta del mòbil: 44 px i a tot l'ample. */
+  fullWidth?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>("cash");
@@ -53,7 +56,7 @@ export function MarkVoucherPaidButton({
           setMethod("cash");
           setOpen(true);
         }}
-        className={`rounded-md bg-brand-purple px-2.5 py-1 text-xs font-bold whitespace-nowrap text-white hover:bg-brand-purple-light ${TAP}`}
+        className={`${fullWidth ? "h-11 w-full rounded-lg px-4 text-sm" : "rounded-md px-2.5 py-1 text-xs"} bg-brand-purple font-bold whitespace-nowrap text-white hover:bg-brand-purple-light ${TAP}`}
       >
         Marcar com pagat
       </button>
