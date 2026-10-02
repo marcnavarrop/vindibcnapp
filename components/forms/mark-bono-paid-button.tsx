@@ -44,6 +44,7 @@ export function MarkBonoPaidButton({
   status,
   expired = false,
   admin = false,
+  fullWidth = false,
 }: {
   /** L'acció de servidor de cada àrea: la seva RLS i les seves rutes a revalidar. */
   action: (prev: MarkPaidState, formData: FormData) => Promise<MarkPaidState>;
@@ -62,6 +63,8 @@ export function MarkBonoPaidButton({
    * mateix; el professional ho ha de dir a l'administració.
    */
   admin?: boolean;
+  /** A la targeta del mòbil: 44 px i a tot l'ample. A la taula, el petit. */
+  fullWidth?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   // Cada vegada que s'obre torna a ser efectiu: és el cas de cada dia, i un
@@ -102,7 +105,7 @@ export function MarkBonoPaidButton({
           setMethod("cash");
           setOpen(true);
         }}
-        className={`rounded-md px-2.5 py-1 text-xs font-bold whitespace-nowrap text-white ${
+        className={`${fullWidth ? "h-11 w-full rounded-lg px-4 text-sm" : "rounded-md px-2.5 py-1 text-xs"} font-bold whitespace-nowrap text-white ${
           isUnpaid
             ? "bg-brand-orange hover:opacity-90"
             : "bg-brand-purple hover:bg-brand-purple-light"

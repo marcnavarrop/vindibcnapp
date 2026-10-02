@@ -123,7 +123,7 @@ export function LoadMoreFooter({
           type="button"
           onClick={onLoadMore}
           disabled={pending}
-          className={`min-h-11 rounded-lg border border-brand-border bg-white px-4 font-bold text-brand-purple hover:bg-brand-bg active:bg-brand-bg disabled:opacity-60 ${TAP}`}
+          className={`min-h-11 w-full rounded-lg border border-brand-border bg-white px-4 font-bold text-brand-purple hover:bg-brand-bg active:bg-brand-bg disabled:opacity-60 sm:w-auto ${TAP}`}
         >
           {pending ? "Carregant…" : "Carregar més"}
         </button>

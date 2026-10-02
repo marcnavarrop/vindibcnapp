@@ -38,6 +38,7 @@ export function CancelBonoButton({
   price,
   totalSessions,
   status,
+  inCard = false,
 }: {
   /** L'acció de servidor de cada àrea: el seu `isAdmin` i les seves rutes. */
   action: (formData: FormData) => void | Promise<void>;
@@ -48,6 +49,12 @@ export function CancelBonoButton({
   price: number;
   totalSessions: number;
   status: BonoStatus;
+  /**
+   * A la targeta del mòbil. `true`: botó de 44 px al costat de l'acció
+   * principal. `"link"`: text vermell al final de la línia de dades, per a un bo
+   * que no té res més a fer (la targeta no creix una fila per un sol botó).
+   */
+  inCard?: boolean | "link";
 }) {
   const [open, setOpen] = useState(false);
   const cobrat = status === "active";
@@ -61,7 +68,11 @@ export function CancelBonoButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`rounded-md border border-brand-border px-2.5 py-1 text-xs font-bold whitespace-nowrap text-brand-muted hover:border-error hover:text-error ${TAP}`}
+        className={
+          inCard === "link"
+            ? `-my-3 inline-flex h-11 items-center px-1 text-sm font-bold text-error hover:underline ${TAP}`
+            : `${inCard ? "h-11 rounded-lg px-4 text-sm" : "rounded-md px-2.5 py-1 text-xs"} border border-brand-border font-bold whitespace-nowrap text-brand-muted hover:border-error hover:text-error ${TAP}`
+        }
       >
         Anul·lar
       </button>

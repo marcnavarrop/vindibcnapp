@@ -1,10 +1,23 @@
 "use client";
 
-import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
+import {
+  FilterChips,
+  filterChipClass,
+  ChipCheck,
+} from "@/components/ui/filter-chips";
 import Link from "next/link";
+import { TAP } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { SERVICE_LABELS, BONO_STATUS_LABELS, formatEur, formatDate } from "@/lib/labels";
-import { markBonoPaidAction, cancelBonoAction } from "@/app/(admin)/admin/bonos/actions";
+import {
+  SERVICE_LABELS,
+  BONO_STATUS_LABELS,
+  formatEur,
+  formatDate,
+} from "@/lib/labels";
+import {
+  markBonoPaidAction,
+  cancelBonoAction,
+} from "@/app/(admin)/admin/bonos/actions";
 import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
 import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
@@ -64,12 +77,16 @@ export function BonosAdminTable({
     <div>
       {/* La piloteta del menú es posa al dia amb aquests comptadors, en entrar
           i cada cop que un cobrament o una anul·lació repinta la pàgina. */}
-      <CollectableBonosAnnouncer count={counts.pending_payment + counts.unpaid} />
+      <CollectableBonosAnnouncer
+        count={counts.pending_payment + counts.unpaid}
+      />
       <FilterChips label="Filtre d'estat">
         {FILTERS.map((f) => (
           <Link
             key={f.key}
-            href={f.key === "all" ? "/admin/bonos" : `/admin/bonos?estat=${f.key}`}
+            href={
+              f.key === "all" ? "/admin/bonos" : `/admin/bonos?estat=${f.key}`
+            }
             replace
             scroll={false}
             aria-current={filter === f.key ? "page" : undefined}
@@ -118,8 +135,24 @@ function BonosAdminRows({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-        <table className="w-full min-w-[44rem] text-left text-sm" data-testid="bonos-table">
+      {/* Al mòbil, una targeta per bo (vegeu `BonoCard`); a partir de 768 px, la
+          taula de sempre. Les dues es pinten amb les mateixes dades i el CSS
+          n'amaga una: res no depèn de saber l'amplada al servidor. */}
+      <ul className="flex flex-col gap-2 md:hidden" data-testid="bonos-cards">
+        {list.items.map((b) => (
+          <BonoCard key={b.id} b={b} today={today} />
+        ))}
+        {list.items.length === 0 && (
+          <li className="rounded-2xl border border-brand-border bg-white px-4 py-8 text-center text-sm text-brand-muted">
+            Sense bons en aquest filtre.
+          </li>
+        )}
+      </ul>
+      <div className="hidden overflow-x-auto rounded-2xl border border-brand-border bg-white md:block">
+        <table
+          className="w-full min-w-[44rem] text-left text-sm"
+          data-testid="bonos-table"
+        >
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
               <th className="px-4 py-3 font-bold">Client</th>
@@ -138,7 +171,7 @@ function BonosAdminRows({
                 className="border-b border-brand-border last:border-0"
               >
                 <td className="px-4 py-3 font-bold text-brand-dark">
-                  {b.clientName}
+                  <ClientLink b={b} />
                 </td>
                 <td className="px-4 py-3">{SERVICE_LABELS[b.serviceType]}</td>
                 <td className="px-4 py-3">
@@ -176,7 +209,8 @@ function BonosAdminRows({
                     confirmació abans de cobrar.
                   */}
                   <div className="flex justify-end gap-2">
-                    {(b.status === "pending_payment" || b.status === "unpaid") && (
+                    {(b.status === "pending_payment" ||
+                      b.status === "unpaid") && (
                       <MarkBonoPaidButton
                         admin
                         action={markBonoPaidAction}
@@ -241,5 +275,130 @@ function BonosAdminRows({
         onLoadMore={list.loadMore}
       />
     </>
+  );
+}
+
+/**
+ * El nom del client, enllaç a la seva fitxa. Abans, per anar d'un bo al seu
+ * client calia passar per Clients i buscar-lo.
+ */
+function ClientLink({ b }: { b: BonoListItem }) {
+  return (
+    <Link
+      href={`/admin/clients/${b.clientId}`}
+      className={`underline decoration-brand-border decoration-2 underline-offset-4 hover:text-brand-purple hover:decoration-brand-purple ${TAP}`}
+    >
+      {b.clientName}
+    </Link>
+  );
+}
+
+/** Què es pot fer amb un bo des d'aquí. La regla d'anul·lar és de `cancelBlockFor`. */
+function actionsFor(b: BonoListItem) {
+  return {
+    canPay: b.status === "pending_payment" || b.status === "unpaid",
+    canCancel:
+      cancelBlockFor(
+        {
+          status: b.status,
+          remainingSessions: b.remainingSessions,
+          totalSessions: b.totalSessions,
+          subscriptionId: b.subscriptionId,
+        },
+        true,
+      ) === null,
+  };
+}
+
+/**
+ * UN BO, AL MÒBIL. A 375 px la taula feia 880 px dins de 325: el preu, l'estat
+ * i «Marcar com pagat» quedaven fora de la pantalla. La targeta ho ensenya tot:
+ *
+ * - a dalt, el client (enllaç a la fitxa) i l'estat;
+ * - al mig, servei · sessions · preu · caducitat, i a part l'avís de sessions
+ *   gastades sense cobrar;
+ * - a baix, NOMÉS si hi ha res a fer, l'acció principal a tot l'ample i
+ *   «Anul·lar» al costat. Un bo actiu sense res a fer són dues línies.
+ */
+function BonoCard({ b, today }: { b: BonoListItem; today: string }) {
+  const { canPay, canCancel } = actionsFor(b);
+  const consumed = b.totalSessions - b.remainingSessions;
+  return (
+    <li
+      className="flex flex-col gap-1.5 rounded-2xl border border-brand-border bg-white px-3.5 py-3"
+      data-testid="bono-card"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-base font-bold text-brand-dark">
+          <ClientLink b={b} />
+        </span>
+        <Badge tone={STATUS_TONE[b.status]}>
+          {BONO_STATUS_LABELS[b.status]}
+        </Badge>
+      </div>
+      <p className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-sm text-brand-muted">
+        <span className="font-semibold text-brand-charcoal">
+          {SERVICE_LABELS[b.serviceType]}
+        </span>
+        <span className="tabular-nums">
+          {b.remainingSessions} / {b.totalSessions} sessions
+        </span>
+        <span className="tabular-nums">{formatEur(b.price)}</span>
+        {b.expiresAt && <span>caduca {formatDate(b.expiresAt)}</span>}
+        {!canPay && canCancel && (
+          <span className="ml-auto">
+            <CancelBonoButton
+              inCard="link"
+              action={cancelBonoAction}
+              bonoId={b.id}
+              clientName={b.clientName}
+              serviceType={b.serviceType}
+              price={b.price}
+              totalSessions={b.totalSessions}
+              status={b.status}
+            />
+          </span>
+        )}
+      </p>
+      {b.status === "pending_payment" && consumed > 0 && (
+        <p className="text-[13px] font-semibold text-brand-orange-text">
+          {consumed === 1
+            ? "1 sessió ja consumida"
+            : `${consumed} sessions ja consumides`}{" "}
+          sense cobrar
+        </p>
+      )}
+      {canPay && (
+        <div className="mt-1 flex items-center gap-2">
+          <div className="flex-1">
+            <MarkBonoPaidButton
+              admin
+              fullWidth
+              action={markBonoPaidAction}
+              bonoId={b.id}
+              clientName={b.clientName}
+              serviceType={b.serviceType}
+              price={b.price}
+              remainingSessions={b.remainingSessions}
+              totalSessions={b.totalSessions}
+              status={b.status}
+              expired={!!b.expiresAt && b.expiresAt < today}
+            />
+          </div>
+          {canCancel && (
+            <CancelBonoButton
+              inCard
+              action={cancelBonoAction}
+              bonoId={b.id}
+              clientName={b.clientName}
+              serviceType={b.serviceType}
+              price={b.price}
+              totalSessions={b.totalSessions}
+              status={b.status}
+            />
+          )}
+        </div>
+      )}
+    </li>
   );
 }
