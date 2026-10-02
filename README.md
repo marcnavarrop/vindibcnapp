@@ -177,6 +177,7 @@ soles a cada build (`prebuild`):
 | `npm run community:check` | El correu de la comunitat arriba a tothom, en lots, i cap fallada queda en silenci. |
 | `npm run contact:check` | El contacte del centre: format, peu i Reply-To dels correus, pàgines legals, avisos interns. |
 | `npm run emailchange:check` | El canvi de correu d'un professional que inicia l'admin. |
+| `npm run emailtaken:check` | Donar d'alta un client o un professional amb un correu que ja té compte: s'atura abans de crear res, en català. |
 
 **Si falla el `prebuild`**, el build s'atura i Vercel no publica res:
 

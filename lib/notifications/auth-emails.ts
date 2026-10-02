@@ -112,6 +112,11 @@ export async function createUserWithInvite(input: {
     options: { data: { full_name: input.fullName } },
   });
   if (error || !data?.user || !data.properties?.hashed_token) {
+    // L'alta ja comprova el correu abans (`assertEmailFree`); això cobreix el
+    // cas d'algú que l'ocupa just entremig. El text d'Auth és en anglès i no
+    // ha d'arribar a la pantalla.
+    if (error && (error.code === "email_exists" || /already (been )?registered/i.test(error.message)))
+      throw new Error("Ja hi ha un compte amb aquest correu. No s'ha creat res.");
     throw new Error(error?.message ?? "No s'ha pogut crear l'usuari.");
   }
 

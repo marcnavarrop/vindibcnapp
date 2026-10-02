@@ -32,6 +32,19 @@ function parseSpecialty(formData: FormData): Specialty | null {
   return v === "entrenador" || v === "fisioterapeuta" ? v : null;
 }
 
+/**
+ * L'error de l'alta, amb el nom, el correu i l'especialitat que s'havien
+ * escrit: React 19 buida el formulari en acabar l'acció. La foto no hi torna
+ * (un fitxer no es pot tornar a posar en un camp): el formulari demana que es
+ * torni a triar.
+ */
+function keep(formData: FormData, error: string): FormState {
+  const values = Object.fromEntries(
+    ["fullName", "email", "specialty"].map((k) => [k, String(formData.get(k) ?? "")]),
+  );
+  return { error, values, at: Date.now() };
+}
+
 export async function createTrainerAction(
   _prev: FormState,
   formData: FormData,
@@ -47,25 +60,23 @@ export async function createTrainerAction(
     specialty: parseSpecialty(formData),
   };
 
-  if (!input.fullName) return { error: "El nom és obligatori." };
-  if (!input.email) return { error: "El correu electrònic és obligatori." };
-  if (!input.specialty) return { error: "Tria una especialitat." };
+  if (!input.fullName) return keep(formData, "El nom és obligatori.");
+  if (!input.email) return keep(formData, "El correu electrònic és obligatori.");
+  if (!input.specialty) return keep(formData, "Tria una especialitat.");
 
   // Es valida ABANS de crear el compte: si la foto no serveix, val més dir-ho
   // que quedar-se amb un entrenador creat i un error a mitges.
   const avatar = parseAvatar(formData);
   if (avatar instanceof File) {
     const check = validateAvatarFile(avatar);
-    if (!check.ok) return { error: check.error };
+    if (!check.ok) return keep(formData, check.error);
   }
 
   let id: string;
   try {
     id = await createTrainer(input);
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "Error en crear el/la professional.",
-    };
+    return keep(formData, e instanceof Error ? e.message : "Error en crear el/la professional.");
   }
 
   // La foto és best-effort: l'entrenador ja existeix i es pot afegir després.

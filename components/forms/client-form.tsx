@@ -54,9 +54,18 @@ export function ClientForm({
   editableEmail: boolean;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
+  // Després d'un error, el que s'havia escrit; si no, el que hi havia.
+  const v = (k: keyof ClientDefaults) => state.values?.[k] ?? defaults?.[k] ?? undefined;
+
 
   return (
     <form
+      // Un error torna amb el que s'havia escrit (`state.values`), però React
+      // 19 buida el formulari en acabar l'acció, i un <select> torna a la
+      // primera opció digui el que digui `defaultValue`. Amb una clau nova a
+      // cada error el formulari es torna a muntar amb aquests valors, i el
+      // buidat cau sobre el formulari vell, que ja no hi és.
+      key={state.at ?? 0}
       action={formAction}
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
@@ -65,7 +74,7 @@ export function ClientForm({
         label="Nom complet"
         name="fullName"
         required
-        defaultValue={defaults?.fullName}
+        defaultValue={v("fullName")}
       />
       {editableEmail ? (
         <Field
@@ -73,7 +82,7 @@ export function ClientForm({
           name="email"
           type="email"
           required
-          defaultValue={defaults?.email}
+          defaultValue={v("email")}
         />
       ) : (
         /*
@@ -102,27 +111,42 @@ export function ClientForm({
         label="Telèfon"
         name="phone"
         type="tel"
-        defaultValue={defaults?.phone}
+        defaultValue={v("phone")}
       />
       <SelectField
         label="Professional assignat/da"
         name="assignedTrainerId"
         placeholder="Sense assignar"
-        defaultValue={defaults?.assignedTrainerId}
+        defaultValue={v("assignedTrainerId")}
         options={trainers.map((t) => ({ value: t.id, label: t.name }))}
       />
       <TextAreaField
         label="Notes clíniques"
         name="clinicalNotes"
-        defaultValue={defaults?.clinicalNotes}
+        defaultValue={v("clinicalNotes")}
       />
       <TextAreaField
         label="Notes generals"
         name="generalNotes"
-        defaultValue={defaults?.generalNotes}
+        defaultValue={v("generalNotes")}
       />
 
-      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      {state.error && (
+        <p role="alert" className="text-sm text-error">
+          {state.error}
+          {state.existingClientId && (
+            <>
+              {" "}
+              <Link
+                href={`/admin/clients/${state.existingClientId}`}
+                className={`font-bold text-brand-purple underline ${TAP}`}
+              >
+                Obrir la seva fitxa
+              </Link>
+            </>
+          )}
+        </p>
+      )}
 
       <div className="flex items-center gap-3">
         <SubmitButton>{submitLabel}</SubmitButton>

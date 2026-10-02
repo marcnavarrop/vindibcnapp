@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { getStore, saveStore } from "@/lib/mock/store";
+import { assertEmailFree, normalizeEmail } from "@/lib/data/account-email";
 import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import { foldName, matchesName, nameWords, wordRegex } from "@/lib/client-search-match";
 import { digitsOnly } from "@/lib/utils";
@@ -700,7 +701,11 @@ export async function reassignClientTrainer(
 }
 
 /** Crea un cliente (y su perfil). Devuelve el id del nuevo cliente. */
-export async function createClientRecord(input: ClientInput): Promise<string> {
+export async function createClientRecord(raw: ClientInput): Promise<string> {
+  // Abans de crear res: un correu que ja és d'algú atura l'alta aquí, amb un
+  // missatge en català i, si és un client, la seva fitxa (`EmailTakenError`).
+  await assertEmailFree(raw.email);
+  const input = { ...raw, email: normalizeEmail(raw.email) };
   if (USE_MOCK) {
     const store = getStore();
     const profileId = crypto.randomUUID();

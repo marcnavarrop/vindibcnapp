@@ -208,6 +208,7 @@
       <li>La cerca mira <strong>només dades del client</strong>: escriure el nom d'una professional no retorna els seus clients (per això hi ha el filtre per professional, que s'activa des del recompte de la pantalla de Professionals)</li>
       <li>A cada fila, dues accions fora de l'enllaç: la <strong>icona de WhatsApp</strong> (només si té telèfon) i "Reenviar invitació". Comprova que tocar la fila obre la fitxa i que tocar les icones <strong>no</strong> l'obre</li>
       <li>"+ Nou client": nom, correu, telèfon, professional assignat i els dos blocs de notes</li>
+      <li><strong>Correu que ja té compte</strong> <span class="flag">Nou</span>: dona d'alta un client amb el correu d'un altre, escrit amb majúscules i un espai al davant. Ha de dir «Ja hi ha un client amb aquest correu: <em>Nom</em>. No s'ha creat res.» i «Obrir la seva fitxa», que porta a la d'aquell client. Amb el correu d'un professional, «Aquest correu ja és d'un professional del centre…». En tots dos casos, a la llista no hi ha cap client nou. Abans, l'error arribava en anglès</li>
       <li><strong>El correu només s'escriu a l'alta.</strong> A "Editar" es veu però no es toca — el canvia el client des de la seva àrea (secció 4.6)</li>
     </ul>
 
@@ -226,7 +227,7 @@
 
     <h3>1.4 Persones → Professionals</h3>
     <ul class="checklist">
-      <li>"+ Nou professional": nom, correu, <strong>foto</strong> (JPG/PNG/WEBP fins a 3 MB) i especialitat — rep la invitació per correu</li>
+      <li>"+ Nou professional": nom, correu, <strong>foto</strong> (JPG/PNG/WEBP fins a 3 MB) i especialitat — rep la invitació per correu. Amb el correu d'un compte que ja existeix, s'atura i diu de qui és <span class="flag">Nou</span></li>
       <li>Un cop creat, el nom <strong>es veu però no es toca</strong>; la foto i l'especialitat sí</li>
       <li><strong>Correu d'accés</strong> <span class="flag">Nou</span> (a sota de «Editar»): escriu el correu nou i «Enviar l'enllaç de confirmació». Comprova: l'enllaç arriba NOMÉS a la bústia nova i el correu vell rep un avís sense enllaç (tots dos diuen que ho ha demanat l'administració); la fitxa diu «Pendent de confirmar» amb «Anul·lar l'enllaç»; el correu no canvia fins que el professional fa clic; després entra amb el correu nou i la mateixa contrasenya, i conserva reserves i liquidacions. Errors: correu invàlid, el mateix, el d'un altre compte, i un segon enviament abans de 5 minuts. En simulació diu «mode demo» i no canvia res</li>
       <li>L'especialitat no és decorativa: <strong>decideix quins serveis vénen marcats per defecte</strong> en crear-li una franja de disponibilitat</li>

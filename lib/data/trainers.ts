@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { deleteAvatar } from "@/lib/data/avatars";
 import { assignInitialProColor } from "@/lib/data/colors";
+import { assertEmailFree, normalizeEmail } from "@/lib/data/account-email";
 import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import type { Specialty } from "@/types/database";
 
@@ -122,7 +123,11 @@ export async function getTrainer(id: string): Promise<TrainerDetail | null> {
  * en los metadatos —el trigger crea su perfil— y luego fija la especialidad.
  * Devuelve el id del nuevo perfil.
  */
-export async function createTrainer(input: TrainerInput): Promise<string> {
+export async function createTrainer(raw: TrainerInput): Promise<string> {
+  // El mateix que a l'alta d'un client: el correu ha de ser lliure abans de
+  // crear res a Auth.
+  await assertEmailFree(raw.email);
+  const input = { ...raw, email: normalizeEmail(raw.email) };
   if (USE_MOCK) {
     const store = getStore();
     const id = crypto.randomUUID();

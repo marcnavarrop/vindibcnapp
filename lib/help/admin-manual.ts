@@ -289,6 +289,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           text: "«+ Nou client» demana el nom, el correu, el telèfon, el professional assignat i dos blocs de notes. En crear-lo neix l'usuari d'accés amb aquest correu i se li envia la invitació perquè es posi contrasenya.",
         },
         {
+          t: "p",
+          text: "Un correu, un compte. Si el correu ja és d'algú del centre —amb majúscules o espais de més compta igual—, l'alta s'atura abans de crear res i et diu de qui és. Si és d'un client, al costat hi surt «Obrir la seva fitxa»: sovint és algú que ja hi era. Si és d'un professional o de l'administració, cal un altre correu.",
+        },
+        {
           t: "warn",
           text: "El correu és l'usuari d'accés i l'alta és l'ÚNIC lloc on es pot escriure. A «Editar» es veu però no es toca. Si un client necessita canviar-lo, ho fa ell des de la seva àrea (Configuració → Compte); si no pot, és un cas per al suport.",
         },
@@ -461,7 +465,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Donar-ne un d'alta" },
         {
           t: "p",
-          text: "«+ Nou professional» demana el nom, el correu, la foto (opcional: JPG, PNG o WEBP fins a 3 MB) i l'especialitat. En crear-lo neix l'usuari amb rol de professional i se li envia el correu d'invitació perquè es posi contrasenya i pugui entrar. No cal fer res més: la seva àrea ja l'espera.",
+          text: "«+ Nou professional» demana el nom, el correu, la foto (opcional: JPG, PNG o WEBP fins a 3 MB) i l'especialitat. En crear-lo neix l'usuari amb rol de professional i se li envia el correu d'invitació perquè es posi contrasenya i pugui entrar. No cal fer res més: la seva àrea ja l'espera. Si el correu ja és d'un altre compte del centre, l'alta s'atura abans de crear res i et diu de qui és.",
         },
         { t: "h", text: "Editar-lo" },
         {

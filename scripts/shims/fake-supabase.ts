@@ -44,8 +44,18 @@ class Query implements PromiseLike<Res> {
   gt(c: string, v: string) { this.filters.push((r) => String(r[c]) > v); return this; }
   gte(c: string, v: string) { this.filters.push((r) => String(r[c]) >= v); return this; }
   lt(c: string, v: string) { this.filters.push((r) => String(r[c]) < v); return this; }
+  // Com el LIKE de Postgres: `%` és qualsevol tros, `_` un sol caràcter, i
+  // `\` escapa el següent (que llavors val tal qual).
   ilike(c: string, v: string) {
-    const re = new RegExp(`^${v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*")}$`, "i");
+    let src = "";
+    for (let i = 0; i < v.length; i++) {
+      const ch = v[i];
+      if (ch === "\\" && i + 1 < v.length) src += v[++i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      else if (ch === "%") src += ".*";
+      else if (ch === "_") src += ".";
+      else src += ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    const re = new RegExp(`^${src}$`, "i");
     this.filters.push((r) => re.test(String(r[c] ?? "")));
     return this;
   }
@@ -110,6 +120,12 @@ export function fakeClient(via: Via = "session") {
     // La sessió: `globalThis.__fakeUser` ({ id, email }) o ningú.
     auth: {
       getUser: async () => ({ data: { user: (globalThis as { __fakeUser?: unknown }).__fakeUser ?? null }, error: null }),
+      // L'alta d'usuaris d'Auth: la decideix la prova (`globalThis.__fakeGenerateLink`).
+      admin: {
+        generateLink: async (args: unknown) =>
+          (globalThis as { __fakeGenerateLink?: (a: unknown) => unknown }).__fakeGenerateLink?.(args) ??
+          { data: null, error: { message: "generateLink no simulat" } },
+      },
     },
   };
 }

@@ -54,21 +54,44 @@ export function TrainerForm({
     };
   }, [preview]);
 
+  // Després d'un error React buida el formulari, també el camp de la foto. La
+  // vista prèvia es quedaria ensenyant una foto que ja no s'enviaria: es treu,
+  // i es diu que s'ha de tornar a triar.
+  const [photoLost, setPhotoLost] = useState(false);
+
+  useEffect(() => {
+    if (!state.error) return;
+    setPreview((p) => {
+      if (p) setPhotoLost(true);
+      return null;
+    });
+  }, [state]);
+
   const current = removed ? null : (preview ?? defaults?.avatarUrl ?? null);
 
   return (
     <form
+      // Com a `ClientForm`: una clau nova a cada error torna a muntar el
+      // formulari amb el que s'havia escrit, i el buidat de React 19 cau sobre
+      // el vell.
+      key={state.at ?? 0}
       action={formAction}
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
       {editableIdentity ? (
         <>
-          <Field label="Nom complet" name="fullName" required />
+          <Field
+            label="Nom complet"
+            name="fullName"
+            required
+            defaultValue={state.values?.fullName}
+          />
           <Field
             label="Correu electrònic"
             name="email"
             type="email"
             required
+            defaultValue={state.values?.email}
           />
         </>
       ) : (
@@ -106,6 +129,7 @@ export function TrainerForm({
                 if (preview) URL.revokeObjectURL(preview);
                 setPreview(URL.createObjectURL(f));
                 setRemoved(false);
+                setPhotoLost(false);
               }}
             />
             <button
@@ -139,11 +163,16 @@ export function TrainerForm({
         name="specialty"
         placeholder="Tria una especialitat"
         required
-        defaultValue={defaults?.specialty ?? ""}
+        defaultValue={state.values?.specialty ?? defaults?.specialty ?? ""}
         options={SPECIALTY_OPTIONS}
       />
 
-      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      {state.error && (
+        <p role="alert" className="text-sm text-error">
+          {state.error}
+          {photoLost && " Torna a triar la foto: no s'ha desat res."}
+        </p>
+      )}
 
       <div className="flex items-center gap-3">
         <SubmitButton>{submitLabel}</SubmitButton>
