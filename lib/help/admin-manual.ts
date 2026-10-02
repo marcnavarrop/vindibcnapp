@@ -492,7 +492,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Reenviar la invitació" },
         {
           t: "p",
-          text: "A cada fila hi ha «Reenviar invitació»: genera un enllaç nou i li torna a enviar el correu per crear la contrasenya. És el que has de prémer si diu que no li ha arribat o que ja ha caducat.",
+          text: "A cada fila hi ha «Reenviar invitació»: genera un enllaç nou i li torna a enviar el correu per crear la contrasenya. És el que has de prémer si diu que no li ha arribat o que ja ha caducat. Al mòbil, cada professional és una targeta: la foto, el nom i l'especialitat a dalt, el correu i «Reenviar invitació» al mig, i el recompte de clients i «Editar» a baix. Tota la targeta obre «Editar».",
         },
         { t: "h", text: "El recompte de clients" },
         {
