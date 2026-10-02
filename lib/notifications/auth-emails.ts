@@ -6,6 +6,7 @@ import { renderInviteEmail, renderRecoveryEmail } from "@/lib/notifications/temp
 import { getCenterContact } from "@/lib/data/center-settings";
 import { publicContact } from "@/lib/center-contact";
 import { writeLog } from "@/lib/notifications/log";
+import { authErrorCa } from "@/lib/auth-errors";
 import { toLocale, type Locale } from "@/lib/i18n/config";
 import type { UserRole } from "@/types/database";
 
@@ -117,7 +118,7 @@ export async function createUserWithInvite(input: {
     // ha d'arribar a la pantalla.
     if (error && (error.code === "email_exists" || /already (been )?registered/i.test(error.message)))
       throw new Error("Ja hi ha un compte amb aquest correu. No s'ha creat res.");
-    throw new Error(error?.message ?? "No s'ha pogut crear l'usuari.");
+    throw new Error(authErrorCa(error, "No s'ha pogut crear l'usuari."));
   }
 
   // El trigger ja ha creat el perfil com a 'client'. Si tocava un altre rol, es
@@ -160,7 +161,7 @@ export async function resendInvite(input: {
     email: input.email,
   });
   if (error || !data?.properties?.hashed_token)
-    return { ok: false, error: error?.message ?? "No s'ha pogut generar l'enllaç." };
+    return { ok: false, error: authErrorCa(error, "No s'ha pogut generar l'enllaç.") };
   return sendInvite(
     input.profileId,
     input.email,

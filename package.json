@@ -38,6 +38,7 @@
     "paid:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/paid-check.mts",
     "contact:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/contact-check.mts",
     "emailchange:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailchange-check.mts",
+    "autherrors:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/autherrors-check.mts",
     "emailtaken:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailtaken-check.mts",
     "demo:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/demo-check.mts"
   },

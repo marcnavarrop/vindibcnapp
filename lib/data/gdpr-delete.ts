@@ -6,6 +6,7 @@ import { bonoConcept } from "@/lib/data/payments";
 import { deleteTrialsForClient } from "@/lib/data/trial-bookings";
 import { deleteAllClientDocuments } from "@/lib/data/client-documents";
 import type { ServiceType } from "@/types/database";
+import { authErrorCa } from "@/lib/auth-errors";
 
 export type DeleteResult = { profileId: string; label: string };
 
@@ -129,7 +130,7 @@ export async function deleteClient(
 
   // 2. Elimina l'usuari d'Auth → cascada + payments.client_id = NULL.
   const { error } = await admin.auth.admin.deleteUser(profileId);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(authErrorCa(error, "No s'ha pogut eliminar el compte d'accés."));
 
   return { profileId, label };
 }
