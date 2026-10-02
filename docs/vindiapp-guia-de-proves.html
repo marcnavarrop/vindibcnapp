@@ -324,6 +324,7 @@
       <li>Un bo anul·lat passa a <strong>"Cancel·lat"</strong> en vermell i es queda sense cap botó</li>
       <li><strong>Per pàgines</strong> <span class="flag">Nou</span>: del més nou al més antic, 50 de cop, «N de M bons» i «Carregar més» fins que desapareix. El filtre d'estat va a l'adreça (<code>?estat=</code>) i el fa el servidor. Els comptadors de «Pendents» i «Decaiguts» sumen la piloteta del menú</li>
       <li>Cobra un pendent des del filtre «Pendents»: la fila desapareix del filtre, el comptador baixa en un i <strong>el «Pendent de cobrament» d'Inici</strong> baixa en el seu preu</li>
+      <li><strong>Targetes al mòbil</strong> <span class="flag">Nou</span>: a 375 px cada bo és una targeta (client i estat; servei · sessions · preu · caducitat) i, als pendents, «Marcar com pagat» a tot l'ample amb «Anul·lar» al costat. Res queda fora de la pantalla ni cal lliscar de costat. «Carregar més» a tot l'ample. A partir de 768 px, la taula de sempre. <strong>El nom del client obre la seva fitxa</strong>, a tots dos amples</li>
       <li><strong>Des d'Inici, ja filtrat</strong> <span class="flag">Nou</span>: la targeta «Pendent de cobrament» i l'accés «Bons pendents» obren Bons amb «Pendents de pagament» posat. Si només n'hi ha de decaiguts, obren «Decaiguts sense cobrar». Sense res per cobrar, obren «Tots»</li>
     </ul>
     <ul class="checklist">
@@ -346,6 +347,7 @@
       <li>El total i els <strong>ingressos del mes de l'Inici</strong> els compta la base (0095) i han de coincidir amb la suma de la llista sencera. Un pagament fet el darrer dia del mes a les 23:30 compta per a aquell mes, no per al següent</li>
       <li>Si el total falla, diu «Total no disponible» amb un avís, mai «0,00 € cobrat». A 375 px la pàgina <strong>no fa scroll horitzontal</strong> (abans sí: la capçalera no hi cabia)</li>
       <li>Comprova que hi apareixen apunts de <strong>cinc orígens</strong>: venda de bo, cobrament d'un bo pendent, cobrament d'un val de regal, <strong>renovació d'una subscripció</strong> i alta manual</li>
+      <li><strong>Concepte i dues targetes</strong> <span class="flag">Nou</span>: la llista porta la columna «Concepte» i el mètode diu «Targeta (TPV)» (taulell) o «Targeta (en línia)» (Stripe). A 375 px, cada pagament és una fila de dues línies: nom i import; data, mètode i concepte. Sense scroll de costat</li>
       <li>"+ Nou pagament": client, bo opcional (triar-lo omple l'import sol), quantitat i mètode</li>
       <li><strong>El client es busca</strong> <span class="flag">Nou</span>: sense escriure en surten 20 per ordre alfabètic i l'avís «Surten els 20 primers»; escrivint un tros del nom sense accent («nuria») troba «Núria». Dona d'alta un client nou i comprova que <strong>el pots cobrar de seguida</strong> (abans, amb més de 1000 clients, els més nous no sortien al desplegable)</li>
       <li>En triar-lo, el desplegable de bons ensenya <strong>només els seus</strong>, amb servei, preu i estat. Canvia de client: els bons es buiden i es tornen a carregar. Un bo que no és del client triat es rebutja: «Aquest bo no és del client triat»</li>

@@ -921,7 +921,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Tots els bons del centre, del més nou al més antic, amb el client, el servei, les sessions, el preu, la caducitat i l'estat. Els filtres de dalt —Tots, Pendents de pagament, Decaiguts sense cobrar i Actius— són la manera ràpida d'anar al que et fa falta; els de pendents i decaiguts porten un comptador taronja quan n'hi ha, i entre tots dos sumen la piloteta del menú. La llista en carrega 50 de cop: a sota diu quants en veus del total i «Carregar més» n'afegeix 50 més. El filtre queda a l'adreça. Si cobres o anul·les un bo, la llista torna a començar des del principi amb l'estat nou.",
+          text: "Tots els bons del centre, del més nou al més antic, amb el client, el servei, les sessions, el preu, la caducitat i l'estat. Els filtres de dalt —Tots, Pendents de pagament, Decaiguts sense cobrar i Actius— són la manera ràpida d'anar al que et fa falta; els de pendents i decaiguts porten un comptador taronja quan n'hi ha, i entre tots dos sumen la piloteta del menú. La llista en carrega 50 de cop: a sota diu quants en veus del total i «Carregar més» n'afegeix 50 més. El filtre queda a l'adreça. Si cobres o anul·les un bo, la llista torna a començar des del principi amb l'estat nou. El nom del client porta a la seva fitxa. Al mòbil, cada bo és una targeta: el client i l'estat a dalt, el servei, les sessions, el preu i la caducitat a sota i, si n'hi ha, «Marcar com pagat» a tot l'ample amb «Anul·lar» al costat; no cal lliscar de costat per veure res.",
         },
         { t: "h", text: "Els sis estats" },
         {
@@ -1085,7 +1085,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "El registre de tot el que ha entrat: data, client, import i mètode, del més recent al més antic. A dalt a la dreta hi ha el total cobrat de tot l'històric i, a sota, quants pagaments són i quant s'ha cobrat amb targeta i quant en efectiu.",
+          text: "El registre de tot el que ha entrat: data, client, import, mètode i concepte (què es va pagar), del més recent al més antic. El mètode distingeix «Targeta (TPV)», cobrada al taulell, de «Targeta (en línia)», pagada per Stripe. Al mòbil, cada pagament és una fila de dues línies. A dalt a la dreta hi ha el total cobrat de tot l'històric i, a sota, quants pagaments són i quant s'ha cobrat amb targeta i quant en efectiu.",
         },
         {
           t: "p",

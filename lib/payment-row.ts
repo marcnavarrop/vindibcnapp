@@ -10,7 +10,18 @@ export type PaymentRowView = {
   amount: string;
   method: PaymentMethod;
   methodLabel: string;
+  concept: string | null;
 };
+
+/**
+ * El mètode tal com es llegeix a Pagaments. La targeta es parteix en dues des
+ * del pas 2: al taulell (TPV) o per internet (Stripe). A la fitxa del client i a
+ * l'àrea del client segueix dient «Targeta», que és el que li importa.
+ */
+export function methodLabel(method: PaymentMethod, online: boolean): string {
+  if (method === "cash") return PAYMENT_METHOD_LABELS.cash;
+  return online ? "Targeta (en línia)" : "Targeta (TPV)";
+}
 
 /**
  * La data i l'import es formaten al SERVIDOR i no al navegador: el format curt
@@ -28,6 +39,7 @@ export function toPaymentRow(p: PaymentListItem): PaymentRowView {
     clientName: p.clientName,
     amount: formatEur(p.amount),
     method: p.method,
-    methodLabel: PAYMENT_METHOD_LABELS[p.method],
+    methodLabel: methodLabel(p.method, p.online),
+    concept: p.concept,
   };
 }

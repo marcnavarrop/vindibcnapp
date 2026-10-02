@@ -56,7 +56,26 @@ export function PaymentsTable({
 
   return (
     <>
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-brand-border bg-white">
+      {/* Al mòbil, una fila de dues línies per pagament (no hi ha cap acció per
+          fila: no calen targetes separades). A partir de 768 px, la taula. */}
+      <ul
+        className="mt-6 divide-y divide-brand-border overflow-hidden rounded-2xl border border-brand-border bg-white md:hidden"
+        data-testid="payments-list"
+      >
+        {rows.map((p) => (
+          <li key={p.id} className="grid grid-cols-[1fr_auto] gap-x-3 px-3.5 py-2" data-testid="payment-card">
+            <span className="min-w-0 truncate font-bold text-brand-dark">{p.clientName}</span>
+            <span className="font-bold tabular-nums text-brand-dark">{p.amount}</span>
+            {/* Una sola línia: el concepte sencer ocupava dues o tres línies i la
+                fila arribava a 86 px. Sencer, a l'escriptori i al `title`. */}
+            <span className="col-span-2 truncate text-[13px] text-brand-muted" title={p.concept ?? undefined}>
+              {p.date} · {p.methodLabel}
+              {p.concept && <> · {p.concept}</>}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-6 hidden overflow-x-auto rounded-2xl border border-brand-border bg-white md:block">
         <table className="w-full min-w-[40rem] text-left text-sm" data-testid="payments-table">
           <thead className="border-b border-brand-border bg-brand-bg">
             <tr className="text-xs tracking-wide text-brand-muted uppercase">
@@ -64,6 +83,7 @@ export function PaymentsTable({
               <th className="px-4 py-3 font-bold">Client</th>
               <th className="px-4 py-3 font-bold">Import</th>
               <th className="px-4 py-3 font-bold">Mètode</th>
+              <th className="px-4 py-3 font-bold">Concepte</th>
             </tr>
           </thead>
           <tbody>
@@ -72,9 +92,10 @@ export function PaymentsTable({
                 <td className="px-4 py-3 font-bold text-brand-dark">{p.date}</td>
                 <td className="px-4 py-3">{p.clientName}</td>
                 <td className="px-4 py-3 font-bold tabular-nums">{p.amount}</td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <Badge tone={p.method === "card" ? "info" : "warn"}>{p.methodLabel}</Badge>
                 </td>
+                <td className="px-4 py-3 text-brand-muted">{p.concept ?? "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -92,7 +113,7 @@ export function PaymentsTable({
             type="button"
             onClick={loadMore}
             disabled={pending}
-            className={`min-h-11 rounded-lg border border-brand-border bg-white px-4 font-bold text-brand-purple hover:bg-brand-bg active:bg-brand-bg disabled:opacity-60 ${TAP}`}
+            className={`min-h-11 w-full rounded-lg border border-brand-border bg-white px-4 font-bold text-brand-purple hover:bg-brand-bg active:bg-brand-bg disabled:opacity-60 sm:w-auto ${TAP}`}
           >
             {pending ? "Carregant…" : "Carregar més"}
           </button>

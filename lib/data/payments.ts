@@ -22,6 +22,14 @@ export type PaymentListItem = {
   method: PaymentMethod;
   /** Tal com el torna Postgres (amb microsegons): el cursor el necessita exacte. */
   paidAt: string;
+  /** Què es va pagar («Bo de 8 sessions · EP Individual», «Val de regal…»). */
+  concept: string | null;
+  /**
+   * Amb targeta per internet (Stripe), i no al TPV del taulell. A la base totes
+   * dues són `card`; les de Stripe porten sempre el seu identificador
+   * (`payment_intent` o factura) i les del taulell no en porten cap.
+   */
+  online: boolean;
 };
 
 function clientName(clientId: string | null, store: Store): string {
@@ -106,13 +114,15 @@ export async function listPayments(
         amount: p.amount,
         method: p.method,
         paidAt: p.paid_at,
+        concept: p.concept ?? null,
+        online: !!p.stripe_payment_id,
       }));
   } else {
     const supabase = await createClient();
     let query = supabase
       .from("payments")
       .select(
-        `id, amount, method, paid_at,
+        `id, amount, method, paid_at, concept, stripe_payment_id,
          client:clients!payments_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`,
       )
       .order("paid_at", { ascending: false })
@@ -131,6 +141,8 @@ export async function listPayments(
       amount: number;
       method: PaymentMethod;
       paid_at: string;
+      concept: string | null;
+      stripe_payment_id: string | null;
       client: { profile: { full_name: string | null } | null } | null;
     };
     rows = (data as unknown as Row[]).map((p) => ({
@@ -139,6 +151,8 @@ export async function listPayments(
       amount: p.amount,
       method: p.method,
       paidAt: p.paid_at,
+      concept: p.concept,
+      online: !!p.stripe_payment_id,
     }));
   }
 
