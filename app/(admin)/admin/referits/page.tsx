@@ -32,7 +32,7 @@ export default async function AdminReferitsPage() {
     <>
       <main className="mx-auto max-w-4xl p-6">
         <GroupTabs tabs={BONS_TABS} />
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
           <div>
             <h1 className="mb-1 text-2xl text-brand-dark">Referits</h1>
             <p className="text-sm text-brand-muted">
@@ -79,8 +79,38 @@ export default async function AdminReferitsPage() {
               "Activa el programa des de Configuració → Centre."}
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-brand-border bg-white">
-            <table className="w-full text-sm">
+          <>
+          {/* Al mòbil, files de dues línies com a Pagaments: qui refereix →
+              el nou client i l'estat a dalt; per a qui és, el % i la data a
+              sota. Sense accions ni enllaç, com la taula. */}
+          <ul
+            className="divide-y divide-brand-border rounded-2xl border border-brand-border bg-white md:hidden"
+            data-testid="referrals-list"
+          >
+            {rewards.map((r) => (
+              <li key={r.id} className="flex flex-col gap-0.5 px-3.5 py-2.5" data-testid="referral-card">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-sm">
+                    <span className="font-bold text-brand-dark">{r.referrerName}</span>
+                    <span className="text-brand-muted"> → </span>
+                    <span className="text-brand-charcoal">{r.refereeName}</span>
+                  </span>
+                  <span
+                    className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLOR[r.status]}`}
+                  >
+                    {STATUS_LABEL[r.status]}
+                  </span>
+                </div>
+                <p className="truncate text-[13px] text-brand-muted">
+                  {r.beneficiaryName === r.refereeName ? "per al referit" : `per a ${r.beneficiaryName}`} ·{" "}
+                  <span className="font-bold text-brand-dark">{r.discountPercent}%</span> ·{" "}
+                  {formatDate(r.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto rounded-2xl border border-brand-border bg-white md:block">
+            <table className="w-full text-sm" data-testid="referrals-table">
               <thead>
                 <tr className="border-b border-brand-border text-left text-xs font-bold text-brand-muted uppercase">
                   <th className="px-4 py-3">Qui refereix</th>
@@ -132,6 +162,7 @@ export default async function AdminReferitsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </main>
     </>

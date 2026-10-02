@@ -1208,7 +1208,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "La pantalla" },
         {
           t: "p",
-          text: "A dalt, tres xifres: total de recompenses, pendents d'usar i ja usades. A sota, la llista amb qui refereix, el nou client, qui és el beneficiari de cada línia, el percentatge, l'estat i la data.",
+          text: "A dalt, tres xifres: total de recompenses, pendents d'usar i ja usades. A sota, la llista amb qui refereix, el nou client, qui és el beneficiari de cada línia, el percentatge, l'estat i la data. Al mòbil, cada recompensa és una fila de dues línies: «qui refereix → nou client» i l'estat a dalt; per a qui és («per al referit» si és el nou client), el percentatge i la data a sota.",
         },
         {
           t: "dl",
