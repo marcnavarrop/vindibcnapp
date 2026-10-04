@@ -145,7 +145,7 @@ export default async function TrainerClientDetailPage({
       ),
     },
     {
-      label: "Bonos",
+      label: "Bons",
       content: (
         <Panel
           title="Bons"

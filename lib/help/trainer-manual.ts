@@ -68,7 +68,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Moure't per l'app" },
         {
           t: "p",
-          text: "El menú de l'esquerra porta a les set seccions: Inici, Clients, Reserves (amb Disponibilitat al selector de dalt de la pantalla), Bons, Les meves factures, Exercicis, Comunitat i Configuració. En un mòbil el menú s'obre amb el botó de dalt, i Reserves hi surt obert amb les seves dues pantalles. El suport és sempre a mà, sense tapar res: al mòbil, la icona de la boia a la barra lila de dalt; a l'ordinador, «Obrir un tiquet» al peu del menú (a Reserves, el botó «Suport» de dalt). S'explica al seu capítol.",
+          text: `El menú de l'esquerra porta a ${s.modules.comunitat ? "nou" : "vuit"} seccions: Inici, Clients, Reserves (amb Disponibilitat al selector de dalt de la pantalla), Bons, Les meves factures, Exercicis, ${s.modules.comunitat ? "Comunitat, " : ""}Configuració i aquesta Ajuda. En un mòbil el menú s'obre amb el botó de dalt, i Reserves hi surt obert amb les seves dues pantalles. El suport és sempre a mà, sense tapar res: al mòbil, la icona de la boia a la barra lila de dalt; a l'ordinador, «Obrir un tiquet» al peu del menú (a Reserves, el botó «Suport» de dalt). S'explica al seu capítol.`,
         },
         {
           t: "p",
@@ -118,7 +118,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
             ],
             [
               "Bons a punt d'esgotar-se",
-              `Bons dels teus clients amb ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys. Si n'hi ha cap, la targeta es posa en blau fosc: és l'avís per oferir la renovació abans que es quedin sense.`,
+              `Bons dels teus clients amb ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys. Si n'hi ha cap, la targeta es posa en blau fosc, amb l'exclamació al costat del títol: és l'avís per oferir la renovació abans que es quedin sense.`,
             ],
             [
               "Ocupació setmanal",
@@ -219,7 +219,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "A dalt hi ha el nom, el correu, el telèfon, el botó de WhatsApp i les etiquetes que té posades. Sota, nou pestanyes. Si el client no és teu, la marca «Només lectura» surt a la dreta del nom i les accions de cada pestanya desapareixen.",
+          text: "A dalt hi ha el nom, el correu, el telèfon, el botó de WhatsApp i les etiquetes que té posades. Sota, nou pestanyes. Si el client no és teu, la marca «Només consulta · pots cobrar-li bons» surt a la dreta del nom i les accions de cada pestanya desapareixen, menys el cobrament dels bons pendents.",
         },
         {
           t: "warn",
@@ -753,7 +753,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Cobrar un bo" },
         {
           t: "p",
-          text: "El botó «Marcar com pagat» surt a totes les files pendents de cobrament o decaigudes, siguin del client que siguin. El que NO s'ha obert és la resta: crear un bo, crear reserves, assignar exercicis o posar etiquetes segueix essent només per als teus clients assignats. No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
+          text: "El botó de cobrar surt a totes les files pendents de cobrament o decaigudes, siguin del client que siguin: «Marcar com pagat» als pendents i, als decaiguts, «Cobrar i recuperar» o «Només cobrar». El que NO s'ha obert és la resta: crear un bo, crear reserves, assignar exercicis o posar etiquetes segueix essent només per als teus clients assignats. No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
         },
         {
           t: "p",
@@ -887,7 +887,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Obrir un tiquet" },
         {
           t: "p",
-          text: "El botó obre un panell amb un formulari curt: un títol d'una línia, una categoria i la descripció. Es tanca amb Escape o tocant fora. També hi tens la pantalla completa a «Suport», amb el llistat sencer i un filtre per estat.",
+          text: "El botó obre un panell amb un formulari curt: un títol d'una línia, una categoria i la descripció. Es tanca amb Escape o tocant fora. Al peu del panell, «Veure tot l'historial →» obre la pantalla completa de Suport, amb el llistat sencer i un filtre per estat (no té entrada pròpia al menú).",
         },
         {
           t: "p",

@@ -226,6 +226,8 @@
       <li>Les deu pestanyes: <strong>Resum</strong>, Bons, Pagaments, Reserves, Exercicis, Progrés, Documents, <strong>Etiquetes</strong>, Notes, Notificacions</li>
       <li>A <strong>Resum</strong>: canvia el professional assignat <strong>des d'aquí mateix</strong>, amb un desplegable, sense passar per "Editar" (secció 13)</li>
       <li>A "Bons": <strong>"+ Afegir bo"</strong> ven un bo a aquesta persona amb el preu que li toca a <strong>ella</strong> (ofertes segmentades incloses — provar amb un client etiquetat)</li>
+      <li><strong>«Cobrament»</strong> <span class="flag">Nou</span> al formulari de «+ Afegir bo»: «Efectiu» i «Targeta (TPV)» creen el bo actiu i anoten el pagament (a Pagaments, amb aquell mètode); «No registrar ara» el deixa «Pendent de pagament» i surt a «Pendent de cobrament» de l'Inici</li>
+      <li>Les pestanyes de la fitxa diuen <strong>«Bons»</strong> (abans hi deia «Bonos», en castellà), també a la fitxa que veu el professional</li>
       <li>A "Notes": edita clíniques i generals per separat i desa. <strong>Cap de les dues la veu el client</strong></li>
       <li>A "Progrés": registra una càrrega (kg+reps) d'un exercici assignat</li>
       <li>A "Notificacions": prova "Reenviar invitació", "Notificar exercicis nous" i "Recordatori de propera sessió"</li>
@@ -335,7 +337,7 @@
       <li><strong>"Marcar com pagat" ja no és un sol clic</strong>: obre un diàleg amb client, servei, sessions i import, i avisa que un cop fet <strong>no es pot desfer des de cap pantalla</strong></li>
       <li><strong>Si el bo ja no es pot cobrar</strong> <span class="flag">Nou</span> (algú l'acaba de cobrar en una altra pestanya, o l'han anul·lat): el diàleg es queda obert i diu en vermell «Aquest bo ja està cobrat o ja no es pot cobrar. No s'ha anotat cap pagament.» A Pagaments no hi ha cap apunt nou. Abans, en aquest cas, el pagament s'anotava igualment. Prova-ho amb dues pestanyes obertes sobre el mateix bo pendent</li>
       <li>Sobre un bo <strong>decaigut</strong> per impagament, el botó canvia: <strong>"Cobrar i recuperar"</strong> (torna el bo amb les sessions que li quedaven; les reserves cancel·lades <strong>no</strong> tornen) o <strong>"Només cobrar"</strong> si ja ha passat de data</li>
-      <li><strong>Com ha pagat?</strong> <span class="flag">Nou</span>: al diàleg, «Efectiu» ve marcat i l'altra opció és «Targeta (TPV)». Cobra'n un en efectiu (dos tocs, com abans) i un altre amb targeta: a Pagaments, el primer surt com a efectiu i el segon com a targeta, i el total «amb targeta» de dalt puja. Torna a obrir el diàleg després d'un cobrament amb targeta: ha de tornar a sortir «Efectiu» marcat</li>
+      <li><strong>Com ha pagat?</strong> <span class="flag">Nou</span>: al diàleg, «Efectiu» ve marcat i l'altra opció és «Targeta (TPV)». Cobra'n un en efectiu (dos tocs, com abans) i un altre amb targeta: a Pagaments, el primer surt com a efectiu i el segon com a targeta, i al desglossament de dalt puja «Targeta (TPV)» (no «Targeta (en línia)»). Torna a obrir el diàleg després d'un cobrament amb targeta: ha de tornar a sortir «Efectiu» marcat</li>
       <li>Cobrar un bo pot fer tres coses més alhora: generar una recompensa de referit, reprendre una subscripció aturada i anotar el pagament amb el mètode triat</li>
       <li>Indicador de risc en blau fosc si s'han consumit sessions abans de pagar</li>
     </ul>
@@ -646,8 +648,8 @@
       <li><strong>Targetes al mòbil</strong> <span class="flag">Nou</span>: a 375 px, cada val és una targeta (codi i estat; comprador, paquet i preu; caducitat o qui el va bescanviar). «Marcar com pagat» si està pendent i, al costat, els enllaços PDF i «Anul·lar». Sense scroll de costat. A partir de 768 px, la taula</li>
     </ul>
 
-    <h2 id="subscripcions"><span class="num">7</span> Subscripcions mensuals de grup <span class="new-badge">Nou</span></h2>
-    <p>La quota mensual dels bons de <strong>grup reduït</strong>: en comptes de comprar el bo cada vegada, el client paga cada mes i rep les seves sessions. <strong>Només els bons de grup es poden subscriure</strong>, i només se'n pot tenir <strong>una de viva alhora</strong>.</p>
+    <h2 id="subscripcions"><span class="num">7</span> Subscripcions mensuals <span class="new-badge">Nou</span></h2>
+    <p>La quota mensual dels paquets marcats <strong>«Només per subscripció»</strong> (Catàleg → Serveis, casella de cada paquet, des de la 0086): en comptes de comprar el bo cada vegada, el client paga cada mes i rep les seves sessions. <strong>Un paquet marcat no es ven solt</strong> per cap camí, i només se'n pot tenir <strong>una de viva alhora</strong>.</p>
 
     <h3>7.1 Les dues regles que ho ordenen tot</h3>
     <ul class="checklist">
@@ -657,7 +659,7 @@
 
     <h3>7.2 Alta (client)</h3>
     <ul class="checklist">
-      <li>Bons → Comprar bo nou → un paquet de <strong>Grup reduït</strong>: hi ha d'haver <strong>una sola porta</strong> cap a la subscripció, amb el mètode de pagament a dins</li>
+      <li>Bons → Comprar bo nou → un paquet marcat <strong>«Només per subscripció»</strong>: hi ha d'haver <strong>una sola porta</strong> cap a la subscripció, amb el mètode de pagament a dins. Un paquet del mateix servei sense la casella s'ha de poder comprar solt</li>
       <li><strong>Alta "al centre"</strong>: es crea a l'instant, amb el bo del primer mes pendent de cobrament</li>
       <li><strong>Alta amb targeta</strong> (4242): comprova que la pantalla de tornada <strong>sap esperar</strong> i que la subscripció no es confon amb una compra d'un dia</li>
       <li>Comprova que amb una subscripció viva ja no se n'ofereix una segona</li>

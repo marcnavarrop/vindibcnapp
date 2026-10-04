@@ -111,7 +111,7 @@ export default async function ClientDetailPage({
       ),
     },
     {
-      label: "Bonos",
+      label: "Bons",
       content: (
         <Panel
           title="Bons"

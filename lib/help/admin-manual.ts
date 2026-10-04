@@ -147,7 +147,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: s.modules.sessionsProva ? "Les sis xifres" : "Les cinc xifres" },
         {
           t: "p",
-          text: "Totes són enllaços: toca-les i vas a la pantalla d'on surten. Les dues que poden posar-se taronges ho fan només quan hi ha alguna cosa a fer.",
+          text: "Totes són enllaços: toca-les i vas a la pantalla d'on surten. Les dues que poden posar-se en blau fosc, amb l'exclamació al costat del títol, ho fan només quan hi ha alguna cosa a fer.",
         },
         {
           t: "dl",
@@ -931,7 +931,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ["Pendent de pagament", "Venut i encara no cobrat. Reserva, però no s'ha ingressat res."],
             ["Completat", "S'han fet totes les sessions. Final normal."],
             ["Caducat", "Ha passat la data de validesa amb sessions sense fer. És pèrdua, i per això surt en vermell i no en gris."],
-            ["Anul·lat", "Ha decaigut per impagament. També pèrdua."],
+            ["Anul·lat per impagament", "Ha decaigut per no haver-se cobrat a temps (als filtres, «Decaiguts sense cobrar»). També pèrdua."],
             ["Cancel·lat", "Anul·lat a mà."],
           ],
         },
@@ -968,7 +968,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "El cobrament s'anota sempre com a EFECTIU i no es pot desfer des de cap pantalla. Si t'equivoques de fila, la correcció no és de l'app.",
+          text: "El cobrament s'anota amb el mètode triat al quadre (efectiu o targeta del TPV) i no es pot desfer des de cap pantalla. Si t'equivoques de fila o de mètode, la correcció no és de l'app.",
         },
         { t: "h", text: "Caducitat" },
         {

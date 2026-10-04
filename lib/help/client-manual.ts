@@ -1022,9 +1022,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "El primer que veus són les teves properes sessions, començant per la més propera. Cadascuna porta el seu botó «Cancel·lar»: el prems, confirmes, i ja està. Si ja és massa a prop per cancel·lar-la, en comptes del botó hi diu que ja no es pot. Tocant la sessió en veus el detall, la pots afegir al teu calendari o repetir-la cada setmana. Si en tens més de tres, «Veure-les totes» les ensenya.",
-            es: "Lo primero que ves son tus próximas sesiones, empezando por la más cercana. Cada una lleva su botón «Cancelar»: lo pulsas, confirmas, y listo. Si ya está demasiado cerca para cancelarla, en lugar del botón pone que ya no se puede. Tocando la sesión ves el detalle, puedes añadirla a tu calendario o repetirla cada semana. Si tienes más de tres, «Verlas todas» las enseña.",
-            en: "The first thing you see is your upcoming sessions, starting with the nearest. Each has its own «Cancel» button: press it, confirm, and that's it. If it's already too close to cancel, it says so instead of showing the button. Tapping the session shows the details, and lets you add it to your calendar or repeat it every week. If you have more than three, «See all» shows them.",
+            ca: "El primer que veus són les teves properes sessions, començant per la més propera. Cadascuna porta el seu botó «Cancel·lar»: el prems, confirmes amb «Sí, cancel·la», i ja està («No, torna» la deixa com estava). Si ja és massa a prop per cancel·lar-la, en comptes del botó hi diu que ja no es pot. Tocant la sessió en veus el detall, la pots afegir al teu calendari o repetir-la cada setmana. Si en tens més de tres, «Veure-les totes» les ensenya.",
+            es: "Lo primero que ves son tus próximas sesiones, empezando por la más cercana. Cada una lleva su botón «Cancelar»: lo pulsas, confirmas con «Sí, cancelar», y listo («No, volver» la deja como estaba). Si ya está demasiado cerca para cancelarla, en lugar del botón pone que ya no se puede. Tocando la sesión ves el detalle, puedes añadirla a tu calendario o repetirla cada semana. Si tienes más de tres, «Verlas todas» las enseña.",
+            en: "The first thing you see is your upcoming sessions, starting with the nearest. Each has its own «Cancel» button: press it, confirm with «Yes, cancel it», and that's it («No, go back» leaves it as it was). If it's already too close to cancel, it says so instead of showing the button. Tapping the session shows the details, and lets you add it to your calendar or repeat it every week. If you have more than three, «See all» shows them.",
           }),
         },
         {
@@ -1242,9 +1242,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Toques la teva sessió, a dalt o a la llista d'hores, i s'obre amb el detall, el botó d'afegir-la al calendari, el de repetir-la cada setmana i el de cancel·lar. Cancel·lar demana una confirmació; la sessió torna al teu bo.",
-            es: "Tocas tu sesión, arriba o en la lista de horas, y se abre con el detalle, el botón de añadirla al calendario, el de repetirla cada semana y el de cancelar. Cancelar pide una confirmación; la sesión vuelve a tu bono.",
-            en: "Tap your session, at the top or in the list of times, and it opens with the details, the button to add it to your calendar, the one to repeat it every week and the one to cancel. Cancelling asks for confirmation; the session goes back onto your pass.",
+            ca: "Toques la teva sessió, a dalt o a la llista d'hores, i s'obre amb el detall, el botó d'afegir-la al calendari, el de repetir-la cada setmana i el de cancel·lar. Cancel·lar demana una confirmació («Sí, cancel·la» o «No, torna»); la sessió torna al teu bo.",
+            es: "Tocas tu sesión, arriba o en la lista de horas, y se abre con el detalle, el botón de añadirla al calendario, el de repetirla cada semana y el de cancelar. Cancelar pide una confirmación («Sí, cancelar» o «No, volver»); la sesión vuelve a tu bono.",
+            en: "Tap your session, at the top or in the list of times, and it opens with the details, the button to add it to your calendar, the one to repeat it every week and the one to cancel. Cancelling asks for confirmation («Yes, cancel it» or «No, go back»); the session goes back onto your pass.",
           }),
         },
         {
