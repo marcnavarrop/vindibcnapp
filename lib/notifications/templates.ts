@@ -914,7 +914,8 @@ export function renderEmail(
           // Cobrat només si ve de Stripe; la del cron neix pendent de pagar.
           [
             d.charged === "1" ? tl("amountCharged") : tl("perMonth"),
-            d.amountEur ? formatEur(Number(d.amountEur), i.locale) : undefined,
+            // Només un import positiu: mai «0,00 €» ni «NaN €».
+            Number(d.amountEur) > 0 ? formatEur(Number(d.amountEur), i.locale) : undefined,
           ],
         ]),
         cta: { label: t("cta"), url: appLink("/client/reservas") },

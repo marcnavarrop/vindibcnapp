@@ -60,6 +60,20 @@ async function send(
 }
 
 /**
+ * L'import de la renovació, o res. Mai un «0,00 €» ni un «NaN €»: si el que
+ * arriba no és un import positiu, la fila no surt. (El webhook ja descarta les
+ * factures amb `amount_paid <= 0`, però si el camp faltés arribaria `NaN`.)
+ *
+ * Si ve del webhook i l'import no és vàlid, NO es cau al preu de llista: el
+ * correu diria «Import mensual» d'una cosa que s'ha cobrat amb targeta.
+ */
+function amountFields(charged: number | null | undefined, unitPrice: number): Record<string, string> {
+  const ok = (n: number) => Number.isFinite(n) && n > 0;
+  if (charged !== undefined && charged !== null) return ok(charged) ? { amountEur: String(charged), charged: "1" } : {};
+  return ok(unitPrice) ? { amountEur: String(unitPrice) } : {};
+}
+
+/**
  * El mes nou ja hi és. Un avís per cicle.
  *
  * `charged`: el que Stripe acaba de cobrar, si ve del webhook. Sense (la
@@ -77,8 +91,7 @@ export async function notifySubscriptionRenewed(
     // En CRU. La plantilla el formata amb l'idioma de qui el llegeix; una data
     // ja formatada aquí sortiria en català dins d'un correu en castellà.
     untilIso: until ?? "",
-    amountEur: String(charged ?? sub.unitPrice),
-    ...(charged != null ? { charged: "1" } : {}),
+    ...amountFields(charged, sub.unitPrice),
   });
 }
 
