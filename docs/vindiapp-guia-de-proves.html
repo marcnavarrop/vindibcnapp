@@ -944,6 +944,7 @@
     </table>
     <ul class="checklist">
       <li>Comprova a Configuració → Notificacions del client que <strong>hi surten sis caselles i no setze</strong>: els obligatoris no s'hi pinten</li>
+      <li><strong>Si no es pot desar</strong> <span class="flag">Corregit</span>: surt «No s'han pogut desar les preferències…» (en l'idioma del client; en català a l'admin i al professional) i les caselles tornen a estar <strong>com són a la base</strong>, no com les havies deixat. Abans deia «Preferències desades» i el canvi es perdia. En local es prova amb <code>MOCK_FAIL=prefs</code> (i <code>prefs,prefs-read</code> perquè falli també la relectura: llavors tornen a com eren en carregar la pàgina)</li>
       <li>Apaga'n un d'opcional, dispara'l i comprova que <strong>no arriba</strong>; dispara'n un d'obligatori i comprova que arriba igualment</li>
       <li><strong>Cancel·lar tu mateix</strong> <span class="flag">Nou</span>: com a client, cancel·la una reserva des de l'app. Arriba «Has cancel·lat la teva reserva» amb l'hora, el servei, el professional i què ha passat amb la sessió (tornada al bo, bo caducat o cortesia). Apaga «Reserva cancel·lada per tu» i torna-ho a provar: no arriba. Si la cancel·la l'admin, arriba igualment (és l'obligatori)</li>
     </ul>

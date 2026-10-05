@@ -3,7 +3,10 @@
 import { TAP } from "@/lib/utils";
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
-import { updateNotificationPreferencesAction } from "@/lib/actions/notification-preferences";
+import {
+  updateNotificationPreferencesAction,
+  type PrefsFormState,
+} from "@/lib/actions/notification-preferences";
 import {
   EVENT_META,
   EVENT_ORDER,
@@ -48,7 +51,8 @@ const CA: Texts = {
   colEmail: "Email",
   save: "Desar preferències",
   saved: "Preferències desades.",
-  failed: "No s'han pogut desar les preferències.",
+  failed:
+    "No s'han pogut desar les preferències. Les caselles tornen a estar com les tenies desades: torna-ho a provar d'aquí a una estona.",
   group: (g) => GROUP_LABELS[g],
   event: (t) => EVENT_META[t],
   byEmail: (label) => `${label} per email`,
@@ -106,8 +110,16 @@ function Body({
 }) {
   const [state, formAction] = useActionState(
     updateNotificationPreferencesAction,
-    {} as { error?: string; ok?: boolean },
+    {} as PrefsFormState,
   );
+  /*
+   * Si no s'ha pogut desar, les caselles tornen a ser les de la BASE (la
+   * relectura que porta l'error), no les que la persona havia marcat: si no,
+   * la pantalla ensenyaria un estat que no s'ha desat. La `key` amb l'intent
+   * fa que es tornin a pintar encara que l'error es repeteixi.
+   */
+  const shown = (state.error && state.prefs) || prefs;
+  const rowsKey = state.error ? `failed-${state.attempt}` : "saved";
 
   /*
    * Es filtra per `ALWAYS_SENT_EVENTS` i no posant `audience: []` a cada
@@ -160,14 +172,22 @@ function Body({
               </div>
             )}
             {groupEvents.map((type) => (
-              <PrefRow key={type} type={type} prefs={prefs} texts={texts} />
+              <PrefRow key={`${rowsKey}-${type}`} type={type} prefs={shown} texts={texts} />
             ))}
           </div>
         ))}
       </div>
 
-      {state.error && <p className="text-sm text-error">{texts.failed}</p>}
-      {state.ok && <p className="text-sm text-success">{texts.saved}</p>}
+      {state.error && (
+        <p role="alert" className="text-sm text-error">
+          {texts.failed}
+        </p>
+      )}
+      {state.ok && (
+        <p role="status" className="text-sm text-success">
+          {texts.saved}
+        </p>
+      )}
 
       <div>
         <button

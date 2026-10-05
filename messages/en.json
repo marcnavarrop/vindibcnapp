@@ -848,7 +848,7 @@
       "save": "Save preferences",
       "saving": "Saving…",
       "saved": "Preferences saved.",
-      "failed": "We couldn't save your preferences.",
+      "failed": "We couldn't save your preferences. The boxes are back to how you had them saved: please try again in a little while.",
       "events": {
         "reservation_confirmed": {
           "label": "Booking confirmed",

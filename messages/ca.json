@@ -848,7 +848,7 @@
       "save": "Desar preferències",
       "saving": "Desant…",
       "saved": "Preferències desades.",
-      "failed": "No s'han pogut desar les preferències.",
+      "failed": "No s'han pogut desar les preferències. Les caselles tornen a estar com les tenies desades: torna-ho a provar d'aquí a una estona.",
       "events": {
         "reservation_confirmed": {
           "label": "Reserva confirmada",

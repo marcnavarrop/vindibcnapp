@@ -848,7 +848,7 @@
       "save": "Guardar preferencias",
       "saving": "Guardando…",
       "saved": "Preferencias guardadas.",
-      "failed": "No se han podido guardar las preferencias.",
+      "failed": "No se han podido guardar las preferencias. Las casillas vuelven a estar como las tenías guardadas: inténtalo de nuevo dentro de un rato.",
       "events": {
         "reservation_confirmed": {
           "label": "Reserva confirmada",
