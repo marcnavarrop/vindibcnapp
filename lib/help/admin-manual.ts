@@ -1588,7 +1588,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ["Telèfon", "Amb 9 xifres s'hi posa el +34; d'un altre país, escriu-hi el prefix. Es desa net i es veu agrupat («931 23 45 67»). Si té WhatsApp, marca-ho i al costat hi sortirà un enllaç per escriure-hi."],
             ["Correu de contacte", "La bústia que el centre LLEGEIX. Els correus als clients porten aquesta adreça com a «respondre a»: si un client respon, li arriba aquí. Si la deixes buida, els correus no conviden a respondre."],
             ["Correu per als avisos interns", "On arriben les sol·licituds de prova i les altes noves. Buit: el correu de contacte."],
-            ["Adreça, titular i NIF", "Per a les pàgines legals (i l'adreça, també per al calendari)."],
+            ["Adreça, titular i NIF", "Per a les pàgines legals. L'adreça, a més, va a l'esdeveniment de calendari i als correus: al peu dels que reben clients i visitants, i com a «Lloc» a les reserves, els recordatoris i la prova confirmada."],
           ],
         },
         {

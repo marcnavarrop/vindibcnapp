@@ -2113,9 +2113,9 @@ export function buildClientManual(
                 en: "Booking confirmed",
               }),
               T({
-                ca: "Quan es crea una reserva a nom teu.",
-                es: "Cuando se crea una reserva a tu nombre.",
-                en: "When a booking is created in your name.",
+                ca: "Quan es crea una reserva a nom teu. Porta un enllaç per afegir-la al teu calendari.",
+                es: "Cuando se crea una reserva a tu nombre. Lleva un enlace para añadirla a tu calendario.",
+                en: "When a booking is created in your name. It includes a link to add it to your calendar.",
               }),
               T({ ca: "Sí", es: "Sí", en: "Yes" }),
             ],

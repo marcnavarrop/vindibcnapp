@@ -27,19 +27,39 @@ dependemos del envío de emails de Supabase.
 
 ### Eventos
 
-| Evento | Destinatario | Default email |
-|---|---|---|
-| `reservation_confirmed` / `reservation_cancelled` | cliente | ✅ |
-| `reservation_rescheduled` | cliente (solo cuando el **equipo** le cambia la hora; el cliente no puede reprogramar) | ✅ siempre |
-| `session_reminder` | cliente | ❌ (opt-in) |
-| `trial_request` | entrenador del hueco + correo de avisos internos (`internalNotifyEmail`) | ❌ (opt-in) |
-| `trial_status` | visitante de la prueba | ✅ |
-| `bono_low` | cliente (al cruzar el umbral configurable; **no** si el bono tiene `auto_renew`) | ❌ |
-| `bono_auto_renewed` | cliente (bono agotado con renovación pedida: nace uno pendiente) | ✅ siempre |
-| `community` | clientes/entrenadores que lo activen | ❌ |
-| `trainer_booking_received` / `trainer_booking_cancelled` | entrenador (solo si la acción la hace el **cliente**) | ✅ |
-| `trainer_daily_agenda` | entrenador (opt-in) | ❌ |
-| `new_client_registered` | admins con la pref + correo de avisos internos (`internalNotifyEmail`) | ✅ |
+«Siempre» = `ALWAYS_SENT_EVENTS` (no se puede apagar). Idioma: «ca/es/en» sale
+del `preferred_language` del cliente; «ca» es catalán fijo (admin, profesional,
+visitante y desarrollador).
+
+| Evento | Destinatario | Idioma | Default email | Lo dispara |
+|---|---|---|---|---|
+| `reservation_confirmed` | cliente | ca/es/en | ✅ | cualquier reserva nueva (lleva «Afegir al calendari») |
+| `reservation_cancelled` | cliente | ca/es/en | ✅ siempre | cancela el **equipo** o el centro al cerrar disponibilidad (0090). Si cancela el propio cliente, no sale |
+| `reservation_rescheduled` | cliente | ca/es/en | ✅ siempre | el **equipo** le cambia la hora; el cliente no puede reprogramar |
+| `session_reminder` | cliente | ca/es/en | ❌ (opt-in) | cron de la víspera; también el botón manual del profesional |
+| `waitlist_fulfilled` | cliente | ca/es/en | ✅ siempre | se libera plaza y se le reserva |
+| `trial_request` | profesional del hueco + avisos internos (`internalNotifyEmail`) | ca | ❌ (opt-in) | visitante en `/prova` |
+| `trial_status` | visitante de la prueba | ca | ✅ siempre | el equipo la confirma o la rechaza |
+| `bono_low` | cliente | ca/es/en | ❌ | al cruzar el umbral configurable; **no** si el bono tiene `auto_renew` |
+| `bono_expiring_soon` | cliente | ca/es/en | ✅ | cron |
+| `bono_auto_renewed` | cliente | ca/es/en | ✅ siempre | bono agotado con renovación pedida: nace uno pendiente de pago |
+| `bono_renewal_failed` | cliente | ca/es/en | ✅ siempre | la renovación pedida no puede hacerse (paquete retirado o solo por suscripción) |
+| `bono_unpaid_cancelled` | cliente | ca/es/en | ✅ siempre | cron: bono sin pagar fuera de plazo |
+| `subscription_renewed` / `_payment_failed` / `_cancelled` | cliente | ca/es/en | ✅ siempre | webhook de Stripe |
+| `subscription_paused` / `_resumed` | cliente | ca/es/en | ✅ siempre | congelar / reanudar |
+| `gift_voucher_gifted` | quien recibe el regalo (sin cuenta) | ca/es/en (el del **comprador**) | — | compra de un vale con envío por correo |
+| `gift_voucher_redeemed` | comprador | ca/es/en | ✅ siempre | alguien canjea el código |
+| `community` | clientes/profesionales que lo activen | ca/es/en | ❌ | el admin publica un anuncio (lotes de 100) |
+| `new_exercises_assigned` | cliente | ca/es/en | ❌ | el profesional pulsa «Notificar exercicis nous» |
+| `trainer_booking_received` / `trainer_booking_cancelled` | profesional (solo si la acción la hace el **cliente**) | ca | ✅ | el cliente reserva / cancela |
+| `trainer_daily_agenda` | profesional | ca | ❌ | cron diario |
+| `invoice_generated` | profesional | ca | siempre | el admin emite la liquidación en Facturació |
+| `new_client_registered` | admins con la pref + avisos internos (`internalNotifyEmail`) | ca | ✅ | registro público |
+| `support_ticket_created` | desarrollador (`DEVELOPER_EMAIL`) | ca | siempre | admin o profesional abren un tiquet. Reply-To = quien lo abre |
+
+Correos de cuenta (no pasan por `notify()`, ver §2): `auth_invite`,
+`auth_recovery`, `auth_welcome`, `auth_email_change`, `auth_email_change_alert`.
+Todos en el idioma del perfil (ca/es/en).
 
 ### Cambio de hora (`reservation_rescheduled`)
 
@@ -97,8 +117,11 @@ dependemos del envío de emails de Supabase.
   (pie `client`, `visitor`, `plain`) y solo si está relleno
   (`RenderedEmail.replyTo`). Sin él, ningún texto invita a responder
   (`welcome.outro` → `outroNoReply`; la prueba confirmada, sin la frase).
-- **Pie:** «Contacte: tel · (WhatsApp) · mailto» en esos mismos correos; nunca
-  en los del profesional o el admin.
+- **Pie:** dirección (enlace a mapa) y «tel (WhatsApp) · mailto» en esos mismos
+  correos (en el texto plano, con «Contacte:» delante); nunca en los del
+  profesional, el admin o el tiquet de soporte.
+- **Excepción:** el tiquet de soporte (`support_ticket_created`) lleva Reply-To
+  al correo de **quien lo abre** (`data.reporterEmail`), no al del centro.
 - **Avisos internos** (`trial_request`, `new_client_registered`):
   `notify_email` → `contact_email` → `CENTER_EMAIL`.
 - Prueba: `npm run contact:check`.
@@ -220,15 +243,42 @@ producción y ninguna visible para `tsc`, el lint ni el build:
 
 ## 3. Plantillas y marca
 
-- `lib/notifications/brand.ts`: hex copiados de `app/globals.css`
-  (`--color-brand-*`): purple `#642263`, purple-light `#965495`, orange
-  `#ff6d17`, dark `#1b1d1f`, charcoal `#303133`, muted `#777777`, border
-  `#eaeaea`, bg `#f7f7f7`. También `appUrl()` / `appLink()` / `emailLogoUrl()`.
-- `lib/notifications/templates.ts`: layout basado en **tablas**, estilos inline,
-  ancho 600px, responsive, `color-scheme: light only`. Cabecera con logo
-  (`public/logo_vindi.png`) + wordmark "VindiBCN" (fallback de texto si el
-  cliente bloquea imágenes). Plantillas auth: `renderInviteEmail` /
-  `renderRecoveryEmail` (footer `plain`). Contenido de usuario escapado.
+Revisión de diseño de octubre de 2026: un solo esqueleto y piezas pequeñas.
+Cada plantilla es un `Block` (datos) y `layout()` lo pinta; ninguna escribe
+HTML propio.
+
+- **`brand.ts`**: hex de `app/globals.css`. `BRAND` (purple `#642263`, dark,
+  charcoal, border, bg; `soft` `#5c5c60` para el texto secundario, AA — el
+  `muted` `#777777` se queda para los PDF) y `TONES` (success / attention /
+  error / neutral, los del paso 7). El naranja solo está en el logo.
+  `EMAIL_LOGO_SIZE` 110×44.
+- **`layout()`**: tablas y estilos en línea, 600 px. Preheader oculto (por
+  defecto, el párrafo tras el saludo; las sesiones lo llevan con día, hora,
+  servicio y profesional), `<title>`, contenedor de 600 px y fuente forzada
+  para Outlook (`<!--[if mso]>`), y a < 520 px tarjeta y botón a todo el ancho.
+  Solo modo claro, como la app.
+- **Piezas** (campos del `Block`):
+  - `eyebrow` — etiqueta de estado arriba («✓ Reserva confirmada»), con tono.
+  - `heading` — Georgia (la serif de todos los equipos; la de la app es Lora).
+  - `hero` + `details` — la tarjeta: etiqueta **encima** del valor (legible a
+    375 px); `hero` pone día y hora en grande, o un código (`code: true`).
+  - `notices` — avisos que se leen **antes** del botón («todavía no está
+    pagado»); `outro` admite también avisos después del botón.
+  - `cta` — botón «a prueba de balas» (VML en Outlook, 48 px de alto).
+  - `links` — enlaces secundarios (Google Calendar en la confirmación).
+  - `footer` — `client`, `trainer`, `admin`, `visitor`, `plain` (cuenta) o
+    `internal` (soporte). A clientes, visitantes y cuenta: dirección (enlace a
+    mapa), contacto y Reply-To al correo de contacto. `replyTo` en el `Block`
+    lo sobrescribe (el tiquet pone el de quien lo abre).
+- **`sessionParts()`**: lo común a los correos de una sesión (hero, servicio,
+  profesional, «Lloc» con la calle y número de `center_settings.address`).
+- **Asuntos** sin «· VindiBCN» al final: ya es el nombre del remitente.
+- **Texto plano** con el mismo contenido, también la dirección y los enlaces.
+- Contenido de usuario escapado; el asunto es texto plano y **no** se escapa.
+
+Revisión visual: `npm run emails:snapshot -- <carpeta> <ca|es|en>` tres veces
+y `npm run emails:review` para verlos en columnas. Solo los correos al equipo,
+al visitante y al desarrollador deben salir iguales en las tres.
 
 ---
 
@@ -276,7 +326,11 @@ Con la arquitectura actual, Supabase **no envía emails**:
   Google nativas / Apple Mail / Outlook se respeta la marca. No es controlable
   desde el HTML.
 - **Imágenes bloqueadas por defecto**: el logo no aparece hasta "Show images";
-  por eso hay wordmark de texto al lado.
+  por eso su `alt` («VindiBCN») lleva estilo propio: blanco y grande sobre el
+  lila.
+- **Outlook de escritorio** no se ha podido probar de verdad (no hay Outlook a
+  mano). El código sigue las técnicas estándar (VML, contenedor `mso`, fuente
+  en cada elemento); si alguien lo usa, conviene mirar un correo real.
 - **BIMI** (logo en el avatar del remitente en Gmail): descartado por coste
   (~1.000 €/año de certificado VMC).
 - **`user_metadata.email` se queda desfasado a propósito.** El correo de una
