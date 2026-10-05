@@ -73,6 +73,20 @@ export function staticI18n(locale?: Locale | null) {
         timeZone: CENTER_TZ,
       }).format(new Date(iso)),
 
+    /**
+     * "Dimecres, 14 d'octubre" — el dia de la sessió, sense hora i amb
+     * majúscula inicial. És la línia de sobre de l'hora gran dels correus.
+     */
+    weekdayDate: (iso: string) => {
+      const s = new Intl.DateTimeFormat(intl, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        timeZone: CENTER_TZ,
+      }).format(new Date(iso));
+      return s.charAt(0).toLocaleUpperCase(intl) + s.slice(1);
+    },
+
     /** "15 de març del 2026" — sense hora. */
     date: (iso: string) =>
       new Intl.DateTimeFormat(intl, {

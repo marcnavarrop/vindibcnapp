@@ -7,14 +7,32 @@
 export const BRAND = {
   purple: "#642263", // --color-brand-purple (lila del sidebar)
   purpleLight: "#965495", // --color-brand-purple-light
-  orange: "#ff6d17", // --color-brand-orange (accent)
+  orange: "#ff6d17", // --color-brand-orange: només el logo, des del pas 7
   dark: "#1b1d1f", // --color-brand-dark
   charcoal: "#303133", // --color-brand-charcoal (text principal)
-  muted: "#777777", // --color-brand-muted
+  muted: "#777777", // --color-brand-muted (el fan servir els PDF)
+  /*
+   * Text secundari dels CORREUS (etiquetes, peu). El muted fa 4,48:1 sobre
+   * blanc i 4,18:1 sobre el gris: per sota d'AA. Aquest és el
+   * --color-brand-tab de l'app: 6,66:1 i 6,21:1.
+   */
+  soft: "#5c5c60",
   border: "#eaeaea", // --color-brand-border
   bg: "#f7f7f7", // --color-brand-bg
   white: "#ffffff",
 } as const;
+
+/**
+ * Els tons d'estat de l'app (pas 7), per a l'etiqueta de dalt i els avisos:
+ * [text, fons]. Contrast AA del text sobre el seu fons.
+ */
+export const TONES = {
+  success: ["#15803d", "#eef8f1"], // --color-success
+  attention: ["#1e3a5f", "#eaf0f6"], // --color-attention
+  error: ["#b42318", "#fdecec"], // --color-error
+  neutral: ["#55555a", "#efeff1"], // --color-neutral
+} as const;
+export type Tone = keyof typeof TONES;
 
 /** Nom del centre (per capçalera i peu). */
 export const CENTER_NAME = "VindiBCN";
@@ -60,4 +78,4 @@ export function emailLogoUrl(): string {
  * ignora part del CSS i, sense els atributs, reserva la mida original del
  * fitxer i ensenya el logo gegant. La proporció és la del fitxer (299×120).
  */
-export const EMAIL_LOGO_SIZE = { width: 100, height: 40 } as const;
+export const EMAIL_LOGO_SIZE = { width: 110, height: 44 } as const;

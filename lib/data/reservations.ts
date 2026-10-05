@@ -206,6 +206,11 @@ async function notifyReservation(
     scheduledAt: string;
     serviceType: ServiceType;
     trainerName?: string | null;
+    /**
+     * Sense el nom, el professional: el correu el busca. Les cancel·lacions
+     * només tenen l'id a mà, i «amb qui era» és part del que s'ha de dir.
+     */
+    trainerId?: string | null;
     /** L'ha cancel·lada el centre en tancar disponibilitat (0090). */
     byCenter?: boolean;
     /**
@@ -217,6 +222,9 @@ async function notifyReservation(
 ): Promise<void> {
   const c = await clientContact(clientId);
   if (!c) return;
+  const trainerName =
+    info.trainerName ??
+    (info.trainerId ? ((await getProfileContact(info.trainerId))?.name ?? null) : null);
   await notify(
     {
       type,
@@ -226,7 +234,7 @@ async function notifyReservation(
         name: c.name ?? "",
         whenIso: info.scheduledAt,
         serviceType: info.serviceType,
-        ...(info.trainerName ? { trainer: info.trainerName } : {}),
+        ...(trainerName ? { trainer: trainerName } : {}),
         ...(info.byCenter ? { byCenter: "1" } : {}),
         ...(info.refund ? { refund: info.refund } : {}),
       },
@@ -1097,6 +1105,7 @@ export async function cancelReservation(id: string): Promise<void> {
     reservationId: res.reservation_id,
     scheduledAt: res.scheduled_at,
     serviceType: res.service_type,
+    trainerId: res.trainer_id,
   });
   await afterCancel({
     trainer_id: res.trainer_id,
@@ -1184,6 +1193,7 @@ export async function cancelReservationsByCenter(
       reservationId: row.reservation_id,
       scheduledAt: row.scheduled_at,
       serviceType: row.service_type,
+      trainerId: row.trainer_id,
       byCenter: true,
       refund: !row.refunded ? "none" : row.bono_expired ? "expired" : "bono",
     });

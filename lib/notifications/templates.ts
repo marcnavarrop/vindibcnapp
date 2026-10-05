@@ -5,12 +5,16 @@ import type { Locale } from "@/lib/i18n/config";
 import { formatEur } from "@/lib/labels";
 import {
   BRAND,
+  TONES,
+  type Tone,
   CENTER_NAME,
   appLink,
   emailLogoUrl,
   EMAIL_LOGO_SIZE,
 } from "@/lib/notifications/brand";
 import { displayPhone, hasContact, telHref, whatsappHref, type PublicContact } from "@/lib/center-contact";
+import { buildCalendarEvent, buildGoogleCalendarUrl } from "@/lib/calendar-links";
+import type { ServiceType } from "@/types/database";
 
 /** Escapa text per evitar injecció d'HTML des de dades d'usuari. */
 function esc(s: string): string {
@@ -19,144 +23,244 @@ function esc(s: string): string {
   );
 }
 
-type DetailRow = { label: string; value: string };
+type DetailRow = { label: string; value: string; href?: string };
 type Cta = { label: string; url: string };
-type FooterKind = "client" | "trainer" | "admin" | "visitor" | "plain";
+/** Un avís que no es pot passar per alt: «encara no està pagat». */
+type Notice = { tone: Tone; text: string };
+/**
+ * "internal": l'avís al desenvolupador (tiquet de suport). Ni contacte del
+ * centre ni preferències: no és cap usuari del centre.
+ */
+type FooterKind = "client" | "trainer" | "admin" | "visitor" | "plain" | "internal";
 
 type Block = {
+  /** L'etiqueta d'estat de dalt de tot: «✓ Reserva confirmada». */
+  eyebrow?: { tone: Tone; text: string };
   heading: string;
-  intro: string[]; // paràgrafs (text ja escapat o segur)
+  /**
+   * El text que la safata ensenya al costat de l'assumpte. Sense, el primer
+   * paràgraf després de la salutació (o l'únic que hi hagi).
+   */
+  preheader?: string;
+  intro: string[]; // paràgrafs (text pla: s'escapen aquí)
+  /** El dia i l'hora en gran, dins de la targeta. `plain` és la línia del text pla. */
+  hero?: { date: string; time: string; plain: string };
   details?: DetailRow[];
+  /** Avisos que s'han de llegir ABANS del botó. */
+  notices?: Notice[];
   cta?: Cta;
-  outro?: string[];
+  /** Enllaços secundaris sota el botó («Afegir a Google Calendar»). */
+  links?: Cta[];
+  /** Després del botó: paràgrafs, o un avís si el text és un consell que compta. */
+  outro?: (string | Notice)[];
   footer: FooterKind;
 };
 
-// ─────────────────────────── Layout (taules, inline) ───────────────────────────
+// ─────────────────────────── Peces (taules, inline) ───────────────────────────
+//
+// Un sol esquelet (`layout`) i peces petites. Tot amb taules i estils en línia,
+// i la font a CADA element de text: Outlook d'escriptori no l'hereta de la
+// taula de fora i, si no la troba, cau a Times New Roman.
 
-function paragraph(text: string, color: string = BRAND.charcoal): string {
+const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+/** Títols: Georgia, la serif que hi ha a tots els equips (la de l'app és Lora). */
+const SERIF = "Georgia,'Times New Roman',serif";
+
+function paragraph(text: string): string {
   // intro/outro són text pla: s'escapen aquí i es respecten els salts de línia.
   const safe = esc(text).replace(/\n/g, "<br>");
-  return `<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:${color};">${safe}</p>`;
+  return `<p style="margin:0 0 16px;font-family:${SANS};font-size:16px;line-height:24px;color:${BRAND.charcoal};">${safe}</p>`;
 }
 
-function detailsTable(rows: DetailRow[]): string {
-  const trs = rows
-    .map(
-      (r) => `<tr>
-        <td style="padding:7px 0;font-size:13px;color:${BRAND.muted};white-space:nowrap;">${esc(r.label)}</td>
-        <td style="padding:7px 0 7px 16px;font-size:15px;font-weight:700;color:${BRAND.dark};text-align:right;">${esc(r.value)}</td>
-      </tr>`,
-    )
+function eyebrow(e: { tone: Tone; text: string }): string {
+  const [fg, bg] = TONES[e.tone];
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;"><tr><td style="background:${bg};border-radius:999px;padding:5px 12px;font-family:${SANS};font-size:12px;line-height:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${fg};">${esc(e.text)}</td></tr></table>`;
+}
+
+function headingHtml(text: string): string {
+  return `<h1 class="serif" style="margin:0 0 18px;font-family:${SERIF};font-size:26px;line-height:32px;font-weight:700;color:${BRAND.dark};">${esc(text)}</h1>`;
+}
+
+/**
+ * La targeta de detalls: l'etiqueta DAMUNT del valor, no al costat. Així una
+ * data llarga es llegeix sencera a 375 px en comptes de partir-se en tres
+ * línies dins d'una columna estreta. Si hi ha `hero`, el dia i l'hora van a
+ * dalt, en gran.
+ */
+function detailsCard(rows: DetailRow[], hero?: Block["hero"]): string {
+  const heroHtml = hero
+    ? `<tr><td style="padding:20px 20px 16px;${rows.length ? `border-bottom:1px solid ${BRAND.border};` : ""}">
+        <div style="font-family:${SANS};font-size:14px;line-height:20px;color:${BRAND.soft};">${esc(hero.date)}</div>
+        <div class="serif" style="font-family:${SERIF};font-size:32px;line-height:38px;font-weight:700;color:${BRAND.purple};">${esc(hero.time)}</div>
+      </td></tr>`
+    : "";
+  const rowsHtml = rows
+    .map((r, idx) => {
+      const value = r.href
+        ? `<a href="${esc(r.href)}" target="_blank" style="color:${BRAND.dark};text-decoration:underline;">${esc(r.value)}</a>`
+        : esc(r.value);
+      return `<tr><td style="padding:12px 20px;${idx < rows.length - 1 ? `border-bottom:1px solid ${BRAND.border};` : ""}">
+        <div style="font-family:${SANS};font-size:12px;line-height:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${BRAND.soft};">${esc(r.label)}</div>
+        <div style="font-family:${SANS};font-size:16px;line-height:22px;font-weight:600;color:${BRAND.dark};padding-top:2px;">${value}</div>
+      </td></tr>`;
+    })
     .join("");
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:${BRAND.bg};border:1px solid ${BRAND.border};border-radius:12px;margin:4px 0 20px;">
-    <tr><td style="padding:6px 18px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${trs}</table>
-    </td></tr>
-  </table>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;border:1px solid ${BRAND.border};border-left:4px solid ${BRAND.purple};border-radius:12px;margin:4px 0 24px;background:${BRAND.white};">${heroHtml}${rowsHtml}</table>`;
 }
 
+function noticeHtml(n: Notice): string {
+  const [fg, bg] = TONES[n.tone];
+  const safe = esc(n.text).replace(/\n/g, "<br>");
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;"><tr><td style="background:${bg};border-left:4px solid ${fg};border-radius:8px;padding:14px 16px;font-family:${SANS};font-size:15px;line-height:22px;color:${fg};">${safe}</td></tr></table>`;
+}
+
+/**
+ * Botó «a prova de bales». Outlook d'escriptori ignora el padding d'un `<a>`
+ * (el botó quedava enganxat al text i només la paraula era clicable): allà es
+ * pinta amb VML. La resta veu una cel·la amb el padding a l'enllaç, 48 px
+ * d'alt, i al mòbil ocupa tota l'amplada (`.btn`).
+ */
 function ctaButton(cta: Cta): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 22px;">
-    <tr><td style="border-radius:10px;background:${BRAND.purple};">
-      <a href="${cta.url}" target="_blank" style="display:inline-block;padding:12px 26px;font-size:14px;font-weight:700;color:${BRAND.white};text-decoration:none;border-radius:10px;">${esc(cta.label)}</a>
-    </td></tr>
-  </table>`;
+  const url = esc(cta.url);
+  const width = Math.min(520, Math.max(220, cta.label.length * 9 + 64));
+  return `<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${url}" style="height:48px;v-text-anchor:middle;width:${width}px;" arcsize="20%" stroke="f" fillcolor="${BRAND.purple}"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">${esc(cta.label)}</center></v:roundrect><![endif]-->
+  <!--[if !mso]><!--><table role="presentation" cellpadding="0" cellspacing="0" border="0" class="btn" style="margin:0 0 24px;"><tr><td align="center" bgcolor="${BRAND.purple}" style="border-radius:10px;background:${BRAND.purple};">
+    <a href="${url}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:${SANS};font-size:16px;line-height:20px;font-weight:700;color:${BRAND.white};text-decoration:none;border-radius:10px;">${esc(cta.label)}</a>
+  </td></tr></table><!--<![endif]-->`;
+}
+
+function linksHtml(links: Cta[]): string {
+  const a = links
+    .map((l) => `<a href="${esc(l.url)}" target="_blank" style="color:${BRAND.purple};text-decoration:underline;font-weight:600;">${esc(l.label)}</a>`)
+    .join(`&nbsp;&nbsp;·&nbsp;&nbsp;`);
+  return `<p style="margin:-8px 0 24px;font-family:${SANS};font-size:14px;line-height:22px;color:${BRAND.soft};">${a}</p>`;
+}
+
+/** L'enllaç al mapa d'una adreça. */
+function mapsUrl(address: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`VindiBCN, ${address}`)}`;
 }
 
 function footer(kind: FooterKind, i: StaticI18n, contact?: PublicContact | null): string {
   const f = i.ns("emails.footer");
-  const privacy = appLink("/legal/privacitat");
+  const link = (href: string, text: string) =>
+    `<a href="${esc(href)}" target="_blank" style="color:${BRAND.soft};text-decoration:underline;">${esc(text)}</a>`;
+  const line = (html: string, attr = "") =>
+    `<p${attr} style="margin:0 0 6px;font-family:${SANS};font-size:13px;line-height:20px;color:${BRAND.soft};">${html}</p>`;
+  const privacy = link(appLink("/legal/privacitat"), f("privacy"));
   let prefsLine = "";
-  if (kind === "client") {
-    const link = `<a href="${appLink("/client/configuracio")}" style="color:${BRAND.purple};text-decoration:underline;">${f("settings")}</a>`;
-    prefsLine = f("clientPrefs", { link });
-  } else if (kind === "trainer")
-    prefsLine = `Pots gestionar els teus avisos des de la teva àrea, a <a href="${appLink(
-      "/trainer/configuracio",
-    )}" style="color:${BRAND.purple};text-decoration:underline;">Configuració</a>.`;
+  if (kind === "client")
+    prefsLine = f("clientPrefs", { link: link(appLink("/client/configuracio"), f("settings")) });
+  else if (kind === "trainer")
+    prefsLine = `Pots gestionar els teus avisos des de la teva àrea, a ${link(appLink("/trainer/configuracio"), "Configuració")}.`;
   else if (kind === "admin")
-    prefsLine = `Pots gestionar els teus avisos a <a href="${appLink(
-      "/admin/configuracio",
-    )}" style="color:${BRAND.purple};text-decoration:underline;">Configuració</a>.`;
+    prefsLine = `Pots gestionar els teus avisos a ${link(appLink("/admin/configuracio"), "Configuració")}.`;
   else if (kind === "visitor")
     prefsLine = `Has rebut aquest correu perquè has demanat una sessió de prova a ${CENTER_NAME}.`;
-  // "plain": només marca + privacitat (emails de compte: invitació/recuperació).
+  // "plain" i "internal": només marca + privacitat.
 
-  return `<tr><td style="padding:20px 32px 28px;border-top:1px solid ${BRAND.border};">
-    <p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:${BRAND.muted};">
-      <strong style="color:${BRAND.charcoal};">${CENTER_NAME}</strong> · ${f("tagline")}
-    </p>
-    ${contactFooterHtml(kind, i, contact)}
-    <p style="margin:0;font-size:12px;line-height:1.5;color:${BRAND.muted};">
-      ${prefsLine ? `${prefsLine}&nbsp;·&nbsp;` : ""}<a href="${privacy}" style="color:${BRAND.muted};text-decoration:underline;">${f("privacy")}</a>
-    </p>
-  </td></tr>`;
+  const lines = [line(`<strong style="color:${BRAND.charcoal};">${CENTER_NAME}</strong> · ${esc(f("tagline"))}`)];
+  if (OUTSIDE.includes(kind) && contact?.address) lines.push(line(link(mapsUrl(contact.address), contact.address)));
+  const c = contactFooterHtml(kind, i, contact);
+  if (c) lines.push(c);
+  lines.push(line(`${prefsLine ? `${prefsLine} · ` : ""}${privacy}`));
+  return lines.join("");
+}
+
+/**
+ * L'esquelet de TOTS els correus.
+ *
+ *   · Preheader amagat: el que la safata ensenya després de l'assumpte.
+ *   · Per a Outlook d'escriptori, una taula de 600 px (no entén `max-width`) i
+ *     la font forçada (si no, Times New Roman).
+ *   · Al mòbil (<520 px), la targeta ocupa tota l'amplada sense marges i el
+ *     botó també. On no s'entenen les media queries, es veu la de 600 px
+ *     encongida, que també funciona.
+ *   · Només mode clar, com l'app: Apple Mail ho respecta; Gmail al mòbil i
+ *     Outlook.com inverteixen igualment, i no es pot evitar des de l'HTML.
+ */
+function layout(block: Block, i: StaticI18n, contact?: PublicContact | null): string {
+  const body: string[] = [];
+  if (block.eyebrow) body.push(eyebrow(block.eyebrow));
+  body.push(headingHtml(block.heading));
+  for (const p of block.intro) body.push(paragraph(p));
+  if (block.hero || (block.details && block.details.length)) body.push(detailsCard(block.details ?? [], block.hero));
+  for (const n of block.notices ?? []) body.push(noticeHtml(n));
+  if (block.cta) body.push(ctaButton(block.cta));
+  if (block.links && block.links.length) body.push(linksHtml(block.links));
+  for (const o of block.outro ?? []) body.push(typeof o === "string" ? paragraph(o) : noticeHtml(o));
+
+  const { width, height } = EMAIL_LOGO_SIZE;
+  // Caràcters invisibles darrere del preheader: si no, la safata hi enganxa el
+  // començament del cos («Hola Ana…»).
+  const filler = "&#847;&zwnj;&nbsp;".repeat(60);
+
+  return `<!doctype html>
+<html lang="${i.locale}" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">
+<title>${esc(block.heading)}</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><style>td,p,a,h1,div{font-family:Arial,sans-serif !important;}.serif{font-family:Georgia,serif !important;}</style><![endif]-->
+<style>:root{color-scheme:light only;supported-color-schemes:light only;}
+@media (max-width:520px){.outer{padding:0 !important}.card{border-radius:0 !important;border-left:0 !important;border-right:0 !important}.px{padding-left:20px !important;padding-right:20px !important}.btn{width:100% !important}.btn a{display:block !important}.foot{padding:20px 20px 32px !important}}
+</style></head>
+<body style="margin:0;padding:0;background:${BRAND.bg};-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${BRAND.bg};">${esc(preheaderOf(block))}${filler}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.bg};"><tr><td align="center" class="outer" style="padding:24px 12px;">
+  <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="card" style="max-width:600px;background:${BRAND.white};border:1px solid ${BRAND.border};border-radius:16px;overflow:hidden;">
+    <tr><td align="center" bgcolor="${BRAND.purple}" style="background:${BRAND.purple};padding:22px 32px;">${brandHeader(width, height)}</td></tr>
+    <tr><td class="px" style="padding:32px 36px 12px;">${body.join("")}</td></tr>
+  </table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;"><tr><td class="foot" align="center" style="padding:20px 24px 8px;text-align:center;">${footer(block.footer, i, contact)}</td></tr></table>
+  <!--[if mso]></td></tr></table><![endif]-->
+</td></tr></table>
+</body></html>`;
 }
 
 /**
  * Capçalera de marca: el logotip oficial, el mateix fitxer que la resta de
- * l'app, damunt del lila.
- *
- * Abans eren dues coses —l'isotip petit i el nom escrit al costat en HTML— i
- * el correu era l'últim lloc on la marca es veia diferent. Ara el nom ja va
- * dins de la imatge, així que el text del costat sobrava.
+ * l'app, centrat damunt del lila.
  *
  * L'`alt` porta estil propi perquè, quan un client bloqueja les imatges (i
  * Outlook i Gmail ho fan per defecte amb remitents desconeguts), el que quedi
  * sigui "VindiBCN" en blanc i gros damunt del lila, no el text diminut i
  * negre per defecte.
  */
-function brandHeader(): string {
-  const { width, height } = EMAIL_LOGO_SIZE;
-  return `<img src="${emailLogoUrl()}" width="${width}" height="${height}" alt="${CENTER_NAME}" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:${BRAND.white};">`;
+function brandHeader(width: number, height: number): string {
+  return `<img src="${emailLogoUrl()}" width="${width}" height="${height}" alt="${CENTER_NAME}" style="display:block;width:${width}px;height:${height}px;border:0;outline:none;text-decoration:none;font-family:${SANS};font-size:20px;font-weight:800;color:${BRAND.white};">`;
 }
 
-function layout(block: Block, i: StaticI18n, contact?: PublicContact | null): string {
-  const bodyParts: string[] = [];
-  bodyParts.push(
-    `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:${BRAND.dark};font-weight:800;">${esc(block.heading)}</h1>`,
-  );
-  for (const pgraph of block.intro) bodyParts.push(paragraph(pgraph));
-  if (block.details && block.details.length) bodyParts.push(detailsTable(block.details));
-  if (block.cta) bodyParts.push(ctaButton(block.cta));
-  for (const pgraph of block.outro ?? []) bodyParts.push(paragraph(pgraph, BRAND.muted));
-
-  return `<!doctype html>
-<html lang="${i.locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><style>:root{color-scheme:light only;supported-color-schemes:light only;}</style></head>
-<body style="margin:0;padding:0;background:${BRAND.bg};">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.bg};">
-    <tr><td align="center" style="padding:24px 12px;">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:${BRAND.white};border:1px solid ${BRAND.border};border-radius:16px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-        <tr><td style="background:${BRAND.purple};padding:22px 32px;">
-          ${brandHeader()}
-        </td></tr>
-        <tr><td style="padding:30px 32px 8px;">${bodyParts.join("")}</td></tr>
-        ${footer(block.footer, i, contact)}
-      </table>
-    </td></tr>
-  </table>
-</body></html>`;
+function preheaderOf(block: Block): string {
+  if (block.preheader) return block.preheader;
+  return block.intro.length > 1 ? block.intro[1] : (block.intro[0] ?? block.heading);
 }
 
 /** Versió text pla a partir dels mateixos continguts (entregabilitat + fallback). */
 function plain(block: Block, i: StaticI18n, contact?: PublicContact | null): string {
   const lines: string[] = [block.heading, ""];
   lines.push(...block.intro);
-  if (block.details && block.details.length) {
+  if (block.hero || (block.details && block.details.length)) {
     lines.push("");
-    for (const r of block.details) lines.push(`${r.label}: ${r.value}`);
+    if (block.hero) lines.push(block.hero.plain);
+    for (const r of block.details ?? []) lines.push(`${r.label}: ${r.value}`);
+  }
+  if (block.notices && block.notices.length) {
+    lines.push("");
+    lines.push(...block.notices.map((n) => n.text));
   }
   if (block.cta) {
     lines.push("");
     lines.push(`${block.cta.label}: ${block.cta.url}`);
   }
+  for (const l of block.links ?? []) lines.push(`${l.label}: ${l.url}`);
   if (block.outro && block.outro.length) {
     lines.push("");
-    lines.push(...block.outro);
+    lines.push(...block.outro.map((o) => (typeof o === "string" ? o : o.text)));
   }
   const f = i.ns("emails.footer");
   lines.push("", "—", `${CENTER_NAME} · ${f("tagline")}`);
+  if (OUTSIDE.includes(block.footer) && contact?.address) lines.push(contact.address);
   const contactLine = contactFooterText(block.footer, i, contact);
   if (contactLine) lines.push(contactLine);
   if (block.footer === "client")
@@ -197,10 +301,9 @@ function canReply(contact: PublicContact | null | undefined): boolean {
 /** La línia de contacte del peu (HTML), o res. */
 function contactFooterHtml(kind: FooterKind, i: StaticI18n, contact: PublicContact | null | undefined): string {
   if (!OUTSIDE.includes(kind) || !contact || !hasContact(contact)) return "";
-  const f = i.ns("emails.footer");
   const wa = i.ns("contact")("whatsapp");
   const link = (href: string, text: string) =>
-    `<a href="${href}" style="color:${BRAND.purple};text-decoration:underline;">${esc(text)}</a>`;
+    `<a href="${esc(href)}" target="_blank" style="color:${BRAND.soft};text-decoration:underline;">${esc(text)}</a>`;
   const parts: string[] = [];
   if (contact.phone)
     parts.push(
@@ -208,7 +311,7 @@ function contactFooterHtml(kind: FooterKind, i: StaticI18n, contact: PublicConta
         (contact.whatsapp ? ` (${link(whatsappHref(contact.phone), wa)})` : ""),
     );
   if (contact.email) parts.push(link(`mailto:${contact.email}`, contact.email));
-  return `<p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:${BRAND.muted};" data-contact>${esc(f("contact"))}: ${parts.join(" · ")}</p>`;
+  return `<p style="margin:0 0 6px;font-family:${SANS};font-size:13px;line-height:20px;color:${BRAND.soft};" data-contact>${parts.join(" · ")}</p>`;
 }
 
 /** La mateixa línia, en text pla. */
@@ -219,6 +322,65 @@ function contactFooterText(kind: FooterKind, i: StaticI18n, contact: PublicConta
   if (contact.phone) parts.push(displayPhone(contact.phone) + (contact.whatsapp ? ` (${i.ns("contact")("whatsapp")})` : ""));
   if (contact.email) parts.push(contact.email);
   return `${f("contact")}: ${parts.join(" · ")}`;
+}
+
+/**
+ * Les peces comunes dels correus d'una SESSIÓ al client: el dia i l'hora en
+ * gran, servei, professional i lloc, i el preheader amb el mateix (així es
+ * llegeix a la safata sense obrir-lo).
+ */
+function sessionParts(
+  i: StaticI18n,
+  d: Record<string, string>,
+  contact: PublicContact | null | undefined,
+  opts: { trainer?: boolean } = {},
+): { hero?: Block["hero"]; rows: DetailRow[]; preheader?: string } {
+  const tl = i.ns("emails.labels");
+  const service = d.serviceType ? i.service(d.serviceType) : undefined;
+  const hero = d.whenIso
+    ? { date: i.weekdayDate(d.whenIso), time: i.time(d.whenIso), plain: `${tl("when")}: ${i.dateTime(d.whenIso)}` }
+    : undefined;
+  const trainer = opts.trainer === false ? undefined : d.trainer;
+  const detail = rows([
+    [tl("service"), service],
+    [tl("trainer"), trainer],
+  ]);
+  // A la targeta, carrer i número («Carrer Gran, 1»): l'adreça sencera ja va
+  // al peu, i l'enllaç porta al mapa amb tota.
+  if (contact?.address)
+    detail.push({ label: tl("place"), value: contact.address.split(", ").slice(0, 2).join(", "), href: mapsUrl(contact.address) });
+  const preheader = hero
+    ? [`${hero.date}, ${hero.time}`, service, trainer].filter(Boolean).join(" · ")
+    : undefined;
+  return { hero, rows: detail, preheader };
+}
+
+/**
+ * «Afegir al calendari» sota el botó de la confirmació. Google, amb un enllaç
+ * que ja porta l'esdeveniment; per a Apple i Outlook cal el fitxer .ics, que
+ * en un correu només podria anar com a adjunt: es baixa des de la reserva, a
+ * l'app, amb el botó que ja hi ha.
+ */
+function calendarLinks(i: StaticI18n, d: Record<string, string>, contact: PublicContact | null | undefined): Cta[] | undefined {
+  if (!d.whenIso || !d.serviceType) return undefined;
+  const tc = i.ns("labels.calendar");
+  const t = i.ns("emails.calendar");
+  const service = i.service(d.serviceType);
+  const name = d.trainer?.trim() || null;
+  const event = buildCalendarEvent({
+    serviceType: d.serviceType as ServiceType,
+    otherPartyName: name,
+    scheduledAt: d.whenIso,
+    address: contact?.address ?? null,
+    text: {
+      title: name ? tc("titleWith", { service, name }) : tc("title", { service }),
+      description: name ? tc("descriptionWith", { service, name }) : tc("description", { service }),
+    },
+  });
+  return [
+    { label: t("google"), url: buildGoogleCalendarUrl(event) },
+    { label: t("other"), url: appLink("/client/reservas") },
+  ];
 }
 
 /** Email d'invitació (crear contrasenya) amb la marca. */
@@ -443,16 +605,17 @@ export function renderEmail(
   switch (event.type) {
     case "reservation_confirmed": {
       const t = i.ns("emails.reservationConfirmed");
+      const s = sessionParts(i, d, contact);
       subject = t("subject");
       block = {
+        eyebrow: { tone: "success", text: `✓ ${t("eyebrow")}` },
         heading: t("heading"),
+        preheader: s.preheader,
         intro: [hola, t("intro")],
-        details: rows([
-          [tl("when"), when],
-          [tl("service"), service],
-          [tl("trainer"), d.trainer],
-        ]),
+        hero: s.hero,
+        details: s.rows,
         cta: { label: t("cta"), url: appLink("/client/reservas") },
+        links: calendarLinks(i, d, contact),
         outro: [t("outro")],
         footer: "client",
       };
@@ -479,17 +642,21 @@ export function renderEmail(
             : d.refund === "none"
               ? t("refundNone")
               : null;
+      const s = sessionParts(i, d, null);
       block = {
+        eyebrow: { tone: byCenter ? "attention" : "neutral", text: t("eyebrow") },
         heading: t("heading"),
+        preheader: s.preheader,
         intro: [hola, byCenter ? t("introByCenter") : t("intro")],
-        details: rows([
-          [tl("when"), when],
-          [tl("service"), service],
-        ]),
+        hero: s.hero,
+        details: s.rows,
+        // Què ha passat amb la sessió es llegeix ABANS del botó: és el que
+        // més importa d'aquest correu. Un bo caducat, en vermell.
+        notices: refundLine
+          ? [{ tone: d.refund === "expired" ? "error" : d.refund === "bono" ? "success" : "neutral", text: refundLine }]
+          : undefined,
         cta: { label: t("cta"), url: appLink("/client/reservas") },
-        outro: byCenter
-          ? [...(refundLine ? [refundLine] : []), t("outroByCenter")]
-          : [t("outro")],
+        outro: byCenter ? [t("outroByCenter")] : [t("outro")],
         footer: "client",
       };
       break;
@@ -503,34 +670,37 @@ export function renderEmail(
        * diu que només es mou aquesta, perquè no pensi que ha canviat tota.
        */
       const oldWhen = d.oldWhenIso ? i.dateTime(d.oldWhenIso) : undefined;
+      const s = sessionParts(i, d, contact);
       block = {
+        eyebrow: { tone: "attention", text: t("eyebrow") },
         heading: t("heading"),
+        preheader: s.preheader,
         intro: [hola, t("intro")],
-        details: rows([
-          [tl("newWhen"), when],
-          [tl("oldWhen"), oldWhen],
-          [tl("service"), service],
-          [tl("trainer"), d.trainer],
-        ]),
+        // L'hora gran és la NOVA; l'antiga, la primera fila, perquè es vegi
+        // quina és la que ha canviat.
+        hero: s.hero && { ...s.hero, plain: `${tl("newWhen")}: ${when}` },
+        details: [...rows([[tl("oldWhen"), oldWhen]]), ...s.rows],
+        notices: d.series === "1" ? [{ tone: "attention", text: t("series") }] : undefined,
         cta: { label: t("cta"), url: appLink("/client/reservas") },
-        outro: [...(d.series === "1" ? [t("series")] : []), t("outro")],
+        outro: [t("outro")],
         footer: "client",
       };
       break;
     }
     case "session_reminder": {
       const t = i.ns("emails.sessionReminder");
+      const s = sessionParts(i, d, contact);
       subject = t("subject");
       block = {
+        eyebrow: { tone: "attention", text: t("eyebrow") },
         heading: t("heading"),
+        preheader: s.preheader,
         intro: [hola, t("intro")],
-        details: rows([
-          [tl("when"), when],
-          [tl("service"), service],
-          [tl("trainer"), d.trainer],
-        ]),
+        hero: s.hero,
+        details: s.rows,
         cta: { label: t("cta"), url: appLink("/client/reservas") },
-        outro: [t("outro")],
+        // Cancel·lar amb temps allibera la plaça: és un consell que compta.
+        outro: [{ tone: "attention", text: t("outro") }],
         footer: "client",
       };
       break;
@@ -900,15 +1070,15 @@ export function renderEmail(
     }
     case "waitlist_fulfilled": {
       const t = i.ns("emails.waitlistFulfilled");
+      const s = sessionParts(i, d, contact);
       subject = t("subject");
       block = {
+        eyebrow: { tone: "success", text: `✓ ${t("eyebrow")}` },
         heading: t("heading"),
+        preheader: s.preheader,
         intro: [hola, t("intro")],
-        details: rows([
-          [tl("when"), when],
-          [tl("service"), service],
-          [tl("trainer"), d.trainer],
-        ]),
+        hero: s.hero,
+        details: s.rows,
         cta: { label: t("cta"), url: appLink("/client/reservas") },
         outro: [t("outro")],
         footer: "client",

@@ -1062,7 +1062,12 @@
       "nextRenewal": "Próxima renovación",
       "sessionsThisCycle": "Sesiones de este mes",
       "resumesOn": "Se reanuda el",
-      "pausedSince": "Congelada desde el"
+      "pausedSince": "Congelada desde el",
+      "place": "Lugar"
+    },
+    "calendar": {
+      "google": "Añadir a Google Calendar",
+      "other": "Otros calendarios (desde la app)"
     },
     "footer": {
       "tagline": "Centro de entrenamiento personal y fisioterapia",
@@ -1074,14 +1079,16 @@
       "contact": "Contacto"
     },
     "reservationConfirmed": {
-      "subject": "Reserva confirmada · VindiBCN",
+      "eyebrow": "Reserva confirmada",
+      "subject": "Reserva confirmada",
       "heading": "Tu reserva está confirmada",
       "intro": "Hemos registrado tu sesión. Aquí tienes los detalles:",
       "cta": "Ver mi reserva",
       "outro": "¡Nos vemos pronto! Si necesitas cambiarla, puedes hacerlo desde tu área."
     },
     "reservationCancelled": {
-      "subject": "Reserva cancelada · VindiBCN",
+      "eyebrow": "Reserva cancelada",
+      "subject": "Reserva cancelada",
       "heading": "Se ha cancelado una reserva",
       "intro": "Te informamos de que esta sesión ha quedado anulada:",
       "cta": "Reservar otra sesión",
@@ -1093,7 +1100,8 @@
       "outroByCenter": "Sentimos las molestias. Si tienes cualquier duda, contacta con el centro."
     },
     "reservationRescheduled": {
-      "subject": "Hemos cambiado la hora de tu sesión · VindiBCN",
+      "eyebrow": "Cambio de hora",
+      "subject": "Hemos cambiado la hora de tu sesión",
       "heading": "Tu sesión ha cambiado de hora",
       "intro": "El centro ha movido una sesión tuya. Esta es la nueva hora:",
       "series": "Esta sesión es de una serie: solo cambia esta. El resto de sesiones de la serie se quedan como estaban.",
@@ -1101,7 +1109,8 @@
       "outro": "Sigue siendo la misma reserva: no has gastado ninguna sesión más del bono. Si la nueva hora no te va bien, contacta con el centro."
     },
     "sessionReminder": {
-      "subject": "Recordatorio: tienes sesión mañana · VindiBCN",
+      "eyebrow": "Recordatorio · mañana",
+      "subject": "Recordatorio: tienes sesión mañana",
       "heading": "Tienes una sesión mañana",
       "intro": "Te recordamos tu próxima sesión:",
       "cta": "Ver mi reserva",
@@ -1145,7 +1154,8 @@
       "outro": "Si ya lo habías pagado o crees que ha habido un error, habla con el centro y lo arreglamos enseguida: no hace falta que vuelvas a pagar nada."
     },
     "waitlistFulfilled": {
-      "subject": "¡Tienes plaza! · VindiBCN",
+      "eyebrow": "Plaza confirmada",
+      "subject": "¡Tienes plaza!",
       "heading": "Se ha liberado la plaza que esperabas",
       "intro": "Alguien ha cancelado y te hemos confirmado la sesión automáticamente. Ya la tienes en tu agenda:",
       "cta": "Ver mi reserva",

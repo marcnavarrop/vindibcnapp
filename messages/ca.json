@@ -1062,7 +1062,12 @@
       "nextRenewal": "Propera renovació",
       "sessionsThisCycle": "Sessions d'aquest mes",
       "resumesOn": "Es reprèn el",
-      "pausedSince": "Congelada des del"
+      "pausedSince": "Congelada des del",
+      "place": "Lloc"
+    },
+    "calendar": {
+      "google": "Afegir a Google Calendar",
+      "other": "Altres calendaris (des de l'app)"
     },
     "footer": {
       "tagline": "Centre d'entrenament personal i fisioteràpia",
@@ -1074,14 +1079,16 @@
       "contact": "Contacte"
     },
     "reservationConfirmed": {
-      "subject": "Reserva confirmada · VindiBCN",
+      "eyebrow": "Reserva confirmada",
+      "subject": "Reserva confirmada",
       "heading": "La teva reserva està confirmada",
       "intro": "Hem registrat la teva sessió. Aquí tens els detalls:",
       "cta": "Veure la meva reserva",
       "outro": "Ens veiem aviat! Si necessites canviar-la, pots fer-ho des de la teva àrea."
     },
     "reservationCancelled": {
-      "subject": "Reserva cancel·lada · VindiBCN",
+      "eyebrow": "Reserva cancel·lada",
+      "subject": "Reserva cancel·lada",
       "heading": "S'ha cancel·lat una reserva",
       "intro": "T'informem que aquesta sessió ha quedat anul·lada:",
       "cta": "Reservar una altra sessió",
@@ -1093,7 +1100,8 @@
       "outroByCenter": "Sentim les molèsties. Si tens cap dubte, contacta amb el centre."
     },
     "reservationRescheduled": {
-      "subject": "Hem canviat l'hora de la teva sessió · VindiBCN",
+      "eyebrow": "Canvi d'hora",
+      "subject": "Hem canviat l'hora de la teva sessió",
       "heading": "La teva sessió ha canviat d'hora",
       "intro": "El centre ha mogut una sessió teva. Aquesta és l'hora nova:",
       "series": "Aquesta sessió és d'una sèrie: només canvia aquesta. La resta de sessions de la sèrie es queden com eren.",
@@ -1101,7 +1109,8 @@
       "outro": "Continua sent la mateixa reserva: no has gastat cap sessió més del bo. Si l'hora nova no et va bé, contacta amb el centre."
     },
     "sessionReminder": {
-      "subject": "Recordatori: tens sessió demà · VindiBCN",
+      "eyebrow": "Recordatori · demà",
+      "subject": "Recordatori: tens sessió demà",
       "heading": "Tens una sessió demà",
       "intro": "Et recordem la teva propera sessió:",
       "cta": "Veure la meva reserva",
@@ -1145,7 +1154,8 @@
       "outro": "Si ja l'havies pagat o creus que hi ha hagut un error, parla amb el centre i ho arreglem de seguida: no cal que tornis a pagar res."
     },
     "waitlistFulfilled": {
-      "subject": "Tens plaça! · VindiBCN",
+      "eyebrow": "Plaça confirmada",
+      "subject": "Tens plaça!",
       "heading": "S'ha alliberat la plaça que esperaves",
       "intro": "Algú ha cancel·lat i t'hem confirmat la sessió automàticament. Ja la tens a la teva agenda:",
       "cta": "Veure la meva reserva",
