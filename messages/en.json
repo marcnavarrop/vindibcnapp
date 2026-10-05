@@ -1051,7 +1051,7 @@
       "service": "Service",
       "trainer": "Professional",
       "remaining": "Unused sessions",
-      "sessions": "Sessions in the new package",
+      "sessions": "Sessions in the new pass",
       "expiresOn": "Expires on",
       "cancelled": "Cancelled sessions",
       "gift": "Gift",
@@ -1063,7 +1063,8 @@
       "sessionsThisCycle": "Sessions this month",
       "resumesOn": "Resumes on",
       "pausedSince": "On hold since",
-      "place": "Location"
+      "place": "Location",
+      "amount": "Amount"
     },
     "calendar": {
       "google": "Add to Google Calendar",
@@ -1117,40 +1118,45 @@
       "outro": "If you can't make it, cancel as early as you can from your area so someone else can take the slot."
     },
     "bonoLow": {
-      "subject": "{remaining, plural, one {# session left on your package} other {# sessions left on your package}} · VindiBCN",
-      "heading": "Your package is running out",
-      "intro": "{remaining, plural, one {You have just # session left} other {You have just # sessions left}} on your {service} package.",
-      "cta": "Renew my package",
+      "eyebrow": "Pass almost used up",
+      "subject": "{remaining, plural, one {# session left on your pass} other {# sessions left on your pass}}",
+      "heading": "Your pass is running out",
+      "intro": "{remaining, plural, one {You have just # session left} other {You have just # sessions left}} on your {service} pass.",
+      "cta": "Renew my pass",
       "outro": "Renew it whenever you like so you don't run out of sessions."
     },
     "bonoAutoRenewed": {
-      "subject": "A new package is waiting for payment · VindiBCN",
-      "heading": "Your package ran out and a new one is ready",
-      "intro": "You asked for your {service} package to renew on its own. You have just used its last session, so we have set up a new “{package}” for €{price}.",
+      "eyebrow": "Awaiting payment",
+      "subject": "A new pass is waiting for payment",
+      "heading": "Your pass ran out and a new one is ready",
+      "intro": "You asked for your {service} pass to renew on its own. You have just used its last session, so we have set up a new “{package}” for €{price}.",
       "warn": "It is NOT paid yet. Until you pay it — by card or at the centre — it will not count as purchased.",
-      "cta": "See my package and pay it",
-      "outro": "If you no longer want it, do nothing: an unpaid package commits you to nothing."
+      "cta": "See my pass and pay for it",
+      "outro": "If you no longer want it, do nothing: an unpaid pass commits you to nothing."
     },
     "bonoRenewalFailed": {
-      "subject": "Your {service} package could not be renewed · VindiBCN",
-      "heading": "Your package ran out and we could not renew it",
-      "intro": "You asked for your {service} package to renew on its own, but that package is no longer available in the current catalogue, so we could not create a new one for you.",
-      "cta": "See the available packages",
-      "outro": "You can choose a new package from today's catalogue whenever you like."
+      "eyebrow": "Couldn't renew",
+      "subject": "Your {service} pass could not be renewed",
+      "heading": "Your pass ran out and we could not renew it",
+      "intro": "You asked for your {service} pass to renew on its own, but that package is no longer available in the current catalogue, so we could not create a new one for you.",
+      "cta": "See the available passes",
+      "outro": "You can choose a new pass from today's catalogue whenever you like."
     },
     "bonoExpiringSoon": {
-      "subject": "Your package expires soon · VindiBCN",
-      "heading": "Your package is about to expire",
-      "intro": "You still have sessions to use and the package expires on {date}. If you want to use them, book them before then.",
+      "eyebrow": "Expires soon",
+      "subject": "Your pass expires soon",
+      "heading": "Your pass is about to expire",
+      "intro": "You still have sessions to use and the pass expires on {date}. If you want to use them, book them before then.",
       "cta": "Book a session",
       "outro": "If you can't make it in time, talk to the centre and we'll sort it out."
     },
     "bonoUnpaidCancelled": {
-      "subject": "Your package has been cancelled · VindiBCN",
-      "heading": "We couldn't confirm payment for your package",
-      "intro1": "Your package was awaiting payment at the centre and we have no record of it being paid within the deadline, so it has been cancelled.",
+      "eyebrow": "Pass cancelled",
+      "subject": "Your pass has been cancelled",
+      "heading": "We couldn't confirm payment for your pass",
+      "intro1": "Your pass was awaiting payment at the centre and we have no record of it being paid within the deadline, so it has been cancelled.",
       "intro2": "That means the sessions you had booked with it have been cancelled and those slots are free again.",
-      "cta": "Buy the package again",
+      "cta": "Buy the pass again",
       "outro": "If you had already paid or you think there's been a mistake, talk to the centre and we'll fix it straight away: you won't have to pay again."
     },
     "waitlistFulfilled": {
@@ -1168,14 +1174,16 @@
       "cta": "View my exercises"
     },
     "giftRedeemed": {
-      "subject": "Your gift has been redeemed · VindiBCN",
+      "eyebrow": "Gift redeemed",
+      "subject": "Your gift has been redeemed",
       "heading": "Your gift arrived",
       "introNamed": "{name} has redeemed the gift voucher you bought them.",
       "introAnon": "Someone has redeemed the gift voucher you bought.",
       "outro": "Thank you for gifting wellbeing. See you at the centre!"
     },
     "giftGifted": {
-      "subjectFrom": "You have a gift from {buyer} · VindiBCN",
+      "eyebrow": "Gift voucher",
+      "subjectFrom": "You have a gift from {buyer}",
       "headingNamed": "{name}, you have a gift!",
       "heading": "You have a gift!",
       "introFrom": "{buyer} has gifted you sessions at VindiBCN.",
@@ -1201,14 +1209,16 @@
     },
     "sessions": "{count, plural, one {# session} other {# sessions}}",
     "subscriptionRenewed": {
-      "subject": "This month's sessions are ready · VindiBCN",
+      "eyebrow": "Subscription renewed",
+      "subject": "This month's sessions are ready",
       "heading": "Your subscription has renewed",
       "intro": "This month's sessions are available. They can be used until the date shown; any you don't use do not carry over to next month.",
       "cta": "Book a session",
       "outro": "If you'd rather stop, you can cancel any time from your passes."
     },
     "subscriptionPaymentFailed": {
-      "subject": "Your subscription is paused · VindiBCN",
+      "eyebrow": "Payment pending",
+      "subject": "Your subscription is paused",
       "heading": "We couldn't charge this month",
       "intro1": "The subscription is paused and won't renew until the outstanding month is paid.",
       "intro2": "Sessions you've already booked are untouched.",
@@ -1216,14 +1226,16 @@
       "outro": "If you think this is a mistake, let us know and we'll look into it."
     },
     "subscriptionCancelled": {
-      "subject": "Subscription cancelled · VindiBCN",
+      "eyebrow": "Cancellation confirmed",
+      "subject": "Subscription cancelled",
       "heading": "Your subscription has been cancelled",
       "intro": "It won't renew again. Sessions you've already paid for are yours until they expire.",
       "cta": "View my passes",
       "outro": "You can subscribe again whenever you like."
     },
     "subscriptionPaused": {
-      "subject": "Your subscription is on hold · VindiBCN",
+      "eyebrow": "On hold",
+      "subject": "Your subscription is on hold",
       "heading": "We've put your subscription on hold",
       "intro1": "While it's on hold you won't be charged and no month will renew. There's nothing for you to do.",
       "intro2": "You don't lose the time it's held: when it resumes, your renewal moves back by exactly the same number of days.",
@@ -1231,7 +1243,8 @@
       "outro": "If you weren't expecting this, let us know and we'll look into it."
     },
     "subscriptionResumed": {
-      "subject": "Your subscription is running again · VindiBCN",
+      "eyebrow": "Resumed",
+      "subject": "Your subscription is running again",
       "heading": "We're up and running again",
       "intro": "The subscription has resumed. Your next renewal has moved back by the days it was on hold.",
       "cta": "Book a session",

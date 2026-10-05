@@ -1063,7 +1063,8 @@
       "sessionsThisCycle": "Sessions d'aquest mes",
       "resumesOn": "Es reprèn el",
       "pausedSince": "Congelada des del",
-      "place": "Lloc"
+      "place": "Lloc",
+      "amount": "Import"
     },
     "calendar": {
       "google": "Afegir a Google Calendar",
@@ -1117,14 +1118,16 @@
       "outro": "Si no hi pots assistir, cancel·la-la com abans millor des de la teva àrea perquè una altra persona la pugui aprofitar."
     },
     "bonoLow": {
-      "subject": "{remaining, plural, one {Et queda # sessió al bo} other {Et queden # sessions al bo}} · VindiBCN",
+      "eyebrow": "Bo gairebé esgotat",
+      "subject": "{remaining, plural, one {Et queda # sessió al bo} other {Et queden # sessions al bo}}",
       "heading": "El teu bo s'està acabant",
       "intro": "{remaining, plural, one {Et queda només # sessió} other {Et queden només # sessions}} al teu bo de {service}.",
       "cta": "Renovar el meu bo",
       "outro": "Renova'l quan vulguis per no quedar-te sense sessions."
     },
     "bonoAutoRenewed": {
-      "subject": "Tens un bo nou esperant pagament · VindiBCN",
+      "eyebrow": "Pendent de pagament",
+      "subject": "Tens un bo nou esperant pagament",
       "heading": "El teu bo s'ha esgotat i n'hi ha un de nou a punt",
       "intro": "Havies demanat que el teu bo de {service} es renovés sol. Acabes de gastar-ne l'última sessió, així que t'hem preparat un «{package}» nou per {price} €.",
       "warn": "Encara NO està pagat. Fins que no el paguis —amb targeta o al centre— no comptarà com a comprat.",
@@ -1132,21 +1135,24 @@
       "outro": "Si ja no el vols, no facis res: un bo sense pagar no et compromet a res."
     },
     "bonoRenewalFailed": {
-      "subject": "El teu bo de {service} no s'ha pogut renovar · VindiBCN",
+      "eyebrow": "No s'ha pogut renovar",
+      "subject": "El teu bo de {service} no s'ha pogut renovar",
       "heading": "El teu bo s'ha esgotat i no l'hem pogut renovar",
       "intro": "Havies demanat que el teu bo de {service} es renovés sol, però el paquet ja no està disponible al catàleg actual, així que no hem pogut crear-te'n un de nou.",
       "cta": "Veure els bons disponibles",
       "outro": "Pots triar un bo nou del catàleg d'avui quan vulguis."
     },
     "bonoExpiringSoon": {
-      "subject": "El teu bo caduca aviat · VindiBCN",
+      "eyebrow": "Caduca aviat",
+      "subject": "El teu bo caduca aviat",
       "heading": "El teu bo està a punt de caducar",
       "intro": "Encara et queden sessions per fer i el bo caduca el {date}. Si el vols aprofitar, reserva-les abans.",
       "cta": "Reservar una sessió",
       "outro": "Si no hi arribes a temps, parla amb el centre i ho mirem."
     },
     "bonoUnpaidCancelled": {
-      "subject": "El teu bo ha quedat anul·lat · VindiBCN",
+      "eyebrow": "Bo anul·lat",
+      "subject": "El teu bo ha quedat anul·lat",
       "heading": "No hem pogut confirmar el pagament del teu bo",
       "intro1": "El teu bo estava pendent de pagar al centre i no ens consta que s'hagi cobrat dins del termini, així que ha quedat anul·lat.",
       "intro2": "Això vol dir que les sessions que hi tenies reservades s'han cancel·lat i les franges han tornat a quedar lliures.",
@@ -1168,14 +1174,16 @@
       "cta": "Veure els meus exercicis"
     },
     "giftRedeemed": {
-      "subject": "Ja han fet servir el teu regal · VindiBCN",
+      "eyebrow": "Regal bescanviat",
+      "subject": "Ja han fet servir el teu regal",
       "heading": "El teu regal ha arribat",
       "introNamed": "{name} ha bescanviat el val de regal que li vas comprar.",
       "introAnon": "Algú ha bescanviat el val de regal que vas comprar.",
       "outro": "Gràcies per regalar benestar. Ens veiem al centre!"
     },
     "giftGifted": {
-      "subjectFrom": "Tens un regal de {buyer} · VindiBCN",
+      "eyebrow": "Val de regal",
+      "subjectFrom": "Tens un regal de {buyer}",
       "headingNamed": "{name}, tens un regal!",
       "heading": "Tens un regal!",
       "introFrom": "{buyer} t'ha regalat sessions a VindiBCN.",
@@ -1201,14 +1209,16 @@
     },
     "sessions": "{count, plural, one {# sessió} other {# sessions}}",
     "subscriptionRenewed": {
-      "subject": "Ja tens les sessions d'aquest mes · VindiBCN",
+      "eyebrow": "Subscripció renovada",
+      "subject": "Ja tens les sessions d'aquest mes",
       "heading": "La teva subscripció s'ha renovat",
       "intro": "Ja tens disponibles les sessions d'aquest mes. Es poden fer servir fins al dia que s'indica; les que no facis servir no passen al mes següent.",
       "cta": "Reservar una sessió",
       "outro": "Si no vols continuar, pots donar-te de baixa quan vulguis des dels teus bons."
     },
     "subscriptionPaymentFailed": {
-      "subject": "La teva subscripció s'ha aturat · VindiBCN",
+      "eyebrow": "Cobrament pendent",
+      "subject": "La teva subscripció s'ha aturat",
       "heading": "No hem pogut cobrar aquest mes",
       "intro1": "La subscripció queda aturada i no es renovarà fins que el mes pendent estigui cobrat.",
       "intro2": "Les sessions que ja tinguis reservades no es toquen.",
@@ -1216,14 +1226,16 @@
       "outro": "Si creus que és un error, digues-nos-ho i ho mirem."
     },
     "subscriptionCancelled": {
-      "subject": "Subscripció donada de baixa · VindiBCN",
+      "eyebrow": "Baixa confirmada",
+      "subject": "Subscripció donada de baixa",
       "heading": "La teva subscripció s'ha donat de baixa",
       "intro": "No es tornarà a renovar. Les sessions que ja tinguis pagades les conserves fins que caduquin.",
       "cta": "Veure els meus bons",
       "outro": "Pots tornar-t'hi a subscriure quan vulguis."
     },
     "subscriptionPaused": {
-      "subject": "La teva subscripció queda congelada · VindiBCN",
+      "eyebrow": "Congelada",
+      "subject": "La teva subscripció queda congelada",
       "heading": "Hem congelat la teva subscripció",
       "intro1": "Mentre estigui així no se't cobrarà res ni se't renovarà cap mes. No has de fer res.",
       "intro2": "El temps que estigui congelada no el perds: quan es reprengui, la renovació es retarda exactament els mateixos dies.",
@@ -1231,7 +1243,8 @@
       "outro": "Si no ho esperaves, digues-nos-ho i ho mirem."
     },
     "subscriptionResumed": {
-      "subject": "La teva subscripció torna a estar en marxa · VindiBCN",
+      "eyebrow": "Represa",
+      "subject": "La teva subscripció torna a estar en marxa",
       "heading": "Ja tornem a estar en marxa",
       "intro": "La subscripció s'ha reprès. La propera renovació s'ha retardat els dies que ha estat congelada.",
       "cta": "Reservar una sessió",

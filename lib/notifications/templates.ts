@@ -43,8 +43,12 @@ type Block = {
    */
   preheader?: string;
   intro: string[]; // paràgrafs (text pla: s'escapen aquí)
-  /** El dia i l'hora en gran, dins de la targeta. `plain` és la línia del text pla. */
-  hero?: { date: string; time: string; plain: string };
+  /**
+   * El dia i l'hora en gran, dins de la targeta. `plain` és la línia del text
+   * pla. `code`: el que va en gran és un codi per copiar (val de regal), sense
+   * serif i sense tallar-lo.
+   */
+  hero?: { date: string; time: string; plain: string; code?: boolean };
   details?: DetailRow[];
   /** Avisos que s'han de llegir ABANS del botó. */
   notices?: Notice[];
@@ -91,7 +95,11 @@ function detailsCard(rows: DetailRow[], hero?: Block["hero"]): string {
   const heroHtml = hero
     ? `<tr><td style="padding:20px 20px 16px;${rows.length ? `border-bottom:1px solid ${BRAND.border};` : ""}">
         <div style="font-family:${SANS};font-size:14px;line-height:20px;color:${BRAND.soft};">${esc(hero.date)}</div>
-        <div class="serif" style="font-family:${SERIF};font-size:32px;line-height:38px;font-weight:700;color:${BRAND.purple};">${esc(hero.time)}</div>
+        ${
+          hero.code
+            ? `<div style="font-family:${SANS};font-size:24px;line-height:32px;font-weight:800;letter-spacing:1px;white-space:nowrap;color:${BRAND.purple};">${esc(hero.time)}</div>`
+            : `<div class="serif" style="font-family:${SERIF};font-size:32px;line-height:38px;font-weight:700;color:${BRAND.purple};">${esc(hero.time)}</div>`
+        }
       </td></tr>`
     : "";
   const rowsHtml = rows
@@ -766,8 +774,13 @@ export function renderEmail(
       const queden = Number(d.remaining ?? 1);
       subject = t("subject", { remaining: queden });
       block = {
+        eyebrow: { tone: "attention", text: t("eyebrow") },
         heading: t("heading"),
         intro: [hola, t("intro", { service: service ?? "", remaining: queden })],
+        details: rows([
+          [tl("service"), service],
+          [tl("remaining"), String(queden)],
+        ]),
         cta: { label: t("cta"), url: appLink("/client/bonos") },
         outro: [t("outro")],
         footer: "client",
@@ -778,6 +791,7 @@ export function renderEmail(
       const t = i.ns("emails.bonoAutoRenewed");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "attention", text: t("eyebrow") },
         heading: t("heading"),
         intro: [
           hola,
@@ -791,11 +805,13 @@ export function renderEmail(
         details: rows([
           [tl("service"), service],
           [tl("sessions"), d.sessions],
+          [tl("amount"), d.price ? formatEur(Number(d.price), i.locale) : undefined],
         ]),
-        // El que de debò ha de quedar clar: encara no està pagat. Va al cos i
-        // no només a l'assumpte, que és el que es llegeix de passada.
+        // El que de debò ha de quedar clar: encara no està pagat. Va com a
+        // avís ABANS del botó, i no al final en lletra petita.
+        notices: [{ tone: "attention", text: t("warn") }],
         cta: { label: t("cta"), url: appLink("/client/bonos/meus") },
-        outro: [t("warn"), t("outro")],
+        outro: [t("outro")],
         footer: "client",
       };
       break;
@@ -804,8 +820,10 @@ export function renderEmail(
       const t = i.ns("emails.bonoRenewalFailed");
       subject = t("subject", { service: service ?? "" });
       block = {
+        eyebrow: { tone: "error", text: t("eyebrow") },
         heading: t("heading"),
         intro: [hola, t("intro", { service: service ?? "" })],
+        details: rows([[tl("service"), service]]),
         cta: { label: t("cta"), url: appLink("/client/bonos") },
         outro: [t("outro")],
         footer: "client",
@@ -816,6 +834,7 @@ export function renderEmail(
       const t = i.ns("emails.bonoExpiringSoon");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "attention", text: t("eyebrow") },
         heading: t("heading"),
         intro: [hola, t("intro", { date: expires ?? "" })],
         details: rows([
@@ -833,12 +852,16 @@ export function renderEmail(
       const t = i.ns("emails.bonoUnpaidCancelled");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "error", text: t("eyebrow") },
         heading: t("heading"),
-        intro: [hola, t("intro1"), t("intro2")],
+        intro: [hola, t("intro1")],
         details: rows([
           [tl("service"), service],
           [tl("cancelled"), d.cancelled],
         ]),
+        // Que les reserves han caigut és el que pot fer que algú es presenti
+        // a una sessió que ja no té.
+        notices: [{ tone: "error", text: t("intro2") }],
         cta: { label: t("cta"), url: appLink("/client/bonos") },
         outro: [t("outro")],
         footer: "client",
@@ -849,6 +872,7 @@ export function renderEmail(
       const t = i.ns("emails.subscriptionRenewed");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "success", text: `✓ ${t("eyebrow")}` },
         heading: t("heading"),
         intro: [hola, t("intro")],
         details: rows([
@@ -870,8 +894,10 @@ export function renderEmail(
       const t = i.ns("emails.subscriptionPaymentFailed");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "error", text: t("eyebrow") },
         heading: t("heading"),
-        intro: [hola, t("intro1"), t("intro2")],
+        intro: [hola, t("intro1")],
+        notices: [{ tone: "neutral", text: t("intro2") }],
         details: rows([
           [tl("service"), service],
           // L'import, igual: arriba en cru i es formata amb l'idioma del
@@ -888,6 +914,7 @@ export function renderEmail(
       const t = i.ns("emails.subscriptionCancelled");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "neutral", text: t("eyebrow") },
         heading: t("heading"),
         intro: [hola, t("intro")],
         details: rows([[tl("service"), service]]),
@@ -901,6 +928,7 @@ export function renderEmail(
       const t = i.ns("emails.subscriptionPaused");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "attention", text: t("eyebrow") },
         heading: t("heading"),
         // Dos paràgrafs i no un: el primer treu la por ("no has de fer res") i
         // el segon explica que el temps no es perd, que és el que de debò
@@ -922,6 +950,7 @@ export function renderEmail(
       const t = i.ns("emails.subscriptionResumed");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "success", text: `✓ ${t("eyebrow")}` },
         heading: t("heading"),
         intro: [hola, t("intro")],
         details: rows([
@@ -1089,6 +1118,7 @@ export function renderEmail(
       const t = i.ns("emails.giftRedeemed");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "success", text: `✓ ${t("eyebrow")}` },
         heading: t("heading"),
         intro: [
           hola,
@@ -1118,6 +1148,7 @@ export function renderEmail(
       const t = i.ns("emails.giftGifted");
       subject = t("subjectFrom", { buyer: d.buyer || t("anon") });
       block = {
+        eyebrow: { tone: "success", text: t("eyebrow") },
         heading: d.recipient
           ? t("headingNamed", { name: d.recipient })
           : t("heading"),
@@ -1126,8 +1157,9 @@ export function renderEmail(
           ...(d.message ? [`"${d.message}"`] : []),
           t("keep"),
         ],
+        // El codi, en gran: és el que s'ha de copiar.
+        hero: d.code ? { date: tl("code"), time: d.code, plain: `${tl("code")}: ${d.code}`, code: true } : undefined,
         details: rows([
-          [tl("code"), d.code],
           [tl("gift"), pkg],
           [tl("validUntil"), expires],
         ]),

@@ -1063,7 +1063,8 @@
       "sessionsThisCycle": "Sesiones de este mes",
       "resumesOn": "Se reanuda el",
       "pausedSince": "Congelada desde el",
-      "place": "Lugar"
+      "place": "Lugar",
+      "amount": "Importe"
     },
     "calendar": {
       "google": "Añadir a Google Calendar",
@@ -1117,14 +1118,16 @@
       "outro": "Si no puedes asistir, cancélala cuanto antes desde tu área para que otra persona la pueda aprovechar."
     },
     "bonoLow": {
-      "subject": "{remaining, plural, one {Te queda # sesión en el bono} other {Te quedan # sesiones en el bono}} · VindiBCN",
+      "eyebrow": "Bono casi agotado",
+      "subject": "{remaining, plural, one {Te queda # sesión en el bono} other {Te quedan # sesiones en el bono}}",
       "heading": "Tu bono se está acabando",
       "intro": "{remaining, plural, one {Te queda solo # sesión} other {Te quedan solo # sesiones}} en tu bono de {service}.",
       "cta": "Renovar mi bono",
       "outro": "Renuévalo cuando quieras para no quedarte sin sesiones."
     },
     "bonoAutoRenewed": {
-      "subject": "Tienes un bono nuevo esperando pago · VindiBCN",
+      "eyebrow": "Pendiente de pago",
+      "subject": "Tienes un bono nuevo esperando pago",
       "heading": "Tu bono se ha agotado y hay uno nuevo listo",
       "intro": "Habías pedido que tu bono de {service} se renovara solo. Acabas de gastar su última sesión, así que te hemos preparado un «{package}» nuevo por {price} €.",
       "warn": "Todavía NO está pagado. Hasta que no lo pagues —con tarjeta o en el centro— no contará como comprado.",
@@ -1132,21 +1135,24 @@
       "outro": "Si ya no lo quieres, no hagas nada: un bono sin pagar no te compromete a nada."
     },
     "bonoRenewalFailed": {
-      "subject": "Tu bono de {service} no se ha podido renovar · VindiBCN",
+      "eyebrow": "No se ha podido renovar",
+      "subject": "Tu bono de {service} no se ha podido renovar",
       "heading": "Tu bono se ha agotado y no hemos podido renovarlo",
       "intro": "Habías pedido que tu bono de {service} se renovara solo, pero el paquete ya no está disponible en el catálogo actual, así que no hemos podido crearte uno nuevo.",
       "cta": "Ver los bonos disponibles",
       "outro": "Puedes elegir un bono nuevo del catálogo de hoy cuando quieras."
     },
     "bonoExpiringSoon": {
-      "subject": "Tu bono caduca pronto · VindiBCN",
+      "eyebrow": "Caduca pronto",
+      "subject": "Tu bono caduca pronto",
       "heading": "Tu bono está a punto de caducar",
       "intro": "Todavía te quedan sesiones por hacer y el bono caduca el {date}. Si lo quieres aprovechar, resérvalas antes.",
       "cta": "Reservar una sesión",
       "outro": "Si no llegas a tiempo, habla con el centro y lo miramos."
     },
     "bonoUnpaidCancelled": {
-      "subject": "Tu bono ha quedado anulado · VindiBCN",
+      "eyebrow": "Bono anulado",
+      "subject": "Tu bono ha quedado anulado",
       "heading": "No hemos podido confirmar el pago de tu bono",
       "intro1": "Tu bono estaba pendiente de pagar en el centro y no nos consta que se haya cobrado dentro del plazo, así que ha quedado anulado.",
       "intro2": "Esto significa que las sesiones que tenías reservadas se han cancelado y las franjas han vuelto a quedar libres.",
@@ -1168,14 +1174,16 @@
       "cta": "Ver mis ejercicios"
     },
     "giftRedeemed": {
-      "subject": "Ya han usado tu regalo · VindiBCN",
+      "eyebrow": "Regalo canjeado",
+      "subject": "Ya han usado tu regalo",
       "heading": "Tu regalo ha llegado",
       "introNamed": "{name} ha canjeado el vale de regalo que le compraste.",
       "introAnon": "Alguien ha canjeado el vale de regalo que compraste.",
       "outro": "Gracias por regalar bienestar. ¡Nos vemos en el centro!"
     },
     "giftGifted": {
-      "subjectFrom": "Tienes un regalo de {buyer} · VindiBCN",
+      "eyebrow": "Vale regalo",
+      "subjectFrom": "Tienes un regalo de {buyer}",
       "headingNamed": "¡{name}, tienes un regalo!",
       "heading": "¡Tienes un regalo!",
       "introFrom": "{buyer} te ha regalado sesiones en VindiBCN.",
@@ -1201,14 +1209,16 @@
     },
     "sessions": "{count, plural, one {# sesión} other {# sesiones}}",
     "subscriptionRenewed": {
-      "subject": "Ya tienes las sesiones de este mes · VindiBCN",
+      "eyebrow": "Suscripción renovada",
+      "subject": "Ya tienes las sesiones de este mes",
       "heading": "Tu suscripción se ha renovado",
       "intro": "Ya tienes disponibles las sesiones de este mes. Se pueden usar hasta el día que se indica; las que no uses no pasan al mes siguiente.",
       "cta": "Reservar una sesión",
       "outro": "Si no quieres continuar, puedes darte de baja cuando quieras desde tus bonos."
     },
     "subscriptionPaymentFailed": {
-      "subject": "Tu suscripción se ha parado · VindiBCN",
+      "eyebrow": "Cobro pendiente",
+      "subject": "Tu suscripción se ha parado",
       "heading": "No hemos podido cobrar este mes",
       "intro1": "La suscripción queda parada y no se renovará hasta que el mes pendiente esté cobrado.",
       "intro2": "Las sesiones que ya tengas reservadas no se tocan.",
@@ -1216,14 +1226,16 @@
       "outro": "Si crees que es un error, dínoslo y lo miramos."
     },
     "subscriptionCancelled": {
-      "subject": "Suscripción dada de baja · VindiBCN",
+      "eyebrow": "Baja confirmada",
+      "subject": "Suscripción dada de baja",
       "heading": "Tu suscripción se ha dado de baja",
       "intro": "No se volverá a renovar. Las sesiones que ya tengas pagadas las conservas hasta que caduquen.",
       "cta": "Ver mis bonos",
       "outro": "Puedes volver a suscribirte cuando quieras."
     },
     "subscriptionPaused": {
-      "subject": "Tu suscripción queda congelada · VindiBCN",
+      "eyebrow": "Congelada",
+      "subject": "Tu suscripción queda congelada",
       "heading": "Hemos congelado tu suscripción",
       "intro1": "Mientras esté así no se te cobrará nada ni se te renovará ningún mes. No tienes que hacer nada.",
       "intro2": "El tiempo que esté congelada no lo pierdes: cuando se reanude, la renovación se retrasa exactamente los mismos días.",
@@ -1231,7 +1243,8 @@
       "outro": "Si no lo esperabas, dínoslo y lo miramos."
     },
     "subscriptionResumed": {
-      "subject": "Tu suscripción vuelve a estar en marcha · VindiBCN",
+      "eyebrow": "Reanudada",
+      "subject": "Tu suscripción vuelve a estar en marcha",
       "heading": "Ya volvemos a estar en marcha",
       "intro": "La suscripción se ha reanudado. La próxima renovación se ha retrasado los días que ha estado congelada.",
       "cta": "Reservar una sesión",
