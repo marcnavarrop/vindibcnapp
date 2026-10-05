@@ -1064,7 +1064,9 @@
       "resumesOn": "Es reprèn el",
       "pausedSince": "Congelada des del",
       "place": "Lloc",
-      "amount": "Import"
+      "amount": "Import",
+      "amountCharged": "Import cobrat",
+      "activeUntil": "Activa fins al"
     },
     "calendar": {
       "google": "Afegir a Google Calendar",

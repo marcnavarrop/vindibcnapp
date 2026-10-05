@@ -45,7 +45,7 @@ visitante y desarrollador).
 | `bono_auto_renewed` | cliente | ca/es/en | ✅ siempre | bono agotado con renovación pedida: nace uno pendiente de pago |
 | `bono_renewal_failed` | cliente | ca/es/en | ✅ siempre | la renovación pedida no puede hacerse (paquete retirado o solo por suscripción) |
 | `bono_unpaid_cancelled` | cliente | ca/es/en | ✅ siempre | cron: bono sin pagar fuera de plazo |
-| `subscription_renewed` / `_payment_failed` / `_cancelled` | cliente | ca/es/en | ✅ siempre | webhook de Stripe |
+| `subscription_renewed` / `_payment_failed` / `_cancelled` | cliente | ca/es/en | ✅ siempre | webhook de Stripe y cron de renovación. La renovada lleva el importe: «Import cobrat» (lo que Stripe ha cobrado, `charged`) o «Import mensual» si viene del cron (el bono nace pendiente de pago). La baja lleva «Activa fins al»: el día antes de `next_renewal_on` |
 | `subscription_paused` / `_resumed` | cliente | ca/es/en | ✅ siempre | congelar / reanudar |
 | `gift_voucher_gifted` | quien recibe el regalo (sin cuenta) | ca/es/en (el del **comprador**) | — | compra de un vale con envío por correo |
 | `gift_voucher_redeemed` | comprador | ca/es/en | ✅ siempre | alguien canjea el código |

@@ -911,6 +911,11 @@ export function renderEmail(
           // ja formatada pel cridant sortiria en català dins d'un correu en
           // castellà, que és exactament el que passava.
           [tl("validUntil"), d.untilIso ? i.date(d.untilIso) : undefined],
+          // Cobrat només si ve de Stripe; la del cron neix pendent de pagar.
+          [
+            d.charged === "1" ? tl("amountCharged") : tl("perMonth"),
+            d.amountEur ? formatEur(Number(d.amountEur), i.locale) : undefined,
+          ],
         ]),
         cta: { label: t("cta"), url: appLink("/client/reservas") },
         outro: [t("outro")],
@@ -945,7 +950,10 @@ export function renderEmail(
         eyebrow: { tone: "neutral", text: t("eyebrow") },
         heading: t("heading"),
         intro: [hola, t("intro")],
-        details: rows([[tl("service"), service]]),
+        details: rows([
+          [tl("service"), service],
+          [tl("activeUntil"), d.untilIso ? i.date(d.untilIso) : undefined],
+        ]),
         cta: { label: t("cta"), url: appLink("/client/bonos/meus") },
         outro: [t("outro")],
         footer: "client",

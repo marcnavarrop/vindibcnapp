@@ -1064,7 +1064,9 @@
       "resumesOn": "Resumes on",
       "pausedSince": "On hold since",
       "place": "Location",
-      "amount": "Amount"
+      "amount": "Amount",
+      "amountCharged": "Amount charged",
+      "activeUntil": "Active until"
     },
     "calendar": {
       "google": "Add to Google Calendar",

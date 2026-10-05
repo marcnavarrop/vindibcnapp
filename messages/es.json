@@ -1064,7 +1064,9 @@
       "resumesOn": "Se reanuda el",
       "pausedSince": "Congelada desde el",
       "place": "Lugar",
-      "amount": "Importe"
+      "amount": "Importe",
+      "amountCharged": "Importe cobrado",
+      "activeUntil": "Activa hasta el"
     },
     "calendar": {
       "google": "Añadir a Google Calendar",

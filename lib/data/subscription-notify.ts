@@ -4,6 +4,7 @@ import { getProfileContact } from "@/lib/notifications";
 import { stableUuid } from "@/lib/data/reminders";
 import { profileIdForClient } from "@/lib/data/subscriptions";
 import type { Subscription } from "@/lib/data/subscriptions";
+import { previousDay } from "@/lib/subscription-cycle";
 
 /**
  * Els tres avisos de la subscripció.
@@ -58,17 +59,26 @@ async function send(
   }
 }
 
-/** El mes nou ja hi és. Un avís per cicle. */
+/**
+ * El mes nou ja hi és. Un avís per cicle.
+ *
+ * `charged`: el que Stripe acaba de cobrar, si ve del webhook. Sense (la
+ * renovació del cron, la de qui paga al centre), el bo del mes neix PENDENT de
+ * pagar: el correu diu l'import del mes, però no que s'hagi cobrat.
+ */
 export async function notifySubscriptionRenewed(
   sub: Subscription,
   cycleStart: string,
   until: string | null,
+  charged?: number | null,
 ): Promise<void> {
   await send(sub, "subscription_renewed", `subscription-renewed:${sub.id}:${cycleStart}`, {
     sessions: String(sub.sessionsPerCycle),
     // En CRU. La plantilla el formata amb l'idioma de qui el llegeix; una data
     // ja formatada aquí sortiria en català dins d'un correu en castellà.
     untilIso: until ?? "",
+    amountEur: String(charged ?? sub.unitPrice),
+    ...(charged != null ? { charged: "1" } : {}),
   });
 }
 
@@ -88,9 +98,17 @@ export async function notifySubscriptionPaymentFailed(
   });
 }
 
-/** Baixa definitiva. Un sol avís per subscripció: no se'n dona de baixa dues. */
+/**
+ * Baixa definitiva. Un sol avís per subscripció: no se'n dona de baixa dues.
+ *
+ * Fins quan dura: l'últim dia del cicle pagat, el dia abans de la renovació que
+ * ja no es farà. Els dos camins que hi arriben (el webhook, en demanar la baixa,
+ * i el cron, quan s'acaba) tenen encara `nextRenewalOn` informat.
+ */
 export async function notifySubscriptionCancelled(sub: Subscription): Promise<void> {
-  await send(sub, "subscription_cancelled", `subscription-cancelled:${sub.id}`, {});
+  await send(sub, "subscription_cancelled", `subscription-cancelled:${sub.id}`, {
+    untilIso: sub.nextRenewalOn ? previousDay(sub.nextRenewalOn) : "",
+  });
 }
 
 /**

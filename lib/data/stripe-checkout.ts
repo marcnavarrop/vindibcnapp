@@ -859,7 +859,7 @@ export async function fulfillSubscriptionInvoice(
   }
 
   // Stripe ja sap fins quan va el període: no cal deduir-ho de l'àncora.
-  await notifySubscriptionRenewed(subscription, period.start, previousDay(period.end));
+  await notifySubscriptionRenewed(subscription, period.start, previousDay(period.end), paid);
 
   // Les sèries marcades per allargar-se (0074), ara que hi ha sessions noves.
   // Dins d'un try: si falla, el mes ja està cobrat i emès, i respondre 500 faria
