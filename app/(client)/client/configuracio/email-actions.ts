@@ -51,10 +51,24 @@ export async function requestEmailChangeAction(
   return { okEmail: newEmail.trim().toLowerCase() };
 }
 
-/** Anul·la la petició pendent. Sense contrasenya: només tanca el que ja era seu. */
-export async function cancelEmailChangeAction(): Promise<void> {
+export type CancelEmailState = { cancelled?: boolean; failed?: boolean; attempt?: number };
+
+/**
+ * Anul·la la petició pendent. Sense contrasenya: només tanca el que ja era seu.
+ *
+ * Si la base falla, es diu, i la pantalla segueix ensenyant el canvi com a
+ * PENDENT (no es revalida res): l'enllaç encara val, i fer creure el contrari
+ * és el pitjor que pot passar aquí.
+ */
+export async function cancelEmailChangeAction(): Promise<CancelEmailState> {
   const viewer = await getViewer();
-  if (!viewer) return;
-  await cancelEmailChange(viewer.id);
+  if (!viewer) return { failed: true, attempt: Date.now() };
+  try {
+    await cancelEmailChange(viewer.id);
+  } catch (e) {
+    console.error("[canvi de correu] no s'ha pogut anul·lar:", e);
+    return { failed: true, attempt: Date.now() };
+  }
   revalidatePath("/client/configuracio");
+  return { cancelled: true };
 }

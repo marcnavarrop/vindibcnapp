@@ -787,7 +787,8 @@
     "sections": "Sections",
     "prefs": {
       "title": "Preferences",
-      "language": "Language"
+      "language": "Language",
+      "languageFailed": "We couldn't save your language. You're still in English, which is the one saved and the one your emails come in. Please try again in a little while."
     },
     "profileUnavailable": "We couldn't load your profile.",
     "unavailable": "Not available.",
@@ -961,6 +962,7 @@
       "pendingTitle": "Waiting for confirmation",
       "pending": "You asked to change your email to {email}. Open the link we sent there.",
       "cancel": "Cancel the request",
+      "cancelFailed": "We couldn't cancel the request: the link we sent is still valid. Please try again in a little while.",
       "cancelled": "Request cancelled.",
       "show": "Show password",
       "hide": "Hide password",

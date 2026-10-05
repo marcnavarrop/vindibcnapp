@@ -572,6 +572,7 @@
       <li>Si el compte és d'abans que el telèfon fos obligatori, el formulari te'l demana el primer cop que hi desis res — <strong>no és un error</strong></li>
       <li>El correu hi surt però <strong>no s'hi pot tocar</strong>: es canvia a "Compte"</li>
       <li><strong>Selector d'idioma</strong> a dalt, sota "Preferències": es desa sol en triar-lo, sense botó (secció 16)</li>
+      <li><strong>Si l'idioma no es pot desar</strong> <span class="flag">Corregit</span>: surt un avís en l'idioma que hi ha desat i la pantalla s'hi queda (el desplegable torna enrere), perquè coincideixi amb el dels correus. Abans la pantalla canviava i el perfil no. En local, <code>MOCK_FAIL=locale</code></li>
       <li>Privacitat: <strong>data i versió</strong> del que vas acceptar en registrar-te, i el <strong>consentiment de dades de salut</strong> amb la casella per donar-lo</li>
       <li>Notificacions: la llista amb caselles "Email". Comprova que <strong>no hi surten tots</strong> els avisos (secció 17)</li>
       <li>Codi de referit al final de Dades personals, amb el compte d'amics que has portat</li>
@@ -583,6 +584,7 @@
       <li>Fins que no obris l'enllaç des d'allà, <strong>el canvi no es fa</strong> i segueixes entrant amb el de sempre — comprova-ho intentant entrar amb el nou abans de confirmar</li>
       <li>Mentre la petició està pendent, l'app t'ho recorda i <strong>et deixa anul·lar-la</strong></li>
       <li><strong>El correu antic rep un avís</strong> que algú ha demanat el canvi. Comprova que arriba: és l'única senyal si no has estat tu</li>
+      <li><strong>«Anul·lar la petició»</strong> <span class="flag">Corregit</span>: l'enllaç del correu nou deixa de funcionar de debò (obre'l i ha de dir «Aquest enllaç ja no és vàlid»). Si no es pot anul·lar, surt un missatge vermell i el canvi <strong>segueix sortint com a pendent</strong>: mai com a anul·lat si l'enllaç encara val. En local, <code>MOCK_FAIL=email-cancel</code>. El mateix a la fitxa d'un professional, a l'admin («Anul·lar l'enllaç»)</li>
       <li>Un cop confirmat, comprova que el correu <strong>de la fitxa</strong> també ha canviat (no només el d'accés)</li>
       <li><strong>Canviar la contrasenya</strong>: cal l'actual i la nova dues vegades, mínim 8 caràcters i diferent de l'actual</li>
       <li>Comprova que <strong>canviar-la no et tanca la sessió</strong>: segueixes dins</li>

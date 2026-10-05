@@ -196,6 +196,14 @@ Nuestro flujo: **enlace sólo al correo nuevo**, **aviso sin ninguna acción** a
 viejo, ambos en el idioma de quien los recibe y ambos en `notification_log`
 (`auth_email_change` / `auth_email_change_alert`).
 
+**Anular** («Anul·lar la petició» del cliente y «Anul·lar l'enllaç» del admin)
+marca la petición como consumida; `cancelEmailChange` **lanza si la base
+falla** y las dos pantallas lo dicen y siguen mostrando el cambio como
+pendiente (antes el error se ignoraba y el enlace seguía vivo 24 h). Una
+petición nueva tampoco sale si no se han podido anular las anteriores. Probado
+en producción (06/10/2026) con la cuenta demo: tras anular, el enlace real de
+`/auth/confirm-email` responde «ja no és vàlid».
+
 **Por qué hay una tabla de por medio.** Invitación y recuperación verifican el
 token con JS en `/auth/update-password` para que los escáneres de enlaces (GET
 sin JS) no lo quemen. Con el cambio de correo eso no se puede repetir:

@@ -51,6 +51,12 @@ export type Store = {
   data_access_log: Tables["data_access_log"]["Row"][];
   trial_bookings: Tables["trial_bookings"]["Row"][];
   notification_preferences: Tables["notification_preferences"]["Row"][];
+  /**
+   * Peticions de canvi de correu. Al mode demo no se'n crea cap (demanar-ne
+   * una torna "demo"), però si n'hi ha, es pinten i s'anul·len com a la base:
+   * és el que permet provar la pantalla de «pendent» i «anul·lar».
+   */
+  email_change_requests: Tables["email_change_requests"]["Row"][];
   notification_log: Tables["notification_log"]["Row"][];
   promotions: Tables["promotions"]["Row"][];
   client_tags: Tables["client_tags"]["Row"][];
@@ -111,6 +117,7 @@ function fromSeed(): Store {
     data_access_log: structuredClone(seedDataAccessLog),
     trial_bookings: structuredClone(seedTrialBookings),
     notification_preferences: structuredClone(seedNotificationPreferences),
+    email_change_requests: [],
     notification_log: structuredClone(seedNotificationLog),
     promotions: structuredClone(seedPromotions),
     client_tags: structuredClone(seedClientTags),

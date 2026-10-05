@@ -787,7 +787,8 @@
     "sections": "Seccions",
     "prefs": {
       "title": "Preferències",
-      "language": "Idioma"
+      "language": "Idioma",
+      "languageFailed": "No s'ha pogut desar l'idioma. Segueixes en català, que és el que tens desat i en el que t'arriben els correus. Torna-ho a provar d'aquí a una estona."
     },
     "profileUnavailable": "No s'ha pogut carregar el teu perfil.",
     "unavailable": "No disponible.",
@@ -961,6 +962,7 @@
       "pendingTitle": "Pendent de confirmar",
       "pending": "Has demanat canviar el correu a {email}. Obre l'enllaç que t'hi hem enviat.",
       "cancel": "Anul·lar la petició",
+      "cancelFailed": "No s'ha pogut anul·lar la petició: l'enllaç que t'hem enviat encara és vàlid. Torna-ho a provar d'aquí a una estona.",
       "cancelled": "Petició anul·lada.",
       "show": "Mostrar la contrasenya",
       "hide": "Amagar la contrasenya",

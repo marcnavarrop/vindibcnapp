@@ -41,11 +41,28 @@ export async function requestTrainerEmailChangeAction(
   return { sentTo: newEmail };
 }
 
-/** Anul·la l'enllaç pendent: el que s'hagi enviat deixa de valer. */
-export async function cancelTrainerEmailChangeAction(formData: FormData): Promise<void> {
-  if (!(await requireRole("admin"))) return;
-  const trainerId = String(formData.get("trainerId") ?? "");
-  if (!trainerId) return;
-  await cancelEmailChange(trainerId);
+export type CancelTrainerEmailState = { cancelled?: boolean; error?: string; attempt?: number };
+
+/**
+ * Anul·la l'enllaç pendent: el que s'hagi enviat deixa de valer.
+ *
+ * Si la base falla, es diu, i la fitxa segueix ensenyant el canvi com a
+ * pendent (no es revalida): l'enllaç encara val.
+ */
+export async function cancelTrainerEmailChangeAction(
+  trainerId: string,
+): Promise<CancelTrainerEmailState> {
+  if (!(await requireRole("admin"))) return { error: MESSAGES.unauthorized, attempt: Date.now() };
+  if (!trainerId) return { error: "Professional no indicat.", attempt: Date.now() };
+  try {
+    await cancelEmailChange(trainerId);
+  } catch (e) {
+    console.error("[canvi de correu] no s'ha pogut anul·lar:", e);
+    return {
+      error: "No s'ha pogut anul·lar l'enllaç: encara és vàlid. Torna-ho a provar d'aquí a una estona.",
+      attempt: Date.now(),
+    };
+  }
   revalidatePath(`/admin/entrenadors/${trainerId}/edit`);
+  return { cancelled: true };
 }

@@ -787,7 +787,8 @@
     "sections": "Secciones",
     "prefs": {
       "title": "Preferencias",
-      "language": "Idioma"
+      "language": "Idioma",
+      "languageFailed": "No se ha podido guardar el idioma. Sigues en castellano, que es el que tienes guardado y en el que te llegan los correos. Vuelve a intentarlo dentro de un rato."
     },
     "profileUnavailable": "No se ha podido cargar tu perfil.",
     "unavailable": "No disponible.",
@@ -961,6 +962,7 @@
       "pendingTitle": "Pendiente de confirmar",
       "pending": "Has pedido cambiar el correo a {email}. Abre el enlace que te hemos enviado allí.",
       "cancel": "Anular la petición",
+      "cancelFailed": "No se ha podido anular la petición: el enlace que te enviamos sigue siendo válido. Vuelve a intentarlo dentro de un rato.",
       "cancelled": "Petición anulada.",
       "show": "Mostrar la contraseña",
       "hide": "Ocultar la contraseña",

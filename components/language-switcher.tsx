@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setLocaleAction } from "@/lib/actions/locale-actions";
 import { LOCALES, LOCALE_NAMES, type Locale } from "@/lib/i18n/config";
@@ -27,10 +27,14 @@ export function LanguageSwitcher({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  // Si no s'ha pogut desar: l'avís, ja escrit en l'idioma que hi ha desat (que
+  // és el de la pantalla que tornarà a pintar el refresh).
+  const [failed, setFailed] = useState<string | null>(null);
 
   function change(value: string) {
     startTransition(async () => {
-      await setLocaleAction(value);
+      const res = await setLocaleAction(value);
+      setFailed(res.ok ? null : res.message);
       router.refresh();
     });
   }
@@ -63,7 +67,19 @@ export function LanguageSwitcher({
     </select>
   );
 
-  if (!label) return <div className={className}>{select}</div>;
+  const error = failed && (
+    <p role="alert" className="text-sm normal-case font-normal tracking-normal text-error" data-locale-error>
+      {failed}
+    </p>
+  );
+
+  if (!label)
+    return (
+      <div className={className}>
+        {select}
+        {error}
+      </div>
+    );
 
   return (
     <div className={`flex flex-col gap-1.5 text-sm ${className ?? ""}`}>
@@ -74,6 +90,7 @@ export function LanguageSwitcher({
         {label}
       </label>
       {select}
+      {error}
     </div>
   );
 }

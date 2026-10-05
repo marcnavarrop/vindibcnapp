@@ -9,6 +9,7 @@ import {
   requestEmailChangeAction,
   cancelEmailChangeAction,
   type EmailFormState,
+  type CancelEmailState,
 } from "@/app/(client)/client/configuracio/email-actions";
 import type { PendingEmailChange } from "@/lib/data/email-change";
 
@@ -39,6 +40,10 @@ export function ChangeEmailForm({
     requestEmailChangeAction,
     {} as EmailFormState,
   );
+  const [cancelState, cancelAction] = useActionState(
+    cancelEmailChangeAction,
+    {} as CancelEmailState,
+  );
 
   return (
     <section className="mt-6 flex flex-col gap-4 rounded-2xl border border-brand-border bg-white p-6">
@@ -68,7 +73,7 @@ export function ChangeEmailForm({
           <p className="text-sm text-brand-charcoal">
             {t("pending", { email: pending.newEmail })}
           </p>
-          <form action={cancelEmailChangeAction}>
+          <form action={cancelAction}>
             <button
               type="submit"
               className="text-sm font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
@@ -76,7 +81,20 @@ export function ChangeEmailForm({
               {t("cancel")}
             </button>
           </form>
+          {/* Si no s'ha pogut anul·lar, el recuadre es queda: el canvi
+              SEGUEIX pendent i l'enllaç encara val. */}
+          {cancelState.failed && (
+            <p role="alert" key={cancelState.attempt} className="text-sm text-error" data-cancel-error>
+              {t("cancelFailed")}
+            </p>
+          )}
         </div>
+      )}
+
+      {!pending && cancelState.cancelled && (
+        <p role="status" className="text-sm text-success" data-cancel-ok>
+          {t("cancelled")}
+        </p>
       )}
 
       {state.okEmail ? (

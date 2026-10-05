@@ -6,6 +6,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { passwordIsCorrect } from "@/lib/data/reauth";
 import { USE_MOCK } from "@/lib/config";
+import { mockFails } from "@/lib/mock/faults";
 import { requireRole } from "@/lib/auth";
 import { appLink } from "@/lib/notifications/brand";
 import {
@@ -80,7 +81,14 @@ function sha256(s: string): string {
 export async function getPendingEmailChange(
   profileId: string,
 ): Promise<PendingEmailChange | null> {
-  if (USE_MOCK) return null;
+  if (USE_MOCK) {
+    const { getStore } = await import("@/lib/mock/store");
+    const now = new Date().toISOString();
+    const r = getStore()
+      .email_change_requests.filter((x) => x.profile_id === profileId && !x.consumed_at && x.expires_at > now)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+    return r ? { newEmail: r.new_email, requestedAt: r.created_at } : null;
+  }
   const admin = createAdminClient();
   const { data } = await admin
     .from("email_change_requests")
@@ -94,15 +102,32 @@ export async function getPendingEmailChange(
   return data ? { newEmail: data.new_email, requestedAt: data.created_at } : null;
 }
 
-/** Anul·la les peticions vives d'un perfil. Idempotent. */
+/**
+ * Anul·la les peticions vives d'un perfil. Idempotent.
+ *
+ * LLANÇA si la base torna error. Abans no ho mirava: la pantalla donava
+ * l'enllaç per anul·lat i l'enllaç seguia viu 24 hores a la bústia nova, que
+ * és just el que qui l'anul·la vol evitar.
+ */
 export async function cancelEmailChange(profileId: string): Promise<void> {
-  if (USE_MOCK) return;
+  // Per provar què ensenya la pantalla quan la base falla (MOCK_FAIL=email-cancel).
+  if (mockFails("email-cancel")) throw new Error("error simulat (MOCK_FAIL=email-cancel)");
+  const now = new Date().toISOString();
+  if (USE_MOCK) {
+    const { getStore, saveStore } = await import("@/lib/mock/store");
+    const store = getStore();
+    for (const r of store.email_change_requests)
+      if (r.profile_id === profileId && !r.consumed_at) r.consumed_at = now;
+    saveStore(store);
+    return;
+  }
   const admin = createAdminClient();
-  await admin
+  const { error } = await admin
     .from("email_change_requests")
-    .update({ consumed_at: new Date().toISOString() })
+    .update({ consumed_at: now })
     .eq("profile_id", profileId)
     .is("consumed_at", null);
+  if (error) throw new Error(error.message);
 }
 
 /**
@@ -219,7 +244,13 @@ async function startEmailChange(input: {
   if ((recent ?? 0) > 0) return "tooSoon";
 
   // Una petició nova anul·la les anteriors: només l'últim enllaç enviat val.
-  await cancelEmailChange(input.profileId);
+  // Si no es poden anul·lar, no se n'envia cap de nou: quedarien dos enllaços
+  // vius, i el vell potser a una adreça que la persona ja no vol.
+  try {
+    await cancelEmailChange(input.profileId);
+  } catch {
+    return "failed";
+  }
 
   const secret = randomBytes(32).toString("base64url");
   const { error: insErr } = await admin.from("email_change_requests").insert({

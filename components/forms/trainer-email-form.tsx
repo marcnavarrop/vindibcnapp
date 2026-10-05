@@ -6,6 +6,7 @@ import {
   cancelTrainerEmailChangeAction,
   requestTrainerEmailChangeAction,
   type TrainerEmailState,
+  type CancelTrainerEmailState,
 } from "@/app/(admin)/admin/entrenadors/email-actions";
 import type { PendingEmailChange } from "@/lib/data/email-change";
 import { TAP } from "@/lib/utils";
@@ -30,6 +31,10 @@ export function TrainerEmailForm({
   const [state, formAction] = useActionState(
     requestTrainerEmailChangeAction.bind(null, trainerId),
     {} as TrainerEmailState,
+  );
+  const [cancelState, cancelAction] = useActionState(
+    cancelTrainerEmailChangeAction.bind(null, trainerId),
+    {} as CancelTrainerEmailState,
   );
 
   return (
@@ -57,13 +62,24 @@ export function TrainerEmailForm({
             S&apos;ha enviat un enllaç a <strong>{pending.newEmail}</strong>. El correu no canvia fins que el
             professional hi fa clic (val 24 hores).
           </p>
-          <form action={cancelTrainerEmailChangeAction}>
-            <input type="hidden" name="trainerId" value={trainerId} />
+          <form action={cancelAction}>
             <button type="submit" className={`text-sm font-bold text-brand-purple hover:text-brand-purple-dark hover:underline ${TAP}`}>
               Anul·lar l&apos;enllaç
             </button>
           </form>
+          {/* Si no s'ha pogut anul·lar, el recuadre es queda: segueix pendent. */}
+          {cancelState.error && (
+            <p role="alert" key={cancelState.attempt} className="text-sm text-error" data-cancel-error>
+              {cancelState.error}
+            </p>
+          )}
         </div>
+      )}
+
+      {!pending && cancelState.cancelled && (
+        <p role="status" className="text-sm text-success" data-cancel-ok>
+          Enllaç anul·lat: ja no serveix per canviar el correu.
+        </p>
       )}
 
       <form action={formAction} className="flex flex-col gap-3">
