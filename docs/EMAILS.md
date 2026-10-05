@@ -34,7 +34,8 @@ visitante y desarrollador).
 | Evento | Destinatario | Idioma | Default email | Lo dispara |
 |---|---|---|---|---|
 | `reservation_confirmed` | cliente | ca/es/en | ✅ | cualquier reserva nueva (lleva «Afegir al calendari») |
-| `reservation_cancelled` | cliente | ca/es/en | ✅ siempre | cancela el **equipo** o el centro al cerrar disponibilidad (0090). Si cancela el propio cliente, no sale |
+| `reservation_cancelled` | cliente | ca/es/en | ✅ siempre | cancela el **equipo** o el centro al cerrar disponibilidad (0090) |
+| `reservation_cancelled_by_client` | cliente | ca/es/en | ✅ (desactivable, 0102) | cancela el **propio cliente** desde la app: resumen y qué pasa con la sesión. Columna propia y no la vieja `reservation_cancelled_email`, que puede tener `false` de antes |
 | `reservation_rescheduled` | cliente | ca/es/en | ✅ siempre | el **equipo** le cambia la hora; el cliente no puede reprogramar |
 | `session_reminder` | cliente | ca/es/en | ❌ (opt-in) | cron de la víspera; también el botón manual del profesional |
 | `waitlist_fulfilled` | cliente | ca/es/en | ✅ siempre | se libera plaza y se le reserva |
@@ -355,6 +356,7 @@ Con la arquitectura actual, Supabase **no envía emails**:
 - **0021** — columnas del aviso de nuevo cliente (`new_client_registered_*`).
 - **0077** — trigger que sincroniza `profiles.email` cuando cambia el de Auth.
 - **0093** — `reschedule_reservation`: tras su `ok:true` sale `reservation_rescheduled`.
+- **0102** — `reservation_cancelled_by_client_email` (default `true`): la casilla del correo cuando cancela el propio cliente.
 - **0078** — `email_change_requests` (RLS cerrada: sin políticas, sólo la clave
   de servicio).
 

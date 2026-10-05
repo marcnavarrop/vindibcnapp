@@ -976,6 +976,7 @@ export interface Database {
           profile_id: string;
           reservation_confirmed_email: boolean;
           reservation_cancelled_email: boolean;
+          reservation_cancelled_by_client_email: boolean;
           session_reminder_email: boolean;
           trial_request_email: boolean;
           trial_status_email: boolean;
@@ -1002,6 +1003,7 @@ export interface Database {
           profile_id: string;
           reservation_confirmed_email?: boolean;
           reservation_cancelled_email?: boolean;
+          reservation_cancelled_by_client_email?: boolean;
           session_reminder_email?: boolean;
           trial_request_email?: boolean;
           trial_status_email?: boolean;
@@ -1028,6 +1030,7 @@ export interface Database {
           profile_id: string;
           reservation_confirmed_email: boolean;
           reservation_cancelled_email: boolean;
+          reservation_cancelled_by_client_email: boolean;
           session_reminder_email: boolean;
           trial_request_email: boolean;
           trial_status_email: boolean;

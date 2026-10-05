@@ -920,11 +920,12 @@
     <h3>17.1 El criteri</h3>
     <p>És <strong>obligatori</strong> l'avís que compleix les tres coses alhora: notifica una cosa <strong>ja consumada</strong>, que la persona <strong>no ha provocat</strong> en aquell instant, i que <strong>no pot descobrir mirant l'app</strong>. Per això la reserva <em>cancel·lada</em> s'envia sempre i la <em>confirmada</em> no: una reserva que existeix la pot veure quan vulgui; una que ja no existeix, no.</p>
 
-    <h3>17.2 Els quinze avisos del client: 10 obligatoris, 5 opcionals</h3>
+    <h3>17.2 Els setze avisos del client: 10 obligatoris, 6 opcionals</h3>
     <table class="status-table">
       <thead><tr><th>Avís</th><th>Es pot apagar?</th></tr></thead>
       <tbody>
         <tr><td>Reserva confirmada</td><td>Sí (ve encès)</td></tr>
+        <tr><td>Reserva cancel·lada per tu <span class="flag">Nou</span></td><td>Sí (ve encès) — la provoca ell mateix des de l'app</td></tr>
         <tr><td>Recordatori de sessió</td><td>Sí (ve apagat)</td></tr>
         <tr><td>Bo a punt d'esgotar-se</td><td>Sí (ve apagat)</td></tr>
         <tr><td>Bo a punt de caducar</td><td>Sí — avisa <em>abans</em>, d'un estat visible a l'app</td></tr>
@@ -942,8 +943,9 @@
       </tbody>
     </table>
     <ul class="checklist">
-      <li>Comprova a Configuració → Notificacions del client que <strong>hi surten cinc caselles i no quinze</strong>: els obligatoris no s'hi pinten</li>
+      <li>Comprova a Configuració → Notificacions del client que <strong>hi surten sis caselles i no setze</strong>: els obligatoris no s'hi pinten</li>
       <li>Apaga'n un d'opcional, dispara'l i comprova que <strong>no arriba</strong>; dispara'n un d'obligatori i comprova que arriba igualment</li>
+      <li><strong>Cancel·lar tu mateix</strong> <span class="flag">Nou</span>: com a client, cancel·la una reserva des de l'app. Arriba «Has cancel·lat la teva reserva» amb l'hora, el servei, el professional i què ha passat amb la sessió (tornada al bo, bo caducat o cortesia). Apaga «Reserva cancel·lada per tu» i torna-ho a provar: no arriba. Si la cancel·la l'admin, arriba igualment (és l'obligatori)</li>
     </ul>
 
     <h3>17.3 Els del professional i els de l'admin</h3>

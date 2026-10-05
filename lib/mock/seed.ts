@@ -127,6 +127,7 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     profile_id: p.id,
     reservation_confirmed_email: true,
     reservation_cancelled_email: true,
+    reservation_cancelled_by_client_email: true,
     session_reminder_email: false,
     trial_request_email: false,
     trial_status_email: true,

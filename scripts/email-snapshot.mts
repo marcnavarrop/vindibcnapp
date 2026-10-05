@@ -85,6 +85,7 @@ const recFor = (type: NotificationEventType) => ({
 const DATA: Record<NotificationEventType, Record<string, string>> = {
   reservation_confirmed: { name: "Ana Ferrer", ...WHENS, ...GRUP, trainer: "Laia Puig" },
   reservation_cancelled: { name: "Ana Ferrer", ...WHENS, ...INDIV },
+  reservation_cancelled_by_client: { name: "Ana Ferrer", ...WHENS, ...INDIV, trainer: "Laia Puig", refund: "bono" },
   // L'hora nova és la compartida; l'antiga, el dia abans a la mateixa hora.
   reservation_rescheduled: { name: "Ana Ferrer", ...WHENS, oldWhenIso: "2026-03-13T09:00:00.000Z", ...INDIV, trainer: "Laia Puig" },
   session_reminder: { name: "Ana Ferrer", ...WHENS, ...FISIO, trainer: "Jordi Roca" },

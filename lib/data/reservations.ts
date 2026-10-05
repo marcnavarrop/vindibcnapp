@@ -200,7 +200,7 @@ async function clientContact(clientId: string): Promise<Contact | null> {
 /** Notifica al client una reserva creada/cancel·lada (best-effort). */
 async function notifyReservation(
   clientId: string,
-  type: "reservation_confirmed" | "reservation_cancelled",
+  type: "reservation_confirmed" | "reservation_cancelled" | "reservation_cancelled_by_client",
   info: {
     reservationId?: string | null;
     scheduledAt: string;
@@ -1723,6 +1723,16 @@ export async function cancelClientReservation(
         throw new Error("Reserva no trobada.");
     }
   }
+
+  // Al client, el resum del que acaba de fer. Opcional (les seves
+  // preferències), a diferència de quan cancel·la el centre.
+  await notifyReservation(res.client_id, "reservation_cancelled_by_client", {
+    reservationId: res.reservation_id,
+    scheduledAt: res.scheduled_at,
+    serviceType: res.service_type,
+    trainerId: res.trainer_id,
+    refund: !res.refunded ? "none" : res.bono_expired ? "expired" : "bono",
+  });
 
   // L'acció l'ha fet el client → avisa el professional de la cancel·lació.
   if (res.trainer_id) {

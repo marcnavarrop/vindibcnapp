@@ -1,0 +1,23 @@
+-- ============================================================================
+-- 0102 · Correu quan el client cancel·la ell mateix una reserva
+--
+-- Fins ara, si el client cancel·lava una reserva des de l'app no rebia cap
+-- correu (només l'avisava la pantalla). Ara rep el resum del que ha fet, amb
+-- què ha passat amb la sessió, i el pot apagar a Configuració → Notificacions,
+-- com la confirmació.
+--
+-- És un esdeveniment NOU (`reservation_cancelled_by_client`) i no la columna
+-- vella `reservation_cancelled_email`: aquella és de la cancel·lació que fa el
+-- centre, que s'envia sempre i que el codi ja no llegeix. Pot tenir `false`
+-- desats d'abans que fos obligatòria, i reaprofitar-la apagaria aquest correu
+-- a qui no ho ha demanat.
+--
+-- Per defecte encès. Les files existents agafen el default soles (no cal
+-- backfill). La RLS de la taula és per fila: la columna nova ja hi queda
+-- coberta.
+--
+-- ORDRE: aplicar ABANS del push. El codi nou desa aquesta columna en guardar
+-- les preferències; sense ella, «Desar» fallaria.
+-- ============================================================================
+alter table public.notification_preferences
+  add column if not exists reservation_cancelled_by_client_email boolean not null default true;

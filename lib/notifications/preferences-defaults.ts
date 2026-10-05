@@ -18,6 +18,9 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   reservation_confirmed_email: true,
   // Sempre (ALWAYS_SENT_EVENTS): una reserva que ja no existeix no la pot veure enlloc.
   reservation_cancelled_email: true,
+  // La que fa el CLIENT des de l'app (0102). Opcional, com la confirmació: la
+  // provoca ell en aquell moment, i és el resum del que acaba de fer.
+  reservation_cancelled_by_client_email: true,
   // Sempre (ALWAYS_SENT_EVENTS): l'equip li ha mogut una sessió i, si no ho
   // sap, es presenta a l'hora d'abans. Mateix criteri que la cancel·lació.
   reservation_rescheduled_email: true,
@@ -168,7 +171,10 @@ export type PersistedPreferenceKey = Exclude<
 export const PREFERENCE_KEYS = (
   Object.keys(DEFAULT_PREFERENCES) as PreferenceKey[]
 ).filter((k): k is PersistedPreferenceKey =>
-  ALWAYS_SENT_EVENTS.every((e) => !k.startsWith(`${e}_`)),
+  // Comparació EXACTA i no per prefix: amb `startsWith("reservation_cancelled_")`
+  // l'obligatori s'emportava també `reservation_cancelled_by_client_email`, que
+  // és opcional, i la casilla no hauria sortit mai.
+  ALWAYS_SENT_EVENTS.every((e) => k !== `${e}_email`),
 );
 
 export function prefKey(

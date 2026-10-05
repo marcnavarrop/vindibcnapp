@@ -858,6 +858,10 @@
           "label": "Reserva cancelada",
           "description": "Cuando se anula una reserva tuya."
         },
+        "reservation_cancelled_by_client": {
+          "label": "Reserva cancelada por ti",
+          "description": "Cuando cancelas tú una reserva desde la app. Si la cancela el centro, te avisamos siempre."
+        },
         "reservation_rescheduled": {
           "label": "Cambio de hora de una reserva",
           "description": "Cuando el centro mueve una sesión tuya a otra hora."
@@ -1101,6 +1105,14 @@
       "refundExpired": "La sesión se ha devuelto a tu bono, pero ese bono ya ha caducado, así que no podrás usarla para reservar. Si tienes cualquier duda, habla con el centro.",
       "refundNone": "Era una sesión de cortesía, así que no hay ninguna sesión que devolver.",
       "outroByCenter": "Sentimos las molestias. Si tienes cualquier duda, contacta con el centro."
+    },
+    "reservationCancelledByClient": {
+      "eyebrow": "Reserva cancelada",
+      "subject": "Has cancelado una reserva",
+      "heading": "Has cancelado tu reserva",
+      "intro": "Esta sesión queda anulada, tal como has pedido:",
+      "cta": "Reservar otra sesión",
+      "outro": "Si ha sido un error, vuelve a reservar cuando quieras."
     },
     "reservationRescheduled": {
       "eyebrow": "Cambio de hora",

@@ -682,6 +682,35 @@ export function renderEmail(
       };
       break;
     }
+    case "reservation_cancelled_by_client": {
+      /*
+       * La cancel·lació que ha fet el CLIENT des de l'app: el resum del que
+       * acaba de fer. Mateix disseny que la del centre, però sense «t'informem»:
+       * qui ho ha fet és ell. Què ha passat amb la sessió es diu igual, sense
+       * prometre un bo que ja ha caducat.
+       */
+      const t = i.ns("emails.reservationCancelledByClient");
+      const tc = i.ns("emails.reservationCancelled");
+      subject = t("subject");
+      const s = sessionParts(i, d, null);
+      const refundLine =
+        d.refund === "bono" ? tc("refundBono") : d.refund === "expired" ? tc("refundExpired") : d.refund === "none" ? tc("refundNone") : null;
+      block = {
+        eyebrow: { tone: "neutral", text: t("eyebrow") },
+        heading: t("heading"),
+        preheader: s.preheader,
+        intro: [hola, t("intro")],
+        hero: s.hero,
+        details: s.rows,
+        notices: refundLine
+          ? [{ tone: d.refund === "expired" ? "error" : d.refund === "bono" ? "success" : "neutral", text: refundLine }]
+          : undefined,
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
     case "reservation_rescheduled": {
       const t = i.ns("emails.reservationRescheduled");
       subject = t("subject");

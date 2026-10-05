@@ -858,6 +858,10 @@
           "label": "Booking cancelled",
           "description": "When one of your bookings is cancelled."
         },
+        "reservation_cancelled_by_client": {
+          "label": "Booking you cancelled",
+          "description": "When you cancel a booking in the app. If the centre cancels it, we always let you know."
+        },
         "reservation_rescheduled": {
           "label": "Booking time changed",
           "description": "When the centre moves one of your sessions to another time."
@@ -1101,6 +1105,14 @@
       "refundExpired": "The session has been returned to your pass, but that pass has already expired, so you won't be able to use it to book. If you have any questions, please talk to the centre.",
       "refundNone": "It was a complimentary session, so there is no session to return.",
       "outroByCenter": "Sorry for the inconvenience. If you have any questions, get in touch with the centre."
+    },
+    "reservationCancelledByClient": {
+      "eyebrow": "Booking cancelled",
+      "subject": "You've cancelled a booking",
+      "heading": "You've cancelled your booking",
+      "intro": "This session has been cancelled, as you asked:",
+      "cta": "Book another session",
+      "outro": "If this was a mistake, book again whenever you like."
     },
     "reservationRescheduled": {
       "eyebrow": "Time changed",

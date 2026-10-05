@@ -21,6 +21,8 @@ const CLIENT_EVENT_TEXT = ca.config.notifications.events;
 export type NotificationEventType =
   | "reservation_confirmed"
   | "reservation_cancelled"
+  // La mateixa cancel·lació, quan la fa el client des de l'app (opcional):
+  | "reservation_cancelled_by_client"
   | "reservation_rescheduled"
   | "session_reminder"
   | "trial_request"
@@ -117,6 +119,11 @@ export const EVENT_META: Record<
   },
   reservation_cancelled: {
     ...CLIENT_EVENT_TEXT.reservation_cancelled,
+    audience: ["client"],
+    group: "general",
+  },
+  reservation_cancelled_by_client: {
+    ...CLIENT_EVENT_TEXT.reservation_cancelled_by_client,
     audience: ["client"],
     group: "general",
   },
@@ -269,6 +276,7 @@ export const EVENT_META: Record<
 export const EVENT_ORDER: NotificationEventType[] = [
   "reservation_confirmed",
   "reservation_cancelled",
+  "reservation_cancelled_by_client",
   "reservation_rescheduled",
   "session_reminder",
   "bono_low",

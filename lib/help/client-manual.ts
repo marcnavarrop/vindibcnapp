@@ -2126,11 +2126,24 @@ export function buildClientManual(
                 en: "Booking cancelled",
               }),
               T({
-                ca: "Quan s'anul·la una reserva teva, la cancel·lis tu o el centre.",
-                es: "Cuando se anula una reserva tuya, la canceles tú o el centro.",
-                en: "When a booking of yours is called off, whether by you or by the centre.",
+                ca: "Quan el centre anul·la una reserva teva.",
+                es: "Cuando el centro anula una reserva tuya.",
+                en: "When the centre calls off a booking of yours.",
               }),
               T({ ca: "No", es: "No", en: "No" }),
+            ],
+            [
+              T({
+                ca: "Reserva cancel·lada per tu",
+                es: "Reserva cancelada por ti",
+                en: "Booking you cancelled",
+              }),
+              T({
+                ca: "Quan cancel·les tu una reserva des de l'app: el resum, i si la sessió ha tornat al bo.",
+                es: "Cuando cancelas tú una reserva desde la app: el resumen, y si la sesión ha vuelto al bono.",
+                en: "When you cancel a booking in the app: a summary, and whether the session has gone back to your pass.",
+              }),
+              T({ ca: "Sí", es: "Sí", en: "Yes" }),
             ],
             [
               T({
