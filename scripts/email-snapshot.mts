@@ -137,8 +137,8 @@ save("reservation_rescheduled__serie", renderEmail({ type: "reservation_reschedu
 // I l'agenda buida, que canvia el text d'entrada.
 save("trainer_daily_agenda__buida", renderEmail({ type: "trainer_daily_agenda", recipient: recFor("trainer_daily_agenda"), data: { name: "Laia Puig", sessions: "[]" } }));
 
-save("auth_invite", renderInviteEmail({ name: "Ana Ferrer", url: "https://exemple/auth/update-password?token_hash=x&type=invite" }));
-save("auth_recovery", renderRecoveryEmail({ name: "Ana Ferrer", url: "https://exemple/auth/update-password?token_hash=x&type=recovery" }));
+save("auth_invite", renderInviteEmail({ name: "Ana Ferrer", url: "https://exemple/auth/update-password?token_hash=x&type=invite", locale: LOCALE ?? null }));
+save("auth_recovery", renderRecoveryEmail({ name: "Ana Ferrer", url: "https://exemple/auth/update-password?token_hash=x&type=recovery", locale: LOCALE ?? null }));
 save("auth_welcome", renderWelcomeEmail({ name: "Ana Ferrer", url: "https://exemple/client", locale: LOCALE ?? null }));
 
 console.log(`${TYPES.length + 6} correus escrits a ${out}`);

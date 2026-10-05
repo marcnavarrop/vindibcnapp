@@ -401,19 +401,21 @@ export function renderInviteEmail(input: {
   contact?: PublicContact | null;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
-  const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
+  const te = i.ns("emails");
+  // Abans el text era aquí, en català, i només el peu seguia l'idioma: a qui
+  // llegeix en castellà li arribava mig correu en cada llengua.
+  const t = i.ns("emails.invite");
+  const hola = input.name?.trim() ? te("greeting", { name: input.name.trim() }) : te("greetingPlain");
   const block: Block = {
-    heading: "Benvingut/da a VindiBCN",
-    intro: [
-      hola,
-      "T'han donat d'alta al centre. Fes clic al botó per crear la teva contrasenya i començar a fer servir la teva àrea.",
-    ],
-    cta: { label: "Crear la meva contrasenya", url: input.url },
-    outro: ["Si no esperaves aquest correu, ignora'l."],
+    eyebrow: { tone: "neutral", text: t("eyebrow") },
+    heading: t("heading"),
+    intro: [hola, t("intro")],
+    cta: { label: t("cta"), url: input.url },
+    outro: [t("outro")],
     footer: "plain",
   };
   return {
-    subject: "Benvingut/da a VindiBCN — crea la teva contrasenya",
+    subject: t("subject"),
     html: layout(block, i, input.contact),
     text: plain(block, i, input.contact),
     replyTo: replyToFor(block, input.contact),
@@ -430,19 +432,19 @@ export function renderRecoveryEmail(input: {
   contact?: PublicContact | null;
 }): RenderedEmail {
   const i = staticI18n(input.locale);
-  const hola = input.name?.trim() ? `Hola ${input.name.trim()},` : "Hola,";
+  const te = i.ns("emails");
+  const t = i.ns("emails.recovery");
+  const hola = input.name?.trim() ? te("greeting", { name: input.name.trim() }) : te("greetingPlain");
   const block: Block = {
-    heading: "Restablir la contrasenya",
-    intro: [
-      hola,
-      "Has demanat crear una contrasenya nova. Fes clic al botó per continuar:",
-    ],
-    cta: { label: "Crear contrasenya nova", url: input.url },
-    outro: ["Si no ho has demanat tu, ignora aquest correu; la teva contrasenya no canviarà."],
+    eyebrow: { tone: "neutral", text: t("eyebrow") },
+    heading: t("heading"),
+    intro: [hola, t("intro")],
+    cta: { label: t("cta"), url: input.url },
+    outro: [t("outro")],
     footer: "plain",
   };
   return {
-    subject: "Restablir la teva contrasenya — VindiBCN",
+    subject: t("subject"),
     html: layout(block, i, input.contact),
     text: plain(block, i, input.contact),
     replyTo: replyToFor(block, input.contact),
@@ -465,6 +467,7 @@ export function renderWelcomeEmail(input: {
     ? te("greeting", { name: input.name.trim() })
     : te("greetingPlain");
   const block: Block = {
+    eyebrow: { tone: "success", text: `✓ ${t("eyebrow")}` },
     heading: t("heading"),
     intro: [hola, t("intro")],
     cta: { label: t("cta"), url: input.url },
@@ -507,6 +510,7 @@ export function renderEmailChangeEmail(input: {
     ? te("greeting", { name: input.name.trim() })
     : te("greetingPlain");
   const block: Block = {
+    eyebrow: { tone: "attention", text: t("eyebrow") },
     heading: t("heading"),
     intro: [hola, input.byAdmin ? t("introByAdmin") : t("intro")],
     cta: { label: t("cta"), url: input.url },
@@ -551,6 +555,7 @@ export function renderEmailChangeAlertEmail(input: {
     ? te("greeting", { name: input.name.trim() })
     : te("greetingPlain");
   const block: Block = {
+    eyebrow: { tone: "attention", text: t("eyebrow") },
     heading: t("heading"),
     intro: [
       hola,
@@ -558,7 +563,9 @@ export function renderEmailChangeAlertEmail(input: {
         ? t("introByAdmin", { old: input.oldEmail, new: input.newEmail })
         : t("intro", { old: input.oldEmail, new: input.newEmail }),
     ],
-    outro: [input.byAdmin ? t("outroByAdmin") : t("outro")],
+    // «Si no has estat tu…» és l'única cosa que importa d'aquest correu: va
+    // com a avís, en vermell si l'ha demanat la persona (pot ser un robatori).
+    outro: [{ tone: input.byAdmin ? "neutral" : "error", text: input.byAdmin ? t("outroByAdmin") : t("outro") }],
     footer: "plain",
   };
   return {
@@ -738,16 +745,22 @@ export function renderEmail(
     case "trial_status": {
       const confirmed = d.status === "confirmed";
       subject = confirmed
-        ? "La teva sessió de prova està confirmada · VindiBCN"
-        : "Sobre la teva sessió de prova · VindiBCN";
+        ? "La teva sessió de prova està confirmada"
+        : "Sobre la teva sessió de prova";
+      // Va a algú que encara no ens coneix: on és el centre i amb qui farà la
+      // sessió són tan importants com l'hora.
+      const s = sessionParts(i, d, contact);
       block = confirmed
         ? {
+            eyebrow: { tone: "success", text: "✓ Prova confirmada" },
             heading: "Sessió de prova confirmada!",
+            preheader: s.preheader,
             intro: [
               hola,
               "Bones notícies: hem confirmat la teva sessió de prova gratuïta.",
             ],
-            details: rows([["Data i hora", when]]),
+            hero: s.hero,
+            details: s.rows,
             outro: [
               canReply(contact)
                 ? "T'hi esperem! Arriba uns minuts abans amb roba còmoda. Si tens qualsevol dubte, respon a aquest correu."
@@ -756,6 +769,7 @@ export function renderEmail(
             footer: "visitor",
           }
         : {
+            eyebrow: { tone: "neutral", text: "Prova no confirmada" },
             heading: "Sobre la teva sessió de prova",
             intro: [
               hola,
@@ -965,8 +979,10 @@ export function renderEmail(
     }
     case "community": {
       const t = i.ns("emails.community");
-      subject = `${d.title ? esc(d.title) + " · " : ""}${t("subject")}`;
+      // L'assumpte és text pla: escapar-lo com a HTML hi deixava «&amp;».
+      subject = `${d.title ? d.title + " · " : ""}${t("subject")}`;
       block = {
+        eyebrow: { tone: "neutral", text: t("eyebrow") },
         heading: d.title?.trim() ? d.title.trim() : t("heading"),
         intro: [hola, (d.body ?? "").trim() || t("fallback")],
         cta: { label: t("cta"), url: appLink("/client/comunitat") },
@@ -1022,6 +1038,7 @@ export function renderEmail(
       const t = i.ns("emails.newExercisesAssigned");
       subject = t("subject");
       block = {
+        eyebrow: { tone: "success", text: t("eyebrow") },
         heading: t("heading"),
         intro: [hola, t("intro")],
         cta: { label: t("cta"), url: appLink("/client/exercicis") },

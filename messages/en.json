@@ -1168,7 +1168,8 @@
       "outro": "If you can't make it after all, cancel it as early as you can so someone else can take the slot."
     },
     "newExercisesAssigned": {
-      "subject": "New exercises assigned · VindiBCN",
+      "eyebrow": "New exercises",
+      "subject": "New exercises assigned",
       "heading": "You have new exercises!",
       "intro": "Your professional has added new exercises for you. Check them in your area for the instructions and videos.",
       "cta": "View my exercises"
@@ -1194,12 +1195,14 @@
       "anon": "someone"
     },
     "community": {
+      "eyebrow": "Community",
       "subject": "News from VindiBCN",
       "heading": "News from the centre",
       "fallback": "We have some news to share with you.",
       "cta": "See it in the community"
     },
     "welcome": {
+      "eyebrow": "Account created",
       "subject": "Welcome to VindiBCN!",
       "heading": "Welcome to VindiBCN!",
       "intro": "We're really glad to have you with us. From your area you can book sessions, buy passes and check your exercises.",
@@ -1251,7 +1254,8 @@
       "outro": "This month's sessions also keep the days that were frozen."
     },
     "emailChange": {
-      "subject": "Confirm your new email — VindiBCN",
+      "eyebrow": "Account security",
+      "subject": "Confirm your new email",
       "heading": "Confirm your new email",
       "intro": "You asked to use this address to sign in to VindiBCN. Click the button to confirm:",
       "cta": "Confirm new email",
@@ -1260,12 +1264,29 @@
       "outroByAdmin": "If you weren't expecting this change, ignore this email and talk to the centre: nothing changes without this click."
     },
     "emailChangeAlert": {
-      "subject": "A change of your account email was requested — VindiBCN",
+      "eyebrow": "Account security",
+      "subject": "A change of your account email was requested",
       "heading": "Someone asked to change your sign-in email",
       "intro": "Someone asked to change the sign-in email of your account from {old} to {new}. We are telling you here so you know.",
       "outro": "If this was you, there's nothing to do in this email: the change is finished from the new mailbox. If it was NOT you, write to us straight away and change your password: someone may have got into your account.",
       "introByAdmin": "The centre's administration has asked to change your account's sign-in email from {old} to {new}. The change will only happen if it's confirmed from the new inbox.",
       "outroByAdmin": "You don't need to do anything. If you weren't expecting it, talk to the centre."
+    },
+    "invite": {
+      "eyebrow": "New account",
+      "subject": "Welcome to VindiBCN: create your password",
+      "heading": "Welcome to VindiBCN",
+      "intro": "You've been registered at the centre. Click the button to create your password and start using your area.",
+      "cta": "Create my password",
+      "outro": "If you weren't expecting this email, ignore it."
+    },
+    "recovery": {
+      "eyebrow": "Account security",
+      "subject": "Reset your password",
+      "heading": "Reset your password",
+      "intro": "You asked to create a new password. Click the button to continue:",
+      "cta": "Create new password",
+      "outro": "If you didn't ask for this, ignore this email; your password won't change."
     }
   },
   "voucherPdf": {

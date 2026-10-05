@@ -14,16 +14,17 @@ const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, 
 
 /**
  * Els que van a l'admin, al professional, a un visitant o al desenvolupador
- * es queden en català a posta, i els dos correus de compte també (encara no
- * hi ha idioma triat). Han de sortir IGUALS a les tres columnes: si no, és
- * que se n'ha escapat un.
+ * es queden en català a posta. Han de sortir IGUALS a les tres columnes: si
+ * no, és que se n'ha escapat un.
+ *
+ * La invitació i la recuperació NO hi són: van en l'idioma del perfil
+ * (`preferred_language`) i es tradueixen com la resta.
  */
 const CATALAN_ON_PURPOSE = new Set([
   "trial_request","trial_status","trial_status__rejected",
   "trainer_booking_received","trainer_booking_cancelled",
   "trainer_daily_agenda","trainer_daily_agenda__buida",
   "new_client_registered","invoice_generated","support_ticket_created",
-  "auth_invite","auth_recovery",
 ]);
 const TRANSLATED = { has: (n) => !CATALAN_ON_PURPOSE.has(n) };
 

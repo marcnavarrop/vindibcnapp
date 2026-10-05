@@ -1168,7 +1168,8 @@
       "outro": "Si al final no puedes ir, cancélala cuanto antes para que otra persona la pueda aprovechar."
     },
     "newExercisesAssigned": {
-      "subject": "Nuevos ejercicios asignados · VindiBCN",
+      "eyebrow": "Ejercicios nuevos",
+      "subject": "Nuevos ejercicios asignados",
       "heading": "¡Tienes ejercicios nuevos asignados!",
       "intro": "Tu profesional te ha añadido ejercicios nuevos. Consúltalos en tu área para ver las instrucciones y los vídeos.",
       "cta": "Ver mis ejercicios"
@@ -1194,12 +1195,14 @@
       "anon": "alguien"
     },
     "community": {
+      "eyebrow": "Comunidad",
       "subject": "Novedades de VindiBCN",
       "heading": "Novedades del centro",
       "fallback": "Tenemos novedades que compartir contigo.",
       "cta": "Verlo en la comunidad"
     },
     "welcome": {
+      "eyebrow": "Cuenta creada",
       "subject": "¡Bienvenido/a a VindiBCN!",
       "heading": "¡Bienvenido/a a VindiBCN!",
       "intro": "Nos alegra mucho tenerte con nosotros. Desde tu área podrás reservar sesiones, comprar bonos y consultar tus ejercicios.",
@@ -1251,7 +1254,8 @@
       "outro": "Las sesiones del mes que tenías también conservan los días que quedaron parados."
     },
     "emailChange": {
-      "subject": "Confirma tu correo nuevo — VindiBCN",
+      "eyebrow": "Seguridad de la cuenta",
+      "subject": "Confirma tu correo nuevo",
       "heading": "Confirma tu correo nuevo",
       "intro": "Has pedido usar esta dirección para entrar en VindiBCN. Haz clic en el botón para confirmarlo:",
       "cta": "Confirmar el correo nuevo",
@@ -1260,12 +1264,29 @@
       "outroByAdmin": "Si no esperabas este cambio, ignora este correo y habla con el centro: sin este clic no cambia nada."
     },
     "emailChangeAlert": {
-      "subject": "Se ha pedido cambiar el correo de tu cuenta — VindiBCN",
+      "eyebrow": "Seguridad de la cuenta",
+      "subject": "Se ha pedido cambiar el correo de tu cuenta",
       "heading": "Se ha pedido cambiar tu correo de acceso",
       "intro": "Alguien ha pedido cambiar el correo de acceso de tu cuenta de {old} a {new}. Te lo contamos aquí para que estés al tanto.",
       "outro": "Si has sido tú, no tienes que hacer nada en este correo: el cambio se termina desde el buzón nuevo. Si NO has sido tú, escríbenos enseguida y cambia la contraseña: alguien podría haber entrado en tu cuenta.",
       "introByAdmin": "La administración del centro ha pedido cambiar el correo de acceso de tu cuenta de {old} a {new}. El cambio solo se hará si se confirma desde el buzón nuevo.",
       "outroByAdmin": "No tienes que hacer nada. Si no lo esperabas, habla con el centro."
+    },
+    "invite": {
+      "eyebrow": "Cuenta nueva",
+      "subject": "Bienvenido/a a VindiBCN: crea tu contraseña",
+      "heading": "Bienvenido/a a VindiBCN",
+      "intro": "Te han dado de alta en el centro. Haz clic en el botón para crear tu contraseña y empezar a usar tu área.",
+      "cta": "Crear mi contraseña",
+      "outro": "Si no esperabas este correo, ignóralo."
+    },
+    "recovery": {
+      "eyebrow": "Seguridad de la cuenta",
+      "subject": "Restablecer tu contraseña",
+      "heading": "Restablecer la contraseña",
+      "intro": "Has pedido crear una contraseña nueva. Haz clic en el botón para continuar:",
+      "cta": "Crear contraseña nueva",
+      "outro": "Si no lo has pedido tú, ignora este correo; tu contraseña no cambiará."
     }
   },
   "voucherPdf": {

@@ -1034,7 +1034,13 @@ async function notifyTrialStatus(id: string, status: "confirmed" | "rejected"): 
       type: "trial_status",
       recipient: { profileId: null, email: t.email, phone: t.phone, name: t.fullName },
       relatedId: t.id,
-      data: { name: t.fullName, whenIso: t.scheduledAt, status },
+      data: {
+        name: t.fullName,
+        whenIso: t.scheduledAt,
+        status,
+        serviceType: t.serviceType,
+        ...(t.trainerName ? { trainer: t.trainerName } : {}),
+      },
     },
     // Obligatori: és la resposta al que va demanar ell. Sense això, o es
     // presenta a una prova rebutjada o es perd una d'acceptada. Explícit
