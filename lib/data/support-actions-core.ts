@@ -50,7 +50,7 @@ export async function createTicketCore(
   // Best-effort: el tiquet ja està desat. Si el correu falla, notify() ho
   // registra al log i no torna cap error — el que no pot passar és que qui
   // reporta una incidència la perdi perquè Resend estigués caigut.
-  await notifySupportTicket(ticket, opts.area);
+  await notifySupportTicket(ticket, opts.area, viewer.email || null);
 
   revalidatePath(opts.revalidate);
   return { ok: true };

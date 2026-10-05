@@ -30,6 +30,8 @@ const DEVELOPER_EMAIL = "marc.navarro.p@gmail.com";
 export async function notifySupportTicket(
   ticket: SupportTicket,
   area: "Administració" | "Professional",
+  /** El correu de qui l'obre: el Reply-To, perquè respondre li arribi a ell. */
+  reporterEmail: string | null,
 ): Promise<void> {
   await notify(
     {
@@ -45,6 +47,7 @@ export async function notifySupportTicket(
         title: ticket.title,
         category: SUPPORT_CATEGORY_LABELS[ticket.category],
         reporter: ticket.authorName,
+        ...(reporterEmail ? { reporterEmail } : {}),
         area,
         description: ticket.description,
         // L'ISO: la plantilla el formata amb la zona del centre i en

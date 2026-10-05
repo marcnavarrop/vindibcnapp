@@ -58,6 +58,11 @@ type Block = {
   /** Després del botó: paràgrafs, o un avís si el text és un consell que compta. */
   outro?: (string | Notice)[];
   footer: FooterKind;
+  /**
+   * Reply-To propi, per sobre del de per defecte (el contacte del centre als
+   * correus de fora). El tiquet de suport hi posa qui l'ha obert.
+   */
+  replyTo?: string | null;
 };
 
 // ─────────────────────────── Peces (taules, inline) ───────────────────────────
@@ -298,6 +303,7 @@ export type RenderedEmail = {
 const OUTSIDE: FooterKind[] = ["client", "visitor", "plain"];
 
 function replyToFor(block: Block, contact: PublicContact | null | undefined): string | null {
+  if (block.replyTo !== undefined) return block.replyTo;
   return OUTSIDE.includes(block.footer) && contact?.email ? contact.email : null;
 }
 
@@ -721,23 +727,31 @@ export function renderEmail(
       break;
     }
     case "trial_request": {
-      subject = "Nova sol·licitud de sessió de prova · VindiBCN";
+      subject = "Nova sol·licitud de sessió de prova";
+      const s = sessionParts(i, d, null);
       block = {
+        eyebrow: { tone: "attention", text: "Pendent de confirmar" },
         heading: "Nova sol·licitud de prova",
+        preheader: [d.visitorName, s.preheader].filter(Boolean).join(" · "),
         intro: [
           hola,
           "Un visitant ha demanat una sessió de prova gratuïta. Cal confirmar-la o rebutjar-la:",
         ],
-        details: rows([
-          ["Nom", d.visitorName],
-          ["Data i hora", when],
-          ["Telèfon", d.phone],
-          ["Correu", d.email],
-        ]),
-        cta: { label: "Gestionar la sol·licitud", url: appLink("/trainer/reservas") },
-        outro: [
-          "Recorda que la sol·licitud pre-bloqueja el forat fins que caduca; confirma-la o rebutja-la com abans millor.",
+        hero: s.hero,
+        details: [
+          ...rows([["Nom", d.visitorName]]),
+          ...(d.phone ? [{ label: "Telèfon", value: d.phone, href: `tel:${d.phone.replace(/[^0-9+]/g, "")}` }] : []),
+          ...(d.email ? [{ label: "Correu", value: d.email, href: `mailto:${d.email}` }] : []),
         ],
+        // Mentre no es respon, el forat queda bloquejat: és el que ha de moure
+        // a fer-ho aviat.
+        notices: [
+          {
+            tone: "attention",
+            text: "La sol·licitud pre-bloqueja el forat fins que caduca; confirma-la o rebutja-la com abans millor.",
+          },
+        ],
+        cta: { label: "Gestionar la sol·licitud", url: appLink("/trainer/reservas") },
         footer: "trainer",
       };
       break;
@@ -991,44 +1005,46 @@ export function renderEmail(
       break;
     }
     case "trainer_booking_received": {
-      subject = "Nova reserva a la teva agenda · VindiBCN";
+      subject = "Nova reserva a la teva agenda";
+      const s = sessionParts(i, d, null, { trainer: false });
       block = {
+        eyebrow: { tone: "success", text: "✓ Nova reserva" },
         heading: "Un client t'ha reservat una sessió",
+        preheader: [d.client, s.preheader].filter(Boolean).join(" · "),
         intro: [hola, "Tens una nova reserva a la teva agenda:"],
-        details: rows([
-          ["Client", d.client],
-          ["Data i hora", when],
-          ["Servei", service],
-        ]),
+        hero: s.hero,
+        details: [...rows([["Client", d.client]]), ...s.rows],
         cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
         footer: "trainer",
       };
       break;
     }
     case "trainer_booking_cancelled": {
-      subject = "Un client ha cancel·lat una sessió · VindiBCN";
+      subject = "Un client ha cancel·lat una sessió";
+      const s = sessionParts(i, d, null, { trainer: false });
       block = {
+        eyebrow: { tone: "neutral", text: "Cancel·lació" },
         heading: "S'ha alliberat un forat de la teva agenda",
+        preheader: [d.client, s.preheader].filter(Boolean).join(" · "),
         intro: [hola, "Un client ha cancel·lat aquesta sessió:"],
-        details: rows([
-          ["Client", d.client],
-          ["Data i hora", when],
-          ["Servei", service],
-        ]),
+        hero: s.hero,
+        details: [...rows([["Client", d.client]]), ...s.rows],
         cta: { label: "Veure la meva agenda", url: appLink("/trainer/reservas") },
         footer: "trainer",
       };
       break;
     }
     case "new_client_registered": {
-      subject = "Nou client registrat · VindiBCN";
+      subject = "Nou client registrat";
       block = {
+        eyebrow: { tone: "neutral", text: "Avís intern" },
         heading: "Nou client registrat",
+        preheader: [d.client, d.clientEmail].filter(Boolean).join(" · "),
         intro: [hola, "S'ha donat d'alta un client nou pel seu compte:"],
-        details: rows([
-          ["Nom", d.client],
-          ["Correu", d.clientEmail],
-        ]),
+        details: [
+          ...rows([["Nom", d.client]]),
+          ...(d.clientEmail ? [{ label: "Correu", value: d.clientEmail, href: `mailto:${d.clientEmail}` }] : []),
+        ],
         cta: { label: "Veure la fitxa del client", url: d.url ?? appLink("/admin/clients") },
         footer: "admin",
       };
@@ -1047,9 +1063,11 @@ export function renderEmail(
       break;
     }
     case "invoice_generated": {
-      subject = "La teva factura ja està disponible · VindiBCN";
+      subject = "La teva factura ja està disponible";
       block = {
+        eyebrow: { tone: "neutral", text: "Liquidació" },
         heading: "Ja tens la factura del període",
+        preheader: [d.period, d.total].filter(Boolean).join(" · "),
         intro: [
           hola,
           "L'administració ha tancat la teva liquidació i n'ha emès el document. El pots descarregar des de la teva àrea:",
@@ -1067,7 +1085,7 @@ export function renderEmail(
       break;
     }
     case "trainer_daily_agenda": {
-      subject = "La teva agenda de demà · VindiBCN";
+      subject = "La teva agenda de demà";
       let sessions: { time: string; client: string; service: string }[] = [];
       try {
         sessions = JSON.parse(d.sessions ?? "[]");
@@ -1075,7 +1093,11 @@ export function renderEmail(
         sessions = [];
       }
       block = {
+        eyebrow: { tone: "neutral", text: "Resum del dia" },
         heading: "La teva agenda de demà",
+        preheader: sessions.length
+          ? sessions.map((x) => `${x.time} ${x.client}`).join(" · ")
+          : "Demà no tens cap sessió programada.",
         intro: [
           hola,
           sessions.length
@@ -1094,23 +1116,29 @@ export function renderEmail(
     case "support_ticket_created": {
       // L'assumpte porta la categoria i el títol perquè es pugui triar què
       // mirar primer des de la safata, sense obrir el correu.
-      subject = `[Suport · ${d.category}] ${d.title} · VindiBCN`;
+      subject = `[Suport · ${d.category}] ${d.title}`;
       block = {
+        eyebrow: { tone: d.category === "Error" ? "error" : "neutral", text: `Suport · ${d.category}` },
         heading: "Nou tiquet de suport",
-        intro: [
-          `${d.reporter} ha obert un tiquet des de ${d.area}.`,
-          // La descripció sencera va al cos i no només a l'app: així es pot
-          // valorar la incidència des del mòbil sense haver d'entrar-hi.
-          d.description,
+        preheader: `${d.reporter}: ${d.title}`,
+        intro: [`${d.reporter} ha obert un tiquet des de ${d.area}.`],
+        details: [
+          ...rows([
+            ["Títol", d.title],
+            ["Categoria", d.category],
+            ["Qui ho reporta", d.reporter],
+          ]),
+          ...(d.reporterEmail ? [{ label: "Correu", value: d.reporterEmail, href: `mailto:${d.reporterEmail}` }] : []),
+          ...rows([["Data", when]]),
         ],
-        details: rows([
-          ["Títol", d.title],
-          ["Categoria", d.category],
-          ["Qui ho reporta", d.reporter],
-          ["Data", when],
-        ]),
+        // La descripció sencera va al cos i no només a l'app: així es pot
+        // valorar la incidència des del mòbil sense haver d'entrar-hi.
+        notices: d.description ? [{ tone: "neutral", text: d.description }] : undefined,
         cta: { label: "Veure els tiquets", url: appLink("/admin/suport") },
-        footer: "plain",
+        // Avís intern: ni el contacte del centre al peu ni el seu Reply-To.
+        // Respondre ha d'arribar a qui ha obert el tiquet.
+        footer: "internal",
+        replyTo: d.reporterEmail || null,
       };
       break;
     }
