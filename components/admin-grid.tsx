@@ -367,11 +367,16 @@ export function AdminGrid({
    */
   const weekStart = parseDay(nav.weekStart);
   const strip = useMemo(() => {
-    if (!now) return [];
     const shown = visible.filter((p) => p.id !== NONE);
     return Array.from({ length: 5 }, (_, i) => {
       const d = addDays(weekStart, i);
       const key = localDateStr(d);
+      // Abans de saber l'hora del navegador, la tira ja hi és amb la mateixa
+      // forma (els cinc dies i una barra buida per professional) i s'omple al
+      // seu lloc. Sense, apareixia després d'hidratar i empenyia els filtres i
+      // la graella 99 px avall (CLS 0,33 a l'ordinador).
+      if (!now)
+        return { date: d, key, pros: shown.map((p) => ({ id: p.id, name: p.name, pct: null })), full: 0, waiting: 0, pending: true };
       // L'ocupació és la de l'Inici (`lib/occupancy.ts`), en hora del navegador.
       const pros = shown.map((p) => ({
         id: p.id,
@@ -392,7 +397,7 @@ export function AdminGrid({
       const waitingN = waiting
         .filter((x) => shown.some((p) => p.id === x.trainerId) && localDateStr(new Date(x.at)) === key)
         .reduce((n, x) => n + x.names.length, 0);
-      return { date: d, key, pros, full, waiting: waitingN };
+      return { date: d, key, pros, full, waiting: waitingN, pending: false };
     });
     // `weekStart` es deriva de `nav.weekStart`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -778,7 +783,8 @@ export function AdminGrid({
               d.full ? `${d.full} ${d.full === 1 ? "ple" : "plens"}` : "",
               d.waiting ? `${d.waiting} en espera` : "",
             ].filter(Boolean);
-            const label = `${longDayFmt.format(d.date)}. ${d.pros
+            // Mentre s'omple, només el dia: «sense horari» seria fals.
+            const label = d.pending ? longDayFmt.format(d.date) : `${longDayFmt.format(d.date)}. ${d.pros
               .map((p) => `${p.name}: ${p.pct === null ? "sense horari" : `${Math.round(p.pct * 100)} % ocupat`}`)
               .join(", ")}${summary.length ? `. ${summary.join(", ")}` : ""}`;
             return (

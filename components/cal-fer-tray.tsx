@@ -77,12 +77,17 @@ export function CalFerTray({
 }) {
   const total = inbox.toMark.length + inbox.toNote.length + inbox.trials.length;
   /*
-   * Plegada fins que se sap l'amplada: al mòbil no ha de fer cap salt. A
-   * l'ordinador s'obre, llevat que qui la fa servir l'hagi plegada: això es
-   * recorda en aquest navegador. Tornar-la a obrir esborra la preferència i
-   * es torna al comportament de sempre.
+   * Al mòbil, plegada; a l'ordinador, oberta, llevat que qui la fa servir
+   * l'hagi plegada: això es recorda en aquest navegador. Tornar-la a obrir
+   * esborra la preferència i es torna al comportament de sempre.
+   *
+   * `null` vol dir «encara no se sap»: és el que surt del servidor i el primer
+   * pintat. Llavors ho decideix el CSS (plegada al mòbil, oberta a partir de
+   * `md`), que és el mateix que farà l'efecte. Abans començava plegada a tot
+   * arreu i a l'ordinador s'obria després d'hidratar, empenyent el calendari
+   * 207 px avall (CLS 0,07). Ara només es mou per a qui l'hagi plegada.
    */
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<boolean | null>(null);
   useEffect(() => {
     let folded = false;
     try {
@@ -90,7 +95,7 @@ export function CalFerTray({
     } catch {
       // Sense memòria: el comportament de sempre.
     }
-    if (!folded && window.matchMedia("(min-width: 768px)").matches) setOpen(true);
+    setOpen(!folded && window.matchMedia("(min-width: 768px)").matches);
   }, []);
   const toggle = () => {
     const next = !open;
@@ -124,7 +129,7 @@ export function CalFerTray({
       <button
         type="button"
         data-inbox-toggle
-        aria-expanded={open}
+        aria-expanded={open === true}
         aria-controls="cal-fer-list"
         onClick={toggle}
         className={clsx(
@@ -144,15 +149,25 @@ export function CalFerTray({
         <span className="min-w-0 flex-1 truncate text-xs text-brand-muted">
           {parts.join(" · ")}
         </span>
-        <span aria-hidden className={clsx("text-brand-muted transition-transform", open && "rotate-180")}>
+        <span
+          aria-hidden
+          className={clsx(
+            "text-brand-muted transition-transform",
+            open === true && "rotate-180",
+            open === null && "md:rotate-180",
+          )}
+        >
           ▾
         </span>
       </button>
 
-      {open && (
+      {open !== false && (
         <div
           id="cal-fer-list"
-          className="max-h-[60vh] overflow-y-auto border-t border-brand-border px-3 pb-2 md:grid md:max-h-none md:gap-4 md:overflow-visible md:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]"
+          className={clsx(
+            open === null && "hidden",
+            "max-h-[60vh] overflow-y-auto border-t border-brand-border px-3 pb-2 md:grid md:max-h-none md:gap-4 md:overflow-visible md:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]",
+          )}
           style={{ "--cols": parts.length || 1 } as React.CSSProperties}
         >
           {inbox.notesFailed && (
