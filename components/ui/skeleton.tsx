@@ -37,3 +37,21 @@ export function SkeletonCard({ lines = 2 }: { lines?: number }) {
     </div>
   );
 }
+
+/**
+ * La pàgina genèrica en càrrega: capçalera i quatre targetes. És el
+ * `loading.tsx` de les tres àrees (client, professional i admin), perquè canviar
+ * de pantalla es vegi igual a totes.
+ */
+export function SkeletonPage() {
+  return (
+    <main className="mx-auto max-w-5xl p-6">
+      <SkeletonPageHeader />
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        {Array.from({ length: 4 }, (_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    </main>
+  );
+}
