@@ -246,25 +246,42 @@ export async function getClientCenterData(
   }
 
   const admin = createAdminClient();
-  // Les proves i la fila de client són independents: un sol viatge en comptes
-  // de dos encadenats.
-  const [holds, { data: client }] = await Promise.all([
-    holdsPromise,
+
+  // UNA SOLA TANDA. Només els bons depenen del client (en necessiten l'id); la
+  // resta —proves, professionals i les seves fotos, horaris, bloquejos i
+  // l'ocupació— és del centre i surt alhora amb la consulta de `clients`. Abans
+  // eren tres tandes seguides: client, després tot el centre, després les fotos.
+  //
+  // `Promise.resolve()` a les consultes que es fan servir dos cops: una consulta
+  // de Supabase no és una promesa, és un objecte que llança la petició a CADA
+  // `.then()`. Sense, la del client i la dels professionals sortirien dues
+  // vegades cadascuna.
+  const clientPromise = Promise.resolve(
     admin
       .from("clients")
       .select("id, assigned_trainer_id")
       .eq("profile_id", profileId)
       .single(),
-  ]);
-  const holdReservations = toHoldReservations(holds);
-  if (!client) return EMPTY;
-
-  const [bonoRows, trainerRows, rules, blocks, resRows] = await Promise.all([
-    admin
-      .from("bonos")
-      .select("service_type, status, remaining_sessions, expires_at")
-      .eq("client_id", client.id),
+  );
+  const trainersPromise = Promise.resolve(
     admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer"),
+  );
+
+  const [holds, { data: client }, bonoRows, trainerRows, avatars, rules, blocks, resRows] = await Promise.all([
+    holdsPromise,
+    clientPromise,
+    clientPromise.then(async ({ data: c }) => {
+      if (!c) return [];
+      const { data } = await admin
+        .from("bonos")
+        .select("service_type, status, remaining_sessions, expires_at")
+        .eq("client_id", c.id);
+      return data ?? [];
+    }),
+    trainersPromise,
+    // Les fotos, totes d'un cop, tan bon punt hi ha els professionals: la
+    // llegenda les pinta juntes.
+    trainersPromise.then(({ data }) => avatarUrls((data ?? []).map((t) => t.avatar_path))),
     listAllTrainerRulesLite(),
     listAllBlocksLite(fromISO),
     // El nom del client s'incorpora a la consulta, però NOMÉS surt d'aquí per
@@ -289,13 +306,11 @@ export async function getClientCenterData(
       (e: unknown) => ({ data: null, error: e as Error }),
     ),
   ]);
+  const holdReservations = toHoldReservations(holds);
+  if (!client) return EMPTY;
 
-  const bonoSessions = sessionsByService(bonoRows.data ?? []);
+  const bonoSessions = sessionsByService(bonoRows);
   const bonoTypes = Object.keys(bonoSessions) as ServiceType[];
-  // Les fotos, totes d'un cop: la llegenda les pinta juntes.
-  const avatars = await avatarUrls(
-    (trainerRows.data ?? []).map((t) => t.avatar_path),
-  );
   const trainers = (trainerRows.data ?? []).map((t) => ({
     id: t.id,
     name: t.full_name ?? "—",

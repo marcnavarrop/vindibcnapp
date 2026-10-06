@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -607,10 +608,13 @@ export type ClientRef = { id: string; createdAt: string };
  * L'`created_at` hi va perquè és el tall de les piloteta quan encara no s'ha
  * mirat res: qui el demana el vol gairebé sempre alhora que l'id, i demanar-lo
  * a part tornaria a llegir la mateixa fila.
+ *
+ * Amb `React.cache()`: la demanen el marc (les piloteta del menú) i la pàgina
+ * de reserves a la mateixa petició, i és la mateixa fila.
  */
-export async function getClientRefByProfile(
+export const getClientRefByProfile = cache(async (
   profileId: string,
-): Promise<ClientRef | null> {
+): Promise<ClientRef | null> => {
   if (USE_MOCK) {
     const client = getStore().clients.find((c) => c.profile_id === profileId);
     return client ? { id: client.id, createdAt: client.created_at } : null;
@@ -623,7 +627,7 @@ export async function getClientRefByProfile(
     .eq("profile_id", profileId)
     .maybeSingle();
   return data ? { id: data.id, createdAt: data.created_at } : null;
-}
+});
 
 /** Entrenadores disponibles para asignar (para los selects de formularios). */
 export async function listTrainers(): Promise<{ id: string; name: string }[]> {
