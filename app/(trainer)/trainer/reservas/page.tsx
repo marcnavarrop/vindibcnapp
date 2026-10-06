@@ -55,6 +55,10 @@ export default async function TrainerReservasPage({
   const agendaOf = onlyMine ? (trainerId ?? "") : undefined;
 
   // Les reserves de la finestra (coordinació) + les de MIS clientes (gestionables).
+  //
+  // TOT EN UNA SOLA TANDA: els seus bloquejos, el recompte d'espera i «Cal fer»
+  // només depenen del professional i de la finestra, no de les reserves. Abans
+  // anaven en dues tandes més, una darrere l'altra.
   const [
     reservations,
     trainers,
@@ -63,6 +67,14 @@ export default async function TrainerReservasPage({
     allBlocks,
     trials,
     palette,
+    // Per a les senyals de la rejilla: els SEUS bloquejos amb el motiu, i
+    // quanta gent espera plaça a les seves sessions (només el recompte). Si el
+    // recompte falla, la rejilla es pinta igual, sense el «+N en espera».
+    ownBlocks,
+    waiting,
+    // «Cal fer»: el que té pendent, acotat als últims dies (vegeu
+    // trainer-inbox). Si falla, l'agenda es pinta igual i es diu en una línia.
+    inbox,
   ] = await Promise.all([
       listReservationsInRange({ from, to, trainerId: agendaOf }),
       listTrainers(),
@@ -71,29 +83,21 @@ export default async function TrainerReservasPage({
       listAllBlocksLite(from),
       listActiveTrialHolds({ from, to }),
       getColorPalette(),
+      trainerId ? listOwnBlocksInRange({ trainerId, from, to }) : Promise.resolve([]),
+      trainerId
+        ? countWaitingForTrainer({
+            trainerId,
+            fromDay: centerDateStr(from),
+            toDay: centerDateStr(to),
+          }).catch(() => [])
+        : Promise.resolve([]),
+      trainerId
+        ? getTrainerInbox({
+            trainerId,
+            trials: centerSettings.modules.sessionsProva,
+          }).catch(() => null)
+        : Promise.resolve(null),
     ]);
-  // Per a les senyals de la rejilla: els SEUS bloquejos amb el motiu, i quanta
-  // gent espera plaça a les seves sessions (només el recompte). Si el recompte
-  // falla, la rejilla es pinta igual, sense el «+N en espera».
-  const [ownBlocks, waiting] = trainerId
-    ? await Promise.all([
-        listOwnBlocksInRange({ trainerId, from, to }),
-        countWaitingForTrainer({
-          trainerId,
-          fromDay: centerDateStr(from),
-          toDay: centerDateStr(to),
-        }).catch(() => []),
-      ])
-    : [[], []];
-
-  // «Cal fer»: el que té pendent, acotat als últims dies (vegeu trainer-inbox).
-  // Si falla, l'agenda es pinta igual i es diu en una línia.
-  const inbox = trainerId
-    ? await getTrainerInbox({
-        trainerId,
-        trials: centerSettings.modules.sessionsProva,
-      }).catch(() => null)
-    : null;
 
   // L'entrenador només gestiona (accepta/rebutja) les proves que són seves.
   const manageableTrialIds = trials

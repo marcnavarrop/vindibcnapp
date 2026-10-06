@@ -39,27 +39,28 @@ export default async function ClientHome() {
   ]);
   const viewer = await getViewer();
 
-  const [client, centerSettings, palette, trainers] = await Promise.all([
-    viewer ? getClientByProfile(viewer.id) : Promise.resolve(null),
-    getCenterSettings(),
-    getColorPalette(),
-    listTrainerCards(),
-  ]);
-
-  // La comunitat només es demana si el mòdul està engegat: si no, seria una
-  // consulta per a una secció que no es pintarà. El mateix amb el codi de
-  // referit, que només fa falta si el programa està actiu.
+  // CADA COSA SURT QUAN TÉ EL QUE NECESSITA, no per tandes. La comunitat i el
+  // codi de referit només esperen la configuració (si el mòdul és apagat, no es
+  // demanen: serien consultes per a seccions que no es pintaran); les enquestes,
+  // també la fitxa del client. Abans esperaven que acabés tota la primera tanda.
+  const clientPromise = viewer ? getClientByProfile(viewer.id) : Promise.resolve(null);
+  const settingsPromise = getCenterSettings();
+  const [client, centerSettings, palette, trainers, announcements, polls, referral] =
+    await Promise.all([
+      clientPromise,
+      settingsPromise,
+      getColorPalette(),
+      listTrainerCards(),
+      settingsPromise.then((s) => (s.modules.comunitat ? listAnnouncements() : [])),
+      Promise.all([settingsPromise, clientPromise]).then(([s, c]) =>
+        s.modules.comunitat && c ? listPollsForClient(c.id) : [],
+      ),
+      settingsPromise.then((s) =>
+        s.referralProgramActive && viewer ? getReferralStats(viewer.id) : null,
+      ),
+    ]);
   const showCommunity = centerSettings.modules.comunitat;
   const showReferral = centerSettings.referralProgramActive;
-  const [announcements, polls, referral] = await Promise.all([
-    showCommunity ? listAnnouncements() : Promise.resolve([]),
-    showCommunity && client
-      ? listPollsForClient(client.id)
-      : Promise.resolve([]),
-    showReferral && viewer
-      ? getReferralStats(viewer.id)
-      : Promise.resolve(null),
-  ]);
 
   const firstName = viewer?.fullName?.split(" ")[0] ?? "";
 

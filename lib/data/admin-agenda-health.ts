@@ -163,6 +163,12 @@ async function fullGroups(now: Date): Promise<FullGroup[]> {
   const from = centerDayStart(today).toISOString();
   const to = centerDayStart(addDaysStr(weekEnd, 1)).toISOString();
   type Row = { trainer_id: string | null; scheduled_at: string };
+  // Els noms, en paral·lel amb les places: no en depenen. La captura buida
+  // només evita un «rebuig sense gestionar» si les places fallen abans
+  // d'arribar a esperar-los; l'error dels noms, si n'hi ha, arriba igual a
+  // l'`await` de sota.
+  const trainersPromise = listTrainers();
+  trainersPromise.catch(() => {});
   let rows: Row[];
   if (USE_MOCK) {
     rows = getStore().reservations.filter(
@@ -186,7 +192,7 @@ async function fullGroups(now: Date): Promise<FullGroup[]> {
     const k = `${r.trainer_id}|${new Date(r.scheduled_at).getTime()}`;
     booked.set(k, (booked.get(k) ?? 0) + 1);
   }
-  const names = new Map((await listTrainers()).map((t) => [t.id, t.name]));
+  const names = new Map((await trainersPromise).map((t) => [t.id, t.name]));
   return queues
     .map((q) => ({
       trainerId: q.trainerId,

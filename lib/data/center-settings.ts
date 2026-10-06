@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { USE_MOCK } from "@/lib/config";
 import { slotOf, slotToHour } from "@/lib/availability-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -123,7 +124,17 @@ function timeOf(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00:00`;
 }
 
-export async function getCenterSettings(): Promise<CenterSettings> {
+/**
+ * La configuració del centre, UNA consulta per petició.
+ *
+ * Amb `React.cache()`: la demanen el marc (`AppShell`), la pàgina i diverses
+ * lectures de la mateixa pantalla (a Subscripcions, una per fila), i abans
+ * cadascuna era un viatge a la base. Dins d'un render es comparteix el
+ * resultat; fora de render (accions de servidor, scripts de comprovació) la
+ * memòria no s'aplica i es llegeix cada vegada, de manera que desar la
+ * configuració i tornar-la a llegir a la mateixa acció veu el valor nou.
+ */
+export const getCenterSettings = cache(async (): Promise<CenterSettings> => {
   if (USE_MOCK) {
     const { getStore } = await import("@/lib/mock/store");
     const cs = getStore().centerSettings;
@@ -202,7 +213,7 @@ export async function getCenterSettings(): Promise<CenterSettings> {
     },
     contact: contactOf(data),
   };
-}
+});
 
 /** Les columnes de la 0100 → `CenterContact`. Buit és null. */
 function contactOf(

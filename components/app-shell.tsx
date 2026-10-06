@@ -25,10 +25,11 @@ export async function AppShell({
   role: Role;
   children: React.ReactNode;
 }) {
-  const [viewer, settings] = await Promise.all([
-    getViewer(),
-    getCenterSettings(),
-  ]);
+  // `getViewer()` surt de les capçaleres del middleware (no és cap viatge), i
+  // la configuració, de la mateixa petició que la pàgina (`React.cache`). Tot
+  // el que no la necessita surt sense esperar-la: vegeu més avall.
+  const viewer = await getViewer();
+  const settingsPromise = getCenterSettings();
 
   // La foto del propi usuari per al sidebar. Es llegeix aquí i no a getViewer
   // perquè getViewer va per capçaleres del middleware al camí ràpid i no
@@ -66,10 +67,16 @@ export async function AppShell({
    * píxels, i no s'ha d'endur el layout sencer. Mateix criteri que
    * `getClientBadgeCounts`.
    */
-  const [avatar, badges, staffBonos] = await Promise.all([
+  //
+  // LA FOTO I EL RECOMPTE DE L'EQUIP NO ESPEREN LA CONFIGURACIÓ: abans tot
+  // anava en dues tandes (perfil i configuració, i després la resta), i el marc
+  // és a sobre del `loading.tsx`, així que l'esquelet no sortia fins que
+  // acabava. Només els números del client la necessiten (depenen dels mòduls).
+  const [settings, avatar, badges, staffBonos] = await Promise.all([
+    settingsPromise,
     ownAvatar(),
     role === "client" && viewer
-      ? getClientBadgeCounts(viewer.id, settings.modules)
+      ? settingsPromise.then((s) => getClientBadgeCounts(viewer.id, s.modules))
       : Promise.resolve(null),
     role !== "client" && viewer
       ? countCenterCollectableBonos().catch(() => 0)

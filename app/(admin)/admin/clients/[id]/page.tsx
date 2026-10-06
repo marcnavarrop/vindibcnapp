@@ -43,6 +43,13 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // El consentiment depèn de la fitxa (en necessita el perfil), però no de la
+  // resta: s'hi encadena i viatja en la mateixa tanda, en comptes d'esperar
+  // que acabi tot per començar.
+  const clientPromise = getClient(id);
+  const consentPromise = clientPromise.then((c) =>
+    c ? getConsentStatus(c.profileId) : null,
+  );
   const [
     client,
     assignedExercises,
@@ -52,8 +59,9 @@ export default async function ClientDetailPage({
     allTags,
     clientTags,
     trainers,
+    consent,
   ] = await Promise.all([
-    getClient(id),
+    clientPromise,
     listClientExercises(id),
     listExercises(),
     listClientDocuments(id),
@@ -61,10 +69,10 @@ export default async function ClientDetailPage({
     listClientTags(),
     listTagsOfClient(id),
     listTrainers(),
+    consentPromise,
   ]);
-  if (!client) notFound();
+  if (!client || !consent) notFound();
 
-  const consent = await getConsentStatus(client.profileId);
   const receivesFisio =
     client.bonos.some((b) => b.serviceType === "fisioterapia") ||
     client.reservations.some((r) => r.serviceType === "fisioterapia");
