@@ -1391,5 +1391,11 @@
     "label": "Contacte del centre",
     "whatsapp": "WhatsApp",
     "alsoWhatsapp": "també per WhatsApp"
+  },
+  "notFound": {
+    "title": "Aquesta pàgina no existeix",
+    "body": "Pot ser que l'enllaç sigui antic o que l'adreça estigui mal escrita.",
+    "back": "Tornar a l'inici",
+    "metaTitle": "Pàgina no trobada · VindiBCN"
   }
 }

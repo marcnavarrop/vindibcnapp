@@ -1391,5 +1391,11 @@
     "label": "Centre contact",
     "whatsapp": "WhatsApp",
     "alsoWhatsapp": "also on WhatsApp"
+  },
+  "notFound": {
+    "title": "This page doesn't exist",
+    "body": "The link may be out of date, or the address may be mistyped.",
+    "back": "Back to home",
+    "metaTitle": "Page not found · VindiBCN"
   }
 }
