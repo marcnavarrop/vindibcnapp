@@ -99,7 +99,7 @@ export default async function TrainerClientDetailPage({
   const needsHealthConsent = receivesFisio && !consent.healthDataAt;
 
   // Les dues accions sobre un bo, amb la mateixa regla que les taules. Cap de
-  // les dues mira `canManage`: vegeu el comentari de la pestanya Bons.
+  // les dues mira `canManage`: vegeu el comentari de `bonoActions`.
   const canCollect = (b: { status: string }) =>
     b.status === "pending_payment" || b.status === "unpaid";
   const canCancelBono = (b: {
@@ -314,7 +314,7 @@ export default async function TrainerClientDetailPage({
         menu={<ClientFileMenu clientId={client.id} clientName={client.fullName} />}
         notice={
           /*
-            Abans era una píldora «Només consulta · pots cobrar-li bons», que a
+            Abans era una píndola «Només consulta · pots cobrar-li bons», que a
             375 px feia tres línies al costat del nom. Ara és una frase: de qui
             és, i què hi pots fer. Des de la 0085 es pot cobrar i anul·lar un bo
             pendent encara que el client no sigui seu.
