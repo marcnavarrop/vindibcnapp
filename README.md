@@ -174,6 +174,7 @@ soles a cada build (`prebuild`):
 | `npm run payments:check` | Els pagaments per pàgines i els totals. |
 | `npm run bonos:check` | Els bons per pàgines, els comptadors i el «Pendent de cobrament». |
 | `npm run paid:check` | Cobrar un bo: o s'activa exactament un bo i s'anota el pagament, o error i res anotat. |
+| `npm run notes:check` | La nota ràpida de la fitxa: una línia a sota de les generals, les clíniques intactes, i mai trepitja una edició feta alhora. |
 | `npm run community:check` | El correu de la comunitat arriba a tothom, en lots, i cap fallada queda en silenci. |
 | `npm run contact:check` | El contacte del centre: format, peu i Reply-To dels correus, pàgines legals, avisos interns. |
 | `npm run emailchange:check` | El canvi de correu d'un professional que inicia l'admin. |

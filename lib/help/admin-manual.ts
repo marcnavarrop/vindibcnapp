@@ -358,7 +358,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Resum",
-              "El que es fa cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix, i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». «+ Nova reserva» obre el formulari amb aquesta persona i el seu professional ja posats. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
+              "El que es fa cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix, i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». «+ Nova reserva» obre el formulari amb aquesta persona i el seu professional ja posats. A la dreta (a sota, al mòbil), les notes clíniques i generals, amb «Afegir una nota general…»: escrius una línia, «Desar», i va al final de les generals amb la data i el teu nom («08/10/2026 · Marc · …»). Les clíniques no es toquen des d'aquí, només des d'«Editar». A sota, els exercicis amb l'última mesura de cadascun.",
             ],
             [
               "Bons i pagaments",

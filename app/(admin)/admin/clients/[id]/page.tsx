@@ -18,6 +18,8 @@ import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
 import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
 import { markBonoPaidAction, cancelBonoAction } from "@/app/(admin)/admin/bonos/actions";
 import { ClientBonoList, SubscriptionCard } from "@/components/client-file/bonos";
+import { QuickNoteForm } from "@/components/client-file/quick-note";
+import { addGeneralNoteAction } from "@/app/(admin)/admin/clients/actions";
 import { centerToday } from "@/lib/center-time";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
@@ -183,7 +185,9 @@ export default async function ClientDetailPage({
               clinicalNotes={client.clinicalNotes}
               generalNotes={client.generalNotes}
               editHref={`/admin/clients/${client.id}/edit`}
-            />
+            >
+              <QuickNoteForm action={addGeneralNoteAction.bind(null, client.id)} />
+            </NotesCard>
             <TrainingCard assigned={assignedExercises} progress={allProgress} />
           </div>
         </div>

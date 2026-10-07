@@ -5,12 +5,14 @@ import { requireRole } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  appendGeneralNote,
   createClientRecord,
   updateClientRecord,
   type ClientInput,
 } from "@/lib/data/clients";
 import { markTrialConverted } from "@/lib/data/trial-bookings";
 import { EmailTakenError } from "@/lib/data/account-email";
+import { centerToday } from "@/lib/center-time";
 
 export type FormState = {
   error?: string;
@@ -121,4 +123,38 @@ export async function updateClientAction(
   revalidatePath("/admin/clients");
   revalidatePath(`/admin/clients/${id}`);
   redirect(`/admin/clients/${id}`);
+}
+
+export type QuickNoteState = { error?: string; savedAt?: number };
+
+/** El sostre d'una nota ràpida: una línia, no un informe. */
+const QUICK_NOTE_MAX = 500;
+
+/**
+ * La nota ràpida del Resum de la fitxa: una línia nova al final de les notes
+ * generals, amb la data del centre i qui l'escriu. Només l'admin (les notes
+ * del client les edita l'administració; el professional les llegeix).
+ */
+export async function addGeneralNoteAction(
+  clientId: string,
+  _prev: QuickNoteState,
+  formData: FormData,
+): Promise<QuickNoteState> {
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
+  // Una sola línia: els salts de línia separen notes, no frases d'una nota.
+  const text = String(formData.get("note") ?? "").replace(/\s+/g, " ").trim();
+  if (!text) return { error: "Escriu la nota abans de desar-la." };
+  if (text.length > QUICK_NOTE_MAX)
+    return { error: `Massa llarga: com a molt ${QUICK_NOTE_MAX} caràcters. Per a més, «Editar».` };
+
+  const [y, m, d] = centerToday().split("-");
+  const who = viewer.fullName.trim().split(/\s+/)[0] || "Administració";
+  try {
+    await appendGeneralNote(clientId, `${d}/${m}/${y} · ${who} · ${text}`);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "No s'ha pogut desar la nota." };
+  }
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { savedAt: Date.now() };
 }

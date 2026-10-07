@@ -836,6 +836,63 @@ export async function updateClientRecord(
   if (pErr) throw pErr;
 }
 
+/**
+ * LA NOTA RÀPIDA DE LA FITXA: afegeix una línia al final de les notes
+ * GENERALS («08/10/2026 · Marc · text») i no toca res més de la fila. Les
+ * clíniques només s'editen des d'«Editar», amb l'avís de consentiment al
+ * davant.
+ *
+ * Llegeix i torna a escriure: dues persones afegint una nota al mateix client
+ * en el mateix instant podrien perdre'n una. Es comprova que el text no hagi
+ * canviat entre la lectura i l'escriptura, i si ha canviat es torna a llegir
+ * un cop; així no es trepitja mai una edició feta just abans.
+ *
+ * Aquesta comprovació viatja a l'adreça de la petició (el text sencer com a
+ * filtre), i `clients` no té cap `updated_at` més curt. Per això només es fa
+ * fins a `LOCKED_UP_TO` caràcters: més enllà, l'adreça podria passar del límit
+ * del servidor i la nota no es desaria mai. Llavors s'escriu sense comprovar,
+ * com ho fa «Editar» des de sempre. (A producció, a l'octubre del 2026, la nota
+ * general més llarga en feia 22.) Fer-ho del tot atòmic demanaria una funció a
+ * la base, és a dir, una migració.
+ *
+ * Qui crida ha de comprovar el rol ABANS (només l'admin): aquí no es comprova.
+ */
+const LOCKED_UP_TO = 2000;
+
+export async function appendGeneralNote(id: string, line: string): Promise<void> {
+  const join = (old: string | null) => (old?.trim() ? `${old.replace(/\s+$/, "")}\n${line}` : line);
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const client = store.clients.find((c) => c.id === id);
+    if (!client) throw new Error("Client no trobat.");
+    client.general_notes = join(client.general_notes);
+    saveStore(store);
+    return;
+  }
+
+  const supabase = await createClient();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data: row, error: getErr } = await supabase
+      .from("clients")
+      .select("general_notes")
+      .eq("id", id)
+      .single();
+    if (getErr || !row) throw new Error("Client no trobat.");
+    const old = (row.general_notes as string | null) ?? null;
+
+    // Només si el text és el que s'acaba de llegir. `is null` i `eq` no són
+    // el mateix filtre: una nota buida a la base és NULL, no "".
+    let q = supabase.from("clients").update({ general_notes: join(old) }).eq("id", id);
+    if (old === null) q = q.is("general_notes", null);
+    else if (old.length <= LOCKED_UP_TO) q = q.eq("general_notes", old);
+    const { data: done, error: upErr } = await q.select("id");
+    if (upErr) throw upErr;
+    if (done && done.length === 1) return;
+  }
+  throw new Error("Algú acaba de canviar les notes d'aquest client. Torna-ho a provar.");
+}
+
 // ── Ajustes del propio perfil (área cliente · Configuració) ──
 
 export type ProfileSettings = {
