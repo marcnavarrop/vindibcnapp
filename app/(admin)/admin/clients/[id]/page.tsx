@@ -9,7 +9,15 @@ import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { ClientTagsPanel } from "@/components/client-tags-panel";
 import { AssignTrainerForm } from "@/components/forms/assign-trainer-form";
-import { getClient, listTrainers } from "@/lib/data/clients";
+import { getClient, listTrainers, type ClientBono } from "@/lib/data/clients";
+import { getAnyLiveSubscription } from "@/lib/data/subscriptions";
+import { countCenterCollectableBonos } from "@/lib/data/bonos";
+import { cancelBlockFor } from "@/lib/bono-rules";
+import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
+import { MarkBonoPaidButton } from "@/components/forms/mark-bono-paid-button";
+import { CancelBonoButton } from "@/components/forms/cancel-bono-button";
+import { markBonoPaidAction, cancelBonoAction } from "@/app/(admin)/admin/bonos/actions";
+import { ClientBonoList, SubscriptionCard } from "@/components/client-file/bonos";
 import { centerToday } from "@/lib/center-time";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
@@ -39,8 +47,6 @@ import {
   createAndAssignTagAction,
 } from "@/app/(admin)/admin/etiquetes/actions";
 import {
-  SERVICE_LABELS,
-  BONO_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
   formatEur,
   formatDate,
@@ -68,6 +74,8 @@ export default async function ClientDetailPage({
     allTags,
     clientTags,
     trainers,
+    subscription,
+    centerCollectable,
     consent,
   ] = await Promise.all([
     clientPromise,
@@ -78,6 +86,10 @@ export default async function ClientDetailPage({
     listClientTags(),
     listTagsOfClient(id),
     listTrainers(),
+    getAnyLiveSubscription(id),
+    // Per a la piloteta de «Bons i pagaments» del menú, com a la fitxa del
+    // professional. Si falla, no s'anuncia res.
+    countCenterCollectableBonos().catch(() => null),
     consentPromise,
   ]);
   if (!client || !consent) notFound();
@@ -94,13 +106,71 @@ export default async function ClientDetailPage({
   const now = new Date().toISOString();
   const assignedTagIds = new Set(clientTags.map((t) => t.id));
 
+  /*
+    COBRAR I ANUL·LAR DES DE LA FITXA, com a la taula de Bons: les mateixes
+    accions de l'admin (`markBonoPaidAction`, `cancelBonoAction` amb
+    `isAdmin: true`) i els mateixos diàlegs, que demanen confirmació. Qui pot
+    anul·lar què ho decideix `cancelBlockFor`, no aquesta pàgina.
+
+    Al Resum (`summary`) només surten als bons per cobrar: un «Anul·lar» a cada
+    bo actiu, a la primera pantalla, seria una acció destructiva i rara a la
+    vista de tothom. A «Bons i pagaments» hi són tots, com a la taula.
+  */
+  const bonoActions = (b: ClientBono, summary: boolean) => {
+    const canPay = b.status === "pending_payment" || b.status === "unpaid";
+    if (summary && !canPay) return null;
+    const canCancel =
+      cancelBlockFor(
+        {
+          status: b.status,
+          remainingSessions: b.remainingSessions,
+          totalSessions: b.totalSessions,
+          subscriptionId: b.subscriptionId,
+        },
+        true,
+      ) === null;
+    if (!canPay && !canCancel) return null;
+    return (
+      <>
+        {canCancel && (
+          <CancelBonoButton
+            action={cancelBonoAction}
+            bonoId={b.id}
+            serviceType={b.serviceType}
+            price={b.price}
+            totalSessions={b.totalSessions}
+            status={b.status}
+          />
+        )}
+        {canPay && (
+          <MarkBonoPaidButton
+            admin
+            action={markBonoPaidAction}
+            bonoId={b.id}
+            serviceType={b.serviceType}
+            price={b.price}
+            remainingSessions={b.remainingSessions}
+            totalSessions={b.totalSessions}
+            status={b.status}
+            expired={!!b.expiresAt && b.expiresAt < today}
+          />
+        )}
+      </>
+    );
+  };
+
   const tabs = [
     {
       label: "Resum",
       content: (
         <div className="grid items-start gap-4 lg:grid-cols-[1.25fr_1fr]">
           <div className="flex flex-col gap-4">
-            <BonosSummaryCard bonos={client.bonos} today={today} addHref={`/admin/clients/${client.id}/bonos/new`} />
+            <BonosSummaryCard
+              bonos={client.bonos}
+              today={today}
+              addHref={`/admin/clients/${client.id}/bonos/new`}
+              actions={(b) => bonoActions(b, true)}
+            />
             <UpcomingSessionsCard
               reservations={client.reservations}
               now={now}
@@ -123,57 +193,32 @@ export default async function ClientDetailPage({
       label: "Bons i pagaments",
       content: (
         <div className="flex flex-col gap-6">
-          <Panel
-            title="Bons"
-            action={
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3 px-1">
+              <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">Bons</h2>
               <Link href={`/admin/clients/${client.id}/bonos/new`} className={`${PANEL_ACTION} ${TAP}`}>
                 + Afegir bo
               </Link>
-            }
-          >
-            {client.bonos.length === 0 ? (
-              <Empty>Sense bons.</Empty>
-            ) : (
-              client.bonos.map((b) => (
-                <Row key={b.id}>
-                  <span className="font-bold text-brand-dark">{SERVICE_LABELS[b.serviceType]}</span>
-                  <span className="text-brand-muted">
-                    {b.remainingSessions} / {b.totalSessions} sessions
-                  </span>
-                  <span>{formatEur(b.price)}</span>
-                  {b.expiresAt && (
-                    <span className="text-xs text-brand-muted">
-                      {b.status === "expired" ? "va caducar" : "caduca"} el {formatDate(b.expiresAt)}
-                    </span>
-                  )}
-                  <Badge
-                    tone={
-                      b.status === "active"
-                        ? "success"
-                        : b.status === "expired" || b.status === "unpaid"
-                          ? "danger"
-                          : "neutral"
-                    }
-                  >
-                    {BONO_STATUS_LABELS[b.status]}
-                  </Badge>
-                </Row>
-              ))
-            )}
-          </Panel>
+            </div>
+            {subscription && <SubscriptionCard sub={subscription} />}
+            <ClientBonoList bonos={client.bonos} today={today} actions={(b) => bonoActions(b, false)} />
+          </section>
           <Panel title="Pagaments">
             {client.payments.length === 0 ? (
               <Empty>Sense pagaments.</Empty>
             ) : (
-              client.payments.map((p) => (
-                <Row key={p.id}>
-                  <span className="font-bold text-brand-dark">{formatDate(p.paidAt)}</span>
-                  <span className="font-bold">{formatEur(p.amount)}</span>
-                  <Badge tone="neutral" icon={p.method === "card" ? "card" : "cash"}>
-                    {PAYMENT_METHOD_LABELS[p.method]}
-                  </Badge>
-                </Row>
-              ))
+              client.payments
+                .slice()
+                .sort((x, y) => y.paidAt.localeCompare(x.paidAt))
+                .map((p) => (
+                  <Row key={p.id}>
+                    <span className="font-bold text-brand-dark">{formatDate(p.paidAt)}</span>
+                    <span className="font-bold tabular-nums">{formatEur(p.amount)}</span>
+                    <Badge tone="neutral" icon={p.method === "card" ? "card" : "cash"}>
+                      {PAYMENT_METHOD_LABELS[p.method]}
+                    </Badge>
+                  </Row>
+                ))
             )}
           </Panel>
         </div>
@@ -287,6 +332,11 @@ export default async function ClientDetailPage({
         needsHealthConsent={needsHealthConsent}
       />
 
+      {/*
+        Aquí també es cobra i s'anul·la: la piloteta del menú es posa al dia
+        amb el recompte del centre cada cop que la pàgina es torna a pintar.
+      */}
+      {centerCollectable !== null && <CollectableBonosAnnouncer count={centerCollectable} />}
       <InPageTabs tabs={tabs} ariaLabel="Seccions de la fitxa" />
     </main>
   );

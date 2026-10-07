@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/auth";
 import { getClient } from "@/lib/data/clients";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createBono, markBonoPaid, cancelBono } from "@/lib/data/bonos";
+import { createBono, markBonoPaid, cancelBono, getBonoClientId } from "@/lib/data/bonos";
 import type { MarkPaidState } from "@/components/forms/mark-bono-paid-button";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
@@ -117,6 +117,10 @@ export async function markBonoPaidAction(
   if (!bonoId) return { error: "Falta el bo." };
   const method = parseCounterMethod(formData.get("method"));
   if (!method) return { error: BAD_METHOD };
+  // Des de la fitxa del client també es cobra: la seva pàgina s'ha de
+  // refrescar amb el bo actiu i el pagament nou. Només hi decideix QUINA
+  // pàgina es refresca, no si es pot cobrar.
+  const clientId = await getBonoClientId(bonoId);
   try {
     await markBonoPaid(bonoId, { method });
   } catch (e) {
@@ -124,6 +128,7 @@ export async function markBonoPaidAction(
     // la pàgina d'error genèrica (en producció, Next n'amaga el text).
     return { error: e instanceof Error ? e.message : "No s'ha pogut cobrar." };
   }
+  if (clientId) revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/admin/bonos");
   revalidatePath("/admin/pagos");
   return { error: null, done: true };
@@ -142,7 +147,9 @@ export async function cancelBonoAction(formData: FormData) {
   if (!(await requireRole("admin"))) return;
   const bonoId = String(formData.get("bonoId") ?? "");
   if (!bonoId) return;
+  const clientId = await getBonoClientId(bonoId);
   await cancelBono(bonoId, { isAdmin: true });
+  if (clientId) revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/admin/bonos");
   revalidatePath("/admin/pagos");
 }

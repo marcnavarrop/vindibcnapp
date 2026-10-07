@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { getViewer } from "@/lib/auth";
-import { Badge } from "@/components/ui/badge";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
-import { getClient, listTrainers } from "@/lib/data/clients";
+import { getClient, listTrainers, type ClientBono } from "@/lib/data/clients";
+import { ClientBonoList } from "@/components/client-file/bonos";
 import { AssignTrainerForm } from "@/components/forms/assign-trainer-form";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
@@ -20,7 +20,7 @@ import {
   TagsEditor,
   TrainerLine,
 } from "@/components/client-file/header-parts";
-import { Empty, Panel, PANEL_ACTION, Row } from "@/components/client-file/panel";
+import { Panel, PANEL_ACTION } from "@/components/client-file/panel";
 import { BonosSummaryCard, NotesCard, TrainingCard, UpcomingSessionsCard } from "@/components/client-file/resum";
 import { SessionsList } from "@/components/client-file/sessions";
 import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
@@ -44,11 +44,6 @@ import { countCenterCollectableBonos } from "@/lib/data/bonos";
 import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { toggleClientTagAction } from "@/app/(admin)/admin/etiquetes/actions";
 import { centerToday } from "@/lib/center-time";
-import {
-  SERVICE_LABELS,
-  BONO_STATUS_LABELS,
-  formatEur,
-} from "@/lib/labels";
 import { TAP } from "@/lib/utils";
 import type { BonoStatus } from "@/types/database";
 
@@ -130,6 +125,51 @@ export default async function TrainerClientDetailPage({
   const today = centerToday();
   const now = new Date().toISOString();
 
+  /*
+    CAP DELS DOS BOTONS VA LLIGAT A `canManage`, i és a posta.
+
+    Des de la 0085, cobrar un bo no depèn de qui tingui el client assignat: qui
+    el té al davant amb els diners a la mà no sempre és qui el té assignat.
+    Anul·lar tampoc, però sí que té sostre —un bo ja cobrat és de l'admin—, i
+    això ho decideix `cancelBlockFor`, no aquesta fitxa.
+
+    Són els mateixos components que fa servir la taula de Bons, amb els seus
+    diàlegs. Sense nom de client a posta: som dins de la seva fitxa. Al Resum
+    (`summary`), només als bons per cobrar.
+  */
+  const bonoActions = (b: ClientBono, summary: boolean) => {
+    const pay = canCollect(b);
+    if (summary && !pay) return null;
+    const cancel = canCancelBono(b);
+    if (!pay && !cancel) return null;
+    return (
+      <>
+        {cancel && (
+          <CancelBonoButton
+            action={cancelTrainerBonoAction}
+            bonoId={b.id}
+            serviceType={b.serviceType}
+            price={b.price}
+            totalSessions={b.totalSessions}
+            status={b.status}
+          />
+        )}
+        {pay && (
+          <MarkBonoPaidButton
+            action={markTrainerBonoPaidAction}
+            bonoId={b.id}
+            serviceType={b.serviceType}
+            price={b.price}
+            remainingSessions={b.remainingSessions}
+            totalSessions={b.totalSessions}
+            status={b.status}
+            expired={!!b.expiresAt && b.expiresAt < today}
+          />
+        )}
+      </>
+    );
+  };
+
   const tabs = [
     {
       label: "Resum",
@@ -140,6 +180,7 @@ export default async function TrainerClientDetailPage({
               bonos={client.bonos}
               today={today}
               addHref={canManage ? `/trainer/bonos/new?clientId=${client.id}` : undefined}
+              actions={(b) => bonoActions(b, true)}
             />
             <UpcomingSessionsCard
               reservations={client.reservations}
@@ -156,94 +197,21 @@ export default async function TrainerClientDetailPage({
       ),
     },
     {
-      // Sense pagaments: el professional no els veu (decisió P2, igual que abans).
+      // Sense pagaments ni subscripció: el professional no en veu els imports
+      // (decisió P2, igual que abans).
       label: "Bons i pagaments",
       content: (
-        <Panel
-          title="Bons"
-          action={
-            canManage && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">Bons</h2>
+            {canManage && (
               <Link href={`/trainer/bonos/new?clientId=${client.id}`} className={`${PANEL_ACTION} ${TAP}`}>
                 + Afegir bo
               </Link>
-            )
-          }
-        >
-          {client.bonos.length === 0 ? (
-            <Empty>Sense bons.</Empty>
-          ) : (
-            client.bonos.map((b) => (
-              <Row key={b.id}>
-                <span className="font-bold text-brand-dark">
-                  {SERVICE_LABELS[b.serviceType]}
-                </span>
-                <span className="text-brand-muted">
-                  {b.remainingSessions} / {b.totalSessions} sessions
-                </span>
-                <span>{formatEur(b.price)}</span>
-                <Badge
-                  icon={b.status === "pending_payment" ? "pending" : undefined}
-                  tone={
-                    b.status === "active"
-                      ? "success"
-                      : b.status === "pending_payment"
-                        ? "attention"
-                        : // Decaigut i caducat no són neutrals com "completat":
-                          // hi ha sessions pagades que s'han perdut. Mateix
-                          // criteri que les dues taules de bons.
-                          b.status === "unpaid" || b.status === "expired"
-                          ? "danger"
-                          : "neutral"
-                  }
-                >
-                  {BONO_STATUS_LABELS[b.status]}
-                </Badge>
-                {/*
-                  CAP DELS DOS BOTONS VA LLIGAT A `canManage`, i és a posta.
-
-                  Des de la 0085, cobrar un bo no depèn de qui tingui el client
-                  assignat: qui el té al davant amb els diners a la mà no sempre
-                  és qui el té assignat. Anul·lar tampoc, però sí que té sostre
-                  —un bo ja cobrat és de l'admin—, i això ho decideix
-                  `cancelBlockFor`, no aquesta fitxa.
-
-                  El que segueix lligat a `canManage` és la resta: afegir un bo,
-                  crear reserves, assignar exercicis i posar etiquetes.
-
-                  Són els mateixos components que fa servir la taula de
-                  l'administració, amb els seus diàlegs. Sense nom de client a
-                  posta: som dins de la seva fitxa.
-                */}
-                {(canCollect(b) || canCancelBono(b)) && (
-                  <span className="ml-auto flex items-center gap-2">
-                    {canCollect(b) && (
-                      <MarkBonoPaidButton
-                        action={markTrainerBonoPaidAction}
-                        bonoId={b.id}
-                        serviceType={b.serviceType}
-                        price={b.price}
-                        remainingSessions={b.remainingSessions}
-                        totalSessions={b.totalSessions}
-                        status={b.status}
-                        expired={!!b.expiresAt && b.expiresAt < today}
-                      />
-                    )}
-                    {canCancelBono(b) && (
-                      <CancelBonoButton
-                        action={cancelTrainerBonoAction}
-                        bonoId={b.id}
-                        serviceType={b.serviceType}
-                        price={b.price}
-                        totalSessions={b.totalSessions}
-                        status={b.status}
-                      />
-                    )}
-                  </span>
-                )}
-              </Row>
-            ))
-          )}
-        </Panel>
+            )}
+          </div>
+          <ClientBonoList bonos={client.bonos} today={today} actions={(b) => bonoActions(b, false)} />
+        </section>
       ),
     },
     {

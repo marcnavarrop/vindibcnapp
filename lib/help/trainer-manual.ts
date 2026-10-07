@@ -254,12 +254,12 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Resum" },
         {
           t: "p",
-          text: "El que fas cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar, amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». Si el client és teu, «+ Nova reserva» obre el formulari amb ell ja posat. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
+          text: "El que fas cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix (sigui teu o no el client), i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». Si el client és teu, «+ Nova reserva» obre el formulari amb ell ja posat. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
         },
         { t: "h", text: "Bons i pagaments" },
         {
           t: "p",
-          text: "Tots els bons del client amb el servei, les sessions consumides sobre el total, el preu i l'estat. Si el client és teu, hi tens «+ Afegir bo» per vendre-n'hi un de nou. A cada bo pendent de cobrament hi ha «Marcar com pagat», per quan el client paga al centre en efectiu o amb targeta al datàfon, sigui teu o no. Els pagaments del client no surten aquí: els porta l'administració.",
+          text: "Els bons del client en targetes: a dalt els vius (per cobrar primer), i els acabats plegats a «Veure els bons acabats». Si el client és teu, hi tens «+ Afegir bo» per vendre-n'hi un de nou. A cada bo pendent de cobrament hi ha «Marcar com pagat», per quan el client paga al centre en efectiu o amb targeta al datàfon, i «Anul·lar», sigui teu o no el client. Un bo ja cobrat no el pots anul·lar: és de l'administració. Els pagaments i la subscripció del client no surten aquí: els porta l'administració.",
         },
         {
           t: "warn",

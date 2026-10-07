@@ -358,11 +358,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Resum",
-              "El que es fa cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar, amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». «+ Nova reserva» obre el formulari amb aquesta persona i el seu professional ja posats. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
+              "El que es fa cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix, i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». «+ Nova reserva» obre el formulari amb aquesta persona i el seu professional ja posats. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
             ],
             [
               "Bons i pagaments",
-              "Tots els seus bons amb sessions restants, preu, caducitat i estat. «+ Afegir bo» ven un bo nou a aquesta persona, amb el preu que li toca a ELLA (ofertes segmentades incloses). A sota, cada cobrament amb data, import i mètode.",
+              "Els bons en targetes: a dalt els vius (per cobrar primer), i els acabats plegats a «Veure els bons acabats». Cada bo porta els seus botons, els mateixos que a la taula de Bons i amb la mateixa confirmació: «Marcar com pagat» (o «Cobrar i recuperar» / «Només cobrar» si ha decaigut) i «Anul·lar», que també surt als ja cobrats que no s'han començat a gastar. «+ Afegir bo» ven un bo nou a aquesta persona, amb el preu que li toca a ELLA (ofertes segmentades incloses). Si té una subscripció viva, una targeta de només lectura amb el paquet, l'import, l'estat i la propera renovació o la represa; es gestiona a Subscripcions. A sota, cada cobrament amb data, import i mètode, del més nou al més antic.",
             ],
             [
               "Sessions",
