@@ -35,15 +35,6 @@ export function Empty({ children }: { children: React.ReactNode }) {
   return <p className="px-5 py-3 text-sm text-brand-muted">{children}</p>;
 }
 
-export function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-brand-border bg-white p-5">
-      <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">{label}</div>
-      <div className="mt-1 text-lg font-bold text-brand-dark">{value}</div>
-    </div>
-  );
-}
-
 /** El rètol d'una acció en text a la capçalera d'un panell («+ Afegir bo»). */
 export const PANEL_ACTION =
   "text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline";

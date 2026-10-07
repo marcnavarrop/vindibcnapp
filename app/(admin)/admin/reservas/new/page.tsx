@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ReservationForm } from "@/components/forms/reservation-form";
 import { listTrainers } from "@/lib/data/clients";
+import { getBookableClient } from "@/lib/data/slot-booking";
 import { TAP } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -8,11 +9,15 @@ export const dynamic = "force-dynamic";
 export default async function NewReservationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ at?: string; trainer?: string }>;
+  searchParams: Promise<{ at?: string; trainer?: string; client?: string }>;
 }) {
-  const { at, trainer } = await searchParams;
+  const { at, trainer, client } = await searchParams;
   // Els clients ja no es carreguen aquí: el formulari els busca al servidor.
-  const trainers = await listTrainers();
+  // `?client=` arriba de la fitxa del client: es posa ja triat.
+  const [trainers, defaultClient] = await Promise.all([
+    listTrainers(),
+    client ? getBookableClient(client, null) : Promise.resolve(null),
+  ]);
 
   return (
       <main className="mx-auto max-w-5xl p-6">
@@ -31,6 +36,7 @@ export default async function NewReservationPage({
           // El calendari només l'envia quan la franja assenyala un sol
           // professional; la resta de vegades no arriba i el camp surt buit.
           defaultTrainerId={trainer}
+          defaultClient={defaultClient}
         />
       </main>
   );

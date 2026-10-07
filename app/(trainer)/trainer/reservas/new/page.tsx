@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { ReservationForm } from "@/components/forms/reservation-form";
 import { listTrainers } from "@/lib/data/clients";
-import { listBookableClients } from "@/lib/data/slot-booking";
+import { getBookableClient, listBookableClients } from "@/lib/data/slot-booking";
 import { createTrainerReservationAction } from "@/app/(trainer)/trainer/reservas/actions";
 import { TAP } from "@/lib/utils";
 
@@ -11,15 +11,17 @@ export const dynamic = "force-dynamic";
 export default async function NewTrainerReservationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ at?: string }>;
+  searchParams: Promise<{ at?: string; client?: string }>;
 }) {
-  const { at } = await searchParams;
+  const { at, client: clientParam } = await searchParams;
   const viewer = await getViewer();
   // Només cal saber si en té cap: el formulari els busca al servidor, i el
   // buscador només li ensenya els seus assignats.
-  const [trainers, clients] = await Promise.all([
+  // `?client=` arriba de la fitxa del client: es posa ja triat, si és seu.
+  const [trainers, clients, defaultClient] = await Promise.all([
     listTrainers(),
     viewer ? listBookableClients(viewer.id) : Promise.resolve([]),
+    viewer && clientParam ? getBookableClient(clientParam, viewer.id) : Promise.resolve(null),
   ]);
 
   return (
@@ -57,6 +59,7 @@ export default async function NewTrainerReservationPage({
              * assignar-la a un altre.
              */
             defaultTrainerId={viewer?.id}
+            defaultClient={defaultClient}
           />
         )}
       </main>

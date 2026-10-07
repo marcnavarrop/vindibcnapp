@@ -2,12 +2,15 @@ import Link from "next/link";
 import { TAP } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Empty, Info, Panel, PANEL_ACTION, Row } from "@/components/client-file/panel";
+import { Empty, Panel, PANEL_ACTION, Row } from "@/components/client-file/panel";
+import { BonosSummaryCard, NotesCard, TrainingCard, UpcomingSessionsCard } from "@/components/client-file/resum";
+import { SessionsList } from "@/components/client-file/sessions";
 import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
 import { ClientTagsPanel } from "@/components/client-tags-panel";
 import { AssignTrainerForm } from "@/components/forms/assign-trainer-form";
 import { getClient, listTrainers } from "@/lib/data/clients";
+import { centerToday } from "@/lib/center-time";
 import { listClientExercises } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
 import { listExercises } from "@/lib/data/exercises";
@@ -38,7 +41,6 @@ import {
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
-  RESERVATION_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
   formatEur,
   formatDate,
@@ -86,23 +88,34 @@ export default async function ClientDetailPage({
   const needsHealthConsent = receivesFisio && !consent.healthDataAt;
 
   const redirectPath = `/admin/clients/${id}`;
+  // El dia i l'instant del CENTRE, decidits al servidor: quines sessions són
+  // properes i quins bons han passat de data.
+  const today = centerToday();
+  const now = new Date().toISOString();
   const assignedTagIds = new Set(clientTags.map((t) => t.id));
 
   const tabs = [
     {
       label: "Resum",
       content: (
-        <div className="flex flex-col gap-6">
-          <section className="grid gap-4 sm:grid-cols-2">
-            <Info label="Bons actius" value={String(client.activeBonos)} />
-            <Info label="Sessions restants" value={String(client.remainingSessions)} />
-          </section>
-          {(client.clinicalNotes || client.generalNotes) && (
-            <ClientNotesPanel
+        <div className="grid items-start gap-4 lg:grid-cols-[1.25fr_1fr]">
+          <div className="flex flex-col gap-4">
+            <BonosSummaryCard bonos={client.bonos} today={today} addHref={`/admin/clients/${client.id}/bonos/new`} />
+            <UpcomingSessionsCard
+              reservations={client.reservations}
+              now={now}
+              clientId={client.id}
+              newHref={`/admin/reservas/new?client=${client.id}${client.assignedTrainerId ? `&trainer=${client.assignedTrainerId}` : ""}`}
+            />
+          </div>
+          <div className="flex flex-col gap-4">
+            <NotesCard
               clinicalNotes={client.clinicalNotes}
               generalNotes={client.generalNotes}
+              editHref={`/admin/clients/${client.id}/edit`}
             />
-          )}
+            <TrainingCard assigned={assignedExercises} progress={allProgress} />
+          </div>
         </div>
       ),
     },
@@ -170,20 +183,18 @@ export default async function ClientDetailPage({
       label: "Sessions",
       content: (
         <div className="flex flex-col gap-4">
-          <Panel title="Sessions">
-            {client.reservations.length === 0 ? (
-              <Empty>Sense reserves.</Empty>
-            ) : (
-              client.reservations.map((r) => (
-                <Row key={r.id}>
-                  <span className="font-bold text-brand-dark">{formatDate(r.scheduledAt)}</span>
-                  <span className="text-brand-muted">{SERVICE_LABELS[r.serviceType]}</span>
-                  <Badge tone={r.status === "completed" ? "success" : "info"}>
-                    {RESERVATION_STATUS_LABELS[r.status]}
-                  </Badge>
-                </Row>
-              ))
-            )}
+          <Panel
+            title="Sessions"
+            action={
+              <Link
+                href={`/admin/reservas/new?client=${client.id}${client.assignedTrainerId ? `&trainer=${client.assignedTrainerId}` : ""}`}
+                className={`${PANEL_ACTION} ${TAP}`}
+              >
+                + Nova reserva
+              </Link>
+            }
+          >
+            <SessionsList reservations={client.reservations} now={now} />
           </Panel>
           <NextSessionReminderButton clientId={client.id} />
         </div>

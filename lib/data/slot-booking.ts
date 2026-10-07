@@ -94,6 +94,47 @@ export async function listBookableClients(trainerId: string): Promise<BookableCl
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Un sol client per reservar-li, amb els bons que pot gastar: el que arriba ja
+ * posat al formulari de «Nova reserva» des de la seva fitxa.
+ *
+ * Amb `onlyTrainerId`, només si és assignat a aquest professional, com el
+ * buscador: un professional que arribi amb l'id d'un client d'un company no el
+ * troba posat, i el servidor tampoc no li deixaria reservar (`assertMayBookFor`).
+ */
+export async function getBookableClient(
+  clientId: string,
+  onlyTrainerId: string | null,
+): Promise<BookableClient | null> {
+  if (USE_MOCK) {
+    const s = getStore();
+    const c = s.clients.find(
+      (x) => x.id === clientId && (!onlyTrainerId || x.assigned_trainer_id === onlyTrainerId),
+    );
+    if (!c) return null;
+    return {
+      id: c.id,
+      name: s.profiles.find((p) => p.id === c.profile_id)?.full_name ?? "—",
+      bonos: usable(s.bonos.filter((b) => b.client_id === c.id) as BonoRow[]).map(toBookable),
+    };
+  }
+  const supabase = await createClient();
+  let q = supabase
+    .from("clients")
+    .select(
+      `id,
+       profile:profiles!clients_profile_id_fkey(full_name),
+       bonos(id, client_id, service_type, remaining_sessions, total_sessions, status, expires_at, purchased_at)`,
+    )
+    .eq("id", clientId);
+  if (onlyTrainerId) q = q.eq("assigned_trainer_id", onlyTrainerId);
+  const { data, error } = await q.maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as unknown as { id: string; profile: { full_name: string | null } | null; bonos: BonoRow[] };
+  return { id: row.id, name: row.profile?.full_name ?? "—", bonos: usable(row.bonos).map(toBookable) };
+}
+
 /** El bo que es gastaria: el més antic utilitzable d'aquest servei, o cap. */
 export async function pickUsableBono(
   clientId: string,

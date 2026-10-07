@@ -254,7 +254,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Resum" },
         {
           t: "p",
-          text: "Els bons actius i les sessions restants. Sota, les notes internes si n'hi ha.",
+          text: "El que fas cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar, amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». Si el client és teu, «+ Nova reserva» obre el formulari amb ell ja posat. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
         },
         { t: "h", text: "Bons i pagaments" },
         {
@@ -268,7 +268,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Sessions" },
         {
           t: "p",
-          text: "L'històric de sessions del client amb la data, el servei i l'estat. Si és teu, hi tens la drecera «+ Nova reserva». A sota, «Recordatori de propera sessió» li envia un correu amb la següent que té programada.",
+          text: "En tres piles: Properes (la que s'obre), Passades i Cancel·lades, cadascuna amb el seu comptador. Les cancel·lades no surten si no les demanes. Cada sessió diu el dia, l'hora, el servei i el professional; una de passada que encara consta com a reservada surt amb «Per marcar». En surten 20 i «Mostrar-ne més» n'afegeix 20 més. Si el client és teu, «+ Nova reserva» obre el formulari amb ell ja posat. A sota, «Recordatori de propera sessió» li envia un correu amb la següent que té programada.",
         },
         { t: "h", text: "Entrenament" },
         {
@@ -462,7 +462,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Una reserva nova des del formulari" },
         {
           t: "p",
-          text: "Des de «+ Nova reserva» o des de la fitxa del client. El formulari demana, per ordre:",
+          text: "Des de «+ Nova reserva» o des de la fitxa del client, que el porta ja posat. El formulari demana, per ordre:",
         },
         {
           t: "dl",

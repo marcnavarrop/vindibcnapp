@@ -20,7 +20,9 @@ import {
   TagsEditor,
   TrainerLine,
 } from "@/components/client-file/header-parts";
-import { Empty, Info, Panel, PANEL_ACTION, Row } from "@/components/client-file/panel";
+import { Empty, Panel, PANEL_ACTION, Row } from "@/components/client-file/panel";
+import { BonosSummaryCard, NotesCard, TrainingCard, UpcomingSessionsCard } from "@/components/client-file/resum";
+import { SessionsList } from "@/components/client-file/sessions";
 import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
 import { ClientProgressPanel } from "@/components/client-progress-panel";
 import {
@@ -45,9 +47,7 @@ import { centerToday } from "@/lib/center-time";
 import {
   SERVICE_LABELS,
   BONO_STATUS_LABELS,
-  RESERVATION_STATUS_LABELS,
   formatEur,
-  formatDate,
 } from "@/lib/labels";
 import { TAP } from "@/lib/utils";
 import type { BonoStatus } from "@/types/database";
@@ -128,22 +128,30 @@ export default async function TrainerClientDetailPage({
   // El dia del CENTRE: decideix si un bo decaigut ja ha passat de data, i amb
   // això quin dels dos textos ensenya el diàleg de cobrament.
   const today = centerToday();
+  const now = new Date().toISOString();
 
   const tabs = [
     {
       label: "Resum",
       content: (
-        <div className="flex flex-col gap-6">
-          <section className="grid gap-4 sm:grid-cols-2">
-            <Info label="Bons actius" value={String(client.activeBonos)} />
-            <Info label="Sessions restants" value={String(client.remainingSessions)} />
-          </section>
-          {(client.clinicalNotes || client.generalNotes) && (
-            <ClientNotesPanel
-              clinicalNotes={client.clinicalNotes}
-              generalNotes={client.generalNotes}
+        <div className="grid items-start gap-4 lg:grid-cols-[1.25fr_1fr]">
+          <div className="flex flex-col gap-4">
+            <BonosSummaryCard
+              bonos={client.bonos}
+              today={today}
+              addHref={canManage ? `/trainer/bonos/new?clientId=${client.id}` : undefined}
             />
-          )}
+            <UpcomingSessionsCard
+              reservations={client.reservations}
+              now={now}
+              clientId={client.id}
+              newHref={canManage ? `/trainer/reservas/new?client=${client.id}` : undefined}
+            />
+          </div>
+          <div className="flex flex-col gap-4">
+            <NotesCard clinicalNotes={client.clinicalNotes} generalNotes={client.generalNotes} />
+            <TrainingCard assigned={assignedExercises} progress={allProgress} />
+          </div>
         </div>
       ),
     },
@@ -246,25 +254,13 @@ export default async function TrainerClientDetailPage({
             title="Sessions"
             action={
               canManage && (
-                <Link href="/trainer/reservas/new" className={`${PANEL_ACTION} ${TAP}`}>
+                <Link href={`/trainer/reservas/new?client=${client.id}`} className={`${PANEL_ACTION} ${TAP}`}>
                   + Nova reserva
                 </Link>
               )
             }
           >
-            {client.reservations.length === 0 ? (
-              <Empty>Sense reserves.</Empty>
-            ) : (
-              client.reservations.map((r) => (
-                <Row key={r.id}>
-                  <span className="font-bold text-brand-dark">{formatDate(r.scheduledAt)}</span>
-                  <span className="text-brand-muted">{SERVICE_LABELS[r.serviceType]}</span>
-                  <Badge tone={r.status === "completed" ? "success" : "info"}>
-                    {RESERVATION_STATUS_LABELS[r.status]}
-                  </Badge>
-                </Row>
-              ))
-            )}
+            <SessionsList reservations={client.reservations} now={now} />
           </Panel>
           <NextSessionReminderButton clientId={client.id} />
         </div>

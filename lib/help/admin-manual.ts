@@ -358,7 +358,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Resum",
-              "Els bons actius, les sessions restants i les notes si n'hi ha.",
+              "El que es fa cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar, amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». «+ Nova reserva» obre el formulari amb aquesta persona i el seu professional ja posats. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
             ],
             [
               "Bons i pagaments",
@@ -366,7 +366,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Sessions",
-              "L'historial sencer amb l'estat de cadascuna, i «Recordatori de propera sessió», que li envia un correu amb la propera que té reservada.",
+              "En tres piles: Properes (la que s'obre), Passades i Cancel·lades, cadascuna amb el seu comptador. Les cancel·lades no surten si no les demanes. Cada sessió diu el dia, l'hora, el servei i el professional; una de passada que encara consta com a reservada surt amb «Per marcar». En surten 20 i «Mostrar-ne més» n'afegeix 20 més. «+ Nova reserva» obre el formulari amb el client ja posat, i a sota hi ha «Recordatori de propera sessió».",
             ],
             [
               "Entrenament",

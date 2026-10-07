@@ -21,6 +21,7 @@ export function ReservationForm({
   cancelHref,
   defaultScheduledAt,
   defaultTrainerId,
+  defaultClient,
   emptyClientsHint,
 }: {
   trainers: { id: string; name: string }[];
@@ -50,6 +51,11 @@ export function ReservationForm({
    * valor posat, deixa de ser una decisió i passa a ser una confirmació.
    */
   defaultTrainerId?: string;
+  /**
+   * Client ja posat: el de la fitxa des d'on s'ha tocat «+ Nova reserva». Com
+   * el professional, es preselecciona i es pot canviar.
+   */
+  defaultClient?: BookableClient | null;
   /** Què dir si no surt cap client sense haver escrit res. */
   emptyClientsHint?: string;
 }) {
@@ -57,7 +63,7 @@ export function ReservationForm({
   // El client es busca al servidor (`ClientSearch`): abans el desplegable els
   // portava tots a la pàgina i, passat el miler, en perdia. Qui hi pot sortir
   // ho decideix el rol de qui mira: l'admin, tothom; el professional, els seus.
-  const [client, setClient] = useState<BookableClient | null>(null);
+  const [client, setClient] = useState<BookableClient | null>(defaultClient ?? null);
   const clientId = client?.id ?? "";
   // Cortesia: es regala la sessió. El bo deixa de tenir sentit i el tipus de
   // servei, que amb bo sortia del bo, s'ha de dir a mà.

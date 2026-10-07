@@ -222,6 +222,26 @@ export function formatTime(iso: string, locale?: Locale): string {
   }).format(new Date(iso));
 }
 
+/**
+ * El dia d'una sessió en tres trossos («dc.», «8», «d’oct.»), per a la
+ * casella de data de la fitxa del client. En hora del centre: una sessió de
+ * les 00:30 no pot sortir el dia d'abans perquè el servidor va en UTC.
+ */
+export function sessionDayParts(
+  iso: string,
+  locale?: Locale,
+): { weekday: string; day: string; month: string } {
+  const parts = new Intl.DateTimeFormat(intlLocale(locale), {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    ...CENTER_DATE_PARTS,
+  }).formatToParts(new Date(iso));
+  const get = (t: Intl.DateTimeFormatPartTypes) => parts.find((x) => x.type === t)?.value ?? "";
+  // «d’oct.» → «oct.»: a la casella no hi ha frase on encaixar la preposició.
+  return { weekday: get("weekday"), day: get("day"), month: get("month").replace(/^(de |d’)/, "") };
+}
+
 /** Mes abreujat ("ag.", "set."), per als calendaris compactes. */
 export function formatMonthShort(iso: string, locale?: Locale): string {
   return new Intl.DateTimeFormat(intlLocale(locale), {
