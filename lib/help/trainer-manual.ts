@@ -85,7 +85,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Quan obris la fitxa d'un client que no és teu, hi veuràs una marca «Només consulta · pots cobrar-li bons» a dalt a la dreta, i els botons de gestió no hi seran. Diu això i no «Només lectura» perquè hi ha una excepció, i és la del capítol de Bons: cobrar-li un bo pendent sí que ho pots fer, sigui de qui sigui. La resta, no. No és una decisió de la pantalla: la base de dades comprova el mateix, així que encara que el botó sortís, el desat fallaria.",
+          text: "Quan obris la fitxa d'un client que no és teu, hi veuràs una línia gris sota el contacte —«Client de …. Pots consultar-ho tot i cobrar-li bons»—, i els botons de gestió no hi seran. Diu això i no «Només lectura» perquè hi ha una excepció, i és la del capítol de Bons: cobrar-li un bo pendent sí que ho pots fer, sigui de qui sigui. La resta, no. No és una decisió de la pantalla: la base de dades comprova el mateix, així que encara que el botó sortís, el desat fallaria.",
         },
         { t: "h", text: "El que no pots canviar tu" },
         {
@@ -219,87 +219,80 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "A dalt hi ha el nom, el correu, el telèfon, el botó de WhatsApp i les etiquetes que té posades. Sota, nou pestanyes. Si el client no és teu, la marca «Només consulta · pots cobrar-li bons» surt a la dreta del nom i les accions de cada pestanya desapareixen, menys el cobrament dels bons pendents.",
+          text: "A dalt, la capçalera: el nom, qui el porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes. La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
+        },
+        {
+          t: "p",
+          text: "Si el client no és teu, sota el contacte hi surt una línia gris: «Client de …. Pots consultar-ho tot i cobrar-li bons; la resta, el seu professional.» Les accions de cada pestanya desapareixen, menys el cobrament i l'anul·lació dels bons pendents.",
         },
         {
           t: "warn",
-          text: "Si el client rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la fitxa s'obre amb un avís blau fosc ben visible. Mentre hi sigui, no hi registris notes mèdiques ni dades de salut: ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Si el client rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera porta una franja blau fosc curta; «Més info» la desplega. Mentre hi sigui, no hi registris notes mèdiques ni dades de salut: ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+        },
+        { t: "h", text: "La capçalera" },
+        {
+          t: "dl",
+          items: [
+            [
+              "Professional",
+              "Qui el porta. «Canviar» obre el desplegable allà mateix i «Desar» el canvia. Ho pot fer qualsevol de l'equip, també amb un client que ara mateix no és seu: és el cas per al qual es va fer, cobrir una baixa o repartir-se l'agenda un dia que falta algú. La resta d'accions de la fitxa segueixen depenent de si el client és teu.",
+            ],
+            [
+              "Etiquetes",
+              "Marques curtes per organitzar la cartera. Si el client és teu, «+ Etiqueta» (o «Etiquetes», si ja en té) obre el panell per posar-li i treure-li les que hi hagi al catàleg; crear-ne de noves és cosa de l'administració, perquè un catàleg on cadascú hi afegeix la seva versió del mateix concepte deixa de servir per filtrar.",
+            ],
+            [
+              "Contacte",
+              "El correu i el telèfon en text, per copiar-los, i tres botons: WhatsApp, Trucar i Correu. WhatsApp i Trucar només surten si té telèfon.",
+            ],
+            [
+              "Més",
+              "«Reenviar invitació»: un nou correu d'accés, per quan el primer va caducar o no va arribar mai. Diu allà mateix si ha anat bé.",
+            ],
+          ],
         },
         { t: "h", text: "Resum" },
         {
           t: "p",
-          text: "El selector de professional assignat, els bons actius i les sessions restants. Sota, les notes internes si n'hi ha.",
+          text: "Els bons actius i les sessions restants. Sota, les notes internes si n'hi ha.",
         },
+        { t: "h", text: "Bons i pagaments" },
         {
           t: "p",
-          text: "Reassignar el professional el pot fer qualsevol de l'equip, també amb un client que ara mateix no és seu. És el cas per al qual es va fer: cobrir una baixa o repartir-se l'agenda un dia que falta algú. En canvi la resta d'accions de la fitxa segueixen depenent de si el client és teu.",
-        },
-        { t: "h", text: "Bons" },
-        {
-          t: "p",
-          text: "Tots els bons del client amb el servei, les sessions consumides sobre el total, el preu i l'estat. Si el client és teu, hi tens «+ Afegir bo» per vendre-n'hi un de nou, i el botó «Marcar com pagat» a cada bo que estigui pendent de cobrament, per quan el client paga al centre en efectiu o amb targeta al datàfon.",
+          text: "Tots els bons del client amb el servei, les sessions consumides sobre el total, el preu i l'estat. Si el client és teu, hi tens «+ Afegir bo» per vendre-n'hi un de nou. A cada bo pendent de cobrament hi ha «Marcar com pagat», per quan el client paga al centre en efectiu o amb targeta al datàfon, sigui teu o no. Els pagaments del client no surten aquí: els porta l'administració.",
         },
         {
           t: "warn",
           text: "«Marcar com pagat» demana confirmació abans de fer res: el primer clic obre un resum amb el servei, les sessions i l'import, i fins que no el confirmes no s'ha cobrat res. Al mateix quadre tries com ha pagat: «Efectiu» ve marcat i l'altra opció és «Targeta (TPV)». Un cop confirmat, el bo passa a actiu, les sessions queden disponibles a l'instant i s'anota el pagament amb el mètode triat. Això sí que no es desfà des d'aquí: si t'equivoques de bo, avisa l'administració.",
         },
-        { t: "h", text: "Reserves" },
+        { t: "h", text: "Sessions" },
         {
           t: "p",
-          text: "L'històric de sessions del client amb la data, el servei i l'estat. Si és teu, hi tens la drecera «+ Nova reserva».",
+          text: "L'històric de sessions del client amb la data, el servei i l'estat. Si és teu, hi tens la drecera «+ Nova reserva». A sota, «Recordatori de propera sessió» li envia un correu amb la següent que té programada.",
         },
-        { t: "h", text: "Exercicis" },
+        { t: "h", text: "Entrenament" },
         {
           t: "p",
           text: "Els exercicis que té assignats i, si el client és teu, el formulari per assignar-ne un de la biblioteca amb una nota de pauta al costat («3 sèries de 12, dos cops/setmana» és l'exemple que hi surt). També pots treure'n un amb «Treure»: pregunta abans, perquè s'endú el progrés que s'hi hagi registrat.",
         },
         {
           t: "note",
-          text: "Assignar un exercici NO avisa el client. L'avís s'envia a mà des de la pestanya Notificacions, amb el botó «Notificar exercicis nous». És així a posta: qui munta una taula sencera no vol enviar dotze correus, un per exercici.",
+          text: "Assignar un exercici NO avisa el client. L'avís s'envia a mà amb «Notificar exercicis nous», just a sota dels exercicis. És així a posta: qui munta una taula sencera no vol enviar dotze correus, un per exercici.",
         },
-        { t: "h", text: "Progrés" },
         {
           t: "p",
-          text: "Les mesures registrades per a cada exercici assignat: data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne: s'esborra al moment i, uns segons, surt «Desfer». És on es veu si el que li has posat està funcionant.",
+          text: "Més avall, el progrés: les mesures registrades per a cada exercici assignat, amb data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne: s'esborra al moment i, uns segons, surt «Desfer». És on es veu si el que li has posat està funcionant.",
         },
-        { t: "h", text: "Documents" },
+        { t: "h", text: "Notes i documents" },
+        {
+          t: "p",
+          text: "Dues caixes separades: les notes clíniques, amb la vora verda i la creu sanitària, i les generals. Les pots llegir, però no escriure —les edita l'administració—. El que sí que escrius tu és la nota de cada sessió, que té el seu propi capítol.",
+        },
         {
           t: "p",
           text: s.modules.documents
-            ? "Els fitxers que ha pujat el client a la seva àrea —informes, proves mèdiques, el que sigui—. Els pots obrir i descarregar, però no pujar-ne: aquesta safata és seva i la gestiona ell."
-            : "El mòdul de documents està desactivat al centre, així que aquesta pestanya sempre sortirà buida: els clients no tenen la pantalla on pujar-ne. Si es torna a activar, aquí hi veuràs el que hagin pujat.",
-        },
-        { t: "h", text: "Etiquetes" },
-        {
-          t: "p",
-          text: "Marques curtes per organitzar la cartera. Si el client és teu, li pots posar i treure les que hi hagi al catàleg; crear-ne de noves és cosa de l'administració, perquè un catàleg on cadascú hi afegeix la seva versió del mateix concepte deixa de servir per filtrar.",
-        },
-        { t: "h", text: "Notes" },
-        {
-          t: "p",
-          text: "Dues caixes separades: les notes clíniques, amb la vora verda i la creu sanitària, i les generals. Les pots llegir, però no escriure —les edita l'administració des del formulari del client—. El que sí que escrius tu és la nota de cada sessió, que té el seu propi capítol.",
-        },
-        { t: "h", text: "Notificacions" },
-        {
-          t: "p",
-          text: "Tres avisos que s'envien quan tu ho decideixis, amb un botó cadascun:",
-        },
-        {
-          t: "dl",
-          items: [
-            [
-              "Reenviar invitació",
-              "Un nou correu d'accés. Per quan el primer va caducar o no va arribar mai.",
-            ],
-            [
-              "Notificar exercicis nous",
-              "Avisa el client que té exercicis nous a la seva àrea.",
-            ],
-            [
-              "Recordatori de propera sessió",
-              "Li recorda la següent sessió que té programada.",
-            ],
-          ],
+            ? "A sota, els fitxers que ha pujat el client a la seva àrea —informes, proves mèdiques, el que sigui—. Els pots obrir i descarregar, però no pujar-ne: aquesta safata és seva i la gestiona ell."
+            : "El mòdul de documents està desactivat al centre, així que la llista de documents sempre sortirà buida: els clients no tenen la pantalla on pujar-ne. Si es torna a activar, aquí hi veuràs el que hagin pujat.",
         },
       ],
     },
@@ -731,7 +724,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "Assignar exercicis a una persona no es fa des d'aquí sinó des de la seva fitxa, a la pestanya Exercicis. Aquesta pantalla és el catàleg; l'assignació és cosa de cada client.",
+          text: "Assignar exercicis a una persona no es fa des d'aquí sinó des de la seva fitxa, a la pestanya Entrenament. Aquesta pantalla és el catàleg; l'assignació és cosa de cada client.",
         },
       ],
     },
@@ -761,7 +754,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons, i això sí que és només per als clients que tens assignats. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
+          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons i pagaments, i això sí que és només per als clients que tens assignats. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
         },
         { t: "h", text: "Els paquets que no es venen solts" },
         {
@@ -1017,7 +1010,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "No em deixa crear una reserva a un client" },
         {
           t: "p",
-          text: "Comprova que el client és teu —a la seva fitxa, que no hi surti «Només lectura»— i que té algun bo actiu amb sessions. Els clients sense bons disponibles no surten a la llista del formulari.",
+          text: "Comprova que el client és teu —a la seva fitxa, que no hi surti la línia «Client de …»— i que té algun bo actiu amb sessions. Els clients sense bons disponibles no surten a la llista del formulari.",
         },
         { t: "h", text: "Un client diu que no pot reservar la seva hora" },
         {

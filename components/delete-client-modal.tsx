@@ -10,11 +10,24 @@ import { TAP, TAP_SURFACE } from "@/lib/utils";
 export function DeleteClientModal({
   clientId,
   clientName,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   clientId: string;
   clientName: string;
+  /**
+   * Obert des de fora, sense el botó propi. La fitxa l'obre des del menú
+   * «Més»: eliminar és infreqüent i irreversible, i no ha de tenir el mateix
+   * pes que Editar a la capçalera.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [ownOpen, setOwnOpen] = useState(false);
+  const controlled = controlledOpen !== undefined;
+  const open = controlled ? controlledOpen : ownOpen;
+  const setOpen = (v: boolean) =>
+    controlled ? onOpenChange?.(v) : setOwnOpen(v);
   const [typed, setTyped] = useState("");
   const [state, formAction] = useActionState(
     deleteClientAction.bind(null, clientId),
@@ -26,20 +39,22 @@ export function DeleteClientModal({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        /*
-         * `shrink-0 whitespace-nowrap` com els seus dos companys de fila.
-         * Sense això era l'ÚNIC dels tres que podia encongir, així que
-         * absorbia tota la compressió ell sol: el text es partia en dues
-         * línies, el botó creixia a 58px d'alt contra els 38 dels altres i
-         * l'`items-center` de la fila els descentrava a tots.
-         */
-        className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-error/40 bg-white px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-error uppercase transition-colors hover:bg-error/10 ${TAP}`}
-      >
-        Eliminar client
-      </button>
+      {!controlled && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          /*
+           * `shrink-0 whitespace-nowrap` com els seus dos companys de fila.
+           * Sense això era l'ÚNIC dels tres que podia encongir, així que
+           * absorbia tota la compressió ell sol: el text es partia en dues
+           * línies, el botó creixia a 58px d'alt contra els 38 dels altres i
+           * l'`items-center` de la fila els descentrava a tots.
+           */
+          className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-error/40 bg-white px-4 py-2 text-sm font-bold tracking-wide whitespace-nowrap text-error uppercase transition-colors hover:bg-error/10 ${TAP}`}
+        >
+          Eliminar client
+        </button>
+      )}
 
       {open && (
         <div

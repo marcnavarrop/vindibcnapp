@@ -302,7 +302,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Notes clíniques",
-              "Dades de salut. Abans d'escriure-n'hi cap, comprova que el client hagi acceptat el consentiment de dades de salut: si no, la fitxa t'avisa amb un requadre blau fosc.",
+              "Dades de salut. Abans d'escriure-n'hi cap, comprova que el client hagi acceptat el consentiment de dades de salut: si no, la fitxa t'avisa amb una franja blau fosc a la capçalera.",
             ],
             [
               "Notes generals",
@@ -324,27 +324,27 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Tot el que el centre sap d'una persona, en una pantalla. A dalt hi ha el nom, el correu, el telèfon amb l'enllaç a WhatsApp i les etiquetes que porti; a la dreta, tres botons; i a sota, deu pestanyes.",
+          text: "Tot el que el centre sap d'una persona, en una pantalla. A dalt, la capçalera: el nom, qui la porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes. La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
         },
-        {
-          t: "p",
-          text: "Les etiquetes surten a la capçalera i no només a la seva pestanya perquè dirigeixen ofertes: canvien el preu que veu aquesta persona. Amagades sota una pestanya, ningú les recordaria en obrir la fitxa.",
-        },
-        { t: "h", text: "Els tres botons de dalt" },
+        { t: "h", text: "La capçalera" },
         {
           t: "dl",
           items: [
             [
-              "Exportar dades",
-              "Descarrega en un fitxer tot el que el centre té d'aquesta persona. Es tracta al capítol de dades personals.",
+              "Professional",
+              "Qui porta aquesta persona. «Canviar» obre el desplegable aquí mateix, sense passar per «Editar», i «Desar» el canvia.",
             ],
             [
-              "Editar",
-              "El formulari d'alta, amb el correu bloquejat.",
+              "Etiquetes",
+              "Les que porta, a la vista, perquè dirigeixen ofertes: canvien el preu que veu aquesta persona. «+ Etiqueta» (o «Etiquetes», si ja en té) obre el panell per marcar-ne i desmarcar-ne del catàleg, i per crear-ne una de nova sense sortir de la fitxa.",
             ],
             [
-              "Eliminar client",
-              "Supressió definitiva, amb doble confirmació. També al capítol de dades personals.",
+              "Contacte",
+              "El correu i el telèfon en text, per copiar-los, i tres botons: WhatsApp, Trucar i Correu. WhatsApp i Trucar només surten si té telèfon.",
+            ],
+            [
+              "Més",
+              "Editar dades (el formulari d'alta, amb el correu bloquejat), Exportar dades, Reenviar invitació (diu allà mateix si ha anat bé) i Eliminar client, en vermell i amb la doble confirmació de sempre. Exportar i eliminar es tracten al capítol de dades personals.",
             ],
           ],
         },
@@ -352,49 +352,29 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "warn",
           text: "El professional assignat decideix amb qui pot reservar el client des de la seva àrea: les sessions individuals i en parella, NOMÉS amb el seu entrenador assignat; els grups i la fisioteràpia, amb qualsevol professional que en faci segons la seva disponibilitat (no segons l'especialitat). Un client sense professional assignat no pot reservar individual ni parelles fins que n'hi posis un; l'app li diu que parli amb el centre. Tu i els professionals, quan reserveu per a un client, no hi esteu subjectes. Si li canvies el professional, les reserves que ja tenia es queden, les seves esperes amb l'anterior ja no entraran, i una sèrie seva que s'allargava sola deixa d'allargar-se.",
         },
-        { t: "h", text: "Les deu pestanyes" },
+        { t: "h", text: "Les cinc pestanyes" },
         {
           t: "dl",
           items: [
             [
               "Resum",
-              "El professional assignat —que es canvia AQUÍ mateix, amb un desplegable, sense passar per «Editar»—, els bons actius, les sessions restants i les notes si n'hi ha.",
+              "Els bons actius, les sessions restants i les notes si n'hi ha.",
             ],
             [
-              "Bons",
-              "Tots els seus bons amb sessions restants, preu, caducitat i estat. «+ Afegir bo» ven un bo nou a aquesta persona, amb el preu que li toca a ELLA (ofertes segmentades incloses).",
+              "Bons i pagaments",
+              "Tots els seus bons amb sessions restants, preu, caducitat i estat. «+ Afegir bo» ven un bo nou a aquesta persona, amb el preu que li toca a ELLA (ofertes segmentades incloses). A sota, cada cobrament amb data, import i mètode.",
             ],
             [
-              "Pagaments",
-              "Cada cobrament amb data, import i mètode.",
+              "Sessions",
+              "L'historial sencer amb l'estat de cadascuna, i «Recordatori de propera sessió», que li envia un correu amb la propera que té reservada.",
             ],
             [
-              "Reserves",
-              "L'historial sencer amb l'estat de cadascuna.",
+              "Entrenament",
+              "Els exercicis que té assignats i el buscador per assignar-n'hi de nous de la biblioteca; «Notificar exercicis nous», que l'avisa per correu; i les mesures registrades de cada exercici.",
             ],
             [
-              "Exercicis",
-              "Els exercicis que té assignats i el buscador per assignar-n'hi de nous de la biblioteca.",
-            ],
-            [
-              "Progrés",
-              "Les mesures registrades de cada exercici assignat.",
-            ],
-            [
-              "Documents",
-              "Els documents que el client ha pujat des de la seva àrea. Només lectura: aquí no se'n puja cap.",
-            ],
-            [
-              "Etiquetes",
-              "Marcar i desmarcar les del catàleg, i crear-ne una de nova sense sortir de la fitxa.",
-            ],
-            [
-              "Notes",
-              "Les clíniques i les generals, amb l'enllaç per editar-les.",
-            ],
-            [
-              "Notificacions",
-              "Tres avisos manuals: reenviar la invitació, dir-li que té exercicis nous i enviar-li el recordatori de la propera sessió.",
+              "Notes i documents",
+              "Les notes clíniques i les generals, amb l'enllaç per editar-les, i els documents que el client ha pujat des de la seva àrea. Els documents són només lectura: aquí no se'n puja cap.",
             ],
           ],
         },
@@ -403,13 +383,13 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           : ([
               {
                 t: "note",
-                text: "El mòdul Documents està desactivat: el client no en pot pujar de nous, però la pestanya continua ensenyant els que ja hi havia. Amagar-la esborraria de la vista uns documents que segueixen existint.",
+                text: "El mòdul Documents està desactivat: el client no en pot pujar de nous, però la pestanya Notes i documents continua ensenyant els que ja hi havia. Amagar-la esborraria de la vista uns documents que segueixen existint.",
               },
             ] as Block[])),
         { t: "h", text: "L'avís de consentiment de salut" },
         {
           t: "p",
-          text: "Si el client rep o ha rebut fisioteràpia i encara no ha acceptat el tractament de dades de salut, la fitxa mostra un requadre blau fosc a sota de la capçalera. Mentre hi sigui, no hi registris notes mèdiques: l'ha d'acceptar ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Si el client rep o ha rebut fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera de la fitxa porta una franja blau fosc curta; «Més info» la desplega. Mentre hi sigui, no hi registris notes mèdiques: l'ha d'acceptar ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
         },
       ],
     },
@@ -439,7 +419,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Assignar-les" },
         {
           t: "p",
-          text: "Les assignació es fa des de la fitxa de cada client, a la pestanya Etiquetes, marcant i desmarcant. També hi pots crear-ne una de nova i assignar-la de cop, sense venir fins aquí. Un professional pot etiquetar els SEUS clients; crear-les al catàleg, no.",
+          text: "L'assignació es fa des de la capçalera de la fitxa de cada client, amb «+ Etiqueta», marcant i desmarcant. També hi pots crear-ne una de nova i assignar-la de cop, sense venir fins aquí. Un professional pot etiquetar els SEUS clients; crear-les al catàleg, no.",
         },
         { t: "h", text: "Per què no sempre es deixen esborrar" },
         {
@@ -1520,11 +1500,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Assignar-los" },
         {
           t: "p",
-          text: "L'assignació no es fa aquí sinó a la fitxa de cada client, a la pestanya Exercicis. Un cop assignats, el client els veu a la seva àrea i hi pot registrar el seu progrés, que tu llegeixes a la pestanya Progrés.",
+          text: "L'assignació no es fa aquí sinó a la fitxa de cada client, a la pestanya Entrenament. Un cop assignats, el client els veu a la seva àrea i hi pot registrar el seu progrés, que tu llegeixes a la mateixa pestanya, a sota.",
         },
         {
           t: "note",
-          text: "Després d'assignar-n'hi uns quants, la pestanya Notificacions de la fitxa té un botó per avisar-lo que en té de nous. No s'envia sol: el dispares tu quan has acabat.",
+          text: "Després d'assignar-n'hi uns quants, «Notificar exercicis nous», just a sota dels exercicis, l'avisa que en té de nous. No s'envia sol: el dispares tu quan has acabat.",
         },
       ],
     },

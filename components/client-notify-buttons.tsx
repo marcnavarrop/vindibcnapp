@@ -2,7 +2,6 @@
 
 import { useTransition, useState } from "react";
 import {
-  resendInviteAction,
   notifyNewExercisesAction,
   notifyNextSessionAction,
   type NotificationActionResult,
@@ -56,24 +55,28 @@ function NotifButton({
   );
 }
 
-export function ClientNotificationsPanel({ clientId }: { clientId: string }) {
+/*
+ * Els avisos manuals ja no tenen pestanya pròpia: cadascun va al costat del
+ * que avisa. El recordatori, a les sessions; els exercicis nous, a
+ * Entrenament; reenviar la invitació, al menú «Més» de la capçalera.
+ */
+
+export function NotifyNewExercisesButton({ clientId }: { clientId: string }) {
   return (
-    <div className="flex flex-col gap-3">
-      <NotifButton
-        label="Reenviar invitació"
-        description="Envia un nou correu d'accés al client (ideal si el primer va caducar o no va arribar)."
-        onAction={() => resendInviteAction(clientId)}
-      />
-      <NotifButton
-        label="Notificar exercicis nous"
-        description="Avisa el client que té exercicis nous assignats a la seva àrea."
-        onAction={() => notifyNewExercisesAction(clientId)}
-      />
-      <NotifButton
-        label="Recordatori de propera sessió"
-        description="Envia un recordatori de la seva propera sessió programada."
-        onAction={() => notifyNextSessionAction(clientId)}
-      />
-    </div>
+    <NotifButton
+      label="Notificar exercicis nous"
+      description="Avisa el client que té exercicis nous assignats a la seva àrea."
+      onAction={() => notifyNewExercisesAction(clientId)}
+    />
+  );
+}
+
+export function NextSessionReminderButton({ clientId }: { clientId: string }) {
+  return (
+    <NotifButton
+      label="Recordatori de propera sessió"
+      description="Envia un recordatori de la seva propera sessió programada."
+      onAction={() => notifyNextSessionAction(clientId)}
+    />
   );
 }
