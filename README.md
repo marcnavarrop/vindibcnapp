@@ -160,6 +160,7 @@ soles a cada build (`prebuild`):
 | `npm run scope:check` | Amb qui pot reservar un client, a tots els camins del servidor. |
 | `npm run demo:check` | Comptes demo i reals separats (calendari, cua, sèries, l'equip, /prova). |
 | `npm run slots:check` | El pas d'hores a mitges hores no ha mogut cap resposta. |
+| `npm run tz:check` | L'hora del centre (`lib/center-time.ts`): cada minut del 2026 contra el codi d'abans i contra una referència independent, amb els canvis d'hora i les mitjanits, amb el procés en UTC, a Madrid i a Nova York. Triga uns 4 minuts. |
 | `npm run dayslots:check` | La llista d'hores del client diu el mateix que el servidor, a qualsevol zona. |
 | `npm run free:check` | Els forats «lliures» de les pantalles són els que el servidor acceptaria. |
 | `npm run grid:check` | La geometria de la rejilla del professional. |
