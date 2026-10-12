@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**103 migracions SQL** a `supabase/migrations/` (`0001`–`0103`), numerades i
+**104 migracions SQL** a `supabase/migrations/` (`0001`–`0104`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -134,8 +134,8 @@ més al codi:
   que passa l'app (com a la `0073`), no amb `current_date` en UTC. Els motius
   (`bono_not_found`, `bono_other_client`, `bono_other_service`,
   `bono_not_usable`, `bono_expired`) es tradueixen a `lib/bono-rejection.ts`.
-  `p_today` té valor per defecte NULL només per a la transició; la `0104` el
-  farà obligatori. No depèn del barrido de bons caducats
+  `p_today` és obligatori des de la `0104` (a la `0103` va tenir valor per
+  defecte NULL només per a la transició), i amb bo un null atura la reserva. No depèn del barrido de bons caducats
   (`sweepExpiredBonos`), que només canvia com es veuen.
 - **Els totals els calcula la base**: `payments_summary`, `payments_by_month`
   (`0095`) i `bonos_summary` (`0097`), només per a l'admin. Sumar al navegador
@@ -230,7 +230,7 @@ lib/*.ts                           regles pures compartides per pantalla i servi
 lib/help/                          els 3 manuals d'usuari, com a dades i no com a JSX
 lib/notifications/                 avisos: plantilles, log, correu, comunitat
 lib/mock/                          el mode simulació
-supabase/migrations/               103 fitxers SQL numerats, aplicats a mà
+supabase/migrations/               104 fitxers SQL numerats, aplicats a mà
 messages/{ca,es,en}.json           i18n del client i les pàgines públiques
 scripts/                           comprovacions (*:check) i eines de suport
 docs/                              aquest document, EMAILS.md i la guia de proves

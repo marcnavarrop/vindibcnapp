@@ -1873,13 +1873,12 @@ export interface Database {
           p_trainer_id: string;
           p_scheduled_at: string;
           p_capacity: number;
-          /** Durada de la sessió; té valor per defecte a la base (0083). */
-          p_duration_minutes?: number;
+          /** Durada de la sessió. Obligatòria des de la 0104 (abans, 60 per defecte). */
+          p_duration_minutes: number;
           /**
            * El dia del centre (YYYY-MM-DD) per a la caducitat del bo (0103).
-           * A la base té valor per defecte NULL només durant la transició (la
-           * 0104 el treu); aquí és obligatori des del primer dia, perquè cap
-           * camí nou se'l pugui saltar sense que el compilador ho digui.
+           * Obligatori a la base des de la 0104, i aquí des del primer dia:
+           * amb bo, un null fa que la base aturi la reserva.
            */
           p_today: string;
         };
@@ -1901,13 +1900,12 @@ export interface Database {
           p_trainer_id: string | null;
           p_scheduled_at: string;
           p_service_type: ServiceType;
-          /** Durada de la sessió; té valor per defecte a la base. */
-          p_duration_minutes?: number;
+          /** Durada de la sessió. Obligatòria des de la 0104 (abans, 60 per defecte). */
+          p_duration_minutes: number;
           /**
            * El dia del centre (YYYY-MM-DD) per a la caducitat del bo (0103).
-           * A la base té valor per defecte NULL només durant la transició (la
-           * 0104 el treu); aquí és obligatori des del primer dia, perquè cap
-           * camí nou se'l pugui saltar sense que el compilador ho digui.
+           * Obligatori a la base des de la 0104, i aquí des del primer dia:
+           * amb bo, un null fa que la base aturi la reserva.
            */
           p_today: string;
         };
