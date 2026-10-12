@@ -7,21 +7,30 @@ import { getViewer, requireRole } from "@/lib/auth";
 import { createBono, markBonoPaid, getBonoClientId, cancelBono } from "@/lib/data/bonos";
 import type { MarkPaidState } from "@/components/forms/mark-bono-paid-button";
 import { getClient } from "@/lib/data/clients";
+import { getService } from "@/lib/data/services";
+import { demoCompatible } from "@/lib/demo-accounts";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType } from "@/types/database";
 
 /**
- * Alta de bono desde el área de entrenador/a. La RLS solo lo permite para sus
- * clientes asignados. No registra cobro aquí: el cobro se marca después con
- * `markTrainerBonoPaidAction`, cuando el cliente paga de verdad.
+ * Alta d'un bo des de l'àrea del professional. No hi anota cap cobrament: es
+ * marca després amb `markTrainerBonoPaidAction`, quan el client paga de debò.
+ *
+ * Als seus clients, qualsevol bo (RLS `bonos_trainer_write`, 0005). A la resta
+ * de clients reals, només un bo de GRUP (0108, decisió d'en Marc: els clients
+ * de grup canvien d'entrenador lliurement): d'un paquet de grup que no sigui
+ * només per subscripció. La base ho torna a mirar (`bonos_trainer_insert_group`);
+ * aquí es diu en català què no es pot, i es mira el que la base no sap: demo
+ * amb demo.
  */
 export async function createTrainerBonoAction(
   clientId: string,
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  if (!(await requireRole("trainer"))) return { error: "No autoritzat." };
+  const viewer = await requireRole("trainer");
+  if (!viewer) return { error: "No autoritzat." };
   const serviceType = formData.get("serviceType") as ServiceType | null;
   // Mateix motiu que a l'acció d'admin: `createBono` mira la casella del
   // paquet, i des de la 0086 això no es pot deduir del tipus de servei.
@@ -34,6 +43,15 @@ export async function createTrainerBonoAction(
     return { error: "El nre. de sessions ha de ser més gran que 0." };
   if (!Number.isFinite(price) || price < 0)
     return { error: "El preu no és vàlid." };
+
+  const client = await getClient(clientId);
+  if (!client) return { error: "Client no trobat." };
+  if (client.assignedTrainerId !== viewer.id) {
+    if (!demoCompatible(client.id, viewer.id)) return { error: "Aquest client no és teu." };
+    const pkg = await getService(serviceId);
+    if (!pkg || pkg.serviceType !== "grupo_reducido" || serviceType !== "grupo_reducido")
+      return { error: "Aquest client no és teu: només li pots crear un bo de grup." };
+  }
 
   try {
     await createBono({

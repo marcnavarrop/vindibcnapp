@@ -81,7 +81,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Els teus clients i la resta" },
         {
           t: "p",
-          text: "La distinció recorre tota l'app i val la pena tenir-la clara des del principi. Pots CONSULTAR la fitxa de qualsevol client del centre, perquè coordinar-se demana saber què fa el company. Només pots GESTIONAR —crear bons, assignar exercicis, posar etiquetes— els clients que tens assignats. Les reserves van més enllà: a qualsevol client del centre li pots reservar un grup (de qualsevol professional) o la teva especialitat a la teva agenda, sempre amb bo; ho expliquem a Reserves.",
+          text: "La distinció recorre tota l'app i val la pena tenir-la clara des del principi. Pots CONSULTAR la fitxa de qualsevol client del centre, perquè coordinar-se demana saber què fa el company. Només pots GESTIONAR —crear bons, assignar exercicis, posar etiquetes— els clients que tens assignats, amb dues excepcions: a qualsevol client li pots crear un bo de grup, i les reserves van més enllà: a qualsevol client del centre li pots reservar un grup (de qualsevol professional) o la teva especialitat a la teva agenda, sempre amb bo; ho expliquem a Reserves.",
         },
         {
           t: "dl",
@@ -763,7 +763,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Cobrar un bo" },
         {
           t: "p",
-          text: "El botó de cobrar surt a totes les files pendents de cobrament o decaigudes, siguin del client que siguin: «Marcar com pagat» als pendents i, als decaiguts, «Cobrar i recuperar» o «Només cobrar». El que NO s'ha obert és la resta: crear un bo, assignar exercicis o posar etiquetes segueix essent només per als teus clients assignats (les reserves tenen la seva regla, a Reserves). No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
+          text: "El botó de cobrar surt a totes les files pendents de cobrament o decaigudes, siguin del client que siguin: «Marcar com pagat» als pendents i, als decaiguts, «Cobrar i recuperar» o «Només cobrar». El que NO s'ha obert és la resta: crear un bo (llevat dels de grup), assignar exercicis o posar etiquetes segueix essent només per als teus clients assignats (les reserves tenen la seva regla, a Reserves). No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
         },
         {
           t: "p",
@@ -771,7 +771,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons i pagaments, i això sí que és només per als clients que tens assignats. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
+          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons i pagaments. Als clients que tens assignats, qualsevol bo. A la resta, només un bo de grup: la pantalla només t'ofereix els paquets de grup que es venen solts (les mensualitats, no) i t'ho diu a dalt. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
         },
         { t: "h", text: "Els paquets que no es venen solts" },
         {

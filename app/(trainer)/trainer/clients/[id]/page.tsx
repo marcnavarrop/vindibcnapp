@@ -183,7 +183,8 @@ export default async function TrainerClientDetailPage({
             <BonosSummaryCard
               bonos={client.bonos}
               today={today}
-              addHref={canManage ? `/trainer/bonos/new?clientId=${client.id}` : undefined}
+              // Als que no són seus, un bo de grup (0108): la pantalla només n'ofereix d'aquests.
+              addHref={canBook ? `/trainer/bonos/new?clientId=${client.id}` : undefined}
               actions={(b) => bonoActions(b, true)}
             />
             <UpcomingSessionsCard

@@ -12,6 +12,10 @@
  *      al store si han escrit o no. Els clients: l'Ana és de la Laia, la Marta
  *      d'en Jordi (fisio) i l'Oriol no té ningú.
  *
+ *   3. Bons (0108): un bo de GRUP a un client que no és seu, sí; un altre bo,
+ *      no. I el bo baix d'un client SENSE professional surt a l'Inici de
+ *      l'admin.
+ *
  * «Demo amb demo» el prova `npm run demo:check`. Treballa sobre el fitxer de la
  * simulació i el deixa tal com era.
  */
@@ -36,6 +40,9 @@ const { createReservation, cancelReservation, completeReservation } = await impo
   "../lib/data/reservations"
 );
 const { datetimeLocalToInstant } = await import("../lib/center-time");
+const bonosTrainer = await import("../app/(trainer)/trainer/bonos/actions");
+const { getAdminDashboard } = await import("../lib/data/dashboard");
+const { RedirectSignal } = await import("./shims/next-navigation");
 
 let bad = 0;
 const check = (nom: string, ok: boolean, detall = "") => {
@@ -175,6 +182,56 @@ try {
   check("marcar feta una sessió de la Marta a la SEVA agenda", estat("ss-r-fisio-laia") === "completed", r);
   r = await intenta(() => completeReservation("ss-r-fisio-jordi"));
   check("marcar feta una sessió de la Marta a l'agenda d'en Jordi (no)", estat("ss-r-fisio-jordi") === "booked", r.slice(0, 90));
+
+  // ─── 3. Bons ──────────────────────────────────────────────────────────────
+  console.log("\n3. Bons (0108) i l'Inici de l'admin\n");
+  const s0 = getStore();
+  const grup = s0.services.find((x) => x.service_type === "grupo_reducido" && x.active && !x.subscription_only);
+  const ep = s0.services.find((x) => x.service_type === "ep_individual" && x.active && !x.subscription_only);
+  if (!grup || !ep) throw new Error("La llavor no té paquets de grup i d'EP actius.");
+  const nBonos = (client: string) => getStore().bonos.filter((b) => b.client_id === client).length;
+  const fdBo = (serviceType: string, serviceId: string) => {
+    const f = new FormData();
+    f.append("serviceType", serviceType);
+    f.append("serviceId", serviceId);
+    f.append("totalSessions", "4");
+    f.append("price", "100");
+    return f;
+  };
+  const crea = async (client: string, serviceType: string, serviceId: string) => {
+    try {
+      const r = await bonosTrainer.createTrainerBonoAction(client, {}, fdBo(serviceType, serviceId));
+      return r && "error" in r && r.error ? r.error : "ok";
+    } catch (e) {
+      return e instanceof RedirectSignal ? "ok" : (e as Error).message;
+    }
+  };
+  let n0 = nBonos("c-marta");
+  r = await crea("c-marta", "grupo_reducido", grup.id);
+  check("bo de grup a la Marta (d'en Jordi)", nBonos("c-marta") === n0 + 1, r);
+  n0 = nBonos("c-marta");
+  r = await crea("c-marta", "ep_individual", ep.id);
+  check("bo d'EP a la Marta (no)", nBonos("c-marta") === n0, r);
+  n0 = nBonos("c-marta");
+  r = await crea("c-marta", "grupo_reducido", ep.id);
+  check("bo «de grup» amb un paquet d'EP a la Marta (no)", nBonos("c-marta") === n0, r);
+  n0 = nBonos("c-ana");
+  r = await crea("c-ana", "ep_individual", ep.id);
+  check("bo d'EP a l'Ana (seva), com sempre", nBonos("c-ana") === n0 + 1, r);
+
+  // L'Oriol no té professional: el seu bo baix ha de sortir a l'admin.
+  {
+    const s = getStore();
+    s.bonos.find((b) => b.id === "b-5")!.remaining_sessions = 1;
+    saveStore(s);
+  }
+  (globalThis as { __mockRole?: string }).__mockRole = "admin";
+  const dash = await getAdminDashboard();
+  check(
+    "bo baix d'un client sense professional a l'Inici de l'admin",
+    dash.lowBonos.some((b) => b.clientId === "c-oriol"),
+    dash.lowBonos.map((b) => b.clientName).join(", "),
+  );
 } catch (e) {
   bad++;
   console.error(e);

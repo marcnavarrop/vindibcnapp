@@ -13,6 +13,7 @@ import {
   createTrainerGroupSubscriptionAction,
 } from "@/app/(trainer)/trainer/bonos/actions";
 import { TAP } from "@/lib/utils";
+import { demoCompatible } from "@/lib/demo-accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -32,18 +33,24 @@ export default async function NewTrainerBonoPage({
   ]);
   if (!client) notFound();
 
-  // Solo se pueden crear bonos para clientes propios.
-  if (!viewer || client.assignedTrainerId !== viewer.id) {
+  // Als seus clients, qualsevol bo. A la resta de clients reals, només un bo
+  // de grup (0108): sense paquets d'altres serveis ni mensualitats (la
+  // subscripció segueix essent només per als propis). Demo amb demo.
+  if (!viewer || !demoCompatible(client.id, viewer.id)) {
     redirect(`/trainer/clients/${clientId}`);
   }
+  const own = client.assignedTrainerId === viewer.id;
+  const offered = own
+    ? services
+    : services.filter((s) => s.serviceType === "grupo_reducido" && !s.subscriptionOnly);
 
   // Amb clientId, igual que a l'àrea d'admin: el bo és per a aquest client.
-  const effectivePricesMap = await getEffectivePrices(services, { clientId });
+  const effectivePricesMap = await getEffectivePrices(offered, { clientId });
   const effectivePrices = Object.fromEntries(effectivePricesMap);
 
   // Mateixa pregunta que a l'àrea d'admin, i pel mateix motiu: l'índex únic de
   // la 0072 no deixa una segona subscripció viva del mateix servei.
-  const liveSubscription = settings.subscriptionsEnabled
+  const liveSubscription = settings.subscriptionsEnabled && own
     ? await getAnyLiveSubscription(client.id)
     : null;
 
@@ -58,16 +65,26 @@ export default async function NewTrainerBonoPage({
           ← Tornar a la fitxa
         </Link>
         <h1 className="mt-1 text-2xl text-brand-dark">Nou bo</h1>
-        <p className="mb-6 text-sm text-brand-muted">Per a {client.fullName}</p>
+        <p className={own ? "mb-6 text-sm text-brand-muted" : "text-sm text-brand-muted"}>
+          Per a {client.fullName}
+        </p>
+        {!own && (
+          <p className="mb-6 text-sm text-brand-muted" data-not-yours>
+            No és client teu: només li pots crear un bo de grup. Les mensualitats
+            i la resta de bons, el seu professional o l&apos;administració.
+          </p>
+        )}
 
         <BonoForm
           action={createTrainerBonoAction.bind(null, clientId)}
-          subscribeAction={createTrainerGroupSubscriptionAction.bind(null, clientId)}
+          subscribeAction={
+            own ? createTrainerGroupSubscriptionAction.bind(null, clientId) : undefined
+          }
           cancelHref={`/trainer/clients/${clientId}`}
-          services={services}
+          services={offered}
           effectivePrices={effectivePrices}
           showPayment={false}
-          subscriptionsEnabled={settings.subscriptionsEnabled}
+          subscriptionsEnabled={settings.subscriptionsEnabled && own}
           hasLiveSubscription={liveSubscription !== null}
           renewalDay={renewalDay}
         />

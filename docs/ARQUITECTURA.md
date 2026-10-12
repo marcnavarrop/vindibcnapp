@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**107 migracions SQL** a `supabase/migrations/` (`0001`–`0107`), numerades i
+**108 migracions SQL** a `supabase/migrations/` (`0001`–`0108`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -113,6 +113,12 @@ més al codi:
   agenda sense obrir la RLS `FOR ALL` de `reservations`. «Demo amb demo» el
   torna a mirar l'app (`assertTeamMayTouch`): la base no sap quins comptes són
   demo. `npm run staffscope:check`.
+- **Bons de grup a qualsevol client** (`0108`): qualsevol professional pot
+  crear un bo de GRUP a qualsevol client real. La política és només d'INSERT i
+  fixa com ha de ser el bo (paquet de grup actiu i no només per subscripció,
+  nou, sense Stripe, subscripció ni val); `bonos_trainer_write` (0005, FOR ALL
+  dels clients assignats) no es toca. La resta de bons i les mensualitats,
+  només els propis.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de
@@ -246,6 +252,19 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   (`lib/data/reauth.ts`), o `verifyOtp` rebutjant els seus propis tokens de canvi
   de correu (`0078`).
 
+## Pendent de decidir
+
+- **Dades de salut dels clients que no són teus.** Des de la 0107 un
+  professional pot reservar i fer sessions a clients que no té assignats (un
+  grup, o la seva especialitat a la seva agenda), però la RLS de les dades de
+  salut segueix sent per client ASSIGNAT: documents (`client_documents`, 0025),
+  consentiments (`consents`, 0014), mesures (`measurements`, 0003), vídeos
+  (`client_videos`, 0027) i exercicis (`client_exercises`, 0012). El cas
+  concret: **un fisio que atén un pacient que no té assignat no veu el seu
+  consentiment de dades de salut ni els seus documents**. Es queda com és
+  (decisió d'en Marc, 12/10/2026) fins que en Marc ho parli amb en Raul i
+  l'assessor.
+
 ## Estructura del repositori
 
 ```
@@ -256,7 +275,7 @@ lib/*.ts                           regles pures compartides per pantalla i servi
 lib/help/                          els 3 manuals d'usuari, com a dades i no com a JSX
 lib/notifications/                 avisos: plantilles, log, correu, comunitat
 lib/mock/                          el mode simulació
-supabase/migrations/               107 fitxers SQL numerats, aplicats a mà
+supabase/migrations/               108 fitxers SQL numerats, aplicats a mà
 messages/{ca,es,en}.json           i18n del client i les pàgines públiques
 scripts/                           comprovacions (*:check) i eines de suport
 docs/                              aquest document, EMAILS.md i la guia de proves
