@@ -223,11 +223,18 @@ export function CalFerTray({
         <ReservationSheet
           r={selected}
           palette={palette}
-          // Els mateixos permisos que a la rejilla: marcar i reprogramar, si el
-          // client és seu; cancel·lar, també si la sessió és de la seva agenda;
-          // la nota, només si la sessió l'ha donada ella.
+          // Els mateixos permisos que a la rejilla (0107): tot, si el client
+          // és seu; marcar feta i cancel·lar, també si la sessió és de la seva
+          // agenda; cancel·lar, qualsevol grup. Reprogramar una sessió que ja
+          // ha passat, aquí només als seus (a la rejilla hi ha la regla
+          // sencera). La nota, només si la sessió l'ha donada ella.
           canManage={selected.clientMine}
-          canCancel={selected.clientMine || selected.trainerId === inbox.trainerId}
+          canComplete={selected.clientMine || selected.trainerId === inbox.trainerId}
+          canCancel={
+            selected.clientMine ||
+            selected.trainerId === inbox.trainerId ||
+            selected.serviceType === "grupo_reducido"
+          }
           cancelAction={cancelAction}
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}

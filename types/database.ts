@@ -1946,6 +1946,13 @@ export interface Database {
         };
         Returns: CancelReservationResult;
       };
+      /** Marcar feta (0107): admin, el professional del client o el de l'agenda. */
+      complete_reservation: {
+        Args: { p_id: string };
+        Returns:
+          | { ok: true }
+          | { ok: false; reason: "not_found" | "forbidden" | "not_booked" };
+      };
       cancel_reservations_by_center: {
         Args: {
           p_trainer_id: string;

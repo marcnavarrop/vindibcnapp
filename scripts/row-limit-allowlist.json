@@ -371,10 +371,6 @@
     "category": "pendent",
     "reason": "Totes les liquidacions; creix cada mes."
   },
-  "lib/data/slot-booking.ts::listBookableClients::clients": {
-    "category": "acotada",
-    "reason": "La cartera d'un professional."
-  },
   "lib/data/slot-booking.ts::pickUsableBono::bonos": {
     "category": "acotada",
     "reason": "Els bons d'un client d'un servei."

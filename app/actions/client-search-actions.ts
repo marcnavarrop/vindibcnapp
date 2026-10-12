@@ -14,10 +14,9 @@ export type ClientSearchResult =
  * El buscador de clients per reservar, per a l'admin i per al professional.
  *
  * Qui pot sortir-hi NO ho diu la pantalla: ho diu el rol de qui mira. L'admin
- * troba qualsevol client del centre; el professional, només els seus
- * assignats, que són els únics que el servidor li deixarà reservar
- * (`assertMayBookFor`). Un professional que escrigui el nom d'un client d'un
- * company no el troba.
+ * troba qualsevol client del centre. El professional també (0107), però els
+ * clients que no són seus surten `restricted`, amb només els bons de grup o de
+ * la seva especialitat, i els demo només si ell també ho és.
  */
 export async function searchClientsAction(query: string): Promise<ClientSearchResult> {
   const viewer = await getViewer();
@@ -26,7 +25,7 @@ export async function searchClientsAction(query: string): Promise<ClientSearchRe
   try {
     const clients = await searchBookableClients(
       typeof query === "string" ? query : "",
-      viewer.role === "trainer" ? viewer.id : null,
+      viewer.role === "trainer" ? { id: viewer.id, specialty: viewer.specialty } : null,
     );
     return { ok: true, clients };
   } catch {

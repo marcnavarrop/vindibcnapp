@@ -81,7 +81,20 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Els teus clients i la resta" },
         {
           t: "p",
-          text: "La distinció recorre tota l'app i val la pena tenir-la clara des del principi. Pots CONSULTAR la fitxa de qualsevol client del centre, perquè coordinar-se demana saber què fa el company. Només pots GESTIONAR —crear bons, crear reserves, assignar exercicis, posar etiquetes— els clients que tens assignats.",
+          text: "La distinció recorre tota l'app i val la pena tenir-la clara des del principi. Pots CONSULTAR la fitxa de qualsevol client del centre, perquè coordinar-se demana saber què fa el company. Només pots GESTIONAR —crear bons, assignar exercicis, posar etiquetes— els clients que tens assignats. Les reserves van més enllà: a qualsevol client del centre li pots reservar un grup (de qualsevol professional) o la teva especialitat a la teva agenda, sempre amb bo; ho expliquem a Reserves.",
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              "Els teus clients",
+              "El que calgui: qualsevol servei, a la teva agenda o a la d'un company (per exemple, una sessió de fisio amb el fisio del centre), amb bo o de cortesia.",
+            ],
+            [
+              "La resta de clients",
+              "Grup: a qualsevol grup del centre, perquè els clients de grup canvien d'horari i d'entrenador lliurement. La teva especialitat (el fisio, fisioteràpia; l'entrenador, individual i parelles), a la teva agenda. Sempre amb bo: la cortesia, només als teus. Si no tens especialitat posada, només grups.",
+            ],
+          ],
         },
         {
           t: "p",
@@ -316,7 +329,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Per marcar",
-              `Sessions dels teus clients dels últims ${INBOX_DAYS} dies que ja han acabat i segueixen reservades. També les d'un client teu que va fer un company: marcar-les és de qui porta el client. «Marcar feta» ho fa allà mateix; si no es va fer, obre la fitxa tocant el nom i cancel·la-la.`,
+              `Sessions dels últims ${INBOX_DAYS} dies que ja han acabat i segueixen reservades: les dels teus clients (també si les va fer un company) i les de la teva agenda (també si el client no és teu). Les poden marcar qui porta el client i qui ha donat la sessió. «Marcar feta» ho fa allà mateix; si no es va fer, obre la fitxa tocant el nom i cancel·la-la.`,
             ],
             [
               "Notes per escriure",
@@ -422,7 +435,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         {
           t: "note",
           text: s.trainersSeeColleaguesReservations
-            ? "La llista ensenya l'agenda de tot el centre, per poder-te coordinar; el calendari, només la teva i la dels companys que encenguis. Gestiones les reserves dels teus clients, i a més pots cancel·lar qualsevol reserva de la teva agenda encara que el client sigui d'un company. Les dels companys es miren i prou."
+            ? "La llista ensenya l'agenda de tot el centre, per poder-te coordinar; el calendari, només la teva i la dels companys que encenguis. Gestiones les reserves dels teus clients. A més, a la teva agenda pots marcar fetes i cancel·lar les dels clients dels companys, i qualsevol plaça de grup del centre la pots cancel·lar o reprogramar. La resta de les dels companys es miren i prou."
             : "Al calendari només hi surten les teves reserves: el centre té desactivada la vista de les dels companys.",
         },
       ],
@@ -447,17 +460,17 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
             ],
             [
               "Client",
-              "Només els teus clients assignats, que són els únics per als quals pots reservar. Al costat de cada nom hi ha les sessions que li queden del bo d'aquell servei, o «sense bo». En triar-lo, la fulla diu de quin bo sortirà la sessió: el més antic que es pot fer servir. Si no en té cap, t'ho diu abans de crear, i el botó no s'activa si no marques «Sessió de cortesia».",
+              "Es busca escrivint el nom, entre tots els clients del centre: primer els teus. Si no és teu, la fulla t'ho diu i només hi veus els bons de grup i de la teva especialitat. En triar-lo, la fulla diu de quin bo sortirà la sessió: el més antic que es pot fer servir. Si no en té cap, t'ho diu abans de crear, i el botó no s'activa si no marques «Sessió de cortesia» (que només surt si el client és teu).",
             ],
             [
               "Sessió de cortesia",
-              "Marcada, la sessió es regala: no descompta res de cap bo.",
+              "Marcada, la sessió es regala: no descompta res de cap bo. Només als teus clients.",
             ],
           ],
         },
         {
           t: "p",
-          text: "En un grup teu amb places, toca la targeta del grup i «Apuntar-hi un client»: la persona entra al grup que ja hi ha, a la mateixa hora; no se'n crea un altre. Si mentre tens la fulla oberta algú agafa el forat, en prémer Crear la fulla t'ho diu i no es crea res.",
+          text: "En un grup amb places, teu o d'un company que tinguis encès al calendari, toca la targeta del grup i «Apuntar-hi un client»: la persona entra al grup que ja hi ha, a la mateixa hora i amb el mateix professional; no se'n crea un altre. Si mentre tens la fulla oberta algú agafa el forat, en prémer Crear la fulla t'ho diu i no es crea res.",
         },
         { t: "h", text: "Una reserva nova des del formulari" },
         {
@@ -473,11 +486,11 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Client",
-              "Es busca escrivint el nom: sense accents ni majúscules, i en qualsevol ordre («puig laia» troba la Laia Puig). Només hi surten els teus clients assignats, que són els únics per als quals pots reservar, cadascun amb els bons que té. Sense escriure res surten els primers, per ordre alfabètic. Si no en tens cap d'assignat, el formulari t'ho diu en comptes de deixar-te omplir-lo per res.",
+              "Es busca escrivint el nom: sense accents ni majúscules, i en qualsevol ordre («puig laia» troba la Laia Puig). Hi surten tots els clients del centre, primer els teus. Dels que no són teus només hi veus els bons de grup i de la teva especialitat, i a sota del nom t'ho recorda. Sense escriure res surten els primers, per ordre alfabètic.",
             ],
             [
               "Sessió de cortesia",
-              "Una casella. Marcada, la sessió es regala: no descompta res de cap bo. Llavors el selector de bo desapareix i has de dir tu de quin tipus de servei és, perquè amb bo el tipus sortia del bo mateix.",
+              "Una casella. Marcada, la sessió es regala: no descompta res de cap bo. Llavors el selector de bo desapareix i has de dir tu de quin tipus de servei és, perquè amb bo el tipus sortia del bo mateix. Només surt si el client és teu.",
             ],
             [
               "Bo",
@@ -506,7 +519,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Reprogramar, marcar feta, cancel·lar" },
         {
           t: "p",
-          text: "Tocant una reserva al calendari s'obre la seva fitxa: al mòbil, una fulla que puja des de baix; a l'ordinador, un plafó a la dreta que deixa veure el calendari al costat. Hi tens el telèfon del client (amb «Copiar»), el bo del qual surt la sessió amb les que li queden i quan caduca, la posició dins de la sèrie si en forma part, la propera sessió que té reservada i l'enllaç a la seva fitxa; aquestes dades es demanen en obrir-la i tarden un moment a sortir. «Afegir al calendari» només surt a les sessions que encara han de passar. Si el client és teu, hi ha tres accions:",
+          text: "Tocant una reserva al calendari s'obre la seva fitxa: al mòbil, una fulla que puja des de baix; a l'ordinador, un plafó a la dreta que deixa veure el calendari al costat. Hi tens el telèfon del client (amb «Copiar»), el bo del qual surt la sessió amb les que li queden i quan caduca, la posició dins de la sèrie si en forma part, la propera sessió que té reservada i l'enllaç a la seva fitxa; aquestes dades es demanen en obrir-la i tarden un moment a sortir. «Afegir al calendari» només surt a les sessions que encara han de passar. Si el client és teu, hi ha tres accions. Si no ho és, la fitxa et diu quines et queden: a la teva agenda, marcar feta i cancel·lar (i reprogramar, si és la teva especialitat); en qualsevol grup del centre, reprogramar i cancel·lar.",
         },
         {
           t: "dl",
@@ -750,7 +763,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Cobrar un bo" },
         {
           t: "p",
-          text: "El botó de cobrar surt a totes les files pendents de cobrament o decaigudes, siguin del client que siguin: «Marcar com pagat» als pendents i, als decaiguts, «Cobrar i recuperar» o «Només cobrar». El que NO s'ha obert és la resta: crear un bo, crear reserves, assignar exercicis o posar etiquetes segueix essent només per als teus clients assignats. No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
+          text: "El botó de cobrar surt a totes les files pendents de cobrament o decaigudes, siguin del client que siguin: «Marcar com pagat» als pendents i, als decaiguts, «Cobrar i recuperar» o «Només cobrar». El que NO s'ha obert és la resta: crear un bo, assignar exercicis o posar etiquetes segueix essent només per als teus clients assignats (les reserves tenen la seva regla, a Reserves). No és una decisió de la pantalla —la base de dades comprova el mateix, així que encara que el botó hi fos, el desat fallaria.",
         },
         {
           t: "p",

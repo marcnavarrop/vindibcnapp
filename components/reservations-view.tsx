@@ -9,7 +9,7 @@ import { AdminGrid } from "@/components/admin-grid";
 import type { WaitingNames } from "@/lib/data/waitlist";
 import type { CenterBlock } from "@/lib/data/availability-blocks";
 import type { OwnBlock } from "@/lib/data/availability-blocks";
-import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
+import type { ClientSearchResult } from "@/app/actions/client-search-actions";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { SessionNote } from "@/lib/data/session-notes";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
@@ -46,6 +46,8 @@ export function ReservationsView({
   nowISO,
   manageableIds,
   cancellableIds,
+  completableIds,
+  reschedulableIds,
   notes,
   noteableIds,
   clientBase,
@@ -66,7 +68,7 @@ export function ReservationsView({
   ownBlocks,
   waiting,
   createFromSlotAction,
-  loadBookableClients,
+  searchClients,
   openingHour,
   closingHour,
   palette,
@@ -84,6 +86,9 @@ export function ReservationsView({
    * sigui d'un company (0091). Sense, les mateixes que `manageableIds`.
    */
   cancellableIds?: string[];
+  /** Les que pot marcar fetes i reprogramar, si no són les de `manageableIds` (0107). */
+  completableIds?: string[];
+  reschedulableIds?: string[];
   /** Notes de sessió llegibles i, a part, de quines es pot escriure. Vegeu
    *  `ReservationsAgenda`: són dues llistes diferents a posta. */
   notes?: Record<string, SessionNote>;
@@ -126,7 +131,8 @@ export function ReservationsView({
   waiting?: { at: string; count: number }[];
   /** Rejilla del professional i agenda de l'admin: crear sobre un forat i apuntar a un grup. */
   createFromSlotAction?: StatefulReservationAction;
-  loadBookableClients?: () => Promise<BookableClientsResult>;
+  /** Rejilla del professional: buscar el client a qui reservar (0107: tot el centre). */
+  searchClients?: (query: string) => Promise<ClientSearchResult>;
 }) {
   const view = nav.view;
   const [showOwnAvail, setShowOwnAvail] = useState(true);
@@ -288,7 +294,7 @@ export function ReservationsView({
       calendar === "trainer" &&
       myTrainerId &&
       createFromSlotAction &&
-      loadBookableClients ? (
+      searchClients ? (
         <TrainerGrid
           nav={nav}
           palette={palette}
@@ -310,12 +316,14 @@ export function ReservationsView({
           colleagueRules={(allAvailability ?? []).filter((r) => selectedColleagues.has(r.trainerId))}
           blocks={allBlocks ?? []}
           createFromSlotAction={createFromSlotAction}
-          loadBookableClients={loadBookableClients}
+          searchClients={searchClients}
           ownBlocks={ownBlocks ?? []}
           waiting={waiting ?? []}
           showFree={showOwnAvail}
           manageableIds={manageableIds ?? []}
           cancellableIds={cancellableIds ?? manageableIds ?? []}
+          completableIds={completableIds ?? manageableIds ?? []}
+          reschedulableIds={reschedulableIds ?? manageableIds ?? []}
           noteableIds={noteableIds ?? []}
           notes={notes}
           clientBase={clientBase}
@@ -359,6 +367,7 @@ export function ReservationsView({
           nowISO={nowISO}
           manageableIds={manageableIds}
           cancellableIds={cancellableIds}
+          completableIds={completableIds}
           notes={notes}
           noteableIds={noteableIds}
           // Les accions de l'àrea on s'és, per props. Abans la llista

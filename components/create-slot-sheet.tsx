@@ -1,14 +1,11 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useMemo, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TAP, TAP_SURFACE, clsx } from "@/lib/utils";
 import { GROUP_CAPACITY, SERVICE_LABELS, formatDate } from "@/lib/labels";
 import { AnimatedFeedback } from "@/components/ui/animated-feedback";
 import type { ReservationActionState } from "@/lib/reservation-action-state";
-import type {
-  BookableClientsResult,
-} from "@/app/(trainer)/trainer/reservas/actions";
 import type { ClientSearchResult } from "@/app/actions/client-search-actions";
 import type { BookableClient } from "@/lib/data/slot-booking";
 import { ClientSearch } from "@/components/client-search";
@@ -35,24 +32,23 @@ const whenFmt = new Intl.DateTimeFormat("ca-ES", {
  *
  *   · Servei: només els que hi caben (`freeServicesAt`, els passa la rejilla).
  *     En un grup amb places, només «Grup» i es va al grup que ja hi ha.
- *   · Client: només els assignats a qui reserva —els únics que el servidor li
- *     acceptarà—, amb el bo que es gastaria i les sessions que li queden. Si no
- *     en té cap d'aquell servei es diu ABANS de prémer Crear, i es pot fer igual
- *     com a sessió de cortesia.
+ *   · Client: es BUSCA al servidor (`searchClients`), amb el bo que es gastaria
+ *     i les sessions que li queden. Si no en té cap d'aquell servei es diu ABANS
+ *     de prémer Crear, i es pot fer igual com a sessió de cortesia… només si el
+ *     client és de qui reserva: un client d'un company (`restricted`, 0107) va
+ *     sempre amb bo, i la casella ni hi surt.
  *
  * El servidor ho torna a comprovar tot (`createFromSlotAction`): si algú ha
  * agafat el forat mentre la fulla era oberta, l'error surt aquí.
  *
- * L'ADMIN la fa servir amb dues diferències: el professional és el de la
- * columna (`trainer`, que viatja amb el formulari) i el client es BUSCA al
- * servidor entre tots els del centre (`searchClients`), en comptes d'un
- * desplegable amb tots.
+ * `trainer`: per a qui és la reserva quan no és qui mira (viatja amb el
+ * formulari). L'admin, el de la columna; el professional, el company del grup
+ * on apunta algú (0107).
  */
 export function CreateSlotSheet({
   at,
   services,
   group,
-  loadClients,
   searchClients,
   trainer,
   createAction,
@@ -62,35 +58,18 @@ export function CreateSlotSheet({
   services: ServiceType[];
   /** Apuntar a un grup que ja existeix: quanta gent hi ha. */
   group?: { count: number };
-  /** El professional: tots els seus clients, en un desplegable. */
-  loadClients?: () => Promise<BookableClientsResult>;
-  /** L'admin: el client es busca al servidor. */
-  searchClients?: (query: string) => Promise<ClientSearchResult>;
-  /** L'admin: per a qui és la reserva (la columna). */
+  /** El client es busca al servidor (qui hi surt, ho decideix el rol). */
+  searchClients: (query: string) => Promise<ClientSearchResult>;
+  /** Per a qui és la reserva, si no és qui mira. */
   trainer?: { id: string; name: string };
   createAction: StatefulAction;
   onClose: () => void;
 }) {
   const router = useRouter();
   const [state, create, creating] = useActionState(createAction, {});
-  const [clients, setClients] = useState<BookableClientsResult | null>(null);
   const [service, setService] = useState<ServiceType | null>(services[0] ?? null);
-  const [clientId, setClientId] = useState("");
   const [courtesy, setCourtesy] = useState(false);
   const [found, setFound] = useState<BookableClient | null>(null);
-
-  useEffect(() => {
-    if (!loadClients) return;
-    let live = true;
-    loadClients()
-      .then((c) => live && setClients(c))
-      .catch(
-        () => live && setClients({ ok: false, error: "No s'han pogut carregar els teus clients." }),
-      );
-    return () => {
-      live = false;
-    };
-  }, [loadClients]);
 
   const close = useCallback(() => {
     if (state.ok) router.refresh();
@@ -102,25 +81,13 @@ export function CreateSlotSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [close]);
 
-  const list = useMemo(() => (clients?.ok ? clients.clients : []), [clients]);
-  const bonoFor = useCallback(
-    (id: string) =>
-      service ? list.find((c) => c.id === id)?.bonos.find((b) => b.serviceType === service) ?? null : null,
-    [list, service],
-  );
-  const chosen = searchClients ? found : (list.find((c) => c.id === clientId) ?? null);
+  const chosen = found;
   const bono = chosen && service ? (chosen.bonos.find((b) => b.serviceType === service) ?? null) : null;
   const noBono = !!chosen && !bono;
-  const canCreate = !!service && !!chosen && (!!bono || courtesy) && !creating;
-
-  // Els que tenen bo del servei, primer: són els que es reserven sense cortesia.
-  const ordered = useMemo(
-    () =>
-      [...list].sort(
-        (a, b) => Number(!!bonoFor(b.id)) - Number(!!bonoFor(a.id)) || a.name.localeCompare(b.name),
-      ),
-    [list, bonoFor],
-  );
+  // Un client d'un company, sempre amb bo (0107).
+  const courtesyAllowed = !chosen?.restricted;
+  const canCreate =
+    !!service && !!chosen && (!!bono || (courtesy && courtesyAllowed)) && !creating;
 
   return (
     <div
@@ -202,54 +169,22 @@ export function CreateSlotSheet({
 
             {/* Client, amb el bo que es gastaria. */}
             <div className="flex flex-col gap-2">
-              {searchClients ? (
-                <ClientSearch
-                  search={searchClients}
-                  service={service}
-                  selected={found}
-                  onSelect={setFound}
-                />
-              ) : (
-                <>
-                  <label
-                    htmlFor="slot-client"
-                    className="text-xs font-bold tracking-wide text-brand-muted uppercase"
-                  >
-                    Client
-                  </label>
-                  {!clients ? (
-                    <p className="text-sm text-brand-muted" aria-live="polite">
-                      Carregant els teus clients…
-                    </p>
-                  ) : !clients.ok ? (
-                    <p role="alert" className="text-sm text-error">
-                      {clients.error}
-                    </p>
-                  ) : list.length === 0 ? (
-                    <p className="text-sm text-brand-muted">
-                      No tens cap client assignat. Els clients que no són teus es
-                      reserven des de la fitxa del seu professional.
-                    </p>
-                  ) : (
-                    <select
-                      id="slot-client"
-                      name="clientId"
-                      value={clientId}
-                      onChange={(e) => setClientId(e.target.value)}
-                      className="min-h-11 rounded-lg border border-brand-border bg-white px-2 text-sm text-brand-charcoal outline-none focus:border-brand-purple"
-                    >
-                      <option value="">Tria un client…</option>
-                      {ordered.map((c) => {
-                        const b = bonoFor(c.id);
-                        return (
-                          <option key={c.id} value={c.id}>
-                            {c.name} — {b ? `${b.remaining} de ${b.total} sessions` : "sense bo"}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  )}
-                </>
+              <ClientSearch
+                search={searchClients}
+                service={service}
+                selected={found}
+                onSelect={(c) => {
+                  setFound(c);
+                  // La cortesia era per al client d'abans: si aquest no és
+                  // seu, no n'hi pot haver.
+                  if (c?.restricted) setCourtesy(false);
+                }}
+              />
+              {chosen?.restricted && (
+                <p className="text-xs text-brand-muted" data-not-yours>
+                  No és client teu: només amb bo, de grup o de la teva especialitat a la
+                  teva agenda.
+                </p>
               )}
               {chosen && service && bono && (
                 <p className="text-sm text-brand-charcoal" data-bono-info>
@@ -265,11 +200,15 @@ export function CreateSlotSheet({
                   className="rounded-lg border border-attention/25 bg-attention-bg px-3 py-2 text-sm text-brand-charcoal"
                 >
                   <strong>{chosen!.name}</strong> no té cap bo de {SERVICE_LABELS[service]} amb
-                  sessions. Només es pot crear com a sessió de cortesia.
+                  sessions.{" "}
+                  {courtesyAllowed
+                    ? "Només es pot crear com a sessió de cortesia."
+                    : "Com que no és client teu, no s'hi pot fer cap sessió de cortesia."}
                 </p>
               )}
             </div>
 
+            {courtesyAllowed && (
             <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -282,6 +221,7 @@ export function CreateSlotSheet({
                 Sessió de cortesia <span className="text-brand-muted">(no descompta cap sessió)</span>
               </span>
             </label>
+            )}
 
             {state.error && (
               <p role="alert" className="text-sm text-error">

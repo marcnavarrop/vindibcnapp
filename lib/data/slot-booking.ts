@@ -6,14 +6,18 @@ import { getStore } from "@/lib/mock/store";
 import { centerToday } from "@/lib/center-time";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { matchesName, nameWords, wordRegex } from "@/lib/client-search-match";
-import type { BonoStatus, ServiceType } from "@/types/database";
+import { servicesForOthersClients } from "@/lib/booking-scope";
+import { demoCompatible } from "@/lib/demo-accounts";
+import type { BonoStatus, ServiceType, Specialty } from "@/types/database";
 
 /**
  * CREAR DES D'UN FORAT: A QUI I AMB QUIN BO.
  *
- * El professional crea reserves per als SEUS clients assignats: és el que
- * accepta `assertMayBookFor` en crear, i el que el selector ha d'oferir (ni un
- * de més, perquè fallaria en prémer Crear).
+ * El professional pot reservar a qualsevol client real (0107), però no
+ * qualsevol cosa: als que no són seus, només grup o la seva especialitat i
+ * sempre amb bo (`staffBookingScope`, `lib/booking-scope.ts`). Aquí aquests
+ * clients surten amb `restricted` i NOMÉS amb els bons que podria gastar-hi:
+ * el selector no ofereix res que el servidor rebutjaria en prémer Crear.
  *
  * El bo que es gasta no el tria qui reserva: és el MÉS ANTIC utilitzable del
  * servei (actiu o pendent de pagament, amb sessions i sense caducar), el mateix
@@ -28,7 +32,19 @@ export type BookableBono = {
   total: number;
   expiresAt: string | null;
 };
-export type BookableClient = { id: string; name: string; bonos: BookableBono[] };
+export type BookableClient = {
+  id: string;
+  name: string;
+  bonos: BookableBono[];
+  /**
+   * No és client de qui reserva (un professional): només bons de grup o de la
+   * seva especialitat, i sense cortesia. Per a l'admin, sempre `false`.
+   */
+  restricted: boolean;
+};
+
+/** Qui reserva, si és un professional: per decidir què se li ofereix. */
+export type BookingTrainer = { id: string; specialty: Specialty | null };
 
 type BonoRow = {
   id: string;
@@ -61,78 +77,81 @@ const toBookable = (b: BonoRow): BookableBono => ({
   expiresAt: b.expires_at,
 });
 
-/** Els clients assignats a aquest professional, amb els bons que poden gastar. */
-export async function listBookableClients(trainerId: string): Promise<BookableClient[]> {
-  if (USE_MOCK) {
-    const s = getStore();
-    return s.clients
-      .filter((c) => c.assigned_trainer_id === trainerId)
-      .map((c) => ({
-        id: c.id,
-        name: s.profiles.find((p) => p.id === c.profile_id)?.full_name ?? "—",
-        bonos: usable(s.bonos.filter((b) => b.client_id === c.id) as BonoRow[]).map(toBookable),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("clients")
-    .select(
-      `id,
-       profile:profiles!clients_profile_id_fkey(full_name),
-       bonos(id, client_id, service_type, remaining_sessions, total_sessions, status, expires_at, purchased_at)`,
-    )
-    .eq("assigned_trainer_id", trainerId);
-  if (error) throw error;
-  type Row = { id: string; profile: { full_name: string | null } | null; bonos: BonoRow[] };
-  return (data as unknown as Row[])
-    .map((c) => ({
-      id: c.id,
-      name: c.profile?.full_name ?? "—",
-      bonos: usable(c.bonos).map(toBookable),
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+/**
+ * El client tal com el veu qui reserva. Per a un professional, `null` si és
+ * d'un altre món (demo amb demo); si no és seu, només els bons que hi pot fer
+ * servir.
+ */
+function shape(
+  c: { id: string; name: string; assignedTrainerId: string | null; bonos: BonoRow[] },
+  trainer: BookingTrainer | null,
+): BookableClient | null {
+  const bonos = usable(c.bonos);
+  if (!trainer) return { id: c.id, name: c.name, bonos: bonos.map(toBookable), restricted: false };
+  if (!demoCompatible(c.id, trainer.id)) return null;
+  if (c.assignedTrainerId === trainer.id)
+    return { id: c.id, name: c.name, bonos: bonos.map(toBookable), restricted: false };
+  const allowed = servicesForOthersClients(trainer.specialty);
+  return {
+    id: c.id,
+    name: c.name,
+    bonos: bonos.filter((b) => allowed.includes(b.service_type)).map(toBookable),
+    restricted: true,
+  };
 }
 
 /**
  * Un sol client per reservar-li, amb els bons que pot gastar: el que arriba ja
  * posat al formulari de «Nova reserva» des de la seva fitxa.
  *
- * Amb `onlyTrainerId`, només si és assignat a aquest professional, com el
- * buscador: un professional que arribi amb l'id d'un client d'un company no el
- * troba posat, i el servidor tampoc no li deixaria reservar (`assertMayBookFor`).
+ * Amb `trainer`, com el veu aquell professional (`shape`): un client demo per a
+ * un professional real no hi surt, i el d'un company surt `restricted`.
  */
 export async function getBookableClient(
   clientId: string,
-  onlyTrainerId: string | null,
+  trainer: BookingTrainer | null,
 ): Promise<BookableClient | null> {
   if (USE_MOCK) {
     const s = getStore();
-    const c = s.clients.find(
-      (x) => x.id === clientId && (!onlyTrainerId || x.assigned_trainer_id === onlyTrainerId),
-    );
+    const c = s.clients.find((x) => x.id === clientId);
     if (!c) return null;
-    return {
-      id: c.id,
-      name: s.profiles.find((p) => p.id === c.profile_id)?.full_name ?? "—",
-      bonos: usable(s.bonos.filter((b) => b.client_id === c.id) as BonoRow[]).map(toBookable),
-    };
+    return shape(
+      {
+        id: c.id,
+        name: s.profiles.find((p) => p.id === c.profile_id)?.full_name ?? "—",
+        assignedTrainerId: c.assigned_trainer_id,
+        bonos: s.bonos.filter((b) => b.client_id === c.id) as BonoRow[],
+      },
+      trainer,
+    );
   }
   const supabase = await createClient();
-  let q = supabase
+  const { data, error } = await supabase
     .from("clients")
     .select(
-      `id,
+      `id, assigned_trainer_id,
        profile:profiles!clients_profile_id_fkey(full_name),
        bonos(id, client_id, service_type, remaining_sessions, total_sessions, status, expires_at, purchased_at)`,
     )
-    .eq("id", clientId);
-  if (onlyTrainerId) q = q.eq("assigned_trainer_id", onlyTrainerId);
-  const { data, error } = await q.maybeSingle();
+    .eq("id", clientId)
+    .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const row = data as unknown as { id: string; profile: { full_name: string | null } | null; bonos: BonoRow[] };
-  return { id: row.id, name: row.profile?.full_name ?? "—", bonos: usable(row.bonos).map(toBookable) };
+  const row = data as unknown as {
+    id: string;
+    assigned_trainer_id: string | null;
+    profile: { full_name: string | null } | null;
+    bonos: BonoRow[];
+  };
+  return shape(
+    {
+      id: row.id,
+      name: row.profile?.full_name ?? "—",
+      assignedTrainerId: row.assigned_trainer_id,
+      bonos: row.bonos,
+    },
+    trainer,
+  );
 }
 
 /** El bo que es gastaria: el més antic utilitzable d'aquest servei, o cap. */
@@ -171,9 +190,10 @@ export async function pickUsableBono(
  * gastar.
  *
  *   · L'admin busca entre tots els clients del centre.
- *   · El professional, NOMÉS entre els seus assignats: els únics per als quals
- *     `assertMayBookFor` li deixarà crear la reserva. No ho decideix la
- *     pantalla: qui crida passa `onlyTrainerId` segons el rol de qui mira.
+ *   · El professional també (0107), però cada client com el veu ell
+ *     (`shape`): els seus primer, els dels companys `restricted` i amb només
+ *     els bons que hi pot gastar, i els demo només si ell és demo. No ho
+ *     decideix la pantalla: qui crida passa `trainer` segons el rol.
  *
  * Sense text, surten els primers per ordre alfabètic.
  *
@@ -189,32 +209,36 @@ export const CLIENT_SEARCH_LIMIT = 20;
 
 export async function searchBookableClients(
   query: string,
-  onlyTrainerId: string | null,
+  trainer: BookingTrainer | null,
 ): Promise<BookableClient[]> {
   const q = query.trim().slice(0, 60);
-
-  // El professional: els seus assignats, que ja és una llista acotada.
-  if (onlyTrainerId) {
-    return (await listBookableClients(onlyTrainerId))
-      .filter((c) => !q || matchesName(c.name, q))
-      .slice(0, CLIENT_SEARCH_LIMIT);
-  }
+  // Els seus, primer: són els que més reserva, i amb tot el que tenen.
+  const ownFirst = (list: BookableClient[]) =>
+    [...list].sort((a, b) => Number(a.restricted) - Number(b.restricted));
 
   if (USE_MOCK) {
     const s = getStore();
-    return s.clients
-      .map((c) => ({
-        id: c.id,
-        name: s.profiles.find((p) => p.id === c.profile_id)?.full_name ?? "—",
-        bonos: usable(s.bonos.filter((b) => b.client_id === c.id) as BonoRow[]).map(toBookable),
-      }))
-      .filter((c) => !q || matchesName(c.name, q))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .slice(0, CLIENT_SEARCH_LIMIT);
+    return ownFirst(
+      s.clients
+        .map((c) =>
+          shape(
+            {
+              id: c.id,
+              name: s.profiles.find((p) => p.id === c.profile_id)?.full_name ?? "—",
+              assignedTrainerId: c.assigned_trainer_id,
+              bonos: s.bonos.filter((b) => b.client_id === c.id) as BonoRow[],
+            },
+            trainer,
+          ),
+        )
+        .filter((c): c is BookableClient => !!c && (!q || matchesName(c.name, q)))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, CLIENT_SEARCH_LIMIT),
+    );
   }
 
-  // L'admin: primer els noms (una consulta petita i ordenada), després els
-  // clients d'aquests noms amb els seus bons.
+  // Primer els noms (una consulta petita i ordenada), després els clients
+  // d'aquests noms amb els seus bons.
   const supabase = await createClient();
   let names = supabase
     .from("profiles")
@@ -231,7 +255,7 @@ export async function searchBookableClients(
   const { data, error } = await supabase
     .from("clients")
     .select(
-      `id, profile_id,
+      `id, profile_id, assigned_trainer_id,
        bonos(id, client_id, service_type, remaining_sessions, total_sessions, status, expires_at, purchased_at)`,
     )
     .in(
@@ -239,10 +263,18 @@ export async function searchBookableClients(
       picked.map((p) => p.id),
     );
   if (error) throw error;
-  type Row = { id: string; profile_id: string; bonos: BonoRow[] };
+  type Row = { id: string; profile_id: string; assigned_trainer_id: string | null; bonos: BonoRow[] };
   const byProfile = new Map((data as unknown as Row[]).map((c) => [c.profile_id, c]));
-  return picked.flatMap((p) => {
-    const c = byProfile.get(p.id);
-    return c ? [{ id: c.id, name: p.full_name ?? "—", bonos: usable(c.bonos).map(toBookable) }] : [];
-  });
+  return ownFirst(
+    picked.flatMap((p) => {
+      const c = byProfile.get(p.id);
+      const shaped = c
+        ? shape(
+            { id: c.id, name: p.full_name ?? "—", assignedTrainerId: c.assigned_trainer_id, bonos: c.bonos },
+            trainer,
+          )
+        : null;
+      return shaped ? [shaped] : [];
+    }),
+  );
 }

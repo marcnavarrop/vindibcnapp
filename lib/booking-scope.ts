@@ -25,14 +25,16 @@
  * Només al que fa el CLIENT: reservar, apuntar-se a la cua, les sèries i les
  * seves alternatives, l'allargament automàtic d'una sèrie i la promoció des de
  * la cua. L'admin i l'entrenador, quan reserven per a un client, no hi passen:
- * l'admin decideix, i l'entrenador ja només pot reservar als seus
- * (`assertMayBookFor`).
+ * l'admin decideix, i l'entrenador té la seva pròpia regla, `staffBookingScope`
+ * (més avall). Per això un professional SÍ pot reservar individual a un client
+ * que té un altre entrenador assignat: ho decideix l'equip, no el client
+ * (decisió d'en Marc, 12/10/2026).
  *
  * VIU AQUÍ, SENSE `server-only`, PERQUÈ LA FAN SERVIR LES DUES BANDES: el
  * calendari del client per no ensenyar el que el servidor rebutjaria, i el
  * servidor per rebutjar-ho encara que algú enviï el formulari a mà.
  */
-import type { ServiceType } from "@/types/database";
+import type { ServiceType, Specialty } from "@/types/database";
 import { demoCompatible } from "@/lib/demo-accounts";
 
 /** Els serveis que només es poden fer amb l'entrenador assignat. */
@@ -118,3 +120,74 @@ export function scopeErrorCode(
   if (scope === "demoMismatch") return "trainerUnavailable";
   return scope === "noAssignedTrainer" ? "noAssignedTrainer" : "notYourTrainer";
 }
+
+/**
+ * QUÈ POT RESERVAR UN PROFESSIONAL PER A UN CLIENT (tiquet d'en Raul, 8/10;
+ * decisions d'en Marc, 12/10/2026).
+ *
+ *   1. Els SEUS clients (assignats): qualsevol servei, a qualsevol agenda, amb
+ *      bo o de cortesia. Com sempre. Que el pugui posar a l'agenda d'un company
+ *      és A POSTA: és la coordinació (la Laia reserva fisio amb en Sergi a una
+ *      clienta seva).
+ *   2. GRUP: qualsevol client real, a qualsevol grup del centre. Els clients de
+ *      grup canvien d'horari i d'entrenador lliurement.
+ *   3. La SEVA ESPECIALITAT, a la SEVA agenda: qualsevol client real (el fisio,
+ *      fisioteràpia; l'entrenador, individual i parelles). Sense especialitat,
+ *      res d'això: només els seus clients i grups.
+ *
+ *   · Cortesia (sense bo): només als seus clients, també en grup i en
+ *     especialitat.
+ *   · «Demo amb demo» NO viu aquí: la mira `demoCompatible` abans, a tots els
+ *     camins, com fins ara.
+ *   · La disponibilitat tampoc: `assertWithinAvailability` la segueix mirant.
+ *
+ * Reprogramar fa servir la mateixa regla (sense cortesia: moure una sessió no
+ * en regala cap). Cancel·lar i marcar feta tenen la seva porta a la base
+ * (`cancel_reservation` i `complete_reservation`, 0107).
+ *
+ * Pura i sense `server-only`: la pantalla la fa servir per no oferir el que el
+ * servidor rebutjaria.
+ */
+export type StaffScope = "ok" | "courtesyNotYours" | "otherAgenda" | "notYourSpecialty";
+
+/** Els serveis de cada especialitat, per a la regla 3. */
+export function specialtyServices(specialty: Specialty | null): ServiceType[] {
+  if (specialty === "fisioterapeuta") return ["fisioterapia"];
+  if (specialty === "entrenador") return ["ep_individual", "ep_parejas"];
+  return [];
+}
+
+export function staffBookingScope(input: {
+  /** El client és assignat a qui reserva. */
+  isOwnClient: boolean;
+  serviceType: ServiceType;
+  /** L'agenda on va la sessió. */
+  trainerId: string | null;
+  viewerId: string;
+  viewerSpecialty: Specialty | null;
+  /** Sense bo. */
+  courtesy: boolean;
+}): StaffScope {
+  if (input.isOwnClient) return "ok";
+  if (input.courtesy) return "courtesyNotYours";
+  if (input.serviceType === "grupo_reducido") return "ok";
+  if (input.trainerId !== input.viewerId) return "otherAgenda";
+  return specialtyServices(input.viewerSpecialty).includes(input.serviceType)
+    ? "ok"
+    : "notYourSpecialty";
+}
+
+/** Els serveis que un professional pot reservar a un client que no és seu. */
+export function servicesForOthersClients(specialty: Specialty | null): ServiceType[] {
+  return ["grupo_reducido", ...specialtyServices(specialty)];
+}
+
+/** El text, en català (admin i professional), de cada «no». */
+export const STAFF_SCOPE_MESSAGES: Record<Exclude<StaffScope, "ok">, string> = {
+  courtesyNotYours:
+    "Les sessions de cortesia només les pots fer als teus clients. Per a aquest client, cal un bo.",
+  otherAgenda:
+    "Aquest client no és teu: a l'agenda d'un company només el pots apuntar a un grup.",
+  notYourSpecialty:
+    "Aquest client no és teu: només li pots reservar grup o la teva especialitat, a la teva agenda.",
+};

@@ -62,7 +62,8 @@ export function ReservationForm({
   const [state, formAction] = useActionState(action, {} as FormState);
   // El client es busca al servidor (`ClientSearch`): abans el desplegable els
   // portava tots a la pàgina i, passat el miler, en perdia. Qui hi pot sortir
-  // ho decideix el rol de qui mira: l'admin, tothom; el professional, els seus.
+  // ho decideix el rol de qui mira (0107: el professional també troba tot el
+  // centre, però els clients que no són seus surten `restricted`).
   const [client, setClient] = useState<BookableClient | null>(defaultClient ?? null);
   const clientId = client?.id ?? "";
   // Cortesia: es regala la sessió. El bo deixa de tenir sentit i el tipus de
@@ -103,10 +104,18 @@ export function ReservationForm({
           setClient(c);
           // El bo era del client d'abans.
           setBonoId("");
+          // Un client d'un company, sempre amb bo (0107).
+          if (c?.restricted) setComplimentary(false);
         }}
         emptyHint={emptyClientsHint}
         variant="form"
       />
+      {client?.restricted && (
+        <p className="-mt-3 text-xs text-brand-muted" data-not-yours>
+          No és client teu: només amb bo, en un grup (de qualsevol professional)
+          o en la teva especialitat a la teva agenda.
+        </p>
+      )}
 
       {/*
         La casella va ABANS del bo perquè és la que decideix si el bo hi pinta
@@ -114,6 +123,7 @@ export function ReservationForm({
         d'existir, i per tant el formulari no pot enviar un bonoId residual— i
         al seu lloc surt el tipus de servei, que amb bo sortia del bo mateix.
       */}
+      {!client?.restricted && (
       <label className="flex items-start gap-2 text-sm text-brand-charcoal">
         <input
           type="checkbox"
@@ -130,6 +140,7 @@ export function ReservationForm({
           </span>
         </span>
       </label>
+      )}
 
       {complimentary ? (
         <SelectField

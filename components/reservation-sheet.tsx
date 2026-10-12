@@ -58,7 +58,11 @@ const whenFmt = new Intl.DateTimeFormat("ca-ES", {
  *
  * QUI POT FER QUÈ no canvia i no es decideix aquí: arriba de la pàgina.
  *   · `canManage`: reprogramar, marcar feta i cancel·lar (els seus clients).
- *   · `canCancel`: només cancel·lar (la seva agenda, client d'un company; 0091).
+ *   · `canReschedule` / `canComplete`: el mateix per separat, quan no és el
+ *     seu client (0107): reprogramar un grup o la seva especialitat a la seva
+ *     agenda; marcar feta el que és de la seva agenda. Sense, valen `canManage`.
+ *   · `canCancel`: cancel·lar sense ser el seu client (la seva agenda, 0091; o
+ *     qualsevol grup, 0107).
  *   · `canWriteNote`: escriure la nota (qui va DONAR la sessió; 0079). L'admin
  *     no la rep mai: la llegeix, no l'escriu.
  */
@@ -67,6 +71,8 @@ export function ReservationSheet({
   palette,
   canManage,
   canCancel,
+  canReschedule,
+  canComplete,
   cancelAction,
   completeAction,
   rescheduleAction,
@@ -80,6 +86,8 @@ export function ReservationSheet({
   palette: ColorPalette;
   canManage: boolean;
   canCancel: boolean;
+  canReschedule?: boolean;
+  canComplete?: boolean;
   cancelAction: StatefulReservationAction;
   completeAction: StatefulReservationAction;
   rescheduleAction: StatefulReservationAction;
@@ -141,6 +149,9 @@ export function ReservationSheet({
 
   const start = new Date(r.scheduledAt);
   const isPast = start.getTime() <= Date.now();
+  const mayReschedule = canReschedule ?? canManage;
+  const mayComplete = canComplete ?? canManage;
+  const mayCancel = canManage || canCancel;
 
   return (
     <div
@@ -227,10 +238,18 @@ export function ReservationSheet({
               />
             )}
 
-            {canManage ? (
-              r.status === "booked" ? (
-                <div className="flex flex-col gap-2">
-                  {reschedulePicker && r.trainerId ? (
+            {r.status === "booked" && (mayReschedule || mayComplete || mayCancel) ? (
+              <div className="flex flex-col gap-2">
+                {/* No és el seu client, però alguna cosa sí que hi pot fer
+                    (0091/0107): es diu què, perquè no sembli un error que
+                    falti un botó. */}
+                {!canManage && (
+                  <p className="flex items-center gap-2 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
+                    <LockIcon /> {notYoursLabel(mayReschedule, mayComplete, mayCancel)}
+                  </p>
+                )}
+                {mayReschedule &&
+                  (reschedulePicker && r.trainerId ? (
                     <ReschedulePicker
                       r={r}
                       action={reschedule}
@@ -272,7 +291,8 @@ export function ReservationSheet({
                           ple, fora de l'horari… Abans la pàgina petava. */}
                       {reschedState.error && <ActionError message={reschedState.error} />}
                     </form>
-                  )}
+                  ))}
+                {mayComplete && (
                   <form action={complete}>
                     <input type="hidden" name="id" value={r.id} />
                     <button
@@ -283,36 +303,22 @@ export function ReservationSheet({
                       {completing ? "Marcant…" : "Marcar feta"}
                     </button>
                   </form>
+                )}
+                {mayCancel && (
                   <CancelReservationConfirm
                     id={r.id}
                     action={cancel}
                     pending={cancelling}
                     disabled={busy}
                   />
-                  {error && <ActionError message={error} />}
-                </div>
-              ) : (
-                <p className="text-sm text-brand-muted">
-                  Aquesta reserva ja està{" "}
-                  {RESERVATION_STATUS_LABELS[r.status].toLowerCase()}.
-                </p>
-              )
-            ) : canCancel && r.status === "booked" ? (
-              <div className="flex flex-col gap-2">
-                {/* La seva agenda, però no el seu client (0091): la pot
-                    cancel·lar, no marcar feta ni reprogramar. */}
-                <p className="flex items-center gap-2 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
-                  <LockIcon /> No és el teu client, però és de la teva agenda: la
-                  pots cancel·lar.
-                </p>
-                <CancelReservationConfirm
-                  id={r.id}
-                  action={cancel}
-                  pending={cancelling}
-                  disabled={busy}
-                />
+                )}
                 {error && <ActionError message={error} />}
               </div>
+            ) : canManage ? (
+              <p className="text-sm text-brand-muted">
+                Aquesta reserva ja està{" "}
+                {RESERVATION_STATUS_LABELS[r.status].toLowerCase()}.
+              </p>
             ) : (
               <p className="flex items-center gap-2 rounded-lg bg-brand-bg px-3 py-2 text-sm text-brand-muted">
                 <LockIcon /> No és el teu client: només lectura.
@@ -466,4 +472,16 @@ export function LockIcon() {
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   );
+}
+
+/** Què pot fer qui mira una reserva d'un client que no és seu. */
+function notYoursLabel(resched: boolean, complete: boolean, cancel: boolean): string {
+  const can = [
+    resched && "reprogramar",
+    complete && "marcar feta",
+    cancel && "cancel·lar",
+  ].filter(Boolean) as string[];
+  const list =
+    can.length > 1 ? `${can.slice(0, -1).join(", ")} o ${can[can.length - 1]}` : can[0];
+  return `No és el teu client, però la pots ${list}.`;
 }

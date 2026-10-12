@@ -56,6 +56,7 @@ export function ReservationsAgenda({
   nowISO,
   manageableIds,
   cancellableIds,
+  completableIds,
   notes,
   noteableIds,
   cancelAction,
@@ -83,6 +84,11 @@ export function ReservationsAgenda({
    * que `manageableIds`.
    */
   cancellableIds?: string[];
+  /**
+   * Les que es poden MARCAR FETES, si és una llista diferent (el professional:
+   * els seus clients i la seva agenda, 0107). Sense, les de `manageableIds`.
+   */
+  completableIds?: string[];
   /**
    * Les accions de l'àrea on s'és. Abans s'importaven les de l'ADMIN aquí
    * dins, també a l'àrea del professional, i revalidaven /admin: la seva
@@ -117,6 +123,13 @@ export function ReservationsAgenda({
       return ids ? new Set(ids) : null;
     },
     [cancellableIds, manageableIds],
+  );
+  const completable = useMemo(
+    () => {
+      const ids = completableIds ?? manageableIds;
+      return ids ? new Set(ids) : null;
+    },
+    [completableIds, manageableIds],
   );
   const actions: RowActions = { cancelAction, completeAction };
   // Sense llista, ningú escriu. El contrari de `manageable`, que sense llista
@@ -182,6 +195,7 @@ export function ReservationsAgenda({
         moreHref={nav.href.moreAhead}
         canManage={(id) => !manageable || manageable.has(id)}
         canCancel={(id) => !cancellable || cancellable.has(id)}
+        canComplete={(id) => !completable || completable.has(id)}
         actions={actions}
       />
       {/* La nota només surt a "Passades": parla de com ha anat la sessió, i
@@ -204,6 +218,7 @@ export function ReservationsAgenda({
         moreHref={nav.href.moreBack}
         canManage={(id) => !manageable || manageable.has(id)}
         canCancel={(id) => !cancellable || cancellable.has(id)}
+        canComplete={(id) => !completable || completable.has(id)}
         actions={actions}
         notes={notes}
         canWriteNote={(id) => noteable.has(id)}
@@ -219,6 +234,7 @@ function Section({
   moreHref,
   canManage,
   canCancel,
+  canComplete,
   actions,
   notes,
   canWriteNote,
@@ -230,6 +246,7 @@ function Section({
   moreHref: string | null;
   canManage: (id: string) => boolean;
   canCancel: (id: string) => boolean;
+  canComplete: (id: string) => boolean;
   actions: RowActions;
   notes?: Record<string, SessionNote>;
   canWriteNote?: (id: string) => boolean;
@@ -272,10 +289,11 @@ function Section({
                         {RESERVATION_STATUS_LABELS[r.status]}
                       </Badge>
                       {r.status === "booked" &&
-                        (canManage(r.id) || canCancel(r.id)) && (
+                        (canManage(r.id) || canCancel(r.id) || canComplete(r.id)) && (
                           <ReservationActions
                             id={r.id}
-                            canComplete={canManage(r.id)}
+                            canComplete={canComplete(r.id)}
+                            canCancel={canManage(r.id) || canCancel(r.id)}
                             {...actions}
                           />
                         )}
@@ -316,9 +334,10 @@ function Section({
 function ReservationActions({
   id,
   canComplete,
+  canCancel,
   cancelAction,
   completeAction,
-}: { id: string; canComplete: boolean } & RowActions) {
+}: { id: string; canComplete: boolean; canCancel: boolean } & RowActions) {
   const [cancelState, cancel, cancelling] = useActionState(cancelAction, {});
   const [completeState, complete, completing] = useActionState(completeAction, {});
   const error = cancelState.error ?? completeState.error ?? null;
@@ -338,13 +357,15 @@ function ReservationActions({
             </button>
           </form>
         )}
-        <CancelReservationConfirm
-          id={id}
-          action={cancel}
-          pending={cancelling}
-          disabled={busy}
-          compact
-        />
+        {canCancel && (
+          <CancelReservationConfirm
+            id={id}
+            action={cancel}
+            pending={cancelling}
+            disabled={busy}
+            compact
+          />
+        )}
       </div>
       {error && (
         <p role="alert" className="max-w-xs text-right text-xs text-error">

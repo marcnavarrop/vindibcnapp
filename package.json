@@ -23,6 +23,7 @@
     "scope:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/scope-check.mts",
     "dayslots:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/day-slots-check.mts",
     "roles:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/roles-check.mts",
+    "staffscope:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/staff-scope-check.mts",
     "occupancy:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/occupancy-check.mts",
     "actions:check": "node scripts/actions-check.mjs",
     "rows:check": "node scripts/row-limit-check.mjs",

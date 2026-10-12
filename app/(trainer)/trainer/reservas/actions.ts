@@ -17,12 +17,12 @@ import {
   type ReservationActionState,
 } from "@/lib/reservation-action-state";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
-import { listBookableClients, type BookableClient } from "@/lib/data/slot-booking";
 import { bookFromSlot } from "@/lib/data/slot-create";
 
 /**
- * Crea una reserva desde el área de entrenador/a. La RLS garantiza que solo
- * puede hacerlo para sus clientes asignados (reservations_trainer_write).
+ * Crea una reserva des de l'àrea del professional. Qui pot reservar què ho
+ * decideix `assertMayBookFor` → `staffBookingScope` (0107): els seus clients,
+ * qualsevol grup, i la seva especialitat a la seva agenda.
  */
 export async function createTrainerReservationAction(
   _prev: FormState,
@@ -70,7 +70,7 @@ export async function cancelTrainerReservationAction(
   return { ok: true };
 }
 
-/** Marca una reserva com a feta (RLS: només dels seus clients assignats). */
+/** Marca una reserva com a feta: els seus clients o la seva agenda (0107). */
 export async function completeTrainerReservationAction(
   _prev: ReservationActionState,
   formData: FormData,
@@ -87,7 +87,7 @@ export async function completeTrainerReservationAction(
   return { ok: true };
 }
 
-/** Reprograma una reserva propia (RLS: solo de sus clientes asignados). */
+/** Reprograma una reserva: la mateixa regla que en crear (0107). */
 export async function rescheduleTrainerReservationAction(
   _prev: ReservationActionState,
   formData: FormData,
@@ -128,28 +128,14 @@ export async function rejectTrialTrainerAction(formData: FormData) {
   revalidatePath("/trainer/reservas");
 }
 
-export type BookableClientsResult =
-  | { ok: true; clients: BookableClient[] }
-  | { ok: false; error: string };
-
-/**
- * Els clients per als quals pot reservar qui mira (els seus assignats), amb
- * els bons que poden gastar. Per a la fulla de crear des d'un forat.
- */
-export async function getBookableClientsAction(): Promise<BookableClientsResult> {
-  const viewer = await getViewer();
-  if (!viewer || viewer.role !== "trainer")
-    return { ok: false, error: "Només un professional pot reservar des de la seva agenda." };
-  try {
-    return { ok: true, clients: await listBookableClients(viewer.id) };
-  } catch {
-    return { ok: false, error: "No s'han pogut carregar els teus clients." };
-  }
-}
-
 /**
  * Crea una reserva a un forat de la SEVA agenda, o apunta un client a un grup
- * seu amb places. El que fa de debò és `bookFromSlot`, compartit amb l'admin.
+ * amb places: seu o, des de la 0107, d'un company (decisió (a) d'en Marc:
+ * qualsevol grup del centre). El que fa de debò és `bookFromSlot`, compartit
+ * amb l'admin.
+ *
+ * L'agenda d'un altre només s'accepta per a GRUP. La resta de la regla (de qui
+ * és el client, cortesia, especialitat) la torna a mirar `createReservation`.
  */
 export async function createFromSlotAction(
   _prev: ReservationActionState,
@@ -157,7 +143,10 @@ export async function createFromSlotAction(
 ): Promise<ReservationActionState> {
   const viewer = await getViewer();
   if (!viewer || viewer.role !== "trainer") return { error: "No autoritzat." };
-  const result = await bookFromSlot(formData, viewer.id);
+  const target = String(formData.get("trainerId") ?? "") || viewer.id;
+  if (target !== viewer.id && formData.get("serviceType") !== "grupo_reducido")
+    return { error: "A l'agenda d'un company només hi pots apuntar algú a un grup." };
+  const result = await bookFromSlot(formData, target);
   if (!result.ok) return result;
   revalidatePath("/trainer/reservas");
   revalidatePath("/trainer/bonos");

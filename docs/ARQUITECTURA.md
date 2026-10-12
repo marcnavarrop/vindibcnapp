@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**106 migracions SQL** a `supabase/migrations/` (`0001`–`0106`), numerades i
+**107 migracions SQL** a `supabase/migrations/` (`0001`–`0107`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -68,7 +68,7 @@ més al codi:
   `prebuild`): llegeix cada fitxer `"use server"` amb el compilador de
   TypeScript i fa fallar el build si alguna funció exportada no crida
   `requireRole`/`getViewer` i no és a `scripts/public-actions.json` amb el motiu.
-  Avui: **158 accions, 151 amb comprovació i 7 públiques a propòsit** (registre,
+  Avui: **157 accions, 150 amb comprovació i 7 públiques a propòsit** (registre,
   contrasenya, sessió de prova…). `npm run roles:check` comprova, en simulació,
   que la condició és la bona (p. ex. un professional, només per als seus
   clients).
@@ -103,6 +103,16 @@ més al codi:
   serialitza les sessions extra d'una subscripció (`0073`).
 - **Anuncis només de l'admin** (`0098`): la política d'escriptura deixava
   editar a qualsevol professional; ara insert/update/delete només admin.
+- **Què reserva un professional per a un client que no és seu** (`0107`,
+  `staffBookingScope` a `lib/booking-scope.ts`): els seus clients, tot (també a
+  l'agenda d'un company: és coordinació); la resta, un grup de qualsevol
+  professional o la seva especialitat a la seva agenda, sempre amb bo. La regla
+  és pura i la fan servir la pantalla i `assertMayBookFor`. Cancel·lar i marcar
+  feta tenen porta a la base: `cancel_reservation` obre qualsevol plaça de grup,
+  i `complete_reservation` (nova) deixa marcar feta una sessió de la pròpia
+  agenda sense obrir la RLS `FOR ALL` de `reservations`. «Demo amb demo» el
+  torna a mirar l'app (`assertTeamMayTouch`): la base no sap quins comptes són
+  demo. `npm run staffscope:check`.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de
@@ -246,7 +256,7 @@ lib/*.ts                           regles pures compartides per pantalla i servi
 lib/help/                          els 3 manuals d'usuari, com a dades i no com a JSX
 lib/notifications/                 avisos: plantilles, log, correu, comunitat
 lib/mock/                          el mode simulació
-supabase/migrations/               106 fitxers SQL numerats, aplicats a mà
+supabase/migrations/               107 fitxers SQL numerats, aplicats a mà
 messages/{ca,es,en}.json           i18n del client i les pàgines públiques
 scripts/                           comprovacions (*:check) i eines de suport
 docs/                              aquest document, EMAILS.md i la guia de proves

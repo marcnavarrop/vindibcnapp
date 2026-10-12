@@ -32,7 +32,7 @@ import { ReservationSheet, LockIcon } from "@/components/reservation-sheet";
 import { ATTENTION, SVC_ICON, TRIAL_COLOR, TrialModal } from "@/components/agenda-pieces";
 import { CircleAlert, Hourglass } from "lucide-react";
 import { CreateSlotSheet } from "@/components/create-slot-sheet";
-import type { BookableClientsResult } from "@/app/(trainer)/trainer/reservas/actions";
+import type { ClientSearchResult } from "@/app/actions/client-search-actions";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 import type { SessionNote } from "@/lib/data/session-notes";
@@ -241,6 +241,8 @@ export function TrainerGrid({
   showFree,
   manageableIds,
   cancellableIds,
+  completableIds,
+  reschedulableIds,
   noteableIds,
   notes,
   clientBase,
@@ -251,7 +253,7 @@ export function TrainerGrid({
   acceptTrialAction,
   rejectTrialAction,
   createFromSlotAction,
-  loadBookableClients,
+  searchClients,
   palette,
   openingHour,
   closingHour,
@@ -277,6 +279,10 @@ export function TrainerGrid({
   showFree: boolean;
   manageableIds: string[];
   cancellableIds: string[];
+  /** Marcar feta: els seus clients i la seva agenda (0107). */
+  completableIds: string[];
+  /** Reprogramar: la regla de reservar (`staffBookingScope`, 0107). */
+  reschedulableIds: string[];
   noteableIds: string[];
   notes?: Record<string, SessionNote>;
   clientBase: string;
@@ -289,7 +295,7 @@ export function TrainerGrid({
   /** Crear sobre un forat o apuntar a un grup (fulla nova). */
   createFromSlotAction: StatefulReservationAction;
   /** Els clients assignats amb els seus bons, per a la fulla de crear. */
-  loadBookableClients: () => Promise<BookableClientsResult>;
+  searchClients: (query: string) => Promise<ClientSearchResult>;
   palette: ColorPalette;
   openingHour: number;
   closingHour: number;
@@ -299,13 +305,18 @@ export function TrainerGrid({
   const [list, setList] = useState<{
     title: string;
     entries: Entry[];
-    /** Un grup propi amb places i per venir: s'hi pot apuntar algú. */
-    join?: { at: Date; count: number };
+    /**
+     * Un grup amb places i per venir: s'hi pot apuntar algú. Des de la 0107
+     * també el d'un company (`trainer`): qualsevol grup del centre.
+     */
+    join?: { at: Date; count: number; trainer?: { id: string; name: string } };
   } | null>(null);
   const [creating, setCreating] = useState<{
     at: Date;
     services: ServiceType[];
     group?: { count: number };
+    /** El company del grup, si no és qui mira. */
+    trainer?: { id: string; name: string };
   } | null>(null);
   const [showAll, setShowAll] = useState(false);
   /** El detall d'un tros del carril dels companys. */
@@ -330,6 +341,15 @@ export function TrainerGrid({
     [waiting],
   );
   const cancellable = useMemo(() => new Set(cancellableIds), [cancellableIds]);
+  const completable = useMemo(() => new Set(completableIds), [completableIds]);
+  const reschedulable = useMemo(() => new Set(reschedulableIds), [reschedulableIds]);
+  // El cadenat de les targetes vol dir «aquí no hi pots fer res». Des de la
+  // 0107 hi ha reserves de clients d'altres on sí que pots fer alguna cosa
+  // (marcar-la feta, cancel·lar-la, moure-la): aquestes no el porten.
+  const actionable = useMemo(
+    () => new Set([...manageableIds, ...cancellableIds, ...completableIds, ...reschedulableIds]),
+    [manageableIds, cancellableIds, completableIds, reschedulableIds],
+  );
   const noteable = useMemo(() => new Set(noteableIds), [noteableIds]);
   const manageableTrials = useMemo(() => new Set(manageableTrialIds), [manageableTrialIds]);
 
@@ -490,9 +510,23 @@ export function TrainerGrid({
           own: e.own,
           r,
         })),
+        // Sense professional conegut no s'ofereix: el formulari aniria a parar a
+        // la pròpia agenda en comptes de la del grup.
         join:
-          e.own && e.list.length < GROUP_CAPACITY && now && e.start.getTime() > now.getTime()
-            ? { at: e.start, count: e.list.length }
+          e.list.length < GROUP_CAPACITY &&
+          (e.own || !!e.list[0].trainerId) &&
+          now &&
+          e.start.getTime() > now.getTime()
+            ? {
+                at: e.start,
+                count: e.list.length,
+                trainer: e.own
+                  ? undefined
+                  : {
+                      id: e.list[0].trainerId!,
+                      name: colleagues.find((c) => c.id === e.list[0].trainerId)?.name ?? "un company",
+                    },
+              }
             : undefined,
       });
   };
@@ -504,7 +538,8 @@ export function TrainerGrid({
     openingHour,
     closingHour,
     palette,
-    manageable,
+    manageable: actionable,
+    markable: completable,
     todayKey: now ? localDateStr(now) : "",
     onOpen: open,
     onMore: (title: string, entries: Entry[]) => setList({ title, entries }),
@@ -587,6 +622,8 @@ export function TrainerGrid({
           palette={palette}
           canManage={manageable.has(selected.id)}
           canCancel={cancellable.has(selected.id)}
+          canComplete={completable.has(selected.id)}
+          canReschedule={reschedulable.has(selected.id)}
           cancelAction={cancelAction}
           completeAction={completeAction}
           rescheduleAction={rescheduleAction}
@@ -611,7 +648,7 @@ export function TrainerGrid({
           title={list.title}
           entries={list.entries}
           palette={palette}
-          manageable={manageable}
+          manageable={actionable}
           onPick={(e) => {
             setList(null);
             open(e);
@@ -621,7 +658,12 @@ export function TrainerGrid({
               ? () => {
                   const j = list.join!;
                   setList(null);
-                  setCreating({ at: j.at, services: ["grupo_reducido"], group: { count: j.count } });
+                  setCreating({
+                    at: j.at,
+                    services: ["grupo_reducido"],
+                    group: { count: j.count },
+                    trainer: j.trainer,
+                  });
                 }
               : undefined
           }
@@ -634,7 +676,7 @@ export function TrainerGrid({
           marks={railSheet.marks}
           colleagues={colleagues}
           palette={palette}
-          manageable={manageable}
+          manageable={actionable}
           onPick={(e) => {
             setRailSheet(null);
             open(e);
@@ -647,7 +689,8 @@ export function TrainerGrid({
           at={creating.at}
           services={creating.services}
           group={creating.group}
-          loadClients={loadBookableClients}
+          trainer={creating.trainer}
+          searchClients={searchClients}
           createAction={createFromSlotAction}
           onClose={() => setCreating(null)}
         />
@@ -695,6 +738,7 @@ export function Grid({
   closingHour,
   palette,
   manageable,
+  markable,
   todayKey,
   onOpen,
   onMore,
@@ -713,6 +757,8 @@ export function Grid({
   closingHour: number;
   palette: ColorPalette;
   manageable: Set<string>;
+  /** «Per marcar»: les que pot marcar fetes (0107). Sense, les de `manageable`. */
+  markable?: Set<string>;
   todayKey: string;
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
@@ -853,6 +899,7 @@ export function Grid({
             isPast={d.dateKey < todayKey}
             palette={palette}
             manageable={manageable}
+            markable={markable}
             onOpen={onOpen}
             onMore={onMore}
             onNew={onNew}
@@ -873,6 +920,7 @@ function DayColumn({
   isPast,
   palette,
   manageable,
+  markable,
   onOpen,
   onMore,
   onNew,
@@ -886,6 +934,8 @@ function DayColumn({
   isPast: boolean;
   palette: ColorPalette;
   manageable: Set<string>;
+  /** «Per marcar»: les que pot marcar fetes (0107). Sense, les de `manageable`. */
+  markable?: Set<string>;
   onOpen: (e: Entry) => void;
   onMore: (title: string, entries: Entry[]) => void;
   onNew: (at: Date, services: ServiceType[], column: string) => void;
@@ -1046,9 +1096,9 @@ function DayColumn({
           past &&
           isToMarkAge(e.start, now) &&
           (e.kind === "res"
-            ? e.r.status === "booked" && manageable.has(e.r.id)
+            ? e.r.status === "booked" && (markable ?? manageable).has(e.r.id)
             : e.kind === "group"
-              ? e.list.some((r) => r.status === "booked" && manageable.has(r.id))
+              ? e.list.some((r) => r.status === "booked" && (markable ?? manageable).has(r.id))
               : false);
         const series =
           e.kind === "res" ? !!e.r.seriesId : e.kind === "group" ? e.list.some((r) => !!r.seriesId) : false;

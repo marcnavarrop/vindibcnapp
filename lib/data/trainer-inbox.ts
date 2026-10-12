@@ -14,10 +14,10 @@ import type { ReservationStatus, ServiceType } from "@/types/database";
  *
  * Tres coses, les mateixes que ja pot fer avui des de la fitxa:
  *
- *   · PER MARCAR — sessions dels SEUS clients que ja han acabat i segueixen
- *     reservades. És la mateixa regla que la vora taronja de la rejilla:
- *     «Fet» el pot prémer qui porta el client, encara que la sessió la donés
- *     un company (`completeReservation` → `assertMayBookFor`).
+ *   · PER MARCAR — sessions que ja han acabat i segueixen reservades, dels
+ *     SEUS clients o de la SEVA agenda (0107). És la mateixa regla que la vora
+ *     taronja de la rejilla i que `complete_reservation` a la base: «Fet» el
+ *     pot prémer qui porta el client i qui ha donat la sessió.
  *   · NOTA PER ESCRIURE — sessions que ha DONAT ella, ja fetes i sense nota.
  *     La nota és de qui la va fer, no de qui coordina (policy de la 0079):
  *     per això aquesta llista va per `trainer_id` i l'anterior per client.
@@ -120,7 +120,10 @@ async function queryReservations(
       })
       .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at));
     const toMark = rows
-      .filter((r) => r.status === "booked" && r.client?.assigned_trainer_id === me)
+      .filter(
+        (r) =>
+          r.status === "booked" && (r.client?.assigned_trainer_id === me || r.trainer_id === me),
+      )
       .slice(0, INBOX_LIMIT);
     const done = rows
       .filter((r) => r.status === "completed" && r.trainer_id === me)
@@ -137,12 +140,25 @@ async function queryReservations(
      client:clients!reservations_client_id_fkey!inner(assigned_trainer_id, profile:profiles!clients_profile_id_fkey(full_name)),
      trainer:profiles!reservations_trainer_id_fkey(full_name)`;
   // Les més recents primer: si mai s'arriba al sostre, el que cau és el més vell.
-  const [mark, done] = await Promise.all([
+  // «Per marcar» són DUES preguntes (0107): els seus clients, siguin de
+  // l'agenda que siguin, i la seva agenda, sigui el client de qui sigui.
+  // PostgREST no sap fer un «o» entre una columna i una del client unit, així
+  // que van per separat i s'ajunten aquí.
+  const [mark, markAgenda, done] = await Promise.all([
     supabase
       .from("reservations")
       .select(select)
       .eq("status", "booked")
       .eq("client.assigned_trainer_id", me)
+      .gte("scheduled_at", sinceIso)
+      .lte("ends_at", nowIso)
+      .order("scheduled_at", { ascending: false })
+      .limit(INBOX_LIMIT),
+    supabase
+      .from("reservations")
+      .select(select)
+      .eq("status", "booked")
+      .eq("trainer_id", me)
       .gte("scheduled_at", sinceIso)
       .lte("ends_at", nowIso)
       .order("scheduled_at", { ascending: false })
@@ -158,8 +174,13 @@ async function queryReservations(
       .limit(INBOX_LIMIT),
   ]);
   if (mark.error) throw mark.error;
+  if (markAgenda.error) throw markAgenda.error;
   if (done.error) throw done.error;
-  const markRows = (mark.data ?? []) as unknown as Row[];
+  const seen = new Set<string>();
+  const markRows = ([...(mark.data ?? []), ...(markAgenda.data ?? [])] as unknown as Row[])
+    .filter((r) => !seen.has(r.id) && !!seen.add(r.id))
+    .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))
+    .slice(0, INBOX_LIMIT);
   const doneRows = (done.data ?? []) as unknown as Row[];
   return {
     toMark: markRows.map((r) => toItem(r, me)),

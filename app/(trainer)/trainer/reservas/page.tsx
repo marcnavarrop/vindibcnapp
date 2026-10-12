@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { searchClientsAction } from "@/app/actions/client-search-actions";
+import { staffBookingScope } from "@/lib/booking-scope";
+import { demoCompatible } from "@/lib/demo-accounts";
 import { TAP } from "@/lib/utils";
 import { GroupTabs } from "@/components/ui/group-tabs";
 import { SupportInlineButton } from "@/components/support-inline-button";
@@ -29,7 +32,6 @@ import {
   acceptTrialTrainerAction,
   rejectTrialTrainerAction,
   createFromSlotAction,
-  getBookableClientsAction,
 } from "@/app/(trainer)/trainer/reservas/actions";
 
 export const dynamic = "force-dynamic";
@@ -109,12 +111,44 @@ export default async function TrainerReservasPage({
     .filter((r) => myClientIds.has(r.clientId))
     .map((r) => r.id);
 
-  // Cancel·lar arriba més lluny que la resta (0091): també les reserves de la
-  // SEVA agenda, encara que el client sigui d'un company. Qui fa la sessió és
-  // qui sap si la podrà fer. Marcar-les fetes o reprogramar-les, no: això
-  // segueix essent dels clients propis.
+  // «Demo amb demo» també aquí: la base no sap quins comptes són demo, i les
+  // portes de la 0107 obren grups de tot el centre.
+  const sameWorld = (r: (typeof reservations)[number]) =>
+    !!trainerId && demoCompatible(r.clientId, trainerId);
+
+  // Cancel·lar (0091 + 0107): els seus clients, la SEVA agenda (qui fa la
+  // sessió és qui sap si la podrà fer) i qualsevol plaça de GRUP del centre.
   const cancellableIds = reservations
-    .filter((r) => myClientIds.has(r.clientId) || r.trainerId === trainerId)
+    .filter(
+      (r) =>
+        myClientIds.has(r.clientId) ||
+        (sameWorld(r) && (r.trainerId === trainerId || r.serviceType === "grupo_reducido")),
+    )
+    .map((r) => r.id);
+
+  // Marcar feta (0107, `complete_reservation`): els seus clients i la seva
+  // agenda. Ho necessita qui reserva la seva especialitat a clients d'altres:
+  // la sessió que fa ell, la marca ell (i la liquidació la compta per a ell).
+  const completableIds = reservations
+    .filter((r) => myClientIds.has(r.clientId) || (sameWorld(r) && r.trainerId === trainerId))
+    .map((r) => r.id);
+
+  // Reprogramar: la mateixa regla que reservar (`staffBookingScope`), sense
+  // cortesia: moure una sessió no en regala cap.
+  const reschedulableIds = reservations
+    .filter(
+      (r) =>
+        !!trainerId &&
+        sameWorld(r) &&
+        staffBookingScope({
+          isOwnClient: myClientIds.has(r.clientId),
+          serviceType: r.serviceType,
+          trainerId: r.trainerId,
+          viewerId: trainerId,
+          viewerSpecialty: viewer?.specialty ?? null,
+          courtesy: false,
+        }) === "ok",
+    )
     .map((r) => r.id);
 
   // LES NOTES VAN PER UNA ALTRA LLISTA, i la diferència és tot el sentit de la
@@ -147,8 +181,8 @@ export default async function TrainerReservasPage({
             <h1 className="text-2xl text-brand-dark">Reserves</h1>
             <p className="mt-1 hidden text-sm text-brand-muted md:block">
               Veus l&apos;agenda completa del centre. Gestiones les reserves
-              dels teus clients, i pots cancel·lar també qualsevol de la teva
-              agenda.
+              dels teus clients, i a més pots apuntar qualsevol client a un
+              grup o a la teva especialitat a la teva agenda.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -190,6 +224,8 @@ export default async function TrainerReservasPage({
           nowISO={nowISO}
           clientBase="/trainer/clients"
           manageableIds={manageableIds}
+          completableIds={completableIds}
+          reschedulableIds={reschedulableIds}
           cancellableIds={cancellableIds}
           notes={notes}
           noteableIds={noteableIds}
@@ -207,7 +243,7 @@ export default async function TrainerReservasPage({
           calendar="trainer"
           ownBlocks={ownBlocks}
           createFromSlotAction={createFromSlotAction}
-          loadBookableClients={getBookableClientsAction}
+          searchClients={searchClientsAction}
           waiting={waiting}
           openingHour={centerSettings.openingHour}
           closingHour={centerSettings.closingHour}

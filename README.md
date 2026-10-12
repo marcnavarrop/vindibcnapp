@@ -159,6 +159,7 @@ soles a cada build (`prebuild`):
 | `npm run i18n:check` | Cada clau `t("…")` existeix i ca/es/en tenen el mateix arbre. |
 | `npm run manual:check` | El manual del client té la mateixa estructura als tres idiomes, sense textos provisionals, amb contacte i sense. |
 | `npm run scope:check` | Amb qui pot reservar un client, a tots els camins del servidor. |
+| `npm run staffscope:check` | Què pot reservar, cancel·lar i marcar fet un professional per a un client que no és seu (0107). |
 | `npm run demo:check` | Comptes demo i reals separats (calendari, cua, sèries, l'equip, /prova). |
 | `npm run slots:check` | El pas d'hores a mitges hores no ha mogut cap resposta. |
 | `npm run tz:check` | L'hora del centre (`lib/center-time.ts`): cada minut del 2026 contra el codi d'abans i contra una referència independent, amb els canvis d'hora i les mitjanits, amb el procés en UTC, a Madrid i a Nova York. Triga uns 4 minuts. |

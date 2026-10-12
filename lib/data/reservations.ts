@@ -46,7 +46,11 @@ import type {
   CancelReservationResult,
 } from "@/types/database";
 import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
-import { assertClientBookingScope } from "@/lib/booking-scope";
+import {
+  assertClientBookingScope,
+  STAFF_SCOPE_MESSAGES,
+  staffBookingScope,
+} from "@/lib/booking-scope";
 import { demoCompatible, isDemoClient } from "@/lib/demo-accounts";
 import { BonoUnusableError, bonoRejectionMessage, isBonoRejection } from "@/lib/bono-rejection";
 import {
@@ -649,8 +653,15 @@ export type ReservationInput = {
  * també per una funció de Postgres (0084) va deixar d'estar protegida per la
  * RLS del client de sessió, i duplicar la comprovació era convidar-les a
  * separar-se amb el temps.
+ *
+ * Des de la 0107 el professional no es limita als seus clients: la regla
+ * sencera és `staffBookingScope` (`lib/booking-scope.ts`), que la pantalla
+ * també fa servir. Aquí només es resol si el client és seu.
  */
-async function assertMayBookFor(clientId: string): Promise<void> {
+async function assertMayBookFor(
+  clientId: string,
+  ctx: { serviceType: ServiceType; trainerId: string | null; courtesy: boolean },
+): Promise<void> {
   const viewer = await getViewer();
   if (!viewer) throw new Error("No autoritzat.");
   if (viewer.role === "admin") return;
@@ -668,7 +679,15 @@ async function assertMayBookFor(clientId: string): Promise<void> {
           .eq("assigned_trainer_id", viewer.id)
           .maybeSingle()
       ).data;
-  if (!seu) throw new Error("Aquest client no és teu.");
+  const scope = staffBookingScope({
+    isOwnClient: seu,
+    serviceType: ctx.serviceType,
+    trainerId: ctx.trainerId,
+    viewerId: viewer.id,
+    viewerSpecialty: viewer.specialty,
+    courtesy: ctx.courtesy,
+  });
+  if (scope !== "ok") throw new Error(STAFF_SCOPE_MESSAGES[scope]);
 }
 
 async function createGroupReservations(
@@ -888,7 +907,11 @@ export async function createReservation(
     // El permís, com al camí real: fins ara la simulació no el mirava, i un
     // professional hi podia reservar per a un client d'un company. En real ja
     // l'aturava `assertMayBookFor` (més avall); aquí no es podia provar.
-    await assertMayBookFor(clientId);
+    await assertMayBookFor(clientId, {
+      serviceType,
+      trainerId: input.trainerId,
+      courtesy: !bono,
+    });
     for (const scheduled_at of dates) {
       // La disponibilitat del professional també mana per aquí. Fins ara aquest
       // camí —el manual, el d'admin i professional— no la mirava gens: podia
@@ -1032,7 +1055,11 @@ export async function createReservation(
   //
   // Les dues escriuen amb la clau de servei, que se salta la RLS. Per això qui
   // mira el permís és `assertMayBookFor` i no la base.
-  await assertMayBookFor(clientId);
+  await assertMayBookFor(clientId, {
+    serviceType,
+    trainerId: input.trainerId,
+    courtesy: !bono,
+  });
   // El client tampoc pot ser a dos llocs alhora (0105), la reservi qui la
   // reservi: es diu AMB QUINA xoca. La base ho torna a mirar (`client_overlap`
   // i la constraint), per si dues peticions arriben alhora.
@@ -1167,7 +1194,7 @@ async function cancelOne(
 const TEAM_CANCEL_ERROR: Record<"not_found" | "forbidden" | "past" | "too_late", string> = {
   not_found: "Aquesta reserva ja no existeix. No s'ha avisat ningú.",
   forbidden:
-    "No pots cancel·lar aquesta reserva: no és de la teva agenda ni d'un client teu. No s'ha avisat ningú.",
+    "No pots cancel·lar aquesta reserva: no és de la teva agenda, ni d'un client teu, ni d'un grup. No s'ha avisat ningú.",
   // Aquests dos només s'apliquen al client; si mai arribessin aquí, que es digui.
   past: "No es pot cancel·lar una sessió passada.",
   too_late: "Ja és massa a prop per cancel·lar-la.",
@@ -1184,6 +1211,7 @@ const TEAM_CANCEL_ERROR: Record<"not_found" | "forbidden" | "past" | "too_late",
  * cancel·lat abans—: no es fa res i no s'avisa ningú, com sempre.
  */
 export async function cancelReservation(id: string): Promise<void> {
+  await assertTeamMayTouch(id, "cancel");
   const res = await cancelOne(id);
   if (!res.ok) {
     if (res.reason === "not_booked") return;
@@ -1290,32 +1318,86 @@ export async function cancelReservationsByCenter(
 }
 
 /** Marca una reserva reservada como realizada. */
+/**
+ * Marca feta una reserva.
+ *
+ * Des de la 0107 ho decideix `complete_reservation`, amb la sessió de qui crida:
+ * admin; professional, si el client és seu o la sessió és de la SEVA agenda
+ * (qui l'ha donada). Abans anava per la RLS `reservations_trainer_write`, que
+ * només deixava els clients assignats: un fisio que reserva fisio a un client
+ * que no és seu no hauria pogut marcar feta la sessió que ell mateix ha fet, i
+ * la liquidació (que compta les fetes per qui les dona) no la veuria.
+ *
+ * Fa EXACTAMENT el mateix que abans: només 'booked' → 'completed', sense mirar
+ * l'hora (tampoc abans).
+ */
 export async function completeReservation(id: string): Promise<void> {
+  await assertTeamMayTouch(id, "complete");
   if (USE_MOCK) {
     const store = getStore();
     const r = store.reservations.find((x) => x.id === id);
     if (!r) throw new Error("Reserva no trobada.");
-    if (r.status !== "booked") throw new Error(NOT_COMPLETED);
+    if (r.status !== "booked") throw new Error(NOT_COMPLETED.not_booked);
     r.status = "completed";
     saveStore(store);
     return;
   }
 
   const supabase = await createClient();
-  // `.select()`: una fila que la RLS no deixa tocar no dona error, dona zero
-  // files. Sense això la pantalla deia «marcada com feta» i no ho estava.
-  const { data, error } = await supabase
-    .from("reservations")
-    .update({ status: "completed" })
-    .eq("id", id)
-    .eq("status", "booked")
-    .select("id");
+  const { data, error } = await supabase.rpc("complete_reservation", { p_id: id });
   if (error) throw error;
-  if (!data || data.length === 0) throw new Error(NOT_COMPLETED);
+  if (!data.ok) throw new Error(NOT_COMPLETED[data.reason] ?? NOT_COMPLETED.not_booked);
 }
 
-const NOT_COMPLETED =
-  "No s'ha pogut marcar com a feta: o ja no estava reservada, o no és d'un client teu.";
+const NOT_COMPLETED = {
+  not_found: "Aquesta reserva ja no existeix.",
+  not_booked: "No s'ha pogut marcar com a feta: ja no estava reservada.",
+  forbidden:
+    "No la pots marcar com a feta: no és d'un client teu ni de la teva agenda.",
+} as const;
+
+/**
+ * El que la base no pot mirar en cancel·lar o marcar feta: DEMO AMB DEMO. Les
+ * portes de la 0107 obren qualsevol grup del centre a qualsevol professional,
+ * i la base no sap quins comptes són de demostració (`lib/demo-accounts.ts`).
+ * Un professional real no toca res del Client Demo, ni un de demo res d'un
+ * client real.
+ *
+ * Al mock, a més, el permís que a la base fan `cancel_reservation` i
+ * `complete_reservation`: sense això, la simulació deixaria fer el que
+ * producció rebutja.
+ */
+async function assertTeamMayTouch(id: string, action: "cancel" | "complete"): Promise<void> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "trainer") return;
+  let r: { client_id: string; trainer_id: string | null; service_type: ServiceType } | null;
+  if (USE_MOCK) {
+    r = getStore().reservations.find((x) => x.id === id) ?? null;
+  } else {
+    const { data, error } = await createAdminClient()
+      .from("reservations")
+      .select("client_id, trainer_id, service_type")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    r = data;
+  }
+  // Si no existeix, que ho digui la base (o el mock) amb el seu motiu.
+  if (!r) return;
+  const refusal =
+    action === "cancel" ? TEAM_CANCEL_ERROR.forbidden : NOT_COMPLETED.forbidden;
+  if (!demoCompatible(r.client_id, viewer.id)) throw new Error(refusal);
+  if (USE_MOCK) {
+    const own = getStore().clients.some(
+      (c) => c.id === r.client_id && c.assigned_trainer_id === viewer.id,
+    );
+    const ok =
+      own ||
+      r.trainer_id === viewer.id ||
+      (action === "cancel" && r.service_type === "grupo_reducido");
+    if (!ok) throw new Error(refusal);
+  }
+}
 
 /** Reprograma una reserva (cambia la fecha/hora). Solo si está reservada. */
 const RESCHEDULE_ERROR: Record<
@@ -1345,8 +1427,8 @@ const RESCHEDULE_ERROR: Record<
  * comptar-hi la que es mou. Abans era un UPDATE sol, que no veia ni grups ni
  * proves ni el pany.
  *
- * Aquí, abans, el que la funció no fa: el permís (admin, o el professional del
- * client) i la disponibilitat amb els bloquejos, igual que en crear. I després,
+ * Aquí, abans, el que la funció no fa: el permís (admin, o l'equip segons
+ * `staffBookingScope`) i la disponibilitat amb els bloquejos, igual que en crear. I després,
  * fora de la transacció com a `cancel_reservation`, la llista d'espera de l'hora
  * antiga: si era una plaça de grup, allà hi ha quedat lloc.
  *
@@ -1354,8 +1436,8 @@ const RESCHEDULE_ERROR: Record<
  * (`reservation_rescheduled`, obligatori com la cancel·lació), només si la
  * funció ha mogut la reserva de debò i fora de la transacció. No hi ha cap camí
  * perquè el client es reprogrami ell mateix —`assertMayBookFor` només deixa
- * passar l'admin i el professional del client—, així que el correu sempre avisa
- * d'un canvi que ha fet algú altre.
+ * passar l'admin i l'equip—, així que el correu sempre avisa d'un canvi que ha
+ * fet algú altre.
  */
 export async function rescheduleReservation(
   id: string,
@@ -1384,7 +1466,13 @@ export async function rescheduleReservation(
     current = data;
   }
   if (!current) throw new Error(RESCHEDULE_ERROR.not_found);
-  await assertMayBookFor(current.client_id);
+  // La mateixa regla que en crear (0107), sense cortesia: moure una sessió no
+  // en regala cap. L'agenda no canvia en moure.
+  await assertMayBookFor(current.client_id, {
+    serviceType: current.service_type,
+    trainerId: current.trainer_id,
+    courtesy: false,
+  });
   await assertWithinAvailability(current.trainer_id, when, current.service_type);
 
   let res: RescheduleReservationResult;

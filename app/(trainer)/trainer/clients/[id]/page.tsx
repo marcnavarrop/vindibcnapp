@@ -1,3 +1,4 @@
+import { demoCompatible } from "@/lib/demo-accounts";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
@@ -92,6 +93,9 @@ export default async function TrainerClientDetailPage({
   if (!client || !consent) notFound();
 
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
+  // Reservar-li alguna cosa, encara que no sigui seu (0107): un grup, o la seva
+  // especialitat a la seva agenda. «Demo amb demo», com a tot arreu.
+  const canBook = !!viewer && demoCompatible(client.id, viewer.id);
 
   const receivesFisio =
     client.bonos.some((b) => b.serviceType === "fisioterapia") ||
@@ -186,7 +190,7 @@ export default async function TrainerClientDetailPage({
               reservations={client.reservations}
               now={now}
               clientId={client.id}
-              newHref={canManage ? `/trainer/reservas/new?client=${client.id}` : undefined}
+              newHref={canBook ? `/trainer/reservas/new?client=${client.id}` : undefined}
             />
           </div>
           <div className="flex flex-col gap-4">
