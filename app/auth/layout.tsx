@@ -1,4 +1,6 @@
 import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { AUTH_LANDING_NAMESPACES, pickMessages } from "@/lib/i18n/client-namespaces";
 
 /**
  * Les pantalles d'aterratge dels correus de compte: fixar la contrasenya
@@ -16,10 +18,14 @@ import { NextIntlClientProvider } from "next-intl";
  * Els formularis són components de client, així que el proveïdor ha de ser aquí
  * perquè els missatges arribin al navegador. Mateix criteri que `app/prova`.
  */
-export default function AuthLandingLayout({
+export default async function AuthLandingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <NextIntlClientProvider>{children}</NextIntlClientProvider>;
+  // Només els namespaces que fan servir els components de client d'aquesta
+  // àrea (vegeu `lib/i18n/client-namespaces.ts`); la resta del diccionari ja
+  // no viatja a cada pàgina.
+  const messages = pickMessages(await getMessages(), AUTH_LANDING_NAMESPACES);
+  return <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>;
 }

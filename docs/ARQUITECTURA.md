@@ -180,6 +180,13 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   mode «Setmana» de l'agenda compten igual (mitges hores d'horari sense bloquejar
   cobertes per una sessió reservada o feta; un grup compta l'hora sencera). Abans
   la tira i l'Inici donaven xifres diferents el mateix dia.
+- **Només els missatges que calen al navegador** (`lib/i18n/client-namespaces.ts`):
+  cada `NextIntlClientProvider` (client, login i registre, aterratges de compte,
+  /prova) envia només els namespaces que fan servir els seus components de
+  client, no el diccionari sencer (~65 kB per pàgina: correus, PDF del val,
+  legals). L'HTML baixa entre un 13 % i un 85 % segons la pàgina. `i18n:client`
+  (al `prebuild`) recorre els imports des de totes les entrades de cada àrea i
+  falla si en falta cap.
 - **El correu de la comunitat** (`lib/notifications/community.ts`): cada
   destinatari queda `queued` al `notification_log` en publicar, i l'enviament va
   a `after()` en lots de 100 (`/emails/batch`), amb clau d'idempotència per lot.

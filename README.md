@@ -147,13 +147,14 @@ casa.
 
 ## Comprovacions
 
-En simulació i sense tocar cap base ni enviar res. Les dues primeres corren
+En simulació i sense tocar cap base ni enviar res. Les tres primeres corren
 soles a cada build (`prebuild`):
 
 | Ordre | Què protegeix |
 | --- | --- |
 | `npm run rows:check` | **(prebuild)** Cap lectura nova sense límit: tot `.select` sense `.limit`/`.range`/`.single`/`head` ha de ser a `scripts/row-limit-allowlist.json`. |
 | `npm run actions:check` | **(prebuild)** Cap acció de servidor sense mirar qui la crida (`requireRole`/`getViewer`), llevat de les públiques de `scripts/public-actions.json`. |
+| `npm run i18n:client` | **(prebuild)** Cada component de client troba els seus missatges: el proveïdor de cada àrea només envia els namespaces de `lib/i18n/client-namespaces.ts`, i això recorre els imports (també `import()`) des de totes les entrades de l'àrea i falla si en falta cap, si n'hi ha un que no existeix o si un `useTranslations` no porta un literal. |
 | `npm run roles:check` | Qui pot fer servir de debò les accions que escriuen amb la clau de servei. |
 | `npm run i18n:check` | Cada clau `t("…")` existeix i ca/es/en tenen el mateix arbre. |
 | `npm run manual:check` | El manual del client té la mateixa estructura als tres idiomes, sense textos provisionals, amb contacte i sense. |
@@ -182,6 +183,11 @@ soles a cada build (`prebuild`):
 | `npm run emailtaken:check` | Donar d'alta un client o un professional amb un correu que ja té compte: s'atura abans de crear res, en català. |
 
 **Si falla el `prebuild`**, el build s'atura i Vercel no publica res:
+
+- `i18n:client`: afegeix el namespace que diu a la llista de la seva àrea a
+  `lib/i18n/client-namespaces.ts` (o, si un component amb `useTranslations`
+  es carrega també a l'admin o al professional, mira'l a mà i anota'l a
+  `KNOWN_OUTSIDE` amb el motiu).
 
 - `rows:check`: la lectura nova s'acota (`.limit`, `.range`, un filtre per id o
   per finestra, o `fetchAllRows` de `lib/supabase/fetch-all.ts`) o s'anota a
