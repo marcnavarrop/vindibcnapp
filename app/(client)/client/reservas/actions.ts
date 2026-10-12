@@ -12,6 +12,7 @@ import {
 import type { ServiceType } from "@/types/database";
 import { SERVICE_TYPES } from "@/lib/labels";
 import { TooLateToCancelError } from "@/lib/cancellation";
+import { BonoUnusableError } from "@/lib/bono-rejection";
 
 
 /**
@@ -57,6 +58,11 @@ export async function createOwnReservationAction(
   } catch (e) {
     const scoped = scopeErrorCode(e);
     if (scoped) return { errorCode: scoped };
+    // El bo que s'havia de gastar ja no val i la base ho ha aturat (0103).
+    if (e instanceof BonoUnusableError) {
+      console.warn("[reserves] bo rebutjat per la base:", e.reason);
+      return { errorCode: "bonoUnusable" };
+    }
     console.error("[reserves]", e);
     return { errorCode: "failed" };
   }

@@ -627,6 +627,7 @@
       "noSeries": "No series specified.",
       "noLimit": "Tell us until when it repeats, or how many sessions you want.",
       "nothingToConfirm": "There's nothing to confirm.",
+      "bonoUnusable": "Your pass can no longer be used for this booking (it's used up, expired or cancelled). Check “My passes” or contact the centre.",
       "failed": "We couldn't complete that. Please try again.",
       "tooLate": "This booking can no longer be cancelled (it needs at least {hours} h notice). Contact the centre if it's urgent.",
       "notYourTrainer": "You can only book 1-to-1 and pairs sessions with your trainer.",

@@ -16,7 +16,8 @@ import { afterBonoConsumed } from "@/lib/data/bono-consumption";
 import { sessionEndIso } from "@/lib/availability-slots";
 import { notify, getProfileContact } from "@/lib/notifications";
 import { getCenterSettings } from "@/lib/data/center-settings";
-import { centerDateStr, centerLocalToInstant } from "@/lib/center-time";
+import { centerDateStr, centerLocalToInstant, centerToday } from "@/lib/center-time";
+import { isBonoRejection } from "@/lib/bono-rejection";
 import {
   assertClientBookingScope,
   clientBookingScope,
@@ -458,6 +459,9 @@ export async function promoteFromWaitlist(freed: {
       for (const cl of cls ?? []) assignedOf.set(cl.id, cl.assigned_trainer_id ?? null);
     }
 
+    // El dia del centre, UN cop: amb aquest es descarten els bons caducats i
+    // amb aquest el torna a mirar la base (0103).
+    const today = centerToday();
     for (const c of candidates) {
       // Ja hi és? (pot passar en un grup on el mateix client hi tingui plaça)
       if (occupied.some((o) => o.client_id === c.client_id)) continue;
@@ -483,7 +487,7 @@ export async function promoteFromWaitlist(freed: {
         .gt("remaining_sessions", 0)
         .order("purchased_at", { ascending: true });
       const bono = (bonos ?? []).find(
-        (b) => !isBonoExpired({ status: b.status, expires_at: b.expires_at }),
+        (b) => !isBonoExpired({ status: b.status, expires_at: b.expires_at }, today),
       );
       if (!bono) continue;
 
@@ -522,6 +526,7 @@ export async function promoteFromWaitlist(freed: {
           p_scheduled_at: freed.scheduledAt,
           p_capacity: GROUP_CAPACITY,
       p_duration_minutes: SESSION_DURATION_MINUTES,
+          p_today: today,
         });
         if (gErr) return { promoted: false, reason: "Error en la promoció." };
         if (!res || !res.ok) {
@@ -529,7 +534,9 @@ export async function promoteFromWaitlist(freed: {
           // els peus): el següent de la cua encara pot entrar-hi. 'taken' i
           // 'full' són de la FRANJA: si ja no hi cap ningú, no cal seguir
           // provant candidats.
-          if (res?.reason === "no_sessions") continue;
+          // Des de la 0103 la base també pot dir que el BO no val
+          // (`bono_*`): també és d'aquest candidat, no de la franja.
+          if (isBonoRejection(res?.reason)) continue;
           return { promoted: false, reason: "La franja segueix plena." };
         }
         createdId = res.id;
@@ -549,13 +556,14 @@ export async function promoteFromWaitlist(freed: {
           p_scheduled_at: freed.scheduledAt,
           p_service_type: c.service_type,
           p_duration_minutes: SESSION_DURATION_MINUTES,
+          p_today: today,
         });
         if (iErr) return { promoted: false, reason: "Error en la promoció." };
         if (!res || !res.ok) {
           // Mateix criteri que als grups: 'no_sessions' és d'AQUEST candidat i
           // el següent de la cua encara pot entrar-hi; 'taken' és de la FRANJA,
           // i si ja no hi cap ningú no cal seguir provant.
-          if (res?.reason === "no_sessions") continue;
+          if (isBonoRejection(res?.reason)) continue;
           return { promoted: false, reason: "La franja segueix plena." };
         }
         createdId = res.id;

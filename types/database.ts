@@ -65,11 +65,20 @@ export type WaitlistStatus = "waiting" | "fulfilled" | "expired" | "cancelled";
  * 'taken' = la franja se l'ha quedada una sessió que no és de grup;
  * 'full' = ja hi ha l'aforament sencer; 'no_sessions' = el bo ha canviat sota
  * els peus de qui el va llegir i el reclam optimista no ha entrat.
+ *
+ * Des de la 0103 la base també mira el bo (`BonoBookingRejection`): de qui és,
+ * de quin servei, en quin estat i si ha caducat (`expires_at` a la resposta).
  */
+export type BonoBookingRejection =
+  | "bono_not_found"
+  | "bono_other_client"
+  | "bono_other_service"
+  | "bono_not_usable"
+  | "bono_expired";
 export type GroupBookingResult =
   /** `remaining` és null quan la reserva és de cortesia: no hi ha cap bo que comptar (0070). */
   | { ok: true; id: string; remaining: number | null }
-  | { ok: false; reason: "taken" | "full" | "no_sessions" };
+  | { ok: false; reason: "taken" | "full" | "no_sessions" | BonoBookingRejection; expires_at?: string };
 
 /**
  * Resultat de `book_individual_slot` (0084), el mirall de l'anterior per a les
@@ -80,7 +89,7 @@ export type GroupBookingResult =
  */
 export type IndividualBookingResult =
   | { ok: true; id: string; remaining: number | null }
-  | { ok: false; reason: "taken" | "no_sessions" };
+  | { ok: false; reason: "taken" | "no_sessions" | BonoBookingRejection; expires_at?: string };
 
 /** Resultat de `reschedule_reservation` (0093). */
 export type RescheduleReservationResult =
@@ -1866,6 +1875,13 @@ export interface Database {
           p_capacity: number;
           /** Durada de la sessió; té valor per defecte a la base (0083). */
           p_duration_minutes?: number;
+          /**
+           * El dia del centre (YYYY-MM-DD) per a la caducitat del bo (0103).
+           * A la base té valor per defecte NULL només durant la transició (la
+           * 0104 el treu); aquí és obligatori des del primer dia, perquè cap
+           * camí nou se'l pugui saltar sense que el compilador ho digui.
+           */
+          p_today: string;
         };
         Returns: GroupBookingResult;
       };
@@ -1887,6 +1903,13 @@ export interface Database {
           p_service_type: ServiceType;
           /** Durada de la sessió; té valor per defecte a la base. */
           p_duration_minutes?: number;
+          /**
+           * El dia del centre (YYYY-MM-DD) per a la caducitat del bo (0103).
+           * A la base té valor per defecte NULL només durant la transició (la
+           * 0104 el treu); aquí és obligatori des del primer dia, perquè cap
+           * camí nou se'l pugui saltar sense que el compilador ho digui.
+           */
+          p_today: string;
         };
         Returns: IndividualBookingResult;
       };

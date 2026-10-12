@@ -627,6 +627,7 @@
       "noSeries": "Serie no indicada.",
       "noLimit": "Di hasta cuándo se repite o cuántas sesiones quieres.",
       "nothingToConfirm": "No hay nada que confirmar.",
+      "bonoUnusable": "Tu bono ya no se puede usar para esta reserva (se ha agotado, ha caducado o se ha anulado). Mira «Mis bonos» o habla con el centro.",
       "failed": "No se ha podido completar la operación. Inténtalo de nuevo.",
       "tooLate": "Ya no se puede cancelar esta reserva (hay que hacerlo con al menos {hours} h de antelación). Contacta con el centro si tienes una urgencia.",
       "notYourTrainer": "Las sesiones individuales y en pareja solo puedes reservarlas con tu entrenador.",

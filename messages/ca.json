@@ -627,6 +627,7 @@
       "noSeries": "Sèrie no indicada.",
       "noLimit": "Digues fins quan es repeteix o quantes sessions vols.",
       "nothingToConfirm": "No hi ha res a confirmar.",
+      "bonoUnusable": "El teu bo ja no es pot fer servir per a aquesta reserva (s'ha acabat, ha caducat o s'ha anul·lat). Mira «Els meus bons» o parla amb el centre.",
       "failed": "No s'ha pogut completar l'operació. Torna-ho a provar.",
       "tooLate": "Ja no es pot cancel·lar aquesta reserva (cal fer-ho amb almenys {hours} h d'antelació). Contacta amb el centre si tens una urgència.",
       "notYourTrainer": "Les sessions individuals i en parella només les pots reservar amb el teu entrenador.",

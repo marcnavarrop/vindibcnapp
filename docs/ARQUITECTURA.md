@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**102 migracions SQL** a `supabase/migrations/` (`0001`–`0102`), numerades i
+**103 migracions SQL** a `supabase/migrations/` (`0001`–`0103`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -125,15 +125,17 @@ més al codi:
   pestanya, o la RLS no el deixa tocar), falla i no anota el pagament. Abans
   s'anotava igualment. `npm run paid:check` ho prova per la branca real contra un
   Supabase de memòria (`scripts/shims/fake-supabase.ts`).
-- **Pendent: la base no torna a comprovar el bo en reservar.**
-  `book_group_slot` (`0083`) i `book_individual_slot` (`0084`) descompten la
-  sessió amb un bloqueig optimista (`remaining_sessions = p_expected_remaining`)
-  però no miren ni l'estat ni la data de caducitat del bo: confien que l'app ho
-  hagi fet abans, i ho fa a tots els camins (`assertBonoUsable` a
-  `lib/data/reservations.ts`, el filtre per `expires_at` de
-  `lib/data/slot-booking.ts`, `isBonoExpired` a les sèries i la llista
-  d'espera). Una segona barrera dins de la funció és a valorar més endavant;
-  demana migració. No depèn del barrido de bons caducats
+- **La base torna a comprovar el bo en reservar** (`0103`).
+  `book_group_slot` i `book_individual_slot` bloquegen la fila del bo
+  (`for update`) i hi apliquen la MATEIXA regla que l'app (`assertBonoUsable`,
+  `isBonoExpired`, els filtres de reservar, la llista d'espera i les sèries):
+  del client, del servei, `active` o `pending_payment`, no caducat i amb les
+  sessions esperades. La caducitat es compara amb `p_today`, el dia del centre
+  que passa l'app (com a la `0073`), no amb `current_date` en UTC. Els motius
+  (`bono_not_found`, `bono_other_client`, `bono_other_service`,
+  `bono_not_usable`, `bono_expired`) es tradueixen a `lib/bono-rejection.ts`.
+  `p_today` té valor per defecte NULL només per a la transició; la `0104` el
+  farà obligatori. No depèn del barrido de bons caducats
   (`sweepExpiredBonos`), que només canvia com es veuen.
 - **Els totals els calcula la base**: `payments_summary`, `payments_by_month`
   (`0095`) i `bonos_summary` (`0097`), només per a l'admin. Sumar al navegador
@@ -228,7 +230,7 @@ lib/*.ts                           regles pures compartides per pantalla i servi
 lib/help/                          els 3 manuals d'usuari, com a dades i no com a JSX
 lib/notifications/                 avisos: plantilles, log, correu, comunitat
 lib/mock/                          el mode simulació
-supabase/migrations/               102 fitxers SQL numerats, aplicats a mà
+supabase/migrations/               103 fitxers SQL numerats, aplicats a mà
 messages/{ca,es,en}.json           i18n del client i les pàgines públiques
 scripts/                           comprovacions (*:check) i eines de suport
 docs/                              aquest document, EMAILS.md i la guia de proves

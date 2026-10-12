@@ -48,6 +48,7 @@ import type {
 import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 import { assertClientBookingScope } from "@/lib/booking-scope";
 import { demoCompatible, isDemoClient } from "@/lib/demo-accounts";
+import { BonoUnusableError, bonoRejectionMessage, isBonoRejection } from "@/lib/bono-rejection";
 
 /**
  * Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio.
@@ -634,6 +635,8 @@ async function createGroupReservations(
   clientId: string,
   trainerId: string | null,
   dates: string[],
+  /** El dia del centre amb què s'ha validat el bo: la base el torna a mirar (0103). */
+  today: string,
 ): Promise<number | null> {
   if (!trainerId)
     throw new Error("Una sessió de grup necessita un professional.");
@@ -657,6 +660,7 @@ async function createGroupReservations(
       p_scheduled_at: scheduledAt,
       p_capacity: GROUP_CAPACITY,
       p_duration_minutes: SESSION_DURATION_MINUTES,
+      p_today: today,
     });
 
     if (error || !res || !res.ok) {
@@ -676,8 +680,9 @@ async function createGroupReservations(
       const motiu = res && !res.ok ? res.reason : null;
       if (motiu === "taken")
         throw new Error("Aquesta franja ja està ocupada.");
-      if (motiu === "no_sessions")
-        throw new Error("Aquest bo no té sessions disponibles.");
+      // Els motius del bo, inclosos els que la base mira des de la 0103.
+      if (isBonoRejection(motiu))
+        throw new Error(bonoRejectionMessage(motiu, res && !res.ok ? res.expires_at : null));
       throw new Error("El grup d'aquesta franja ja està complet.");
     }
 
@@ -713,6 +718,8 @@ async function createIndividualReservations(
   trainerId: string | null,
   serviceType: ServiceType,
   dates: string[],
+  /** El dia del centre amb què s'ha validat el bo: la base el torna a mirar (0103). */
+  today: string,
 ): Promise<number | null> {
   const admin = createAdminClient();
   const fetes: string[] = [];
@@ -727,6 +734,7 @@ async function createIndividualReservations(
       p_scheduled_at: scheduledAt,
       p_service_type: serviceType,
       p_duration_minutes: SESSION_DURATION_MINUTES,
+      p_today: today,
     });
 
     if (error || !res || !res.ok) {
@@ -742,8 +750,8 @@ async function createIndividualReservations(
           .eq("id", bono.id);
       if (error) throw new Error("No s'ha pogut crear la reserva.");
       const motiu = res && !res.ok ? res.reason : null;
-      if (motiu === "no_sessions")
-        throw new Error("Aquest bo no té sessions disponibles.");
+      if (isBonoRejection(motiu))
+        throw new Error(bonoRejectionMessage(motiu, res && !res.ok ? res.expires_at : null));
       throw new Error("Aquesta franja ja està ocupada.");
     }
 
@@ -786,10 +794,13 @@ function assertRepeatable(serviceType: ServiceType, weeks: number): void {
  * comprovació, qui manipulés el desplegable reservava amb un bo caducat, o amb
  * un de ja marcat com a caducat.
  */
-function assertBonoUsable(b: { status: BonoStatus; expires_at: string | null }): void {
+function assertBonoUsable(
+  b: { status: BonoStatus; expires_at: string | null },
+  today: string = centerToday(),
+): void {
   if (b.status !== "active" && b.status !== "pending_payment")
     throw new Error("Aquest bo ja no es pot fer servir.");
-  if (isBonoExpired(b))
+  if (isBonoExpired(b, today))
     throw new Error(`Aquest bo va caducar el ${formatDate(b.expires_at!)}: ja no es pot fer servir.`);
 }
 
@@ -892,6 +903,9 @@ export async function createReservation(
   }
 
   const supabase = await createClient();
+  // El dia del centre, UN cop: amb aquest es valida el bo aquí i amb aquest el
+  // torna a mirar la base (0103). A la mitjanit no poden dir coses diferents.
+  const today = centerToday();
 
   // Sense bo, una sessió de cortesia: no hi ha res a llegir ni a comprovar.
   // Amb bo, exactament el mateix de sempre.
@@ -912,7 +926,7 @@ export async function createReservation(
       .eq("id", input.bonoId)
       .single();
     if (bErr || !data) throw new Error("Bo no trobat.");
-    assertBonoUsable(data);
+    assertBonoUsable(data, today);
     if (data.remaining_sessions < weeks)
       throw new Error(
         `Aquest bo només té ${data.remaining_sessions} sessions disponibles.`,
@@ -955,13 +969,14 @@ export async function createReservation(
   await assertMayBookFor(clientId);
   const remaining =
     serviceType === "grupo_reducido"
-      ? await createGroupReservations(bono, clientId, input.trainerId, dates)
+      ? await createGroupReservations(bono, clientId, input.trainerId, dates, today)
       : await createIndividualReservations(
           bono,
           clientId,
           input.trainerId,
           serviceType,
           dates,
+          today,
         );
 
   const trainer = input.trainerId
@@ -1586,7 +1601,10 @@ export async function createClientReservation(
   //    ESE servicio.
   await assertWithinAvailability(trainerId, when, serviceType);
 
-  // 3. Bono más antiguo activo de este tipo con sesiones (FIFO).
+  // 3. Bono más antiguo activo de este tipo con sesiones (FIFO). El dia del
+  //    centre, un cop: amb aquest es tria el bo i amb aquest el torna a mirar
+  //    la base (0103).
+  const today = centerToday();
   const { data: bono, error: bErr } = await admin
     .from("bonos")
     .select("id, remaining_sessions, status, first_reservation_at")
@@ -1595,7 +1613,7 @@ export async function createClientReservation(
     .in("status", ["active", "pending_payment"])
     .gt("remaining_sessions", 0)
     // Caducats fora: o no en tenen data, o encara no ha passat.
-    .or(`expires_at.is.null,expires_at.gte.${centerToday()}`)
+    .or(`expires_at.is.null,expires_at.gte.${today}`)
     .order("purchased_at", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -1624,9 +1642,13 @@ export async function createClientReservation(
       p_scheduled_at: scheduledAt,
       p_capacity: GROUP_CAPACITY,
       p_duration_minutes: SESSION_DURATION_MINUTES,
+      p_today: today,
     });
     if (gErr) throw new Error("No s'ha pogut crear la reserva.");
     if (!res || !res.ok) {
+      // El bo ja no val (0103): el client ho llegeix en el seu idioma.
+      if (isBonoRejection(res?.reason) && res.reason !== "no_sessions")
+        throw new BonoUnusableError(res.reason, res.expires_at);
       // Els mateixos missatges de sempre: qui reserva no ha de notar que per
       // dins això ha canviat de lloc.
       if (res?.reason === "taken")
@@ -1659,9 +1681,12 @@ export async function createClientReservation(
       p_scheduled_at: scheduledAt,
       p_service_type: serviceType,
       p_duration_minutes: SESSION_DURATION_MINUTES,
+      p_today: today,
     });
     if (bErr2) throw new Error("No s'ha pogut crear la reserva.");
     if (!res || !res.ok) {
+      if (isBonoRejection(res?.reason) && res.reason !== "no_sessions")
+        throw new BonoUnusableError(res.reason, res.expires_at);
       // Els mateixos missatges de sempre: qui reserva no ha de notar que per
       // dins això ha canviat de lloc.
       if (res?.reason === "no_sessions")
