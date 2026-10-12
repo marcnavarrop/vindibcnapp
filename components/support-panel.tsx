@@ -175,7 +175,8 @@ function AnswerForm({
   const [editing, setEditing] = useState(false);
 
   // Es tanca sol quan s'ha desat. Com al formulari d'alta: és una reacció a
-  // l'enviament, no un estat derivat.
+  // l'enviament, no un estat derivat. La confirmació no és aquí sinó al
+  // panell: si el tiquet surt del filtre, aquesta fila ja no existeix.
   useEffect(() => {
     if (state.ok) setEditing(false);
   }, [state]);
@@ -375,6 +376,28 @@ export function SupportPanel({
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<StatusFilter>(defaultStatus);
   const [category, setCategory] = useState<"all" | SupportCategory>("all");
+  // La confirmació d'una resposta desada. Viu al panell i no a la fila: amb el
+  // filtre de pendents, un tiquet que passa a «Resolt» desapareix de la llista
+  // i s'emportaria el missatge amb ell.
+  const [answered, setAnswered] = useState<{ title: string; status: SupportStatus } | null>(null);
+
+  // La resposta passa per aquí abans d'anar al servidor: el panell sí que
+  // segueix muntat quan torna, i sap quin estat s'ha triat (el servidor només
+  // diu «fet»).
+  const answerWithNotice = useMemo<Action | undefined>(() => {
+    if (!answerAction) return undefined;
+    return async (prev, fd) => {
+      const res = await answerAction(prev, fd);
+      if (res.ok) {
+        const id = String(fd.get("id") ?? "");
+        setAnswered({
+          title: tickets.find((x) => x.id === id)?.title ?? "",
+          status: String(fd.get("status") ?? "") as SupportStatus,
+        });
+      }
+      return res;
+    };
+  }, [answerAction, tickets]);
 
   const byCategory = useMemo(
     () =>
@@ -541,6 +564,26 @@ export function SupportPanel({
         </p>
       )}
 
+      {answered && (
+        <p role="status" className="text-sm text-success">
+          Resposta desada a «{answered.title}». El tiquet és ara «
+          {SUPPORT_STATUS_LABELS[answered.status]}»
+          {!matchesStatus({ status: answered.status } as SupportTicket, status) && (
+            <>
+              {" "}i ja no surt amb aquest filtre:{" "}
+              <button
+                type="button"
+                onClick={() => setStatus(answered.status)}
+                className={`font-bold text-brand-purple underline hover:text-brand-purple-dark ${TAP_SURFACE}`}
+              >
+                veure els «{SUPPORT_STATUS_LABELS[answered.status]}»
+              </button>
+            </>
+          )}
+          .
+        </p>
+      )}
+
       {/* ── Llistat ── */}
       {visible.length === 0 ? (
         <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
@@ -595,7 +638,9 @@ export function SupportPanel({
                   columna que comparteix amb l'estat, que al mòbil la
                   deixava en mitja pantalla. */}
               <Answer ticket={t} />
-              {answerAction && <AnswerForm ticket={t} action={answerAction} />}
+              {answerWithNotice && (
+                <AnswerForm ticket={t} action={answerWithNotice} />
+              )}
             </li>
           ))}
         </ul>

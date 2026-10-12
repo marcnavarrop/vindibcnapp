@@ -1938,7 +1938,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Respondre un tiquet" },
         {
           t: "p",
-          text: "A cada tiquet, «Respondre» obre un camp per escriure la resposta i, al costat, l'estat amb què es queda (proposa «Resolt» si encara era obert). En desar, qui l'ha obert la veu a sota del seu tiquet i li arriba per correu; si respon el correu, et respon a tu. Hi ha una sola resposta per tiquet: «Editar la resposta» la corregeix, i només torna a enviar el correu si el text ha canviat.",
+          text: "A cada tiquet, «Respondre» obre un camp per escriure la resposta i, al costat, l'estat amb què es queda (proposa «Resolt» si encara era obert). En desar, qui l'ha obert la veu a sota del seu tiquet i li arriba per correu; si respon el correu, et respon a tu. Hi ha una sola resposta per tiquet: «Editar la resposta» la corregeix, i només torna a enviar el correu si el text ha canviat. En desar, a dalt surt la confirmació amb l'estat nou; si el tiquet ja no entra al filtre que tens posat (per exemple, el passes a «Resolt» mirant els pendents), t'ho diu i t'ofereix canviar el filtre per veure'l.",
         },
         { t: "h", text: "La pantalla de seguiment" },
         {
