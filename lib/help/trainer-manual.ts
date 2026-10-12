@@ -461,6 +461,10 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         { t: "h", text: "Una reserva nova des del formulari" },
         {
+          t: "warn",
+          text: "Un client no pot tenir mai dues sessions que es trepitgin, les reservi qui les reservi: ni amb dos professionals diferents, ni una de 9:00 amb una de 9:30. Si ho proves, el formulari (i la fulla de l'agenda) diu amb quina xoca («Aquest client ja té una altra sessió que es trepitja amb aquesta hora (dt. 20 oct., 11:00 · EP Individual).») i no crea res. Una que comença just quan acaba l'altra sí que hi cap. El mateix val en canviar l'hora d'una sessió: «El client ja té una altra sessió a aquesta hora.».",
+        },
+        {
           t: "p",
           text: "Des de «+ Nova reserva» o des de la fitxa del client, que el porta ja posat. El formulari demana, per ordre:",
         },

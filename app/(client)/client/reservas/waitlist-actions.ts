@@ -6,6 +6,7 @@ import { getClientByProfile } from "@/lib/data/clients";
 import { joinWaitlist, cancelWaitlistEntry } from "@/lib/data/waitlist";
 import { scopeErrorCode } from "@/lib/booking-scope";
 import type { ServiceType } from "@/types/database";
+import { BookingConflictError } from "@/lib/booking-conflict";
 
 /**
  * Apuntar-se i desapuntar-se d'una franja plena, fora de qualsevol sèrie.
@@ -20,7 +21,7 @@ import type { ServiceType } from "@/types/database";
  * quin idioma llegeix el client. El text el posa la pantalla.
  */
 export type ReservaErrorCode =
-  | "unauthorized" | "noTrainer" | "badService" | "noDate" | "noReservation" | "noSession" | "noEntry" | "noClient" | "noSeries" | "noLimit" | "nothingToConfirm" | "tooLate" | "notYourTrainer" | "noAssignedTrainer" | "trainerUnavailable" | "bonoUnusable" | "failed";
+  | "unauthorized" | "noTrainer" | "badService" | "noDate" | "noReservation" | "noSession" | "noEntry" | "noClient" | "noSeries" | "noLimit" | "nothingToConfirm" | "tooLate" | "notYourTrainer" | "noAssignedTrainer" | "trainerUnavailable" | "bonoUnusable" | "clientOverlap" | "slotTaken" | "groupFull" | "noSessions" | "failed";
 
 export type WaitlistState = { errorCode?: ReservaErrorCode; ok?: boolean };
 
@@ -46,6 +47,8 @@ export async function joinWaitlistAction(
   } catch (e) {
     const scoped = scopeErrorCode(e);
     if (scoped) return { errorCode: scoped };
+    // Ja té una altra sessió que es trepitja amb aquesta (0105).
+    if (e instanceof BookingConflictError) return { errorCode: e.code };
     console.error("[llista d'espera]", e);
     return { errorCode: "failed" };
   }

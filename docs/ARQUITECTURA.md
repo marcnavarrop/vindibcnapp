@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**104 migracions SQL** a `supabase/migrations/` (`0001`–`0104`), numerades i
+**105 migracions SQL** a `supabase/migrations/` (`0001`–`0105`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -103,6 +103,15 @@ més al codi:
   serialitza les sessions extra d'una subscripció (`0073`).
 - **Anuncis només de l'admin** (`0098`): la política d'escriptura deixava
   editar a qualsevol professional; ara insert/update/delete només admin.
+- **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
+  `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
+  només reserves `booked`) ho garanteix a tots els camins, i les funcions de
+  reservar i de moure (`book_group_slot`, `book_individual_slot`,
+  `reschedule_reservation`) ho miren abans de tocar cap bo i tornen
+  `client_overlap`. L'app ho comprova per solapament a tots els camins
+  (`findClientOverlap`, `lib/data/reservations.ts`) i tradueix els motius a
+  `lib/booking-conflict.ts`; l'error 23P01 es distingeix del de la 0082 pel
+  nom de la constraint.
 - **Comptes demo separats dels reals** (`lib/demo-accounts.ts`): mentre
   l'Entrenador Demo, el Fisio Demo i el Client Demo visquin a producció, la regla
   «demo amb demo, real amb real» és dins de `clientBookingScope`
@@ -156,7 +165,7 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
 - **`scripts/row-limit-check.mjs`** (`npm run rows:check`, a cada `prebuild`):
   cada `.from(…).select(…)` sense `.limit`/`.range`/`.single`/`head` ha de ser a
   `scripts/row-limit-allowlist.json` com a `acotada` (filtrada per id, client,
-  finestra…) o `pendent` (creix amb el centre). Avui: 115 entrades, 102 acotades
+  finestra…) o `pendent` (creix amb el centre). Avui: 114 entrades, 101 acotades
   i 13 pendents. Una lectura nova sense anotar fa fallar el build.
 - **Les llistes que creixen van per pàgines** (pagaments, clients, bons, històric
   de proves), amb cursor i comptadors de la base; **les lectures que han de ser
@@ -230,7 +239,7 @@ lib/*.ts                           regles pures compartides per pantalla i servi
 lib/help/                          els 3 manuals d'usuari, com a dades i no com a JSX
 lib/notifications/                 avisos: plantilles, log, correu, comunitat
 lib/mock/                          el mode simulació
-supabase/migrations/               104 fitxers SQL numerats, aplicats a mà
+supabase/migrations/               105 fitxers SQL numerats, aplicats a mà
 messages/{ca,es,en}.json           i18n del client i les pàgines públiques
 scripts/                           comprovacions (*:check) i eines de suport
 docs/                              aquest document, EMAILS.md i la guia de proves

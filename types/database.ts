@@ -78,7 +78,7 @@ export type BonoBookingRejection =
 export type GroupBookingResult =
   /** `remaining` és null quan la reserva és de cortesia: no hi ha cap bo que comptar (0070). */
   | { ok: true; id: string; remaining: number | null }
-  | { ok: false; reason: "taken" | "full" | "no_sessions" | BonoBookingRejection; expires_at?: string };
+  | { ok: false; reason: "taken" | "full" | "client_overlap" | "no_sessions" | BonoBookingRejection; expires_at?: string };
 
 /**
  * Resultat de `book_individual_slot` (0084), el mirall de l'anterior per a les
@@ -89,7 +89,7 @@ export type GroupBookingResult =
  */
 export type IndividualBookingResult =
   | { ok: true; id: string; remaining: number | null }
-  | { ok: false; reason: "taken" | "no_sessions" | BonoBookingRejection; expires_at?: string };
+  | { ok: false; reason: "taken" | "client_overlap" | "no_sessions" | BonoBookingRejection; expires_at?: string };
 
 /** Resultat de `reschedule_reservation` (0093). */
 export type RescheduleReservationResult =
@@ -105,7 +105,7 @@ export type RescheduleReservationResult =
     }
   | {
       ok: false;
-      reason: "not_found" | "not_booked" | "past" | "same" | "taken" | "full";
+      reason: "not_found" | "not_booked" | "past" | "same" | "taken" | "full" | "client_overlap";
     };
 
 /** Resultat de `cancel_reservation` (0091). */

@@ -49,6 +49,12 @@ import { canCancelAt, TooLateToCancelError } from "@/lib/cancellation";
 import { assertClientBookingScope } from "@/lib/booking-scope";
 import { demoCompatible, isDemoClient } from "@/lib/demo-accounts";
 import { BonoUnusableError, bonoRejectionMessage, isBonoRejection } from "@/lib/bono-rejection";
+import {
+  BookingConflictError,
+  clientOverlapMessage,
+  conflictCodeOf,
+  isClientOverlapDbError,
+} from "@/lib/booking-conflict";
 
 /**
  * Lanza si la franja no cae dentro de la disponibilidad del trainer para el servicio.
@@ -352,6 +358,50 @@ export function mockOccupants(
         rangesOverlap(start, end, new Date(r.scheduled_at).getTime(), rowEndMs(r)),
     )
     .map((r) => ({ service_type: r.service_type, client_id: r.client_id }));
+}
+
+/**
+ * L'altra reserva viva del MATEIX client que es trepitja amb aquesta franja, si
+ * n'hi ha (la més propera). La regla de producte (0105): un client no pot ser a
+ * dos llocs alhora, la reservi qui la reservi. És la mateixa condició que la
+ * constraint `reservations_no_client_overlap` i la comprovació de les funcions
+ * de la base; mirar-ho aquí abans permet dir AMB QUINA xoca.
+ *
+ * `excludeId`: la reserva que es mou (canvi d'hora), que no xoca amb si mateixa.
+ */
+export async function findClientOverlap(
+  clientId: string,
+  scheduledAt: string,
+  durationMinutes: number,
+  excludeId?: string,
+): Promise<{ scheduled_at: string; service_type: ServiceType } | null> {
+  const start = new Date(scheduledAt).getTime();
+  const end = start + durationMinutes * 60_000;
+  if (USE_MOCK) {
+    const hit = getStore()
+      .reservations.filter(
+        (r) =>
+          r.id !== excludeId &&
+          r.client_id === clientId &&
+          r.status === "booked" &&
+          rangesOverlap(start, end, new Date(r.scheduled_at).getTime(), rowEndMs(r)),
+      )
+      .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0];
+    return hit ? { scheduled_at: hit.scheduled_at, service_type: hit.service_type } : null;
+  }
+  let q = createAdminClient()
+    .from("reservations")
+    .select("id, scheduled_at, service_type")
+    .eq("client_id", clientId)
+    .eq("status", "booked")
+    .lt("scheduled_at", new Date(end).toISOString())
+    .gt("ends_at", new Date(start).toISOString())
+    .order("scheduled_at", { ascending: true })
+    .limit(1);
+  if (excludeId) q = q.neq("id", excludeId);
+  const { data, error } = await q.maybeSingle();
+  if (error) throw error;
+  return data ? { scheduled_at: data.scheduled_at, service_type: data.service_type as ServiceType } : null;
 }
 
 /** El bessó de `mockOccupants` contra el backend real. */
@@ -676,8 +726,10 @@ async function createGroupReservations(
             status: bono.status,
           })
           .eq("id", bono.id);
+      if (isClientOverlapDbError(error)) throw new Error(clientOverlapMessage());
       if (error) throw new Error("No s'ha pogut crear la reserva.");
       const motiu = res && !res.ok ? res.reason : null;
+      if (motiu === "client_overlap") throw new Error(clientOverlapMessage());
       if (motiu === "taken")
         throw new Error("Aquesta franja ja està ocupada.");
       // Els motius del bo, inclosos els que la base mira des de la 0103.
@@ -748,8 +800,10 @@ async function createIndividualReservations(
             status: bono.status,
           })
           .eq("id", bono.id);
+      if (isClientOverlapDbError(error)) throw new Error(clientOverlapMessage());
       if (error) throw new Error("No s'ha pogut crear la reserva.");
       const motiu = res && !res.ok ? res.reason : null;
+      if (motiu === "client_overlap") throw new Error(clientOverlapMessage());
       if (isBonoRejection(motiu))
         throw new Error(bonoRejectionMessage(motiu, res && !res.ok ? res.expires_at : null));
       throw new Error("Aquesta franja ja està ocupada.");
@@ -852,6 +906,18 @@ export async function createReservation(
         mockOccupants(store, input.trainerId, scheduled_at, SESSION_DURATION_MINUTES),
         serviceType,
       );
+      // El client tampoc pot ser a dos llocs alhora (0105), la reservi qui la
+      // reservi. Abans aquest camí no ho mirava gens.
+      {
+        const s0 = new Date(scheduled_at).getTime();
+        const clash = store.reservations.find(
+          (r) =>
+            r.client_id === clientId &&
+            r.status === "booked" &&
+            rangesOverlap(s0, s0 + SESSION_DURATION_MINUTES * 60_000, new Date(r.scheduled_at).getTime(), rowEndMs(r)),
+        );
+        if (clash) throw new Error(clientOverlapMessage(clash));
+      }
       store.reservations.push({
         id: crypto.randomUUID(),
         client_id: clientId,
@@ -967,6 +1033,13 @@ export async function createReservation(
   // Les dues escriuen amb la clau de servei, que se salta la RLS. Per això qui
   // mira el permís és `assertMayBookFor` i no la base.
   await assertMayBookFor(clientId);
+  // El client tampoc pot ser a dos llocs alhora (0105), la reservi qui la
+  // reservi: es diu AMB QUINA xoca. La base ho torna a mirar (`client_overlap`
+  // i la constraint), per si dues peticions arriben alhora.
+  for (const scheduled_at of dates) {
+    const clash = await findClientOverlap(clientId, scheduled_at, SESSION_DURATION_MINUTES);
+    if (clash) throw new Error(clientOverlapMessage(clash));
+  }
   const remaining =
     serviceType === "grupo_reducido"
       ? await createGroupReservations(bono, clientId, input.trainerId, dates, today)
@@ -1246,7 +1319,7 @@ const NOT_COMPLETED =
 
 /** Reprograma una reserva (cambia la fecha/hora). Solo si está reservada. */
 const RESCHEDULE_ERROR: Record<
-  "not_found" | "not_booked" | "past" | "same" | "taken" | "full",
+  "not_found" | "not_booked" | "past" | "same" | "taken" | "full" | "client_overlap",
   string
 > = {
   not_found: "Aquesta reserva ja no existeix.",
@@ -1255,6 +1328,8 @@ const RESCHEDULE_ERROR: Record<
   same: "La reserva ja és a aquesta hora.",
   taken: "Aquesta franja ja està ocupada.",
   full: "El grup d'aquesta franja ja està complet.",
+  // 0105: el client ja té una altra sessió que es trepitja amb l'hora nova.
+  client_overlap: "El client ja té una altra sessió a aquesta hora.",
 };
 
 /**
@@ -1324,6 +1399,8 @@ export async function rescheduleReservation(
     if (error) {
       // La constraint de la 0082 pot saltar si el recompte no ha vist un
       // solapament; per a qui mira, és el mateix: la franja és ocupada.
+      // La de la 0105 (el client) dona el mateix codi i es distingeix pel nom.
+      if (isClientOverlapDbError(error)) throw new Error(RESCHEDULE_ERROR.client_overlap);
       if (error.code === "23P01") throw new Error(RESCHEDULE_ERROR.taken);
       throw new Error("No s'ha pogut reprogramar la reserva.");
     }
@@ -1412,6 +1489,18 @@ function mockReschedule(id: string, scheduledAt: string): RescheduleReservationR
     } else if (occupants.length > 0) {
       return { ok: false, reason: "taken" };
     }
+  }
+  // El client tampoc pot quedar a dos llocs alhora (0105), com a la base.
+  {
+    const s0 = new Date(scheduledAt).getTime();
+    const clash = store.reservations.some(
+      (x) =>
+        x.id !== r.id &&
+        x.client_id === r.client_id &&
+        x.status === "booked" &&
+        rangesOverlap(s0, s0 + duration * 60_000, new Date(x.scheduled_at).getTime(), rowEndMs(x)),
+    );
+    if (clash) return { ok: false, reason: "client_overlap" };
   }
   const old = r.scheduled_at;
   r.scheduled_at = scheduledAt;
@@ -1511,7 +1600,7 @@ export async function createClientReservation(
         r.status === "booked" &&
         rangesOverlap(startMs, endMs, new Date(r.scheduled_at).getTime(), rowEndMs(r)),
     );
-    if (clientAlreadyBooked) throw new Error("Ja tens una reserva a aquesta hora.");
+    if (clientAlreadyBooked) throw new BookingConflictError("clientOverlap", "Ja tens una reserva a aquesta hora.");
     await assertWithinAvailability(trainerId, when, serviceType);
     assertSlotFree(
       [
@@ -1587,15 +1676,11 @@ export async function createClientReservation(
     clientId: client.id,
   });
 
-  // 1b. El client no pot tenir dues reserves confirmades a la mateixa hora.
-  const { data: clientConflict } = await admin
-    .from("reservations")
-    .select("id")
-    .eq("client_id", client.id)
-    .eq("scheduled_at", scheduledAt)
-    .eq("status", "booked")
-    .maybeSingle();
-  if (clientConflict) throw new Error("Ja tens una reserva a aquesta hora.");
+  // 1b. El client no pot tenir dues reserves vives que es trepitgin (0105).
+  //     Per SOLAPAMENT: abans només es mirava el mateix instant d'inici, i una
+  //     de 9:00 i una de 9:30 passaven.
+  const clash = await findClientOverlap(client.id, scheduledAt, SESSION_DURATION_MINUTES);
+  if (clash) throw new BookingConflictError("clientOverlap", clientOverlapMessage(clash));
 
   // 2. La franja debe estar dentro de la disponibilidad de ESE profesional para
   //    ESE servicio.
@@ -1644,18 +1729,17 @@ export async function createClientReservation(
       p_duration_minutes: SESSION_DURATION_MINUTES,
       p_today: today,
     });
+    // La constraint de la 0105: dues peticions seves alhora per a dos
+    // professionals. Per a qui reserva, és el mateix que `client_overlap`.
+    if (isClientOverlapDbError(gErr)) throw new BookingConflictError("clientOverlap");
     if (gErr) throw new Error("No s'ha pogut crear la reserva.");
     if (!res || !res.ok) {
       // El bo ja no val (0103): el client ho llegeix en el seu idioma.
       if (isBonoRejection(res?.reason) && res.reason !== "no_sessions")
         throw new BonoUnusableError(res.reason, res.expires_at);
-      // Els mateixos missatges de sempre: qui reserva no ha de notar que per
-      // dins això ha canviat de lloc.
-      if (res?.reason === "taken")
-        throw new Error("Aquesta franja ja està ocupada.");
-      if (res?.reason === "no_sessions")
-        throw new Error("Aquest bo no té sessions disponibles.");
-      throw new Error("El grup d'aquesta franja ja està complet.");
+      // Franja ocupada, grup ple, sense sessions o ja té una altra sessió
+      // (0105): cadascun amb el seu text, ja no el genèric.
+      throw new BookingConflictError(conflictCodeOf(res?.reason) ?? "groupFull");
     }
   } else {
     // 4. Comprovar la franja, descomptar la sessió i inserir, tot dins del
@@ -1683,15 +1767,12 @@ export async function createClientReservation(
       p_duration_minutes: SESSION_DURATION_MINUTES,
       p_today: today,
     });
+    if (isClientOverlapDbError(bErr2)) throw new BookingConflictError("clientOverlap");
     if (bErr2) throw new Error("No s'ha pogut crear la reserva.");
     if (!res || !res.ok) {
       if (isBonoRejection(res?.reason) && res.reason !== "no_sessions")
         throw new BonoUnusableError(res.reason, res.expires_at);
-      // Els mateixos missatges de sempre: qui reserva no ha de notar que per
-      // dins això ha canviat de lloc.
-      if (res?.reason === "no_sessions")
-        throw new Error("Aquest bo no té sessions disponibles.");
-      throw new Error("Aquesta franja ja està ocupada.");
+      throw new BookingConflictError(conflictCodeOf(res?.reason) ?? "slotTaken");
     }
   }
 

@@ -647,6 +647,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "p",
           text: "Hi ha dues maneres: tocant un forat lliure de l'agenda, que és la ràpida, o amb «+ Nova reserva», el formulari de sempre, per a tot el que no cau en un forat (repeticions setmanals, una reserva sense professional).",
         },
+        {
+          t: "warn",
+          text: "Un client no pot tenir mai dues sessions que es trepitgin, les reservi qui les reservi: ni amb dos professionals diferents, ni una de 9:00 amb una de 9:30. Si ho proves, el formulari diu amb quina xoca («Aquest client ja té una altra sessió que es trepitja amb aquesta hora (dt. 20 oct., 11:00 · EP Individual).») i no crea res. Una que comença just quan acaba l'altra sí que hi cap. El mateix val en canviar l'hora d'una sessió: «El client ja té una altra sessió a aquesta hora.».",
+        },
         { t: "h", text: "Des d'un forat de l'agenda" },
         {
           t: "p",

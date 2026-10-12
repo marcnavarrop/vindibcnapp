@@ -8,8 +8,10 @@ import { getStore, saveStore } from "@/lib/mock/store";
 import {
   slotHasRoom,
   fetchOccupants,
+  findClientOverlap,
   mockOccupants,
 } from "@/lib/data/reservations";
+import { BookingConflictError, clientOverlapMessage, isClientOverlapDbError } from "@/lib/booking-conflict";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { GROUP_CAPACITY, SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { afterBonoConsumed } from "@/lib/data/bono-consumption";
@@ -209,25 +211,16 @@ export async function joinWaitlist(input: {
     if (!bono)
       throw new Error("Necessites un bo actiu d'aquest servei amb sessions.");
 
-    const here = store.reservations.filter(
-      (r) =>
-        r.trainer_id === input.trainerId &&
-        new Date(r.scheduled_at).getTime() === when.getTime() &&
-        r.status === "booked",
-    );
+    // Per SOLAPAMENT, com les funcions de la base: abans es mirava l'instant
+    // exacte i una sessió de 9:30 no veia la de 9:00.
+    const here = mockOccupants(store, input.trainerId, input.scheduledAt, SESSION_DURATION_MINUTES);
     if (slotHasRoom(here, input.serviceType))
       throw new Error("Aquesta sessió encara té plaça: pots reservar-la.");
     if (here.some((r) => r.client_id === client.id))
       throw new Error("Ja tens una reserva en aquesta sessió.");
-    if (
-      store.reservations.some(
-        (r) =>
-          r.client_id === client.id &&
-          new Date(r.scheduled_at).getTime() === when.getTime() &&
-          r.status === "booked",
-      )
-    )
-      throw new Error("Ja tens una altra sessió a aquesta hora.");
+    // Ni amb ningú altre: el client no pot ser a dos llocs alhora (0105).
+    const clashMock = await findClientOverlap(client.id, input.scheduledAt, SESSION_DURATION_MINUTES);
+    if (clashMock) throw new BookingConflictError("clientOverlap", clientOverlapMessage(clashMock));
     if (
       store.waitlist_entries.some(
         (w) =>
@@ -281,26 +274,18 @@ export async function joinWaitlist(input: {
   if (!bono)
     throw new Error("Necessites un bo actiu d'aquest servei amb sessions.");
 
-  const { data: here } = await admin
-    .from("reservations")
-    .select("service_type, client_id")
-    .eq("trainer_id", input.trainerId)
-    .eq("scheduled_at", input.scheduledAt)
-    .eq("status", "booked");
-  const occupied = (here ?? []) as { service_type: ServiceType; client_id: string }[];
+  // Qui ocupa la franja, per SOLAPAMENT (`fetchOccupants`, el mateix criteri
+  // que les funcions de la base). Abans era l'instant exacte i, amb mitges
+  // hores, podia dir «encara té plaça» d'una franja plena o al revés.
+  const occupied = await fetchOccupants(admin, input.trainerId, input.scheduledAt, SESSION_DURATION_MINUTES);
   if (slotHasRoom(occupied, input.serviceType))
     throw new Error("Aquesta sessió encara té plaça: pots reservar-la.");
   if (occupied.some((r) => r.client_id === client.id))
     throw new Error("Ja tens una reserva en aquesta sessió.");
 
-  const { data: clash } = await admin
-    .from("reservations")
-    .select("id")
-    .eq("client_id", client.id)
-    .eq("scheduled_at", input.scheduledAt)
-    .eq("status", "booked")
-    .maybeSingle();
-  if (clash) throw new Error("Ja tens una altra sessió a aquesta hora.");
+  // Cap altra sessió seva que es trepitgi amb aquesta (0105).
+  const clash = await findClientOverlap(client.id, input.scheduledAt, SESSION_DURATION_MINUTES);
+  if (clash) throw new BookingConflictError("clientOverlap", clientOverlapMessage(clash));
 
   const { data: already } = await admin
     .from("waitlist_entries")
@@ -491,15 +476,9 @@ export async function promoteFromWaitlist(freed: {
       );
       if (!bono) continue;
 
-      // Cap altra reserva seva a la mateixa hora.
-      const { data: clash } = await admin
-        .from("reservations")
-        .select("id")
-        .eq("client_id", c.client_id)
-        .eq("scheduled_at", freed.scheduledAt)
-        .eq("status", "booked")
-        .maybeSingle();
-      if (clash) continue;
+      // Cap altra reserva seva que es trepitgi amb aquesta (0105): per
+      // SOLAPAMENT, no només a la mateixa hora d'inici.
+      if (await findClientOverlap(c.client_id, freed.scheduledAt, SESSION_DURATION_MINUTES)) continue;
 
       // Reclam de la plaça i de la sessió.
       //
@@ -528,6 +507,8 @@ export async function promoteFromWaitlist(freed: {
       p_duration_minutes: SESSION_DURATION_MINUTES,
           p_today: today,
         });
+        // La constraint de la 0105 és cosa d'aquest candidat, no de la franja.
+        if (isClientOverlapDbError(gErr)) continue;
         if (gErr) return { promoted: false, reason: "Error en la promoció." };
         if (!res || !res.ok) {
           // 'no_sessions' és cosa d'AQUEST candidat (el bo li ha canviat sota
@@ -536,7 +517,7 @@ export async function promoteFromWaitlist(freed: {
           // provant candidats.
           // Des de la 0103 la base també pot dir que el BO no val
           // (`bono_*`): també és d'aquest candidat, no de la franja.
-          if (isBonoRejection(res?.reason)) continue;
+          if (isBonoRejection(res?.reason) || res?.reason === "client_overlap") continue;
           return { promoted: false, reason: "La franja segueix plena." };
         }
         createdId = res.id;
@@ -558,12 +539,13 @@ export async function promoteFromWaitlist(freed: {
           p_duration_minutes: SESSION_DURATION_MINUTES,
           p_today: today,
         });
+        if (isClientOverlapDbError(iErr)) continue;
         if (iErr) return { promoted: false, reason: "Error en la promoció." };
         if (!res || !res.ok) {
           // Mateix criteri que als grups: 'no_sessions' és d'AQUEST candidat i
           // el següent de la cua encara pot entrar-hi; 'taken' és de la FRANJA,
           // i si ja no hi cap ningú no cal seguir provant.
-          if (isBonoRejection(res?.reason)) continue;
+          if (isBonoRejection(res?.reason) || res?.reason === "client_overlap") continue;
           return { promoted: false, reason: "La franja segueix plena." };
         }
         createdId = res.id;
@@ -675,15 +657,8 @@ async function promoteMock(
       )
       .sort((a, b) => a.purchased_at.localeCompare(b.purchased_at))[0];
     if (!bono) continue;
-    if (
-      store.reservations.some(
-        (r) =>
-          r.client_id === c.client_id &&
-          r.scheduled_at === freed.scheduledAt &&
-          r.status === "booked",
-      )
-    )
-      continue;
+    // Cap altra sessió seva que es trepitgi amb aquesta (0105).
+    if (await findClientOverlap(c.client_id, freed.scheduledAt, SESSION_DURATION_MINUTES)) continue;
 
     const id = crypto.randomUUID();
     store.reservations.push({

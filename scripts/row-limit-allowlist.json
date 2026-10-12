@@ -435,10 +435,6 @@
     "category": "acotada",
     "reason": "Els bons d'un client d'un servei."
   },
-  "lib/data/waitlist.ts::joinWaitlist::reservations": {
-    "category": "acotada",
-    "reason": "Una franja."
-  },
   "lib/data/waitlist.ts::listWaitingForAdmin::waitlist_entries": {
     "category": "acotada",
     "reason": "Finestra de dies; les passades caduquen."

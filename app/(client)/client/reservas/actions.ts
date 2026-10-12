@@ -13,6 +13,7 @@ import type { ServiceType } from "@/types/database";
 import { SERVICE_TYPES } from "@/lib/labels";
 import { TooLateToCancelError } from "@/lib/cancellation";
 import { BonoUnusableError } from "@/lib/bono-rejection";
+import { BookingConflictError } from "@/lib/booking-conflict";
 
 
 /**
@@ -62,6 +63,13 @@ export async function createOwnReservationAction(
     if (e instanceof BonoUnusableError) {
       console.warn("[reserves] bo rebutjat per la base:", e.reason);
       return { errorCode: "bonoUnusable" };
+    }
+    // Ja té una altra sessió a aquesta hora, la franja s'acaba d'ocupar, el
+    // grup s'acaba d'omplir o el bo s'ha quedat sense sessions (0105): cada
+    // cosa amb el seu text, no el genèric.
+    if (e instanceof BookingConflictError) {
+      console.warn("[reserves] no hi cap:", e.code);
+      return { errorCode: e.code };
     }
     console.error("[reserves]", e);
     return { errorCode: "failed" };
