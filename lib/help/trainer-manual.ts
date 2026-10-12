@@ -771,7 +771,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons i pagaments. Als clients que tens assignats, qualsevol bo. A la resta, només un bo de grup: la pantalla només t'ofereix els paquets de grup que es venen solts (les mensualitats, no) i t'ho diu a dalt. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
+          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons i pagaments. Als clients que tens assignats, qualsevol bo. A la resta, només un bo de grup: la pantalla només t'ofereix els paquets de grup que es venen solts (les mensualitats, no), t'ho diu a dalt, i les sessions i el preu són els del catàleg, amb l'oferta si al client li'n toca una; no es poden canviar. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
         },
         { t: "h", text: "Els paquets que no es venen solts" },
         {

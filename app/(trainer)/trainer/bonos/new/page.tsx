@@ -70,8 +70,10 @@ export default async function NewTrainerBonoPage({
         </p>
         {!own && (
           <p className="mb-6 text-sm text-brand-muted" data-not-yours>
-            No és client teu: només li pots crear un bo de grup. Les mensualitats
-            i la resta de bons, el seu professional o l&apos;administració.
+            No és client teu: només li pots crear un bo de grup, amb les sessions
+            i el preu del catàleg (amb l&apos;oferta, si li toca). Les
+            mensualitats i la resta de bons, el seu professional o
+            l&apos;administració.
           </p>
         )}
 
@@ -87,6 +89,7 @@ export default async function NewTrainerBonoPage({
           subscriptionsEnabled={settings.subscriptionsEnabled && own}
           hasLiveSubscription={liveSubscription !== null}
           renewalDay={renewalDay}
+          catalogOnly={!own}
         />
       </main>
   );

@@ -17,7 +17,27 @@
 --     (la subscripció segueix el seu camí, `subscribeAtCenter`);
 --   · nou de trinca: actiu, amb totes les sessions, sense primera reserva;
 --   · sense res de diners externs ni de cicles: ni subscripció, ni Stripe, ni
---     val de regal, ni renovació automàtica.
+--     val de regal, ni renovació automàtica;
+--   · amb les SESSIONS del paquet i el PREU del catàleg: el del paquet, o el
+--     que en dona una oferta activa d'aquell paquet o d'aquell servei. Sense
+--     això, per l'API es podria crear un bo de grup a 0 € o amb més sessions a
+--     un client que no és teu.
+--
+-- EL PREU AMB OFERTA ES CALCULA COM L'APP (`computeEffectivePrice`)
+--
+--   preu final = max(0, round(preu − estalvi)), a EUROS SENCERS,
+--   estalvi = preu × valor / 100 (percentatge) o el valor (import fix),
+--   oferta activa avui al centre (Europe/Madrid, com `centerToday`), de
+--   l'abast `package` amb aquest paquet o de l'abast `service` amb aquest
+--   tipus de servei.
+--
+-- Una diferència a posta: l'app aplica la MILLOR oferta que arriba al públic
+-- del client (té un bo actiu, una etiqueta…); la base accepta el preu de
+-- QUALSEVOL oferta activa del paquet, perquè les regles de públic viuen a
+-- l'app. El que no pot passar és un preu que no surti del catàleg.
+--
+-- Les columnes del bo van amb el nom de la taula (`bonos.price`): dins de la
+-- subconsulta, `price` a seques seria el del paquet.
 --
 -- Editar-lo, esborrar-lo o anul·lar-lo després segueix essent del seu
 -- professional o de l'admin; cobrar-lo, de qualsevol (0085).
@@ -45,15 +65,36 @@ create policy "bonos_trainer_insert_group" on public.bonos
     and gift_voucher_id is null
     and renewed_from_bono_id is null
     and auto_renew = false
-    and service_id is not null
+    and bonos.service_id is not null
     and exists (
       select 1 from public.services s
-      where s.id = service_id
+      where s.id = bonos.service_id
         and s.service_type = 'grupo_reducido'
         and s.active
         and not s.subscription_only
+        and bonos.total_sessions = s.default_sessions
+        and (
+          bonos.price = s.price
+          or exists (
+            select 1 from public.promotions p
+            where p.active
+              and p.starts_at <= (now() at time zone 'Europe/Madrid')::date
+              and p.ends_at   >= (now() at time zone 'Europe/Madrid')::date
+              and (
+                (p.scope = 'package' and s.id = any (p.service_ids))
+                or (p.scope = 'service' and s.service_type::text = any (p.service_types))
+              )
+              and bonos.price = greatest(
+                0,
+                round(s.price - case p.discount_type
+                                  when 'percentage' then s.price * p.discount_value / 100
+                                  else p.discount_value
+                                end)
+              )
+          )
+        )
     )
   );
 
 comment on policy "bonos_trainer_insert_group" on public.bonos is
-  'Qualsevol professional crea un bo de GRUP nou (paquet de grup actiu, no només per subscripció, sense Stripe ni subscripció ni val) a qualsevol client (0108). La resta de bons, només els propis (bonos_trainer_write, 0005).';
+  'Qualsevol professional crea un bo de GRUP nou (paquet de grup actiu, no només per subscripció, amb les sessions del paquet i el preu del catàleg o d''una oferta activa, sense Stripe ni subscripció ni val) a qualsevol client (0108). La resta de bons, només els propis (bonos_trainer_write, 0005).';

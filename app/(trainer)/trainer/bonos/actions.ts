@@ -8,6 +8,7 @@ import { createBono, markBonoPaid, getBonoClientId, cancelBono } from "@/lib/dat
 import type { MarkPaidState } from "@/components/forms/mark-bono-paid-button";
 import { getClient } from "@/lib/data/clients";
 import { getService } from "@/lib/data/services";
+import { getEffectivePrice } from "@/lib/data/promotions";
 import { demoCompatible } from "@/lib/demo-accounts";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
@@ -51,6 +52,21 @@ export async function createTrainerBonoAction(
     const pkg = await getService(serviceId);
     if (!pkg || pkg.serviceType !== "grupo_reducido" || serviceType !== "grupo_reducido")
       return { error: "Aquest client no és teu: només li pots crear un bo de grup." };
+    // Les sessions i el preu, els del catàleg (0108): el preu del paquet o el
+    // que li dona l'oferta a aquest client. La base ho torna a mirar.
+    const effective = await getEffectivePrice(pkg, { clientId });
+    if (totalSessions !== pkg.defaultSessions)
+      return {
+        error: `Aquest client no és teu: el bo ha de tenir les sessions del paquet (${pkg.defaultSessions} ${
+          pkg.defaultSessions === 1 ? "sessió" : "sessions"
+        }).`,
+      };
+    if (price !== pkg.price && price !== effective.finalPrice)
+      return {
+        error: `Aquest client no és teu: el preu ha de ser el del catàleg (${effective.finalPrice} €${
+          effective.hasDiscount ? `, amb l'oferta; sense, ${pkg.price} €` : ""
+        }).`,
+      };
   }
 
   try {

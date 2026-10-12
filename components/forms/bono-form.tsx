@@ -46,6 +46,7 @@ export function BonoForm({
   subscriptionsEnabled = false,
   hasLiveSubscription = false,
   renewalDay,
+  catalogOnly = false,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   /**
@@ -67,6 +68,12 @@ export function BonoForm({
   hasLiveSubscription?: boolean;
   /** Dia del mes en què se li renovarà, que és el d'avui al centre. */
   renewalDay?: number;
+  /**
+   * Sessions i preu, els del catàleg i no es poden tocar: un professional que
+   * crea un bo de grup a un client que no és seu (0108). La base només accepta
+   * el preu del paquet o el d'una oferta activa, i les sessions del paquet.
+   */
+  catalogOnly?: boolean;
 }) {
   const [state, formAction] = useActionState(action, {} as FormState);
   // Segona sortida del MATEIX formulari, com a /client/bonos: el botó de la
@@ -185,6 +192,7 @@ export function BonoForm({
             type="number"
             min={1}
             required
+            readOnly={catalogOnly}
             value={sessions}
             onChange={(e) => setSessions(e.target.value)}
           />
@@ -195,6 +203,7 @@ export function BonoForm({
             min={0}
             step="0.01"
             required
+            readOnly={catalogOnly}
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />

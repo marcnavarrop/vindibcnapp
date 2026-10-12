@@ -116,8 +116,10 @@ més al codi:
 - **Bons de grup a qualsevol client** (`0108`): qualsevol professional pot
   crear un bo de GRUP a qualsevol client real. La política és només d'INSERT i
   fixa com ha de ser el bo (paquet de grup actiu i no només per subscripció,
-  nou, sense Stripe, subscripció ni val); `bonos_trainer_write` (0005, FOR ALL
-  dels clients assignats) no es toca. La resta de bons i les mensualitats,
+  nou, sense Stripe, subscripció ni val, amb les sessions del paquet i el preu
+  del catàleg: el del paquet o el que en dona una oferta activa, calculat com
+  `computeEffectivePrice`, arrodonit a euros); `bonos_trainer_write` (0005,
+  FOR ALL dels clients assignats) no es toca. La resta de bons i les mensualitats,
   només els propis.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,

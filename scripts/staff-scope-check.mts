@@ -190,17 +190,29 @@ try {
   const ep = s0.services.find((x) => x.service_type === "ep_individual" && x.active && !x.subscription_only);
   if (!grup || !ep) throw new Error("La llavor no té paquets de grup i d'EP actius.");
   const nBonos = (client: string) => getStore().bonos.filter((b) => b.client_id === client).length;
-  const fdBo = (serviceType: string, serviceId: string) => {
+  // Per defecte, les sessions i el preu del paquet (0108).
+  const fdBo = (serviceType: string, serviceId: string, sessions?: number, price?: number) => {
+    const pkg = getStore().services.find((x) => x.id === serviceId)!;
     const f = new FormData();
     f.append("serviceType", serviceType);
     f.append("serviceId", serviceId);
-    f.append("totalSessions", "4");
-    f.append("price", "100");
+    f.append("totalSessions", String(sessions ?? pkg.default_sessions));
+    f.append("price", String(price ?? pkg.price));
     return f;
   };
-  const crea = async (client: string, serviceType: string, serviceId: string) => {
+  const crea = async (
+    client: string,
+    serviceType: string,
+    serviceId: string,
+    sessions?: number,
+    price?: number,
+  ) => {
     try {
-      const r = await bonosTrainer.createTrainerBonoAction(client, {}, fdBo(serviceType, serviceId));
+      const r = await bonosTrainer.createTrainerBonoAction(
+        client,
+        {},
+        fdBo(serviceType, serviceId, sessions, price),
+      );
       return r && "error" in r && r.error ? r.error : "ok";
     } catch (e) {
       return e instanceof RedirectSignal ? "ok" : (e as Error).message;
@@ -215,6 +227,12 @@ try {
   n0 = nBonos("c-marta");
   r = await crea("c-marta", "grupo_reducido", ep.id);
   check("bo «de grup» amb un paquet d'EP a la Marta (no)", nBonos("c-marta") === n0, r);
+  n0 = nBonos("c-marta");
+  r = await crea("c-marta", "grupo_reducido", grup.id, undefined, 0);
+  check("bo de grup a la Marta a 0 € (no)", nBonos("c-marta") === n0, r);
+  n0 = nBonos("c-marta");
+  r = await crea("c-marta", "grupo_reducido", grup.id, grup.default_sessions + 5);
+  check("bo de grup a la Marta amb més sessions que el paquet (no)", nBonos("c-marta") === n0, r);
   n0 = nBonos("c-ana");
   r = await crea("c-ana", "ep_individual", ep.id);
   check("bo d'EP a l'Ana (seva), com sempre", nBonos("c-ana") === n0 + 1, r);
