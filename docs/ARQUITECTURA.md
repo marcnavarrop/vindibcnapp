@@ -266,6 +266,15 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   consentiment de dades de salut ni els seus documents**. Es queda com és
   (decisió d'en Marc, 12/10/2026) fins que en Marc ho parli amb en Raul i
   l'assessor.
+- **El client pot llegir les seves pròpies notes clíniques per l'API.**
+  Comprovat el 12/10/2026 amb una sessió real del Client Demo: `GET
+  /rest/v1/clients?select=clinical_notes` torna la seva fila (només la seva)
+  amb la columna. La RLS de `clients` és per fila i no per columna, i cap
+  `grant` per columna la tanca. L'app no les ensenya enlloc, però el comentari
+  de la `0079` («NO la veu el client») no és cert a nivell d'API. Sortides:
+  passar-les a una taula pròpia amb RLS sense el client, o treure el `select`
+  d'aquesta columna a `authenticated` i servir-la només des del servidor. Totes
+  dues demanen migració. Pendent de decidir amb el punt anterior.
 
 ## Estructura del repositori
 
