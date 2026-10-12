@@ -260,8 +260,10 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   professional pot reservar i fer sessions a clients que no té assignats (un
   grup, o la seva especialitat a la seva agenda), però la RLS de les dades de
   salut segueix sent per client ASSIGNAT: documents (`client_documents`, 0025),
-  consentiments (`consents`, 0014), mesures (`measurements`, 0003), vídeos
-  (`client_videos`, 0027) i exercicis (`client_exercises`, 0012). El cas
+  consentiments (`consents`, 0014), exercicis assignats (`client_exercises`,
+  0012) i el seu progrés (`exercise_progress`, 0029). (Les antigues
+  `measurements` i `client_videos` ja no existeixen a producció: la 0029 va
+  esborrar les mesures, comprovat el 12/10/2026.) El cas
   concret: **un fisio que atén un pacient que no té assignat no veu el seu
   consentiment de dades de salut ni els seus documents**. Es queda com és
   (decisió d'en Marc, 12/10/2026) fins que en Marc ho parli amb en Raul i

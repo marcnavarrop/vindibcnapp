@@ -5,7 +5,7 @@ import { getColorPalette } from "@/lib/data/colors";
 import { colorOfPro } from "@/lib/colors";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { listTrainersDetailed } from "@/lib/data/trainers";
+import { countClientsWithoutTrainer, listTrainersDetailed } from "@/lib/data/trainers";
 import { GroupTabs } from "@/components/ui/group-tabs";
 
 const TABS = [
@@ -20,9 +20,10 @@ export const dynamic = "force-dynamic";
 type Trainer = Awaited<ReturnType<typeof listTrainersDetailed>>[number];
 
 export default async function EntrenadorsPage() {
-  const [trainers, palette] = await Promise.all([
+  const [trainers, palette, withoutTrainer] = await Promise.all([
     listTrainersDetailed(),
     getColorPalette(),
+    countClientsWithoutTrainer(),
   ]);
   // Les signed URLs es demanen totes d'un cop: una per fila serien N viatges.
   const avatars = await avatarUrls(trainers.map((t) => t.avatarPath));
@@ -36,6 +37,21 @@ export default async function EntrenadorsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div>
             <h1 className="text-2xl text-brand-dark">Professionals</h1>
+            {/* Els clients sense professional no comptaven a cap fila. Poden
+                anar sense (grup o fisio), però s'han de poder trobar. */}
+            <p className="mt-1 text-sm text-brand-muted" data-without-trainer>
+              Sense professional:{" "}
+              {withoutTrainer > 0 ? (
+                <Link
+                  href="/admin/clients?trainer=none"
+                  className={`font-bold text-brand-purple hover:text-brand-purple-dark hover:underline ${TAP}`}
+                >
+                  {withoutTrainer}
+                </Link>
+              ) : (
+                <b className="font-bold text-brand-charcoal">0</b>
+              )}
+            </p>
           </div>
           <Link
             href="/admin/entrenadors/new"

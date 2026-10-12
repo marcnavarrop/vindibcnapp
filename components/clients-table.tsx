@@ -35,7 +35,8 @@ export function ClientsTable({
    * Filtre per entrenador actiu, resolt al servidor via ?trainer=<id>.
    * `name` és null si l'id no resol cap entrenador (enllaç antic o eliminat).
    */
-  trainerFilter?: { name: string | null } | null;
+  /** `none`: el filtre «Sense professional» (`?trainer=none`). */
+  trainerFilter?: { name: string | null; none?: boolean } | null;
 }) {
   const search = useUrlQuery();
 
@@ -70,9 +71,22 @@ export function ClientsTable({
           </span>
         )}
 
+        {/* Sense cap filtre posat, la drecera als que no tenen professional
+            (grup o fisio, que poden anar sense). La resta de filtres per
+            professional arriben des de la pantalla Professionals. */}
+        {!trainerFilter && (
+          <Link
+            href={`/admin/clients?trainer=none${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+            className={`inline-flex items-center rounded-full border border-brand-border bg-white px-3 py-1 text-xs font-bold text-brand-charcoal hover:border-brand-purple hover:text-brand-purple ${TAP}`}
+          >
+            Sense professional
+          </Link>
+        )}
         {trainerFilter && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple/10 py-1 pr-1 pl-3 text-xs font-bold text-brand-purple">
-            Professional: {trainerFilter.name ?? "desconegut/da"}
+            {trainerFilter.none
+              ? "Sense professional"
+              : `Professional: ${trainerFilter.name ?? "desconegut/da"}`}
             <Link
               href={q ? `/admin/clients?q=${encodeURIComponent(q)}` : "/admin/clients"}
               aria-label="Treure el filtre de professional"
@@ -124,7 +138,7 @@ function ClientsRows({
   total: number | null;
   q: string;
   trainerId: string | null;
-  trainerFilter: { name: string | null } | null;
+  trainerFilter: { name: string | null; none?: boolean } | null;
   dim: boolean;
 }) {
   const list = useLoadMore(initialRows, initialCursor, (cursor) =>
@@ -135,7 +149,9 @@ function ClientsRows({
     ? "No s'ha trobat cap client amb aquesta cerca."
     : !trainerFilter
       ? "Encara no hi ha cap client."
-      : trainerFilter.name
+      : trainerFilter.none
+        ? "Tots els clients tenen un professional assignat."
+        : trainerFilter.name
         ? `${trainerFilter.name} no té cap client assignat.`
         : "Aquest professional ja no existeix.";
 

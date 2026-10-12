@@ -98,7 +98,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Quan obris la fitxa d'un client que no és teu, hi veuràs una línia gris sota el contacte —«Client de …. Pots consultar-ho tot i cobrar-li bons»—, i els botons de gestió no hi seran. Diu això i no «Només lectura» perquè hi ha una excepció, i és la del capítol de Bons: cobrar-li un bo pendent sí que ho pots fer, sigui de qui sigui. La resta, no. No és una decisió de la pantalla: la base de dades comprova el mateix, així que encara que el botó sortís, el desat fallaria.",
+          text: "Quan obris la fitxa d'un client que no és teu, hi veuràs una línia gris sota el contacte —«Client de …» o «Client sense professional assignat», i què hi pots fer—, i els botons de gestió no hi seran. Diu això i no «Només lectura» perquè hi ha excepcions: cobrar-li bons, reservar-li grups i la teva especialitat a la teva agenda, i crear-li bons de grup. La resta, el seu professional, o l'administració si no en té cap. No és una decisió de la pantalla: la base de dades comprova el mateix, així que encara que el botó sortís, el desat fallaria.",
         },
         { t: "h", text: "El que no pots canviar tu" },
         {
@@ -236,11 +236,15 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Si el client no és teu, sota el contacte hi surt una línia gris: «Client de …. Pots consultar-ho tot i cobrar-li bons; la resta, el seu professional.» Les accions de cada pestanya desapareixen, menys el cobrament i l'anul·lació dels bons pendents.",
+          text: "Si el client no és teu, sota el contacte hi surt una línia gris: «Client de …» (o «Client sense professional assignat») i què hi pots fer: consultar-ho tot, cobrar-li bons, reservar-li grups i la teva especialitat a la teva agenda, i crear-li bons de grup. La resta, el seu professional, o l'administració si no en té cap. Les accions de cada pestanya que no són d'això desapareixen.",
+        },
+        {
+          t: "note",
+          text: "El consentiment de dades de salut d'un client que no és teu no el pots veure: només el veuen el seu professional i l'administració. Per això, si rep fisioteràpia, la capçalera porta una franja gris «Consentiment de salut: no el pots veure» en lloc de l'avís de pendent. No vol dir que falti: abans d'anotar-hi dades de salut, confirma-ho amb l'administració.",
         },
         {
           t: "warn",
-          text: "Si el client rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera porta una franja blau fosc curta; «Més info» la desplega. Mentre hi sigui, no hi registris notes mèdiques ni dades de salut: ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Si el client és teu, rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera porta una franja blau fosc curta; «Més info» la desplega. Mentre hi sigui, no hi registris notes mèdiques ni dades de salut: ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
         },
         { t: "h", text: "La capçalera" },
         {

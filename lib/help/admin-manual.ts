@@ -276,7 +276,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "La cerca mira NOMÉS les dades del client. Escriure el nom d'una professional no et retorna els seus clients: per a això hi ha el filtre per professional, que s'activa des del recompte de la pantalla de Professionals i surt com una pastilla lila que pots treure amb la creueta.",
+          text: "La cerca mira NOMÉS les dades del client. Escriure el nom d'una professional no et retorna els seus clients: per a això hi ha el filtre per professional, que s'activa des del recompte de la pantalla de Professionals i surt com una pastilla lila que pots treure amb la creueta. Al costat del cercador hi ha també «Sense professional»: els clients que no en tenen cap assignat, que és un estat vàlid (els que només venen a grups o a fisio).",
         },
         { t: "h", text: "Les dues accions de cada fila" },
         {
@@ -477,7 +477,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "El recompte de clients" },
         {
           t: "p",
-          text: "El número de la columna «Clients» és un enllaç: porta al llistat de clients ja filtrat per aquesta persona. Si en té zero, no és enllaç.",
+          text: "El número de la columna «Clients» és un enllaç: porta al llistat de clients ja filtrat per aquesta persona. Si en té zero, no és enllaç. Sota el títol, «Sense professional: N» compta els clients que no en tenen cap d'assignat; el número porta al llistat filtrat amb aquests.",
         },
         { t: "h", text: "El que gestiona ell i el que gestiones tu" },
         {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { TAP } from "@/lib/utils";
 import { ClientsTable } from "@/components/clients-table";
-import { listClientsPage } from "@/lib/data/clients";
+import { listClientsPage, NO_TRAINER } from "@/lib/data/clients";
 import { getTrainer } from "@/lib/data/trainers";
 import { GroupTabs } from "@/components/ui/group-tabs";
 
@@ -23,9 +23,11 @@ export default async function ClientsPage({
 
   // La cerca i el filtre per entrenador es resolen al servidor. El filtre va
   // per id, per no confondre dos entrenadors que es diguin igual.
+  // `?trainer=none`: els que no tenen cap professional assignat.
+  const noTrainer = trainerId === NO_TRAINER;
   const [page, trainerRow] = await Promise.all([
     listClientsPage({ q, trainerId }),
-    trainerId ? getTrainer(trainerId) : null,
+    trainerId && !noTrainer ? getTrainer(trainerId) : null,
   ]);
 
   return (
@@ -50,7 +52,13 @@ export default async function ClientsPage({
           total={page.total}
           q={q}
           trainerId={trainerId}
-          trainerFilter={trainerId ? { name: trainerRow?.fullName ?? null } : null}
+          trainerFilter={
+            noTrainer
+              ? { name: null, none: true }
+              : trainerId
+                ? { name: trainerRow?.fullName ?? null }
+                : null
+          }
         />
       </main>
     </>

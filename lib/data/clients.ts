@@ -230,9 +230,15 @@ function matchesQuery(c: { fullName: string; email: string; phone: string | null
  * sortit, ni cercant-los. Ara: cursor sobre (nom, id), 50 per pàgina i el
  * total amb `count: exact` a la primera.
  */
+/** Valor del filtre de professional que vol dir «sense professional assignat». */
+export const NO_TRAINER = "none";
+
 export async function listClientsPage(opts: {
   q?: string;
-  /** Només els assignats a aquest professional. */
+  /**
+   * Només els assignats a aquest professional, o els que no en tenen cap amb
+   * `NO_TRAINER` (els de grup o fisio, que poden anar sense: regla d'en Marc).
+   */
   trainerId?: string | null;
   cursor?: string | null;
   limit?: number;
@@ -250,7 +256,13 @@ export async function listClientsPage(opts: {
   if (USE_MOCK) {
     const store = getStore();
     const all = store.clients
-      .filter((c) => !opts.trainerId || c.assigned_trainer_id === opts.trainerId)
+      .filter((c) =>
+        !opts.trainerId
+          ? true
+          : opts.trainerId === NO_TRAINER
+            ? !c.assigned_trainer_id
+            : c.assigned_trainer_id === opts.trainerId,
+      )
       .map((c) => ({ ...toListItem(c.id, store), assignedTrainerId: c.assigned_trainer_id ?? null }))
       .filter((c) => !q || matchesQuery(c, q))
       .sort((a, b) => (a.fullName < b.fullName ? -1 : a.fullName > b.fullName ? 1 : a.profileId < b.profileId ? -1 : 1));
@@ -264,7 +276,7 @@ export async function listClientsPage(opts: {
       )
       .slice(0, limit + 1)
       .map((item) => ({ item, rawName: item.fullName }));
-  } else if (opts.trainerId && !UUID.test(opts.trainerId)) {
+  } else if (opts.trainerId && opts.trainerId !== NO_TRAINER && !UUID.test(opts.trainerId)) {
     // Un ?trainer= que no és un uuid (un enllaç vell o escrit a mà): Postgres
     // el rebutjaria amb un error i tombaria la pàgina. No és de ningú: cap client.
     rows = [];
@@ -288,7 +300,8 @@ export async function listClientsPage(opts: {
       .order("full_name", { ascending: true, nullsFirst: false })
       .order("id", { ascending: true })
       .limit(limit + 1);
-    if (opts.trainerId) query = query.eq("client.assigned_trainer_id", opts.trainerId);
+    if (opts.trainerId === NO_TRAINER) query = query.is("client.assigned_trainer_id", null);
+    else if (opts.trainerId) query = query.eq("client.assigned_trainer_id", opts.trainerId);
 
     const conds: string[] = [];
     if (q) conds.push(searchCondition(q));

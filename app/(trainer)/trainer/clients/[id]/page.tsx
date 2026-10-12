@@ -100,7 +100,12 @@ export default async function TrainerClientDetailPage({
   const receivesFisio =
     client.bonos.some((b) => b.serviceType === "fisioterapia") ||
     client.reservations.some((r) => r.serviceType === "fisioterapia");
-  const needsHealthConsent = receivesFisio && !consent.healthDataAt;
+  // El consentiment només el llegeixen el client, l'admin i el professional
+  // ASSIGNAT (RLS `consents_select`, 0014). A qualsevol altre la consulta li
+  // torna buida, i abans la fitxa ho llegia com «falta el consentiment» encara
+  // que estigués signat. Ara, si no el pots veure, es diu això i prou.
+  const consentHidden = receivesFisio && !canManage;
+  const needsHealthConsent = receivesFisio && canManage && !consent.healthDataAt;
 
   // Les dues accions sobre un bo, amb la mateixa regla que les taules. Cap de
   // les dues mira `canManage`: vegeu el comentari de `bonoActions`.
@@ -324,6 +329,9 @@ export default async function TrainerClientDetailPage({
             és, i què hi pots fer. Des de la 0085 es pot cobrar i anul·lar un bo
             pendent encara que el client no sigui seu.
           */
+          // Des de la 0107/0108 també li pots reservar grups i la teva
+          // especialitat a la teva agenda, i crear-li bons de grup. La resta és
+          // del seu professional, o de l'administració si no en té cap.
           !canManage && (
             <p className="rounded-xl border border-brand-border bg-neutral-bg px-3.5 py-2.5 text-sm text-neutral-ink">
               {client.trainerName ? (
@@ -333,11 +341,14 @@ export default async function TrainerClientDetailPage({
               ) : (
                 "Client sense professional assignat."
               )}{" "}
-              Pots consultar-ho tot i cobrar-li bons; la resta, el seu professional.
+              Pots consultar-ho tot, cobrar-li bons, reservar-li grups i la teva
+              especialitat a la teva agenda, i crear-li bons de grup. La resta,{" "}
+              {client.trainerName ? "el seu professional" : "l'administració"}.
             </p>
           )
         }
         needsHealthConsent={needsHealthConsent}
+        consentHidden={consentHidden}
       />
 
       {/*

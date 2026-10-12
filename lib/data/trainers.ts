@@ -84,6 +84,22 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
   }));
 }
 
+/**
+ * Quants clients no tenen cap professional assignat. És un estat vàlid (els de
+ * grup o fisio poden anar sense) i no sortia enlloc: la pantalla Professionals
+ * comptava només per professional. Un recompte a la base, com els altres.
+ */
+export async function countClientsWithoutTrainer(): Promise<number> {
+  if (USE_MOCK) return getStore().clients.filter((c) => !c.assigned_trainer_id).length;
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("clients")
+    .select("id", { count: "exact", head: true })
+    .is("assigned_trainer_id", null);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 /** Ficha de un entrenador por su id de perfil. */
 export async function getTrainer(id: string): Promise<TrainerDetail | null> {
   if (USE_MOCK) {

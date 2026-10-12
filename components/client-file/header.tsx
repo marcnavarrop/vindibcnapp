@@ -35,6 +35,7 @@ export function ClientFileHeader({
   menu,
   notice,
   needsHealthConsent,
+  consentHidden = false,
 }: {
   backHref: string;
   fullName: string;
@@ -49,6 +50,11 @@ export function ClientFileHeader({
   /** La línia de la fitxa d'un client que no és seu. */
   notice?: React.ReactNode;
   needsHealthConsent: boolean;
+  /**
+   * Qui mira no pot llegir el consentiment de salut (no és el seu professional
+   * assignat): no se sap si n'hi ha, i no s'ha de dir que falta.
+   */
+  consentHidden?: boolean;
 }) {
   const number = whatsappNumber(phone);
   return (
@@ -111,7 +117,11 @@ export function ClientFileHeader({
       </div>
 
       {notice}
-      {needsHealthConsent && <HealthConsentWarning />}
+      {consentHidden ? (
+        <HealthConsentWarning hidden />
+      ) : (
+        needsHealthConsent && <HealthConsentWarning />
+      )}
     </header>
   );
 }
