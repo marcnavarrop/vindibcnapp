@@ -1,7 +1,11 @@
 import "server-only";
-import { notify } from "@/lib/notifications/index";
-import { SUPPORT_CATEGORY_LABELS } from "@/lib/labels";
+import { getProfileContact, notify } from "@/lib/notifications/index";
+import { SUPPORT_CATEGORY_LABELS, SUPPORT_STATUS_LABELS } from "@/lib/labels";
+import { USE_MOCK } from "@/lib/config";
+import { getStore } from "@/lib/mock/store";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupportTicket } from "@/lib/data/support";
+import type { SupportStatus } from "@/types/database";
 
 /**
  * Adreça de qui desenvolupa l'app.
@@ -57,4 +61,54 @@ export async function notifySupportTicket(
     },
     { ignorePreferences: true },
   );
+}
+
+/**
+ * Avisa qui va obrir un tiquet que ja té resposta (0106).
+ *
+ * Sempre (`ignorePreferences`): és la resposta al que va preguntar, i sense el
+ * correu quedaria en una pantalla que no té cap motiu per tornar a obrir.
+ * Hereta el "mai llança" de `notify`: la resposta ja és desada.
+ */
+export async function notifySupportAnswer(input: {
+  ticketId: string;
+  authorId: string;
+  title: string;
+  answer: string;
+  status: SupportStatus;
+  answeredByName: string;
+  /** El Reply-To: respondre el correu arriba a qui ha respost el tiquet. */
+  answeredByEmail: string | null;
+}): Promise<void> {
+  const recipient = await getProfileContact(input.authorId);
+  if (!recipient?.email) return;
+  await notify(
+    {
+      type: "support_ticket_answered",
+      recipient,
+      relatedId: input.ticketId,
+      data: {
+        title: input.title,
+        answer: input.answer,
+        status: SUPPORT_STATUS_LABELS[input.status],
+        statusKey: input.status,
+        answeredBy: input.answeredByName,
+        ...(input.answeredByEmail ? { answeredByEmail: input.answeredByEmail } : {}),
+        // L'enllaç porta a la pantalla de suport de la seva àrea.
+        area: (await isAdminProfile(input.authorId)) ? "admin" : "trainer",
+      },
+    },
+    { ignorePreferences: true },
+  );
+}
+
+async function isAdminProfile(profileId: string): Promise<boolean> {
+  if (USE_MOCK)
+    return getStore().profiles.find((p) => p.id === profileId)?.role === "admin";
+  const { data } = await createAdminClient()
+    .from("profiles")
+    .select("role")
+    .eq("id", profileId)
+    .maybeSingle();
+  return data?.role === "admin";
 }

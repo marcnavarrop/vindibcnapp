@@ -64,6 +64,10 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // Igual: el tiquet de suport va a qui desenvolupa l'app, que no té perfil
   // ni preferències. També s'envia amb `ignorePreferences`.
   support_ticket_created_email: false,
+  // Sempre (ALWAYS_SENT_EVENTS): és la resposta al que va preguntar ell, com
+  // `trial_status`. Sense el correu, la resposta queda en una pantalla que el
+  // professional no té cap motiu per tornar a obrir.
+  support_ticket_answered_email: true,
   // Sempre (ALWAYS_SENT_EVENTS): se li acaba de crear una reserva sense
   // demanar-la en aquell moment; si no ho sap, no hi va i crema la sessió.
   waitlist_fulfilled_email: true,
@@ -116,6 +120,7 @@ export type AlwaysSentEvent =
   // Avisos administratius sense cap pantalla de preferències al darrere.
   | "invoice_generated"
   | "support_ticket_created"
+  | "support_ticket_answered"
   | "gift_voucher_gifted"
   // Diners que es mouen sols sobre una subscripció que paga el client.
   | "subscription_renewed"
@@ -143,6 +148,7 @@ export type AlwaysSentEvent =
 export const ALWAYS_SENT_EVENTS: AlwaysSentEvent[] = [
   "invoice_generated",
   "support_ticket_created",
+  "support_ticket_answered",
   "gift_voucher_gifted",
   "subscription_renewed",
   "subscription_payment_failed",

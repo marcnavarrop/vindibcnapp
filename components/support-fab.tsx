@@ -256,6 +256,15 @@ export function SupportFab({
                           <p className="text-[11px] text-brand-muted">
                             {SUPPORT_CATEGORY_LABELS[t.category]} ·{" "}
                             {formatDate(t.createdAt)}
+                            {/* La resposta sencera és a l'historial; aquí
+                                només que n'hi ha, perquè es vegi d'un cop
+                                d'ull quins val la pena obrir. */}
+                            {t.answer && (
+                              <>
+                                {" "}·{" "}
+                                <span className="font-bold text-brand-purple">Respost</span>
+                              </>
+                            )}
                           </p>
                         </div>
                         <span className="shrink-0">

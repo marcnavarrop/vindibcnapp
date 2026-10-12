@@ -131,6 +131,108 @@ function StatusPicker({
 }
 
 /**
+ * La resposta de l'admin (0106), tal com la veu qui va obrir el tiquet.
+ *
+ * Sencera i sense retallar: és el que la persona ha vingut a llegir, i acostuma
+ * a ser curta.
+ */
+function Answer({ ticket }: { ticket: SupportTicket }) {
+  if (!ticket.answer) return null;
+  return (
+    <div className="mt-3 rounded-xl border border-brand-purple/20 bg-brand-purple/5 px-4 py-3">
+      <p className="text-xs font-bold tracking-wide text-brand-purple uppercase">
+        Resposta
+      </p>
+      <p className="mt-1 text-sm whitespace-pre-wrap text-brand-charcoal">
+        {ticket.answer}
+      </p>
+      {ticket.answeredAt && (
+        <p className="mt-1 text-xs text-brand-muted">
+          {ticket.answeredByName ?? "Administració"} · {formatDate(ticket.answeredAt)}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Respondre (o corregir la resposta) i deixar l'estat, en un sol enviament.
+ * Només el rep l'admin.
+ *
+ * L'estat va al mateix formulari perquè respondre gairebé sempre vol dir moure
+ * el tiquet: en dos passos, el més fàcil és oblidar el segon i deixar «Obert»
+ * un tiquet ja contestat. Per defecte proposa «Resolt» si encara era obert, i
+ * si ja s'hi treballava, el que tenia.
+ */
+function AnswerForm({
+  ticket,
+  action,
+}: {
+  ticket: SupportTicket;
+  action: Action;
+}) {
+  const [state, formAction] = useActionState(action, {});
+  const [editing, setEditing] = useState(false);
+
+  // Es tanca sol quan s'ha desat. Com al formulari d'alta: és una reacció a
+  // l'enviament, no un estat derivat.
+  useEffect(() => {
+    if (state.ok) setEditing(false);
+  }, [state]);
+
+  if (!editing)
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className={`mt-3 text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP_SURFACE}`}
+      >
+        {ticket.answer ? "Editar la resposta" : "Respondre"}
+      </button>
+    );
+
+  return (
+    <form action={formAction} className="mt-3 flex flex-col gap-3">
+      <input type="hidden" name="id" value={ticket.id} />
+      <TextAreaField
+        label="Resposta"
+        name="answer"
+        required
+        rows={4}
+        maxLength={5000}
+        defaultValue={ticket.answer ?? ""}
+        placeholder={`Què li vols dir a ${ticket.authorName}?`}
+      />
+      <SelectField
+        label="Estat"
+        name="status"
+        defaultValue={ticket.status === "open" ? "resolved" : ticket.status}
+        options={SUPPORT_STATUSES.map((s) => ({
+          value: s,
+          label: SUPPORT_STATUS_LABELS[s],
+        }))}
+      />
+      <p className="text-xs text-brand-muted">
+        {ticket.answer
+          ? "Si canvies el text, li tornarà a arribar per correu."
+          : `Li arribarà per correu a ${ticket.authorName} i la veurà sota el seu tiquet.`}
+      </p>
+      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      <div className="flex items-center gap-4">
+        <SubmitButton>Desar la resposta</SubmitButton>
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          className={`text-xs font-bold tracking-wide text-brand-muted uppercase hover:text-brand-purple ${TAP}`}
+        >
+          Cancel·lar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/**
  * La descripció, retallada a tres línies fins que algú demani veure-la sencera.
  *
  * Un tiquet pot tenir 5.000 caràcters i abans es pintaven tots: amb quatre
@@ -250,12 +352,15 @@ export function SupportPanel({
   tickets,
   createAction,
   setStatusAction,
+  answerAction,
   defaultStatus = "all",
 }: {
   tickets: SupportTicket[];
   createAction: Action;
   /** Només l'admin el rep: sense això, l'estat és de només lectura. */
   setStatusAction?: Action;
+  /** Només l'admin el rep: sense això, la resposta només es llegeix. */
+  answerAction?: Action;
   /**
    * Amb què s'obre el filtre d'estat.
    *
@@ -485,6 +590,12 @@ export function SupportPanel({
                   )}
                 </div>
               </div>
+
+              {/* Fora de la fila del títol: a tota l'amplada, i no a la
+                  columna que comparteix amb l'estat, que al mòbil la
+                  deixava en mitja pantalla. */}
+              <Answer ticket={t} />
+              {answerAction && <AnswerForm ticket={t} action={answerAction} />}
             </li>
           ))}
         </ul>

@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**105 migracions SQL** a `supabase/migrations/` (`0001`–`0105`), numerades i
+**106 migracions SQL** a `supabase/migrations/` (`0001`–`0106`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -68,7 +68,7 @@ més al codi:
   `prebuild`): llegeix cada fitxer `"use server"` amb el compilador de
   TypeScript i fa fallar el build si alguna funció exportada no crida
   `requireRole`/`getViewer` i no és a `scripts/public-actions.json` amb el motiu.
-  Avui: **156 accions, 149 amb comprovació i 7 públiques a propòsit** (registre,
+  Avui: **158 accions, 151 amb comprovació i 7 públiques a propòsit** (registre,
   contrasenya, sessió de prova…). `npm run roles:check` comprova, en simulació,
   que la condició és la bona (p. ex. un professional, només per als seus
   clients).
@@ -246,7 +246,7 @@ lib/*.ts                           regles pures compartides per pantalla i servi
 lib/help/                          els 3 manuals d'usuari, com a dades i no com a JSX
 lib/notifications/                 avisos: plantilles, log, correu, comunitat
 lib/mock/                          el mode simulació
-supabase/migrations/               105 fitxers SQL numerats, aplicats a mà
+supabase/migrations/               106 fitxers SQL numerats, aplicats a mà
 messages/{ca,es,en}.json           i18n del client i les pàgines públiques
 scripts/                           comprovacions (*:check) i eines de suport
 docs/                              aquest document, EMAILS.md i la guia de proves

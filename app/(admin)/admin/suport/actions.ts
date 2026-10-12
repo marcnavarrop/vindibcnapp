@@ -2,6 +2,7 @@
 
 import { requireRole } from "@/lib/auth";
 import {
+  answerCore,
   createTicketCore,
   setStatusCore,
   type SupportFormState,
@@ -26,4 +27,12 @@ export async function setTicketStatusAction(
 ): Promise<SupportFormState> {
   if (!(await requireRole("admin"))) return { error: "No autoritzat." };
   return setStatusCore(fd, "/admin/suport");
+}
+
+export async function answerTicketAction(
+  _prev: SupportFormState,
+  fd: FormData,
+): Promise<SupportFormState> {
+  if (!(await requireRole("admin"))) return { error: "No autoritzat." };
+  return answerCore(fd, "/admin/suport");
 }

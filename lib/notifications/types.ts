@@ -54,7 +54,9 @@ export type NotificationEventType =
   | "gift_voucher_redeemed"
   | "gift_voucher_gifted"
   // Avís intern cap a qui desenvolupa l'app (no és cap usuari del centre):
-  | "support_ticket_created";
+  | "support_ticket_created"
+  // La resposta a qui ha obert el tiquet (0106):
+  | "support_ticket_answered";
 
 /**
  * Canal d'enviament. Només email.
@@ -270,6 +272,14 @@ export const EVENT_META: Record<
     audience: [],
     group: "general",
   },
+  support_ticket_answered: {
+    label: "Resposta a un tiquet de suport",
+    description: "Quan l'administració respon un tiquet que ha obert algú de l'equip.",
+    // `audience: []`: s'envia sempre (ALWAYS_SENT_EVENTS) i no surt a cap
+    // pantalla de preferències.
+    audience: [],
+    group: "general",
+  },
 };
 
 /** Ordre de presentació dels esdeveniments a la UI. */
@@ -302,4 +312,5 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "gift_voucher_redeemed",
   "gift_voucher_gifted",
   "support_ticket_created",
+  "support_ticket_answered",
 ];

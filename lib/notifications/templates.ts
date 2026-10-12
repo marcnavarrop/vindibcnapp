@@ -1180,6 +1180,28 @@ export function renderEmail(
       };
       break;
     }
+    case "support_ticket_answered": {
+      // Va a algú de l'equip: en català fix, com la resta de l'àrea del
+      // professional i de l'administració.
+      subject = `Resposta al teu tiquet: ${d.title}`;
+      block = {
+        eyebrow: { tone: d.statusKey === "resolved" ? "success" : "neutral", text: `Suport · ${d.status}` },
+        heading: "Tens resposta al teu tiquet",
+        preheader: d.answer,
+        intro: [hola, `${d.answeredBy} ha respost el tiquet «${d.title}».`],
+        // La resposta sencera al cos: es pot llegir des del mòbil sense entrar
+        // a l'app, igual que el tiquet nou que rep qui desenvolupa.
+        notices: [{ tone: "neutral", text: d.answer }],
+        details: rows([["Estat", d.status]]),
+        cta: { label: "Veure els meus tiquets", url: appLink(d.area === "admin" ? "/admin/suport" : "/trainer/suport") },
+        // Respondre el correu arriba a qui ha respost el tiquet, no a la
+        // bústia del centre (pensada per als clients) ni al remitent, que no
+        // es llegeix.
+        footer: "internal",
+        replyTo: d.answeredByEmail || null,
+      };
+      break;
+    }
     case "waitlist_fulfilled": {
       const t = i.ns("emails.waitlistFulfilled");
       const s = sessionParts(i, d, contact);

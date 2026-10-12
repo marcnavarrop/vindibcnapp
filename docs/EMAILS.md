@@ -57,6 +57,7 @@ visitante y desarrollador).
 | `invoice_generated` | profesional | ca | siempre | el admin emite la liquidación en Facturació |
 | `new_client_registered` | admins con la pref + avisos internos (`internalNotifyEmail`) | ca | ✅ | registro público |
 | `support_ticket_created` | desarrollador (`DEVELOPER_EMAIL`) | ca | siempre | admin o profesional abren un tiquet. Reply-To = quien lo abre |
+| `support_ticket_answered` | quien abrió el tiquet (profesional o admin) | ca | siempre | el admin responde el tiquet (0106), solo si el texto cambia y no es su propio tiquet. Reply-To = quien responde |
 
 Correos de cuenta (no pasan por `notify()`, ver §2): `auth_invite`,
 `auth_recovery`, `auth_welcome`, `auth_email_change`, `auth_email_change_alert`.
@@ -122,7 +123,9 @@ Todos en el idioma del perfil (ca/es/en).
   correos (en el texto plano, con «Contacte:» delante); nunca en los del
   profesional, el admin o el tiquet de soporte.
 - **Excepción:** el tiquet de soporte (`support_ticket_created`) lleva Reply-To
-  al correo de **quien lo abre** (`data.reporterEmail`), no al del centro.
+  al correo de **quien lo abre** (`data.reporterEmail`), no al del centro. Y la
+  respuesta (`support_ticket_answered`), al de **quien responde**
+  (`data.answeredByEmail`).
 - **Avisos internos** (`trial_request`, `new_client_registered`):
   `notify_email` → `contact_email` → `CENTER_EMAIL`.
 - Prueba: `npm run contact:check`.

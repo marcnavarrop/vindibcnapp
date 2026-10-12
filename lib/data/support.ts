@@ -14,10 +14,16 @@ export type SupportTicket = {
   status: SupportStatus;
   createdAt: string;
   updatedAt: string;
+  /** La resposta de l'admin (0106), o null si encara no n'hi ha. */
+  answer: string | null;
+  answeredAt: string | null;
+  answeredByName: string | null;
 };
 
 const MAX_TITLE = 150;
 const MAX_DESCRIPTION = 5000;
+/** El mateix límit que la descripció i que la constraint de la 0106. */
+export const MAX_ANSWER = 5000;
 
 export type TicketInput = {
   title: string;
@@ -73,6 +79,9 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
         status: t.status,
         createdAt: t.created_at,
         updatedAt: t.updated_at,
+        answer: t.answer ?? null,
+        answeredAt: t.answered_at ?? null,
+        answeredByName: t.answered_by ? nameOf(t.answered_by) : null,
       }));
   }
 
@@ -80,7 +89,7 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
   const { data, error } = await supabase
     .from("support_tickets")
     .select(
-      "id, created_by, title, description, category, status, created_at, updated_at, author:profiles!support_tickets_created_by_fkey(full_name)",
+      "id, created_by, title, description, category, status, created_at, updated_at, answer, answered_at, author:profiles!support_tickets_created_by_fkey(full_name), answerer:profiles!support_tickets_answered_by_fkey(full_name)",
     )
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -94,7 +103,10 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
     status: SupportStatus;
     created_at: string;
     updated_at: string;
+    answer: string | null;
+    answered_at: string | null;
     author: { full_name: string | null } | null;
+    answerer: { full_name: string | null } | null;
   };
   return (data as unknown as Row[]).map((t) => ({
     id: t.id,
@@ -106,6 +118,9 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
     status: t.status,
     createdAt: t.created_at,
     updatedAt: t.updated_at,
+    answer: t.answer,
+    answeredAt: t.answered_at,
+    answeredByName: t.answer ? (t.answerer?.full_name ?? null) : null,
   }));
 }
 
@@ -151,6 +166,9 @@ export async function createSupportTicket(
       status: "open" as SupportStatus,
       created_at: now,
       updated_at: now,
+      answer: null,
+      answered_at: null,
+      answered_by: null,
     };
     store.support_tickets.push(row);
     saveStore(store);
@@ -166,6 +184,9 @@ export async function createSupportTicket(
       status: "open",
       createdAt: now,
       updatedAt: now,
+      answer: null,
+      answeredAt: null,
+      answeredByName: null,
     };
   }
 
@@ -195,6 +216,9 @@ export async function createSupportTicket(
     status: "open",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    answer: null,
+    answeredAt: null,
+    answeredByName: null,
   };
 }
 
@@ -223,6 +247,91 @@ export async function setSupportTicketStatus(
   // aquesta comprovació, un professional intentant tancar un tiquet veuria un
   // "fet!" que no ha passat.
   if (count === 0) throw new Error("No tens permís per canviar aquest tiquet.");
+}
+
+/** Neteja i valida una resposta. Mateix límit que la constraint de la 0106. */
+export function validateAnswer(
+  raw: string,
+): { ok: true; value: string } | { ok: false; error: string } {
+  const value = raw.trim();
+  if (!value) return { ok: false, error: "Escriu la resposta." };
+  if (value.length > MAX_ANSWER)
+    return { ok: false, error: `La resposta no pot passar de ${MAX_ANSWER} caràcters.` };
+  return { ok: true, value };
+}
+
+/** El que cal per avisar qui va obrir el tiquet que ja té resposta. */
+export type AnsweredTicket = {
+  id: string;
+  createdBy: string;
+  title: string;
+  status: SupportStatus;
+  /** La resposta d'abans: si és la mateixa, no es torna a avisar. */
+  previousAnswer: string | null;
+};
+
+/**
+ * Desa la resposta d'un tiquet i, en el mateix UPDATE, el nou estat.
+ *
+ * Una sola escriptura a posta: «Respondre i marcar resolt» no pot quedar a
+ * mitges (la resposta desada i el tiquet obert, o al revés). Només l'admin: ho
+ * imposa la RLS (`support_tickets_admin_update`, 0047), i com a
+ * `setSupportTicketStatus`, cap fila tocada vol dir que no l'ha deixat.
+ *
+ * Torna la resposta d'ABANS perquè qui crida decideixi si cal avisar: corregir
+ * només l'estat amb el mateix text no ha de tornar a enviar el correu.
+ */
+export async function answerSupportTicket(
+  id: string,
+  input: { answer: string; status: SupportStatus; answeredBy: string },
+): Promise<AnsweredTicket> {
+  const checked = validateAnswer(input.answer);
+  if (!checked.ok) throw new Error(checked.error);
+  const answer = checked.value;
+  const now = new Date().toISOString();
+
+  if (USE_MOCK) {
+    const store = getStore();
+    const t = store.support_tickets.find((x) => x.id === id);
+    if (!t) throw new Error("Tiquet no trobat.");
+    const previousAnswer = t.answer ?? null;
+    t.answer = answer;
+    t.answered_at = now;
+    t.answered_by = input.answeredBy;
+    t.status = input.status;
+    t.updated_at = now;
+    saveStore(store);
+    return { id, createdBy: t.created_by, title: t.title, status: input.status, previousAnswer };
+  }
+
+  const supabase = await createClient();
+  // La resposta d'abans es llegeix amb la sessió: si la RLS no deixa veure el
+  // tiquet, tampoc el deixarà tocar, i l'error és el mateix.
+  const { data: before, error: rErr } = await supabase
+    .from("support_tickets")
+    .select("id, created_by, title, answer")
+    .eq("id", id)
+    .maybeSingle();
+  if (rErr) throw rErr;
+  if (!before) throw new Error("Tiquet no trobat.");
+
+  const { error, count } = await supabase
+    .from("support_tickets")
+    .update(
+      { answer, answered_at: now, answered_by: input.answeredBy, status: input.status },
+      { count: "exact" },
+    )
+    .eq("id", id);
+  if (error) throw error;
+  if (count === 0) throw new Error("No tens permís per respondre aquest tiquet.");
+
+  return {
+    id,
+    createdBy: before.created_by,
+    title: before.title,
+    status: input.status,
+    previousAnswer: before.answer,
+  };
 }
 
 /**

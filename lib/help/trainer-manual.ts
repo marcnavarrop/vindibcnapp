@@ -912,6 +912,11 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           t: "note",
           text: "L'estat el mous tu no: el canvia qui atén el tiquet. Tu el veus. Els teus tiquets només els veus tu i qui desenvolupa l'app; els dels companys no.",
         },
+        { t: "h", text: "La resposta" },
+        {
+          t: "p",
+          text: "Quan l'administració respon un tiquet teu, la resposta surt a sota, en un requadre «Resposta» amb qui l'ha escrit i quan, i et n'arriba una còpia per correu. Al panell ràpid, els tiquets amb resposta porten «Respost». Si vols afegir-hi alguna cosa, respon el correu: arriba a qui t'ha contestat. Si la resposta es corregeix, et torna a arribar.",
+        },
       ],
     },
 

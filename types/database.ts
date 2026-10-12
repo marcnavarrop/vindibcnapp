@@ -1662,6 +1662,10 @@ export interface Database {
           status: SupportStatus;
           created_at: string;
           updated_at: string;
+          /** La resposta de l'admin (0106). */
+          answer: string | null;
+          answered_at: string | null;
+          answered_by: string | null;
         };
         Insert: {
           id?: string;
@@ -1676,6 +1680,9 @@ export interface Database {
         Update: {
           status?: SupportStatus;
           updated_at?: string;
+          answer?: string | null;
+          answered_at?: string | null;
+          answered_by?: string | null;
         };
         Relationships: [];
       };

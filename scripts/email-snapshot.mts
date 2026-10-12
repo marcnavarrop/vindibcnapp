@@ -74,6 +74,7 @@ const INTERN = new Set<NotificationEventType>([
   "new_client_registered",
   "invoice_generated",
   "support_ticket_created",
+  "support_ticket_answered",
 ]);
 
 const recFor = (type: NotificationEventType) => ({
@@ -112,6 +113,7 @@ const DATA: Record<NotificationEventType, Record<string, string>> = {
   subscription_resumed: { name: "Ana Ferrer", ...GRUP, nextRenewalIso: RENEWS_ISO },
   gift_voucher_redeemed: { name: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "EP Individual · 5 sessions", packageName: "EP Individual", sessions: "5", buyer: "Pau Riera" },
   gift_voucher_gifted: { name: "Laura", recipient: "Laura", buyer: "Ana Ferrer", code: "VINDI-AB12-CD34", package: "EP Individual · 5 sessions", packageName: "EP Individual", sessions: "5", expires: EXPIRES, expiresIso: EXPIRES_ISO, message: "Per molts anys!" },
+  support_ticket_answered: { title: "El calendari no carrega", answer: "Ja està arreglat: era la memòria cau del navegador.", status: "Resolt", statusKey: "resolved", answeredBy: "Marc Navarro", answeredByEmail: "admin@example.com", area: "trainer" },
   support_ticket_created: { reporter: "Laia Puig", area: "trainer", title: "El calendari no carrega", category: "bug", description: "En obrir Reserves surt en blanc.", ...WHENS },
 };
 

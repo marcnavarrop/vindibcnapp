@@ -1,6 +1,7 @@
 import { listSupportTickets } from "@/lib/data/support";
 import { SupportPanel } from "@/components/support-panel";
 import {
+  answerTicketAction,
   createTicketAdminAction,
   setTicketStatusAction,
 } from "@/app/(admin)/admin/suport/actions";
@@ -15,7 +16,8 @@ export default async function AdminSuportPage() {
       <h1 className="mb-1 text-2xl text-brand-dark">Suport</h1>
       <p className="mb-6 text-sm text-brand-muted">
         Errors, dubtes i idees sobre l&apos;app. Veus els tiquets de tot
-        l&apos;equip i pots canviar-ne l&apos;estat.
+        l&apos;equip, en pots canviar l&apos;estat i respondre&apos;ls: la
+        resposta li arriba per correu a qui l&apos;ha obert.
       </p>
 
       {/* S'obre pels PENDENTS —oberts i en curs—: aquesta pantalla és una
@@ -25,6 +27,7 @@ export default async function AdminSuportPage() {
         tickets={tickets}
         createAction={createTicketAdminAction}
         setStatusAction={setTicketStatusAction}
+        answerAction={answerTicketAction}
         defaultStatus="pending"
       />
     </main>

@@ -24,7 +24,7 @@ const CATALAN_ON_PURPOSE = new Set([
   "trial_request","trial_status","trial_status__rejected",
   "trainer_booking_received","trainer_booking_cancelled",
   "trainer_daily_agenda","trainer_daily_agenda__buida",
-  "new_client_registered","invoice_generated","support_ticket_created",
+  "new_client_registered","invoice_generated","support_ticket_created","support_ticket_answered",
 ]);
 const TRANSLATED = { has: (n) => !CATALAN_ON_PURPOSE.has(n) };
 

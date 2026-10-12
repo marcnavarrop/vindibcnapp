@@ -129,7 +129,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             "Calcular i tancar liquidacions i bonus dels professionals.",
             "Canviar la configuració del centre, que afecta les tres àrees alhora.",
             "Exportar i esborrar les dades personals d'un client.",
-            "Canviar l'estat d'un tiquet de suport.",
+            "Canviar l'estat d'un tiquet de suport i respondre'l.",
           ],
         },
       ],
@@ -1934,6 +1934,11 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         {
           t: "note",
           text: "Aquesta és una de les diferències amb l'àrea del professional: ell veu l'estat dels seus tiquets però no el pot canviar, i només veu els seus. Tu veus els de tot l'equip i en pots moure l'estat amb el desplegable de cada fila.",
+        },
+        { t: "h", text: "Respondre un tiquet" },
+        {
+          t: "p",
+          text: "A cada tiquet, «Respondre» obre un camp per escriure la resposta i, al costat, l'estat amb què es queda (proposa «Resolt» si encara era obert). En desar, qui l'ha obert la veu a sota del seu tiquet i li arriba per correu; si respon el correu, et respon a tu. Hi ha una sola resposta per tiquet: «Editar la resposta» la corregeix, i només torna a enviar el correu si el text ha canviat.",
         },
         { t: "h", text: "La pantalla de seguiment" },
         {
