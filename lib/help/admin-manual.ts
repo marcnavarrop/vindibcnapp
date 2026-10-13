@@ -332,7 +332,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           items: [
             [
               "Professional",
-              "Qui porta aquesta persona. «Canviar» obre el desplegable aquí mateix, sense passar per «Editar», i «Desar» el canvia.",
+              "Qui porta aquesta persona. «Canviar» obre el desplegable aquí mateix, sense passar per «Editar», i «Desar» el canvia. Es pot deixar sense assignar. Els comptes de demostració només van entre ells: al Client Demo només s'hi pot posar un professional demo, i a un client real mai un professional demo (el desplegable ja no els ofereix, i tampoc l'alta ni «Editar»).",
             ],
             [
               "Etiquetes",

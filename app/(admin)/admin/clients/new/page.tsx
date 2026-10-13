@@ -1,3 +1,4 @@
+import { demoAssignmentAllowed } from "@/lib/demo-accounts";
 import Link from "next/link";
 import { ClientForm } from "@/components/forms/client-form";
 import { listTrainers } from "@/lib/data/clients";
@@ -41,7 +42,8 @@ export default async function NewClientPage({
 
         <ClientForm
           action={createClientAction}
-          trainers={trainers}
+          // Demo amb demo (`demoAssignmentAllowed`): no s'ofereix el que es rebutjaria.
+          trainers={trainers.filter((t) => demoAssignmentAllowed(null, t.id))}
           defaults={defaults}
           trialId={trialId}
           // L'alta (i la conversió d'una prova) és l'únic lloc on aquest camp

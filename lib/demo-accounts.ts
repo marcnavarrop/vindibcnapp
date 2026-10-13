@@ -47,6 +47,25 @@ export function demoCompatible(clientId: string | null, trainerId: string | null
   return isDemoClient(clientId) === isDemoTrainer(trainerId);
 }
 
+/**
+ * ¿Es pot ASSIGNAR aquest professional a aquest client? La mateixa regla que en
+ * reservar (`demoCompatible`), però aquí `clientId` null vol dir un client NOU,
+ * que sempre és real (el Client Demo ja existeix i no es torna a crear).
+ *
+ *   · Sense professional («sense assignar»): sempre.
+ *   · Client demo → només un professional demo.
+ *   · Client real → mai un professional demo.
+ */
+export function demoAssignmentAllowed(clientId: string | null, trainerId: string | null): boolean {
+  if (!trainerId) return true;
+  const demoClient = clientId ? isDemoClient(clientId) : false;
+  return demoClient === isDemoTrainer(trainerId);
+}
+
+/** El que es diu, en català, quan `demoAssignmentAllowed` diu que no. */
+export const DEMO_ASSIGNMENT_ERROR =
+  "Els comptes de demostració només van entre ells: a un client de demo només se li pot assignar un professional de demo (o cap), i a un client real, mai un professional de demo.";
+
 /** Per a qui no té compte (/prova): mai un professional demo. */
 export function publicTrainer(trainerId: string | null | undefined): boolean {
   return !isDemoTrainer(trainerId);

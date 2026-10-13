@@ -252,7 +252,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           items: [
             [
               "Professional",
-              "Qui el porta. «Canviar» obre el desplegable allà mateix i «Desar» el canvia. Ho pot fer qualsevol de l'equip, també amb un client que ara mateix no és seu: és el cas per al qual es va fer, cobrir una baixa o repartir-se l'agenda un dia que falta algú. La resta d'accions de la fitxa segueixen depenent de si el client és teu.",
+              "Qui el porta. «Canviar» obre el desplegable allà mateix i «Desar» el canvia. Ho pot fer qualsevol de l'equip, també amb un client que ara mateix no és seu: és el cas per al qual es va fer, cobrir una baixa o repartir-se l'agenda un dia que falta algú. La resta d'accions de la fitxa segueixen depenent de si el client és teu. Els comptes de demostració només van entre ells: el desplegable només t'ofereix els professionals que hi encaixen.",
             ],
             [
               "Etiquetes",

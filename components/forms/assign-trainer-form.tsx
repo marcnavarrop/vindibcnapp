@@ -1,5 +1,6 @@
 "use client";
 
+import { demoAssignmentAllowed } from "@/lib/demo-accounts";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SelectField } from "@/components/ui/select";
@@ -73,7 +74,11 @@ export function AssignTrainerForm({
         value={trainerId}
         onChange={(e) => setTrainerId(e.target.value)}
         placeholder="Sense assignar"
-        options={trainers.map((t) => ({ value: t.id, label: t.name }))}
+        // Demo amb demo: no s'ofereix el que el servidor rebutjaria
+        // (`demoAssignmentAllowed`, la mateixa regla a les tres portes).
+        options={trainers
+          .filter((t) => demoAssignmentAllowed(clientId, t.id))
+          .map((t) => ({ value: t.id, label: t.name }))}
       />
       <div className="flex items-center gap-3">
         <SubmitButton>Desar</SubmitButton>

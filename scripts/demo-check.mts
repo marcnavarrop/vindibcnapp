@@ -37,6 +37,8 @@ const { joinWaitlist } = await import("../lib/data/waitlist");
 const { resolveSeries } = await import("../lib/data/booking-series");
 const { getPublicTrialData, createTrialBooking } = await import("../lib/data/trial-bookings");
 const { addDaysStr, centerLocalToInstant, centerToday, centerWeekday } = await import("../lib/center-time");
+const { reassignClientTrainer, createClientRecord, updateClientRecord } = await import("../lib/data/clients");
+const { DEMO_ASSIGNMENT_ERROR } = await import("../lib/demo-accounts");
 
 let fallides = 0;
 const check = (c: boolean, m: string) => { console.log(`  ${c ? "✓" : "✗"} ${m}`); if (!c) fallides++; };
@@ -129,6 +131,36 @@ try {
   const tr = await fails(() => createTrialBooking({ fullName: "Visitant Prova", email: "visitant@exemple.test", phone: "600000000", scheduledAt: `${sat}T10:00`, ip: "203.0.113.9" } as never));
   check(tr === "slotTaken", `una prova dissabte a les 10 (només l'Entrenador Demo): ${tr ?? "acceptada!"}`);
   check(!getStore().trial_bookings.some((t) => DEMO_TRAINER_IDS.includes(t.trainer_id ?? "")), "cap prova assignada a un professional demo");
+
+  // Assignar professional: demo amb demo, real amb real, i «sense assignar»
+  // sempre. Les tres portes: reassignar, l'alta i l'edició de l'admin.
+  console.log("\nAssignar professional");
+  const assignat = (id: string) => getStore().clients.find((c) => c.id === id)?.assigned_trainer_id ?? null;
+  const prova = async (nom: string, clientId: string, trainerId: string | null, hauria: boolean) => {
+    const abans = assignat(clientId);
+    const err = await fails(() => reassignClientTrainer(clientId, trainerId));
+    const canviat = assignat(clientId) === trainerId;
+    check(
+      hauria ? !err && canviat : err === DEMO_ASSIGNMENT_ERROR && assignat(clientId) === abans,
+      `${nom}: ${err ? `«${err.slice(0, 60)}…»` : "assignat"}`,
+    );
+  };
+  await prova("Client Demo → Fisio Demo (demo → demo)", DEMO_CLIENT_ID, F, true);
+  await prova("Client Demo → la Laia (demo → real)", DEMO_CLIENT_ID, LAIA, false);
+  await prova("l'Ana → Entrenador Demo (real → demo)", "c-ana", E, false);
+  await prova("l'Ana → en Jordi (real → real)", "c-ana", "u-trainer-jordi", true);
+  await prova("l'Ana → sense assignar", "c-ana", null, true);
+  await prova("Client Demo → sense assignar", DEMO_CLIENT_ID, null, true);
+  const alta = await fails(() =>
+    createClientRecord({ fullName: "Client nou de prova", email: "nou.demo-check@exemple.test", phone: "600000000", assignedTrainerId: E, clinicalNotes: null, generalNotes: null }),
+  );
+  check(alta === DEMO_ASSIGNMENT_ERROR && !getStore().profiles.some((p) => p.email === "nou.demo-check@exemple.test"),
+    `alta d'un client nou amb l'Entrenador Demo: ${alta ? "rebutjada, sense crear res" : "creada!"}`);
+  const anaAbans = assignat("c-ana");
+  const edit = await fails(() =>
+    updateClientRecord("c-ana", { fullName: "Ana Ferrer", phone: "+34 600 100 001", assignedTrainerId: F, clinicalNotes: null, generalNotes: null }),
+  );
+  check(edit === DEMO_ASSIGNMENT_ERROR && assignat("c-ana") === anaAbans, `editar l'Ana posant-li el Fisio Demo: ${edit ? "rebutjat" : "desat!"}`);
 } catch (e) {
   console.error(e);
   fallides++;

@@ -9,6 +9,7 @@ import { assertEmailFree, normalizeEmail } from "@/lib/data/account-email";
 import { createUserWithInvite } from "@/lib/notifications/auth-emails";
 import { foldName, matchesName, nameWords, wordRegex } from "@/lib/client-search-match";
 import { digitsOnly } from "@/lib/utils";
+import { DEMO_ASSIGNMENT_ERROR, demoAssignmentAllowed } from "@/lib/demo-accounts";
 import type {
   ServiceType,
   BonoStatus,
@@ -683,6 +684,9 @@ export async function reassignClientTrainer(
   clientId: string,
   trainerId: string | null,
 ): Promise<void> {
+  // Demo amb demo també en assignar: abans qualsevol professional podia posar
+  // un client real a l'Entrenador Demo (o el Client Demo a un real).
+  if (!demoAssignmentAllowed(clientId, trainerId)) throw new Error(DEMO_ASSIGNMENT_ERROR);
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.id === clientId);
@@ -719,6 +723,8 @@ export async function reassignClientTrainer(
 
 /** Crea un cliente (y su perfil). Devuelve el id del nuevo cliente. */
 export async function createClientRecord(raw: ClientInput): Promise<string> {
+  // Un client nou sempre és real: mai un professional demo (`demoAssignmentAllowed`).
+  if (!demoAssignmentAllowed(null, raw.assignedTrainerId)) throw new Error(DEMO_ASSIGNMENT_ERROR);
   // Abans de crear res: un correu que ja és d'algú atura l'alta aquí, amb un
   // missatge en català i, si és un client, la seva fitxa (`EmailTakenError`).
   await assertEmailFree(raw.email);
@@ -804,6 +810,8 @@ export async function updateClientRecord(
   id: string,
   input: ClientUpdateInput,
 ): Promise<void> {
+  // La mateixa regla que en reassignar: demo amb demo, real amb real.
+  if (!demoAssignmentAllowed(id, input.assignedTrainerId)) throw new Error(DEMO_ASSIGNMENT_ERROR);
   if (USE_MOCK) {
     const store = getStore();
     const client = store.clients.find((c) => c.id === id);

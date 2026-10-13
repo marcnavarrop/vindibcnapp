@@ -1,3 +1,4 @@
+import { demoAssignmentAllowed } from "@/lib/demo-accounts";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientForm } from "@/components/forms/client-form";
@@ -29,7 +30,8 @@ export default async function EditClientPage({
 
         <ClientForm
           action={updateClientAction.bind(null, id)}
-          trainers={trainers}
+          // Demo amb demo (`demoAssignmentAllowed`): no s'ofereix el que es rebutjaria.
+          trainers={trainers.filter((t) => demoAssignmentAllowed(id, t.id))}
           // Editant algú que ja existeix: el correu es veu però no es toca.
           editableEmail={false}
           submitLabel="Desar canvis"
