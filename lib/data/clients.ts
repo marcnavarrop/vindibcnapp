@@ -65,6 +65,11 @@ export type ClientBono = {
    * d'anul·lar-lo: donar-se de baixa té el seu camí (`cancelBlockFor`).
    */
   subscriptionId: string | null;
+  /**
+   * El paquet de la botiga d'on va sortir (null si no en va sortir de cap: un
+   * regal, una subscripció o un bo fet a mà). «Renovar» porta a comprar aquest.
+   */
+  serviceId: string | null;
   /** Renovació automàtica demanada pel client (0088). */
   autoRenew: boolean;
   /**
@@ -448,7 +453,8 @@ function buildDetail(clientId: string): ClientDetail | null {
         status: b.status,
         expiresAt: b.expires_at ?? null,
         subscriptionId: b.subscription_id ?? null,
-        autoRenew: b.auto_renew ?? false,
+        serviceId: b.service_id ?? null,
+      autoRenew: b.auto_renew ?? false,
         autoRenewBlock: autoRenewBlockOf(b),
       })),
     reservations: store.reservations
@@ -562,6 +568,7 @@ async function fetchClientDetail(
       status: b.status,
       expiresAt: b.expires_at ?? null,
       subscriptionId: b.subscription_id ?? null,
+      serviceId: b.service_id ?? null,
       autoRenew: b.auto_renew ?? false,
       autoRenewBlock: autoRenewBlockOf(b),
     })),

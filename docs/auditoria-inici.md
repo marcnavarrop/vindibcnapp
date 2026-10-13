@@ -211,6 +211,36 @@ Los cuatro números (sesiones restantes, bonos, reservas y asistencia) salen del
 2. **Con decisión:** A1 (excluir las cuentas demo de los números), A4 (métrica de ingresos), P3 (sin marcar en el profesional), C4 (renovar desde el cliente).
 3. **Rediseño de los tres Inicios** según las maquetas (A2, P2, C2, G2, G3) y A6 (consultas de «Fora de disponibilitat»), con la medida en producción antes y después.
 
+## Antes y después (octubre de 2026)
+
+### Fase 1 · arreglos rápidos (en producción, 7aa162c)
+
+P1, C1, C3, C5, A3, A5/P5, P4, G1, C6 y C7. Verificado en producción con la sesión del Client Demo («60 de 75 als teus bons», enlace «Saltar al contingut»).
+
+### Fase 2 y 3 · decisiones de Marc y reordenación (pendiente de push)
+
+| | Antes | Después |
+| --- | --- | --- |
+| **Admin · orden** | 6 números, 4 accesos, «El que espera resposta», «Avui al centre», 3 tarjetas de agenda y ocupación por profesional | Saludo con «Reserva» y «Client» → **Per resoldre** (un plafón, un botón por fila) → Avui al centre → **Com va el centre** (4 números) → bonos bajos |
+| **A1 · cuentas demo** | Los pagos de prueba del Client Demo eran el 88 % de los ingresos de octubre; 4 de los 5 bonos bajos eran suyos; la disponibilidad del Entrenador Demo contaba en la ocupación | Fuera de ingresos, pendientes de cobro, sesiones, ocupación, bonos bajos, sin marcar, fuera de horario, grupos y vales. Fuente única: `demo_profiles` (la de `same_world()`), leída con la clave de servicio solo en el servidor (`lib/data/demo-world.ts`). Sin migración |
+| **A4 · ingresos** | Mes en curso contra el mes anterior entero | Del 1 a hoy contra el mismo tramo del mes anterior («vs 1–13 de setembre») |
+| **Profesional · orden** | 4 números, 3 accesos, avisos, reservas, bonus, bonos bajos, clientes y todo el muro | Frase del día → **El teu dia** → **Per fer** → Aquesta setmana (3 números) → próximas (sin las de hoy) → bonus → bonos bajos y clientes → último anuncio |
+| **P3 · sin marcar** | Solo en Reserves («Cal fer») | En «El teu dia» (las de hoy) y en «Per fer» (otros días, 5 y «I N més»), con **«Marcar feta»**: la misma acción `complete_reservation`, sin tocar permisos |
+| **Cliente · orden** | 4 números, 3 accesos, próxima sesión, la misma sesión otra vez en la lista, bonos | **Próxima sesión en grande** (calendario, «Com arribar», cancelar) → **Reservar una sessió** → **Sessions que et queden** → Després (sin repetir la próxima) → comunidad y regalos |
+| **C4 · renovar** | Un bono de 1/5 sin ningún aviso | «Renovar» con el umbral de bonos bajos o con el bono acabado (si no tiene otro de ese servicio) → `/client/bonos?paquet=…`, paso 2 con el mismo paquete elegido; precio, pago y confirmación de siempre. No en bonos de suscripción ni de regalo |
+
+Verificación (modo simulación, Chromium a 375/390/1280 y WebKit a 390/1280, estados vacío, normal y cargado): 45 páginas en 200, sin errores de página, sin scroll horizontal y con CLS 0. «Renovar» probado en ca/es/en: abre el paso 2 con `serviceId` igual al del bono. «Marcar feta» probado: la sesión sale de «Per fer». Checks y build en verde.
+
+Altura de la página en el móvil (375 px, estado cargado, en pantallas de 812 px):
+
+| Área | Antes | Después |
+| --- | --- | --- |
+| Admin | 4,2 | 2,7 |
+| Profesional | 3,7 | 3,9 (sale «El teu dia» y «Per fer» con botones) |
+| Cliente | 3,3 | 2,9 |
+
+Lo que importa no es la altura total sino qué se ve primero: en las tres áreas, lo primero de la pantalla es ahora el trabajo de hoy, no los números.
+
 ## Capturas
 
 | Fichero | Qué muestra |
@@ -227,3 +257,6 @@ Los cuatro números (sesiones restantes, bonos, reservas y asistencia) salen del
 | [10-maqueta-admin-390.jpg](auditoria-inici-capturas/10-maqueta-admin-390.jpg) · [11 escritorio](auditoria-inici-capturas/11-maqueta-admin-1280.jpg) | Maqueta del Inicio ideal del admin |
 | [12-maqueta-professional-390.jpg](auditoria-inici-capturas/12-maqueta-professional-390.jpg) · [13 escritorio](auditoria-inici-capturas/13-maqueta-professional-1280.jpg) | Maqueta del profesional |
 | [14-maqueta-client-390.jpg](auditoria-inici-capturas/14-maqueta-client-390.jpg) · [15 escritorio](auditoria-inici-capturas/15-maqueta-client-1280.jpg) | Maqueta del cliente |
+| [16](auditoria-inici-capturas/16-abans-despres-admin-375.jpg) · [17](auditoria-inici-capturas/17-abans-despres-admin-1280.jpg) | Admin, antes y después, 375 y 1280 |
+| [18](auditoria-inici-capturas/18-abans-despres-trainer-375.jpg) · [19](auditoria-inici-capturas/19-abans-despres-trainer-1280.jpg) | Profesional, antes y después, 375 y 1280 |
+| [20](auditoria-inici-capturas/20-abans-despres-client-375.jpg) · [21](auditoria-inici-capturas/21-abans-despres-client-1280.jpg) | Cliente, antes y después, 375 y 1280 |

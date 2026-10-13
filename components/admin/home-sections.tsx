@@ -1,6 +1,6 @@
 import { TAP, TAP_SURFACE } from "@/lib/utils";
 import Link from "next/link";
-import { Icon, IconBox, type IconName } from "@/components/ui/home-icon";
+import { Icon, type IconName } from "@/components/ui/home-icon";
 import { AttentionPanel, AttentionRow } from "@/components/ui/attention";
 import { countdownLabel } from "@/lib/data/trial-attention";
 import {
@@ -20,6 +20,9 @@ import type { AdminDashboard, DashboardPart } from "@/lib/data/dashboard";
 import { Badge } from "@/components/ui/badge";
 import type { ReservationListItem } from "@/lib/data/reservations";
 import type { AdminAttention } from "@/lib/data/admin-attention";
+import type { AgendaHealth, UnmarkedByTrainer } from "@/lib/data/admin-agenda-health";
+import { centerDateStr } from "@/lib/center-time";
+import { GROUP_CAPACITY } from "@/lib/labels";
 
 /**
  * Peces de l'inici de l'admin.
@@ -35,10 +38,28 @@ import type { AdminAttention } from "@/lib/data/admin-attention";
 
 export function Header({ name, today }: { name: string; today: string }) {
   return (
-    <section>
-      <p className="text-sm text-brand-muted">{today}</p>
-      <h1 className="mt-0.5 text-2xl text-brand-dark">Hola, {name}! 👋</h1>
-      <p className="mt-1 text-sm text-brand-muted">Com va el centre avui.</p>
+    <section className="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p className="text-sm text-brand-muted">{today}</p>
+        <h1 className="mt-0.5 text-2xl text-brand-dark">Hola, {name}! 👋</h1>
+      </div>
+      {/* Les dues tasques que l'admin comença des de l'inici. Abans eren
+          quatre targetes grans (~350 px al mòbil) per sobre dels avisos; la
+          resta ja és al menú. */}
+      <div className="flex gap-2">
+        <Link
+          href="/admin/reservas"
+          className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-brand-purple px-3 text-sm font-bold text-white hover:bg-brand-purple-light active:bg-brand-purple-dark ${TAP}`}
+        >
+          <Icon name="calendarPlus" size={16} /> Reserva
+        </Link>
+        <Link
+          href="/admin/clients/new"
+          className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-brand-purple bg-white px-3 text-sm font-bold text-brand-purple hover:bg-brand-purple/5 ${TAP}`}
+        >
+          <Icon name="user" size={16} /> Client
+        </Link>
+      </div>
     </section>
   );
 }
@@ -60,27 +81,16 @@ export function collectableHref(c: { pending: number; unpaid: number }): string 
 // ─────────────────────────── Mètriques ───────────────────────────
 
 /**
- * Les mètriques de dalt, amb el mateix càlcul.
+ * «Com va el centre»: quatre xifres (tres amb el mòdul de proves apagat).
  *
- * Els números surten de `getAdminDashboard` sense tocar-los: aquí només canvia
- * com es pinten. Sis en una fila serien massa estretes, així que van de tres
- * en tres —dues files a l'escriptori, dues columnes al mòbil—.
- *
- * Són sis o cinc. La conversió de proves cau quan el mòdul està apagat, i no
- * per estètica: la seva targeta enllaça a `/admin/prova`, que amb el mòdul
- * apagat respon 404. Amagar-la és el mateix criteri que fa desaparèixer
- * l'entrada del menú. La graella no s'immuta —tres per fila, i l'última en
- * queda amb dues—, així que no cal tocar res més.
+ * Els números surten de `getAdminDashboard`, sense els comptes demo. Van
+ * després de «Per resoldre» i d'«Avui al centre»: primer el que demana feina,
+ * després el dia i al final els números. La conversió de proves cau amb el
+ * mòdul apagat: la seva targeta enllaça a `/admin/prova`, que llavors respon
+ * 404 (el mateix criteri que amaga l'entrada del menú).
  */
 export function KpiRow({ d }: { d: AdminDashboard }) {
-  const {
-    revenue,
-    pendingBonos,
-    lowBonos,
-    sessions,
-    occupancy,
-    trialConversion,
-  } = d;
+  const { revenue, sessions, occupancy, trialConversion } = d;
 
   const cards: {
     /** De quina consulta surt: si ha fallat, la targeta ho diu. */
@@ -95,56 +105,27 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
     {
       part: "revenue",
       icon: "euro",
-      label: "Ingressos del mes",
+      label: "Ingressos fins avui",
       value: formatEur(revenue.current),
       hint:
         revenue.changePct === null ? (
-          `Sense ingressos el ${revenue.previousMonthLabel}`
+          `Sense ingressos de l'${revenue.compareLabel}`
         ) : (
           <span
             className={revenue.changePct >= 0 ? "text-success" : "text-error"}
           >
             {revenue.changePct >= 0 ? "↑" : "↓"}
-            {pct1(Math.abs(revenue.changePct))}% vs {revenue.previousMonthLabel}
+            {pct1(Math.abs(revenue.changePct))}% vs <span className="whitespace-nowrap">{revenue.compareLabel}</span>
           </span>
         ),
       href: "/admin/pagos",
     },
     {
-      part: "pendingBonos",
-      icon: "ticket",
-      label: "Pendent de cobrament",
-      value: formatEur(pendingBonos.total),
-      hint:
-        pendingBonos.count === 1
-          ? "1 bo per cobrar al centre"
-          : `${pendingBonos.count} bons per cobrar al centre`,
-      href: collectableHref(pendingBonos),
-      // Només crida l'atenció si hi ha alguna cosa a cobrar.
-      warn: pendingBonos.count > 0,
-    },
-    {
-      part: "lowBonos",
-      icon: "ticket",
-      label: "Bons a punt d'esgotar-se",
-      value: String(lowBonos.length),
-      hint:
-        lowBonos.length === 0
-          ? "Cap bo per sota del llindar"
-          : (() => {
-              // Clients, no bons: un client amb dos bons baixos compta un cop.
-              const n = new Set(lowBonos.map((b) => b.clientId)).size;
-              return n === 1 ? "1 client a qui oferir renovació" : `${n} clients a qui oferir renovació`;
-            })(),
-      href: "/admin/bonos",
-      warn: lowBonos.length > 0,
-    },
-    {
       part: "sessions",
       icon: "calendar",
-      label: "Sessions",
-      value: String(sessions.today),
-      hint: `avui · ${sessions.week} aquesta setmana`,
+      label: "Sessions aquesta setmana",
+      value: String(sessions.week),
+      hint: `${sessions.today} avui`,
       href: "/admin/reservas",
     },
     {
@@ -154,7 +135,11 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
       value: occupancy.slots > 0 ? `${pct1(occupancy.pct)}%` : "—",
       hint:
         occupancy.slots > 0
-          ? `${occupancy.booked} de ${occupancy.slots} franges`
+          ? // Per professional, els tres primers: abans era una secció a part.
+            occupancy.perTrainer
+              .slice(0, 3)
+              .map((t) => `${firstName(t.trainerName)} ${Math.round(t.pct)}%`)
+              .join(" · ")
           : "Sense franges definides",
       href: "/admin/disponibilitat",
     },
@@ -191,7 +176,11 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
     }
 
   return (
-    <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+    <section className="flex flex-col gap-2">
+      <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
+        Com va el centre
+      </h2>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <KpiFailedNotice count={cards.filter((c) => failed.has(c.part)).length} />
       {cards.map((c) => {
         const body = (
@@ -247,50 +236,13 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
           <div key={c.label}>{body}</div>
         );
       })}
+      </div>
+      {/* Els números són del centre de debò: els comptes demo no hi compten. */}
+      <p className="text-xs text-brand-muted">Sense els comptes demo.</p>
     </section>
   );
 }
 
-// ─────────────────────── Accions ràpides ───────────────────────
-
-/**
- * Les quatre coses que l'admin fa entrant, no navegant.
- *
- * No són dreceres al menú —això ja és el menú—: són el primer pas d'una
- * tasca. Donar d'alta algú, posar-li una sessió, cobrar el que està pendent i
- * mirar els vals, que és l'únic diner que entra sense passar per una fitxa de
- * client i el que més fàcil és oblidar.
- */
-export function QuickActions({
-  pendingHref = "/admin/bonos",
-}: {
-  /** On porta «Bons pendents»: el mateix filtre que «Pendent de cobrament». */
-  pendingHref?: string;
-}) {
-  const actions: { icon: IconName; label: string; href: string }[] = [
-    { icon: "user", label: "Nou client", href: "/admin/clients/new" },
-    { icon: "calendarPlus", label: "Nova reserva", href: "/admin/reservas" },
-    { icon: "ticket", label: "Bons pendents", href: pendingHref },
-    { icon: "gift", label: "Vals de regal", href: "/admin/vals-regal" },
-  ];
-
-  return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {actions.map((a) => (
-        <Link
-          key={a.href}
-          href={a.href}
-          className={`flex items-center gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-base font-bold text-brand-dark hover:border-brand-purple hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-brand-purple">
-            <Icon name={a.icon} size={21} />
-          </span>
-          <span className="min-w-0 leading-tight text-balance">{a.label}</span>
-        </Link>
-      ))}
-    </section>
-  );
-}
 
 // ─────────────────────── Avui al centre ───────────────────────
 
@@ -391,55 +343,6 @@ export function TodayAtCentre({
   );
 }
 
-// ─────────────────── Ocupació per professional ───────────────────
-
-/**
- * El detall que hi havia dins de la targeta d'ocupació.
- *
- * Surt de la mètrica i passa a secció pròpia: dins d'una targeta compacta no
- * hi cabien les barres sense trencar l'alçada de tota la fila, i és informació
- * que es mira amb calma, no d'un cop d'ull.
- */
-export function OccupancyByTrainer({ d }: { d: AdminDashboard }) {
-  // Si ha fallat, la targeta de dalt ja ho diu; unes barres a zero no.
-  if (d.failed.includes("occupancy")) return null;
-  if (d.occupancy.perTrainer.length === 0) return null;
-  return (
-    <section className="rounded-2xl border border-brand-border bg-white p-5">
-      <div className="mb-3 flex items-center gap-2.5">
-        <IconBox name="chart" />
-        <div>
-          <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
-            Ocupació per professional
-          </h2>
-          <p className="text-xs text-brand-muted">
-            {d.occupancy.booked} de {d.occupancy.slots} franges aquesta setmana
-          </p>
-        </div>
-      </div>
-      <ul className="space-y-2.5">
-        {d.occupancy.perTrainer.map((t) => (
-          <li key={t.trainerId}>
-            <div className="flex items-baseline justify-between gap-2 text-xs">
-              <span className="truncate text-brand-charcoal">
-                {t.trainerName}
-              </span>
-              <span className="shrink-0 font-bold text-brand-muted">
-                {pct1(t.pct)}%
-              </span>
-            </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-brand-bg">
-              <div
-                className="h-full rounded-full bg-brand-purple"
-                style={{ width: `${Math.min(100, t.pct)}%` }}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
 // ─────────────────── Atenció immediata ───────────────────
 
@@ -450,77 +353,195 @@ export function OccupancyByTrainer({ d }: { d: AdminDashboard }) {
  * gairebé sempre ensenya tres zeros deixa de mirar-se, i llavors el dia que
  * hi hagi alguna cosa tampoc es veurà.
  */
-export function Attention({ a }: { a: AdminAttention }) {
-  if (a.empty) return null;
+/**
+ * «Per resoldre»: el que demana feina avui, primer, cada cosa amb el botó que
+ * la resol.
+ *
+ * Abans eren dues peces separades i per sota dels números: «Atenció immediata»
+ * (proves, vals, referits, clients sense entrenador) i, més avall, tres
+ * targetes d'estat de l'agenda (sense marcar, fora d'horari, grups amb cua).
+ * Al mòbil, la primera començava a més d'una pantalla. Ara és una sola llista,
+ * a dalt. Si no hi ha res, no es pinta (vegeu `AttentionPanel`).
+ *
+ * Tot sense el món demo: ho filtren les dades (`getDemoWorld`).
+ */
+export function ToResolve({
+  a,
+  h,
+  pending,
+}: {
+  a: AdminAttention;
+  h: AgendaHealth;
+  pending: AdminDashboard["pendingBonos"];
+}) {
+  const rows: React.ReactNode[] = [];
+  let count = 0;
 
+  if (a.trials.length > 0) {
+    count += a.trials.length;
+    rows.push(
+      <AttentionRow
+        key="trials"
+        title={a.trials.length === 1 ? "1 prova per respondre" : `${a.trials.length} proves per respondre`}
+        detail={
+          <>
+            {a.trials[0].name} · {formatDate(a.trials[0].scheduledAt)} · {countdownLabel(a.trials[0].hoursLeft)}
+            {a.trials.length > 1 && ` · i ${a.trials.length - 1} més`}
+          </>
+        }
+        href="/admin/prova"
+        cta="Respondre"
+      />,
+    );
+  }
+
+  if (h.unmarked.ok && h.unmarked.data.total > 0) {
+    const u = h.unmarked.data;
+    count += u.total;
+    // Cada professional, a l'últim dia que té per marcar: un toc i és allà.
+    const first = u.trainers[0];
+    rows.push(
+      <AttentionRow
+        key="unmarked"
+        title={`${u.total}${u.truncated ? "+" : ""} sessions sense marcar`}
+        detail={
+          <>
+            {u.trainers.map((t, i) => (
+              <span key={t.id ?? i}>
+                {i > 0 && " · "}
+                <Link href={unmarkedHref(t)} className="underline hover:text-brand-dark">
+                  {firstName(t.name)} {t.sessions.length}
+                </Link>
+              </span>
+            ))}
+            {" · no es paguen fins que es marquin"}
+          </>
+        }
+        href={unmarkedHref(first)}
+        cta="Marcar"
+      />,
+    );
+  } else if (!h.unmarked.ok) {
+    rows.push(<AttentionRow key="unmarked-ko" title="No s'han pogut carregar les sessions sense marcar" detail="Mira-ho a l'agenda." href="/admin/reservas" cta="Agenda" />);
+  }
+
+  if (pending.count > 0) {
+    count += pending.count;
+    rows.push(
+      <AttentionRow
+        key="collect"
+        title={`${pending.count === 1 ? "1 bo" : `${pending.count} bons`} per cobrar · ${formatEur(pending.total)}`}
+        detail={pending.unpaid > 0 ? `${pending.pending} pendents de pagament i ${pending.unpaid} decaiguts` : "Pendents de pagament"}
+        href={collectableHref(pending)}
+        cta="Cobrar"
+      />,
+    );
+  }
+
+  if (a.vouchers.length > 0) {
+    count += a.vouchers.length;
+    rows.push(
+      <AttentionRow
+        key="vouchers"
+        title={a.vouchers.length === 1 ? "1 val de regal per cobrar" : `${a.vouchers.length} vals de regal per cobrar`}
+        detail={
+          <>
+            {a.vouchers[0].code} · {a.vouchers[0].buyerName} · {formatEur(a.vouchers[0].price)}
+            {a.vouchers.length > 1 && ` · i ${a.vouchers.length - 1} més`} · no es pot bescanviar fins que es cobri
+          </>
+        }
+        href="/admin/vals-regal"
+        cta="Cobrar"
+      />,
+    );
+  }
+
+  if (a.trainingWithoutTrainer > 0) {
+    count += a.trainingWithoutTrainer;
+    rows.push(
+      <AttentionRow
+        key="no-trainer"
+        title={a.trainingWithoutTrainer === 1 ? "1 client sense entrenador" : `${a.trainingWithoutTrainer} clients sense entrenador`}
+        detail="Tenen bo d'individual o de parelles i no el poden reservar fins que se'ls assigni un entrenador."
+        href="/admin/clients?trainer=none"
+        cta="Assignar"
+      />,
+    );
+  }
+
+  if (h.outOfAvailability.ok && h.outOfAvailability.data.total > 0) {
+    const o = h.outOfAvailability.data;
+    count += o.total;
+    rows.push(
+      <AttentionRow
+        key="orphans"
+        title={o.total === 1 ? "1 reserva fora d'horari" : `${o.total} reserves fora d'horari`}
+        detail={
+          <>
+            {o.trainers.map((t, i) => (
+              <span key={t.id}>
+                {i > 0 && " · "}
+                <Link href={`/admin/disponibilitat?trainer=${t.id}`} className="underline hover:text-brand-dark">
+                  {firstName(t.name)} {t.count}
+                </Link>
+              </span>
+            ))}
+            {" · reserves, proves o esperes que ja no cauen en l'horari"}
+          </>
+        }
+        href={`/admin/disponibilitat?trainer=${o.trainers[0].id}`}
+        cta="Revisar"
+      />,
+    );
+  } else if (!h.outOfAvailability.ok) {
+    rows.push(<AttentionRow key="orphans-ko" title="No s'han pogut revisar les reserves fora d'horari" detail="Mira-ho a Disponibilitat." href="/admin/disponibilitat" cta="Revisar" />);
+  }
+
+  if (h.fullGroups.ok && h.fullGroups.data.length > 0) {
+    const g = h.fullGroups.data;
+    count += g.length;
+    const at = g[0];
+    rows.push(
+      <AttentionRow
+        key="groups"
+        title={g.length === 1 ? "1 grup amb gent a la cua" : `${g.length} grups amb gent a la cua`}
+        detail={
+          <>
+            {formatDate(at.at)} {formatTime(at.at)} · {firstName(at.trainerName)} · {at.booked}/{GROUP_CAPACITY}, {at.waiting.length} en espera
+            {g.length > 1 && ` · i ${g.length - 1} més`}
+          </>
+        }
+        href={`/admin/reservas?dia=${centerDateStr(new Date(at.at))}&pro=${at.trainerId}`}
+        cta="Veure"
+      />,
+    );
+  }
+
+  if (a.referrals > 0) {
+    count += a.referrals;
+    rows.push(
+      <AttentionRow
+        key="referrals"
+        title={a.referrals === 1 ? "1 recompensa de referit per aplicar" : `${a.referrals} recompenses de referit per aplicar`}
+        detail="Descomptes guanyats que esperen la propera compra."
+        href="/admin/referits"
+        cta="Veure"
+      />,
+    );
+  }
+
+  if (rows.length === 0) return null;
   return (
-    <AttentionPanel>
-      {a.trials.length > 0 && (
-        <AttentionRow
-          title={
-            a.trials.length === 1
-              ? "1 sol·licitud de prova pendent"
-              : `${a.trials.length} sol·licituds de prova pendents`
-          }
-          detail={
-            <>
-              {/* El compte enrere és el que la fa urgent: mentre no es
-                    respon, la franja segueix bloquejada per a tothom. */}
-              {a.trials[0].name} · {formatDate(a.trials[0].scheduledAt)}
-              {" · "}
-              {countdownLabel(a.trials[0].hoursLeft)}
-              {a.trials.length > 1 && ` · i ${a.trials.length - 1} més`}
-            </>
-          }
-          href="/admin/prova"
-          cta="Revisar"
-        />
-      )}
-
-      {a.vouchers.length > 0 && (
-        <AttentionRow
-          title={
-            a.vouchers.length === 1
-              ? "1 val de regal pendent de cobrament"
-              : `${a.vouchers.length} vals de regal pendents de cobrament`
-          }
-          detail={
-            <>
-              {a.vouchers[0].code} · {a.vouchers[0].buyerName} ·{" "}
-              {formatEur(a.vouchers[0].price)}
-              {a.vouchers.length > 1 && ` · i ${a.vouchers.length - 1} més`}
-              {" · no es pot bescanviar fins que es cobri"}
-            </>
-          }
-          href="/admin/vals-regal"
-          cta="Veure"
-        />
-      )}
-
-      {a.referrals > 0 && (
-        <AttentionRow
-          title={
-            a.referrals === 1
-              ? "1 recompensa de referit per aplicar"
-              : `${a.referrals} recompenses de referit per aplicar`
-          }
-          detail="Descomptes guanyats que esperen la propera compra."
-          href="/admin/referits"
-          cta="Veure"
-        />
-      )}
-
-      {/* Un client sense entrenador pot comprar sol un bo d'individual o de
-          parelles, però no el pot reservar fins que en tingui un d'assignat.
-          Cap altre avís no ho diu. */}
-      {a.trainingWithoutTrainer > 0 && (
-        <AttentionRow
-          title={`Clients sense entrenador amb bo d'entrenament: ${a.trainingWithoutTrainer}`}
-          detail="Tenen un bo d'individual o de parelles i no el poden reservar fins que se'ls assigni un entrenador."
-          href="/admin/clients?trainer=none"
-          cta="Veure"
-        />
-      )}
+    <AttentionPanel title="Per resoldre" count={count}>
+      {rows}
     </AttentionPanel>
   );
+}
+
+/** L'agenda del professional, el dia de la seva sessió sense marcar més recent. */
+function unmarkedHref(t: UnmarkedByTrainer["trainers"][number]) {
+  const s = t.sessions[0];
+  return s
+    ? `/admin/reservas?dia=${centerDateStr(new Date(s.scheduledAt))}${t.id ? `&pro=${t.id}` : ""}`
+    : "/admin/reservas";
 }

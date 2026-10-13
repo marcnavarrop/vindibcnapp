@@ -8,7 +8,12 @@ import {
   KPI_FAILED_VALUE,
   KPI_FAILED_HINT,
 } from "@/components/ui/kpi";
-import { formatDate } from "@/lib/labels";
+import { formatDate, formatRelativeDay, formatTime, SERVICE_LABELS, SESSION_DURATION_MINUTES } from "@/lib/labels";
+import { Badge } from "@/components/ui/badge";
+import { MarkDone } from "@/components/cal-fer-tray";
+import { completeTrainerReservationAction } from "@/app/(trainer)/trainer/reservas/actions";
+import type { ReservationListItem } from "@/lib/data/reservations";
+import type { InboxReservation } from "@/lib/data/trainer-inbox";
 import {
   countdownLabel,
   type TrialAttentionItem,
@@ -29,21 +34,90 @@ import type { ClientListItem } from "@/lib/data/clients";
 export function Header({
   name,
   today,
-  clientCount,
+  day,
 }: {
   name: string;
   today: string;
-  clientCount: number;
+  /** Les seves sessions d'avui (per dir quantes i quina és la pròxima). */
+  day: ReservationListItem[];
 }) {
+  // Abans deia «56 clients assignats», que ja era a la xifra de sota. El que
+  // es vol saber en obrir és com és el dia.
+  const next = day.find((r) => new Date(r.scheduledAt).getTime() > Date.now() && r.status === "booked");
+  const n = day.length;
   return (
     <section>
       <p className="text-sm text-brand-muted">{today}</p>
       <h1 className="mt-0.5 text-2xl text-brand-dark">Hola, {name}! 👋</h1>
-      <p className="mt-1 text-sm text-brand-muted">
-        {clientCount === 1
-          ? "1 client assignat"
-          : `${clientCount} clients assignats`}
-      </p>
+      {/* Sense sessions, ja ho diu «El teu dia» just a sota. */}
+      {n > 0 && (
+        <p className="mt-1 text-sm text-brand-muted">
+          {`Avui tens ${n === 1 ? "1 sessió" : `${n} sessions`}`}
+          {next ? ` · la pròxima a les ${formatTime(next.scheduledAt)}` : " · ja no en queda cap més"}
+        </p>
+      )}
+    </section>
+  );
+}
+
+// ─────────────────────────── El teu dia ───────────────────────────
+
+/** En quin punt és una sessió d'avui (mateix criteri que l'Inici de l'admin). */
+function dayState(r: ReservationListItem): "done" | "unmarked" | "now" | "upcoming" {
+  if (r.status === "completed") return "done";
+  const start = new Date(r.scheduledAt).getTime();
+  const end = start + SESSION_DURATION_MINUTES * 60_000;
+  if (end <= Date.now()) return "unmarked";
+  if (start <= Date.now()) return "now";
+  return "upcoming";
+}
+
+/**
+ * «El teu dia»: les seves sessions d'avui amb l'hora, el client i en quin punt
+ * són, i «Marcar feta» a les que ja han acabat. És el primer que es mira en
+ * obrir l'app; abans calia baixar per sota de quatre xifres, tres dreceres i
+ * els avisos, i la llista no deia l'hora.
+ */
+export function TrainerDay({ day, failed }: { day: ReservationListItem[]; failed?: boolean }) {
+  const nextId = day.find((r) => dayState(r) === "upcoming")?.id;
+  return (
+    <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-brand-border px-5 py-3">
+        <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">El teu dia</h2>
+        <Link
+          href="/trainer/reservas"
+          className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
+        >
+          Agenda
+        </Link>
+      </div>
+      {failed ? (
+        <p role="alert" className="px-5 py-6 text-sm text-error">No s&apos;han pogut carregar les sessions d&apos;avui.</p>
+      ) : day.length === 0 ? (
+        <p className="px-5 py-6 text-sm text-brand-muted">Avui no tens cap sessió.</p>
+      ) : (
+        <ul className="divide-y divide-brand-border">
+          {day.map((r) => {
+            const st = dayState(r);
+            return (
+              <li
+                key={r.id}
+                className={`flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5 ${st === "done" ? "opacity-70" : ""} ${r.id === nextId ? "border-l-4 border-l-brand-orange" : ""}`}
+              >
+                <span className="w-12 shrink-0 text-lg font-bold text-brand-dark tabular-nums">{formatTime(r.scheduledAt)}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-brand-dark">{r.clientName}</p>
+                  <p className="truncate text-xs text-brand-muted">{SERVICE_LABELS[r.serviceType]}</p>
+                </div>
+                {st === "done" && <Badge tone="success">Feta</Badge>}
+                {st === "now" && <Badge tone="info" icon={null}>Ara</Badge>}
+                {r.id === nextId && <Badge tone="info" icon={null}>Pròxima</Badge>}
+                {st === "unmarked" && <MarkDone id={r.id} action={completeTrainerReservationAction} />}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
@@ -71,8 +145,8 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       part: "sessions",
       icon: "calendar",
       label: "Sessions",
-      value: String(d.sessions.today),
-      hint: `avui · ${d.sessions.week} aquesta setmana`,
+      value: String(d.sessions.week),
+      hint: "aquesta setmana",
       href: "/trainer/reservas",
     },
     {
@@ -82,21 +156,6 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       value: String(d.clients),
       hint: d.clients === 1 ? "client assignat" : "clients assignats a tu",
       href: "/trainer/clients",
-    },
-    {
-      part: "lowBonos",
-      icon: "ticket",
-      label: "Bons a punt d'esgotar-se",
-      value: String(d.lowBonos.length),
-      hint:
-        d.lowBonos.length === 0
-          ? "Cap bo dels teus per sota del llindar"
-          : (() => {
-              // Clients, no bons: un client amb dos bons baixos compta un cop.
-              const n = new Set(d.lowBonos.map((b) => b.clientId)).size;
-              return n === 1 ? "1 client a qui oferir renovació" : `${n} clients a qui oferir renovació`;
-            })(),
-      href: "/trainer/bonos",
     },
     {
       part: "occupancy",
@@ -119,14 +178,21 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       c.hint = KPI_FAILED_HINT;
     }
 
+  // Tres xifres de la setmana. Els bons per renovar ja tenen la seva targeta a
+  // sota amb els noms; aquí n'era un duplicat.
   return (
-    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <section aria-labelledby="kpi-setmana" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <h2 id="kpi-setmana" className="col-span-full text-xs font-bold tracking-widest text-brand-muted uppercase">
+        Aquesta setmana
+      </h2>
       <KpiFailedNotice count={cards.filter((c) => failed.has(c.part)).length} />
       {cards.map((c) => {
         const warn =
           !failed.has(c.part) && c.label.startsWith("Bons") && d.lowBonos.length > 0;
         return (
-          <Link key={c.label} href={c.href} className={`block h-full ${TAP_SURFACE}`}>
+          // Tres targetes en dues columnes: l'última ocupa la fila sencera
+          // al mòbil, en comptes de quedar-se sola a mitja amplada.
+          <Link key={c.label} href={c.href} className={`block h-full ${TAP_SURFACE} last:col-span-2 lg:last:col-span-1`}>
             {/*
               Al mòbil la icona va a sobre i no al costat, com a l'admin. Aquí
               les xifres són curtes —un compte de sessions o un percentatge—,
@@ -188,25 +254,39 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
  * L'admin en té tres menes; el professional només aquesta, perquè és l'única
  * que li demana una resposta a ell. Si no en té cap, la secció no es pinta.
  */
-export function Attention({
+/** Quantes sessions sense marcar d'altres dies s'ensenyen a «Per fer». */
+const TO_MARK_SHOWN = 5;
+
+/**
+ * «Per fer»: el que demana feina, cada cosa amb el botó que la resol.
+ *
+ * - Les proves per respondre (mentre no es responen, la franja és bloquejada).
+ * - Les seves sessions d'ALTRES dies que encara són reservades, amb «Marcar
+ *   feta» aquí mateix (`complete_reservation`, la mateixa acció que a
+ *   Reserves): una sessió sense marcar no es paga a les liquidacions. Les
+ *   d'avui ja surten a «El teu dia».
+ * - L'historial clínic d'un client seu amb novetats (0110).
+ *
+ * Si no hi ha res, no es pinta.
+ */
+export function ToDo({
   trials,
+  toMark,
   clinical = [],
 }: {
   trials: TrialAttentionItem[];
+  toMark: InboxReservation[];
   /** Clients seus amb novetats a l'historial clínic que encara no ha obert (0110). */
   clinical?: { id: string; name: string }[];
 }) {
-  if (trials.length === 0 && clinical.length === 0) return null;
+  if (trials.length === 0 && toMark.length === 0 && clinical.length === 0) return null;
+  const count = trials.length + toMark.length + clinical.length;
 
   return (
-    <AttentionPanel>
+    <AttentionPanel title="Per fer" count={count}>
       {trials.length > 0 && (
         <AttentionRow
-          title={
-            trials.length === 1
-              ? "1 sol·licitud de prova pendent"
-              : `${trials.length} sol·licituds de prova pendents`
-          }
+          title={trials.length === 1 ? "1 prova per respondre" : `${trials.length} proves per respondre`}
           detail={
             <>
               {/* Mentre no es respon, la franja segueix bloquejada: el compte
@@ -218,7 +298,25 @@ export function Attention({
             </>
           }
           href="/trainer/reservas"
-          cta="Revisar"
+          cta="Respondre"
+        />
+      )}
+      {toMark.slice(0, TO_MARK_SHOWN).map((r) => (
+        <AttentionRow
+          key={r.id}
+          title={`Sense marcar · ${r.clientName}`}
+          detail={`${formatRelativeDay(r.scheduledAt)} · ${formatTime(r.scheduledAt)} · ${SERVICE_LABELS[r.serviceType]}`}
+          href="/trainer/reservas"
+          cta="Marcar"
+          action={<MarkDone id={r.id} action={completeTrainerReservationAction} />}
+        />
+      ))}
+      {toMark.length > TO_MARK_SHOWN && (
+        <AttentionRow
+          title={`I ${toMark.length - TO_MARK_SHOWN} sessions més sense marcar`}
+          detail="Una sessió que no es marca com a feta no es paga a les liquidacions."
+          href="/trainer/reservas"
+          cta="Veure-les"
         />
       )}
       {/* Algú altre (el fisio o l'admin) hi ha escrit des que el va mirar.
@@ -227,8 +325,8 @@ export function Attention({
         <AttentionRow
           title={
             clinical.length === 1
-              ? "Historial clínic amb novetats: 1 client"
-              : `Historial clínic amb novetats: ${clinical.length} clients`
+              ? "Historial clínic nou: 1 client"
+              : `Historial clínic nou: ${clinical.length} clients`
           }
           detail={
             <>
@@ -246,30 +344,6 @@ export function Attention({
 
 // ─────────────────────── Accions ràpides ───────────────────────
 
-export function QuickActions() {
-  const actions: { icon: IconName; label: string; href: string }[] = [
-    { icon: "calendarPlus", label: "Reservar sessió", href: "/trainer/reservas" },
-    { icon: "user", label: "Els meus clients", href: "/trainer/clients" },
-    { icon: "calendar", label: "Disponibilitat", href: "/trainer/disponibilitat" },
-  ];
-
-  return (
-    <section className="grid gap-3 sm:grid-cols-3">
-      {actions.map((a) => (
-        <Link
-          key={a.href}
-          href={a.href}
-          className={`flex items-center gap-3 rounded-2xl border border-brand-border bg-white px-4 py-4 text-base font-bold text-brand-dark hover:border-brand-purple hover:bg-brand-purple/5 active:bg-brand-purple/10 ${TAP}`}
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-brand-purple">
-            <Icon name={a.icon} size={21} />
-          </span>
-          <span className="min-w-0 leading-tight text-balance">{a.label}</span>
-        </Link>
-      ))}
-    </section>
-  );
-}
 
 // ─────────────────────── Els meus clients ───────────────────────
 

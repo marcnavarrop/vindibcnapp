@@ -183,7 +183,13 @@
       "noExpiry": "No expiry date",
       "expiresOn": "Expires {date}",
       "sessionsLeft": "{left} / {total} sessions",
-      "sessionsUsed": "{used} of {total} sessions used"
+      "sessionsUsed": "{used} of {total} sessions used",
+      "titleLeft": "Sessions left",
+      "left": "{left, plural, one {# session} other {# sessions}}",
+      "ofTotal": "of {total}",
+      "renew": "Renew",
+      "finished": "Used up",
+      "morePacks": "More on your passes →"
     },
     "upcoming": {
       "title": "Upcoming bookings",
@@ -193,7 +199,13 @@
     },
     "community": "Community",
     "nextSession": "Next session",
-    "withTrainer": "With {name}"
+    "withTrainer": "With {name}",
+    "next": {
+      "none": "You have no session booked.",
+      "directions": "Get directions",
+      "book": "Book a session",
+      "later": "Later"
+    }
   },
   "brand": {
     "badge": "Client area",

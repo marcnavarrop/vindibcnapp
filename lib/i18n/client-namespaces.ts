@@ -34,6 +34,7 @@ export const CLIENT_AREA_NAMESPACES = [
   "gifts",
   "growth.gift",
   "growth.referral",
+  "home.next",
   "labels.calendar",
   "labels.gender",
   "labels.service",

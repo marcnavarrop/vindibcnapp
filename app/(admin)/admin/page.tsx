@@ -6,20 +6,17 @@ import {
 } from "@/lib/data/reservations";
 import { getAdminAttention } from "@/lib/data/admin-attention";
 import { getAgendaHealth } from "@/lib/data/admin-agenda-health";
-import { AgendaHealthCards } from "@/components/admin/agenda-health";
 import { LowBonosCard } from "@/components/low-bonos-card";
 import {
   Header,
   KpiRow,
-  QuickActions,
-  collectableHref,
-  Attention,
+  ToResolve,
   TodayAtCentre,
-  OccupancyByTrainer,
 } from "@/components/admin/home-sections";
 import { formatLongDate } from "@/lib/labels";
 import { addDaysStr, centerDayStart, centerToday } from "@/lib/center-time";
 import { COUNTS_AS_OCCUPIED } from "@/lib/occupancy";
+import { getDemoWorld, isDemoRow } from "@/lib/data/demo-world";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +40,14 @@ async function todaySessions(): Promise<{ list: ReservationListItem[]; failed: b
     // Reservades i fetes (no les cancel·lades): el mateix que compta la xifra
     // «Sessions avui» de dalt (`COUNTS_AS_OCCUPIED`). Abans només les
     // reservades, i la llista deia 8 on la xifra deia 10.
-    return { list: list.filter((r) => COUNTS_AS_OCCUPIED(r.status)), failed: false };
+    // I sense el món demo (`demo_profiles`), com la resta de l'Inici.
+    const demo = await getDemoWorld();
+    return {
+      list: list.filter(
+        (r) => COUNTS_AS_OCCUPIED(r.status) && !isDemoRow(demo, { clientId: r.clientId, trainerId: r.trainerId }),
+      ),
+      failed: false,
+    };
   } catch (e) {
     console.error("[inici admin] sessions d'avui:", e instanceof Error ? e.message : e);
     return { list: [], failed: true };
@@ -59,6 +63,8 @@ export default async function AdminHome() {
     getAgendaHealth(),
   ]);
 
+  // L'ordre de l'auditoria de l'Inici (13/10/2026): primer el que demana
+  // feina, després el dia, després els números i al final el detall.
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 p-4 sm:p-6">
       <Header
@@ -66,32 +72,21 @@ export default async function AdminHome() {
         today={formatLongDate(new Date())}
       />
 
-      <KpiRow d={d} />
+      {/* 1. Per resoldre: proves, sense marcar, cobraments, vals, clients
+          sense entrenador, fora d'horari, grups amb cua i referits, cadascun
+          amb el botó que el resol. Si no hi ha res, no es pinta. */}
+      <ToResolve a={attention} h={health} pending={d.pendingBonos} />
 
-      <QuickActions pendingHref={collectableHref(d.pendingBonos)} />
-
-      {/* Va per damunt de l'agenda del dia: si hi ha alguna cosa que caduca,
-          es veu abans de posar-se a mirar les sessions. Si no hi ha res, no
-          es pinta i la pantalla no en queda cap rastre. */}
-      <Attention a={attention} />
-
+      {/* 2. El dia: totes les sessions, amb el seu estat. */}
       <TodayAtCentre reservations={today.list} failed={today.failed} />
 
-      {/* L'estat de l'agenda de tot el centre: el que no s'ha marcat, el que
-          ha quedat fora de l'horari i els grups plens amb cua. Cada targeta
-          porta on es resol, i si la seva lectura falla, ho diu. */}
-      <AgendaHealthCards h={health} />
+      {/* 3. Com va el centre: quatre números, sense comptes demo. */}
+      <KpiRow d={d} />
 
-      {/* El detall que abans vivia dins de dues targetes de mètrica: la llista
-          de bons a punt d'esgotar-se i les barres per professional. Segueixen
-          sent el mateix contingut, ara amb l'espai que necessiten. */}
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        {/* Si ha fallat, la targeta de dalt ja ho diu; una llista buida no. */}
-        {!d.failed.includes("lowBonos") && (
-          <LowBonosCard bonos={d.lowBonos} clientHrefBase="/admin/clients" allHref="/admin/bonos" />
-        )}
-        <OccupancyByTrainer d={d} />
-      </div>
+      {/* 4. A qui oferir renovació: els cinc primers. */}
+      {!d.failed.includes("lowBonos") && (
+        <LowBonosCard bonos={d.lowBonos} clientHrefBase="/admin/clients" allHref="/admin/bonos" />
+      )}
     </main>
   );
 }

@@ -114,6 +114,8 @@ export async function sweepExpiredGiftVouchers(): Promise<void> {
 export type GiftVoucher = {
   id: string;
   code: string;
+  /** Qui el va comprar (per deixar fora els del món demo a l'Inici de l'admin). */
+  buyerClientId: string | null;
   buyerName: string;
   recipientName: string | null;
   recipientEmail: string | null;
@@ -133,6 +135,7 @@ export type GiftVoucher = {
 type Row = {
   id: string;
   code: string;
+  buyer_client_id: string | null;
   recipient_name: string | null;
   recipient_email: string | null;
   message: string | null;
@@ -149,7 +152,7 @@ type Row = {
   redeemer?: { profile: { full_name: string | null } | null } | null;
 };
 
-const SELECT = `id, code, recipient_name, recipient_email, message, price,
+const SELECT = `id, code, buyer_client_id, recipient_name, recipient_email, message, price,
   service_type, total_sessions, package_name, purchased_at, expires_at, status,
   redeemed_at, pdf_path,
   buyer:clients!gift_vouchers_buyer_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name)),
@@ -159,6 +162,7 @@ function toVoucher(r: Row): GiftVoucher {
   return {
     id: r.id,
     code: r.code,
+    buyerClientId: r.buyer_client_id ?? null,
     buyerName: r.buyer?.profile?.full_name ?? "—",
     recipientName: r.recipient_name,
     recipientEmail: r.recipient_email,
@@ -212,6 +216,7 @@ export async function listVouchersPendingPayment(): Promise<GiftVoucher[]> {
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
       .map((v) => ({
         ...toVoucher(v as unknown as Row),
+        buyerClientId: v.buyer_client_id,
         buyerName: mockName(v.buyer_client_id) ?? "—",
         redeemedByName: mockName(v.redeemed_by_client_id),
       }));
@@ -237,6 +242,7 @@ export async function listGiftVouchersAdmin(): Promise<GiftVoucher[]> {
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .map((v) => ({
         ...toVoucher(v as unknown as Row),
+        buyerClientId: v.buyer_client_id,
         buyerName: mockName(v.buyer_client_id) ?? "—",
         redeemedByName: mockName(v.redeemed_by_client_id),
       }));
@@ -261,6 +267,7 @@ export async function listGiftVouchersBought(clientId: string): Promise<GiftVouc
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .map((v) => ({
         ...toVoucher(v as unknown as Row),
+        buyerClientId: v.buyer_client_id,
         buyerName: mockName(v.buyer_client_id) ?? "—",
         redeemedByName: mockName(v.redeemed_by_client_id),
       }));

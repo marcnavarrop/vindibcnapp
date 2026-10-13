@@ -293,82 +293,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "La pantalla d'entrada és un resum: què tens, què ve ara i què has de fer si vols alguna cosa. No cal entrar-hi a fer res, però és des d'on es fa tot més de pressa.",
-            es: "La pantalla de entrada es un resumen: qué tienes, qué viene ahora y qué tienes que hacer si quieres algo. No hace falta entrar a hacer nada, pero es desde donde se hace todo más rápido.",
-            en: "The opening screen is a summary: what you have, what's coming up and what to do if you want something. You don't have to do anything here, but it's the quickest way in to everything.",
-          }),
-        },
-        {
-          t: "h",
-          text: T({
-            ca: "Els quatre indicadors",
-            es: "Los cuatro indicadores",
-            en: "The four figures",
-          }),
-        },
-        {
-          t: "dl",
-          items: [
-            [
-              T({
-                ca: "Sessions restants",
-                es: "Sesiones restantes",
-                en: "Sessions left",
-              }),
-              T({
-                ca: "Les sessions que et queden sumant tots els bons que pots fer servir, i entre parèntesis quantes en portaves en total.",
-                es: "Las sesiones que te quedan sumando todos los bonos que puedes usar, y entre paréntesis cuántas llevabas en total.",
-                en: "How many sessions you have left across every pass you can use, with the original total in brackets.",
-              }),
-            ],
-            [
-              T({
-                ca: "Bons actius",
-                es: "Bonos activos",
-                en: "Active passes",
-              }),
-              T({
-                ca: "Quants bons tens en marxa ara mateix.",
-                es: "Cuántos bonos tienes en marcha ahora mismo.",
-                en: "How many passes you have on the go right now.",
-              }),
-            ],
-            [
-              T({
-                ca: "Properes reserves",
-                es: "Próximas reservas",
-                en: "Upcoming bookings",
-              }),
-              T({
-                ca: "Les sessions que tens reservades per als pròxims set dies.",
-                es: "Las sesiones que tienes reservadas para los próximos siete días.",
-                en: "The sessions you have booked over the next seven days.",
-              }),
-            ],
-            [
-              T({ ca: "Assistència", es: "Asistencia", en: "Attendance" }),
-              T({
-                ca: "El percentatge de sessions d'aquest mes que s'han donat per fetes. Surt un guionet mentre no n'hi hagi cap de tancada: sense sessions, un percentatge no voldria dir res.",
-                es: "El porcentaje de sesiones de este mes que se han dado por hechas. Sale un guion mientras no haya ninguna cerrada: sin sesiones, un porcentaje no querría decir nada.",
-                en: "The share of this month's sessions marked as done. It shows a dash until at least one is closed: with no sessions, a percentage wouldn't mean anything.",
-              }),
-            ],
-          ],
-        },
-        {
-          t: "h",
-          text: T({
-            ca: "Accions ràpides",
-            es: "Acciones rápidas",
-            en: "Quick actions",
-          }),
-        },
-        {
-          t: "p",
-          text: T({
-            ca: "Tres botons grans amb les tres coses que es fan més sovint: reservar una sessió, comprar un bo i anar als teus entrenaments. Res que no es pugui fer també des del menú; simplement són a un clic.",
-            es: "Tres botones grandes con las tres cosas que se hacen más a menudo: reservar una sesión, comprar un bono e ir a tus entrenamientos. Nada que no se pueda hacer también desde el menú; simplemente están a un clic.",
-            en: "Three large buttons for the three things done most often: book a session, buy a pass, and go to your workouts. Nothing you can't also do from the menu; they're just one click away.",
+            ca: "La pantalla d'entrada només té el que serveix: la teva pròxima sessió, el botó per reservar-ne una altra i les sessions que et queden a cada bo. Tota la resta és al menú.",
+            es: "La pantalla de entrada solo tiene lo que sirve: tu próxima sesión, el botón para reservar otra y las sesiones que te quedan en cada bono. Todo lo demás está en el menú.",
+            en: "The opening screen only has what's useful: your next session, the button to book another one and the sessions left on each pass. Everything else is in the menu.",
           }),
         },
         {
@@ -382,9 +309,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Al mòbil és el primer que veus en obrir l'app, i a l'ordinador queda a la dreta: el dia, l'hora en gran i amb qui la fas. Porta el botó «Afegir al calendari», que la posa al teu Google Calendar o et descarrega un fitxer que qualsevol altra agenda entén (Apple, Outlook…).",
-            es: "En el móvil es lo primero que ves al abrir la app, y en el ordenador queda a la derecha: el día, la hora en grande y con quién la haces. Lleva el botón «Añadir al calendario», que la pone en tu Google Calendar o te descarga un archivo que cualquier otra agenda entiende (Apple, Outlook…).",
-            en: "On a phone it's the first thing you see when you open the app; on a computer it sits on the right: the day, the time in large type and who it's with. It carries an «Add to calendar» button that puts it in your Google Calendar or downloads a file any other diary understands (Apple, Outlook…).",
+            ca: "És el primer que veus: el dia («Avui», «Demà», «dj. 15 oct.»), l'hora en gran, el servei i amb qui la fas. A sota hi ha «Afegir al calendari», que la posa al teu Google Calendar o et descarrega un fitxer que qualsevol altra agenda entén (Apple, Outlook…); «Com arribar», que obre l'adreça del centre al mapa; i «Cancel·lar», o «Ja no es pot cancel·lar» si falta menys del marge del centre. Si no en tens cap de reservada, t'ho diu.",
+            es: "Es lo primero que ves: el día («Hoy», «Mañana», «jue. 15 oct.»), la hora en grande, el servicio y con quién la haces. Debajo están «Añadir al calendario», que la pone en tu Google Calendar o te descarga un archivo que cualquier otra agenda entiende (Apple, Outlook…); «Cómo llegar», que abre la dirección del centro en el mapa; y «Cancelar», o «Ya no se puede cancelar» si falta menos del margen del centro. Si no tienes ninguna reservada, te lo dice.",
+            en: "It's the first thing you see: the day («Today», «Tomorrow», «Thu 15 Oct»), the time in large type, the service and who it's with. Underneath are «Add to calendar», which puts it in your Google Calendar or downloads a file any other diary understands (Apple, Outlook…); «Get directions», which opens the centre's address on the map; and «Cancel», or «Too late to cancel» if it's within the centre's notice period. If you have nothing booked, it tells you so.",
           }),
         },
         {
@@ -398,33 +325,57 @@ export function buildClientManual(
         {
           t: "h",
           text: T({
-            ca: "Properes reserves",
-            es: "Próximas reservas",
-            en: "Upcoming bookings",
+            ca: "Reservar una sessió",
+            es: "Reservar una sesión",
+            en: "Book a session",
           }),
         },
         {
           t: "p",
           text: T({
-            ca: "Les tres següents, amb el dia gran a l'esquerra i el professional a la dreta. Des d'aquí mateix pots afegir-les al calendari o cancel·lar-les, sense passar pel calendari de Reserves. «Veure totes» porta a Reserves.",
-            es: "Las tres siguientes, con el día grande a la izquierda y el profesional a la derecha. Desde aquí mismo puedes añadirlas al calendario o cancelarlas, sin pasar por el calendario de Reservas. «Ver todas» lleva a Reservas.",
-            en: "The next three, with the day in large type on the left and the trainer or physio on the right. From here you can add them to your calendar or cancel them without going through the Bookings calendar. «See all» takes you to Bookings.",
+            ca: "El botó gran just a sota porta al calendari de Reserves.",
+            es: "El botón grande justo debajo lleva al calendario de Reservas.",
+            en: "The big button just below takes you to the Bookings calendar.",
           }),
         },
         {
           t: "h",
           text: T({
-            ca: "Bons actius",
-            es: "Bonos activos",
-            en: "Active passes",
+            ca: "Sessions que et queden",
+            es: "Sesiones que te quedan",
+            en: "Sessions left",
           }),
         },
         {
           t: "p",
           text: T({
-            ca: "Una targeta per bo, amb el servei, les sessions que et queden de les que tenia, l'estat i la data de caducitat si en té. La barra de sota creix a mesura que el vas gastant: mostra el que has consumit, no el que et queda.",
-            es: "Una tarjeta por bono, con el servicio, las sesiones que te quedan de las que tenía, el estado y la fecha de caducidad si la tiene. La barra de abajo crece a medida que lo vas gastando: muestra lo que has consumido, no lo que te queda.",
-            en: "One card per pass, with the service, how many of its sessions are left, the status and the expiry date if it has one. The bar underneath grows as you use it up: it shows what you've spent, not what's left.",
+            ca: "Una targeta per bo, amb el servei, les sessions que et queden en gran i de quantes era, i la data de caducitat si en té. La barra creix a mesura que el vas gastant: mostra el que has consumit, no el que et queda. Un bo pendent de pagament ho diu amb una etiqueta.",
+            es: "Una tarjeta por bono, con el servicio, las sesiones que te quedan en grande y de cuántas era, y la fecha de caducidad si la tiene. La barra crece a medida que lo vas gastando: muestra lo que has consumido, no lo que te queda. Un bono pendiente de pago lo dice con una etiqueta.",
+            en: "One card per pass, with the service, the sessions left in large type and how many it had, and the expiry date if it has one. The bar grows as you use it up: it shows what you've spent, not what's left. A pass awaiting payment says so with a label.",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
+            ca: `Quan a un bo li queden ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys, o ja s'ha acabat i no en tens cap altre d'aquell servei, hi surt «Renovar»: porta a comprar el mateix paquet, ja triat. El preu, la manera de pagar i la confirmació són els de sempre. Els bons d'una subscripció o d'un regal no el porten.`,
+            es: `Cuando a un bono le quedan ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sesión" : "sesiones"} o menos, o ya se ha terminado y no tienes otro de ese servicio, aparece «Renovar»: lleva a comprar el mismo paquete, ya elegido. El precio, la forma de pago y la confirmación son los de siempre. Los bonos de una suscripción o de un regalo no lo llevan.`,
+            en: `When a pass has ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "session" : "sessions"} or fewer left, or it's used up and you have no other pass for that service, a «Renew» button appears: it takes you to buy the same package, already selected. The price, payment method and confirmation are the usual ones. Passes from a subscription or a gift don't have it.`,
+          }),
+        },
+        {
+          t: "h",
+          text: T({
+            ca: "Després",
+            es: "Después",
+            en: "Later",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
+            ca: "Les tres reserves que vénen després de la pròxima, amb el dia gran a l'esquerra i el professional a la dreta. Les pots afegir al calendari o cancel·lar des d'aquí mateix. «Veure totes» porta a Reserves.",
+            es: "Las tres reservas que vienen después de la próxima, con el día grande a la izquierda y el profesional a la derecha. Puedes añadirlas al calendario o cancelarlas desde aquí mismo. «Ver todas» lleva a Reservas.",
+            en: "The three bookings after your next one, with the day in large type on the left and the trainer or physio on the right. You can add them to your calendar or cancel them from here. «See all» takes you to Bookings.",
           }),
         },
         ...(s.modules.comunitat

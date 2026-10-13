@@ -40,6 +40,7 @@ export function BuyBonoForm({
   hasLiveSubscription = false,
   subscriptionServiceType = null,
   renewalDay,
+  initialServiceId = null,
 }: {
   services: Service[];
   effectivePrices?: Record<string, EffectivePrice>;
@@ -68,6 +69,13 @@ export function BuyBonoForm({
    * que se li promet ha de ser el que després calcularà l'alta.
    */
   renewalDay: number;
+  /**
+   * Paquet ja triat en entrar (`?paquet=`), des del «Renovar» de l'Inici.
+   * Només salta al pas 2 amb aquest paquet marcat: el preu, el pagament i la
+   * confirmació són els de sempre, i el servidor ho torna a validar tot. Si el
+   * paquet ja no es ven (o no existeix), s'entra pel pas 1 com sempre.
+   */
+  initialServiceId?: string | null;
 }) {
   const locale = useLocale() as Locale;
   const t = useTranslations("bonos.buy");
@@ -95,7 +103,8 @@ export function BuyBonoForm({
     {} as CheckoutState,
   );
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const initial = initialServiceId ? services.find((s) => s.id === initialServiceId) : undefined;
+  const [step, setStep] = useState<1 | 2>(initial ? 2 : 1);
   /**
    * Confirmació abans de crear el bo.
    *
@@ -110,8 +119,8 @@ export function BuyBonoForm({
   const [confirming, setConfirming] = useState<null | "center" | "card" | "subscription" | "subscriptionCard">(null);
   /** Condicions acceptades. Es reinicia cada cop que s'obre el diàleg. */
   const [acceptsTerms, setAcceptsTerms] = useState(false);
-  const [serviceType, setServiceType] = useState<ServiceType | null>(null);
-  const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
+  const [serviceType, setServiceType] = useState<ServiceType | null>(initial?.serviceType ?? null);
+  const [serviceId, setServiceId] = useState(initial?.id ?? services[0]?.id ?? "");
 
   const selected = useMemo(
     () => services.find((s) => s.id === serviceId),

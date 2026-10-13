@@ -115,23 +115,50 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "La pantalla d'entrada està pensada per respondre en deu segons a «què tinc avui i què reclama la meva atenció». De dalt a baix hi trobaràs sempre les mateixes peces, i les que no tenen res a dir no es pinten.",
+          text: "La pantalla d'entrada va per ordre: primer el teu dia, després el que tens per fer, després els números de la setmana i al final la resta. Les peces que no tenen res a dir no es pinten. A dalt, sota la salutació, una frase et diu quantes sessions tens avui i a quina hora és la pròxima.",
         },
-        { t: "h", text: "Les quatre xifres de dalt" },
+        { t: "h", text: "El teu dia" },
+        {
+          t: "p",
+          text: "Les teves sessions d'avui per ordre d'hora, amb el client i el servei, i en quin punt és cadascuna: «Pròxima» (amb la vora taronja), «Ara», «Feta», o el botó «Marcar feta» si ja ha acabat i segueix reservada. «Agenda» porta a Reserves.",
+        },
+        { t: "h", text: "Per fer" },
+        {
+          t: "p",
+          text: "Un plafó amb el que demana feina, cada cosa amb el seu botó, i a dalt quantes n'hi ha. Si no hi ha res, no es pinta.",
+        },
+        {
+          t: "dl",
+          items: [
+            ...(s.modules.sessionsProva
+              ? ([
+                  [
+                    "Proves per respondre",
+                    "Les sol·licituds de sessió de prova a la teva agenda, amb el nom, el dia i quantes hores queden abans que caduquin. Mentre no responguis, la franja segueix bloquejada i ningú més la pot reservar. «Respondre» porta a Reserves.",
+                  ],
+                ] as [string, string][])
+              : []),
+            [
+              "Sense marcar",
+              "Les sessions d'altres dies (dels últims 30) que ja han passat i segueixen com a reservades, de clients teus o donades per tu. «Marcar feta» la marca aquí mateix, igual que a Reserves. En surten cinc; si n'hi ha més, una última fila ho diu i porta a Reserves. Una sessió que no es marca com a feta no es paga a les liquidacions.",
+            ],
+            [
+              "Historial clínic nou",
+              "Algú altre ha escrit a l'historial d'un client teu des que el vas mirar. «Llegir» porta a la pestanya del primer; quan l'obres, l'avís marxa.",
+            ],
+          ],
+        },
+        { t: "h", text: "Aquesta setmana" },
         {
           t: "dl",
           items: [
             [
               "Sessions",
-              "Les d'avui, i al costat les de tota la setmana. Compta les teves, no les del centre. Porta a Reserves.",
+              "Les teves de dilluns a diumenge, reservades i fetes. Porta a Reserves.",
             ],
             [
               "Els teus clients",
               "Quants en tens assignats ara mateix. Porta a Clients.",
-            ],
-            [
-              "Bons a punt d'esgotar-se",
-              `Bons dels teus clients amb ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys. Si n'hi ha cap, la targeta es posa en blau fosc, amb l'exclamació al costat del títol: és l'avís per oferir la renovació abans que es quedin sense.`,
             ],
             [
               "Ocupació setmanal",
@@ -143,28 +170,10 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           t: "note",
           text: "Els diners del centre no surten enlloc d'aquesta pantalla —ni ingressos ni pendents de cobrament—. L'única xifra econòmica que hi pot aparèixer és la teva: l'estimació del teu bonus.",
         },
-        ...(s.modules.sessionsProva
-          ? ([
-              { t: "h", text: "Atenció immediata" },
-              {
-                t: "p",
-                text: "Just sota les xifres, i només si n'hi ha, surten les sol·licituds de sessió de prova que t'esperen a tu. Hi veuràs el nom, el dia i quantes hores queden abans que caduquin. Mentre no responguis, la franja segueix bloquejada i ningú més la pot reservar: per això surten aquí dalt i no com una xifra més.",
-              },
-            ] as Block[])
-          : []),
-        {
-          t: "p",
-          text: "Al mateix lloc surt «Historial clínic amb novetats» quan algú altre ha escrit a l'historial d'un client teu des que el vas mirar. «Llegir» porta a la pestanya del primer; quan l'obres, l'avís marxa.",
-        },
-        { t: "h", text: "Accions ràpides" },
-        {
-          t: "p",
-          text: "Tres dreceres a les pantalles on es passa el dia: Reservar sessió, Els meus clients i Disponibilitat. No fan res que no es pugui fer des del menú; s'estalvien un clic.",
-        },
         { t: "h", text: "Properes reserves" },
         {
           t: "p",
-          text: "L'agenda immediata en format llista, amb el dia («Avui», «Demà», «dj. 15 oct.») i l'hora de cada reserva. Porta el filtre «Mostra: Els meus · Tots» per veure només les teves o les de tot el centre, útil per saber qui hi ha a la sala a la mateixa hora.",
+          text: "L'agenda que ve després d'avui en format llista (les d'avui ja són a «El teu dia»), amb el dia («Demà», «dj. 15 oct.») i l'hora de cada reserva. Porta el filtre «Mostra: Els meus · Tots» per veure només les teves o les de tot el centre, útil per saber qui hi ha a la sala a la mateixa hora.",
         },
         { t: "h", text: "El teu bonus" },
         {
@@ -178,14 +187,14 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Bons baixos i els meus clients" },
         {
           t: "p",
-          text: "A baix, dues llistes de treball: els bons dels teus clients que s'estan acabant —amb el nom i quantes sessions queden— i els teus clients amb les sessions que li resten a cadascun. De cada llista en surten els cinc primers i un enllaç per veure-les senceres. Totes dues porten a la fitxa d'un clic.",
+          text: `A baix, dues llistes de treball: els bons dels teus clients que s'estan acabant (${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys), amb el nom i quantes sessions queden, i els teus clients amb les sessions que li resten a cadascun. De cada llista en surten els cinc primers i un enllaç per veure-les senceres. Totes dues porten a la fitxa d'un clic.`,
         },
         ...(s.modules.comunitat
           ? ([
               { t: "h", text: "Comunitat" },
               {
                 t: "p",
-                text: "L'últim bloc és el mur d'anuncis del centre, el mateix que veus a la secció Comunitat. Hi és perquè un avís que ningú llegeix no serveix de res.",
+                text: "L'últim bloc és l'anunci més recent del centre; la resta, a la secció Comunitat («Veure tots»). Hi és perquè un avís que ningú llegeix no serveix de res.",
               },
             ] as Block[])
           : []),
@@ -604,7 +613,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Com et surten" },
         {
           t: "p",
-          text: "Les que cauen a la teva disponibilitat te surten a dos llocs: a «Atenció immediata» de l'Inici i al calendari, com una targeta blau fosc amb «PROVA», la vora discontínua i el rellotge de sorra. Tocant-les hi tens les dades de qui la demana i dos botons, «Acceptar» i «Rebutjar».",
+          text: "Les que cauen a la teva disponibilitat te surten a dos llocs: a «Per fer» de l'Inici i al calendari, com una targeta blau fosc amb «PROVA», la vora discontínua i el rellotge de sorra. Tocant-les hi tens les dades de qui la demana i dos botons, «Acceptar» i «Rebutjar».",
         },
         {
           t: "warn",

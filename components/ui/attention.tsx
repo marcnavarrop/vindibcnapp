@@ -14,7 +14,17 @@ import { TAP } from "@/lib/utils";
  * immediata que gairebé sempre ensenya zeros deixa de mirar-se, i el dia que
  * hi hagi alguna cosa tampoc es veurà. Per això no hi ha estat buit.
  */
-export function AttentionPanel({ children }: { children: React.ReactNode }) {
+export function AttentionPanel({
+  children,
+  title = "Atenció immediata",
+  count,
+}: {
+  children: React.ReactNode;
+  /** «Per resoldre» a l'admin, «Per fer» al professional. */
+  title?: string;
+  /** Quantes coses demanen feina, al costat del títol. */
+  count?: number;
+}) {
   return (
     // El gris de sempre (#777) fa 3,9:1 sobre aquest fons: a dins es llegeix en
     // el gris de les pestanyes, que en fa 5,8.
@@ -24,8 +34,13 @@ export function AttentionPanel({ children }: { children: React.ReactNode }) {
           <Icon name="alert" size={16} />
         </span>
         <h2 className="text-xs font-bold tracking-widest text-attention uppercase">
-          Atenció immediata
+          {title}
         </h2>
+        {count !== undefined && count > 0 && (
+          <span className="ml-auto flex h-6 min-w-6 items-center justify-center rounded-full bg-attention px-2 text-xs font-bold text-white">
+            {count}
+          </span>
+        )}
       </div>
       <ul className="divide-y divide-attention/15">{children}</ul>
     </section>
@@ -38,11 +53,17 @@ export function AttentionRow({
   detail,
   href,
   cta,
+  action,
 }: {
   title: string;
   detail: React.ReactNode;
   href: string;
   cta: string;
+  /**
+   * En lloc de l'enllaç, un control propi (p. ex. «Marcar feta», que resol
+   * aquí mateix sense anar enlloc).
+   */
+  action?: React.ReactNode;
 }) {
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 sm:px-5">
@@ -50,12 +71,16 @@ export function AttentionRow({
         <p className="text-sm font-bold text-brand-dark">{title}</p>
         <p className="text-xs text-brand-muted">{detail}</p>
       </div>
-      <Link
-        href={href}
-        className={`shrink-0 text-xs font-bold tracking-wide text-attention uppercase hover:text-brand-dark ${TAP}`}
-      >
-        {cta} →
-      </Link>
+      {action ?? (
+        // Un botó de debò (44 px d'alt) i no un enllaç de text: és l'acció
+        // que resol la fila, i al mòbil s'ha de poder tocar sense apuntar.
+        <Link
+          href={href}
+          className={`inline-flex min-h-10 shrink-0 items-center rounded-lg bg-attention px-3 text-xs font-bold text-white hover:bg-brand-dark ${TAP}`}
+        >
+          {cta}
+        </Link>
+      )}
     </li>
   );
 }

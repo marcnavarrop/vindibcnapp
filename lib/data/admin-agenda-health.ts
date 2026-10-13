@@ -9,6 +9,7 @@ import { listWaitingForAdmin } from "@/lib/data/waitlist";
 import { addDaysStr, centerDateStr, centerDayStart, centerToday, centerWeekStart } from "@/lib/center-time";
 import { GROUP_CAPACITY } from "@/lib/labels";
 import { INBOX_DAYS } from "@/lib/inbox-window";
+import { getDemoWorld, isDemoRow } from "@/lib/data/demo-world";
 
 /**
  * L'ESTAT DE L'AGENDA, PER A L'INICI DE L'ADMIN.
@@ -72,7 +73,7 @@ async function unmarked(now: Date): Promise<UnmarkedByTrainer> {
   const sinceIso = new Date(now.getTime() - INBOX_DAYS * 86_400_000).toISOString();
   const nowIso = now.toISOString();
 
-  type Row = { id: string; scheduled_at: string; trainer_id: string | null; clientName: string; trainerName: string | null };
+  type Row = { id: string; scheduled_at: string; trainer_id: string | null; client_id: string | null; clientName: string; trainerName: string | null };
   let rows: Row[];
   if (USE_MOCK) {
     const s = getStore();
@@ -86,6 +87,7 @@ async function unmarked(now: Date): Promise<UnmarkedByTrainer> {
         id: r.id,
         scheduled_at: r.scheduled_at,
         trainer_id: r.trainer_id,
+        client_id: r.client_id,
         clientName: name(s.clients.find((c) => c.id === r.client_id)?.profile_id) ?? "—",
         trainerName: name(r.trainer_id),
       }));
@@ -93,7 +95,7 @@ async function unmarked(now: Date): Promise<UnmarkedByTrainer> {
     const { data, error } = await (await createClient())
       .from("reservations")
       .select(
-        `id, scheduled_at, trainer_id,
+        `id, scheduled_at, trainer_id, client_id,
          client:clients!reservations_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name)),
          trainer:profiles!reservations_trainer_id_fkey(full_name)`,
       )
@@ -107,6 +109,7 @@ async function unmarked(now: Date): Promise<UnmarkedByTrainer> {
       id: string;
       scheduled_at: string;
       trainer_id: string | null;
+      client_id: string | null;
       client: { profile: { full_name: string | null } | null } | null;
       trainer: { full_name: string | null } | null;
     };
@@ -114,10 +117,15 @@ async function unmarked(now: Date): Promise<UnmarkedByTrainer> {
       id: r.id,
       scheduled_at: r.scheduled_at,
       trainer_id: r.trainer_id,
+      client_id: r.client_id,
       clientName: r.client?.profile?.full_name ?? "—",
       trainerName: r.trainer?.full_name ?? null,
     }));
   }
+
+  // Sense el món demo (`demo_profiles`): l'Inici de l'admin parla del centre.
+  const demo = await getDemoWorld();
+  rows = rows.filter((r) => !isDemoRow(demo, { clientId: r.client_id, trainerId: r.trainer_id }));
 
   const byTrainer = new Map<string, UnmarkedByTrainer["trainers"][number]>();
   for (const r of rows) {
@@ -138,7 +146,10 @@ async function unmarked(now: Date): Promise<UnmarkedByTrainer> {
 /** Fora de disponibilitat: el detector del plafó, professional per professional. */
 async function outOfAvailability(): Promise<OutOfAvailability> {
   if (mockFails("orphans")) throw new Error("error simulat (MOCK_FAIL=orphans)");
-  const trainers = await listTrainers();
+  // Els professionals demo, fora: no són del centre, i a més cadascun eren cinc
+  // consultes més a cada obertura de l'Inici.
+  const [all, demo] = await Promise.all([listTrainers(), getDemoWorld()]);
+  const trainers = all.filter((t) => !demo.profileIds.has(t.id));
   const counts = await Promise.all(
     trainers.map(async (t) => ({ id: t.id, name: t.name, count: orphanCount(await findOrphans(t.id)) })),
   );
@@ -155,8 +166,9 @@ async function fullGroups(now: Date): Promise<FullGroup[]> {
   if (mockFails("waitlist")) throw new Error("error simulat (MOCK_FAIL=waitlist)");
   const today = centerToday();
   const weekEnd = addDaysStr(centerWeekStart(today), 6);
+  const demo = await getDemoWorld();
   const queues = (await listWaitingForAdmin({ fromDay: today, toDay: weekEnd })).filter(
-    (q) => new Date(q.at).getTime() > now.getTime(),
+    (q) => new Date(q.at).getTime() > now.getTime() && !demo.profileIds.has(q.trainerId),
   );
   if (queues.length === 0) return [];
 

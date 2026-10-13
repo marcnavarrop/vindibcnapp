@@ -84,6 +84,8 @@ export async function completeTrainerReservationAction(
     return actionError(e, "No s'ha pogut marcar com a feta.");
   }
   revalidatePath("/trainer/reservas");
+  // També es marca des de l'Inici («El teu dia» i «Per fer»).
+  revalidatePath("/trainer");
   return { ok: true };
 }
 

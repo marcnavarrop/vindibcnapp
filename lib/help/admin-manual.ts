@@ -142,35 +142,82 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: `La pantalla d'entrada respon a «com va el centre avui i què reclama la meva atenció». De dalt a baix: ${s.modules.sessionsProva ? "sis" : "cinc"} xifres, quatre accions ràpides, el que espera resposta, les sessions del dia, els bons que s'acaben i l'ocupació per professional.`,
+          text: "La pantalla d'entrada va per ordre d'urgència: primer el que s'ha de resoldre, després el que passa avui, després com va el centre i al final els bons que s'acaben. Dalt de tot, al costat de la salutació, hi ha els dos botons de les tasques que es fan entrant: «Reserva» (nova reserva) i «Client» (alta d'un client).",
         },
-        { t: "h", text: s.modules.sessionsProva ? "Les sis xifres" : "Les cinc xifres" },
+        { t: "h", text: "Per resoldre" },
         {
           t: "p",
-          text: "Totes són enllaços: toca-les i vas a la pantalla d'on surten. Les dues que poden posar-se en blau fosc, amb l'exclamació al costat del títol, ho fan només quan hi ha alguna cosa a fer.",
+          text: "Un plafó amb tot el que demana feina, cada cosa amb el botó que la resol i, a dalt, quantes n'hi ha. El criteri per entrar-hi és que NO fer-ho tingui un cost. Cada fila només surt si té alguna cosa, i si no hi ha res, el plafó no es pinta.",
+        },
+        {
+          t: "dl",
+          items: [
+            ...(s.modules.sessionsProva
+              ? ([
+                  [
+                    "Proves per respondre",
+                    "Amb el compte enrere: mentre no es responen, la franja segueix bloquejada per a tothom. «Respondre» porta a Proves.",
+                  ],
+                ] as [string, string][])
+              : []),
+            [
+              "Sessions sense marcar",
+              "Les que ja han passat i segueixen com a reservades, dels últims 30 dies, amb quantes en té cada professional. Tocant el nom d'un professional (o «Marcar»), l'agenda s'obre el dia de la seva sessió sense marcar més recent, amb la seva columna marcada. Una sessió que no es marca com a feta no es paga a les liquidacions. Si n'hi ha més de 300, es compten les 300 més recents («300+»).",
+            ],
+            [
+              "Bons per cobrar",
+              "Quants bons i quants diners: els «Pendent de pagament» que no han caducat i els «Decaigut sense cobrar». És la mateixa cua que la piloteta de «Bons» del menú. «Cobrar» porta a Bons amb el filtre ja posat: «Pendents de pagament» si n'hi ha, i si només n'hi ha de decaiguts, «Decaiguts sense cobrar».",
+            ],
+            [
+              "Vals de regal per cobrar",
+              "Un val no es pot bescanviar fins que el marques com a pagat, i qui el va rebre ja el té a la mà.",
+            ],
+            [
+              "Clients sense entrenador",
+              "Clients sense entrenador assignat que tenen un bo d'individual o de parelles actiu o pendent. No el poden reservar fins que se'ls assigni un entrenador. «Assignar» porta a Clients filtrat per «Sense professional».",
+            ],
+            [
+              "Reserves fora d'horari",
+              "Reserves, proves i esperes que han quedat fora de l'horari del seu professional (s'ha tancat una franja o s'hi ha posat un bloqueig). Tocant el nom del professional, o «Revisar», vas al plafó de Disponibilitat on es decideix què se'n fa.",
+            ],
+            [
+              "Grups amb gent a la cua",
+              "Els grups d'aquí a diumenge amb llista d'espera: el dia i l'hora, el professional, l'ocupació («4/4») i quants esperen. «Veure» obre l'agenda aquell dia amb la columna del professional.",
+            ],
+            [
+              "Recompenses de referit per aplicar",
+              "Descomptes ja guanyats que esperen la propera compra del beneficiari.",
+            ],
+          ],
+        },
+        {
+          t: "note",
+          text: "Cada fila es llegeix per separat. Si una no es pot carregar, surt una fila que ho diu, amb el botó per anar-ho a mirar; les altres surten igual.",
+        },
+        { t: "h", text: "Avui al centre" },
+        {
+          t: "p",
+          text: "Les sessions d'avui de tot el centre, amb l'hora, el client, el servei i de quin professional és cadascuna, i en quin punt és: «Feta», «Per marcar» (ja ha acabat i segueix reservada), «Ara» o res si encara ha de venir. Hi surten totes, també les fetes. Les de cortesia porten l'etiqueta «Cortesia».",
+        },
+        { t: "h", text: "Com va el centre" },
+        {
+          t: "p",
+          text: `${s.modules.sessionsProva ? "Quatre" : "Tres"} xifres. Totes són enllaços a la pantalla d'on surten.`,
         },
         {
           t: "dl",
           items: [
             [
-              "Ingressos del mes",
-              "Suma dels pagaments REGISTRATS aquest mes natural (hora de Madrid), amb la variació respecte del mes anterior. Compta diners cobrats, no bons venuts: un bo pendent de cobrament no hi surt fins que el cobres. La suma la fa la base de dades, així que és exacta per molts pagaments que hi hagi.",
+              "Ingressos fins avui",
+              "Suma dels pagaments REGISTRATS des de l'1 del mes fins ara (hora de Madrid), comparada amb el MATEIX TROS del mes anterior: el 13 d'octubre es compara l'1–13 d'octubre amb l'1–13 de setembre, no amb el setembre sencer, que a mig mes sempre sortiria a la baixa. Compta diners cobrats, no bons venuts.",
             ],
             [
-              "Pendent de cobrament",
-              "Import i nombre de bons per cobrar: els «Pendent de pagament» que no han caducat i els «Decaigut sense cobrar» (que no caduquen). És la mateixa cua que la piloteta de «Bons» del menú i que els dos comptadors de la pantalla de Bons. Es posa en blau fosc si n'hi ha algun. És la xifra que et diu quants diners hi ha compromesos i no ingressats, i la compta la base de dades, exacta per molts bons que hi hagi. Tocant-la vas a Bons amb el filtre ja posat: «Pendents de pagament» si n'hi ha, i si només n'hi ha de decaiguts, «Decaiguts sense cobrar». L'accés «Bons pendents» porta al mateix lloc.",
-            ],
-            [
-              "Bons a punt d'esgotar-se",
-              `Bons actius amb ${sess(s.bonoLowThreshold)} o menys. Els caducats en queden fora: la llista és de gent a qui oferir renovació, i un bo que ja no es pot fer servir no hi porta. La línia de sota diu a quants clients diferents (un client amb dos bons baixos compta un cop). Es posa en blau fosc si n'hi ha cap. A la targeta de baix surten els cinc primers, i «veure tots» porta a Bons.`,
-            ],
-            [
-              "Sessions",
-              "Les d'avui, i al costat les de tota la setmana. Compta les reservades i les ja fetes; les cancel·lades, no.",
+              "Sessions aquesta setmana",
+              "Les reservades i les fetes de dilluns a diumenge, i a sota les d'avui. Les cancel·lades no compten.",
             ],
             [
               "Ocupació setmanal",
-              "Quantes franges de disponibilitat de tot el centre tenen reserva aquesta setmana. Sense cap franja definida surt un guionet, no un zero: no és que el centre estigui buit, és que encara ningú no ha dit quan hi és.",
+              "Quantes franges de disponibilitat de tot el centre tenen reserva aquesta setmana, i a sota la dels tres professionals amb més franges. Sense cap franja definida surt un guionet, no un zero. El càlcul és el de la tira i la setmana de l'agenda (vegeu «L'agenda de reserves»).",
             ],
             ...(s.modules.sessionsProva
               ? ([
@@ -182,80 +229,14 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
               : []),
           ],
         },
-        { t: "h", text: "Accions ràpides" },
-        {
-          t: "p",
-          text: "Nou client, Nova reserva, Bons pendents i Vals de regal. No són dreceres al menú —el menú ja hi és—: són el primer pas de les quatre tasques que es fan entrant, sense navegar. Els vals hi són perquè són l'únic diner que entra sense passar per la fitxa de ningú, i el més fàcil d'oblidar.",
-        },
-        { t: "h", text: "El que espera resposta" },
-        {
-          t: "p",
-          text: "Un plafó amb tres coses possibles, i cap més. El criteri per entrar-hi és que NO respondre tingui un cost.",
-        },
-        {
-          t: "dl",
-          items: [
-            ...(s.modules.sessionsProva
-              ? ([
-                  [
-                    "Sol·licituds de prova pendents",
-                    "Amb el compte enrere: mentre no es responen, la franja segueix bloquejada per a tothom.",
-                  ],
-                ] as [string, string][])
-              : []),
-            [
-              "Vals de regal pendents de cobrament",
-              "Un val no es pot bescanviar fins que el marques com a pagat, i qui el va rebre ja el té a la mà.",
-            ],
-            [
-              "Recompenses de referit per aplicar",
-              "Descomptes ja guanyats que esperen la propera compra del beneficiari.",
-            ],
-            [
-              "Clients sense entrenador amb bo d'entrenament",
-              "Clients sense entrenador assignat que tenen un bo d'individual o de parelles actiu o pendent (l'han pogut comprar sols, amb targeta o «pagar al centre»). No el poden reservar fins que se'ls assigni un entrenador. «Veure» porta a Clients filtrat per «Sense professional».",
-            ],
-          ],
-        },
         {
           t: "note",
-          text: "Si no hi ha res de res, la secció no es pinta, i cada fila només surt si té alguna cosa. Un plafó d'atenció que gairebé sempre ensenya zeros deixa de mirar-se, i llavors el dia que hi hagi alguna cosa tampoc es veurà.",
+          text: "SENSE ELS COMPTES DEMO. Els ingressos, les sessions, l'ocupació, els bons i els avisos de l'Inici no compten res dels comptes demo (Client Demo, Entrenador Demo, Fisio Demo…): ni els seus pagaments de prova, ni els seus bons, ni la seva disponibilitat. Quins són demo ho diu la mateixa llista de la base que separa el seu historial clínic, no una llista a part. Les altres pantalles (Pagaments, Bons, Reserves) sí que els ensenyen.",
         },
-        { t: "h", text: "Avui al centre" },
+        { t: "h", text: "Bons a punt d'esgotar-se" },
         {
           t: "p",
-          text: "Les sessions d'avui de tot el centre, amb l'hora, el client, el servei i de quin professional és cadascuna, i en quin punt és: «Feta», «Per marcar» (ja ha acabat i segueix reservada), «Ara» o res si encara ha de venir. Hi surten totes, també les fetes, així que en són les mateixes que la xifra «Sessions» de dalt. Les de cortesia porten l'etiqueta «Cortesia».",
-        },
-        { t: "h", text: "L'estat de l'agenda" },
-        {
-          t: "p",
-          text: "Sota les sessions d'avui, tres targetes amb el que s'ha de resoldre a l'agenda de tot el centre. Cada una porta on es resol.",
-        },
-        {
-          t: "dl",
-          items: [
-            [
-              "Sense marcar",
-              "Les sessions que ja han passat i segueixen com a reservades, dels últims 30 dies, per professional (primer qui en té més). De cadascú se'n llisten les tres més recents; tocant-ne una, l'agenda s'obre aquell dia amb la columna d'aquell professional marcada (i encesa, encara que l'haguessis apagat als filtres). Una sessió que no es marca com a feta no es paga a les liquidacions. Si n'hi ha més de 300, es compten les 300 més recents i la targeta ho diu («300+»).",
-            ],
-            [
-              "Fora de disponibilitat",
-              "Quantes reserves, proves i esperes han quedat fora de l'horari del seu professional, per exemple perquè se n'ha tancat una franja o s'hi ha posat un bloqueig. És el mateix recompte del plafó «Reserves fora de la disponibilitat» de Disponibilitat: «Revisar» porta al d'aquell professional, on es decideix què se'n fa.",
-            ],
-            [
-              "Grups amb espera",
-              "Els grups d'aquí a diumenge amb gent a la llista d'espera: el dia i l'hora, el professional, l'ocupació («4/4») i els noms dels que esperen, per ordre. Tocant-ne un, l'agenda s'obre aquell dia amb la columna del professional.",
-            ],
-          ],
-        },
-        {
-          t: "note",
-          text: "Cada targeta es llegeix per separat. Si una no es pot carregar, ho diu i no ensenya cap número; les altres surten igual. Un zero vol dir zero de debò.",
-        },
-        { t: "h", text: "Ocupació per professional" },
-        {
-          t: "p",
-          text: "Les mateixes franges de la xifra d'ocupació, obertes per persona. Qui no té cap disponibilitat definida no hi surt: no seria un 0 %, seria una divisió per zero. El càlcul és el de la tira i la setmana de l'agenda (vegeu «L'agenda de reserves»).",
+          text: `Bons actius amb ${sess(s.bonoLowThreshold)} o menys, sense els caducats: és la llista de gent a qui oferir renovació. Surten els cinc primers, amb quants clients diferents són, i «veure tots els bons» porta a Bons.`,
         },
       ],
     },

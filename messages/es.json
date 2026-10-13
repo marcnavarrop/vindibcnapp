@@ -183,7 +183,13 @@
       "noExpiry": "Sin fecha de caducidad",
       "expiresOn": "Caduca el {date}",
       "sessionsLeft": "{left} / {total} sesiones",
-      "sessionsUsed": "{used} de {total} sesiones consumidas"
+      "sessionsUsed": "{used} de {total} sesiones consumidas",
+      "titleLeft": "Sesiones que te quedan",
+      "left": "{left, plural, one {# sesión} other {# sesiones}}",
+      "ofTotal": "de {total}",
+      "renew": "Renovar",
+      "finished": "Terminado",
+      "morePacks": "Más gestiones de bonos →"
     },
     "upcoming": {
       "title": "Próximas reservas",
@@ -193,7 +199,13 @@
     },
     "community": "Comunidad",
     "nextSession": "Próxima sesión",
-    "withTrainer": "Con {name}"
+    "withTrainer": "Con {name}",
+    "next": {
+      "none": "No tienes ninguna sesión reservada.",
+      "directions": "Cómo llegar",
+      "book": "Reservar una sesión",
+      "later": "Después"
+    }
   },
   "brand": {
     "badge": "Área cliente",

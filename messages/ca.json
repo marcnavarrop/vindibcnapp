@@ -183,7 +183,13 @@
       "noExpiry": "Sense data de caducitat",
       "expiresOn": "Caduca el {date}",
       "sessionsLeft": "{left} / {total} sessions",
-      "sessionsUsed": "{used} de {total} sessions consumides"
+      "sessionsUsed": "{used} de {total} sessions consumides",
+      "titleLeft": "Sessions que et queden",
+      "left": "{left, plural, one {# sessió} other {# sessions}}",
+      "ofTotal": "de {total}",
+      "renew": "Renovar",
+      "finished": "Acabat",
+      "morePacks": "Més gestions de bons →"
     },
     "upcoming": {
       "title": "Properes reserves",
@@ -193,7 +199,13 @@
     },
     "community": "Comunitat",
     "nextSession": "Pròxima sessió",
-    "withTrainer": "Amb {name}"
+    "withTrainer": "Amb {name}",
+    "next": {
+      "none": "No tens cap sessió reservada.",
+      "directions": "Com arribar",
+      "book": "Reservar una sessió",
+      "later": "Després"
+    }
   },
   "brand": {
     "badge": "Àrea client",

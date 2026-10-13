@@ -34,7 +34,7 @@ import {
 } from "@/lib/center-time";
 import { mockFails } from "@/lib/mock/faults";
 import { COUNTS_AS_OCCUPIED, occupancyOf } from "@/lib/occupancy";
-import { paymentsByMonth, type MonthRevenue } from "@/lib/data/payments";
+import { getDemoWorld, isDemoRow } from "@/lib/data/demo-world";
 import type { BonoStatus, ServiceType, TrialStatus } from "@/types/database";
 
 // ─────────────────────── Tipus de sortida ───────────────────────
@@ -59,9 +59,11 @@ export type AdminDashboard = {
   revenue: {
     current: number;
     previous: number;
-    /** Variació en % vs el mes anterior; null si el mes anterior va ser 0. */
+    /** Variació en % vs el MATEIX TRAM del mes anterior; null si aquell tram va ser 0. */
     changePct: number | null;
     previousMonthLabel: string;
+    /** «1–13 de setembre»: el tram del mes anterior amb què es compara. */
+    compareLabel: string;
   };
   pendingBonos: CollectableSummary;
   lowBonos: LowBono[];
@@ -88,8 +90,31 @@ export type AdminDashboard = {
 // ─────────────────────── Dades crues ───────────────────────
 // Es normalitzen mock i real a la mateixa forma perquè el CÀLCUL sigui únic.
 
-/** Ingressos d'aquest mes i de l'anterior, en hora del centre (0095). */
-type RawRevenue = { current: number; previous: number };
+/**
+ * Ingressos d'aquest mes fins ara i del MATEIX TRAM del mes anterior (de l'1 al
+ * mateix dia i hora), en hora del centre i sense el món demo.
+ *
+ * Abans es comparava el que portava el mes amb el mes anterior SENCER: a
+ * principi de mes sempre semblava que anava malament (el 13 d'octubre, amb les
+ * dades de prova, «↑0,8 %» quan el tram comparable donava +81 %).
+ */
+type RawRevenue = { current: number; previous: number; compareDay: number };
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Les dues finestres d'ingressos: de l'1 a ara, i el mateix tram del mes anterior. */
+function revenueWindows(now: Date) {
+  const [y, m, d] = centerDateStr(now).split("-").map(Number);
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  const monthStart = centerDayStart(`${y}-${pad2(m)}-01`);
+  const prevStart = centerDayStart(`${py}-${pad2(pm)}-01`);
+  // Mateix temps transcorregut des de l'1, sense passar de l'1 d'aquest mes
+  // (el 31 de març contra un febrer de 28 dies es queda en el febrer sencer).
+  const prevEnd = new Date(Math.min(prevStart.getTime() + (now.getTime() - monthStart.getTime()), monthStart.getTime()));
+  const daysInPrev = new Date(Date.UTC(py, pm, 0)).getUTCDate();
+  return { monthStart, prevStart, prevEnd, compareDay: Math.min(d, daysInPrev) };
+}
 type RawBono = {
   id: string;
   clientId: string;
@@ -169,20 +194,6 @@ function dashboardWindow(now: Date) {
   };
 }
 
-/**
- * `payments_by_month(2)` torna el mes anterior i el que corre, en aquest ordre.
- * Es busca per data i no per posició: si mai en tornés un altre nombre, un
- * mes que no hi és compta zero en comptes de prendre el d'un altre.
- */
-function toRevenue(rows: MonthRevenue[]): RawRevenue {
-  const today = centerDateStr(new Date());
-  const [y, m] = today.split("-").map(Number);
-  const cur = `${today.slice(0, 7)}-01`;
-  const prev = `${m === 1 ? y - 1 : y}-${String(m === 1 ? 12 : m - 1).padStart(2, "0")}-01`;
-  const at = (k: string) => rows.find((r) => r.month === k)?.total ?? 0;
-  return { current: at(cur), previous: at(prev) };
-}
-
 /** Registra l'error d'una part i la marca com a fallida. */
 function noteFailure(
   failed: Set<DashboardPart>,
@@ -199,6 +210,7 @@ function noteFailure(
 async function gather(lowThreshold: number): Promise<Raw> {
   const now = new Date();
   const win = dashboardWindow(now);
+  const rev = revenueWindows(now);
   const failed = new Set<DashboardPart>();
 
   if (USE_MOCK) {
@@ -224,9 +236,14 @@ async function gather(lowThreshold: number): Promise<Raw> {
       mockFails(part) &&
       noteFailure(failed, parts, `${part} (simulat)`, { message: "error simulat" });
 
+    const inWin = (iso: string, from: Date, to: Date) => iso >= from.toISOString() && iso < to.toISOString();
     const revenue = fail("payments", ["revenue"])
-      ? { current: 0, previous: 0 }
-      : toRevenue(await paymentsByMonth(2));
+      ? { current: 0, previous: 0, compareDay: rev.compareDay }
+      : {
+          current: store.payments.filter((p) => inWin(p.paid_at, rev.monthStart, now)).reduce((n, p) => n + p.amount, 0),
+          previous: store.payments.filter((p) => inWin(p.paid_at, rev.prevStart, rev.prevEnd)).reduce((n, p) => n + p.amount, 0),
+          compareDay: rev.compareDay,
+        };
     const toRaw = (b: (typeof store.bonos)[number]): RawBono => ({
       id: b.id,
       clientId: b.client_id,
@@ -282,19 +299,41 @@ async function gather(lowThreshold: number): Promise<Raw> {
   const BONO_SELECT = `id, client_id, price, status, remaining_sessions, service_type, expires_at,
      client:clients!bonos_client_id_fkey(profile:profiles!clients_profile_id_fkey(full_name))`;
 
+  // Els ingressos els compta la base (`payments_summary`, 0095) per a cada
+  // tram, amb la sessió de l'admin.
+  const paidIn = (from: Date, to: Date) =>
+    admin
+      .rpc("payments_summary", { p_from: from.toISOString(), p_to: to.toISOString() })
+      .then(({ data, error }) => ({ total: Number(data?.[0]?.total ?? 0), error }));
+
+  // El món demo (`demo_profiles`): els seus pagaments i bons pendents es
+  // resten, i les seves reserves, bons i disponibilitat no es compten.
+  const demo = await getDemoWorld();
+  const demoClients = [...demo.clientIds];
+
   // Totes independents: van alhora.
-  const [rules, blocks, pay, pend, low, res, triHappened, triConverted, tra] =
+  const [rules, blocks, payCur, payPrev, demoPay, demoPend, pend, low, res, triHappened, triConverted, tra] =
     await Promise.all([
       listAllTrainerRulesLite(),
       listAllBlocksLite(win.weekFrom),
-      // Els ingressos els compta la base (`payments_by_month`, 0095), amb la
-      // sessió de l'admin: abans es portaven les files des de l'1 del mes
-      // anterior i es sumaven aquí, i un mes de més de 1000 cobraments hauria
-      // quedat curt sense avisar.
-      paymentsByMonth(2).then(
-        (rows) => ({ data: rows, error: null }),
-        (e: unknown) => ({ data: null, error: { message: e instanceof Error ? e.message : String(e) } }),
-      ),
+      paidIn(rev.monthStart, now),
+      paidIn(rev.prevStart, rev.prevEnd),
+      demoClients.length
+        ? admin
+            .from("payments")
+            .select("amount, paid_at")
+            .in("client_id", demoClients)
+            .gte("paid_at", rev.prevStart.toISOString())
+            .limit(1000)
+        : Promise.resolve({ data: [] as { amount: number; paid_at: string }[], error: null }),
+      demoClients.length
+        ? admin
+            .from("bonos")
+            .select("status, price, expires_at")
+            .in("client_id", demoClients)
+            .in("status", ["pending_payment", "unpaid"])
+            .limit(1000)
+        : Promise.resolve({ data: [] as { status: BonoStatus; price: number; expires_at: string | null }[], error: null }),
       // El «Pendent de cobrament» el compta la base (0097), amb el mateix
       // criteri que la piloteta: pendents no caducats i decaiguts.
       getCollectableSummary().then(
@@ -308,7 +347,7 @@ async function gather(lowThreshold: number): Promise<Raw> {
         .lte("remaining_sessions", lowThreshold),
       admin
         .from("reservations")
-        .select("trainer_id, scheduled_at, status")
+        .select("trainer_id, client_id, scheduled_at, status")
         .gte("scheduled_at", win.weekFrom.toISOString())
         .lt("scheduled_at", win.weekTo.toISOString()),
       admin
@@ -323,8 +362,8 @@ async function gather(lowThreshold: number): Promise<Raw> {
       admin.from("profiles").select("id, full_name").eq("role", "trainer"),
     ]);
 
-  noteFailure(failed, ["revenue"], "pagaments", pay.error);
-  noteFailure(failed, ["pendingBonos"], "bons pendents", pend.error);
+  noteFailure(failed, ["revenue"], "pagaments", payCur.error ?? payPrev.error ?? demoPay.error);
+  noteFailure(failed, ["pendingBonos"], "bons pendents", pend.error ?? demoPend.error);
   noteFailure(failed, ["lowBonos"], "bons baixos", low.error);
   noteFailure(failed, ["sessions", "occupancy"], "reserves de la setmana", res.error);
   noteFailure(failed, ["trials"], "proves fetes", triHappened.error);
@@ -342,7 +381,9 @@ async function gather(lowThreshold: number): Promise<Raw> {
     client: { profile: { full_name: string | null } | null } | null;
   };
   const clientNames = new Map<string, string>();
-  const bonos = ((low.data ?? []) as unknown as BonoRow[]).map((b) => {
+  const bonos = ((low.data ?? []) as unknown as BonoRow[])
+    .filter((b) => !demo.clientIds.has(b.client_id))
+    .map((b) => {
     clientNames.set(b.client_id, b.client?.profile?.full_name ?? "—");
     return {
       id: b.id,
@@ -356,13 +397,40 @@ async function gather(lowThreshold: number): Promise<Raw> {
   });
 
   const trainerNames = new Map<string, string>();
-  for (const t of tra.data ?? []) trainerNames.set(t.id, t.full_name ?? "—");
+  for (const t of tra.data ?? []) if (!demo.profileIds.has(t.id)) trainerNames.set(t.id, t.full_name ?? "—");
+
+  // Ingressos menys els del món demo, per tram.
+  const demoIn = (from: Date, to: Date) =>
+    (demoPay.data ?? [])
+      .filter((p) => p.paid_at >= from.toISOString() && p.paid_at < to.toISOString())
+      .reduce((n, p) => n + Number(p.amount), 0);
+  const revenue = {
+    current: payCur.total - demoIn(rev.monthStart, now),
+    previous: payPrev.total - demoIn(rev.prevStart, rev.prevEnd),
+    compareDay: rev.compareDay,
+  };
+
+  // Pendent de cobrament menys el del món demo, amb el MATEIX criteri que
+  // `bonos_summary` (0097): pendents no caducats per data i decaiguts.
+  const demoCollectable = (demoPend.data ?? []).filter(
+    (b) => !isBonoExpired({ status: b.status as BonoStatus, expires_at: b.expires_at }),
+  );
+  const collectable = pend.data
+    ? {
+        count: pend.data.count - demoCollectable.length,
+        total: Math.round((pend.data.total - demoCollectable.reduce((n, b) => n + Number(b.price), 0)) * 100) / 100,
+        pending: pend.data.pending - demoCollectable.filter((b) => b.status === "pending_payment").length,
+        unpaid: pend.data.unpaid - demoCollectable.filter((b) => b.status === "unpaid").length,
+      }
+    : { count: 0, total: 0, pending: 0, unpaid: 0 };
 
   return {
-    revenue: pay.data ? toRevenue(pay.data) : { current: 0, previous: 0 },
-    collectable: pend.data ?? { count: 0, total: 0, pending: 0, unpaid: 0 },
+    revenue,
+    collectable,
     bonos,
-    reservations: (res.data ?? []).map((r) => ({
+    reservations: (res.data ?? [])
+      .filter((r) => !isDemoRow(demo, { clientId: r.client_id, trainerId: r.trainer_id }))
+      .map((r) => ({
       trainerId: r.trainer_id,
       scheduledAt: r.scheduled_at,
       status: r.status,
@@ -373,8 +441,10 @@ async function gather(lowThreshold: number): Promise<Raw> {
     },
     clientNames,
     trainerNames,
-    rules,
-    blocks,
+    // Sense la disponibilitat dels professionals demo: no reserven mai i
+    // abaixaven l'ocupació del centre.
+    rules: rules.filter((r) => !demo.profileIds.has(r.trainerId)),
+    blocks: blocks.filter((b) => !demo.profileIds.has(b.trainerId)),
     failed,
   };
 }
@@ -415,7 +485,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
   // anterior per a l'etiqueta i el %.
   const m = toCenterLocal(now).getUTCMonth();
   const prevM = m === 0 ? 11 : m - 1;
-  const { current, previous } = raw.revenue;
+  const { current, previous, compareDay } = raw.revenue;
   const changePct =
     previous > 0 ? ((current - previous) / previous) * 100 : null;
 
@@ -509,6 +579,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
       previous,
       changePct,
       previousMonthLabel: MONTHS[prevM],
+      compareLabel: `${compareDay === 1 ? "1" : `1–${compareDay}`} ${/^[aeiou]/.test(MONTHS[prevM]) ? "d'" : "de "}${MONTHS[prevM]}`,
     },
     pendingBonos,
     lowBonos,

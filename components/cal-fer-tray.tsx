@@ -12,7 +12,7 @@ import type { ReservationActionState } from "@/lib/reservation-action-state";
 import type { InboxReservation, TrainerInbox } from "@/lib/data/trainer-inbox";
 import type { TrialHoldItem } from "@/lib/data/trial-bookings";
 
-type StatefulAction = (
+export type StatefulAction = (
   prev: ReservationActionState,
   formData: FormData,
 ) => Promise<ReservationActionState>;
@@ -310,8 +310,11 @@ function Row({
   );
 }
 
-/** «Marcar feta», amb l'error aquí mateix si el servidor diu que no. */
-function MarkDone({ id, action }: { id: string; action: StatefulAction }) {
+/**
+ * «Marcar feta», amb l'error aquí mateix si el servidor diu que no.
+ * També el fa servir l'Inici del professional («El teu dia» i «Per fer»).
+ */
+export function MarkDone({ id, action }: { id: string; action: StatefulAction }) {
   const [state, submit, pending] = useActionState(action, {});
   return (
     <form action={submit} className="flex flex-col items-end">

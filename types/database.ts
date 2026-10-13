@@ -1173,6 +1173,13 @@ export interface Database {
         Relationships: [];
       };
       /** Fins quan ha vist cadascú l'historial d'un client (0110). */
+      /** Comptes de demostració (0110). Cap sessió hi té accés: només la clau de servei. */
+      demo_profiles: {
+        Row: { profile_id: string; label: string };
+        Insert: { profile_id: string; label: string };
+        Update: { label?: string };
+        Relationships: [];
+      };
       clinical_seen: {
         Row: { viewer_id: string; client_id: string; seen_at: string };
         Insert: { viewer_id: string; client_id: string; seen_at?: string };

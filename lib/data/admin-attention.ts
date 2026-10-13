@@ -10,6 +10,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore } from "@/lib/mock/store";
 import { centerToday } from "@/lib/center-time";
+import { getDemoWorld } from "@/lib/data/demo-world";
 
 /**
  * El que espera resposta de l'administració, avui.
@@ -69,7 +70,10 @@ export async function getAdminAttention(): Promise<AdminAttention> {
   // Les proves ja arriben preparades; els vals, filtrats i ordenats.
   const trials = trialsRaw;
 
-  const vouchers = vouchersRaw.map((v) => ({
+  // Sense el món demo (`demo_profiles`): els vals de prova del Client Demo no
+  // són feina del centre.
+  const demo = await getDemoWorld();
+  const vouchers = vouchersRaw.filter((v) => !v.buyerClientId || !demo.clientIds.has(v.buyerClientId)).map((v) => ({
     id: v.id,
     code: v.code,
     buyerName: v.buyerName,

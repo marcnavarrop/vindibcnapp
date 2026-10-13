@@ -223,3 +223,18 @@ export async function getTrainerInbox(input: {
     notesFailed: failed,
   };
 }
+
+/**
+ * Només «per marcar», per a l'Inici del professional: la mateixa llista que
+ * «Cal fer» de Reserves (mateixa finestra, mateix sostre i la mateixa sessió),
+ * sense les notes ni les proves, que l'Inici ja llegeix pel seu compte.
+ */
+export async function listToMark(input: { trainerId: string; now?: Date }): Promise<{
+  toMark: InboxReservation[];
+  truncated: boolean;
+}> {
+  const now = input.now ?? new Date();
+  const since = new Date(now.getTime() - INBOX_DAYS * 86_400_000);
+  const res = await queryReservations(input.trainerId, since, now);
+  return { toMark: res.toMark, truncated: res.truncated };
+}

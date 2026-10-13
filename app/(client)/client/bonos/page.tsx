@@ -21,7 +21,14 @@ import { isSubscriptionOnly } from "@/lib/subscription-rules";
 
 export const dynamic = "force-dynamic";
 
-export default async function ComprarBonoPage() {
+export default async function ComprarBonoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ paquet?: string | string[] }>;
+}) {
+  // «Renovar» des de l'Inici: el paquet del bo que s'acaba ja triat.
+  const paquetParam = (await searchParams).paquet;
+  const initialServiceId = typeof paquetParam === "string" ? paquetParam : null;
   const viewer = await getViewer();
 
   // El catàleg i la recompensa pendent són independents: s'engeguen alhora.
@@ -143,6 +150,7 @@ export default async function ComprarBonoPage() {
         hasLiveSubscription={liveSubscription !== null}
         subscriptionServiceType={liveSubscription?.serviceType ?? null}
         renewalDay={renewalDay}
+        initialServiceId={initialServiceId}
       />
 
       {/*

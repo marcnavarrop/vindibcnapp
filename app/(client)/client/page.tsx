@@ -7,7 +7,6 @@ import { getColorPalette } from "@/lib/data/colors";
 import { getReferralStats } from "@/lib/data/referral";
 import { avatarUrls } from "@/lib/data/avatars";
 import {
-  computeClientKpis,
   usableBonos,
   upcomingReservations,
   listTrainerCards,
@@ -15,11 +14,10 @@ import {
 import { CommunityBoard } from "@/components/community-board";
 import { PollCard } from "@/components/poll-card";
 import {
-  KpiRow,
-  QuickActions,
-  ActiveBonos,
+  NextSessionHero,
+  BookCta,
+  BonoBalance,
   UpcomingReservations,
-  NextSessionCard,
 } from "@/components/client/home-sections";
 import { GiftCta, ReferralCta } from "@/components/client/growth-cards";
 import { formatLongDate } from "@/lib/labels";
@@ -80,12 +78,20 @@ export default async function ClientHome() {
     );
   }
 
-  const kpis = computeClientKpis(client);
   const bonos = usableBonos(client);
+  // Els bons acabats d'un servei del qual ja no en té cap més: és quan més
+  // falta fa «Renovar» (ja no pot reservar). Un per servei.
+  const finished = client.bonos.filter(
+    (b, i, all) =>
+      b.status === "completed" &&
+      !bonos.some((u) => u.serviceType === b.serviceType) &&
+      all.findIndex((x) => x.status === "completed" && x.serviceType === b.serviceType) === i,
+  );
   const upcoming = upcomingReservations(client, new Date().toISOString());
 
   // El nom i la foto surten del directori de professionals, no de la reserva:
   // la RLS no deixa que el client llegeixi aquell perfil per la via normal.
+  // La primera va en gran; «Després», les MAX_UPCOMING següents.
   const withTrainer = upcoming.slice(0, MAX_UPCOMING + 1).map((r) => {
     const t = r.trainerId ? trainers.get(r.trainerId) : null;
     return {
@@ -94,7 +100,7 @@ export default async function ClientHome() {
       trainerAvatarPath: t?.avatarPath ?? r.trainerAvatarPath,
     };
   });
-  const shownWithTrainer = withTrainer.slice(0, MAX_UPCOMING);
+  const later = withTrainer.slice(1);
 
   // Les fotos, totes d'un cop.
   const avatars = await avatarUrls(withTrainer.map((r) => r.trainerAvatarPath));
@@ -124,39 +130,28 @@ export default async function ClientHome() {
           today={formatLongDate(new Date(), locale)}
         />
 
-      <KpiRow kpis={kpis} />
+      {/* L'ordre de l'auditoria: el que et toca (la pròxima sessió), el que
+          has de fer (reservar, renovar) i al final la resta. */}
+      <NextSessionHero
+        reservation={withTrainer[0] ?? null}
+        avatars={avatars}
+        palette={palette}
+        minCancellationHours={centerSettings.minCancellationHours}
+      />
 
-      <QuickActions />
+      <BookCta />
 
-      {/* Primer les reserves i després els bons: el que un client mira en
-          obrir l'app és quan té la pròxima sessió, no quantes li queden. Amb
-          els bons a sobre, l'agenda quedava sota la línia de scroll.
+      <BonoBalance bonos={bonos} finished={finished} lowThreshold={centerSettings.bonoLowThreshold} />
 
-          Dues columnes a partir de `lg`: l'agenda a l'esquerra i, a la dreta,
-          la pròxima sessió. En mòbil van una sota l'altra, amb la pròxima
-          sessió PRIMER: és el que es mira quan s'obre l'app. */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="order-2 lg:order-1 lg:col-span-2">
-          <UpcomingReservations
-            reservations={shownWithTrainer}
-            avatars={avatars}
-            palette={palette}
-            minCancellationHours={centerSettings.minCancellationHours}
-          />
-        </div>
-
-        <div className="order-1 flex flex-col gap-4 lg:order-2">
-          {withTrainer[0] && (
-            <NextSessionCard
-              reservation={withTrainer[0]}
-              avatars={avatars}
-              palette={palette}
-            />
-          )}
-        </div>
-      </div>
-
-      <ActiveBonos bonos={bonos} />
+      {later.length > 0 && (
+        <UpcomingReservations
+          title={t("next.later")}
+          reservations={later}
+          avatars={avatars}
+          palette={palette}
+          minCancellationHours={centerSettings.minCancellationHours}
+        />
+      )}
 
       {/* Comunitat i les targetes de creixement comparteixen la mateixa
           graella: el mur a l'esquerra i les targetes com a columna al costat.
