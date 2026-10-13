@@ -69,6 +69,11 @@
     "next": "Siguiente",
     "today": "Hoy",
     "free": "Libre",
+    "slotLabel": "Pedir la prueba el {when}",
+    "loading": "Cargando las horas libres…",
+    "noFreeHere": "No hay horas libres en estas fechas.",
+    "goToFirstFree": "Ver el primer día con horas: {day}",
+    "noneAhead": "Ahora mismo no hay ninguna hora libre para sesiones de prueba. Escríbenos y te buscaremos un hueco.",
     "legend": "Elige una franja libre para pedir tu sesión de prueba gratuita. Hace falta un mínimo de {hours} h de antelación. Recibirás la confirmación del profesional.",
     "days": [
       "Lu",

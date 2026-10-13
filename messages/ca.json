@@ -69,6 +69,11 @@
     "next": "Següent",
     "today": "Avui",
     "free": "Lliure",
+    "slotLabel": "Demanar la prova el {when}",
+    "loading": "Carregant les hores lliures…",
+    "noFreeHere": "No hi ha hores lliures en aquestes dates.",
+    "goToFirstFree": "Veure el primer dia amb hores: {day}",
+    "noneAhead": "Ara mateix no hi ha cap hora lliure per a sessions de prova. Escriu-nos i et buscarem un forat.",
     "legend": "Tria una franja lliure per demanar la teva sessió de prova gratuïta. Cal un mínim de {hours} h d'antelació. Rebràs la confirmació del professional.",
     "days": [
       "Dl",

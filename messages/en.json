@@ -69,6 +69,11 @@
     "next": "Next",
     "today": "Today",
     "free": "Free",
+    "slotLabel": "Book the trial on {when}",
+    "loading": "Loading free times…",
+    "noFreeHere": "There are no free times on these dates.",
+    "goToFirstFree": "See the first day with free times: {day}",
+    "noneAhead": "There are no free times for trial sessions right now. Get in touch and we will find you a slot.",
     "legend": "Pick a free slot to book your free trial session. It needs at least {hours} hours' notice. The professional will send you the confirmation.",
     "days": [
       "Mon",

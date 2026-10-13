@@ -116,8 +116,14 @@ export async function BrandPanel() {
 
       {/* Sempre en fila: icona en un quadrat a l'esquerra i, a la dreta,
           títol i descripció. Apilades (icona a dalt, text a sota) feien la
-          fila el doble d'alta i li menjaven l'espai a la il·lustració. */}
-      <ul className="relative grid gap-2.5 sm:grid-cols-3">
+          fila el doble d'alta i li menjaven l'espai a la il·lustració.
+
+          Per sota de `sm:` no hi són: al mòbil les tres targetes ocupaven uns
+          200 px abans del formulari i empenyien la crida a la sessió de prova
+          —l'única cosa que serveix a qui encara no és client— sota el plec
+          (898 px en un iPhone de 844). Són decoratives: qui ja és client sap
+          què hi trobarà. */}
+      <ul className="relative hidden gap-2.5 sm:grid sm:grid-cols-3">
         {FEATURES.map((f) => (
           <li
             key={f.key}
