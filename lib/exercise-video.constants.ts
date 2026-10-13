@@ -27,8 +27,15 @@ export const ALLOWED_VIDEO_MIME = new Set(["video/mp4", "video/quicktime"]);
 export const VIDEO_LIMIT_LABEL = `MP4 / MOV, màx. ${MAX_VIDEO_MB} MB`;
 
 /** Consell de gravació, sota el camp del fitxer. */
+// L'iPhone grava en H.264 a uns 15 Mbps: 23,5 s a 1080p van fer 45,7 MB
+// (prova real del 13/10/2026). Amb el límit de 50 MB, 30 s ja no hi caben.
+// Si es puja MAX_VIDEO_MB a 100 (pla Pro), aquest consell pot tornar a 30 s.
 export const VIDEO_RECORDING_TIP =
-  "Grava en 1080p i menys de 30 s: un vídeo així ocupa uns 20-30 MB. En 4K o més llarg passarà del límit.";
+  "Grava en 1080p i menys de 25 s: un vídeo així ocupa uns 45 MB. En 4K o més llarg passarà del límit.";
+
+/** Avís si el vídeo triat és HEVC (vegeu `lib/video-codec.ts`). No bloqueja. */
+export const VIDEO_HEVC_WARNING =
+  "Aquest vídeo és HEVC: es veurà a l'iPhone i al Mac, però no a molts Android ni PC (Chrome i Firefox no el poden reproduir). Si els teus clients en fan servir, a l'iPhone ves a Ajustos → Càmera → Formats → «Més compatible» i torna'l a gravar, o posa'l a YouTube (ocult) i tria «Enllaç». Si vols, el pots desar igualment.";
 
 /**
  * Carpeta on cauen els vídeos acabats de pujar, abans que l'exercici es desi.
@@ -59,7 +66,7 @@ export function checkExerciseVideo(file: {
   if (file.size > MAX_VIDEO_BYTES)
     return {
       ok: false,
-      error: `El vídeo és massa gran: ${(file.size / 1024 / 1024).toFixed(1)} MB. El límit és de ${MAX_VIDEO_MB} MB. Grava'l en 1080p i més curt, o posa un enllaç de YouTube.`,
+      error: `El vídeo és massa gran: ${(file.size / 1024 / 1024).toFixed(1)} MB. El límit és de ${MAX_VIDEO_MB} MB. Grava'l en 1080p i de menys de 25 s, o posa un enllaç de YouTube.`,
     };
   if (!ALLOWED_VIDEO_MIME.has(file.type))
     return { ok: false, error: "Format no acceptat. Usa MP4 o MOV." };

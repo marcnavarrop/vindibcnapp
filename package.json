@@ -45,7 +45,8 @@
     "emailchange:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailchange-check.mts",
     "autherrors:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/autherrors-check.mts",
     "emailtaken:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailtaken-check.mts",
-    "demo:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/demo-check.mts"
+    "demo:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/demo-check.mts",
+    "videocodec:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/videocodec-check.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

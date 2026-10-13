@@ -8,7 +8,9 @@ import {
   MAX_VIDEO_MB,
   VIDEO_LIMIT_LABEL,
   VIDEO_RECORDING_TIP,
+  VIDEO_HEVC_WARNING,
 } from "@/lib/exercise-video.constants";
+import { detectVideoCodec } from "@/lib/video-codec";
 
 /**
  * Estat de la pujada, el que necessita saber el formulari per deixar desar o no.
@@ -47,6 +49,8 @@ export function ExerciseVideoUpload({
 }) {
   const [status, setStatusState] = useState<VideoUploadStatus>({ state: "idle" });
   const [path, setPath] = useState<string | null>(null);
+  /** El vídeo triat és HEVC: només un avís, la pujada segueix. */
+  const [hevc, setHevc] = useState(false);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
   // Cada fitxer triat té el seu torn: una resposta d'un fitxer anterior que
   // arribi tard no ha de trepitjar l'estat del nou.
@@ -65,6 +69,11 @@ export function ExerciseVideoUpload({
     const myTurn = ++turn.current;
     xhrRef.current?.abort();
     setPath(null);
+    setHevc(false);
+    // En paral·lel a la pujada i sense esperar-la: si no es pot llegir, cap avís.
+    void detectVideoCodec(file)
+      .then((codec) => { if (myTurn === turn.current) setHevc(codec === "hevc"); })
+      .catch(() => {});
 
     const type = videoMimeOf(file);
     const check = checkExerciseVideo({ size: file.size, type });
@@ -148,6 +157,7 @@ export function ExerciseVideoUpload({
             turn.current++;
             xhrRef.current?.abort();
             setPath(null);
+            setHevc(false);
             return setStatus({ state: "idle" });
           }
           void start(f);
@@ -158,6 +168,15 @@ export function ExerciseVideoUpload({
         {VIDEO_RECORDING_TIP} Si no, posa&apos;l a YouTube (ocult) i tria «Enllaç».
       </p>
 
+      {hevc && status.state !== "error" && (
+        <p
+          className="rounded-lg bg-attention-bg px-3 py-2 text-xs text-attention"
+          role="status"
+          data-video-hevc
+        >
+          {VIDEO_HEVC_WARNING}
+        </p>
+      )}
       {status.state === "uploading" && (
         <div className="flex flex-col gap-1" role="status" aria-live="polite">
           <div

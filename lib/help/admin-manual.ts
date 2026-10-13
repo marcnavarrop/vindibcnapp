@@ -1507,7 +1507,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Crear-ne un" },
         {
           t: "p",
-          text: "Nom, categoria, descripció i, opcionalment, un vídeo. El vídeo es pot posar de dues maneres: enganxant una adreça (YouTube, Vimeo…) o pujant un fitxer (MP4 o MOV, fins a 50 MB). El fitxer es puja directament en triar-lo, amb una barra de progrés, i no es pot desar l'exercici fins que acaba. Consell: gravar-lo en 1080p i de menys de 30 segons. Si es tria un vídeo i no es desa l'exercici, el fitxer s'esborra sol l'endemà.",
+          text: "Nom, categoria, descripció i, opcionalment, un vídeo. El vídeo es pot posar de dues maneres: enganxant una adreça (YouTube, Vimeo…) o pujant un fitxer (MP4 o MOV, fins a 50 MB). El fitxer es puja directament en triar-lo, amb una barra de progrés, i no es pot desar l'exercici fins que acaba. Consell: gravar-lo en 1080p i de menys de 25 segons. Si el vídeo és HEVC (el format de molts iPhone), surt un avís que no bloqueja: es veurà a l'iPhone i al Mac, però no a molts Android ni PC. Si es tria un vídeo i no es desa l'exercici, el fitxer s'esborra sol l'endemà.",
         },
         { t: "h", text: "Categories" },
         {
