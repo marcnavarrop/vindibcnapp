@@ -95,6 +95,15 @@ h3 {
   font-family: var(--font-display), Georgia, serif;
 }
 
+/* …però no les etiquetes petites de secció en majúscules («ATENCIÓ
+   IMMEDIATA», «LES TEVES PROPERES», «1 · QUÈ VOLS RESERVAR?»): són títols per
+   a l'estructura, no per llegir, i en serif i majúscules espaiades es veien
+   pesants. Van en la lletra del cos. La marca és la classe `uppercase`, que
+   és com s'escriuen totes (57 avui). */
+:where(h1, h2, h3).uppercase {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
 /* ─────────────────────────── Impressió ───────────────────────────
    Pensat per al manual d'ajuda (/client/ajuda), que porta un botó
    "Descarregar PDF" que no fa res més que cridar `window.print()`. No hi ha
