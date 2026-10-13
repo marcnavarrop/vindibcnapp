@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
@@ -50,7 +50,27 @@ export function ExerciseForm({
   categories: ExerciseCategoryItem[];
   basePath: string;
 }) {
-  const [state, formAction] = useActionState(action, {} as FormState);
+  /**
+   * L'acció, embolcallada perquè una fallada de xarxa no acabi en la pantalla
+   * d'«Application error». Si la petició no arriba (Vercel respon 413 a un cos
+   * de més de ~4,5 MB, o es talla la connexió), el `useActionState` rebutja i
+   * Next pinta l'error global; aquí es converteix en un missatge al costat del
+   * botó, i el formulari conserva el que hi havia escrit.
+   */
+  const [state, formAction] = useActionState(
+    async (prev: FormState, formData: FormData): Promise<FormState> => {
+      try {
+        return await action(prev, formData);
+      } catch (e) {
+        console.error("[exercici] l'acció ha fallat", e);
+        return {
+          error:
+            "No s'ha pogut desar l'exercici: la connexió ha fallat o el fitxer és massa gran. Torna-ho a provar; si hi ha vídeo, prova'n un de més petit.",
+        };
+      }
+    },
+    {} as FormState,
+  );
 
   /**
    * Crear una categoria sense sortir del formulari.
@@ -118,12 +138,33 @@ export function ExerciseForm({
    * sobretot, diu què passa.
    */
   const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  /**
+   * L'avís que surt al costat del botó quan l'enviament s'atura aquí.
+   *
+   * Abans, amb un vídeo massa gran, el missatge només sortia sota el camp del
+   * fitxer; i si després es canviava a «Sense vídeo» o «Enllaç», el camp
+   * desapareixia però l'error es quedava i tallava l'enviament en silenci: el
+   * botó «no feia res». Ara l'error del fitxer només compta en mode fitxer,
+   * i quan atura l'enviament ho diu al costat del botó.
+   */
+  const [blocked, setBlocked] = useState<string | null>(null);
+  const activeFileError = videoMode === "file" ? fileError : null;
 
   return (
     <form
       action={formAction}
       onSubmit={(e) => {
-        if (fileError) e.preventDefault();
+        if (activeFileError) {
+          e.preventDefault();
+          // No el mateix text (ja surt sota el fitxer): on és i què fer.
+          setBlocked(
+            "No s'ha desat: el vídeo no es pot pujar. Mira l'avís del vídeo, a sobre, o tria «Sense vídeo» o «Enllaç».",
+          );
+          fileInputRef.current?.focus();
+          return;
+        }
+        setBlocked(null);
       }}
       className="flex max-w-xl flex-col gap-5 rounded-2xl border border-brand-border bg-white p-6"
     >
@@ -216,7 +257,10 @@ export function ExerciseForm({
                 name="videoMode"
                 value={mode}
                 checked={videoMode === mode}
-                onChange={() => setVideoMode(mode)}
+                onChange={() => {
+                  setVideoMode(mode);
+                  setBlocked(null);
+                }}
                 className="accent-brand-purple"
               />
               {mode === "none" && "Sense vídeo"}
@@ -260,7 +304,9 @@ export function ExerciseForm({
               name="videoFile"
               accept="video/mp4,video/quicktime,.mp4,.mov"
               capture="environment"
+              ref={fileInputRef}
               onChange={(e) => {
+                setBlocked(null);
                 const f = e.target.files?.[0];
                 if (!f) return setFileError(null);
                 const check = checkExerciseVideo(f);
@@ -277,7 +323,11 @@ export function ExerciseForm({
         )}
       </div>
 
-      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      {(blocked ?? state.error) && (
+        <p className="text-sm text-error" role="alert">
+          {blocked ?? state.error}
+        </p>
+      )}
 
       <div className="flex items-center gap-3">
         <SubmitButton>{submitLabel}</SubmitButton>
