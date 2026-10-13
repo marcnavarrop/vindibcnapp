@@ -73,6 +73,19 @@ més al codi:
   que la condició és la bona (p. ex. un professional, només per als seus
   clients).
 
+### Capçaleres de seguretat
+
+`next.config.ts` (`headers()`) les posa a totes les respostes: `X-Frame-Options:
+DENY` (cap web aliena pot posar l'app en un iframe), `X-Content-Type-Options:
+nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, una
+`Permissions-Policy` que tanca càmera, micròfon, geolocalització i pagament del
+navegador, i sense `x-powered-by`. La CSP va de moment en **Report-Only**: els
+orígens permesos són Supabase (API i Storage), YouTube sense galetes (vídeos
+d'exercicis), vercel.live (previsualitzacions) i Stripe Checkout com a destí de
+formulari. Els avisos arriben a `app/api/csp-report` i queden als registres de
+Vercel com a `[csp] …`; quan no n'hi hagi, n'hi ha prou de canviar el nom de la
+capçalera per fer-la obligatòria (i afegir-hi `frame-ancestors 'none'`).
+
 ### Coses concretes a mirar
 
 - **Dues escalades a admin, tapades** (`0063`, `0064`): un trigger `BEFORE

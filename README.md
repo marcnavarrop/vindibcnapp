@@ -91,7 +91,7 @@ app/
   (auth)/, auth/        accés, registre, contrasenya, confirmació de correu
   prova/                sessió de prova pública (sense compte)
   legal/                avís legal, privacitat i galetes
-  api/                  webhook de Stripe i cron
+  api/                  webhook de Stripe, cron i receptor d'avisos de la CSP
   actions/              accions de servidor compartides entre àrees
 components/             components; components/ui/ són les peces bàsiques
 lib/

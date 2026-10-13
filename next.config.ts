@@ -9,7 +9,80 @@ import createNextIntlPlugin from "next-intl/plugin";
  */
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
+/**
+ * Capçaleres de seguretat de totes les respostes.
+ *
+ * La CSP va en mode `Report-Only`: el navegador avisa a la consola del que
+ * hauria bloquejat, però no bloqueja res. Quan s'hagi comprovat a producció
+ * (pagament amb Stripe, vídeos, documents, fotos) que no surt cap avís, es pot
+ * passar a `Content-Security-Policy` canviant només el nom de la capçalera.
+ *
+ * D'on ve cada origen extern:
+ * - Supabase (`NEXT_PUBLIC_SUPABASE_URL`): l'API, l'accés i Storage (fotos,
+ *   vídeos i documents amb URL signada).
+ * - YouTube sense galetes: els vídeos d'exercicis enllaçats (exercise-library).
+ * - vercel.live: la barra de comentaris de Vercel a les previsualitzacions.
+ * - Stripe: només es surt cap a Checkout (`form-action`); no hi ha cap script
+ *   de Stripe a l'app.
+ * `'unsafe-inline'` als scripts és el que demana Next sense nonces (els seus
+ * scripts en línia); `'unsafe-eval'` només en desenvolupament.
+ */
+const SUPABASE = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").origin;
+  } catch {
+    return "";
+  }
+})();
+const SUPABASE_WS = SUPABASE.replace(/^https:/, "wss:");
+const DEV = process.env.NODE_ENV !== "production";
+
+const CSP = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${DEV ? " 'unsafe-eval'" : ""} https://vercel.live`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${SUPABASE} https://vercel.live https://vercel.com`,
+  `media-src 'self' blob: ${SUPABASE}`,
+  "font-src 'self' data: https://vercel.live",
+  `connect-src 'self' ${SUPABASE} ${SUPABASE_WS} https://vercel.live wss://ws-us3.pusher.com`,
+  "frame-src https://www.youtube-nocookie.com https://vercel.live",
+  "form-action 'self' https://checkout.stripe.com",
+  "base-uri 'self'",
+  "object-src 'none'",
+  // On van els avisos (app/api/csp-report). Sense, Safari ni els genera.
+  "report-uri /api/csp-report",
+  "report-to csp",
+  // `frame-ancestors 'none'` s'hi afegirà quan la CSP sigui obligatòria: en
+  // Report-Only el navegador l'ignora (i Safari ho diu a cada pàgina).
+]
+  .join("; ")
+  .replace(/\s+/g, " ");
+
+const SECURITY_HEADERS = [
+  { key: "Content-Security-Policy-Report-Only", value: CSP },
+  { key: "Reporting-Endpoints", value: 'csp="/api/csp-report"' },
+  // Ningú pot posar l'app dins d'un iframe d'una altra web (clickjacking al
+  // login). Va a part de la CSP perquè, en Report-Only, `frame-ancestors` no
+  // bloqueja.
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  // Res del que l'app no fa servir. Els permisos del reproductor de YouTube
+  // (pantalla completa, autoplay…) no s'hi toquen.
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+  },
+];
+
 const nextConfig: NextConfig = {
+  // Sense `x-powered-by: Next.js`: no cal anunciar amb què està fet.
+  poweredByHeader: false,
+
+  async headers() {
+    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+  },
+
   experimental: {
     /**
      * Cos màxim d'una Server Action. El default de Next és 1 MB, i com que el
