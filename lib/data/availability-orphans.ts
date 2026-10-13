@@ -2,8 +2,12 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
-import { listAvailabilityRules, type AvailabilityRule } from "@/lib/data/availability";
-import { listBlocksLite } from "@/lib/data/availability-blocks";
+import {
+  listAvailabilityRules,
+  listAllTrainerRulesLite,
+  type AvailabilityRule,
+} from "@/lib/data/availability";
+import { listBlocksLite, listAllBlocksLite } from "@/lib/data/availability-blocks";
 import { cancelReservationsByCenter } from "@/lib/data/reservations";
 import { rejectTrial } from "@/lib/data/trial-bookings";
 import { isSessionCovered } from "@/lib/availability-coverage";
@@ -354,6 +358,127 @@ export async function findOrphans(trainerId: string): Promise<Orphans> {
     trials: o.trials.sort(byTime),
     waitlist: o.waitlist.sort(byTime),
   };
+}
+
+// ─── Només el recompte, de tots alhora (Inici de l'admin) ─────────────────────
+
+/** Sostre de cada lectura del recompte. Si s'hi arriba, es torna al càlcul d'un en un. */
+const COUNT_SCAN_LIMIT = 5000;
+
+type Commitment = { trainerId: string; scheduledAt: string; durationMinutes: number; serviceType: ServiceType };
+
+/**
+ * Quantes coses té cada professional fora de la seva disponibilitat.
+ *
+ * El MATEIX càlcul que `findOrphans` (els mateixos compromisos, les mateixes
+ * regles i `isSessionCovered`), però per a tots els professionals amb cinc
+ * lectures en total: les reserves, les proves i les esperes futures de tots, totes
+ * les regles i els bloquejos que acaben després d'ara (un bloqueig que ja ha
+ * acabat no pot tocar res futur). Abans l'Inici en feia cinc o set per
+ * professional (31 amb sis professionals), només per pintar un número.
+ *
+ * Només compta: per veure QUÈ cau fora, el plafó de Disponibilitat segueix
+ * fent servir `findOrphans`, amb els noms i els bons.
+ */
+export async function countOrphansByTrainer(trainerIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map(trainerIds.map((id) => [id, 0]));
+  if (trainerIds.length === 0) return counts;
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const today = centerToday();
+
+  let items: Commitment[];
+  if (USE_MOCK) {
+    const store = getStore();
+    const mine = new Set(trainerIds);
+    items = [
+      ...store.reservations
+        .filter((r) => r.trainer_id && mine.has(r.trainer_id) && r.status === "booked" && r.scheduled_at > nowIso)
+        .map((r) => ({
+          trainerId: r.trainer_id!,
+          scheduledAt: r.scheduled_at,
+          durationMinutes: r.duration_minutes ?? SESSION_DURATION_MINUTES,
+          serviceType: r.service_type,
+        })),
+      ...store.trial_bookings
+        .filter(
+          (t) =>
+            t.trainer_id && mine.has(t.trainer_id) && t.scheduled_at > nowIso &&
+            (t.status === "confirmed" || (t.status === "pending" && t.expires_at >= nowIso)),
+        )
+        .map((t) => ({ trainerId: t.trainer_id!, scheduledAt: t.scheduled_at, durationMinutes: SESSION_DURATION_MINUTES, serviceType: t.service_type })),
+      ...store.waitlist_entries
+        .filter((w) => !!w.trainer_id && mine.has(w.trainer_id) && w.status === "waiting" && w.desired_date >= today)
+        .map((w) => ({
+          trainerId: w.trainer_id!,
+          scheduledAt: centerLocalToInstant(w.desired_date, w.desired_time.slice(0, 5)).toISOString(),
+          durationMinutes: SESSION_DURATION_MINUTES,
+          serviceType: w.service_type,
+        })),
+    ];
+  } else {
+    const admin = createAdminClient();
+    const [resQ, trialQ, waitQ] = await Promise.all([
+      admin
+        .from("reservations")
+        .select("trainer_id, scheduled_at, duration_minutes, service_type")
+        .in("trainer_id", trainerIds)
+        .eq("status", "booked")
+        .gt("scheduled_at", nowIso)
+        .limit(COUNT_SCAN_LIMIT),
+      admin
+        .from("trial_bookings")
+        .select("trainer_id, scheduled_at, service_type, status, expires_at")
+        .in("trainer_id", trainerIds)
+        .gt("scheduled_at", nowIso)
+        .in("status", ["pending", "confirmed"])
+        .limit(COUNT_SCAN_LIMIT),
+      admin
+        .from("waitlist_entries")
+        .select("trainer_id, desired_date, desired_time, service_type")
+        .in("trainer_id", trainerIds)
+        .eq("status", "waiting")
+        .gte("desired_date", today)
+        .limit(COUNT_SCAN_LIMIT),
+    ]);
+    if (resQ.error) throw resQ.error;
+    if (trialQ.error) throw trialQ.error;
+    if (waitQ.error) throw waitQ.error;
+    // Al sostre no es compta a mitges: el càlcul de sempre, d'un en un.
+    if ([resQ.data, trialQ.data, waitQ.data].some((d) => (d ?? []).length >= COUNT_SCAN_LIMIT)) {
+      const each = await Promise.all(trainerIds.map(async (id) => [id, orphanCount(await findOrphans(id))] as const));
+      return new Map(each);
+    }
+    items = [
+      ...(resQ.data ?? []).map((r) => ({
+        trainerId: r.trainer_id as string,
+        scheduledAt: r.scheduled_at,
+        durationMinutes: r.duration_minutes ?? SESSION_DURATION_MINUTES,
+        serviceType: r.service_type,
+      })),
+      ...(trialQ.data ?? [])
+        .filter((t) => t.status === "confirmed" || t.expires_at >= nowIso)
+        .map((t) => ({ trainerId: t.trainer_id as string, scheduledAt: t.scheduled_at, durationMinutes: SESSION_DURATION_MINUTES, serviceType: t.service_type })),
+      ...(waitQ.data ?? []).map((w) => ({
+        trainerId: w.trainer_id as string,
+        scheduledAt: centerLocalToInstant(w.desired_date, String(w.desired_time).slice(0, 5)).toISOString(),
+        durationMinutes: SESSION_DURATION_MINUTES,
+        serviceType: w.service_type,
+      })),
+    ];
+  }
+  // Una espera d'avui a una hora que ja ha passat no compta (com a `findOrphans`).
+  items = items.filter((c) => c.scheduledAt > nowIso);
+  if (items.length === 0) return counts;
+
+  const [rules, blocks] = await Promise.all([listAllTrainerRulesLite(), listAllBlocksLite(now)]);
+  for (const c of items) {
+    const r = rules.filter((x) => x.trainerId === c.trainerId);
+    const b = blocks.filter((x) => x.trainerId === c.trainerId);
+    if (!isSessionCovered(r, b, c.scheduledAt, c.durationMinutes, c.serviceType))
+      counts.set(c.trainerId, (counts.get(c.trainerId) ?? 0) + 1);
+  }
+  return counts;
 }
 
 /**

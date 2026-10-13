@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getStore } from "@/lib/mock/store";
 import { mockFails } from "@/lib/mock/faults";
 import { listTrainers } from "@/lib/data/clients";
-import { findOrphans, orphanCount } from "@/lib/data/availability-orphans";
+import { countOrphansByTrainer } from "@/lib/data/availability-orphans";
 import { listWaitingForAdmin } from "@/lib/data/waitlist";
 import { addDaysStr, centerDateStr, centerDayStart, centerToday, centerWeekStart } from "@/lib/center-time";
 import { GROUP_CAPACITY } from "@/lib/labels";
@@ -143,16 +143,17 @@ async function unmarked(now: Date): Promise<UnmarkedByTrainer> {
   };
 }
 
-/** Fora de disponibilitat: el detector del plafó, professional per professional. */
+/**
+ * Fora de disponibilitat: el recompte del plafó de Disponibilitat, de tots els
+ * professionals amb una sola tanda de lectures (`countOrphansByTrainer`).
+ */
 async function outOfAvailability(): Promise<OutOfAvailability> {
   if (mockFails("orphans")) throw new Error("error simulat (MOCK_FAIL=orphans)");
-  // Els professionals demo, fora: no són del centre, i a més cadascun eren cinc
-  // consultes més a cada obertura de l'Inici.
+  // Els professionals demo, fora: no són del centre.
   const [all, demo] = await Promise.all([listTrainers(), getDemoWorld()]);
   const trainers = all.filter((t) => !demo.profileIds.has(t.id));
-  const counts = await Promise.all(
-    trainers.map(async (t) => ({ id: t.id, name: t.name, count: orphanCount(await findOrphans(t.id)) })),
-  );
+  const byId = await countOrphansByTrainer(trainers.map((t) => t.id));
+  const counts = trainers.map((t) => ({ id: t.id, name: t.name, count: byId.get(t.id) ?? 0 }));
   const withSome = counts.filter((c) => c.count > 0).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   return { total: withSome.reduce((n, c) => n + c.count, 0), trainers: withSome };
 }
