@@ -327,8 +327,9 @@ export default async function ClientDetailPage({
           /*
             Assignar el professional es fa a la mateixa fitxa i no dins
             d'«Editar»: aquell formulari desa de cop nom, correu, telèfon i
-            les notes clíniques, i obrir-lo per canviar un desplegable era
-            passar per sobre de dades de salut per a res.
+            notes generals, i obrir-lo per canviar un desplegable era passar
+            per sobre de totes aquestes dades per a res. (Les notes clíniques
+            ja no hi són: des de la 0110/0111 viuen a l'historial clínic.)
           */
           <TrainerLine
             trainerName={client.trainerName}

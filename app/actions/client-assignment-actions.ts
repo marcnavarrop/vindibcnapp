@@ -25,9 +25,11 @@ export type AssignTrainerState = {
  *
  * L'autorització és aquesta comprovació de rol i prou. Es fa aquí, i no a la
  * RLS, perquè la política de `clients` que deixaria fer-ho també obriria
- * l'edició de les notes clíniques —dades de salut— de tothom, i això sí que ha
- * de seguir acotat als clients propis. `reassignClientTrainer()` escriu només
- * aquest camp, de manera que el permís que es dóna aquí no arriba enlloc més.
+ * l'edició de tota la fila de tothom (nom, telèfon, notes generals), i això sí
+ * que ha de seguir acotat als clients propis. Les notes clíniques ja no hi són:
+ * des de la 0110/0111 viuen a l'historial clínic, amb la seva pròpia RLS.
+ * `reassignClientTrainer()` escriu només aquest camp, de manera que el permís
+ * que es dóna aquí no arriba enlloc més.
  *
  * Sense registre de qui ha fet el canvi: decisió presa.
  */
