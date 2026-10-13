@@ -2,18 +2,16 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { DOCUMENT_MAX_BYTES } from "@/lib/documents";
+import {
+  checkDocument,
+  documentExtOf,
+  isDocumentPathOf,
+  DOCUMENT_ALLOWED_MIME,
+  DOCUMENT_MAX_BYTES,
+  type DocumentRejection,
+} from "@/lib/documents";
 
 const BUCKET = "client-documents";
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/heic",
-  "image/heif",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
 /** Durada de les signed URLs (1 hora). */
 const SIGNED_URL_TTL = 3600;
 
@@ -29,20 +27,7 @@ export type ClientDocument = {
   uploadedAt: string;
 };
 
-/**
- * Per què no s'accepta un fitxer. Codi i no frase: qui puja documents és el
- * client, i la seva pantalla va en tres idiomes. Mateix criteri que a la
- * resta de l'àrea.
- */
-export type DocumentRejection = "tooBig" | "badFormat";
-
-export function validateDocumentFile(
-  file: File,
-): { ok: true } | { ok: false; code: DocumentRejection } {
-  if (file.size > DOCUMENT_MAX_BYTES) return { ok: false, code: "tooBig" };
-  if (!ALLOWED_MIME.has(file.type)) return { ok: false, code: "badFormat" };
-  return { ok: true };
-}
+export type { DocumentRejection };
 
 // ─── LIST ────────────────────────────────────────────────────────────────────
 
@@ -69,68 +54,142 @@ export async function listClientDocuments(
 }
 
 // ─── UPLOAD ──────────────────────────────────────────────────────────────────
+//
+// El fitxer NO passa per Vercel (que talla les peticions a 4,5 MB, i el límit
+// dels documents és de 15). El navegador el puja directament a Storage AMB LA
+// SESSIÓ DEL CLIENT, de manera que la barrera continua sent la RLS de la 0025:
+// `storage_client_documents_insert` només el deixa escriure a la seva carpeta
+// `{client_id}/`. Aquí no s'usa la clau de servei per pujar: són documents que
+// poden ser de salut, i la frontera ha de ser la base, no l'aplicació.
+//
+// 1. `prepareDocumentPath`: el camí nou dins la carpeta del client.
+// 2. El navegador hi puja el fitxer (POST a Storage, amb barra de progrés).
+// 3. `registerUploadedDocument`: comprova el fitxer DE DEBÒ (mida i tipus segons
+//    Storage) i desa la fila, també amb la sessió (RLS `client_documents_insert`).
+// 4. El que es queda a Storage sense fila (pujada a mitges, pestanya tancada)
+//    ho esborra el cron l'endemà: `cleanupOrphanDocuments`.
 
-export async function uploadClientDocument(opts: {
+export function prepareDocumentPath(
+  clientId: string,
+  file: { size: number; type: string },
+): { ok: true; path: string } | { ok: false; code: DocumentRejection } {
+  const check = checkDocument(file);
+  if (!check.ok) return check;
+  return { ok: true, path: `${clientId}/${crypto.randomUUID()}.${documentExtOf(file.type)}` };
+}
+
+export type RegisterResult =
+  | { ok: true; document: ClientDocument }
+  | { ok: false; code: DocumentRejection | "notFound" | "badPath" | "failed" };
+
+export async function registerUploadedDocument(opts: {
   clientId: string;
   uploadedBy: string;
-  file: File;
+  path: string;
+  fileName: string;
   description?: string;
-}): Promise<ClientDocument> {
-  const { clientId, uploadedBy, file, description } = opts;
-
-  const validation = validateDocumentFile(file);
-  if (!validation.ok) throw new Error(validation.code);
-
-  const ext = file.name.split(".").pop() ?? "bin";
-  const uuid = crypto.randomUUID();
-  const storagePath = `${clientId}/${uuid}.${ext}`;
+  /** Només en simulació, on no hi ha Storage d'on llegir-los. */
+  mockSize?: number;
+  mockType?: string;
+}): Promise<RegisterResult> {
+  const { clientId, uploadedBy, path, description } = opts;
+  if (!isDocumentPathOf(clientId, path)) return { ok: false, code: "badPath" };
+  const fileName = opts.fileName.trim().slice(0, 200) || path.split("/")[1];
 
   if (USE_MOCK) {
+    const check = checkDocument({ size: opts.mockSize ?? 0, type: opts.mockType ?? "" });
+    if (!check.ok) return check;
     const { getStore, saveStore } = await import("@/lib/mock/store");
     const store = getStore();
     const row = {
-      id: uuid,
+      id: crypto.randomUUID(),
       client_id: clientId,
       uploaded_by: uploadedBy,
-      storage_path: storagePath,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
+      storage_path: path,
+      file_name: fileName,
+      file_size: opts.mockSize ?? null,
+      mime_type: opts.mockType ?? null,
       description: description ?? null,
       uploaded_at: new Date().toISOString(),
     };
     store.client_documents.push(row);
     saveStore(store);
-    return toClientDocument(row);
+    return { ok: true, document: toClientDocument(row) };
   }
 
-  // Upload al bucket (usem el client de sessió — RLS Storage valida ownership).
+  // Amb la sessió del client: si no és seu, la RLS de Storage ni el deixa veure.
   const supabase = await createClient();
-  const { error: storageError } = await supabase.storage
-    .from(BUCKET)
-    .upload(storagePath, file, { contentType: file.type, upsert: false });
-  if (storageError) throw new Error(storageError.message);
+  const [folder, name] = path.split("/");
+  const { data: found } = await supabase.storage.from(BUCKET).list(folder, { search: name, limit: 1 });
+  const obj = found?.find((o) => o.name === name);
+  if (!obj) return { ok: false, code: "notFound" };
 
-  // Guarda metadades.
+  const meta = (obj.metadata ?? {}) as { size?: number; mimetype?: string };
+  const size = Number(meta.size ?? 0);
+  const mime = String(meta.mimetype ?? "");
+  if (size > DOCUMENT_MAX_BYTES || !DOCUMENT_ALLOWED_MIME.has(mime)) {
+    await supabase.storage.from(BUCKET).remove([path]);
+    return { ok: false, code: size > DOCUMENT_MAX_BYTES ? "tooBig" : "badFormat" };
+  }
+
   const { data, error } = await supabase
     .from("client_documents")
     .insert({
       client_id: clientId,
       uploaded_by: uploadedBy,
-      storage_path: storagePath,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
+      storage_path: path,
+      file_name: fileName,
+      file_size: size,
+      mime_type: mime,
       description: description || null,
     })
     .select()
     .single();
-  if (error) {
-    // Si falla la inserció, intenta netejar el fitxer pujat.
-    await supabase.storage.from(BUCKET).remove([storagePath]);
-    throw new Error(error.message);
+  if (error || !data) {
+    await supabase.storage.from(BUCKET).remove([path]);
+    return { ok: false, code: "failed" };
   }
-  return toClientDocument(data);
+  return { ok: true, document: toClientDocument(data) };
+}
+
+/** A partir de quan un fitxer sense fila es considera una pujada abandonada. */
+export const ORPHAN_DOCUMENT_MAX_AGE_HOURS = 24;
+
+/**
+ * Esborra els fitxers de `client-documents` que no tenen fila a
+ * `client_documents` i fa més d'un dia que hi són (pujades a mitges). Torna
+ * quants n'ha esborrat. Clau de servei: és manteniment del cron, sense sessió.
+ */
+export async function cleanupOrphanDocuments(): Promise<number> {
+  if (USE_MOCK) return 0;
+  const admin = createAdminClient();
+  const cutoff = Date.now() - ORPHAN_DOCUMENT_MAX_AGE_HOURS * 3600 * 1000;
+  const { data: folders, error } = await admin.storage.from(BUCKET).list("", { limit: 1000 });
+  if (error || !folders) {
+    console.error("[documents] no s'han pogut llistar les carpetes", error?.message);
+    return 0;
+  }
+  let removed = 0;
+  // Les carpetes són els clients (`{client_id}/`); els fitxers solts de
+  // l'arrel, si n'hi hagués, no són d'aquest flux i no es toquen.
+  for (const folder of folders.filter((f) => f.id === null)) {
+    const { data: files } = await admin.storage.from(BUCKET).list(folder.name, { limit: 1000 });
+    const old = (files ?? []).filter((f) => f.id && f.created_at && new Date(f.created_at).getTime() < cutoff);
+    if (!old.length) continue;
+    const { data: rows, error: rowsError } = await admin
+      .from("client_documents")
+      .select("storage_path")
+      .eq("client_id", folder.name)
+      .limit(1000);
+    if (rowsError) continue; // dubte → no s'esborra res
+    const known = new Set((rows ?? []).map((r) => r.storage_path));
+    const orphans = old.map((f) => `${folder.name}/${f.name}`).filter((p) => !known.has(p));
+    if (!orphans.length) continue;
+    const { error: rmError } = await admin.storage.from(BUCKET).remove(orphans);
+    if (rmError) console.error("[documents] no s'han pogut esborrar orfes", rmError.message);
+    else removed += orphans.length;
+  }
+  return removed;
 }
 
 // ─── SIGNED URL ──────────────────────────────────────────────────────────────

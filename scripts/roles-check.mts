@@ -45,6 +45,7 @@ const serveis = await import("../app/(admin)/admin/serveis/actions");
 const reservasAdmin = await import("../app/(admin)/admin/reservas/actions");
 const reservasTrainer = await import("../app/(trainer)/trainer/reservas/actions");
 const exercicis = await import("../lib/actions/exercise-actions");
+const documents = await import("../app/(client)/client/documents/actions");
 
 /** Crida una acció; un `redirect` és com acaba bé una acció de formulari. */
 async function run(fn: () => Promise<unknown>): Promise<string> {
@@ -260,6 +261,27 @@ try {
       exercicis.createExerciseAction("/admin/exercicis", {}, fd({ name: "Camí aliè", category: cat, videoMode: "file", uploadedVideoPath: "un-altre-exercici/video.mp4" })),
     );
     record("createExerciseAction (camí de vídeo fora de pending/)", "admin", getStore().exercises.length > n0, r, false);
+  }
+
+  // Documents del client: el camí per pujar només el dona a qui té fitxa de
+  // client (a la seva carpeta), i registrar un fitxer d'una altra carpeta es
+  // rebutja. «Escriu» = dona camí / desa fila.
+  for (const rol of ["client", "trainer", "admin"] as Role[]) {
+    as(rol);
+    const r = await documents.prepareDocumentUploadAction({ size: 1000, type: "application/pdf" });
+    record("prepareDocumentUploadAction", rol, r.ok, r.ok ? `ok ${r.path.split("/")[0].slice(0, 8)}…` : `error: ${r.errorCode}`, rol === "client");
+  }
+  {
+    as("client");
+    const s0 = getStore();
+    const own = s0.clients.find((c) => c.profile_id === s0.profiles.find((p) => p.role === "client")!.id)!.id;
+    const other = s0.clients.find((c) => c.id !== own)!.id;
+    const n0 = getStore().client_documents.length;
+    const r1 = await documents.registerDocumentAction({ path: `${other}/${crypto.randomUUID()}.pdf`, fileName: "aliè.pdf", size: 1000, type: "application/pdf" });
+    record("registerDocumentAction (carpeta d'un altre client)", "client", getStore().client_documents.length > n0, r1.errorCode ? `error: ${r1.errorCode}` : "ok", false);
+    const n1 = getStore().client_documents.length;
+    const r2 = await documents.registerDocumentAction({ path: `${own}/${crypto.randomUUID()}.pdf`, fileName: "propi.pdf", size: 1000, type: "application/pdf" });
+    record("registerDocumentAction (la seva carpeta)", "client", getStore().client_documents.length > n1, r2.errorCode ? `error: ${r2.errorCode}` : "ok", true);
   }
 } catch (e) {
   console.error(e);

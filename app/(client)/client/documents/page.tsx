@@ -3,7 +3,8 @@ import { getClientByProfile } from "@/lib/data/clients";
 import { listClientDocuments } from "@/lib/data/client-documents";
 import { DocumentsClientPanel } from "@/components/documents-client-panel";
 import {
-  uploadDocumentAction,
+  prepareDocumentUploadAction,
+  registerDocumentAction,
   deleteDocumentAction,
 } from "@/app/(client)/client/documents/actions";
 import { assertModuleEnabled } from "@/lib/data/module-guard";
@@ -26,7 +27,8 @@ export default async function ClientDocumentsPage() {
       {client ? (
         <DocumentsClientPanel
           documents={documents}
-          uploadAction={uploadDocumentAction}
+          prepareAction={prepareDocumentUploadAction}
+          registerAction={registerDocumentAction}
           deleteAction={deleteDocumentAction}
         />
       ) : (

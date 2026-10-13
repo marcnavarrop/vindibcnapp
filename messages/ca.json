@@ -1011,6 +1011,7 @@
     "descriptionPlaceholder": "Ex: Informe de la ressonància del genoll",
     "upload": "Pujar",
     "uploading": "Pujant…",
+    "uploadingPct": "Pujant… {pct}%",
     "cancel": "Cancel·lar",
     "download": "Descarregar",
     "delete": "Eliminar",
@@ -1023,7 +1024,10 @@
       "badFormat": "Format no acceptat. Usa PDF, imatge (JPG/PNG/HEIC) o Word.",
       "badId": "Document no vàlid.",
       "uploadFailed": "No s'ha pogut pujar el fitxer.",
-      "deleteFailed": "No s'ha pogut eliminar el document."
+      "deleteFailed": "No s'ha pogut eliminar el document.",
+      "interrupted": "La pujada s'ha tallat (sense connexió o connexió inestable). Torna-ho a provar.",
+      "uploadDenied": "No tens permís per pujar aquest fitxer. Tanca la sessió, torna a entrar i prova-ho de nou.",
+      "notUploaded": "El fitxer no ha acabat de pujar. Torna a triar-lo i espera que la barra arribi al final."
     },
     "deleteQuestion": "Eliminar «{name}»?",
     "deleteConsequence": "El centre tampoc el podrà veure.",

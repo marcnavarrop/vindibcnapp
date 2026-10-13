@@ -1613,9 +1613,9 @@ export function buildClientManual(
         {
           t: "note",
           text: T({
-            ca: "Si el fitxer és massa gros o té un format que no acceptem, l'app t'ho diu abans d'intentar pujar-lo, no després.",
-            es: "Si el archivo es demasiado grande o tiene un formato que no aceptamos, la app te lo dice antes de intentar subirlo, no después.",
-            en: "If the file is too big or in a format we don't accept, the app tells you before it tries to upload it, not afterwards.",
+            ca: "Si el fitxer és massa gros o té un format que no acceptem, l'app t'ho diu abans d'intentar pujar-lo, no després. Mentre es puja veuràs una barra amb el percentatge: no tanquis la pantalla fins que acabi.",
+            es: "Si el archivo es demasiado grande o tiene un formato que no aceptamos, la app te lo dice antes de intentar subirlo, no después. Mientras se sube verás una barra con el porcentaje: no cierres la pantalla hasta que termine.",
+            en: "If the file is too big or in a format we don't accept, the app tells you before it tries to upload it, not afterwards. While it uploads you'll see a bar with the percentage: don't close the screen until it finishes.",
           }),
         },
       ],

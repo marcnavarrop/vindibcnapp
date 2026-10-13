@@ -105,9 +105,8 @@ const nextConfig: NextConfig = {
   experimental: {
     /**
      * Cos màxim d'una Server Action. El default de Next és 1 MB; aquí 4 MB
-     * perquè els documents dels clients viatgen dins de l'acció. ATENCIÓ:
-     * `DOCUMENT_MAX_MB` (lib/documents.ts) diu 15 MB, però per aquest camí un
-     * document de més de ~4 MB no arriba mai (pendent: pujar-los com els vídeos).
+     * per marge. Cap fitxer gros hi viatja ja: els vídeos d'exercicis i els
+     * documents del client es pugen directament a Storage des del navegador.
      *
      * 4 MB i no més: Vercel talla les peticions a funcions a ~4,5 MB i respon
      * 413 abans que Next hi digui res. Els vídeos d'exercicis ja NO passen per

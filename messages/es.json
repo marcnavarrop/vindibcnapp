@@ -1011,6 +1011,7 @@
     "descriptionPlaceholder": "Ej.: Informe de la resonancia de la rodilla",
     "upload": "Subir",
     "uploading": "Subiendo…",
+    "uploadingPct": "Subiendo… {pct}%",
     "cancel": "Cancelar",
     "download": "Descargar",
     "delete": "Eliminar",
@@ -1023,7 +1024,10 @@
       "badFormat": "Formato no aceptado. Usa PDF, imagen (JPG/PNG/HEIC) o Word.",
       "badId": "Documento no válido.",
       "uploadFailed": "No se ha podido subir el archivo.",
-      "deleteFailed": "No se ha podido eliminar el documento."
+      "deleteFailed": "No se ha podido eliminar el documento.",
+      "interrupted": "La subida se ha cortado (sin conexión o conexión inestable). Vuelve a intentarlo.",
+      "uploadDenied": "No tienes permiso para subir este archivo. Cierra la sesión, vuelve a entrar e inténtalo de nuevo.",
+      "notUploaded": "El archivo no ha terminado de subirse. Vuelve a elegirlo y espera a que la barra llegue al final."
     },
     "deleteQuestion": "¿Eliminar «{name}»?",
     "deleteConsequence": "El centro tampoco podrá verlo.",

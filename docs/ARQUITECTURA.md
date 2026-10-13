@@ -85,6 +85,18 @@ de l'exercici. El cron diari esborra el que porta més d'un dia a `pending/`. El
 límit és a un sol lloc: `MAX_VIDEO_MB` a `lib/exercise-video.constants.ts`. Cap
 migració: el permís el signa la clau de servei.
 
+### Documents del client: pujada directa amb la sessió del client
+
+Com els vídeos, el fitxer no passa per Vercel, però aquí **sense clau de
+servei**: poden ser documents de salut i la frontera ha de seguir sent la RLS.
+`prepareDocumentUploadAction` dona el camí dins de `{client_id}/`; el navegador
+hi fa el POST amb el token de la sessió del client, i la política
+`storage_client_documents_insert` (0025) només el deixa escriure a la seva
+carpeta. `registerDocumentAction` comprova el fitxer a Storage (mida i tipus de
+debò) i insereix la fila també amb la sessió (`client_documents_insert`). El cron
+esborra els fitxers de més d'un dia sense fila (`cleanupOrphanDocuments`). Límit:
+`DOCUMENT_MAX_MB` (15) a `lib/documents.ts`.
+
 ### Capçaleres de seguretat
 
 `next.config.ts` (`headers()`) les posa a totes les respostes: `X-Frame-Options:

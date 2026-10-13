@@ -1011,6 +1011,7 @@
     "descriptionPlaceholder": "E.g. Knee MRI report",
     "upload": "Upload",
     "uploading": "Uploading…",
+    "uploadingPct": "Uploading… {pct}%",
     "cancel": "Cancel",
     "download": "Download",
     "delete": "Delete",
@@ -1023,7 +1024,10 @@
       "badFormat": "That format isn't accepted. Use PDF, an image (JPG/PNG/HEIC) or Word.",
       "badId": "That document isn't valid.",
       "uploadFailed": "We couldn't upload the file.",
-      "deleteFailed": "We couldn't delete the document."
+      "deleteFailed": "We couldn't delete the document.",
+      "interrupted": "The upload was cut off (no connection or an unstable one). Please try again.",
+      "uploadDenied": "You don't have permission to upload this file. Sign out, sign back in and try again.",
+      "notUploaded": "The file didn't finish uploading. Choose it again and wait for the bar to reach the end."
     },
     "deleteQuestion": "Delete “{name}”?",
     "deleteConsequence": "The centre won't be able to see it either.",

@@ -8,18 +8,60 @@ import { formatDate } from "@/lib/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { ClientDocument } from "@/lib/data/client-documents";
 import type { DocFormState } from "@/app/(client)/client/documents/actions";
-import { DOCUMENT_MAX_MB as MAX_MB } from "@/lib/documents";
+import type { DocErrorCode } from "@/app/(client)/client/documents/actions";
+import {
+  DOCUMENT_MAX_MB as MAX_MB,
+  DOCUMENT_ALLOWED_EXT as ALLOWED_EXT,
+  checkDocument,
+  documentMimeOf,
+} from "@/lib/documents";
+import { USE_MOCK } from "@/lib/config";
 
-const ALLOWED_EXT = ["pdf", "jpg", "jpeg", "png", "heic", "heif", "doc", "docx"];
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/heic",
-  "image/heif",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
+/** Errors de la pujada al navegador, a més dels de l'acció. */
+type UploadErrorCode = DocErrorCode | "interrupted" | "uploadDenied";
+
+/**
+ * Puja el fitxer directament a Supabase Storage AMB LA SESSIÓ DEL CLIENT.
+ *
+ * No passa per Vercel (que talla a 4,5 MB; el límit és de 15): la RLS de
+ * Storage de la 0025 només el deixa escriure a la seva carpeta, i és qui
+ * mana. Amb XMLHttpRequest i no amb supabase-js per poder ensenyar el progrés.
+ */
+async function uploadToStorage(
+  path: string,
+  file: File,
+  type: string,
+  onProgress: (pct: number) => void,
+): Promise<UploadErrorCode | null> {
+  // Import dinàmic, com al login: supabase-js no entra a la càrrega inicial.
+  const { createClient } = await import("@/lib/supabase/client");
+  const { data } = await createClient().auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return "unauthenticated";
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/client-documents/${path}`);
+    xhr.setRequestHeader("authorization", `Bearer ${token}`);
+    xhr.setRequestHeader("apikey", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    xhr.setRequestHeader("content-type", type);
+    xhr.setRequestHeader("x-upsert", "false");
+    xhr.setRequestHeader("cache-control", "max-age=3600");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(null);
+      const body = xhr.responseText;
+      if (xhr.status === 413 || /maximum allowed size|too large/i.test(body)) return resolve("tooBig");
+      if (/mime|not supported/i.test(body)) return resolve("badFormat");
+      if (xhr.status === 401 || /jwt|expired/i.test(body)) return resolve("unauthenticated");
+      if (xhr.status === 403 || /row-level security|unauthorized/i.test(body)) return resolve("uploadDenied");
+      resolve("uploadFailed");
+    };
+    xhr.onerror = () => resolve("interrupted");
+    xhr.send(file);
+  });
+}
 
 function formatBytes(bytes: number | null): string {
   if (!bytes) return "";
@@ -38,11 +80,13 @@ function fileIcon(mimeType: string | null): string {
 
 export function DocumentsClientPanel({
   documents,
-  uploadAction,
+  prepareAction,
+  registerAction,
   deleteAction,
 }: {
   documents: ClientDocument[];
-  uploadAction: (prev: DocFormState, formData: FormData) => Promise<DocFormState>;
+  prepareAction: (file: { size: number; type: string }) => Promise<{ ok: true; path: string } | { ok: false; errorCode: DocErrorCode }>;
+  registerAction: (input: { path: string; fileName: string; description?: string; size?: number; type?: string }) => Promise<DocFormState>;
   deleteAction: (prev: DocFormState, formData: FormData) => Promise<DocFormState>;
 }) {
   const t = useTranslations("documents");
@@ -53,34 +97,51 @@ export function DocumentsClientPanel({
   const [clientError, setClientError] = useState<
     "tooBig" | "badFormat" | null
   >(null);
-  const [uploadState, uploadFormAction, uploading] = useActionState(
-    async (prev: DocFormState, formData: FormData) => {
-      const result = await uploadAction(prev, formData);
-      if (result.ok) {
-        setShowForm(false);
-        // Reload page to show updated list.
-        window.location.reload();
-      }
-      return result;
-    },
-    {},
-  );
+  // La pujada: progrés (0–100) mentre dura, i l'error si n'hi ha.
+  const [progress, setProgress] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<UploadErrorCode | null>(null);
+  const uploading = progress !== null;
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_MB * 1024 * 1024) {
-      setClientError("tooBig");
-      e.target.value = "";
-      return;
-    }
-    if (!ALLOWED_MIME.has(file.type)) {
-      setClientError("badFormat");
+    setUploadError(null);
+    if (!file) return setClientError(null);
+    const check = checkDocument({ size: file.size, type: documentMimeOf(file) });
+    if (!check.ok) {
+      setClientError(check.code);
       e.target.value = "";
       return;
     }
     setClientError(null);
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const file = fd.get("file");
+    if (!(file instanceof File) || file.size === 0) return setUploadError("noFile");
+    const type = documentMimeOf(file);
+    const description = String(fd.get("description") ?? "");
+    setUploadError(null);
+    setProgress(0);
+    try {
+      const prep = await prepareAction({ size: file.size, type });
+      if (!prep.ok) return setUploadError(prep.errorCode);
+      if (!USE_MOCK) {
+        const err = await uploadToStorage(prep.path, file, type, setProgress);
+        if (err) return setUploadError(err);
+      }
+      setProgress(100);
+      const reg = await registerAction({ path: prep.path, fileName: file.name, description, size: file.size, type });
+      if (reg.errorCode) return setUploadError(reg.errorCode);
+      setShowForm(false);
+      window.location.reload();
+    } catch {
+      setUploadError("interrupted");
+    } finally {
+      setProgress(null);
+    }
   }
 
   return (
@@ -125,7 +186,7 @@ export function DocumentsClientPanel({
           <h2 className="mb-4 text-sm font-bold tracking-wide text-brand-muted uppercase">
             {t("newTitle")}
           </h2>
-          <form ref={formRef} action={uploadFormAction} className="flex flex-col gap-3">
+          <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div>
               <label className="mb-1 block text-xs font-bold tracking-wide text-brand-muted uppercase">
                 {t("file")} <span className="text-error">*</span>
@@ -162,9 +223,24 @@ export function DocumentsClientPanel({
                 className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-sm outline-none focus:border-brand-purple"
               />
             </div>
-            {uploadState.errorCode && (
-              <p className="text-sm text-error">
-                {te(uploadState.errorCode, { max: MAX_MB })}
+            {uploading && (
+              <div className="flex flex-col gap-1" role="status" aria-live="polite">
+                <div
+                  className="h-2 overflow-hidden rounded-full bg-brand-border"
+                  role="progressbar"
+                  aria-label={t("uploading")}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progress}
+                >
+                  <div className="h-full rounded-full bg-brand-purple transition-[width]" style={{ width: `${progress}%` }} />
+                </div>
+                <p className="text-xs text-brand-muted">{t("uploadingPct", { pct: progress })}</p>
+              </div>
+            )}
+            {uploadError && (
+              <p className="text-sm text-error" role="alert">
+                {te(uploadError, { max: MAX_MB })}
               </p>
             )}
             <div className="flex gap-2">

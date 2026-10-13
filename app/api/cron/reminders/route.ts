@@ -19,6 +19,7 @@ import { centerHour, centerToday } from "@/lib/center-time";
 import { toucaEnviarAvisos } from "@/lib/cron-window";
 import { prunePasswordResetRequests } from "@/lib/data/password-reset";
 import { cleanupPendingExerciseVideos } from "@/lib/data/exercise-videos";
+import { cleanupOrphanDocuments } from "@/lib/data/client-documents";
 
 export const dynamic = "force-dynamic";
 
@@ -150,6 +151,12 @@ async function handle(req: NextRequest) {
     console.error("[cron] neteja de vídeos pendents", e);
     return 0;
   });
+  // Igual amb els documents del client: el navegador els puja abans de desar
+  // la fila, i un fitxer sense fila de fa més d'un dia és una pujada a mitges.
+  const orphanDocumentsRemoved = await cleanupOrphanDocuments().catch((e) => {
+    console.error("[cron] neteja de documents orfes", e);
+    return 0;
+  });
 
   // ─── Hora d'enviament configurable ───
   //
@@ -176,6 +183,7 @@ async function handle(req: NextRequest) {
       bonosUnpaid,
       resetPruned,
       pendingVideosRemoved,
+      orphanDocumentsRemoved,
     });
   }
 
@@ -246,6 +254,7 @@ async function handle(req: NextRequest) {
     bonosUnpaid,
     resetPruned,
     pendingVideosRemoved,
+    orphanDocumentsRemoved,
     bonosExpiring: {
       window_days: BONO_EXPIRY_WARNING_DAYS,
       targets: expiring.length,
