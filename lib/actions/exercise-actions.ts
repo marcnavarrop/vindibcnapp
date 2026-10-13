@@ -11,9 +11,11 @@ import {
   type ExerciseInput,
 } from "@/lib/data/exercises";
 import {
-  uploadExerciseVideo,
-  validateExerciseVideo,
+  createPendingVideoUpload,
+  finalizePendingVideo,
+  type PendingUpload,
 } from "@/lib/data/exercise-videos";
+import { isPendingVideoPath } from "@/lib/exercise-video.constants";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
 /**
@@ -46,21 +48,14 @@ async function parse(formData: FormData): Promise<{ input: ExerciseInput } | { e
 
   let videoFilePath: string | null = null;
   if (videoMode === "file") {
-    const file = formData.get("videoFile");
-    // Si no s'ha seleccionat fitxer nou però hi ha un path existent, el conservem
-    const existingPath = str("existingVideoFilePath") || null;
-    if (file instanceof File && file.size > 0) {
-      const validation = validateExerciseVideo(file);
-      if (!validation.ok) return { error: validation.error };
-      // La pujada real es fa a createExerciseAction/updateExerciseAction
-      // perquè necessitem l'id de l'exercici per al path.
-      // Aquí retornem el File com a marcador — es passa per referència.
-      // En realitat, uploadExerciseVideo es crida des de l'action.
-      // Retornem null aquí i el caller s'encarrega.
-      videoFilePath = null; // placeholder, el caller puja el fitxer
-    } else {
-      videoFilePath = existingPath;
-    }
+    // El vídeo nou ja és a Storage (`pending/…`): el navegador l'hi ha pujat
+    // directament. Aquí només arriba el camí; el mou a la carpeta de
+    // l'exercici qui crida, quan ja en té l'id.
+    const uploaded = str("uploadedVideoPath");
+    if (uploaded && !isPendingVideoPath(uploaded))
+      return { error: "El vídeo pujat no és vàlid. Torna'l a triar." };
+    // Sense vídeo nou, es conserva el que ja tenia l'exercici.
+    videoFilePath = uploaded ? null : str("existingVideoFilePath") || null;
   }
 
   return {
@@ -105,18 +100,17 @@ export async function createExerciseAction(
     return { error: e instanceof Error ? e.message : "Error en crear." };
   }
 
-  // Si hi ha vídeo nou, el pugem ara que tenim l'id
-  const videoMode = String(formData.get("videoMode") ?? "");
-  if (videoMode === "file") {
-    const file = formData.get("videoFile");
-    if (file instanceof File && file.size > 0) {
-      try {
-        const path = await uploadExerciseVideo(exerciseId, file);
-        await updateExercise(exerciseId, { ...input, videoFilePath: path });
-      } catch (e) {
-        // L'exercici es crea igualment; l'error de vídeo no és bloquejant
-        return { error: e instanceof Error ? e.message : "Error pujant el vídeo." };
-      }
+  // El vídeo pujat a `pending/`, ara que hi ha id, a la carpeta de l'exercici.
+  const uploaded = String(formData.get("uploadedVideoPath") ?? "");
+  if (String(formData.get("videoMode") ?? "") === "file" && uploaded) {
+    try {
+      const path = await finalizePendingVideo(exerciseId, uploaded);
+      await updateExercise(exerciseId, { ...input, videoFilePath: path });
+    } catch (e) {
+      // L'exercici ja s'ha creat; el vídeo no. Es diu, i es pot afegir editant-lo.
+      return {
+        error: `L'exercici s'ha creat, però el vídeo no: ${e instanceof Error ? e.message : "error desconegut."} Edita'l per tornar-lo a afegir.`,
+      };
     }
   }
 
@@ -144,19 +138,15 @@ export async function updateExerciseAction(
   const existing = await getExercise(id);
   const oldPath = existing?.videoFilePath ?? null;
 
-  // Si hi ha fitxer nou, pugem primer
-  const videoMode = String(formData.get("videoMode") ?? "");
-  if (videoMode === "file") {
-    const file = formData.get("videoFile");
-    if (file instanceof File && file.size > 0) {
-      try {
-        const path = await uploadExerciseVideo(id, file);
-        input.videoFilePath = path;
-      } catch (e) {
-        return { error: e instanceof Error ? e.message : "Error pujant el vídeo." };
-      }
+  // Vídeo nou (ja pujat a `pending/`): a la carpeta de l'exercici. Sense, el
+  // `existingVideoFilePath` ja ve del parse.
+  const uploaded = String(formData.get("uploadedVideoPath") ?? "");
+  if (String(formData.get("videoMode") ?? "") === "file" && uploaded) {
+    try {
+      input.videoFilePath = await finalizePendingVideo(id, uploaded);
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "No s'ha pogut desar el vídeo." };
     }
-    // Si no hi ha fitxer nou, existingVideoFilePath ja ve del parse
   }
 
   try {
@@ -174,4 +164,33 @@ export async function deleteExerciseAction(basePath: string, formData: FormData)
   const id = String(formData.get("id") ?? "");
   if (id) await deleteExercise(id);
   revalidatePath(basePath);
+}
+
+/**
+ * Permís per pujar el vídeo d'un exercici directament a Storage.
+ *
+ * Només professionals i admin. Rep el que diu el navegador del fitxer (nom,
+ * mida, tipus), ho comprova i torna on pujar-lo. El fitxer no passa per aquí:
+ * el navegador el puja directament, sense el límit de 4,5 MB de Vercel. En
+ * desar l'exercici es torna a comprovar el fitxer de debò.
+ */
+export async function requestExerciseVideoUploadAction(file: {
+  name: string;
+  size: number;
+  type: string;
+}): Promise<{ ok: true; upload: PendingUpload } | { ok: false; error: string }> {
+  const denied = await assertCanManage();
+  if (denied) return { ok: false, error: denied };
+  try {
+    return {
+      ok: true,
+      upload: await createPendingVideoUpload({
+        name: String(file?.name ?? ""),
+        size: Number(file?.size ?? 0),
+        type: String(file?.type ?? ""),
+      }),
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No s'ha pogut preparar la pujada." };
+  }
 }

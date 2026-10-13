@@ -9,10 +9,7 @@ import type { ExerciseCategoryItem } from "@/lib/data/exercise-categories";
 import { TextAreaField } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Button } from "@/components/ui/button";
-import {
-  checkExerciseVideo,
-  VIDEO_LIMIT_LABEL,
-} from "@/lib/exercise-video.constants";
+import { ExerciseVideoUpload, type VideoUploadStatus } from "@/components/forms/exercise-video-upload";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import { TAP } from "@/lib/utils";
 
@@ -129,38 +126,35 @@ export function ExerciseForm({
     .sort((a, b) => a.name.localeCompare(b.name, "ca"))
     .map((c) => ({ value: c.id, label: c.name }));
   const [videoMode, setVideoMode] = useState<VideoMode>(initialMode(defaults));
-  /**
-   * Error del fitxer detectat AQUÍ, abans d'enviar res.
-   *
-   * Sense això, un vídeo massa gros no arribava ni al servidor: Next talla la
-   * petició pel `bodySizeLimit` i el resultat era una pantalla d'"Application
-   * error", no un missatge. Comprovar-ho al navegador estalvia el viatge i,
-   * sobretot, diu què passa.
-   */
-  const [fileError, setFileError] = useState<string | null>(null);
+  /** Com va la pujada del vídeo nou (vegeu `ExerciseVideoUpload`). */
+  const [upload, setUpload] = useState<VideoUploadStatus>({ state: "idle" });
   const fileInputRef = useRef<HTMLInputElement>(null);
   /**
    * L'avís que surt al costat del botó quan l'enviament s'atura aquí.
    *
-   * Abans, amb un vídeo massa gran, el missatge només sortia sota el camp del
-   * fitxer; i si després es canviava a «Sense vídeo» o «Enllaç», el camp
-   * desapareixia però l'error es quedava i tallava l'enviament en silenci: el
-   * botó «no feia res». Ara l'error del fitxer només compta en mode fitxer,
-   * i quan atura l'enviament ho diu al costat del botó.
+   * Abans, amb un vídeo massa gran, l'error es quedava desat encara que es
+   * canviés a «Sense vídeo» o «Enllaç»: el camp desapareixia però l'enviament
+   * es tallava en silenci i el botó «no feia res». Ara el vídeo només compta
+   * en mode fitxer, i quan atura l'enviament ho diu al costat del botó.
    */
   const [blocked, setBlocked] = useState<string | null>(null);
-  const activeFileError = videoMode === "file" ? fileError : null;
+  const videoBlock =
+    videoMode !== "file"
+      ? null
+      : upload.state === "uploading"
+        ? `Espera que acabi de pujar el vídeo (${upload.progress}%) i torna a prémer el botó.`
+        : upload.state === "error"
+          ? "No s'ha desat: el vídeo no s'ha pogut pujar. Mira l'avís del vídeo, a sobre, o tria «Sense vídeo» o «Enllaç»."
+          : null;
 
   return (
     <form
       action={formAction}
       onSubmit={(e) => {
-        if (activeFileError) {
+        if (videoBlock) {
           e.preventDefault();
           // No el mateix text (ja surt sota el fitxer): on és i què fer.
-          setBlocked(
-            "No s'ha desat: el vídeo no es pot pujar. Mira l'avís del vídeo, a sobre, o tria «Sense vídeo» o «Enllaç».",
-          );
+          setBlocked(videoBlock);
           fileInputRef.current?.focus();
           return;
         }
@@ -281,46 +275,15 @@ export function ExerciseForm({
         )}
 
         {videoMode === "file" && (
-          <div className="flex flex-col gap-2">
-            {/* Si ja hi ha un vídeo pujat i no se'n selecciona de nou, conservem el path */}
-            {defaults?.videoFilePath && (
-              <input
-                type="hidden"
-                name="existingVideoFilePath"
-                value={defaults.videoFilePath}
-              />
-            )}
-            <label className="text-xs font-bold tracking-wide text-brand-muted uppercase">
-              Fitxer de vídeo ({VIDEO_LIMIT_LABEL})
-            </label>
-            {defaults?.videoFilePath && (
-              <p className="rounded-lg bg-brand-bg px-3 py-2 text-xs text-brand-muted">
-                Ja hi ha un vídeo pujat. Selecciona un fitxer nou per
-                substituir-lo, o deixa-ho en blanc per conservar-lo.
-              </p>
-            )}
-            <input
-              type="file"
-              name="videoFile"
-              accept="video/mp4,video/quicktime,.mp4,.mov"
-              // Sense `capture`: a l'iPhone obria directament la càmera i no
-              // deixava triar un vídeo ja gravat de la galeria.
-              ref={fileInputRef}
-              onChange={(e) => {
-                setBlocked(null);
-                const f = e.target.files?.[0];
-                if (!f) return setFileError(null);
-                const check = checkExerciseVideo(f);
-                setFileError(check.ok ? null : check.error);
-              }}
-              className="text-sm text-brand-dark file:mr-3 file:rounded-lg file:border-0 file:bg-brand-purple file:px-3 file:py-1 file:text-xs file:font-bold file:text-white file:tracking-wide file:uppercase"
-            />
-            {fileError && (
-              <p className="text-sm text-error" role="alert">
-                {fileError}
-              </p>
-            )}
-          </div>
+          <ExerciseVideoUpload
+            existingPath={defaults?.videoFilePath ?? null}
+            inputRef={fileInputRef}
+            onStatus={(st) => {
+              setUpload(st);
+              // L'avís «Espera que acabi…» es queda mentre la barra avança.
+              if (st.state !== "uploading") setBlocked(null);
+            }}
+          />
         )}
       </div>
 

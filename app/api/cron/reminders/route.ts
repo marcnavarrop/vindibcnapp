@@ -18,6 +18,7 @@ import { getCenterSettings } from "@/lib/data/center-settings";
 import { centerHour, centerToday } from "@/lib/center-time";
 import { toucaEnviarAvisos } from "@/lib/cron-window";
 import { prunePasswordResetRequests } from "@/lib/data/password-reset";
+import { cleanupPendingExerciseVideos } from "@/lib/data/exercise-videos";
 
 export const dynamic = "force-dynamic";
 
@@ -140,6 +141,16 @@ async function handle(req: NextRequest) {
   // no un avís, i deixar-ho a sota faria créixer la taula per sempre.
   const resetPruned = await prunePasswordResetRequests();
 
+  // ─── Vídeos d'exercicis pujats i mai desats ───
+  // El navegador puja el vídeo a `pending/` en triar-lo; si l'exercici no es
+  // desa, s'hi queda. Els de fa més d'un dia s'esborren. Manteniment, com
+  // l'anterior: per sobre de la guarda de l'hora. Una fallada aquí no ha
+  // d'aturar els avisos.
+  const pendingVideosRemoved = await cleanupPendingExerciseVideos().catch((e) => {
+    console.error("[cron] neteja de vídeos pendents", e);
+    return 0;
+  });
+
   // ─── Hora d'enviament configurable ───
   //
   // A partir d'aquí ve el que SÍ que és una preferència d'enviament: avisos de
@@ -164,6 +175,7 @@ async function handle(req: NextRequest) {
       subscriptions: { ...summarize(renewals), resumed },
       bonosUnpaid,
       resetPruned,
+      pendingVideosRemoved,
     });
   }
 
@@ -233,6 +245,7 @@ async function handle(req: NextRequest) {
     subscriptions: { ...summarize(renewals), resumed },
     bonosUnpaid,
     resetPruned,
+    pendingVideosRemoved,
     bonosExpiring: {
       window_days: BONO_EXPIRY_WARNING_DAYS,
       targets: expiring.length,

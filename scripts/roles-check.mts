@@ -44,6 +44,7 @@ const prova = await import("../app/(admin)/admin/prova/actions");
 const serveis = await import("../app/(admin)/admin/serveis/actions");
 const reservasAdmin = await import("../app/(admin)/admin/reservas/actions");
 const reservasTrainer = await import("../app/(trainer)/trainer/reservas/actions");
+const exercicis = await import("../lib/actions/exercise-actions");
 
 /** Crida una acció; un `redirect` és com acaba bé una acció de formulari. */
 async function run(fn: () => Promise<unknown>): Promise<string> {
@@ -241,6 +242,24 @@ try {
     const nOwn = consents(own);
     const r10 = await run(() => register.recordRegistrationConsentAction(own));
     record("recordRegistrationConsentAction (el propi)", rol, consents(own) > nOwn, r10, true);
+  }
+
+  // Vídeos d'exercicis: el permís de pujada directa a Storage. Aquí «escriu»
+  // vol dir «dona permís». Un client no n'ha de rebre mai; i en desar, un camí
+  // que no sigui de `pending/` (el d'un altre exercici, inventat) es rebutja.
+  for (const rol of ["client", "trainer", "admin"] as Role[]) {
+    as(rol);
+    const r = await exercicis.requestExerciseVideoUploadAction({ name: "v.mov", size: 1000, type: "video/quicktime" });
+    record("requestExerciseVideoUploadAction", rol, r.ok, r.ok ? "ok" : `error: ${r.error}`, rol !== "client");
+  }
+  {
+    as("admin");
+    const cat = getStore().exercise_categories?.[0]?.id ?? "";
+    const n0 = getStore().exercises.length;
+    const r = await run(() =>
+      exercicis.createExerciseAction("/admin/exercicis", {}, fd({ name: "Camí aliè", category: cat, videoMode: "file", uploadedVideoPath: "un-altre-exercici/video.mp4" })),
+    );
+    record("createExerciseAction (camí de vídeo fora de pending/)", "admin", getStore().exercises.length > n0, r, false);
   }
 } catch (e) {
   console.error(e);

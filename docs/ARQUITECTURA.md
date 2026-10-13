@@ -73,6 +73,18 @@ més al codi:
   que la condició és la bona (p. ex. un professional, només per als seus
   clients).
 
+### Vídeos d'exercicis: pujada directa a Storage
+
+El vídeo no passa per Vercel (que talla les peticions a 4,5 MB). Una acció
+(`requestExerciseVideoUploadAction`, només professional o admin) comprova la
+mida i el tipus declarats i dona un permís signat de pujada (`createSignedUploadUrl`,
+un sol camí a `pending/`, sense sobreescriure, caduca a les 2 h); el navegador hi
+fa el PUT amb barra de progrés. En desar l'exercici, `finalizePendingVideo`
+comprova el fitxer de debò (mida i tipus segons Storage) i el mou a la carpeta
+de l'exercici. El cron diari esborra el que porta més d'un dia a `pending/`. El
+límit és a un sol lloc: `MAX_VIDEO_MB` a `lib/exercise-video.constants.ts`. Cap
+migració: el permís el signa la clau de servei.
+
 ### Capçaleres de seguretat
 
 `next.config.ts` (`headers()`) les posa a totes les respostes: `X-Frame-Options:

@@ -770,7 +770,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Crear-ne un" },
         {
           t: "p",
-          text: "Amb «+ Nou exercici». Demana el nom, la categoria, una descripció i, opcionalment, un vídeo: o bé l'enllaç a un de YouTube, o bé un fitxer que puges tu. Els exercicis existents s'editen i s'esborren des de la mateixa fitxa. Esborrar-ne un el treu també de tots els clients que el tenen assignat, amb el seu progrés; per això pregunta abans.",
+          text: "Amb «+ Nou exercici». Demana el nom, la categoria, una descripció i, opcionalment, un vídeo: o bé l'enllaç a un de YouTube, o bé un fitxer que puges tu (MP4 o MOV, fins a 50 MB; es puja en triar-lo, amb una barra de progrés, i el pots triar de la galeria del mòbil). Grava'l en 1080p i de menys de 30 segons; si en surt un de més gran, posa'l a YouTube com a ocult i enganxa'n l'enllaç. Els exercicis existents s'editen i s'esborren des de la mateixa fitxa. Esborrar-ne un el treu també de tots els clients que el tenen assignat, amb el seu progrés; per això pregunta abans.",
         },
         { t: "h", text: "Categories" },
         {
