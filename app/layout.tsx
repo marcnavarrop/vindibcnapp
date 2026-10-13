@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Lora, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
+import { getTranslations } from "next-intl/server";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { appUrl } from "@/lib/notifications/brand";
 
 // Titulares de marca.
 // Pesos: solo los que se usan de verdad. Auditado sobre las clases aplicadas —
@@ -20,10 +22,33 @@ const robotoCondensed = Roboto_Condensed({
   weight: ["400", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "VindiBCN",
-  description: "Gestió del centre d'entrenament personal i fisioteràpia",
-};
+/**
+ * Metadades per defecte de totes les pàgines.
+ *
+ * - `metadataBase`: les URL de la imatge per compartir (`opengraph-image`) han
+ *   de ser absolutes perquè WhatsApp i companyia les puguin baixar.
+ * - Open Graph i Twitter: el que surt en compartir un enllaç. Cada pàgina
+ *   pública hi posa el seu títol i la seva descripció (vegeu `shareMetadata`).
+ * - `noindex` a tota l'app: la que s'ha de trobar a Google és la web del
+ *   centre (vegeu `app/robots.ts`, on hi ha el perquè).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    metadataBase: new URL(appUrl()),
+    title: "VindiBCN",
+    description: t("description"),
+    robots: { index: false, follow: true },
+    openGraph: {
+      type: "website",
+      siteName: "Vindi BCN",
+      title: "VindiBCN",
+      description: t("description"),
+    },
+    twitter: { card: "summary_large_image" },
+  };
+}
+
 
 /**
  * `lang` surt de la cookie d'idioma.

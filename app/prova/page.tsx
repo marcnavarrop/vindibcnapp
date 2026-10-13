@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { CenterContactLine } from "@/components/center-contact-line";
+import { shareMetadata } from "@/lib/share-metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
  */
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("trial");
-  return { title: t("metaTitle"), description: t("metaDescription") };
+  return shareMetadata(t("metaTitle"), t("metaDescription"), "/prova/opengraph-image");
 }
 
 export default async function ProvaPage() {

@@ -30,6 +30,7 @@
     "hidePassword": "Amagar la contrasenya"
   },
   "forgotPassword": {
+    "metaTitle": "Restablir la contrasenya · VindiBCN",
     "title": "Restablir la contrasenya",
     "intro": "Introdueix el teu correu i t'enviarem un enllaç per crear una contrasenya nova.",
     "email": "Correu electrònic",
@@ -40,6 +41,7 @@
     "errorBadEmail": "Indica un correu vàlid."
   },
   "updatePassword": {
+    "metaTitle": "Crear la contrasenya · VindiBCN",
     "title": "Crea la teva contrasenya",
     "verifying": "Verificant l'enllaç…",
     "invalid": "Aquest enllaç no és vàlid o ha caducat. Demana'n un de nou des de <link>restablir la contrasenya</link>.",
@@ -54,6 +56,7 @@
     "hidePassword": "Amagar la contrasenya"
   },
   "confirmEmail": {
+    "metaTitle": "Canviar el correu · VindiBCN",
     "title": "Canviar el correu d'accés",
     "verifying": "Confirmant…",
     "done": "Fet. A partir d'ara entra amb <b>{email}</b>.",
@@ -115,6 +118,8 @@
     }
   },
   "register": {
+    "metaTitle": "Crear compte · VindiBCN",
+    "metaDescription": "Crea el teu compte de client de VindiBCN per reservar i seguir les teves sessions.",
     "title": "Crear compte",
     "createdTitle": "Compte creat",
     "fullName": "Nom complet",
@@ -1426,5 +1431,8 @@
     "generic": "No s'ha pogut completar. Torna-ho a provar.",
     "link": "L'enllaç no és vàlid o ha caducat. Torna-ho a provar.",
     "preExpired": "La sessió d'administrador ha caducat mentre provaves. Torna a entrar."
+  },
+  "meta": {
+    "description": "VindiBCN, l'àrea client del centre d'entrenament personal i fisioteràpia de Gràcia (Barcelona)."
   }
 }

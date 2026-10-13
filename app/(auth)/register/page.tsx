@@ -1,5 +1,7 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { shareMetadata } from "@/lib/share-metadata";
 import { RegisterPanel } from "@/app/(auth)/register/register-panel";
 import { BrandPanel } from "@/components/auth/brand-panel";
 
@@ -22,6 +24,11 @@ import { BrandPanel } from "@/components/auth/brand-panel";
  * que es desa al perfil. Posar-ne un segon aquí en faria dos que diuen coses
  * diferents.
  */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("register");
+  return shareMetadata(t("metaTitle"), t("metaDescription"));
+}
+
 export default async function RegisterPage() {
   const t = await getTranslations("legal");
 

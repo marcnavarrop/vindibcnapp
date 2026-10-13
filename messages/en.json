@@ -30,6 +30,7 @@
     "hidePassword": "Hide password"
   },
   "forgotPassword": {
+    "metaTitle": "Reset your password · VindiBCN",
     "title": "Reset your password",
     "intro": "Enter your email and we'll send you a link to create a new password.",
     "email": "Email",
@@ -40,6 +41,7 @@
     "errorBadEmail": "Enter a valid email address."
   },
   "updatePassword": {
+    "metaTitle": "Create your password · VindiBCN",
     "title": "Create your password",
     "verifying": "Checking the link…",
     "invalid": "This link isn't valid or has expired. Request a new one from <link>reset your password</link>.",
@@ -54,6 +56,7 @@
     "hidePassword": "Hide password"
   },
   "confirmEmail": {
+    "metaTitle": "Change your email · VindiBCN",
     "title": "Change your sign-in email",
     "verifying": "Confirming…",
     "done": "Done. From now on you sign in with <b>{email}</b>.",
@@ -115,6 +118,8 @@
     }
   },
   "register": {
+    "metaTitle": "Create account · VindiBCN",
+    "metaDescription": "Create your VindiBCN client account to book and keep track of your sessions.",
     "title": "Create account",
     "createdTitle": "Account created",
     "fullName": "Full name",
@@ -1426,5 +1431,8 @@
     "generic": "That didn't work. Please try again.",
     "link": "The link isn't valid or has expired. Please try again.",
     "preExpired": "Your admin session expired while you were testing. Please sign in again."
+  },
+  "meta": {
+    "description": "VindiBCN, the client area of the personal training and physiotherapy centre in Gràcia (Barcelona)."
   }
 }

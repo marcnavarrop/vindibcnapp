@@ -6,6 +6,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { LoginPanel } from "@/app/(auth)/login/login-panel";
 import { BrandPanel } from "@/components/auth/brand-panel";
 import { TrialCta } from "@/components/trial-cta";
+import { shareMetadata } from "@/lib/share-metadata";
 
 /**
  * El títol i la descripció també van traduïts: són el que es veu a la pestanya
@@ -13,7 +14,7 @@ import { TrialCta } from "@/components/trial-cta";
  */
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("login");
-  return { title: t("metaTitle"), description: t("metaDescription") };
+  return shareMetadata(t("metaTitle"), t("metaDescription"));
 }
 
 /**
