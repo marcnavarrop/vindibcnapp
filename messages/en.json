@@ -205,7 +205,8 @@
       "directions": "Get directions",
       "book": "Book a session",
       "later": "Later"
-    }
+    },
+    "communitySeeAll": "See all →"
   },
   "brand": {
     "badge": "Client area",

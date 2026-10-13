@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
 import { listAnnouncements } from "@/lib/data/announcements";
@@ -161,13 +162,26 @@ export default async function ClientHome() {
         <div className="grid items-start gap-4 lg:grid-cols-3">
           {communityHasContent && (
             <section className="flex flex-col gap-4 lg:col-span-2">
-              <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
-                {t("community")}
-              </h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
+                  {t("community")}
+                </h2>
+                {announcements.length > 1 && (
+                  <Link
+                    href="/client/comunitat"
+                    className="text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline"
+                  >
+                    {t("communitySeeAll")}
+                  </Link>
+                )}
+              </div>
+              {/* Les enquestes, totes: es responen aquí mateix. Dels anuncis,
+                  només l'últim (com a l'Inici del professional); la resta, a
+                  Comunitat. */}
               {polls.map((p) => (
                 <PollCard key={p.id} poll={p} />
               ))}
-              <CommunityBoard announcements={announcements} locale={locale} />
+              <CommunityBoard announcements={announcements.slice(0, 1)} locale={locale} />
             </section>
           )}
 

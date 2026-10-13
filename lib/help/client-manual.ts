@@ -387,9 +387,9 @@ export function buildClientManual(
               {
                 t: "p",
                 text: T({
-                  ca: "Si el centre ha publicat anuncis o ha obert alguna enquesta, els primers els veus aquí mateix, sense haver d'entrar a Comunitat.",
-                  es: "Si el centro ha publicado anuncios o ha abierto alguna encuesta, los primeros los ves aquí mismo, sin tener que entrar en Comunidad.",
-                  en: "If the centre has posted announcements or opened a poll, you see the first few right here without going into Community.",
+                  ca: "Al final hi ha l'últim anunci del centre i les enquestes obertes, que pots respondre aquí mateix. La resta d'anuncis, a Comunitat («Veure tots»).",
+                  es: "Al final está el último anuncio del centro y las encuestas abiertas, que puedes responder aquí mismo. El resto de anuncios, en Comunidad («Ver todos»).",
+                  en: "At the bottom you'll find the centre's latest announcement and any open polls, which you can answer right here. The other announcements are in Community («See all»).",
                 }),
               },
             ] as Block[])
@@ -1581,9 +1581,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "El tauler del centre: anuncis, novetats i enquestes. Els més recents també et surten a l'Inici, així que no cal entrar-hi cada dia.",
-            es: "El tablón del centro: anuncios, novedades y encuestas. Los más recientes también te salen en Inicio, así que no hace falta entrar cada día.",
-            en: "The centre's noticeboard: announcements, news and polls. The most recent also appear on your Home screen, so there's no need to come in every day.",
+            ca: "El tauler del centre: anuncis, novetats i enquestes. L'últim anunci i les enquestes també et surten a l'Inici, així que no cal entrar-hi cada dia.",
+            es: "El tablón del centro: anuncios, novedades y encuestas. El último anuncio y las encuestas también te salen en Inicio, así que no hace falta entrar cada día.",
+            en: "The centre's noticeboard: announcements, news and polls. The latest announcement and the polls also appear on your Home screen, so there's no need to come in every day.",
           }),
         },
         {
