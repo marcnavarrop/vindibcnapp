@@ -162,7 +162,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Bons a punt d'esgotar-se",
-              `Bons actius amb ${sess(s.bonoLowThreshold)} o menys. Els caducats en queden fora: la llista és de gent a qui oferir renovació, i un bo que ja no es pot fer servir no hi porta. Es posa en blau fosc si n'hi ha cap.`,
+              `Bons actius amb ${sess(s.bonoLowThreshold)} o menys. Els caducats en queden fora: la llista és de gent a qui oferir renovació, i un bo que ja no es pot fer servir no hi porta. La línia de sota diu a quants clients diferents (un client amb dos bons baixos compta un cop). Es posa en blau fosc si n'hi ha cap. A la targeta de baix surten els cinc primers, i «veure tots» porta a Bons.`,
             ],
             [
               "Sessions",
@@ -224,7 +224,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Avui al centre" },
         {
           t: "p",
-          text: "Les sessions d'avui de tot el centre, amb l'hora, el client, el servei i de quin professional és cadascuna. Les de cortesia porten l'etiqueta «Cortesia».",
+          text: "Les sessions d'avui de tot el centre, amb l'hora, el client, el servei i de quin professional és cadascuna, i en quin punt és: «Feta», «Per marcar» (ja ha acabat i segueix reservada), «Ara» o res si encara ha de venir. Hi surten totes, també les fetes, així que en són les mateixes que la xifra «Sessions» de dalt. Les de cortesia porten l'etiqueta «Cortesia».",
         },
         { t: "h", text: "L'estat de l'agenda" },
         {

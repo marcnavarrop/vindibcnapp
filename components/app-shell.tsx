@@ -12,6 +12,7 @@ import { getClientBadgeCounts } from "@/lib/data/client-badges";
 import { countCenterCollectableBonos } from "@/lib/data/bonos";
 import { USE_MOCK } from "@/lib/config";
 import type { Role } from "@/lib/nav";
+import { getTranslations } from "next-intl/server";
 
 /**
  * Marco común de las áreas privadas: sidebar (parametrizado por rol) + el
@@ -83,8 +84,21 @@ export async function AppShell({
       : Promise.resolve(null),
   ]);
 
+  // L'àrea del client va en tres idiomes; l'admin i el professional, en català.
+  const skipLabel =
+    role === "client" ? (await getTranslations("shell"))("skipToContent") : "Saltar al contingut";
+
   return (
     <div className="min-h-screen bg-brand-bg">
+      {/* Primer element de la pàgina: amb el teclat, saltar-se el menú (abans
+          calien 14 tabulacions per arribar al contingut). Invisible fins que
+          rep el focus. WCAG 2.4.1. */}
+      <a
+        href="#contingut"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-brand-purple focus:shadow-lg focus:ring-2 focus:ring-brand-purple"
+      >
+        {skipLabel}
+      </a>
       <AppSidebar
         role={role}
         specialty={viewer?.specialty ?? null}
@@ -103,7 +117,9 @@ export async function AppShell({
             que és el mateix criteri que el panell de suport de sota. Quan el mode
             està apagat no pinta res. */}
         <PreModeBanner />
-        <CenterContactProvider contact={publicContact(settings.contact)}>{children}</CenterContactProvider>
+        <div id="contingut" tabIndex={-1} className="outline-none">
+          <CenterContactProvider contact={publicContact(settings.contact)}>{children}</CenterContactProvider>
+        </div>
       </div>
 
       {/* El panell de suport de les àrees internes. L'obre `SupportTrigger`,

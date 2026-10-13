@@ -112,7 +112,7 @@ export default async function TrainerHome() {
       <div className="grid items-start gap-4 lg:grid-cols-2">
         {/* Si ha fallat, la targeta de dalt ja ho diu; una llista buida no. */}
         {!kpi.failed.includes("lowBonos") && (
-          <LowBonosCard bonos={kpi.lowBonos} clientHrefBase="/trainer/clients" />
+          <LowBonosCard bonos={kpi.lowBonos} clientHrefBase="/trainer/clients" allHref="/trainer/bonos" />
         )}
         <MyClients clients={clients} />
       </div>

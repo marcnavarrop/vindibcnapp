@@ -166,7 +166,8 @@
       "nextSevenDays": "los próximos 7 días",
       "attendance": "Asistencia",
       "noClosedSessions": "sin sesiones cerradas",
-      "scheduled": "de {total} programadas"
+      "scheduled": "de {total} en tus bonos",
+      "attendanceOf": "{done} de {total} este mes"
     },
     "actions": {
       "book": "Reservar sesión",
@@ -1438,5 +1439,8 @@
   },
   "meta": {
     "description": "VindiBCN, el área cliente del centro de entrenamiento personal y fisioterapia de Gràcia (Barcelona)."
+  },
+  "shell": {
+    "skipToContent": "Saltar al contenido"
   }
 }

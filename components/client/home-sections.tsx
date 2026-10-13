@@ -11,7 +11,9 @@ import {
   formatDate,
   formatTime,
   formatMonthShort,
+  formatRelativeDay,
 } from "@/lib/labels";
+import { centerDateStr } from "@/lib/center-time";
 import type { Locale } from "@/lib/i18n/config";
 import type { ClientBono, ClientReservation } from "@/lib/data/clients";
 import type { ClientKpis } from "@/lib/data/client-dashboard";
@@ -56,7 +58,7 @@ export async function KpiRow({ kpis }: { kpis: ClientKpis }) {
         hint:
           kpis.attendancePct === null
             ? t("noClosedSessions")
-            : `${kpis.attendanceDone} de ${kpis.attendanceTotal} aquest mes`,
+            : t("attendanceOf", { done: kpis.attendanceDone, total: kpis.attendanceTotal }),
       },
     ];
 
@@ -278,7 +280,9 @@ export async function UpcomingReservations({
       ) : (
         <ul className="divide-y divide-brand-border">
           {reservations.map((r) => {
-            const d = new Date(r.scheduledAt);
+            // El número del dia, en hora del CENTRE: `getDate()` dona el del
+            // servidor (UTC), i una sessió de mitjanit sortia el dia d'abans.
+            const dayNum = Number(centerDateStr(new Date(r.scheduledAt)).slice(8));
             return (
               <li
                 key={r.id}
@@ -287,7 +291,7 @@ export async function UpcomingReservations({
                 {/* Dia i mes en gran: és el que es busca amb la mirada. */}
                 <div className="flex w-11 shrink-0 flex-col items-center leading-none">
                   <span className="text-xl font-bold text-brand-dark">
-                    {d.getDate()}
+                    {dayNum}
                   </span>
                   <span className="text-[10px] font-bold tracking-wide text-brand-muted uppercase">
                     {formatMonthShort(r.scheduledAt, locale)}
@@ -299,7 +303,7 @@ export async function UpcomingReservations({
                     {tl(r.serviceType)}
                   </p>
                   <p className="truncate text-xs text-brand-muted">
-                    {formatDate(r.scheduledAt, locale)} ·{" "}
+                    {formatRelativeDay(r.scheduledAt, locale)} ·{" "}
                     {formatTime(r.scheduledAt, locale)}
                   </p>
                 </div>
@@ -366,8 +370,10 @@ export async function NextSessionCard({
           <p className="font-bold text-brand-dark">
             {tl(reservation.serviceType)}
           </p>
-          <p className="text-xs text-brand-muted">
-            {formatDate(reservation.scheduledAt, locale)}
+          {/* Gris més fosc que el `muted`: sobre el lila clar de la targeta,
+              el muted no arribava a 4,5:1 (4,17). */}
+          <p className="text-xs text-brand-tab">
+            {formatRelativeDay(reservation.scheduledAt, locale)}
           </p>
         </div>
       </div>
@@ -383,7 +389,7 @@ export async function NextSessionCard({
           size={22}
           color={colorOfPro(palette, reservation.trainerId)}
         />
-        <span className="text-sm text-brand-muted">
+        <span className="text-sm text-brand-tab">
           {t("withTrainer", { name: firstName(reservation.trainerName) })}
         </span>
       </div>

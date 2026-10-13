@@ -164,7 +164,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Properes reserves" },
         {
           t: "p",
-          text: "L'agenda immediata en format llista. Porta el filtre «Mostra: Els meus · Tots» per veure només les teves o les de tot el centre, útil per saber qui hi ha a la sala a la mateixa hora.",
+          text: "L'agenda immediata en format llista, amb el dia («Avui», «Demà», «dj. 15 oct.») i l'hora de cada reserva. Porta el filtre «Mostra: Els meus · Tots» per veure només les teves o les de tot el centre, útil per saber qui hi ha a la sala a la mateixa hora.",
         },
         { t: "h", text: "El teu bonus" },
         {
@@ -178,7 +178,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Bons baixos i els meus clients" },
         {
           t: "p",
-          text: "A baix, dues llistes de treball: els bons dels teus clients que s'estan acabant —amb el nom i quantes sessions queden— i la llista dels teus clients amb les sessions que li resten a cadascun. Totes dues porten a la fitxa d'un clic.",
+          text: "A baix, dues llistes de treball: els bons dels teus clients que s'estan acabant —amb el nom i quantes sessions queden— i els teus clients amb les sessions que li resten a cadascun. De cada llista en surten els cinc primers i un enllaç per veure-les senceres. Totes dues porten a la fitxa d'un clic.",
         },
         ...(s.modules.comunitat
           ? ([

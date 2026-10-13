@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/home-sections";
 import { formatLongDate } from "@/lib/labels";
 import { addDaysStr, centerDayStart, centerToday } from "@/lib/center-time";
+import { COUNTS_AS_OCCUPIED } from "@/lib/occupancy";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,10 @@ async function todaySessions(): Promise<{ list: ReservationListItem[]; failed: b
       from: centerDayStart(today),
       to: centerDayStart(addDaysStr(today, 1)),
     });
-    return { list: list.filter((r) => r.status === "booked"), failed: false };
+    // Reservades i fetes (no les cancel·lades): el mateix que compta la xifra
+    // «Sessions avui» de dalt (`COUNTS_AS_OCCUPIED`). Abans només les
+    // reservades, i la llista deia 8 on la xifra deia 10.
+    return { list: list.filter((r) => COUNTS_AS_OCCUPIED(r.status)), failed: false };
   } catch (e) {
     console.error("[inici admin] sessions d'avui:", e instanceof Error ? e.message : e);
     return { list: [], failed: true };
@@ -84,7 +88,7 @@ export default async function AdminHome() {
       <div className="grid items-start gap-4 lg:grid-cols-2">
         {/* Si ha fallat, la targeta de dalt ja ho diu; una llista buida no. */}
         {!d.failed.includes("lowBonos") && (
-          <LowBonosCard bonos={d.lowBonos} clientHrefBase="/admin/clients" />
+          <LowBonosCard bonos={d.lowBonos} clientHrefBase="/admin/clients" allHref="/admin/bonos" />
         )}
         <OccupancyByTrainer d={d} />
       </div>

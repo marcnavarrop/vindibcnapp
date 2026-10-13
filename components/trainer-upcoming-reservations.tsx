@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FilterChips, filterChipClass, ChipCheck } from "@/components/ui/filter-chips";
 import { Badge } from "@/components/ui/badge";
 import { AddToCalendarButton } from "@/components/ui/add-to-calendar-button";
-import { SERVICE_LABELS, RESERVATION_STATUS_LABELS, formatDate } from "@/lib/labels";
+import { SERVICE_LABELS, RESERVATION_STATUS_LABELS, formatRelativeDay, formatTime } from "@/lib/labels";
 import type { ReservationListItem } from "@/lib/data/reservations";
 
 /**
@@ -31,7 +31,7 @@ export function TrainerUpcomingReservations({
 
   return (
     <section className="rounded-2xl border border-brand-border bg-white">
-      <div className="flex items-center justify-between border-b border-brand-border bg-brand-bg px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-brand-border bg-brand-bg px-5 py-3">
         <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">
           Properes reserves
         </h2>
@@ -70,8 +70,11 @@ export function TrainerUpcomingReservations({
                 key={r.id}
                 className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-sm"
               >
-                <span className="font-bold text-brand-dark">
-                  {formatDate(r.scheduledAt)}
+                {/* El dia i l'HORA: abans només sortia «14 d'oct. del 2026»,
+                    i amb sis reserves el mateix dia no se sabia quan era cada una. */}
+                <span className="min-w-28 text-brand-dark">
+                  <span className="text-brand-muted">{formatRelativeDay(r.scheduledAt)} · </span>
+                  <span className="font-bold">{formatTime(r.scheduledAt)}</span>
                 </span>
                 <span className={isOwn ? "" : "text-brand-muted"}>
                   {r.clientName}

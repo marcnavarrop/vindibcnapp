@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/kpi";
 import {
   SERVICE_LABELS,
+  SESSION_DURATION_MINUTES,
   formatDate,
   formatEur,
   formatTime,
@@ -130,9 +131,11 @@ export function KpiRow({ d }: { d: AdminDashboard }) {
       hint:
         lowBonos.length === 0
           ? "Cap bo per sota del llindar"
-          : lowBonos.length === 1
-            ? "1 client a qui oferir renovació"
-            : `${lowBonos.length} clients a qui oferir renovació`,
+          : (() => {
+              // Clients, no bons: un client amb dos bons baixos compta un cop.
+              const n = new Set(lowBonos.map((b) => b.clientId)).size;
+              return n === 1 ? "1 client a qui oferir renovació" : `${n} clients a qui oferir renovació`;
+            })(),
       href: "/admin/bonos",
       warn: lowBonos.length > 0,
     },
@@ -301,6 +304,22 @@ const firstName = (name: string | null) => (name ?? "").split(" ")[0] || "—";
  * casa, de qui és cada sessió i amb qui. Per això la fila porta el
  * professional, que a l'inici del client no hi fa falta.
  */
+/**
+ * En quin punt és una sessió d'avui: feta, per marcar (ja ha acabat i segueix
+ * reservada), ara mateix o per fer. La llista porta TOT el dia —també les ja
+ * fetes— perquè digui el mateix que la xifra «Sessions avui» de dalt, que les
+ * compta totes; abans les fetes desapareixien de la llista.
+ */
+function dayState(r: ReservationListItem): "done" | "unmarked" | "now" | "upcoming" {
+  if (r.status === "completed") return "done";
+  const start = new Date(r.scheduledAt).getTime();
+  const end = start + SESSION_DURATION_MINUTES * 60_000;
+  const now = Date.now();
+  if (end <= now) return "unmarked";
+  if (start <= now) return "now";
+  return "upcoming";
+}
+
 export function TodayAtCentre({
   reservations,
   failed,
@@ -333,10 +352,12 @@ export function TodayAtCentre({
         </p>
       ) : (
         <ul className="divide-y divide-brand-border">
-          {reservations.map((r) => (
+          {reservations.map((r) => {
+            const state = dayState(r);
+            return (
             <li
               key={r.id}
-              className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5"
+              className={`flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5 ${state === "done" ? "opacity-70" : ""}`}
             >
               {/* L'hora en gran: en una llista d'un sol dia, és l'única cosa
                   que distingeix una fila de la següent amb la mirada. */}
@@ -358,8 +379,12 @@ export function TodayAtCentre({
                 <Icon name="user" size={13} />
                 {firstName(r.trainerName)}
               </span>
+              {state === "done" && <Badge tone="success">Feta</Badge>}
+              {state === "unmarked" && <Badge tone="attention">Per marcar</Badge>}
+              {state === "now" && <Badge tone="info" icon={null}>Ara</Badge>}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>

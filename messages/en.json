@@ -166,7 +166,8 @@
       "nextSevenDays": "the next 7 days",
       "attendance": "Attendance",
       "noClosedSessions": "no completed sessions",
-      "scheduled": "of {total} scheduled"
+      "scheduled": "of {total} in your passes",
+      "attendanceOf": "{done} of {total} this month"
     },
     "actions": {
       "book": "Book a session",
@@ -1438,5 +1439,8 @@
   },
   "meta": {
     "description": "VindiBCN, the client area of the personal training and physiotherapy centre in Gràcia (Barcelona)."
+  },
+  "shell": {
+    "skipToContent": "Skip to content"
   }
 }

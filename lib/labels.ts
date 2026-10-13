@@ -1,7 +1,7 @@
 import { CENTER_TZ } from "@/lib/config";
 import ca from "@/messages/ca.json";
 import { intlLocale, type Locale } from "@/lib/i18n/config";
-import { centerDateStr } from "@/lib/center-time";
+import { addDaysStr, centerDateStr } from "@/lib/center-time";
 import type {
   ServiceType,
   TrainingServiceType,
@@ -273,6 +273,48 @@ export function formatMonthShort(iso: string, locale?: Locale): string {
     ...CENTER_DATE_PARTS,
   }).format(new Date(iso));
 }
+
+/**
+ * El dia d'una sessió, curt i sense any: «Avui», «Demà» o «dj. 15 d’oct.».
+ *
+ * Per a les llistes d'inici, on l'any és soroll («14 d'oct. del 2026» a cada
+ * fila) i on el que es vol saber és si és avui o quan. En hora del CENTRE,
+ * com la resta de dates. `now` es pot passar per provar-ho.
+ */
+const RELATIVE_WORDS: Record<Locale, [string, string]> = {
+  ca: ["Avui", "Demà"],
+  es: ["Hoy", "Mañana"],
+  en: ["Today", "Tomorrow"],
+};
+export function formatRelativeDay(iso: string, locale?: Locale, now: Date = new Date()): string {
+  const day = centerDateStr(new Date(iso));
+  const today = centerDateStr(now);
+  const [w0, w1] = RELATIVE_WORDS[locale ?? "ca"] ?? RELATIVE_WORDS.ca;
+  if (day === today) return w0;
+  if (day === addDaysStr(today, 1)) return w1;
+  // Amb taules pròpies i no amb Intl: Safari, Chrome i Node escriuen aquest
+  // format diferent («dj, 15 oct.» / «dj., 15 d’oct.», «Thu, 15 Oct» /
+  // «Thu 15 Oct»), i la pàgina es pinta al servidor i s'hidrata al navegador.
+  const [y, m, d] = day.split("-").map(Number);
+  const wd = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7; // 0 = dilluns
+  const t = SHORT_DAY_NAMES[locale ?? "ca"] ?? SHORT_DAY_NAMES.ca;
+  return `${t.days[wd]} ${d} ${t.months[m - 1]}`;
+}
+
+const SHORT_DAY_NAMES: Record<Locale, { days: string[]; months: string[] }> = {
+  ca: {
+    days: ["dl.", "dt.", "dc.", "dj.", "dv.", "ds.", "dg."],
+    months: ["gen.", "febr.", "març", "abr.", "maig", "juny", "jul.", "ag.", "set.", "oct.", "nov.", "des."],
+  },
+  es: {
+    days: ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"],
+    months: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"],
+  },
+  en: {
+    days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  },
+};
 
 /** Cabecera de día: "dilluns, 22 de juny". */
 export function formatDayHeading(iso: string, locale?: Locale): string {

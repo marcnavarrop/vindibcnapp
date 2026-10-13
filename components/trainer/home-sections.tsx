@@ -91,9 +91,11 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
       hint:
         d.lowBonos.length === 0
           ? "Cap bo dels teus per sota del llindar"
-          : d.lowBonos.length === 1
-            ? "1 client a qui oferir renovació"
-            : `${d.lowBonos.length} clients a qui oferir renovació`,
+          : (() => {
+              // Clients, no bons: un client amb dos bons baixos compta un cop.
+              const n = new Set(d.lowBonos.map((b) => b.clientId)).size;
+              return n === 1 ? "1 client a qui oferir renovació" : `${n} clients a qui oferir renovació`;
+            })(),
       href: "/trainer/bonos",
     },
     {
@@ -272,12 +274,19 @@ export function QuickActions() {
 // ─────────────────────── Els meus clients ───────────────────────
 
 /** La llista de sempre, amb la caixa de la resta de la pantalla. */
+/**
+ * Els seus clients, els primers cinc i el total: la llista sencera ja és a
+ * Clients. Amb 56 clients, aquesta secció feia sis pantalles d'escriptori i
+ * vuit de mòbil i enterrava la comunitat.
+ */
+const MY_CLIENTS_SHOWN = 5;
+
 export function MyClients({ clients }: { clients: ClientListItem[] }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-brand-border bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-brand-border px-5 py-3">
         <h2 className="text-xs font-bold tracking-widest text-brand-muted uppercase">
-          Els meus clients
+          Els meus clients{clients.length > 0 ? ` · ${clients.length}` : ""}
         </h2>
         <Link
           href="/trainer/clients"
@@ -293,7 +302,7 @@ export function MyClients({ clients }: { clients: ClientListItem[] }) {
         </p>
       ) : (
         <ul className="divide-y divide-brand-border">
-          {clients.map((c) => (
+          {clients.slice(0, MY_CLIENTS_SHOWN).map((c) => (
             <li key={c.id}>
               <Link
                 href={`/trainer/clients/${c.id}`}
@@ -311,6 +320,16 @@ export function MyClients({ clients }: { clients: ClientListItem[] }) {
               </Link>
             </li>
           ))}
+          {clients.length > MY_CLIENTS_SHOWN && (
+            <li>
+              <Link
+                href="/trainer/clients"
+                className={`block px-5 py-3 text-xs font-bold text-brand-purple hover:underline ${TAP}`}
+              >
+                I {clients.length - MY_CLIENTS_SHOWN} més · veure tots els clients →
+              </Link>
+            </li>
+          )}
         </ul>
       )}
     </section>
