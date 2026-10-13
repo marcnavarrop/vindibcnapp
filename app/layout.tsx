@@ -70,12 +70,17 @@ export default async function RootLayout({
   const locale = await resolveLocale();
 
   return (
-    <html lang={locale}>
-      <body
-        className={`${lora.variable} ${robotoCondensed.variable} antialiased`}
-      >
-        {children}
-      </body>
+    /* Les variables de les fonts van a <html> i no a <body>.
+       `--font-sans` i `--font-display` (globals.css, `@theme`) es declaren a
+       `:root`, que és <html>, i hi apunten amb var(): amb les classes de
+       next/font al <body>, a <html> les variables encara no existien, totes
+       dues quedaven buides i tota l'app es pintava amb la font del sistema,
+       mentre Lora i Roboto Condensed es baixaven igualment (84 kB). */
+    <html
+      lang={locale}
+      className={`${lora.variable} ${robotoCondensed.variable}`}
+    >
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
