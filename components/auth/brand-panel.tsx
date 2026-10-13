@@ -68,7 +68,7 @@ export async function BrandPanel() {
         <Wordmark height={48} />
 
         <span className="w-fit rounded-full border border-white/25 px-3 py-1 text-[11px] font-bold tracking-[0.14em] text-white/80 uppercase">
-          Àrea client
+          {t("badge")}
         </span>
 
         <div className="flex flex-col gap-1.5">

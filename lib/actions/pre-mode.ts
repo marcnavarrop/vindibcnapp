@@ -172,11 +172,8 @@ export async function returnToAdminAction(): Promise<void> {
   if (error || data.user?.id !== back.adminId) {
     await clearBackTicket();
     await clearPreTicket();
-    redirect(
-      `/login?error=${encodeURIComponent(
-        "La sessió d'administrador ha caducat mentre provaves. Torna a entrar.",
-      )}`,
-    );
+    // Un codi: el login només pinta els avisos de la seva llista (`loginUrlError`).
+    redirect("/login?error=preExpired");
   }
 
   // El mode PRE es queda armat: has tornat d'un salt, no has plegat.

@@ -11,6 +11,7 @@ import { Field } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select";
 import { TextAreaField } from "@/components/ui/textarea";
 import { PasswordField } from "@/components/ui/password-field";
+import { authErrorKey } from "@/lib/auth-errors";
 import { RequiredNote } from "@/components/ui/required-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LOCALES, type Locale } from "@/lib/i18n/config";
@@ -41,6 +42,7 @@ const GENDERS: Gender[] = ["home", "dona", "altre", "ns_nc"];
  */
 export function RegisterPanel() {
   const t = useTranslations("register");
+  const ta = useTranslations("authErrors");
   /*
    * Les etiquetes dels camps nous surten de `config.profile`, que és on ja
    * vivien: són EL MATEIX dada, només canvia quan es demana. Duplicar-les
@@ -155,7 +157,9 @@ export function RegisterPanel() {
       });
 
       if (signUpError) {
-        setError(signUpError.message);
+        // En l'idioma de la pantalla, no l'anglès de GoTrue.
+        const key = authErrorKey(signUpError);
+        setError(key ? ta(key) : t("errorGeneric"));
         return;
       }
 
@@ -185,7 +189,9 @@ export function RegisterPanel() {
       // Según la config de Supabase, puede requerir confirmación por email.
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("errorGeneric"));
+      // Res tècnic a la pantalla («Failed to fetch»…): el missatge del registre.
+      console.error("[register]", err);
+      setError(t("errorGeneric"));
     } finally {
       // Xarxa de seguretat: el botó mai es queda penjat.
       setLoading(false);
@@ -228,6 +234,7 @@ export function RegisterPanel() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {/* Camps no controlats: els valors surten del FormData al submit. */}
         <Field
+          plainLabel
           label={t("fullName")}
           name="fullName"
           type="text"
@@ -236,6 +243,7 @@ export function RegisterPanel() {
         />
 
         <Field
+          plainLabel
           label={t("email")}
           name="email"
           type="email"
@@ -244,6 +252,7 @@ export function RegisterPanel() {
         />
 
         <Field
+          plainLabel
           label={tp("phone")}
           name="phone"
           type="tel"
@@ -255,6 +264,7 @@ export function RegisterPanel() {
             més avall: la data de naixement forma part de les dades que el
             centre necessita, no de les que es poden deixar per a un altre dia. */}
         <Field
+          plainLabel
           label={tp("birthDate")}
           name="birthDate"
           type="date"
@@ -292,6 +302,7 @@ export function RegisterPanel() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
+              plainLabel
               label={tp("height")}
               name="heightCm"
               type="number"
@@ -299,6 +310,7 @@ export function RegisterPanel() {
               max={260}
             />
             <Field
+              plainLabel
               label={tp("weight")}
               name="weightKg"
               type="number"
@@ -309,13 +321,17 @@ export function RegisterPanel() {
           </div>
 
           <SelectField
+            plainLabel
             label={tp("gender")}
             name="gender"
-            placeholder={tg("ns_nc")}
+            // «—» i no «Prefereixo no dir-ho»: aquesta ja és una opció de la
+            // llista, i el desplegable la repetia dues vegades.
+            placeholder="—"
             options={genderOptions}
           />
 
           <Field
+            plainLabel
             label={tp("emergency")}
             name="emergencyContact"
             placeholder={tp("emergencyPlaceholder")}
@@ -325,6 +341,7 @@ export function RegisterPanel() {
               → Dades personals. Opcional: aquí serveix perquè qui s'apunta ja
               pugui dir a què ve, però no és cap requisit per obrir el compte. */}
           <TextAreaField
+            plainLabel
             label={tp("objective")}
             name="objective"
             placeholder={tp("objectivePlaceholder")}
@@ -332,13 +349,14 @@ export function RegisterPanel() {
         </fieldset>
 
         <div className="flex flex-col gap-1">
-          <LanguageSwitcher current={locale} label={t("language")} />
+          <LanguageSwitcher current={locale} label={t("language")} plainLabel />
           <p className="text-xs text-brand-muted">{t("languageHint")}</p>
         </div>
 
         {/* `uppercase` només afecta com es veu; el valor es normalitza en
             llegir-lo, sense necessitat d'estat de React. */}
         <Field
+          plainLabel
           label={t("referral")}
           name="referralCode"
           type="text"
@@ -354,24 +372,29 @@ export function RegisterPanel() {
             onChange={(e) => setAcceptPrivacy(e.target.checked)}
             className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
           />
+          {/* Una sola frase amb els enllaços a dins: abans eren quatre trossos
+              units amb espais, i en català sortia «i l' Avís Legal». */}
           <span>
-            {t("acceptPre")}{" "}
-            <Link
-              href="/legal/privacitat"
-              target="_blank"
-              className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
-            >
-              {t("privacyPolicy")}
-            </Link>{" "}
-            {t("acceptMid")}{" "}
-            <Link
-              href="/legal/avis-legal"
-              target="_blank"
-              className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
-            >
-              {t("legalNotice")}
-            </Link>
-            .
+            {t.rich("acceptRich", {
+              privacy: (chunks) => (
+                <Link
+                  href="/legal/privacitat"
+                  target="_blank"
+                  className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+              notice: (chunks) => (
+                <Link
+                  href="/legal/avis-legal"
+                  target="_blank"
+                  className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
           </span>
         </label>
 

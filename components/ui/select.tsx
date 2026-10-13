@@ -1,8 +1,11 @@
 import { clsx } from "@/lib/utils";
 import { RequiredMark } from "@/components/ui/required-mark";
+import { fieldLabelClass } from "@/components/ui/input";
 
 type SelectFieldProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
+  /** Etiqueta en tipus frase (vegeu `fieldLabelClass`). */
+  plainLabel?: boolean;
   options: { value: string; label: string }[];
   placeholder?: string;
 };
@@ -10,6 +13,7 @@ type SelectFieldProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
 /** Desplegable con etiqueta, estilado con la identidad VindiBCN. */
 export function SelectField({
   label,
+  plainLabel,
   options,
   placeholder,
   className,
@@ -20,7 +24,7 @@ export function SelectField({
   const selectId = id ?? name;
   return (
     <label htmlFor={selectId} className="flex flex-col gap-1.5 text-sm">
-      <span className="font-bold tracking-wide text-brand-charcoal uppercase">
+      <span className={fieldLabelClass(plainLabel)}>
         {label}
         {props.required && <RequiredMark />}
       </span>

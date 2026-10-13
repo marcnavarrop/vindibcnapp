@@ -44,3 +44,79 @@ export function authErrorCa(error: AuthLikeError, fallback: string): string {
   console.error(`[auth] error sense traduir (${error.code ?? error.status ?? "?"}): ${msg}`);
   return fallback;
 }
+
+/**
+ * ELS ERRORS D'AUTH, EN L'IDIOMA DE QUI ENTRA
+ *
+ * El login, el registre i la nova contrasenya ensenyaven `error.message` tal
+ * com arriba de GoTrue: «Invalid login credentials», en anglès, també a qui
+ * llegeix la pantalla en català o castellà. Aquí no es tradueix (això ho fa la
+ * pantalla, que sap l'idioma): es diu QUIN error és, amb una clau del
+ * namespace `authErrors`. El que no es reconeix torna `null` i la pantalla hi
+ * posa el seu missatge genèric; l'original va a la consola.
+ */
+export type AuthErrorKey =
+  | "invalidCredentials"
+  | "emailNotConfirmed"
+  | "emailExists"
+  | "emailInvalid"
+  | "weakPassword"
+  | "samePassword"
+  | "rateLimited"
+  | "emailRateLimited"
+  | "timeout"
+  | "signupDisabled";
+
+const KEY_BY_CODE: Record<string, AuthErrorKey> = {
+  invalid_credentials: "invalidCredentials",
+  email_not_confirmed: "emailNotConfirmed",
+  user_already_exists: "emailExists",
+  email_exists: "emailExists",
+  email_address_invalid: "emailInvalid",
+  validation_failed: "emailInvalid",
+  weak_password: "weakPassword",
+  same_password: "samePassword",
+  over_request_rate_limit: "rateLimited",
+  over_email_send_rate_limit: "emailRateLimited",
+  request_timeout: "timeout",
+  signup_disabled: "signupDisabled",
+  email_provider_disabled: "signupDisabled",
+};
+
+const KEY_BY_TEXT: [RegExp, AuthErrorKey][] = [
+  [/invalid login credentials|invalid credentials/i, "invalidCredentials"],
+  [/email not confirmed/i, "emailNotConfirmed"],
+  [/already (been )?registered|already exists/i, "emailExists"],
+  [/should be different/i, "samePassword"],
+  [/password should|weak password|password is too weak/i, "weakPassword"],
+  [/email rate limit/i, "emailRateLimited"],
+  [/rate limit|too many requests|only request this after/i, "rateLimited"],
+  [/invalid format|unable to validate email|invalid email/i, "emailInvalid"],
+  [/signups? not allowed|signups? (are )?disabled/i, "signupDisabled"],
+  [/timeout|timed out/i, "timeout"],
+];
+
+export function authErrorKey(error: AuthLikeError): AuthErrorKey | null {
+  if (!error) return null;
+  if (error.code && KEY_BY_CODE[error.code]) return KEY_BY_CODE[error.code];
+  const msg = error.message ?? "";
+  for (const [re, key] of KEY_BY_TEXT) if (re.test(msg)) return key;
+  console.error(`[auth] error sense clau (${error.code ?? error.status ?? "?"}): ${msg}`);
+  return null;
+}
+
+/**
+ * Els avisos que arriben al login per l'adreça (`/login?error=…`).
+ *
+ * Abans hi viatjava la frase sencera, en català, i el login l'ensenyava tal
+ * qual: qualsevol podia enviar un enllaç a la pantalla d'entrada de debò amb
+ * el text que volgués («El teu compte està bloquejat, truca al…»). Ara només hi
+ * va un codi d'aquesta llista; qualsevol altra cosa no es pinta.
+ */
+export const LOGIN_URL_ERRORS = ["link", "preExpired"] as const;
+export type LoginUrlError = (typeof LOGIN_URL_ERRORS)[number];
+export function loginUrlError(value: string | null): LoginUrlError | null {
+  return (LOGIN_URL_ERRORS as readonly string[]).includes(value ?? "")
+    ? (value as LoginUrlError)
+    : null;
+}

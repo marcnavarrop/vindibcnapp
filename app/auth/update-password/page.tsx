@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { authErrorKey } from "@/lib/auth-errors";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/wordmark";
@@ -25,6 +26,7 @@ type Status = "verifying" | "ready" | "invalid";
  */
 function UpdatePasswordInner() {
   const t = useTranslations("updatePassword");
+  const ta = useTranslations("authErrors");
   const params = useSearchParams();
   const [status, setStatus] = useState<Status>("verifying");
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +82,9 @@ function UpdatePasswordInner() {
       const supabase = createClient();
       const { error: updErr } = await supabase.auth.updateUser({ password });
       if (updErr) {
-        setError(updErr.message);
+        // En l'idioma de la pantalla, no l'anglès de GoTrue.
+        const key = authErrorKey(updErr);
+        setError(key ? ta(key) : ta("generic"));
         return;
       }
 

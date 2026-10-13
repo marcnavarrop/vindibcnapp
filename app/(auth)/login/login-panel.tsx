@@ -11,6 +11,7 @@ import { PasswordField } from "@/components/ui/password-field";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { ROLE_LABELS } from "@/lib/labels";
 import { safeRedirect } from "@/lib/auth-redirect";
+import { authErrorKey, loginUrlError } from "@/lib/auth-errors";
 import type { UserRole } from "@/types/database";
 
 function MailIcon() {
@@ -73,11 +74,14 @@ function MockLogin() {
 /** Login real contra Supabase. */
 function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
   const t = useTranslations("login");
+  const ta = useTranslations("authErrors");
   const searchParams = useSearchParams();
-  // Missatge d'error que pot arribar del callback (enllaç caducat, etc.).
-  const [error, setError] = useState<string | null>(
-    searchParams.get("error"),
-  );
+  // Avís que pot arribar per l'adreça (enllaç caducat, mode PRE). Només els
+  // codis coneguts: un text arbitrari a `?error=` no es pinta mai.
+  const [error, setError] = useState<string | null>(() => {
+    const code = loginUrlError(searchParams.get("error"));
+    return code ? ta(code) : null;
+  });
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -109,7 +113,9 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
         await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError) {
-        setError(signInError.message);
+        // En l'idioma de la pantalla, no l'anglès de GoTrue.
+        const key = authErrorKey(signInError);
+        setError(key ? ta(key) : t("errorNoSession"));
         return;
       }
       if (!data.user) {

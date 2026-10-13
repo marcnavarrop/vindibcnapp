@@ -1,13 +1,17 @@
 import { clsx } from "@/lib/utils";
 import { RequiredMark } from "@/components/ui/required-mark";
+import { fieldLabelClass } from "@/components/ui/input";
 
 type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
+  /** Etiqueta en tipus frase (vegeu `fieldLabelClass`). */
+  plainLabel?: boolean;
 };
 
 /** Área de texto con etiqueta, estilada con la identidad VindiBCN. */
 export function TextAreaField({
   label,
+  plainLabel,
   className,
   id,
   name,
@@ -16,7 +20,7 @@ export function TextAreaField({
   const areaId = id ?? name;
   return (
     <label htmlFor={areaId} className="flex flex-col gap-1.5 text-sm">
-      <span className="font-bold tracking-wide text-brand-charcoal uppercase">
+      <span className={fieldLabelClass(plainLabel)}>
         {label}
         {props.required && <RequiredMark />}
       </span>

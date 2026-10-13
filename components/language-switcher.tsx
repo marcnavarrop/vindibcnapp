@@ -18,11 +18,14 @@ import { LOCALES, LOCALE_NAMES, type Locale } from "@/lib/i18n/config";
 export function LanguageSwitcher({
   current,
   label,
+  plainLabel,
   className,
 }: {
   current: Locale;
   /** Etiqueta visible. Si no n'hi ha, el select va sol amb aria-label. */
   label?: string;
+  /** Etiqueta en tipus frase, com la dels camps del registre. */
+  plainLabel?: boolean;
   className?: string;
 }) {
   const router = useRouter();
@@ -85,7 +88,11 @@ export function LanguageSwitcher({
     <div className={`flex flex-col gap-1.5 text-sm ${className ?? ""}`}>
       <label
         htmlFor={id}
-        className="font-bold tracking-wide text-brand-charcoal uppercase"
+        className={
+          plainLabel
+            ? "font-medium text-brand-charcoal"
+            : "font-bold tracking-wide text-brand-charcoal uppercase"
+        }
       >
         {label}
       </label>

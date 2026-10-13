@@ -124,10 +124,7 @@
     "languageHint": "En qué idioma quieres ver la app. Podrás cambiarlo cuando quieras.",
     "referral": "Código de referido (opcional)",
     "referralPlaceholder": "Ej: ANF-2K4M",
-    "acceptPre": "He leído y acepto la",
-    "acceptMid": "y el",
-    "privacyPolicy": "Política de Privacidad",
-    "legalNotice": "Aviso Legal",
+    "acceptRich": "He leído y acepto la <privacy>Política de Privacidad</privacy> y el <notice>Aviso Legal</notice>.",
     "submit": "Crear cuenta",
     "submitting": "Creando…",
     "haveAccount": "¿Ya tienes cuenta?",
@@ -193,6 +190,7 @@
     "withTrainer": "Con {name}"
   },
   "brand": {
+    "badge": "Área cliente",
     "headline": "Tu centro, a tu alcance",
     "subtitle": "Gestiona tus reservas, consulta las sesiones y tus planes activos, todo en un solo sitio.",
     "features": {
@@ -1413,5 +1411,20 @@
     "body": "Puede que el enlace sea antiguo o que la dirección esté mal escrita.",
     "back": "Volver al inicio",
     "metaTitle": "Página no encontrada · VindiBCN"
+  },
+  "authErrors": {
+    "invalidCredentials": "El correo o la contraseña no son correctos.",
+    "emailNotConfirmed": "Todavía no has confirmado el correo. Revisa la bandeja de entrada (y el correo no deseado) y abre el enlace que te hemos enviado.",
+    "emailExists": "Ya hay una cuenta con este correo. Puedes iniciar sesión o recuperar la contraseña.",
+    "emailInvalid": "Este correo no parece válido.",
+    "weakPassword": "La contraseña es demasiado débil. Hazla más larga o mezcla letras, números y símbolos.",
+    "samePassword": "La contraseña nueva tiene que ser distinta de la anterior.",
+    "rateLimited": "Demasiados intentos en poco tiempo. Espera unos minutos y vuelve a intentarlo.",
+    "emailRateLimited": "Se han enviado demasiados correos en poco tiempo. Vuelve a intentarlo dentro de unos minutos.",
+    "timeout": "El servicio ha tardado demasiado en responder. Vuelve a intentarlo.",
+    "signupDisabled": "Ahora mismo no se pueden crear cuentas nuevas. Ponte en contacto con el centro.",
+    "generic": "No se ha podido completar. Vuelve a intentarlo.",
+    "link": "El enlace no es válido o ha caducado. Vuelve a intentarlo.",
+    "preExpired": "La sesión de administrador ha caducado mientras probabas. Vuelve a entrar."
   }
 }

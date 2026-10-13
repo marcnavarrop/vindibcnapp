@@ -124,10 +124,7 @@
     "languageHint": "En quin idioma vols veure l'app. Ho podràs canviar quan vulguis.",
     "referral": "Codi de referit (opcional)",
     "referralPlaceholder": "Ex: ANF-2K4M",
-    "acceptPre": "He llegit i accepto la",
-    "acceptMid": "i l'",
-    "privacyPolicy": "Política de Privacitat",
-    "legalNotice": "Avís Legal",
+    "acceptRich": "He llegit i accepto la <privacy>Política de Privacitat</privacy> i l''<notice>Avís Legal</notice>.",
     "submit": "Crear compte",
     "submitting": "Creant…",
     "haveAccount": "Ja tens compte?",
@@ -193,6 +190,7 @@
     "withTrainer": "Amb {name}"
   },
   "brand": {
+    "badge": "Àrea client",
     "headline": "El teu centre, al teu abast",
     "subtitle": "Gestiona les teves reserves, consulta les sessions i els teus plans actius, tot en un sol lloc.",
     "features": {
@@ -1413,5 +1411,20 @@
     "body": "Pot ser que l'enllaç sigui antic o que l'adreça estigui mal escrita.",
     "back": "Tornar a l'inici",
     "metaTitle": "Pàgina no trobada · VindiBCN"
+  },
+  "authErrors": {
+    "invalidCredentials": "El correu o la contrasenya no són correctes.",
+    "emailNotConfirmed": "Encara no has confirmat el correu. Revisa la safata d'entrada (i el correu brossa) i obre l'enllaç que t'hem enviat.",
+    "emailExists": "Ja hi ha un compte amb aquest correu. Pots iniciar sessió o recuperar la contrasenya.",
+    "emailInvalid": "Aquest correu no sembla vàlid.",
+    "weakPassword": "La contrasenya és massa feble. Fes-la més llarga o barreja-hi lletres, números i símbols.",
+    "samePassword": "La contrasenya nova ha de ser diferent de l'anterior.",
+    "rateLimited": "Massa intents en poca estona. Espera uns minuts i torna-ho a provar.",
+    "emailRateLimited": "S'han enviat massa correus en poca estona. Torna-ho a provar d'aquí a uns minuts.",
+    "timeout": "El servei ha trigat massa a respondre. Torna-ho a provar.",
+    "signupDisabled": "Ara mateix no es poden crear comptes nous. Posa't en contacte amb el centre.",
+    "generic": "No s'ha pogut completar. Torna-ho a provar.",
+    "link": "L'enllaç no és vàlid o ha caducat. Torna-ho a provar.",
+    "preExpired": "La sessió d'administrador ha caducat mentre provaves. Torna a entrar."
   }
 }

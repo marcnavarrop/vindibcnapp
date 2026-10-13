@@ -91,7 +91,7 @@ export function ProfileSettingsForm({ settings }: { settings: ProfileSettings })
         <SelectField
           label={t("gender")}
           name="gender"
-          placeholder={tg("ns_nc")}
+          placeholder="—"
           defaultValue={settings.gender}
           options={genderOptions}
         />

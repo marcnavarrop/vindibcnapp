@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(`${origin}${next}`);
   }
 
-  return NextResponse.redirect(
-    `${origin}/login?error=${encodeURIComponent("Enllaç no vàlid o caducat. Torna-ho a intentar.")}`,
-  );
+  // Un codi i no la frase: el login la tradueix a l'idioma de qui entra i no
+  // ensenya cap text que vingui de l'adreça (vegeu `loginUrlError`).
+  return NextResponse.redirect(`${origin}/login?error=link`);
 }

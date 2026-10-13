@@ -124,10 +124,7 @@
     "languageHint": "Which language you'd like the app in. You can change it any time.",
     "referral": "Referral code (optional)",
     "referralPlaceholder": "E.g. ANF-2K4M",
-    "acceptPre": "I have read and accept the",
-    "acceptMid": "and the",
-    "privacyPolicy": "Privacy Policy",
-    "legalNotice": "Legal Notice",
+    "acceptRich": "I have read and accept the <privacy>Privacy Policy</privacy> and the <notice>Legal Notice</notice>.",
     "submit": "Create account",
     "submitting": "Creating…",
     "haveAccount": "Already have an account?",
@@ -193,6 +190,7 @@
     "withTrainer": "With {name}"
   },
   "brand": {
+    "badge": "Client area",
     "headline": "Your centre, within reach",
     "subtitle": "Manage your bookings, check your sessions and your active plans, all in one place.",
     "features": {
@@ -1413,5 +1411,20 @@
     "body": "The link may be out of date, or the address may be mistyped.",
     "back": "Back to home",
     "metaTitle": "Page not found · VindiBCN"
+  },
+  "authErrors": {
+    "invalidCredentials": "The email or password is incorrect.",
+    "emailNotConfirmed": "You haven't confirmed your email yet. Check your inbox (and spam folder) and open the link we sent you.",
+    "emailExists": "There's already an account with this email. You can sign in or reset your password.",
+    "emailInvalid": "That email doesn't look valid.",
+    "weakPassword": "That password is too weak. Make it longer or mix letters, numbers and symbols.",
+    "samePassword": "The new password must be different from the old one.",
+    "rateLimited": "Too many attempts in a short time. Wait a few minutes and try again.",
+    "emailRateLimited": "Too many emails sent in a short time. Try again in a few minutes.",
+    "timeout": "The service took too long to respond. Please try again.",
+    "signupDisabled": "New accounts can't be created right now. Please contact the centre.",
+    "generic": "That didn't work. Please try again.",
+    "link": "The link isn't valid or has expired. Please try again.",
+    "preExpired": "Your admin session expired while you were testing. Please sign in again."
   }
 }

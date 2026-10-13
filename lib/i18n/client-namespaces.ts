@@ -48,6 +48,7 @@ export const CLIENT_AREA_NAMESPACES = [
 
 /** Login, registre i contrasenya oblidada (`app/(auth)`). */
 export const AUTH_NAMESPACES = [
+  "authErrors",
   "config.profile",
   "contact",
   "forgotPassword",
@@ -57,7 +58,7 @@ export const AUTH_NAMESPACES = [
 ] as const;
 
 /** Les pantalles d'aterratge dels correus de compte (`app/auth`). */
-export const AUTH_LANDING_NAMESPACES = ["confirmEmail", "updatePassword"] as const;
+export const AUTH_LANDING_NAMESPACES = ["authErrors", "confirmEmail", "updatePassword"] as const;
 
 /** La sessió de prova pública (`app/prova`). */
 export const TRIAL_NAMESPACES = ["contact", "trial"] as const;
