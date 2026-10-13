@@ -205,12 +205,36 @@ const CENTER_DATE_PARTS = { timeZone: CENTER_TZ } as const;
 
 /** Formatea una fecha ISO en formato corto. */
 export function formatDate(iso: string, locale?: Locale): string {
+  if ((locale ?? "ca") === "ca") return catalanShortDate(new Date(iso), "2-digit", CENTER_TZ);
   return new Intl.DateTimeFormat(intlLocale(locale), {
     day: "2-digit",
     month: "short",
     year: "numeric",
     ...CENTER_DATE_PARTS,
   }).format(new Date(iso));
+}
+
+/**
+ * «05 de juny del 2026», «05 d’ag. del 2026», igual a tots els navegadors.
+ *
+ * Amb `{ day, month: "short", year }` en català, Node i Chrome escriuen
+ * «05 de juny del 2026» però Safari, amb les seves pròpies dades d'idioma,
+ * «05 juny 2026». La pàgina es pinta al servidor i s'hidrata al navegador: a
+ * Safari els dos textos no coincidien i React tornava a pintar tot l'arbre
+ * (error #418) al client, a les reserves i a la comunitat. Aquí el patró es
+ * munta a mà amb peces que tots tres motors diuen igual (el dia, el mes sol i
+ * l'any); el castellà i l'anglès no en tenen, el problema, i no es toquen.
+ */
+export function catalanShortDate(
+  date: Date,
+  day: "2-digit" | "numeric",
+  timeZone?: string,
+): string {
+  const part = (opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("ca", { ...opts, timeZone }).format(date);
+  const month = part({ month: "short" });
+  const prep = /^[aeiouàèéíïòóúü]/i.test(month) ? "d’" : "de ";
+  return `${part({ day })} ${prep}${month} del ${part({ year: "numeric" })}`;
 }
 
 /** Hora (HH:mm) de una fecha ISO. */

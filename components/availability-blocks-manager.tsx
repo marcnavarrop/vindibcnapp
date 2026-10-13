@@ -7,6 +7,9 @@ import { OrphansConfirm } from "@/components/orphans-confirm";
 import type { AvailabilityBlock } from "@/lib/data/availability-blocks";
 import type { BlockFormState } from "@/lib/data/availability-block-submit";
 import { TAP } from "@/lib/utils";
+import { CENTER_TZ } from "@/lib/config";
+import { catalanShortDate } from "@/lib/labels";
+import { centerDateStr } from "@/lib/center-time";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -17,22 +20,26 @@ function toLocalInput(d: Date): string {
   )}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * «5 de juny del 2026, 09:00–13:00», en hora del CENTRE.
+ *
+ * Abans no fixava la zona: el servidor (UTC) i el navegador escrivien hores
+ * diferents i, a Safari, a més, la data en un altre patró; React ho veia com
+ * una pàgina diferent (error d'hidratació #418) i la tornava a pintar.
+ */
 function fmtRange(startIso: string, endIso: string): string {
   const s = new Date(startIso);
   const e = new Date(endIso);
-  const date = new Intl.DateTimeFormat("ca-ES", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const date = (d: Date) => catalanShortDate(d, "numeric", CENTER_TZ);
   const time = new Intl.DateTimeFormat("ca-ES", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: CENTER_TZ,
   });
-  const sameDay = s.toDateString() === e.toDateString();
+  const sameDay = centerDateStr(s) === centerDateStr(e);
   return sameDay
-    ? `${date.format(s)}, ${time.format(s)}–${time.format(e)}`
-    : `${date.format(s)} ${time.format(s)} → ${date.format(e)} ${time.format(e)}`;
+    ? `${date(s)}, ${time.format(s)}–${time.format(e)}`
+    : `${date(s)} ${time.format(s)} → ${date(e)} ${time.format(e)}`;
 }
 
 export function AvailabilityBlocksManager({
