@@ -241,6 +241,29 @@ Altura de la página en el móvil (375 px, estado cargado, en pantallas de 812 p
 
 Lo que importa no es la altura total sino qué se ve primero: en las tres áreas, lo primero de la pantalla es ahora el trabajo de hoy, no los números.
 
+### Producción, antes y después (14/10/2026)
+
+Medido en el navegador con la sesión de cada cuenta, solo leyendo: `fetch` de la página sin caché, tiempo hasta el primer byte.
+
+| Inicio | Antes (7aa162c) | Después |
+| --- | --- | --- |
+| Admin | mediana 315 ms (283–517, 5 peticiones) | 52e2f10: 261–352 ms · **84785fc: mediana 290 ms (248–400, 10 peticiones en caliente)** |
+| Profesional (Entrenador Demo) | mediana 373 ms | — |
+| Cliente (Client Demo) | mediana 445 ms | 437 ms |
+
+Números del admin, antes → después:
+
+| | Antes | Después |
+| --- | --- | --- |
+| Ingresos | 1.700,00 € (↓13,5 % vs septiembre entero) | **640,00 € (↑77,8 % vs 1–14 de septiembre)**; con la base: octubre sin demo 640 €, con demo 1.700 €; 1–14 sep sin demo 360 € |
+| Bonos bajos | 5 (4 del Client Demo) | 1 (fulanito) |
+| Sin marcar | 5 (2 del Client Demo, 1 del Entrenador Demo) | 3 (Raul 2 · Laia 1) |
+| Ocupación | 2,1 % con Entrenador Demo y Fisio Demo | 2,7 %, sin ellos |
+
+**A6 · consultas.** «Fora d'horari» hacía `findOrphans` por profesional: 5–7 consultas cada uno (31 en la auditoría, con 6). Ahora `countOrphansByTrainer` hace 5 para todos (reservas, pruebas y esperas futuras, todas las reglas y los bloqueos que acaban después de ahora) con el mismo predicado `isSessionCovered`. En simulación da el mismo número que `findOrphans`, profesional por profesional, también con huérfanos provocados (16, 4, 26 y 4). En total el Inicio del admin pasa de unas 50 consultas a unas 25 (cálculo por lectura del código).
+
+La mejora de tiempo es pequeña (≈ 315 → 290 ms de mediana) porque las consultas ya iban en paralelo y hoy solo hay 4 profesionales reales: lo que se gana es carga sobre la base, y que no crezca con cada profesional nuevo. El panel de Disponibilitat sigue usando `findOrphans` (necesita nombres y bonos). Hoy en producción no hay nada fuera de horario, así que el número (0) no permite comparar con datos reales distintos de cero.
+
 ## Capturas
 
 | Fichero | Qué muestra |
