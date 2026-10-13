@@ -83,6 +83,25 @@ const nextConfig: NextConfig = {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },
 
+  /**
+   * /admin/facturacio no té pàgina pròpia: entra per Tarifes.
+   *
+   * Abans ho feia una pàgina amb `redirect()`, i el router de Next petava amb
+   * «Rendered more hooks than during the previous render» (React #310) cada
+   * cop que s'hi entrava per l'adreça o des d'un enllaç vell; després es
+   * refeia i pintava Tarifes. Aquí la redirecció passa abans que React hi
+   * entri. El menú ja enllaça directament a Tarifes.
+   */
+  async redirects() {
+    return [
+      {
+        source: "/admin/facturacio",
+        destination: "/admin/facturacio/tarifes",
+        permanent: false,
+      },
+    ];
+  },
+
   experimental: {
     /**
      * Cos màxim d'una Server Action. El default de Next és 1 MB, i com que el
