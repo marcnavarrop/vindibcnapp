@@ -303,7 +303,8 @@ export function ExerciseForm({
               type="file"
               name="videoFile"
               accept="video/mp4,video/quicktime,.mp4,.mov"
-              capture="environment"
+              // Sense `capture`: a l'iPhone obria directament la càmera i no
+              // deixava triar un vídeo ja gravat de la galeria.
               ref={fileInputRef}
               onChange={(e) => {
                 setBlocked(null);
