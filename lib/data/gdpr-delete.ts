@@ -18,8 +18,8 @@ export type DeleteResult = { profileId: string; label: string };
  *    (a partir del seu bo) perquè el registre contable conservi QUÈ es va
  *    facturar quan es desvinculi del client.
  * 2. S'elimina l'usuari de Supabase Auth (Admin API). Això cascadeja:
- *    auth.users → profiles → clients → (bons, reserves, mesures, exercicis) i
- *    consents. Els pagaments queden amb client_id = NULL (retinguts).
+ *    auth.users → profiles → clients → (bons, reserves, mesures, exercicis,
+ *    historial clínic) i consents. Els pagaments queden amb client_id = NULL (retinguts).
  */
 export async function deleteClient(
   clientId: string,
@@ -72,6 +72,10 @@ export async function deleteClient(
       (ce) => ce.client_id !== clientId,
     );
     store.consents = store.consents.filter((c) => c.user_id !== profileId);
+    // L'historial clínic (0110) cau amb el client (`on delete cascade`).
+    store.clinical_first_visits = store.clinical_first_visits.filter((f) => f.client_id !== clientId);
+    store.clinical_followups = store.clinical_followups.filter((f) => f.client_id !== clientId);
+    store.clinical_seen = store.clinical_seen.filter((s) => s.client_id !== clientId);
     store.notification_preferences = store.notification_preferences.filter(
       (n) => n.profile_id !== profileId,
     );

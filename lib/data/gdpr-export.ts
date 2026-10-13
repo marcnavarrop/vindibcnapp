@@ -14,6 +14,11 @@ export type ClientDataExport = {
   exercises: unknown[];
   consents: unknown[];
   documents: unknown[];
+  /**
+   * L'historial clínic (0110). El client no el veu a l'app; si demana les seves
+   * dades, hi va sencer: primera visita i seguiments (amb qui els va escriure).
+   */
+  clinical_history: { first_visit: unknown | null; followups: unknown[] };
 };
 
 /**
@@ -55,6 +60,10 @@ export async function exportClientData(
           .filter((d) => d.client_id === clientId)
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .map(({ storage_path: _sp, ...meta }) => meta),
+        clinical_history: {
+          first_visit: store.clinical_first_visits.find((f) => f.client_id === clientId) ?? null,
+          followups: store.clinical_followups.filter((f) => f.client_id === clientId),
+        },
       },
     };
   }
@@ -68,8 +77,18 @@ export async function exportClientData(
   if (!client) return null;
   const profileId = client.profile_id;
 
-  const [profile, bonos, reservations, payments, ces, exercise_progress, consents, documents] =
-    await Promise.all([
+  const [
+    profile,
+    bonos,
+    reservations,
+    payments,
+    ces,
+    exercise_progress,
+    consents,
+    documents,
+    firstVisit,
+    followups,
+  ] = await Promise.all([
       admin.from("profiles").select("*").eq("id", profileId).single(),
       admin.from("bonos").select("*").eq("client_id", clientId),
       admin.from("reservations").select("*").eq("client_id", clientId),
@@ -87,6 +106,12 @@ export async function exportClientData(
         .from("client_documents")
         .select("id, client_id, uploaded_by, file_name, file_size, mime_type, description, uploaded_at")
         .eq("client_id", clientId),
+      admin.from("clinical_first_visits").select("*").eq("client_id", clientId).maybeSingle(),
+      admin
+        .from("clinical_followups")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: true }),
     ]);
 
   const p = profile.data as { full_name?: string; email?: string } | null;
@@ -104,6 +129,7 @@ export async function exportClientData(
       exercises: ces.data ?? [],
       consents: consents.data ?? [],
       documents: documents.data ?? [],
+      clinical_history: { first_visit: firstVisit.data ?? null, followups: followups.data ?? [] },
     },
   };
 }

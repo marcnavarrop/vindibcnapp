@@ -28,7 +28,7 @@ export type FormState = {
   at?: number;
 };
 
-const FIELDS = ["fullName", "email", "phone", "assignedTrainerId", "clinicalNotes", "generalNotes"];
+const FIELDS = ["fullName", "email", "phone", "assignedTrainerId", "generalNotes"];
 
 /** L'error, amb el que s'havia escrit perquè el formulari no es buidi. */
 function fail(formData: FormData, error: string, extra: Partial<FormState> = {}): FormState {
@@ -44,7 +44,6 @@ function parse(formData: FormData): ClientInput {
     email: str("email"),
     phone: str("phone") || null,
     assignedTrainerId: str("assignedTrainerId") || null,
-    clinicalNotes: str("clinicalNotes") || null,
     generalNotes: str("generalNotes") || null,
   };
 }
@@ -113,7 +112,6 @@ export async function updateClientAction(
       fullName: input.fullName,
       phone: input.phone,
       assignedTrainerId: input.assignedTrainerId,
-      clinicalNotes: input.clinicalNotes,
       generalNotes: input.generalNotes,
     });
   } catch (e) {

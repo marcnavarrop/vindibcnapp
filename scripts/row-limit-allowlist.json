@@ -227,6 +227,10 @@
     "category": "acotada",
     "reason": "Un client (RGPD): l'exportació ha de ser sencera."
   },
+  "lib/data/gdpr-export.ts::exportClientData::clinical_followups": {
+    "category": "acotada",
+    "reason": "Un client (RGPD): l'historial clínic va sencer a l'exportació."
+  },
   "lib/data/gdpr-export.ts::exportClientData::client_documents": {
     "category": "acotada",
     "reason": "Un client (RGPD)."

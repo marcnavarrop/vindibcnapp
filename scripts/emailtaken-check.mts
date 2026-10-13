@@ -65,7 +65,7 @@ const reset = () => {
   authCalls = 0;
   authResult = null;
 };
-const client = (email: string) => ({ fullName: "Algú Nou", email, phone: null, assignedTrainerId: null, clinicalNotes: null, generalNotes: null });
+const client = (email: string) => ({ fullName: "Algú Nou", email, phone: null, assignedTrainerId: null, generalNotes: null });
 const tryCreate = async (f: () => Promise<unknown>) => {
   try { await f(); return null; } catch (e) { return e; }
 };

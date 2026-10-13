@@ -300,17 +300,13 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "warn",
           text: "El correu és l'usuari d'accés i l'alta és l'ÚNIC lloc on es pot escriure. A «Editar» es veu però no es toca. Si un client necessita canviar-lo, ho fa ell des de la seva àrea (Configuració → Compte); si no pot, és un cas per al suport.",
         },
-        { t: "h", text: "Les dues notes" },
+        { t: "h", text: "Les notes" },
         {
           t: "dl",
           items: [
             [
-              "Notes clíniques",
-              "Dades de salut. Abans d'escriure-n'hi cap, comprova que el client hagi acceptat el consentiment de dades de salut: si no, la fitxa t'avisa amb una franja blau fosc a la capçalera.",
-            ],
-            [
               "Notes generals",
-              "Tot el que no és salut: preferències, avisos d'agenda, el que calgui.",
+              "Tot el que no és salut: preferències, avisos d'agenda, el que calgui. Les dades de salut no van al formulari: van a la pestanya «Historial clínic» de la fitxa.",
             ],
           ],
         },
@@ -356,13 +352,13 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "warn",
           text: "El professional assignat decideix amb qui pot reservar el client des de la seva àrea: les sessions individuals i en parella, NOMÉS amb el seu entrenador assignat; els grups i la fisioteràpia, amb qualsevol professional que en faci segons la seva disponibilitat (no segons l'especialitat). Un client sense professional assignat no pot reservar individual ni parelles fins que n'hi posis un; l'app li diu que parli amb el centre. Tu i els professionals, quan reserveu per a un client, no hi esteu subjectes. Si li canvies el professional, les reserves que ja tenia es queden, les seves esperes amb l'anterior ja no entraran, i una sèrie seva que s'allargava sola deixa d'allargar-se.",
         },
-        { t: "h", text: "Les cinc pestanyes" },
+        { t: "h", text: "Les sis pestanyes" },
         {
           t: "dl",
           items: [
             [
               "Resum",
-              "El que es fa cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix, i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». «+ Nova reserva» obre el formulari amb aquesta persona i el seu professional ja posats. A la dreta (a sota, al mòbil), les notes clíniques i generals, amb «Afegir una nota general…»: escrius una línia, «Desar», i va al final de les generals amb la data i el teu nom («08/10/2026 · Marc · …»). Les clíniques no es toquen des d'aquí, només des d'«Editar». A sota, els exercicis amb l'última mesura de cadascun.",
+              "El que es fa cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix, i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». «+ Nova reserva» obre el formulari amb aquesta persona i el seu professional ja posats. A la dreta (a sota, al mòbil), les notes generals, amb «Afegir una nota general…»: escrius una línia, «Desar», i va al final amb la data i el teu nom («08/10/2026 · Marc · …»). A sota, els exercicis amb l'última mesura de cadascun.",
             ],
             [
               "Bons i pagaments",
@@ -377,8 +373,12 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
               "Els exercicis que té assignats i el buscador per assignar-n'hi de nous de la biblioteca; «Notificar exercicis nous», que l'avisa per correu; i les mesures registrades de cada exercici.",
             ],
             [
+              "Historial clínic",
+              "La informació de salut, en dues parts: la «Primera visita» (una per client) i el «Seguiment» (entrades amb data i autor, la més recent a dalt). A dalt, si el client ha signat el consentiment de dades de salut i quan, o l'avís de pendent. Tu ho pots tot: escriure, editar qualsevol entrada i esborrar seguiments (amb confirmació; no es recupera).",
+            ],
+            [
               "Notes i documents",
-              "Les notes clíniques i les generals, amb l'enllaç per editar-les, i els documents que el client ha pujat des de la seva àrea. Els documents són només lectura: aquí no se'n puja cap.",
+              "Les notes generals, amb l'enllaç per editar-les, i els documents que el client ha pujat des de la seva àrea. Els documents són només lectura: aquí no se'n puja cap.",
             ],
           ],
         },
@@ -390,10 +390,19 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
                 text: "El mòdul Documents està desactivat: el client no en pot pujar de nous, però la pestanya Notes i documents continua ensenyant els que ja hi havia. Amagar-la esborraria de la vista uns documents que segueixen existint.",
               },
             ] as Block[])),
+        { t: "h", text: "Qui veu l'historial clínic" },
+        {
+          t: "p",
+          text: "Qualsevol fisioterapeuta, amb qualsevol client: el llegeix, escriu i edita la primera visita i afegeix seguiments; cada seguiment només el pot editar qui el va escriure o tu, i esborrar, només tu. L'entrenador assignat el llegeix sencer sense escriure-hi, i se li avisa a la fitxa i a l'Inici quan hi ha novetats. Els altres entrenadors no el veuen, i el client tampoc a l'app (sí a l'exportació de les seves dades). Els comptes demo només entre ells: un fisio demo, només amb el Client Demo.",
+        },
+        {
+          t: "note",
+          text: "Cada vegada que un professional obre un historial queda una fila al registre d'accessos (qui, de quin client i quan). Les teves obertures i les del Client Demo no s'apunten.",
+        },
         { t: "h", text: "L'avís de consentiment de salut" },
         {
           t: "p",
-          text: "Si el client rep o ha rebut fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera de la fitxa porta una franja blau fosc curta; «Més info» la desplega. Mentre hi sigui, no hi registris notes mèdiques: l'ha d'acceptar ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Si el client rep o ha rebut fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera de la fitxa porta una franja blau fosc curta; «Més info» la desplega. L'ha d'acceptar ell des de la seva àrea, a Configuració → Privacitat i consentiments. L'historial no es bloqueja, però abans d'anotar-hi dades de salut, que l'accepti.",
         },
       ],
     },
@@ -1863,7 +1872,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Exportar les dades" },
         {
           t: "p",
-          text: "«Exportar dades» descarrega un fitxer amb tot el que el centre guarda d'aquesta persona: el perfil, la fitxa, els bons, les reserves, els pagaments, els exercicis assignats, el progrés registrat, els consentiments i la llista dels seus documents.",
+          text: "«Exportar dades» descarrega un fitxer amb tot el que el centre guarda d'aquesta persona: el perfil, la fitxa, els bons, les reserves, els pagaments, els exercicis assignats, el progrés registrat, els consentiments, la llista dels seus documents i l'historial clínic (primera visita i seguiments).",
         },
         {
           t: "note",
@@ -1876,7 +1885,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats i consentiments. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona.",
+          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, historial clínic i consentiments. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona.",
         },
         {
           t: "p",
@@ -1885,12 +1894,12 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "El consentiment de dades de salut" },
         {
           t: "p",
-          text: "És a part del consentiment de privacitat i el dóna el client des de la seva àrea (Configuració → Privacitat i consentiments). Mentre no el tingui, la seva fitxa t'avisa i no s'hi han de registrar notes mèdiques.",
+          text: "És a part del consentiment de privacitat i el dóna el client des de la seva àrea (Configuració → Privacitat i consentiments). Mentre no el tingui, la seva fitxa t'avisa i no s'hi han d'anotar dades de salut a l'historial clínic.",
         },
         { t: "h", text: "El que no es pot fer des de l'app" },
         {
           t: "p",
-          text: "No hi ha cap pantalla per consultar el registre d'accessos: les exportacions i les supressions s'apunten, però es consulten des de la base de dades. Si mai et fa falta, és una petició per al suport.",
+          text: "No hi ha cap pantalla per consultar el registre d'accessos: les exportacions, les supressions i les obertures d'historials clínics s'apunten, però es consulten des de la base de dades. Si mai et fa falta, és una petició per al suport.",
         },
       ],
     },

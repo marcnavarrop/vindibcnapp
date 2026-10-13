@@ -14,7 +14,6 @@ export type ClientDefaults = {
   email: string;
   phone: string;
   assignedTrainerId: string;
-  clinicalNotes: string;
   generalNotes: string;
 };
 
@@ -119,11 +118,6 @@ export function ClientForm({
         placeholder="Sense assignar"
         defaultValue={v("assignedTrainerId")}
         options={trainers.map((t) => ({ value: t.id, label: t.name }))}
-      />
-      <TextAreaField
-        label="Notes clíniques"
-        name="clinicalNotes"
-        defaultValue={v("clinicalNotes")}
       />
       <TextAreaField
         label="Notes generals"

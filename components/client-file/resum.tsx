@@ -201,13 +201,15 @@ export function UpcomingSessionsCard({
   );
 }
 
+/**
+ * Les notes GENERALS. Les clíniques ja no hi són: viuen a l'historial clínic
+ * (0110), amb la seva pestanya i la seva RLS.
+ */
 export function NotesCard({
-  clinicalNotes,
   generalNotes,
   editHref,
   children,
 }: {
-  clinicalNotes: string | null;
   generalNotes: string | null;
   editHref?: string;
   /** La nota ràpida, si qui mira en pot escriure. */
@@ -225,12 +227,6 @@ export function NotesCard({
       }
     >
       <div className="flex flex-col gap-2.5 p-4 sm:px-5">
-        <div className="rounded-xl border border-brand-clinical/30 bg-brand-clinical/5 px-3.5 py-2.5 text-sm">
-          <h3 className="mb-1 text-[11.5px] font-bold tracking-wide text-brand-clinical uppercase">Clíniques</h3>
-          <p className={clsx("whitespace-pre-wrap", clinicalNotes?.trim() ? "text-brand-charcoal" : "text-brand-muted")}>
-            {clinicalNotes?.trim() || "Sense notes clíniques."}
-          </p>
-        </div>
         <div className="rounded-xl border border-brand-border px-3.5 py-2.5 text-sm">
           <h3 className="mb-1 text-[11.5px] font-bold tracking-wide text-brand-muted uppercase">Generals</h3>
           <p className={clsx("whitespace-pre-wrap", generalNotes?.trim() ? "text-brand-charcoal" : "text-brand-muted")}>

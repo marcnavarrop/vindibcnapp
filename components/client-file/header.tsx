@@ -36,6 +36,7 @@ export function ClientFileHeader({
   notice,
   needsHealthConsent,
   consentHidden = false,
+  clinicalNovelty = false,
 }: {
   backHref: string;
   fullName: string;
@@ -55,6 +56,12 @@ export function ClientFileHeader({
    * assignat): no se sap si n'hi ha, i no s'ha de dir que falta.
    */
   consentHidden?: boolean;
+  /**
+   * L'entrenador assignat té una novetat a l'historial clínic d'aquest client
+   * (0110): una entrada nova o una primera visita editada per un altre que
+   * encara no ha vist. Porta a la pestanya; en obrir-la, desapareix.
+   */
+  clinicalNovelty?: boolean;
 }) {
   const number = whatsappNumber(phone);
   return (
@@ -117,6 +124,15 @@ export function ClientFileHeader({
       </div>
 
       {notice}
+      {clinicalNovelty && (
+        <a
+          href="?pestanya=historial-clinic"
+          className="self-start rounded-full bg-brand-purple px-3 py-1 text-xs font-bold text-white hover:bg-brand-purple-light"
+          data-clinical-novelty
+        >
+          Novetat a l&apos;historial clínic →
+        </a>
+      )}
       {consentHidden ? (
         <HealthConsentWarning hidden />
       ) : (

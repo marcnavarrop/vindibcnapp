@@ -152,6 +152,10 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
               },
             ] as Block[])
           : []),
+        {
+          t: "p",
+          text: "Al mateix lloc surt «Historial clínic amb novetats» quan algú altre ha escrit a l'historial d'un client teu des que el vas mirar. «Llegir» porta a la pestanya del primer; quan l'obres, l'avís marxa.",
+        },
         { t: "h", text: "Accions ràpides" },
         {
           t: "p",
@@ -232,7 +236,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "A dalt, la capçalera: el nom, qui el porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes. La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
+          text: "A dalt, la capçalera: el nom, qui el porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes (sis si pots veure'n l'historial clínic). La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
         },
         {
           t: "p",
@@ -240,11 +244,11 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "El consentiment de dades de salut d'un client que no és teu no el pots veure: només el veuen el seu professional i l'administració. Per això, si rep fisioteràpia, la capçalera porta una franja gris «Consentiment de salut: no el pots veure» en lloc de l'avís de pendent. No vol dir que falti: abans d'anotar-hi dades de salut, confirma-ho amb l'administració.",
+          text: "El consentiment de dades de salut el veuen els qui poden llegir l'historial clínic: el seu professional, qualsevol fisioterapeuta i l'administració. Si no ets cap d'aquests i el client rep fisioteràpia, la capçalera porta una franja gris «Consentiment de salut: no el pots veure» en lloc de l'avís de pendent. No vol dir que falti.",
         },
         {
           t: "warn",
-          text: "Si el client és teu, rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera porta una franja blau fosc curta; «Més info» la desplega. Mentre hi sigui, no hi registris notes mèdiques ni dades de salut: ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Si pots llegir-ne l'historial, el client rep fisioteràpia i encara no ha acceptat el tractament de dades de salut, la capçalera porta una franja blau fosc curta; «Més info» la desplega. Ha d'acceptar-ho ell des de la seva àrea, a Configuració → Privacitat i consentiments. L'app no et bloqueja l'historial, però abans d'anotar-hi dades de salut, que l'accepti.",
         },
         { t: "h", text: "La capçalera" },
         {
@@ -266,12 +270,16 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
               "Més",
               "«Reenviar invitació»: un nou correu d'accés, per quan el primer va caducar o no va arribar mai. Diu allà mateix si ha anat bé.",
             ],
+            [
+              "Novetat a l'historial clínic",
+              "Si el client és teu i algú altre (el fisio o l'administració) ha escrit a l'historial clínic des de l'última vegada que el vas obrir, surt aquesta etiqueta. Porta directament a la pestanya i, quan l'obres, desapareix.",
+            ],
           ],
         },
         { t: "h", text: "Resum" },
         {
           t: "p",
-          text: "El que fas cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix (sigui teu o no el client), i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». Si el client és teu, «+ Nova reserva» obre el formulari amb ell ja posat. A la dreta (a sota, al mòbil), les notes clíniques i generals, i els exercicis amb l'última mesura de cadascun.",
+          text: "El que fas cada dia amb un client, a la vista en obrir la fitxa. Els bons vius, primer els pendents de cobrar amb «Marcar com pagat» i «Anul·lar» allà mateix (sigui teu o no el client), i els actius amb una barra de les sessions que queden i la caducitat (els acabats, només comptats). Les tres properes sessions amb el dia, l'hora, el servei i el professional, quantes més en té, l'última que va fer i «Recordatori de propera sessió». Si el client és teu, «+ Nova reserva» obre el formulari amb ell ja posat. A la dreta (a sota, al mòbil), les notes generals i els exercicis amb l'última mesura de cadascun.",
         },
         { t: "h", text: "Bons i pagaments" },
         {
@@ -300,10 +308,36 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           t: "p",
           text: "Més avall, el progrés: les mesures registrades per a cada exercici assignat, amb data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne: s'esborra al moment i, uns segons, surt «Desfer». És on es veu si el que li has posat està funcionant.",
         },
+        { t: "h", text: "Historial clínic" },
+        {
+          t: "p",
+          text: "La pestanya on viu la informació de salut del client, en dues parts: la «Primera visita» (una per client: motiu de consulta, antecedents, exploració, pla…) i el «Seguiment», una entrada per sessió o per novetat, amb la data i qui l'ha escrita, la més recent a dalt. A dalt de tot, si el client ha signat el consentiment de dades de salut i quan; si no, l'avís de pendent.",
+        },
+        {
+          t: "dl",
+          items: [
+            [
+              "Si ets fisioterapeuta",
+              "Amb qualsevol client, sigui teu o no: llegeixes tot l'historial, escrius i edites la primera visita i afegeixes seguiments. Cada seguiment només el pot editar qui el va escriure (o l'administració). Esborrar, només l'administració.",
+            ],
+            [
+              "Si ets el seu entrenador",
+              "El llegeixes sencer, però no hi escrius. Quan hi ha alguna cosa nova que no has vist, t'ho diu la capçalera de la fitxa i l'Inici.",
+            ],
+            [
+              "Si no és teu i no ets fisio",
+              "La pestanya no hi és.",
+            ],
+          ],
+        },
+        {
+          t: "note",
+          text: "Cada vegada que obres un historial clínic queda anotat al registre d'accessos del centre (qui, de quin client i quan). És el que demana la llei per a les dades de salut. El client no el veu a l'app, però si demana les seves dades, hi va inclòs.",
+        },
         { t: "h", text: "Notes i documents" },
         {
           t: "p",
-          text: "Dues caixes separades: les notes clíniques, amb la vora verda i la creu sanitària, i les generals. Les pots llegir, però no escriure —les edita l'administració—. El que sí que escrius tu és la nota de cada sessió, que té el seu propi capítol.",
+          text: "Les notes generals del client. Les pots llegir, però no escriure —les edita l'administració—. El que sí que escrius tu és la nota de cada sessió, que té el seu propi capítol. La informació de salut no va aquí: va a l'historial clínic.",
         },
         {
           t: "p",

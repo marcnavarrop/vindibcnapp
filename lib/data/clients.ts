@@ -102,7 +102,6 @@ export type ClientPayment = {
 export type ClientDetail = ClientListItem & {
   profileId: string;
   assignedTrainerId: string | null;
-  clinicalNotes: string | null;
   generalNotes: string | null;
   bonos: ClientBono[];
   reservations: ClientReservation[];
@@ -114,7 +113,6 @@ export type ClientInput = {
   email: string;
   phone: string | null;
   assignedTrainerId: string | null;
-  clinicalNotes: string | null;
   generalNotes: string | null;
 };
 
@@ -438,7 +436,6 @@ function buildDetail(clientId: string): ClientDetail | null {
     ...toListItem(clientId, store),
     profileId: client.profile_id,
     assignedTrainerId: client.assigned_trainer_id,
-    clinicalNotes: client.clinical_notes ?? null,
     generalNotes: client.general_notes ?? null,
     bonos: store.bonos
       .filter((b) => b.client_id === clientId)
@@ -487,7 +484,6 @@ type DetailRow = {
   id: string;
   profile_id: string;
   assigned_trainer_id: string | null;
-  clinical_notes: string | null;
   general_notes: string | null;
   profile: {
     full_name: string | null;
@@ -532,7 +528,7 @@ async function fetchClientDetail(
   const { data, error } = await supabase
     .from("clients")
     .select(
-      `id, profile_id, assigned_trainer_id, clinical_notes, general_notes,
+      `id, profile_id, assigned_trainer_id, general_notes,
        profile:profiles!clients_profile_id_fkey(full_name, email, phone),
        trainer:profiles!clients_assigned_trainer_id_fkey(full_name),
        bonos(id, service_type, total_sessions, remaining_sessions, price, status, expires_at, subscription_id, service_id, gift_voucher_id, auto_renew),
@@ -556,7 +552,6 @@ async function fetchClientDetail(
     remainingSessions: active.reduce((s, b) => s + b.remaining_sessions, 0),
     profileId: row.profile_id,
     assignedTrainerId: row.assigned_trainer_id,
-    clinicalNotes: row.clinical_notes,
     generalNotes: row.general_notes,
     bonos: row.bonos.map((b) => ({
       id: b.id,
@@ -754,7 +749,8 @@ export async function createClientRecord(raw: ClientInput): Promise<string> {
       id: clientId,
       profile_id: profileId,
       assigned_trainer_id: input.assignedTrainerId,
-      clinical_notes: input.clinicalNotes,
+      // Les notes clíniques ja no es fan servir (historial clínic, 0110).
+      clinical_notes: null,
       general_notes: input.generalNotes,
       referral_code: null,
       referred_by_client_id: null,
@@ -778,7 +774,6 @@ export async function createClientRecord(raw: ClientInput): Promise<string> {
     .insert({
       profile_id: profileId,
       assigned_trainer_id: input.assignedTrainerId,
-      clinical_notes: input.clinicalNotes,
       general_notes: input.generalNotes,
     })
     .select("id")
@@ -817,7 +812,6 @@ export async function updateClientRecord(
     const client = store.clients.find((c) => c.id === id);
     if (!client) throw new Error("Client no trobat");
     client.assigned_trainer_id = input.assignedTrainerId;
-    client.clinical_notes = input.clinicalNotes;
     client.general_notes = input.generalNotes;
     const profile = store.profiles.find((p) => p.id === client.profile_id);
     if (profile) {
@@ -841,7 +835,6 @@ export async function updateClientRecord(
     .from("clients")
     .update({
       assigned_trainer_id: input.assignedTrainerId,
-      clinical_notes: input.clinicalNotes,
       general_notes: input.generalNotes,
     })
     .eq("id", id);

@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**109 migracions SQL** a `supabase/migrations/` (`0001`–`0109`), numerades i
+**110 migracions SQL** a `supabase/migrations/` (`0001`–`0110`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -128,6 +128,21 @@ més al codi:
   del catàleg o d'una oferta activa), però neix **pendent de pagament**: no pot
   regalar sessions a un client que no és seu. És una política a part
   (`bonos_physio_insert_physio`); la 0108 no es toca.
+- **Historial clínic** (`0110`, tiquet d'en Sergi): taules pròpies
+  `clinical_first_visits` (una per client), `clinical_followups` (data, autor,
+  text) i `clinical_seen` (l'última vegada que cada professional l'ha obert, per
+  a l'avís de novetat). Llegeixen l'admin, qualsevol fisio (`is_physio()`) i
+  l'entrenador assignat; escriuen l'admin i els fisios; un seguiment l'edita
+  només el seu autor o l'admin; esborrar, només l'admin. El client, res (sí a
+  l'exportació RGPD). Els triggers fixen `client_id`, autor i `created_at`.
+  **«Demo amb demo» també a la base**: `demo_profiles` (sense accés per a
+  `authenticated`) i `same_world(client)` a totes les polítiques de l'historial
+  i a `health_consent_status(client)`, que diu si hi ha consentiment de salut i
+  quan als qui poden llegir l'historial. Cada obertura d'un no admin queda a
+  `data_access_log` (`clinical_view`), llevat del Client Demo. La regla pura,
+  per a pantalla i accions: `lib/clinical-access.ts`. `npm run clinical:check`.
+  Les `clients.clinical_notes` (0 a producció) s'hi van copiar i l'app ja no les
+  fa servir; una segona migració les buidarà i en tancarà l'accés.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de
@@ -271,10 +286,11 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   0012) i el seu progrés (`exercise_progress`, 0029). (Les antigues
   `measurements` i `client_videos` ja no existeixen a producció: la 0029 va
   esborrar les mesures, comprovat el 12/10/2026.) El cas
-  concret: **un fisio que atén un pacient que no té assignat no veu el seu
-  consentiment de dades de salut ni els seus documents**. Es queda com és
-  (decisió d'en Marc, 12/10/2026) fins que en Marc ho parli amb en Raul i
-  l'assessor.
+  concret: **un fisio que atén un pacient que no té assignat no veu els seus
+  documents**. Es queda com és (decisió d'en Marc, 12/10/2026) fins que en
+  Marc ho parli amb en Raul i l'assessor. (Si hi ha consentiment de salut i
+  quan, sí que ho veu des de la 0110, per `health_consent_status`; la taula
+  `consents` no.)
 - **El client pot llegir les seves pròpies notes clíniques per l'API.**
   Comprovat el 12/10/2026 amb una sessió real del Client Demo: `GET
   /rest/v1/clients?select=clinical_notes` torna la seva fila (només la seva)
@@ -283,7 +299,9 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   de la `0079` («NO la veu el client») no és cert a nivell d'API. Sortides:
   passar-les a una taula pròpia amb RLS sense el client, o treure el `select`
   d'aquesta columna a `authenticated` i servir-la només des del servidor. Totes
-  dues demanen migració. Pendent de decidir amb el punt anterior.
+  dues demanen migració. **Mig resolt a la 0110**: les notes clíniques ara
+  viuen a l'historial clínic (sense accés per al client) i l'app ja no llegeix
+  ni escriu la columna; queda la migració que la buida i en treu l'accés.
 
 ## Estructura del repositori
 

@@ -859,7 +859,7 @@ export interface Database {
           actor_id: string | null;
           subject_profile_id: string | null;
           subject_label: string | null;
-          action: "export" | "delete";
+          action: "export" | "delete" | "clinical_view";
           details: string | null;
           created_at: string;
         };
@@ -868,7 +868,7 @@ export interface Database {
           actor_id?: string | null;
           subject_profile_id?: string | null;
           subject_label?: string | null;
-          action: "export" | "delete";
+          action: "export" | "delete" | "clinical_view";
           details?: string | null;
           created_at?: string;
         };
@@ -877,7 +877,7 @@ export interface Database {
           actor_id?: string | null;
           subject_profile_id?: string | null;
           subject_label?: string | null;
-          action?: "export" | "delete";
+          action?: "export" | "delete" | "clinical_view";
           details?: string | null;
           created_at?: string;
         };
@@ -1126,6 +1126,62 @@ export interface Database {
         Relationships: [];
       };
       /** Nota de seguiment d'una sessió (0079). Una per reserva. */
+      /** «Primera visita» de l'historial clínic: una per client (0110). */
+      clinical_first_visits: {
+        Row: {
+          client_id: string;
+          body: string;
+          created_by: string | null;
+          created_at: string;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          client_id: string;
+          body: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      /** «Seguiment» de l'historial clínic: entrades amb data i autor (0110). */
+      clinical_followups: {
+        Row: {
+          id: string;
+          client_id: string;
+          author_id: string | null;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          author_id?: string | null;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      /** Fins quan ha vist cadascú l'historial d'un client (0110). */
+      clinical_seen: {
+        Row: { viewer_id: string; client_id: string; seen_at: string };
+        Insert: { viewer_id: string; client_id: string; seen_at?: string };
+        Update: { seen_at?: string };
+        Relationships: [];
+      };
       session_notes: {
         Row: {
           reservation_id: string;
@@ -1945,6 +2001,11 @@ export interface Database {
           p_today: string;
         };
         Returns: CancelReservationResult;
+      };
+      /** Consentiment de salut d'un client: data i versió, o cap fila (0110). */
+      health_consent_status: {
+        Args: { p_client: string };
+        Returns: { granted_at: string; version: string }[];
       };
       /** Marcar feta (0107): admin, el professional del client o el de l'agenda. */
       complete_reservation: {

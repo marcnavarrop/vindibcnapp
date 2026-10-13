@@ -20,6 +20,7 @@ import {
   seedAvailabilityRules,
   seedConsents,
   seedDataAccessLog,
+  seedClinicalFirstVisits,
   seedTrialBookings,
   seedNotificationPreferences,
   seedNotificationLog,
@@ -80,6 +81,10 @@ export type Store = {
   booking_series: Tables["booking_series"]["Row"][];
   waitlist_entries: Tables["waitlist_entries"]["Row"][];
   session_notes: Tables["session_notes"]["Row"][];
+  /** L'historial clínic (0110): primera visita, seguiments i fins on s'ha vist. */
+  clinical_first_visits: Tables["clinical_first_visits"]["Row"][];
+  clinical_followups: Tables["clinical_followups"]["Row"][];
+  clinical_seen: Tables["clinical_seen"]["Row"][];
   professional_colors: Tables["professional_colors"]["Row"][];
   service_type_colors: Tables["service_type_colors"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
@@ -129,6 +134,9 @@ function fromSeed(): Store {
     booking_series: [],
     waitlist_entries: [],
     session_notes: [],
+    clinical_first_visits: structuredClone(seedClinicalFirstVisits),
+    clinical_followups: [],
+    clinical_seen: [],
     service_rates: [],
     bonus_service_weights: [],
     bonus_tiers: [],

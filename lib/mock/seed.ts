@@ -115,6 +115,15 @@ export const seedConsents: Consent[] = [];
 type DataAccessLog = Database["public"]["Tables"]["data_access_log"]["Row"];
 export const seedDataAccessLog: DataAccessLog[] = [];
 
+/**
+ * L'historial clínic (0110). La nota clínica de l'Ana passa a ser la seva
+ * «Primera visita», sense autor, igual que fa la còpia de la migració.
+ */
+type ClinicalFirstVisit = Database["public"]["Tables"]["clinical_first_visits"]["Row"];
+export const seedClinicalFirstVisits: ClinicalFirstVisit[] = [
+  { client_id: "c-ana", body: "Lesió prèvia de genoll. Treballar mobilitat.", created_by: null, created_at: now, updated_by: null, updated_at: now },
+];
+
 type TrialBooking = Database["public"]["Tables"]["trial_bookings"]["Row"];
 export const seedTrialBookings: TrialBooking[] = [];
 

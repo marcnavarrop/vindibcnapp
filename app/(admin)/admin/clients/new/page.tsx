@@ -23,7 +23,6 @@ export default async function NewClientPage({
         email: trial.email,
         phone: trial.phone,
         assignedTrainerId: trial.trainerId ?? "",
-        clinicalNotes: "",
         generalNotes: "Prové d'una sessió de prova.",
       }
     : undefined;

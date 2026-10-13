@@ -7,6 +7,7 @@ import {
 import { listAnnouncements } from "@/lib/data/announcements";
 import { getTrainerDashboard } from "@/lib/data/dashboard";
 import { pendingTrialAttention } from "@/lib/data/trial-attention";
+import { clientsWithClinicalNovelty } from "@/lib/data/clinical-history";
 import { AnnouncementsFeed } from "@/components/announcements-feed";
 import { TrainerUpcomingReservations } from "@/components/trainer-upcoming-reservations";
 import { TrainerBonusPanel } from "@/components/trainer-bonus-panel";
@@ -61,7 +62,7 @@ export default async function TrainerHome() {
   const viewer = await getViewer();
   const trainerId = viewer?.id ?? "";
 
-  const [clients, next, announcements, kpi, trials] =
+  const [clients, next, announcements, kpi, trials, novelty] =
     await Promise.all([
       listClients(trainerId),
       upcoming(trainerId), // les seves i les del centre, per al toggle Els meus / Tots
@@ -69,7 +70,17 @@ export default async function TrainerHome() {
       getTrainerDashboard(trainerId),
       // Lectura pura: obrir l'inici no ha d'escriure res.
       pendingTrialAttention(trainerId),
+      // Historial clínic dels seus clients amb canvis d'altres (0110). Si falla,
+      // l'inici es pinta igual: l'avís també surt a la fitxa.
+      clientsWithClinicalNovelty(trainerId).catch((e) => {
+        console.error("[inici professional] historial clínic:", e instanceof Error ? e.message : e);
+        return [] as string[];
+      }),
     ]);
+  const clinical = novelty.flatMap((id) => {
+    const c = clients.find((x) => x.id === id);
+    return c ? [{ id, name: c.fullName }] : [];
+  });
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 p-4 sm:p-6">
@@ -85,7 +96,7 @@ export default async function TrainerHome() {
 
       {/* Per damunt de l'agenda: si hi ha una prova que caduca, es veu abans
           de posar-se a mirar les sessions. Sense res pendent, no es pinta. */}
-      <Attention trials={trials} />
+      <Attention trials={trials} clinical={clinical} />
 
       <TrainerUpcomingReservations
         mine={next.mine}

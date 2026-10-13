@@ -182,7 +182,7 @@
       <li><a href="#prova">9. Sessió de prova pública</a></li>
       <li><a href="#calendari">10. El calendari a fons</a></li>
       <li><a href="#ofertes">11. Ofertes segmentades i etiquetes <span class="new-badge">Nou</span></a></li>
-      <li><a href="#notes">12. Notes de sessió <span class="new-badge">Nou</span></a></li>
+      <li><a href="#notes">12. Notes de sessió i historial clínic <span class="new-badge">Nou</span></a></li>
       <li><a href="#reassignacio">13. Reassignació de client <span class="new-badge">Nou</span></a></li>
       <li><a href="#config">14. Configuració del centre <span class="new-badge">Ampliat</span></a></li>
       <li><a href="#referits">15. Sistema de referits</a></li>
@@ -850,6 +850,20 @@
       <li>Comprova que <strong>un altre professional no la veu</strong>, encara que tingui aquell client assignat</li>
       <li>Comprova que <strong>l'admin la llegeix però no n'escriu cap</strong>: no és que la pantalla no ho ofereixi, és que la base no ho deixaria desar</li>
       <li>El cos de la nota <strong>no es tradueix mai</strong> (és text lliure del centre); el que l'envolta, sí</li>
+    </ul>
+
+    <h3 id="historial-clinic">12.3 L'historial clínic <span class="flag">Nou</span></h3>
+    <p>Una pestanya de la fitxa del client amb la <strong>Primera visita</strong> (una per client) i el <strong>Seguiment</strong> (entrades amb data i autor). No té res a veure amb la nota de sessió: aquesta <strong>el client no la veu</strong>.</p>
+    <ul class="checklist">
+      <li>Com a <strong>Fisio Demo</strong>, al Client Demo (encara que no sigui seu): escriu la primera visita, afegeix un seguiment i edita'l</li>
+      <li>Com a <strong>Fisio Demo</strong>: un seguiment escrit per un altre <strong>no té «Editar»</strong>, i cap seguiment té «Esborrar»</li>
+      <li>Com a <strong>Entrenador Demo</strong> (l'assignat del Client Demo): el llegeix sencer, <strong>sense formularis</strong>, i després d'un canvi del fisio surt <strong>«Novetat a l'historial clínic»</strong> a la capçalera de la fitxa i a l'Inici; en obrir la pestanya, desapareix</li>
+      <li>Un entrenador que <strong>no és l'assignat</strong>: la pestanya no hi és</li>
+      <li>Com a <strong>Client Demo</strong>: no hi ha cap historial a la seva àrea; a <strong>l'exportació de dades</strong> (admin → fitxa → Més → Exportar dades) sí que hi surt</li>
+      <li>Com a <strong>admin</strong>: edita qualsevol entrada i esborra un seguiment (demana confirmació)</li>
+      <li>A dalt de la pestanya: «Consentiment de dades de salut signat el …» o l'avís de pendent; <strong>no bloqueja</strong> l'escriptura</li>
+      <li><strong>Demo amb demo</strong>: un professional demo no veu l'historial d'un client real, ni un de real el del Client Demo (ho mira també la base)</li>
+      <li>Cada obertura d'un professional queda al registre d'accessos (no les de l'admin ni les del Client Demo): es comprova des de la base</li>
     </ul>
 
     <h2 id="reassignacio"><span class="num">13</span> Reassignació de client entre professionals <span class="new-badge">Nou</span></h2>

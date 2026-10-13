@@ -3,7 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
 
-export type DataAccessAction = "export" | "delete";
+export type DataAccessAction = "export" | "delete" | "clinical_view";
 
 /**
  * Deixa constància d'una acció RGPD (exportació o supressió) sobre les dades

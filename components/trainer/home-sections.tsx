@@ -186,30 +186,58 @@ export function KpiRow({ d }: { d: TrainerDashboard }) {
  * L'admin en té tres menes; el professional només aquesta, perquè és l'única
  * que li demana una resposta a ell. Si no en té cap, la secció no es pinta.
  */
-export function Attention({ trials }: { trials: TrialAttentionItem[] }) {
-  if (trials.length === 0) return null;
+export function Attention({
+  trials,
+  clinical = [],
+}: {
+  trials: TrialAttentionItem[];
+  /** Clients seus amb novetats a l'historial clínic que encara no ha obert (0110). */
+  clinical?: { id: string; name: string }[];
+}) {
+  if (trials.length === 0 && clinical.length === 0) return null;
 
   return (
     <AttentionPanel>
-      <AttentionRow
-        title={
-          trials.length === 1
-            ? "1 sol·licitud de prova pendent"
-            : `${trials.length} sol·licituds de prova pendents`
-        }
-        detail={
-          <>
-            {/* Mentre no es respon, la franja segueix bloquejada: el compte
-                enrere és el que la fa urgent i no només pendent. */}
-            {trials[0].name} · {formatDate(trials[0].scheduledAt)}
-            {" · "}
-            {countdownLabel(trials[0].hoursLeft)}
-            {trials.length > 1 && ` · i ${trials.length - 1} més`}
-          </>
-        }
-        href="/trainer/reservas"
-        cta="Revisar"
-      />
+      {trials.length > 0 && (
+        <AttentionRow
+          title={
+            trials.length === 1
+              ? "1 sol·licitud de prova pendent"
+              : `${trials.length} sol·licituds de prova pendents`
+          }
+          detail={
+            <>
+              {/* Mentre no es respon, la franja segueix bloquejada: el compte
+                  enrere és el que la fa urgent i no només pendent. */}
+              {trials[0].name} · {formatDate(trials[0].scheduledAt)}
+              {" · "}
+              {countdownLabel(trials[0].hoursLeft)}
+              {trials.length > 1 && ` · i ${trials.length - 1} més`}
+            </>
+          }
+          href="/trainer/reservas"
+          cta="Revisar"
+        />
+      )}
+      {/* Algú altre (el fisio o l'admin) hi ha escrit des que el va mirar.
+          Porta al primer; la resta es veuen al nom i a la seva fitxa. */}
+      {clinical.length > 0 && (
+        <AttentionRow
+          title={
+            clinical.length === 1
+              ? "Historial clínic amb novetats: 1 client"
+              : `Historial clínic amb novetats: ${clinical.length} clients`
+          }
+          detail={
+            <>
+              {clinical[0].name}
+              {clinical.length > 1 && ` · i ${clinical.length - 1} més`}
+            </>
+          }
+          href={`/trainer/clients/${clinical[0].id}?pestanya=historial-clinic`}
+          cta="Llegir"
+        />
+      )}
     </AttentionPanel>
   );
 }

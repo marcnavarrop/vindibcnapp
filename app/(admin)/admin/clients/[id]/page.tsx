@@ -25,6 +25,9 @@ import { listClientExercises } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
 import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
+import { getViewer } from "@/lib/auth";
+import { FOLLOWUPS_LIMIT, getClinicalHistory } from "@/lib/data/clinical-history";
+import { ClinicalHistoryPanel } from "@/components/clinical-history-panel";
 import { listClientDocuments } from "@/lib/data/client-documents";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
@@ -95,6 +98,13 @@ export default async function ClientDetailPage({
     consentPromise,
   ]);
   if (!client || !consent) notFound();
+
+  // L'historial clínic (0110): l'admin ho veu i ho pot tot. El consentiment el
+  // té de sempre (`getConsentStatus`).
+  const viewer = await getViewer();
+  const history = viewer
+    ? await getClinicalHistory({ id: client.id, assignedTrainerId: client.assignedTrainerId }, viewer)
+    : null;
 
   const receivesFisio =
     client.bonos.some((b) => b.serviceType === "fisioterapia") ||
@@ -182,7 +192,6 @@ export default async function ClientDetailPage({
           </div>
           <div className="flex flex-col gap-4">
             <NotesCard
-              clinicalNotes={client.clinicalNotes}
               generalNotes={client.generalNotes}
               editHref={`/admin/clients/${client.id}/edit`}
             >
@@ -270,12 +279,34 @@ export default async function ClientDetailPage({
         </div>
       ),
     },
+    ...(history && viewer
+      ? [
+          {
+            label: "Historial clínic",
+            content: (
+              <ClinicalHistoryPanel
+                clientId={client.id}
+                history={history}
+                consent={
+                  consent.healthDataAt
+                    ? { grantedAt: consent.healthDataAt, version: consent.healthDataVersion ?? "—" }
+                    : null
+                }
+                canWrite
+                canDelete
+                viewerId={viewer.id}
+                isAdmin
+                truncated={history.followups.length === FOLLOWUPS_LIMIT}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       label: "Notes i documents",
       content: (
         <div className="flex flex-col gap-6">
           <ClientNotesPanel
-            clinicalNotes={client.clinicalNotes}
             generalNotes={client.generalNotes}
             editHref={`/admin/clients/${client.id}/edit`}
           />

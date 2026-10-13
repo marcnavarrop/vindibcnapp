@@ -152,13 +152,13 @@ try {
   await prova("l'Ana → sense assignar", "c-ana", null, true);
   await prova("Client Demo → sense assignar", DEMO_CLIENT_ID, null, true);
   const alta = await fails(() =>
-    createClientRecord({ fullName: "Client nou de prova", email: "nou.demo-check@exemple.test", phone: "600000000", assignedTrainerId: E, clinicalNotes: null, generalNotes: null }),
+    createClientRecord({ fullName: "Client nou de prova", email: "nou.demo-check@exemple.test", phone: "600000000", assignedTrainerId: E, generalNotes: null }),
   );
   check(alta === DEMO_ASSIGNMENT_ERROR && !getStore().profiles.some((p) => p.email === "nou.demo-check@exemple.test"),
     `alta d'un client nou amb l'Entrenador Demo: ${alta ? "rebutjada, sense crear res" : "creada!"}`);
   const anaAbans = assignat("c-ana");
   const edit = await fails(() =>
-    updateClientRecord("c-ana", { fullName: "Ana Ferrer", phone: "+34 600 100 001", assignedTrainerId: F, clinicalNotes: null, generalNotes: null }),
+    updateClientRecord("c-ana", { fullName: "Ana Ferrer", phone: "+34 600 100 001", assignedTrainerId: F, generalNotes: null }),
   );
   check(edit === DEMO_ASSIGNMENT_ERROR && assignat("c-ana") === anaAbans, `editar l'Ana posant-li el Fisio Demo: ${edit ? "rebutjat" : "desat!"}`);
 } catch (e) {

@@ -14,7 +14,14 @@ import { listExercises } from "@/lib/data/exercises";
 import { listClientDocuments } from "@/lib/data/client-documents";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
-import { getConsentStatus } from "@/lib/data/consents";
+import {
+  clientsWithClinicalNovelty,
+  FOLLOWUPS_LIMIT,
+  getClinicalHistory,
+  getHealthConsentFor,
+} from "@/lib/data/clinical-history";
+import { canDeleteClinical, canReadClinical, canWriteClinical } from "@/lib/clinical-access";
+import { ClinicalHistoryPanel } from "@/components/clinical-history-panel";
 import { ClientFileHeader } from "@/components/client-file/header";
 import {
   ClientFileMenu,
@@ -56,13 +63,7 @@ export default async function TrainerClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  // El consentiment depèn de la fitxa (en necessita el perfil), però no de la
-  // resta: s'hi encadena i viatja en la mateixa tanda, en comptes d'esperar
-  // que acabi tot per començar.
   const clientPromise = getClient(id);
-  const consentPromise = clientPromise.then((c) =>
-    c ? getConsentStatus(c.profileId) : null,
-  );
   const [
     viewer,
     client,
@@ -74,7 +75,6 @@ export default async function TrainerClientDetailPage({
     allTags,
     clientTags,
     centerCollectable,
-    consent,
   ] = await Promise.all([
     getViewer(),
     clientPromise,
@@ -88,24 +88,38 @@ export default async function TrainerClientDetailPage({
     // Per a la piloteta de «Bons» del menú: vegeu l'anunciador de sota. Si
     // falla, no s'anuncia res —millor el número d'abans que un zero inventat.
     countCenterCollectableBonos().catch(() => null),
-    consentPromise,
   ]);
-  if (!client || !consent) notFound();
+  if (!client) notFound();
 
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
   // Reservar-li alguna cosa, encara que no sigui seu (0107): un grup, o la seva
   // especialitat a la seva agenda. «Demo amb demo», com a tot arreu.
   const canBook = !!viewer && demoCompatible(client.id, viewer.id);
 
+  // L'HISTORIAL CLÍNIC (0110): el llegeixen els fisios (de qualsevol client) i
+  // l'entrenador ASSIGNAT; l'escriuen els fisios. «Demo amb demo». La base ho
+  // torna a mirar amb la seva RLS.
+  const subject = { id: client.id, assignedTrainerId: client.assignedTrainerId };
+  const canReadHistory = !!viewer && canReadClinical(viewer, subject);
+  const [history, healthConsent, novelty] = canReadHistory
+    ? await Promise.all([
+        getClinicalHistory(subject, viewer!),
+        getHealthConsentFor({ ...subject, profileId: client.profileId }, viewer!),
+        // L'avís de novetat és per a l'entrenador del client.
+        canManage
+          ? clientsWithClinicalNovelty(viewer!.id, client.id).catch(() => [])
+          : Promise.resolve([] as string[]),
+      ])
+    : [null, null, [] as string[]];
+
   const receivesFisio =
     client.bonos.some((b) => b.serviceType === "fisioterapia") ||
     client.reservations.some((r) => r.serviceType === "fisioterapia");
-  // El consentiment només el llegeixen el client, l'admin i el professional
-  // ASSIGNAT (RLS `consents_select`, 0014). A qualsevol altre la consulta li
-  // torna buida, i abans la fitxa ho llegia com «falta el consentiment» encara
-  // que estigués signat. Ara, si no el pots veure, es diu això i prou.
-  const consentHidden = receivesFisio && !canManage;
-  const needsHealthConsent = receivesFisio && canManage && !consent.healthDataAt;
+  // El consentiment de salut el diu `health_consent_status` (0110) a qui pot
+  // llegir l'historial: si està signat i quan. A qui no, «no el pots veure»:
+  // no se sap si n'hi ha i no s'ha de dir que falta.
+  const consentHidden = receivesFisio && !canReadHistory;
+  const needsHealthConsent = receivesFisio && canReadHistory && !healthConsent;
 
   // Les dues accions sobre un bo, amb la mateixa regla que les taules. Cap de
   // les dues mira `canManage`: vegeu el comentari de `bonoActions`.
@@ -200,7 +214,7 @@ export default async function TrainerClientDetailPage({
             />
           </div>
           <div className="flex flex-col gap-4">
-            <NotesCard clinicalNotes={client.clinicalNotes} generalNotes={client.generalNotes} />
+            <NotesCard generalNotes={client.generalNotes} />
             <TrainingCard assigned={assignedExercises} progress={allProgress} />
           </div>
         </div>
@@ -265,14 +279,30 @@ export default async function TrainerClientDetailPage({
         </div>
       ),
     },
+    ...(canReadHistory && history
+      ? [
+          {
+            label: "Historial clínic",
+            content: (
+              <ClinicalHistoryPanel
+                clientId={client.id}
+                history={history}
+                consent={healthConsent}
+                canWrite={canWriteClinical(viewer!, subject)}
+                canDelete={canDeleteClinical(viewer!)}
+                viewerId={viewer!.id}
+                isAdmin={false}
+                truncated={history.followups.length === FOLLOWUPS_LIMIT}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       label: "Notes i documents",
       content: (
         <div className="flex flex-col gap-6">
-          <ClientNotesPanel
-            clinicalNotes={client.clinicalNotes}
-            generalNotes={client.generalNotes}
-          />
+          <ClientNotesPanel generalNotes={client.generalNotes} />
           <DocumentsReadonlyPanel documents={documents} clientId={id} />
         </div>
       ),
@@ -351,6 +381,7 @@ export default async function TrainerClientDetailPage({
         }
         needsHealthConsent={needsHealthConsent}
         consentHidden={consentHidden}
+        clinicalNovelty={novelty.length > 0}
       />
 
       {/*

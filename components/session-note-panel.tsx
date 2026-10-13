@@ -122,13 +122,13 @@ export function SessionNotePanel({
           />
           {/* El text d'ajuda no és decoració: qui escriu ha de saber que el
               client ho llegirà, i que això NO és el lloc de la informació
-              clínica —aquella va a les notes del client, que tenen el seu propi
-              consentiment i que el client no veu (0035). */}
+              clínica —aquella va a l'historial clínic del client (0110), que el
+              client no veu i que té el seu propi consentiment. */}
           <p className="text-xs text-brand-muted">
             Aquesta nota <strong>la llegeix el client</strong>, a més de tu i de
             l&apos;administració. És seguiment de la sessió: si has d&apos;anotar
-            informació de salut, va a les notes clíniques de la fitxa del client,
-            no aquí.
+            informació de salut, va a l&apos;historial clínic de la fitxa del
+            client, no aquí.
           </p>
           {state.error && <p className="text-sm text-error">{state.error}</p>}
           <div className="flex flex-wrap items-center gap-2">
