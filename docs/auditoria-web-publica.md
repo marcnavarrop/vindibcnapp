@@ -6,6 +6,81 @@ Páginas públicas auditadas: `/` (redirige a `/login`), `/login`, `/register`, 
 
 Capturas de evidencia en [`docs/auditoria-capturas/`](auditoria-capturas/).
 
+> **Actualización del 13/10/2026, tarde: decisiones de Marc y fase 1 hecha.** El resumen está en la sección [Seguimiento](#seguimiento-decisiones-y-fase-1). Lo que sigue a continuación es el informe original, sin tocar, como referencia del «antes».
+
+---
+
+## Seguimiento: decisiones y fase 1
+
+### Decisiones de Marc
+
+- **El centro ya tiene web propia.** VindiApp es la herramienta, no la web pública: no se hace portada ni SEO fuerte. La web del centro enlazará a `/prova` y al login. Quedan **descartados** C1, C7, S3, S6 y la parte de SEO de S4 (URL por idioma); S1 se hace solo en su parte de `robots.txt`, sin sitemap.
+- **Se aplican las fuentes de marca** (Lora y Roboto Condensed): D1.
+- **Los textos legales los revisa el asesor**: no se ha tocado su contenido, solo la maquetación de la cabecera (D4).
+
+### Qué se ha hecho (commits a `main`)
+
+| # | Commit | Hallazgos | Estado |
+| --- | --- | --- | --- |
+| 1 | `6e32783` /prova s'obre al primer dia amb hores, amb diàleg accessible | C2, C3, C5, A2, A3, P1, D3 | ✅ en producción y verificado |
+| 2 | `637903a` Accessibilitat: gris AA, camps a 16 px al mòbil i errors anunciats | A1, A4, A5, A6, A7 | ✅ en producción y verificado |
+| 3 | `ec0b9ae` Pantalles d'entrada: errors en l'idioma de qui entra i detalls del registre | T1, T2, T3, T4, D4, D6 + X7 (nuevo) | ✅ en producción y verificado |
+| 4 | `d05d75f` Compartir i cercadors: Open Graph amb imatge de marca, noindex i robots.txt | S1 (robots), S2, S5, S8 | ✅ en producción y verificado |
+| 5 | `ea1d869` Fonts de marca aplicades a tota l'app | D1, P4 | ⏸ **en local, sin push**: a la espera de que Marc vea el antes/después |
+| 6 | `c0a5de7` Capçaleres de seguretat, amb la CSP en Report-Only | X1 | ⏸ **en local, sin push**: es configuración |
+
+Detalle de cada punto:
+
+1. **/prova.** Abre en el **primer día con horas libres** (antes, en «hoy», que nunca tiene). En móvil, la vista Día es una **lista de botones de hora** de 44 px de alto en vez de la rejilla de 30 filas: la primera hora queda a 433 px (antes, ~900). Si un día no tiene horas, lo dice y ofrece saltar al primero que sí. La norma de las 24 h va **encima** de las horas. El formulario es un **diálogo accesible**: `role="dialog"`, `aria-modal`, foco en el primer campo, tabulador encerrado, Escape cierra y el foco vuelve a la hora elegida (también en Safari). Cada hora se anuncia con día y hora («Demanar la prova el dimecres, 14 d'octubre, a les 17:00»). En el login, en móvil, las tres tarjetas del panel desaparecen y el botón de prueba queda **sin scroll** en un iPhone 390×844 (abajo del todo a 744–748 px; antes, a 898). *Ojo:* en un Safari real con las barras desplegadas el alto útil es algo menor, así que puede quedar justo en el borde.
+2. **Accesibilidad.** Gris secundario `#777777` → `#717171` (4,88:1 sobre blanco y 4,56:1 sobre el fondo gris; a la vista, el mismo). Campos a **16 px en móvil** (Safari ya no hace zoom; en escritorio siguen a 14 px). Botón del ojo de la contraseña: 40×40 de zona táctil y nombre traducido (salía en catalán en es/en). Errores con `role="alert"`. El titular del panel ya no es un `h2` antes del `h1`.
+3. **Pequeños.** Errores de Supabase traducidos a ca/es/en en login, registro y nueva contraseña (`authErrorKey`, cubierto por `autherrors:check`). Registro con todas las etiquetas en tipo frase, «i l'Avís Legal» sin espacio y el género sin la opción repetida (también en Configuración). «Àrea client» traducida. Cabecera legal a 320 px: el menú baja bajo el logo.
+4. **Compartir.** Imagen de 1200×630 con el logo y el lila (centrada para la miniatura cuadrada de WhatsApp), una general y otra para /prova; Open Graph y Twitter con título y descripción de cada página; títulos propios en registro y contraseñas; descripción por defecto pública y traducida. `robots.txt` cierra `/admin`, `/trainer`, `/client`, `/api` y `/auth`.
+   **Decisión sobre /prova: `noindex`, como el resto de la app.** La que debe posicionar es la web del centro, que tiene el contexto (fotos, equipo, precios) y enlaza a /prova; /prova sola, desde Google, es un calendario sin explicación. Además, el dominio `vercel.app` es provisional (habría que redirigir todo lo indexado) y el idioma va por cookie (Google solo vería el catalán). Las páginas públicas **no** se bloquean en `robots.txt`: el `noindex` solo funciona si el robot puede leerlas, y WhatsApp las lee para la vista previa.
+5. **Fuentes.** Las variables de `next/font` pasan de `<body>` a `<html>`, que es donde las busca `--font-sans`/`--font-display`. Títulos en Lora y texto en Roboto Condensed en toda la app. Comparación antes/después de 16 pantallas a 375 y 1280 px enviada a Marc; ninguna de las 82 pantallas recorridas (públicas, admin, profesional y cliente) tiene scroll horizontal. **Pregunta abierta:** la regla global pone Lora en todos los `h2`/`h3`, también en las etiquetas pequeñas de sección en mayúsculas («ATENCIÓ IMMEDIATA», «LES TEVES PROPERES»). Se puede limitar Lora a los títulos grandes si se prefiere.
+6. **Cabeceras.** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` y sin `x-powered-by`. CSP en **Report-Only** (Supabase, YouTube sin cookies, vercel.live, Stripe Checkout como destino de formulario), con un receptor en `/api/csp-report` que deja cada aviso en los registros de Vercel como `[csp]`. Probado en local: ningún aviso en las páginas públicas ni en 26 pantallas internas (simulación) en Chromium y WebKit; un aviso provocado a mano llega bien desde Safari. **No verificado:** el envío de avisos de Chromium (solo funciona con HTTPS, así que hay que verlo en producción) y los flujos reales con sesión (pago con Stripe, subida de vídeos y documentos), que no se pueden probar sin entrar.
+
+### Antes y después (producción, mediana de 3)
+
+| Página | Modo | Rend. antes → ahora | Accesib. | TBT | LCP | CLS |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/login` | móvil | 98 → 99 | 96 → **100** | 25 → 36 ms | 2,14 → 2,13 s | 0 → 0 |
+| `/login` | escritorio | 100 → 100 | 96 → **100** | 0 → 0 ms | 0,59 → 0,59 s | 0 → 0 |
+| `/prova` | móvil | **93 → 99** | 96 → **100** | **310 → 32 ms** | 2,06 → 2,13 s | 0,033 → 0,032 |
+| `/prova` | escritorio | 100 → 100 | 96 → **100** | 0 → 0 ms | 0,47 → 0,47 s | 0 → 0,022 |
+| `/register` | móvil | 99 → 99 | 96 → **100** | 13 → 27 ms | 2,13 → 2,20 s | 0 → 0 |
+| `/register` | escritorio | 100 → 100 | 96 → **100** | 0 → 0 ms | 0,60 → 0,59 s | 0 → 0 |
+| `/legal/privacitat` | móvil | 99 → 99 | 96 → **100** | 24 → 32 ms | 2,06 → 2,07 s | 0 → 0 |
+| `/legal/privacitat` | escritorio | 100 → 100 | 96 → **100** | 0 → 0 ms | 0,46 → 0,45 s | 0 → 0 |
+
+- **SEO de Lighthouse: 100 → 66, a propósito.** El único punto que falla es `is-crawlable`, que es justamente el `noindex` decidido.
+- **axe:** de 1–27 infracciones de contraste por página a **cero** en las 9 páginas públicas, en ca/es/en y a 375 y 1280 px (producción).
+- **Responsive en producción:** 198 combinaciones (6 páginas × 11 tamaños × Chromium, WebKit y Firefox), sin scroll horizontal ni errores de consola.
+- **TBT de /prova** medido también en local con dos builds iguales salvo el cambio: 252 → 18 ms.
+- El CLS de 0,022 en /prova (escritorio) es el paso de «Cargando las horas libres…» a la semana; está muy por debajo de 0,1.
+- Los puntos 5 y 6 aún no están en producción: sus números se tomarán después del push.
+
+### Encontrado por el camino
+
+- **X7 (nuevo, corregido en el punto 3):** el login pintaba cualquier texto que llegara en `/login?error=…`. Alguien podía enviar un enlace a la pantalla de entrada auténtica con el mensaje que quisiera («Tu cuenta está bloqueada, llama al…»). Ahora solo acepta dos códigos (`link`, `preExpired`) y los traduce. El callback de Auth y el aviso del modo PRE envían el código en vez de la frase; el comportamiento no cambia.
+- **Errores de React que ya existían** (también en `8e9b3a4`, antes de esta sesión): #310 en `/admin/facturacio` y discrepancias de hidratación (#418) en WebKit en varias pantallas de reservas y del cliente. Fuera del alcance; queda como tarea aparte.
+
+### Pendiente para Raul y el asesor ⚖️
+
+- **Los textos legales siguen publicados como borrador**, con el aviso «Document provisional» y marcadores visibles («[A concretar amb l'assessor.]», «[Barcelona]», «[A validar per l'assessor.]»…). Hay que pasarlos al asesor (L1).
+- **Stripe no figura en la Política de Privacidad** entre los encargados del tratamiento, aunque se cobra con Stripe (bonos, vales y suscripciones). Tampoco se concretan las transferencias internacionales (Vercel, Resend y Stripe son empresas de EE. UU.) (L2).
+- Siguen abiertos para el asesor: el consentimiento de los datos de salud en el alta (L3), la finalidad y la conservación de los datos de quien pide una prueba (L4) y añadir la cookie `vindi_locale` a la política de cookies (L5).
+
+### Capturas del después
+
+| Fichero | Qué muestra |
+| --- | --- |
+| [13-despres-prova-390-webkit.jpg](auditoria-capturas/13-despres-prova-390-webkit.jpg) | /prova en iPhone: primer día con horas y lista de botones |
+| [14-despres-prova-390-modal.jpg](auditoria-capturas/14-despres-prova-390-modal.jpg) | El diálogo de solicitud |
+| [15-despres-login-390-webkit.jpg](auditoria-capturas/15-despres-login-390-webkit.jpg) | Login en iPhone: el botón de prueba sin scroll |
+| [16-despres-legal-320-capcalera.jpg](auditoria-capturas/16-despres-legal-320-capcalera.jpg) | Cabecera legal a 320 px |
+| [17-despres-register-320.jpg](auditoria-capturas/17-despres-register-320.jpg) | Registro: etiquetas unificadas, «i l'Avís Legal», género sin repetir |
+| [18-despres-imatge-compartir-prova.jpg](auditoria-capturas/18-despres-imatge-compartir-prova.jpg) | La imagen que sale al compartir /prova |
+
 ---
 
 ## Resumen ejecutivo
