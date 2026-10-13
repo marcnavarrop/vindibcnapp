@@ -749,8 +749,6 @@ export async function createClientRecord(raw: ClientInput): Promise<string> {
       id: clientId,
       profile_id: profileId,
       assigned_trainer_id: input.assignedTrainerId,
-      // Les notes clíniques ja no es fan servir (historial clínic, 0110).
-      clinical_notes: null,
       general_notes: input.generalNotes,
       referral_code: null,
       referred_by_client_id: null,

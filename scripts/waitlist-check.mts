@@ -73,7 +73,7 @@ function seed() {
     prof(MARTA.profile, "Marta Espera", "client") as never,
   );
   const client = (c: typeof PERE) => ({
-    id: c.client, profile_id: c.profile, assigned_trainer_id: RAUL, clinical_notes: null,
+    id: c.client, profile_id: c.profile, assigned_trainer_id: RAUL,
     general_notes: null, referral_code: null, referred_by_client_id: null, created_at: NOW,
   });
   s.clients.push(client(PERE) as never, client(MARTA) as never);

@@ -39,9 +39,8 @@ const check = (cond: boolean, msg: string) => {
   console.log(`  ${cond ? "✓" : "✗"} ${msg}`);
   if (!cond) fallides++;
 };
-const CLINICAL = "Lesió prèvia de genoll.";
 const reset = (general: string | null) => {
-  fake.tables = { clients: [{ id: "c-1", general_notes: general, clinical_notes: CLINICAL }] };
+  fake.tables = { clients: [{ id: "c-1", general_notes: general }] };
   fake.hooks = {};
   fake.writes = [];
 };
@@ -55,7 +54,6 @@ console.log("\nSense notes");
 reset(null);
 await appendGeneralNote("c-1", L1);
 check(row().general_notes === L1, "NULL → la línia sola");
-check(row().clinical_notes === CLINICAL, "les clíniques, intactes");
 
 console.log("\nAmb notes");
 reset("Prefereix horari de matí.  \n");
@@ -63,7 +61,6 @@ await appendGeneralNote("c-1", L1);
 check(row().general_notes === `Prefereix horari de matí.\n${L1}`, "la línia a sota, sense espais de més al final de l'anterior");
 await appendGeneralNote("c-1", L2);
 check(row().general_notes === `Prefereix horari de matí.\n${L1}\n${L2}`, "una segona, a sota de la primera");
-check(row().clinical_notes === CLINICAL, "les clíniques, intactes");
 check(fake.writes.every((w) => w.via === "session"), "escriu amb la sessió (passa per la RLS), no amb la clau de servei");
 
 console.log("\nAlgú desa alhora");

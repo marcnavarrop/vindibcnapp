@@ -287,7 +287,6 @@ export interface Database {
           id: string;
           profile_id: string;
           assigned_trainer_id: string | null;
-          clinical_notes: string | null;
           general_notes: string | null;
           referral_code: string | null;
           referred_by_client_id: string | null;
@@ -297,7 +296,6 @@ export interface Database {
           id?: string;
           profile_id: string;
           assigned_trainer_id?: string | null;
-          clinical_notes?: string | null;
           general_notes?: string | null;
           referral_code?: string | null;
           referred_by_client_id?: string | null;
@@ -307,7 +305,6 @@ export interface Database {
           id?: string;
           profile_id?: string;
           assigned_trainer_id?: string | null;
-          clinical_notes?: string | null;
           general_notes?: string | null;
           referral_code?: string | null;
           referred_by_client_id?: string | null;

@@ -57,7 +57,7 @@ try {
     const pid = `cc-u-${i}`;
     const name = i === 119 ? "Òscar Últim" : `Client ${String(i).padStart(3, "0")}`;
     s.profiles.push({ id: pid, full_name: name, email: `cc${i}@exemple.cat`, phone: i === 7 ? "+34 611 222 333" : i === 8 ? "622333444" : null, role: "client", specialty: null, preferred_language: "ca", birth_date: null, height_cm: null, weight_kg: null, gender: null, emergency_contact: null, objective: null, avatar_path: null, created_at: NOW } as never);
-    s.clients.push({ id: `cc-c-${i}`, profile_id: pid, assigned_trainer_id: i % 2 ? "u-trainer-laia" : null, clinical_notes: null, general_notes: null, referral_code: null, referred_by_client_id: null, created_at: i === 119 ? new Date().toISOString() : NOW } as never);
+    s.clients.push({ id: `cc-c-${i}`, profile_id: pid, assigned_trainer_id: i % 2 ? "u-trainer-laia" : null, general_notes: null, referral_code: null, referred_by_client_id: null, created_at: i === 119 ? new Date().toISOString() : NOW } as never);
   }
   saveStore(s);
   const totals = getStore().clients.length;

@@ -93,7 +93,7 @@ function seed() {
     prof("sc-u-pere", "Pere DeRaul", "client", null) as never,
   );
   const client = (id: string, profile: string, assigned: string | null) => ({
-    id, profile_id: profile, assigned_trainer_id: assigned, clinical_notes: null,
+    id, profile_id: profile, assigned_trainer_id: assigned,
     general_notes: null, referral_code: null, referred_by_client_id: null, created_at: NOW,
   });
   s.clients.push(
