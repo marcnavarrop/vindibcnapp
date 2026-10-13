@@ -14,6 +14,7 @@ import {
 } from "@/app/(trainer)/trainer/bonos/actions";
 import { TAP } from "@/lib/utils";
 import { demoCompatible } from "@/lib/demo-accounts";
+import { bonoServicesForOthersClients } from "@/lib/bono-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -33,16 +34,19 @@ export default async function NewTrainerBonoPage({
   ]);
   if (!client) notFound();
 
-  // Als seus clients, qualsevol bo. A la resta de clients reals, només un bo
-  // de grup (0108): sense paquets d'altres serveis ni mensualitats (la
-  // subscripció segueix essent només per als propis). Demo amb demo.
+  // Als seus clients, qualsevol bo. A la resta de clients reals, un bo de grup
+  // (0108) i, si és fisio, de fisio (0109): sense paquets d'altres serveis ni
+  // mensualitats (la subscripció segueix essent només per als propis). Demo
+  // amb demo.
   if (!viewer || !demoCompatible(client.id, viewer.id)) {
     redirect(`/trainer/clients/${clientId}`);
   }
   const own = client.assignedTrainerId === viewer.id;
+  const forOthers: string[] = bonoServicesForOthersClients(viewer.specialty);
+  const physio = viewer.specialty === "fisioterapeuta";
   const offered = own
     ? services
-    : services.filter((s) => s.serviceType === "grupo_reducido" && !s.subscriptionOnly);
+    : services.filter((s) => forOthers.includes(s.serviceType) && !s.subscriptionOnly);
 
   // Amb clientId, igual que a l'àrea d'admin: el bo és per a aquest client.
   const effectivePricesMap = await getEffectivePrices(offered, { clientId });
@@ -70,10 +74,22 @@ export default async function NewTrainerBonoPage({
         </p>
         {!own && (
           <p className="mb-6 text-sm text-brand-muted" data-not-yours>
-            No és client teu: només li pots crear un bo de grup, amb les sessions
-            i el preu del catàleg (amb l&apos;oferta, si li toca). Les
-            mensualitats i la resta de bons, el seu professional o
-            l&apos;administració.
+            {physio ? (
+              <>
+                No és client teu: li pots crear un bo de grup o de fisioteràpia,
+                amb les sessions i el preu del catàleg (amb l&apos;oferta, si li
+                toca). El de fisioteràpia es queda <b>pendent de pagament</b>
+                fins que el cobreu. Les mensualitats i la resta de bons, el seu
+                professional o l&apos;administració.
+              </>
+            ) : (
+              <>
+                No és client teu: només li pots crear un bo de grup, amb les
+                sessions i el preu del catàleg (amb l&apos;oferta, si li toca).
+                Les mensualitats i la resta de bons, el seu professional o
+                l&apos;administració.
+              </>
+            )}
           </p>
         )}
 

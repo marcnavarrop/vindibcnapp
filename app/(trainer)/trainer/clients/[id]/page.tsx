@@ -342,7 +342,9 @@ export default async function TrainerClientDetailPage({
                 "Client sense professional assignat."
               )}{" "}
               Pots consultar-ho tot, cobrar-li bons, reservar-li grups i la teva
-              especialitat a la teva agenda, i crear-li bons de grup. La resta,{" "}
+              especialitat a la teva agenda, i crear-li bons de grup
+              {viewer?.specialty === "fisioterapeuta" ? " o de fisioteràpia (pendents de pagament)" : ""}
+              . La resta,{" "}
               {client.trainerName ? "el seu professional" : "l'administració"}.
             </p>
           )

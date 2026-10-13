@@ -61,3 +61,27 @@ export const CANCEL_BLOCK_LABELS: Record<CancelBlock, string> = {
   needs_admin:
     "Aquest bo ja està cobrat. Anul·lar-lo és cosa de l'administració.",
 };
+
+/**
+ * QUINS BONS POT CREAR UN PROFESSIONAL A UN CLIENT QUE NO ÉS SEU (0108, 0109).
+ *
+ *   · Grup: qualsevol professional. Neix actiu, com sempre.
+ *   · Fisioteràpia: només un fisio (el fisio és transversal: no s'assigna al
+ *     client). Neix PENDENT DE PAGAMENT: no pot regalar sessions a un client
+ *     que no és seu, i el cobrament queda per fer.
+ *
+ * Sempre amb les sessions i el preu del catàleg; ho mira l'acció i ho torna a
+ * mirar la base. Als seus clients, qualsevol bo i actiu, com fins ara.
+ * Pura: la fa servir la pantalla «Nou bo» per no oferir el que el servidor
+ * rebutjaria.
+ */
+export function bonoServicesForOthersClients(
+  specialty: "entrenador" | "fisioterapeuta" | null,
+): ("grupo_reducido" | "fisioterapia")[] {
+  return specialty === "fisioterapeuta" ? ["grupo_reducido", "fisioterapia"] : ["grupo_reducido"];
+}
+
+/** Amb quin estat neix el bo que un professional crea a un client que no és seu. */
+export function othersBonoStatus(serviceType: string): "active" | "pending_payment" {
+  return serviceType === "fisioterapia" ? "pending_payment" : "active";
+}

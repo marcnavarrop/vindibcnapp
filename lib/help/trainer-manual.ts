@@ -81,7 +81,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Els teus clients i la resta" },
         {
           t: "p",
-          text: "La distinció recorre tota l'app i val la pena tenir-la clara des del principi. Pots CONSULTAR la fitxa de qualsevol client del centre, perquè coordinar-se demana saber què fa el company. Només pots GESTIONAR —crear bons, assignar exercicis, posar etiquetes— els clients que tens assignats, amb dues excepcions: a qualsevol client li pots crear un bo de grup, i les reserves van més enllà: a qualsevol client del centre li pots reservar un grup (de qualsevol professional) o la teva especialitat a la teva agenda, sempre amb bo; ho expliquem a Reserves.",
+          text: "La distinció recorre tota l'app i val la pena tenir-la clara des del principi. Pots CONSULTAR la fitxa de qualsevol client del centre, perquè coordinar-se demana saber què fa el company. Només pots GESTIONAR —crear bons, assignar exercicis, posar etiquetes— els clients que tens assignats, amb dues excepcions: a qualsevol client li pots crear un bo de grup (i, si ets fisio, de fisioteràpia), i les reserves van més enllà: a qualsevol client del centre li pots reservar un grup (de qualsevol professional) o la teva especialitat a la teva agenda, sempre amb bo; ho expliquem a Reserves.",
         },
         {
           t: "dl",
@@ -236,7 +236,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Si el client no és teu, sota el contacte hi surt una línia gris: «Client de …» (o «Client sense professional assignat») i què hi pots fer: consultar-ho tot, cobrar-li bons, reservar-li grups i la teva especialitat a la teva agenda, i crear-li bons de grup. La resta, el seu professional, o l'administració si no en té cap. Les accions de cada pestanya que no són d'això desapareixen.",
+          text: "Si el client no és teu, sota el contacte hi surt una línia gris: «Client de …» (o «Client sense professional assignat») i què hi pots fer: consultar-ho tot, cobrar-li bons, reservar-li grups i la teva especialitat a la teva agenda, i crear-li bons de grup (si ets fisio, també de fisioteràpia, que neixen pendents de pagament). La resta, el seu professional, o l'administració si no en té cap. Les accions de cada pestanya que no són d'això desapareixen.",
         },
         {
           t: "note",
@@ -775,7 +775,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons i pagaments. Als clients que tens assignats, qualsevol bo. A la resta, només un bo de grup: la pantalla només t'ofereix els paquets de grup que es venen solts (les mensualitats, no), t'ho diu a dalt, i les sessions i el preu són els del catàleg, amb l'oferta si al client li'n toca una; no es poden canviar. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
+          text: "Els bons es creen des de la fitxa del client, a la pestanya Bons i pagaments. Als clients que tens assignats, qualsevol bo. A la resta, un bo de grup i, si ets fisio, també de fisioteràpia (el fisio no s'assigna al client: pot atendre qualsevol client). La pantalla només t'ofereix aquests paquets, dels que es venen solts (les mensualitats, no), t'ho diu a dalt, i les sessions i el preu són els del catàleg, amb l'oferta si al client li'n toca una; no es poden canviar. El bo de fisioteràpia a un client que no és teu neix «Pendent de pagament»: el cobreu com qualsevol altre pendent. Allà mateix hi tens els mateixos botons, amb els mateixos quadres de confirmació.",
         },
         { t: "h", text: "Els paquets que no es venen solts" },
         {

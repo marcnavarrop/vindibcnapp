@@ -343,6 +343,12 @@ export type BonoInput = {
   serviceId: string;
   /** Si se indica, registra el cobro del bono con este método. */
   paymentMethod?: PaymentMethod | null;
+  /**
+   * Amb quin estat neix. Per defecte, actiu (com sempre). Pendent de pagament
+   * quan un fisio el crea a un client que no és seu (0109): no pot regalar
+   * sessions, i el cobrament queda per fer.
+   */
+  status?: "active" | "pending_payment";
 };
 
 /**
@@ -436,7 +442,7 @@ export async function createBono(input: BonoInput): Promise<string> {
       total_sessions: input.totalSessions,
       remaining_sessions: input.totalSessions,
       price: input.price,
-      status: "active",
+      status: input.status ?? "active",
       purchased_at: now,
       expires_at: expiresAt,
       first_reservation_at: null,
@@ -464,7 +470,7 @@ export async function createBono(input: BonoInput): Promise<string> {
         total_sessions: input.totalSessions,
         remaining_sessions: input.totalSessions,
         price: input.price,
-        status: "active",
+        status: input.status ?? "active",
         expires_at: expiresAt,
         service_id: input.serviceId,
       })

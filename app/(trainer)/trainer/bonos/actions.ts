@@ -9,6 +9,7 @@ import type { MarkPaidState } from "@/components/forms/mark-bono-paid-button";
 import { getClient } from "@/lib/data/clients";
 import { getService } from "@/lib/data/services";
 import { getEffectivePrice } from "@/lib/data/promotions";
+import { bonoServicesForOthersClients, othersBonoStatus } from "@/lib/bono-rules";
 import { demoCompatible } from "@/lib/demo-accounts";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
@@ -19,11 +20,15 @@ import type { ServiceType } from "@/types/database";
  * marca després amb `markTrainerBonoPaidAction`, quan el client paga de debò.
  *
  * Als seus clients, qualsevol bo (RLS `bonos_trainer_write`, 0005). A la resta
- * de clients reals, només un bo de GRUP (0108, decisió d'en Marc: els clients
- * de grup canvien d'entrenador lliurement): d'un paquet de grup que no sigui
- * només per subscripció. La base ho torna a mirar (`bonos_trainer_insert_group`);
- * aquí es diu en català què no es pot, i es mira el que la base no sap: demo
- * amb demo.
+ * de clients reals (`bonoServicesForOthersClients`):
+ *   · un bo de GRUP, qualsevol professional (0108): els clients de grup
+ *     canvien d'entrenador lliurement. Neix actiu.
+ *   · un bo de FISIO, només un fisio (0109): el fisio és transversal. Neix
+ *     PENDENT DE PAGAMENT.
+ * Sempre d'un paquet que no sigui només per subscripció, amb les sessions i el
+ * preu del catàleg. La base ho torna a mirar (`bonos_trainer_insert_group`,
+ * `bonos_physio_insert_physio`); aquí es diu en català què no es pot, i es
+ * mira el que la base no sap: demo amb demo.
  */
 export async function createTrainerBonoAction(
   clientId: string,
@@ -47,11 +52,18 @@ export async function createTrainerBonoAction(
 
   const client = await getClient(clientId);
   if (!client) return { error: "Client no trobat." };
-  if (client.assignedTrainerId !== viewer.id) {
+  const own = client.assignedTrainerId === viewer.id;
+  if (!own) {
     if (!demoCompatible(client.id, viewer.id)) return { error: "Aquest client no és teu." };
+    const allowed: string[] = bonoServicesForOthersClients(viewer.specialty);
     const pkg = await getService(serviceId);
-    if (!pkg || pkg.serviceType !== "grupo_reducido" || serviceType !== "grupo_reducido")
-      return { error: "Aquest client no és teu: només li pots crear un bo de grup." };
+    if (!pkg || pkg.serviceType !== serviceType || !allowed.includes(serviceType))
+      return {
+        error:
+          viewer.specialty === "fisioterapeuta"
+            ? "Aquest client no és teu: només li pots crear un bo de grup o de fisioteràpia."
+            : "Aquest client no és teu: només li pots crear un bo de grup.",
+      };
     // Les sessions i el preu, els del catàleg (0108): el preu del paquet o el
     // que li dona l'oferta a aquest client. La base ho torna a mirar.
     const effective = await getEffectivePrice(pkg, { clientId });
@@ -77,6 +89,8 @@ export async function createTrainerBonoAction(
       totalSessions,
       price,
       paymentMethod: null,
+      // Als seus, actiu com sempre; a la resta, el de fisio neix pendent (0109).
+      status: own ? "active" : othersBonoStatus(serviceType),
     });
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error en crear el bo." };

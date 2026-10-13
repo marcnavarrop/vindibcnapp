@@ -16,6 +16,9 @@
  *      no. I el bo baix d'un client SENSE professional surt a l'Inici de
  *      l'admin.
  *
+ *   4. Bons de fisio (0109): un fisio en crea un a un client que no és seu, i
+ *      neix pendent de pagament; un entrenador, no.
+ *
  * «Demo amb demo» el prova `npm run demo:check`. Treballa sobre el fitxer de la
  * simulació i el deixa tal com era.
  */
@@ -43,6 +46,7 @@ const { datetimeLocalToInstant } = await import("../lib/center-time");
 const bonosTrainer = await import("../app/(trainer)/trainer/bonos/actions");
 const { getAdminDashboard } = await import("../lib/data/dashboard");
 const { RedirectSignal } = await import("./shims/next-navigation");
+const { seedProfiles } = await import("../lib/mock/seed");
 
 let bad = 0;
 const check = (nom: string, ok: boolean, detall = "") => {
@@ -250,6 +254,52 @@ try {
     dash.lowBonos.some((b) => b.clientId === "c-oriol"),
     dash.lowBonos.map((b) => b.clientName).join(", "),
   );
+
+  // ─── 4. Bons de fisio (0109) ───────────────────────────────────────────────
+  // El professional de la simulació és la Laia (entrenadora). Per fer de fisio,
+  // se li canvia l'especialitat només en aquest tros, en memòria.
+  console.log("\n4. Bons de fisio (0109)\n");
+  (globalThis as { __mockRole?: string }).__mockRole = "trainer";
+  const fisPkg = getStore().services.find((x) => x.id === "s-fis-5");
+  if (!fisPkg) throw new Error("La llavor no té el «Bo de 5 sessions» de fisio.");
+  const laia = seedProfiles.find((p) => p.id === "u-trainer-laia")!;
+  const abansEsp = laia.specialty;
+  const bonosNous = (client: string, before: Set<string>) =>
+    getStore().bonos.filter((b) => b.client_id === client && !before.has(b.id));
+  const idsDe = (client: string) => new Set(getStore().bonos.filter((b) => b.client_id === client).map((b) => b.id));
+  try {
+    laia.specialty = "fisioterapeuta";
+    let abans = idsDe("c-marta");
+    r = await crea("c-marta", "fisioterapia", fisPkg.id);
+    let nous = bonosNous("c-marta", abans);
+    check(
+      "fisio: bo de fisio a la Marta (no és seva), pendent de pagament",
+      nous.length === 1 && nous[0].status === "pending_payment",
+      `${r} · ${nous.map((b) => b.status).join(", ") || "cap"}`,
+    );
+    abans = idsDe("c-marta");
+    r = await crea("c-marta", "grupo_reducido", grup.id);
+    nous = bonosNous("c-marta", abans);
+    check("fisio: bo de grup a la Marta, actiu (com a la 0108)", nous.length === 1 && nous[0].status === "active", r);
+    abans = idsDe("c-marta");
+    r = await crea("c-marta", "ep_individual", ep.id);
+    check("fisio: bo d'entrenament a la Marta (no)", bonosNous("c-marta", abans).length === 0, r);
+    abans = idsDe("c-marta");
+    r = await crea("c-marta", "fisioterapia", fisPkg.id, undefined, 1);
+    check("fisio: bo de fisio a un preu que no és del catàleg (no)", bonosNous("c-marta", abans).length === 0, r);
+    abans = idsDe("c-marta");
+    r = await crea("c-marta", "fisioterapia", fisPkg.id, fisPkg.default_sessions + 3);
+    check("fisio: bo de fisio amb més sessions que el paquet (no)", bonosNous("c-marta", abans).length === 0, r);
+    abans = idsDe("c-ana");
+    r = await crea("c-ana", "fisioterapia", fisPkg.id);
+    nous = bonosNous("c-ana", abans);
+    check("fisio: bo de fisio a l'Ana (seva), actiu com sempre", nous.length === 1 && nous[0].status === "active", r);
+  } finally {
+    laia.specialty = abansEsp;
+  }
+  const abansE = idsDe("c-marta");
+  r = await crea("c-marta", "fisioterapia", fisPkg.id);
+  check("entrenador: bo de fisio a la Marta (no)", bonosNous("c-marta", abansE).length === 0, r);
 } catch (e) {
   bad++;
   console.error(e);

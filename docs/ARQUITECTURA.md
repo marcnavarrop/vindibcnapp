@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**108 migracions SQL** a `supabase/migrations/` (`0001`–`0108`), numerades i
+**109 migracions SQL** a `supabase/migrations/` (`0001`–`0109`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -121,6 +121,13 @@ més al codi:
   `computeEffectivePrice`, arrodonit a euros); `bonos_trainer_write` (0005,
   FOR ALL dels clients assignats) no es toca. La resta de bons i les mensualitats,
   només els propis.
+- **Bons de fisio a qualsevol client** (`0109`): el fisio és transversal (no
+  s'assigna al client). Un professional amb especialitat `fisioterapeuta` pot
+  crear un bo de FISIO a qualsevol client, amb el mateix control que la 0108
+  (paquet de fisio actiu i no només per subscripció, sessions del paquet, preu
+  del catàleg o d'una oferta activa), però neix **pendent de pagament**: no pot
+  regalar sessions a un client que no és seu. És una política a part
+  (`bonos_physio_insert_physio`); la 0108 no es toca.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de
@@ -288,7 +295,7 @@ lib/*.ts                           regles pures compartides per pantalla i servi
 lib/help/                          els 3 manuals d'usuari, com a dades i no com a JSX
 lib/notifications/                 avisos: plantilles, log, correu, comunitat
 lib/mock/                          el mode simulació
-supabase/migrations/               108 fitxers SQL numerats, aplicats a mà
+supabase/migrations/               109 fitxers SQL numerats, aplicats a mà
 messages/{ca,es,en}.json           i18n del client i les pàgines públiques
 scripts/                           comprovacions (*:check) i eines de suport
 docs/                              aquest document, EMAILS.md i la guia de proves
