@@ -349,17 +349,17 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Una targeta per bo, amb el servei, les sessions que et queden en gran i de quantes era, i la data de caducitat si en té. La barra creix a mesura que el vas gastant: mostra el que has consumit, no el que et queda. Un bo pendent de pagament ho diu amb una etiqueta.",
-            es: "Una tarjeta por bono, con el servicio, las sesiones que te quedan en grande y de cuántas era, y la fecha de caducidad si la tiene. La barra crece a medida que lo vas gastando: muestra lo que has consumido, no lo que te queda. Un bono pendiente de pago lo dice con una etiqueta.",
-            en: "One card per pass, with the service, the sessions left in large type and how many it had, and the expiry date if it has one. The bar grows as you use it up: it shows what you've spent, not what's left. A pass awaiting payment says so with a label.",
+            ca: "Fins a tres bons dels que encara tenen sessions (primer els que s'acaben i després els que caduquen abans); la resta, a «Veure tots». Cada targeta porta el servei, les sessions que et queden en gran i de quantes era, i la data de caducitat si en té. La barra creix a mesura que el vas gastant: mostra el que has consumit, no el que et queda. Un bo pendent de pagament ho diu amb una etiqueta.",
+            es: "Hasta tres bonos de los que aún tienen sesiones (primero los que se acaban y después los que caducan antes); el resto, en «Ver todos». Cada tarjeta lleva el servicio, las sesiones que te quedan en grande y de cuántas era, y la fecha de caducidad si la tiene. La barra crece a medida que lo vas gastando: muestra lo que has consumido, no lo que te queda. Un bono pendiente de pago lo dice con una etiqueta.",
+            en: "Up to three passes that still have sessions (those running out first, then those expiring soonest); the rest are under «See all». Each card shows the service, the sessions left in large type and how many it had, and the expiry date if it has one. The bar grows as you use it up: it shows what you've spent, not what's left. A pass awaiting payment says so with a label.",
           }),
         },
         {
           t: "p",
           text: T({
-            ca: `Quan a un bo li queden ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys, o ja s'ha acabat i no en tens cap altre d'aquell servei, hi surt «Renovar»: porta a comprar el mateix paquet, ja triat. El preu, la manera de pagar i la confirmació són els de sempre. Els bons d'una subscripció o d'un regal no el porten.`,
-            es: `Cuando a un bono le quedan ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sesión" : "sesiones"} o menos, o ya se ha terminado y no tienes otro de ese servicio, aparece «Renovar»: lleva a comprar el mismo paquete, ya elegido. El precio, la forma de pago y la confirmación son los de siempre. Los bonos de una suscripción o de un regalo no lo llevan.`,
-            en: `When a pass has ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "session" : "sessions"} or fewer left, or it's used up and you have no other pass for that service, a «Renew» button appears: it takes you to buy the same package, already selected. The price, payment method and confirmation are the usual ones. Passes from a subscription or a gift don't have it.`,
+            ca: `Quan a un bo li queden ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys, hi surt «Renovar»: porta a comprar el mateix paquet, ja triat. El preu, la manera de pagar i la confirmació són els de sempre. Els bons d'una subscripció o d'un regal no el porten.`,
+            es: `Cuando a un bono le quedan ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sesión" : "sesiones"} o menos, aparece «Renovar»: lleva a comprar el mismo paquete, ya elegido. El precio, la forma de pago y la confirmación son los de siempre. Los bonos de una suscripción o de un regalo no lo llevan.`,
+            en: `When a pass has ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "session" : "sessions"} or fewer left, a «Renew» button appears: it takes you to buy the same package, already selected. The price, payment method and confirmation are the usual ones. Passes from a subscription or a gift don't have it.`,
           }),
         },
         {

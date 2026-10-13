@@ -140,7 +140,7 @@ const BONO_TONE: Partial<Record<BonoStatus, "success" | "attention">> = {
 
 /**
  * Pot sortir-hi «Renovar»: el bo és d'un paquet de la botiga (no d'un regal,
- * d'una subscripció ni fet a mà) i s'ha acabat o en queden poques. Porta a
+ * d'una subscripció ni fet a mà) i en queden poques (el llindar dels bons baixos). Porta a
  * comprar el mateix paquet (`/client/bonos?paquet=…`), amb el preu, el
  * pagament i la confirmació de sempre.
  */
@@ -151,17 +151,14 @@ export function canRenew(b: ClientBono, lowThreshold: number): boolean {
 /**
  * Les sessions que li queden a cada bo, en gran, i «Renovar» quan s'acaba.
  *
- * `bonos` són els que es poden fer servir; `finished`, els que s'han acabat
- * d'un servei del qual ja no en té cap més (perquè el «Renovar» hi sigui quan
- * més falta fa: quan ja no pot reservar).
+ * Arriben ja triats per la pàgina: només els que tenen sessions i, com a
+ * molt, tres. La resta, a «Veure tots».
  */
 export async function BonoBalance({
   bonos,
-  finished,
   lowThreshold,
 }: {
   bonos: ClientBono[];
-  finished: ClientBono[];
   lowThreshold: number;
 }) {
   const [t, tl, ts, locale] = await Promise.all([
@@ -170,7 +167,6 @@ export async function BonoBalance({
     getTranslations("labels.bonoStatus"),
     getLocale() as Promise<Locale>,
   ]);
-  const all = [...bonos, ...finished];
 
   return (
     <section>
@@ -182,11 +178,11 @@ export async function BonoBalance({
           href="/client/bonos/meus"
           className={`text-xs font-bold tracking-wide text-brand-purple uppercase hover:text-brand-purple-dark hover:underline ${TAP}`}
         >
-          {t("seeAll")}
+          {t("seeAllShort")}
         </Link>
       </div>
 
-      {all.length === 0 ? (
+      {bonos.length === 0 ? (
         <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
           {t("empty")}{" "}
           <Link
@@ -199,8 +195,7 @@ export async function BonoBalance({
         </p>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {all.map((b) => {
-            const done = b.status === "completed";
+          {bonos.map((b) => {
             const used = b.totalSessions - b.remainingSessions;
             const pct = b.totalSessions > 0 ? (used / b.totalSessions) * 100 : 0;
             const renew = canRenew(b, lowThreshold);
@@ -214,14 +209,10 @@ export async function BonoBalance({
                     <IconBox name="ticket" />
                     <p className="min-w-0 truncate font-bold text-brand-dark">{tl(b.serviceType)}</p>
                   </div>
-                  {done ? (
-                    <Badge tone="neutral">{t("finished")}</Badge>
-                  ) : (
-                    BONO_TONE[b.status] && (
-                      <Badge tone={BONO_TONE[b.status]!} icon="pending">
-                        {ts(b.status)}
-                      </Badge>
-                    )
+                  {BONO_TONE[b.status] && (
+                    <Badge tone={BONO_TONE[b.status]!} icon="pending">
+                      {ts(b.status)}
+                    </Badge>
                   )}
                 </div>
 
@@ -244,12 +235,10 @@ export async function BonoBalance({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  {!done && (
-                    <p className="flex items-center gap-1.5 text-xs text-brand-muted">
-                      <Icon name="calendar" size={13} />
-                      {b.expiresAt ? t("expiresOn", { date: formatDate(b.expiresAt, locale) }) : t("noExpiry")}
-                    </p>
-                  )}
+                  <p className="flex items-center gap-1.5 text-xs text-brand-muted">
+                    <Icon name="calendar" size={13} />
+                    {b.expiresAt ? t("expiresOn", { date: formatDate(b.expiresAt, locale) }) : t("noExpiry")}
+                  </p>
                   {renew && (
                     <Link
                       href={`/client/bonos?paquet=${encodeURIComponent(b.serviceId!)}`}

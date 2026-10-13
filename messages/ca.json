@@ -188,8 +188,8 @@
       "left": "{left, plural, one {# sessió} other {# sessions}}",
       "ofTotal": "de {total}",
       "renew": "Renovar",
-      "finished": "Acabat",
-      "morePacks": "Més gestions de bons →"
+      "morePacks": "Més gestions de bons →",
+      "seeAllShort": "Veure tots →"
     },
     "upcoming": {
       "title": "Properes reserves",

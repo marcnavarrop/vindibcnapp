@@ -18,6 +18,7 @@ import {
   NextSessionHero,
   BookCta,
   BonoBalance,
+  canRenew,
   UpcomingReservations,
 } from "@/components/client/home-sections";
 import { GiftCta, ReferralCta } from "@/components/client/growth-cards";
@@ -30,6 +31,8 @@ export const dynamic = "force-dynamic";
 
 /** Quantes reserves i quants anuncis caben a l'inici abans de "veure'ls tots". */
 const MAX_UPCOMING = 3;
+/** Quants bons surten a «Sessions que et queden». */
+const MAX_BONOS = 3;
 
 export default async function ClientHome() {
   const [t, locale] = await Promise.all([
@@ -80,14 +83,17 @@ export default async function ClientHome() {
   }
 
   const bonos = usableBonos(client);
-  // Els bons acabats d'un servei del qual ja no en té cap més: és quan més
-  // falta fa «Renovar» (ja no pot reservar). Un per servei.
-  const finished = client.bonos.filter(
-    (b, i, all) =>
-      b.status === "completed" &&
-      !bonos.some((u) => u.serviceType === b.serviceType) &&
-      all.findIndex((x) => x.status === "completed" && x.serviceType === b.serviceType) === i,
-  );
+  // «Sessions que et queden»: només els bons amb sessions i, com a molt,
+  // MAX_BONOS; la resta, a «Veure tots». Primer els que es poden renovar (els
+  // que s'acaben) i després els que caduquen abans.
+  const shownBonos = bonos
+    .filter((b) => b.remainingSessions > 0)
+    .sort(
+      (a, b) =>
+        Number(canRenew(b, centerSettings.bonoLowThreshold)) - Number(canRenew(a, centerSettings.bonoLowThreshold)) ||
+        (a.expiresAt ?? "9999").localeCompare(b.expiresAt ?? "9999"),
+    )
+    .slice(0, MAX_BONOS);
   const upcoming = upcomingReservations(client, new Date().toISOString());
 
   // El nom i la foto surten del directori de professionals, no de la reserva:
@@ -142,7 +148,7 @@ export default async function ClientHome() {
 
       <BookCta />
 
-      <BonoBalance bonos={bonos} finished={finished} lowThreshold={centerSettings.bonoLowThreshold} />
+      <BonoBalance bonos={shownBonos} lowThreshold={centerSettings.bonoLowThreshold} />
 
       {later.length > 0 && (
         <UpcomingReservations

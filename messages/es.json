@@ -188,8 +188,8 @@
       "left": "{left, plural, one {# sesión} other {# sesiones}}",
       "ofTotal": "de {total}",
       "renew": "Renovar",
-      "finished": "Terminado",
-      "morePacks": "Más gestiones de bonos →"
+      "morePacks": "Más gestiones de bonos →",
+      "seeAllShort": "Ver todos →"
     },
     "upcoming": {
       "title": "Próximas reservas",

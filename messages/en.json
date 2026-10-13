@@ -188,8 +188,8 @@
       "left": "{left, plural, one {# session} other {# sessions}}",
       "ofTotal": "of {total}",
       "renew": "Renew",
-      "finished": "Used up",
-      "morePacks": "More on your passes →"
+      "morePacks": "More on your passes →",
+      "seeAllShort": "See all →"
     },
     "upcoming": {
       "title": "Upcoming bookings",
