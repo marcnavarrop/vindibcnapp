@@ -138,6 +138,8 @@ function UpdatePasswordInner() {
               required
               minLength={MIN_PASSWORD_LENGTH}
               autoComplete="new-password"
+              showLabel={t("showPassword")}
+              hideLabel={t("hidePassword")}
             />
             <PasswordField
               label={t("repeatPassword")}
@@ -145,8 +147,14 @@ function UpdatePasswordInner() {
               required
               minLength={MIN_PASSWORD_LENGTH}
               autoComplete="new-password"
+              showLabel={t("showPassword")}
+              hideLabel={t("hidePassword")}
             />
-            {error && <p className="text-sm text-error">{error}</p>}
+            {error && (
+              <p role="alert" className="text-sm text-error">
+                {error}
+              </p>
+            )}
             <Button type="submit" disabled={loading}>
               {loading ? t("saving") : t("save")}
             </Button>

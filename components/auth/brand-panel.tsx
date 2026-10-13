@@ -72,9 +72,11 @@ export async function BrandPanel() {
         </span>
 
         <div className="flex flex-col gap-1.5">
-          <h2 className="font-display text-2xl leading-tight font-bold text-balance sm:text-[1.75rem]">
+          {/* Un <p> i no un <h2>: anava abans del <h1> del formulari i el
+              lector de pantalla començava la pàgina per un subtítol. */}
+          <p className="font-display text-2xl leading-tight font-bold text-balance sm:text-[1.75rem]">
             {t("headline")}
-          </h2>
+          </p>
           <p className="max-w-sm text-sm leading-relaxed text-white/70">
             {t("subtitle")}
           </p>

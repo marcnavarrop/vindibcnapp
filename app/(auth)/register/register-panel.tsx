@@ -268,6 +268,8 @@ export function RegisterPanel() {
           required
           minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
+          showLabel={t("showPassword")}
+          hideLabel={t("hidePassword")}
         />
 
         <PasswordField
@@ -276,6 +278,8 @@ export function RegisterPanel() {
           required
           minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
+          showLabel={t("showPassword")}
+          hideLabel={t("hidePassword")}
         />
 
         {/* Dades opcionals. Mateixos camps i mateixos límits que a
@@ -373,7 +377,11 @@ export function RegisterPanel() {
 
         <RequiredNote>{t("requiredNote")}</RequiredNote>
 
-        {error && <p className="text-sm text-error">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-error">
+            {error}
+          </p>
+        )}
 
         <Button type="submit" disabled={loading || !acceptPrivacy}>
           {loading ? t("submitting") : t("submit")}

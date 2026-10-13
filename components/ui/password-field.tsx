@@ -96,7 +96,9 @@ export function PasswordField({
               : (showLabel ?? "Mostrar la contrasenya")
           }
           aria-pressed={visible}
-          className={`absolute top-1/2 right-3 -translate-y-1/2 rounded-md p-0.5 text-brand-muted transition-colors hover:text-brand-purple active:bg-brand-bg ${TAP}`}
+          // 40×40 de zona de toc (abans 22×22, per sota del mínim de 24 de
+          // WCAG 2.5.8); la icona es queda igual i al mateix lloc.
+          className={`absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-brand-muted transition-colors hover:text-brand-purple active:bg-brand-bg ${TAP}`}
         >
           <EyeIcon off={visible} />
         </button>

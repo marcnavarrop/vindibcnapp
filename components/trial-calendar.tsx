@@ -358,7 +358,13 @@ export function TrialCalendar({
                         isToday ? "bg-brand-purple/5" : "bg-brand-bg",
                       )}
                     >
-                      <div className="text-xs font-bold tracking-wide text-brand-muted uppercase">
+                      <div
+                        className={clsx(
+                          "text-xs font-bold tracking-wide uppercase",
+                          // Sobre el fons lila d'avui, el gris no arriba a 4,5:1.
+                          isToday ? "text-brand-purple" : "text-brand-muted",
+                        )}
+                      >
                         {dayNames[weekdayOf(d)]}
                       </div>
                       <div className="text-sm font-bold text-brand-dark">

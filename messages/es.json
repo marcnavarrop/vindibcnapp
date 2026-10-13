@@ -25,7 +25,9 @@
     "errorConnection": "Ha habido un problema de conexión. Inténtalo de nuevo.",
     "demoTitle": "Entrar (modo demo)",
     "demoSubtitle": "Simulación sin Supabase. Elige con qué rol quieres entrar; los datos son de ejemplo.",
-    "demoEnterAs": "Entrar como {role}"
+    "demoEnterAs": "Entrar como {role}",
+    "showPassword": "Mostrar la contraseña",
+    "hidePassword": "Ocultar la contraseña"
   },
   "forgotPassword": {
     "title": "Restablecer la contraseña",
@@ -47,7 +49,9 @@
     "saving": "Guardando…",
     "errorTooShort": "La contraseña debe tener como mínimo {min} caracteres.",
     "errorMismatch": "Las contraseñas no coinciden.",
-    "errorConnection": "Ha habido un problema de conexión. Vuelve a intentarlo."
+    "errorConnection": "Ha habido un problema de conexión. Vuelve a intentarlo.",
+    "showPassword": "Mostrar la contraseña",
+    "hidePassword": "Ocultar la contraseña"
   },
   "confirmEmail": {
     "title": "Cambiar el correo de acceso",
@@ -143,7 +147,9 @@
       "noBirthDate": "Hace falta tu fecha de nacimiento.",
       "shortPassword": "La contraseña debe tener al menos 8 caracteres.",
       "passwordMismatch": "Las contraseñas no coinciden."
-    }
+    },
+    "showPassword": "Mostrar la contraseña",
+    "hidePassword": "Ocultar la contraseña"
   },
   "home": {
     "greeting": "¡Hola, {name}! 👋",

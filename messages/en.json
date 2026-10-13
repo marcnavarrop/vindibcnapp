@@ -25,7 +25,9 @@
     "errorConnection": "There was a connection problem. Please try again.",
     "demoTitle": "Sign in (demo mode)",
     "demoSubtitle": "Simulation without Supabase. Choose which role to enter as; the data is sample data.",
-    "demoEnterAs": "Enter as {role}"
+    "demoEnterAs": "Enter as {role}",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "forgotPassword": {
     "title": "Reset your password",
@@ -47,7 +49,9 @@
     "saving": "Saving…",
     "errorTooShort": "The password must be at least {min} characters long.",
     "errorMismatch": "The passwords don't match.",
-    "errorConnection": "There was a connection problem. Please try again."
+    "errorConnection": "There was a connection problem. Please try again.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "confirmEmail": {
     "title": "Change your sign-in email",
@@ -143,7 +147,9 @@
       "noBirthDate": "Your date of birth is required.",
       "shortPassword": "The password must be at least 8 characters.",
       "passwordMismatch": "The passwords don't match."
-    }
+    },
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "home": {
     "greeting": "Hi, {name}! 👋",

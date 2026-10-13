@@ -10,7 +10,7 @@ export const BRAND = {
   orange: "#ff6d17", // --color-brand-orange: només el logo, des del pas 7
   dark: "#1b1d1f", // --color-brand-dark
   charcoal: "#303133", // --color-brand-charcoal (text principal)
-  muted: "#777777", // --color-brand-muted (el fan servir els PDF)
+  muted: "#717171", // --color-brand-muted (el fan servir els PDF)
   /*
    * Text secundari dels CORREUS (etiquetes, peu). El muted fa 4,48:1 sobre
    * blanc i 4,18:1 sobre el gris: per sota d'AA. Aquest és el

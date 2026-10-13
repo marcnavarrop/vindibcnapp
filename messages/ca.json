@@ -25,7 +25,9 @@
     "errorConnection": "Hi ha hagut un problema de connexió. Torna-ho a provar.",
     "demoTitle": "Entrar (mode demo)",
     "demoSubtitle": "Simulació sense Supabase. Tria amb quin rol vols entrar; les dades són d'exemple.",
-    "demoEnterAs": "Entrar com a {role}"
+    "demoEnterAs": "Entrar com a {role}",
+    "showPassword": "Mostrar la contrasenya",
+    "hidePassword": "Amagar la contrasenya"
   },
   "forgotPassword": {
     "title": "Restablir la contrasenya",
@@ -47,7 +49,9 @@
     "saving": "Desant…",
     "errorTooShort": "La contrasenya ha de tenir com a mínim {min} caràcters.",
     "errorMismatch": "Les contrasenyes no coincideixen.",
-    "errorConnection": "Hi ha hagut un problema de connexió. Torna-ho a provar."
+    "errorConnection": "Hi ha hagut un problema de connexió. Torna-ho a provar.",
+    "showPassword": "Mostrar la contrasenya",
+    "hidePassword": "Amagar la contrasenya"
   },
   "confirmEmail": {
     "title": "Canviar el correu d'accés",
@@ -143,7 +147,9 @@
       "noBirthDate": "Cal la teva data de naixement.",
       "shortPassword": "La contrasenya ha de tenir com a mínim 8 caràcters.",
       "passwordMismatch": "Les contrasenyes no coincideixen."
-    }
+    },
+    "showPassword": "Mostrar la contrasenya",
+    "hidePassword": "Amagar la contrasenya"
   },
   "home": {
     "greeting": "Hola, {name}! 👋",

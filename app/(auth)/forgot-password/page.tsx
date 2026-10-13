@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
             {/* L'acció torna un CODI, no una frase: qui sap l'idioma és la
                 pantalla, no el servidor. Mateix criteri que la sessió de prova. */}
             {state.errorCode && (
-              <p className="text-sm text-error">{t("errorBadEmail")}</p>
+              <p role="alert" className="text-sm text-error">{t("errorBadEmail")}</p>
             )}
             <SubmitButton pendingLabel={t("submitting")}>
               {t("submit")}

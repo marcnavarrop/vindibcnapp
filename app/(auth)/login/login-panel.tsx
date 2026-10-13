@@ -187,6 +187,8 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
           autoComplete="current-password"
           placeholder={t("passwordPlaceholder")}
           icon={<LockIcon />}
+          showLabel={t("showPassword")}
+          hideLabel={t("hidePassword")}
         />
 
         <div className="flex justify-end">
@@ -198,7 +200,11 @@ function LoginForm({ trialCta }: { trialCta?: React.ReactNode }) {
           </Link>
         </div>
 
-        {error && <p className="text-sm text-error">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-error">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"

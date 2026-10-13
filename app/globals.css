@@ -19,7 +19,11 @@
   --color-brand-orange: #ff6d17; /* marca (logo) i GRUPS: des del pas 7, res més. Per a text, group-ink */
   --color-brand-dark: #1b1d1f;
   --color-brand-charcoal: #303133;
-  --color-brand-muted: #777777;
+  /* Text secundari. Era #777777: 4,48:1 sobre blanc i 4,18:1 sobre el fons
+     gris, per sota d'AA (4,5:1) per a text de 14 px. #717171 és el gris més
+     clar que hi arriba a tots dos llocs (4,88:1 i 4,56:1): a la vista, el
+     mateix gris. */
+  --color-brand-muted: #717171;
   /* Text de les pestanyes NO actives. El muted fa 4,48:1 sobre blanc i 4,1:1
      sobre el fons gris de la pàgina: per sota del mínim AA (4,5:1) per a text
      de 14 px. Aquest fa 6,6:1 i 6,2:1, i segueix sent clarament més suau que
@@ -69,6 +73,19 @@ body {
    no en vol dos: l'accés del marc (`SupportTrigger`) s'amaga NOMÉS allà. */
 body:has([data-support-inline]) [data-support-fab] {
   display: none;
+}
+
+/* Camps de text a 16 px al mòbil.
+   Safari d'iPhone fa zoom a la pàgina quan es toca un camp amb la lletra per
+   sota de 16 px, i tots els de l'app anaven a 14 (`text-sm`). Fora de capa a
+   propòsit: així guanya les utilitats de Tailwind, que van dins de la capa
+   `utilities`. Cap camp de l'app fa servir una lletra més gran que això. */
+@media (max-width: 639.98px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* Titulares con la serif de marca */
