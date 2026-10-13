@@ -189,7 +189,8 @@
       "ofTotal": "de {total}",
       "renew": "Renovar",
       "morePacks": "Más gestiones de bonos →",
-      "seeAllShort": "Ver todos →"
+      "seeAllShort": "Ver todos →",
+      "finishedLine": "Se te ha terminado el bono de {service}."
     },
     "upcoming": {
       "title": "Próximas reservas",

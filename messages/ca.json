@@ -189,7 +189,8 @@
       "ofTotal": "de {total}",
       "renew": "Renovar",
       "morePacks": "Més gestions de bons →",
-      "seeAllShort": "Veure tots →"
+      "seeAllShort": "Veure tots →",
+      "finishedLine": "Se t'ha acabat el bo de {service}."
     },
     "upcoming": {
       "title": "Properes reserves",

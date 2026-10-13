@@ -357,9 +357,9 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: `Quan a un bo li queden ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys, hi surt «Renovar»: porta a comprar el mateix paquet, ja triat. El preu, la manera de pagar i la confirmació són els de sempre. Els bons d'una subscripció o d'un regal no el porten.`,
-            es: `Cuando a un bono le quedan ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sesión" : "sesiones"} o menos, aparece «Renovar»: lleva a comprar el mismo paquete, ya elegido. El precio, la forma de pago y la confirmación son los de siempre. Los bonos de una suscripción o de un regalo no lo llevan.`,
-            en: `When a pass has ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "session" : "sessions"} or fewer left, a «Renew» button appears: it takes you to buy the same package, already selected. The price, payment method and confirmation are the usual ones. Passes from a subscription or a gift don't have it.`,
+            ca: `Quan a un bo li queden ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sessió" : "sessions"} o menys, hi surt «Renovar»: porta a comprar el mateix paquet, ja triat. Si un bo s'ha acabat i no en tens cap altre amb sessions d'aquell servei, el bo ja no surt a la llista, però a sota hi ha una línia «Se t'ha acabat el bo de…» amb el seu «Renovar». El preu, la manera de pagar i la confirmació són els de sempre. Els bons d'una subscripció o d'un regal no el porten.`,
+            es: `Cuando a un bono le quedan ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "sesión" : "sesiones"} o menos, aparece «Renovar»: lleva a comprar el mismo paquete, ya elegido. Si un bono se ha terminado y no tienes otro con sesiones de ese servicio, el bono ya no sale en la lista, pero debajo hay una línea «Se te ha terminado el bono de…» con su «Renovar». El precio, la forma de pago y la confirmación son los de siempre. Los bonos de una suscripción o de un regalo no lo llevan.`,
+            en: `When a pass has ${s.bonoLowThreshold} ${s.bonoLowThreshold === 1 ? "session" : "sessions"} or fewer left, a «Renew» button appears: it takes you to buy the same package, already selected. If a pass is used up and you have no other pass with sessions for that service, it no longer appears in the list, but underneath there's a line «Your … pass is used up» with its own «Renew». The price, payment method and confirmation are the usual ones. Passes from a subscription or a gift don't have it.`,
           }),
         },
         {

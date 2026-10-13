@@ -189,7 +189,8 @@
       "ofTotal": "of {total}",
       "renew": "Renew",
       "morePacks": "More on your passes →",
-      "seeAllShort": "See all →"
+      "seeAllShort": "See all →",
+      "finishedLine": "Your {service} pass is used up."
     },
     "upcoming": {
       "title": "Upcoming bookings",

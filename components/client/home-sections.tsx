@@ -152,13 +152,16 @@ export function canRenew(b: ClientBono, lowThreshold: number): boolean {
  * Les sessions que li queden a cada bo, en gran, i «Renovar» quan s'acaba.
  *
  * Arriben ja triats per la pàgina: només els que tenen sessions i, com a
- * molt, tres. La resta, a «Veure tots».
+ * molt, tres. La resta, a «Veure tots». A sota, una línia per cada bo acabat
+ * d'un servei del qual ja no en queda cap (`finished`), amb el seu «Renovar».
  */
 export async function BonoBalance({
   bonos,
+  finished = [],
   lowThreshold,
 }: {
   bonos: ClientBono[];
+  finished?: ClientBono[];
   lowThreshold: number;
 }) {
   const [t, tl, ts, locale] = await Promise.all([
@@ -182,7 +185,7 @@ export async function BonoBalance({
         </Link>
       </div>
 
-      {bonos.length === 0 ? (
+      {bonos.length === 0 && finished.length === 0 ? (
         <p className="rounded-2xl border border-brand-border bg-white px-5 py-6 text-sm text-brand-muted">
           {t("empty")}{" "}
           <Link
@@ -193,7 +196,7 @@ export async function BonoBalance({
           </Link>{" "}
           {t("emptyTail")}
         </p>
-      ) : (
+      ) : bonos.length === 0 ? null : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {bonos.map((b) => {
             const used = b.totalSessions - b.remainingSessions;
@@ -251,6 +254,28 @@ export async function BonoBalance({
               </li>
             );
           })}
+        </ul>
+      )}
+
+      {finished.length > 0 && (
+        <ul className={`flex flex-col gap-2 ${bonos.length > 0 ? "mt-3" : ""}`}>
+          {finished.map((b) => (
+            <li
+              key={b.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-border bg-white px-4 py-3"
+            >
+              <span className="flex min-w-0 items-center gap-2.5 text-sm text-brand-dark">
+                <IconBox name="ticket" />
+                {t("finishedLine", { service: tl(b.serviceType) })}
+              </span>
+              <Link
+                href={`/client/bonos?paquet=${encodeURIComponent(b.serviceId!)}`}
+                className={`inline-flex min-h-10 items-center rounded-lg border border-brand-purple px-3 text-sm font-bold text-brand-purple hover:bg-brand-purple/10 ${TAP}`}
+              >
+                {t("renew")}
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
     </section>

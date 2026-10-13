@@ -94,6 +94,16 @@ export default async function ClientHome() {
         (a.expiresAt ?? "9999").localeCompare(b.expiresAt ?? "9999"),
     )
     .slice(0, MAX_BONOS);
+  // Bons ACABATS d'un servei del qual ja no en té cap amb sessions: no surten a
+  // la llista (no queda res a gastar), però sí el seu «Renovar», que és quan més
+  // falta fa. Un per servei, i només si es pot renovar (paquet de la botiga).
+  const finished = client.bonos.filter(
+    (b, i, all) =>
+      b.status === "completed" &&
+      canRenew(b, centerSettings.bonoLowThreshold) &&
+      !bonos.some((u) => u.serviceType === b.serviceType && u.remainingSessions > 0) &&
+      all.findIndex((x) => x.status === "completed" && x.serviceType === b.serviceType && !!x.serviceId) === i,
+  );
   const upcoming = upcomingReservations(client, new Date().toISOString());
 
   // El nom i la foto surten del directori de professionals, no de la reserva:
@@ -148,7 +158,7 @@ export default async function ClientHome() {
 
       <BookCta />
 
-      <BonoBalance bonos={shownBonos} lowThreshold={centerSettings.bonoLowThreshold} />
+      <BonoBalance bonos={shownBonos} finished={finished} lowThreshold={centerSettings.bonoLowThreshold} />
 
       {later.length > 0 && (
         <UpcomingReservations
