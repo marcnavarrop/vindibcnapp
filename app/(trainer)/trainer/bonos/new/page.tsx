@@ -78,7 +78,7 @@ export default async function NewTrainerBonoPage({
               <>
                 No és client teu: li pots crear un bo de grup o de fisioteràpia,
                 amb les sessions i el preu del catàleg (amb l&apos;oferta, si li
-                toca). El de fisioteràpia es queda <b>pendent de pagament</b>
+                toca). El de fisioteràpia es queda <b>pendent de pagament</b>{" "}
                 fins que el cobreu. Les mensualitats i la resta de bons, el seu
                 professional o l&apos;administració.
               </>
