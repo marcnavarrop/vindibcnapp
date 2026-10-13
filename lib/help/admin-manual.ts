@@ -211,11 +211,15 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
               "Recompenses de referit per aplicar",
               "Descomptes ja guanyats que esperen la propera compra del beneficiari.",
             ],
+            [
+              "Clients sense entrenador amb bo d'entrenament",
+              "Clients sense entrenador assignat que tenen un bo d'individual o de parelles actiu o pendent (l'han pogut comprar sols, amb targeta o «pagar al centre»). No el poden reservar fins que se'ls assigni un entrenador. «Veure» porta a Clients filtrat per «Sense professional».",
+            ],
           ],
         },
         {
           t: "note",
-          text: "Si no hi ha res de les tres coses, la secció no es pinta. Un plafó d'atenció que gairebé sempre ensenya tres zeros deixa de mirar-se, i llavors el dia que hi hagi alguna cosa tampoc es veurà.",
+          text: "Si no hi ha res de res, la secció no es pinta, i cada fila només surt si té alguna cosa. Un plafó d'atenció que gairebé sempre ensenya zeros deixa de mirar-se, i llavors el dia que hi hagi alguna cosa tampoc es veurà.",
         },
         { t: "h", text: "Avui al centre" },
         {

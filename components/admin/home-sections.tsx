@@ -484,6 +484,18 @@ export function Attention({ a }: { a: AdminAttention }) {
           cta="Veure"
         />
       )}
+
+      {/* Un client sense entrenador pot comprar sol un bo d'individual o de
+          parelles, però no el pot reservar fins que en tingui un d'assignat.
+          Cap altre avís no ho diu. */}
+      {a.trainingWithoutTrainer > 0 && (
+        <AttentionRow
+          title={`Clients sense entrenador amb bo d'entrenament: ${a.trainingWithoutTrainer}`}
+          detail="Tenen un bo d'individual o de parelles i no el poden reservar fins que se'ls assigni un entrenador."
+          href="/admin/clients?trainer=none"
+          cta="Veure"
+        />
+      )}
     </AttentionPanel>
   );
 }
