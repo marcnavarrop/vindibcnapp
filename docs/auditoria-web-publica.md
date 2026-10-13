@@ -70,6 +70,14 @@ Detalle de cada punto:
 - **Stripe no figura en la Política de Privacidad** entre los encargados del tratamiento, aunque se cobra con Stripe (bonos, vales y suscripciones). Tampoco se concretan las transferencias internacionales (Vercel, Resend y Stripe son empresas de EE. UU.) (L2).
 - Siguen abiertos para el asesor: el consentimiento de los datos de salud en el alta (L3), la finalidad y la conservación de los datos de quien pide una prueba (L4) y añadir la cookie `vindi_locale` a la política de cookies (L5).
 
+### Segunda ronda (13/10/2026, noche)
+
+- **Corrección:** en el informe dije que el error #310 «rompe /admin/facturacio». No es exacto. Solo salta al entrar por la dirección `/admin/facturacio` (o un enlace antiguo); el menú enlaza directamente a Tarifes y no falla, y aun cuando falla, Tarifes acaba pintándose. La causa es el router de Next con un `redirect()` dentro de una página del área de admin. **Arreglo preparado en la rama `fix-facturacio-redirect` (`47a39f7`), sin push** porque es la sección de facturación: la redirección pasa a `next.config.ts` (307) y desaparece la página; verificado en simulación sin ningún error.
+- **Hidratación en Safari (#418), arreglado y en producción (`835c2c9`):** `formatDate` en catalán salía «05 de juny del 2026» en el servidor y Chrome pero «05 juny 2026» en Safari. Ahora el patrón se compone a mano (`catalanShortDate`) y da lo mismo que antes en Chrome (comprobado los 365 días). Los bloqueos de disponibilidad, además, ya usan la hora del centro. Cero errores en 15 pantallas en WebKit y Chromium; correos idénticos.
+- **`/login?error=`:** debí parar antes del push porque tocaba el acceso. Verificado en producción, solo leyendo, en Chromium y WebKit: el enlace caducado (`/auth/callback` sin código válido → `?error=link`) y el aviso del modo PRE (`?error=preExpired`) muestran su mensaje en ca/es/en, y un texto inventado no se pinta. El salto real de vuelta del modo PRE con la sesión caducada no se ha provocado.
+- **Fuentes (punto 5), en producción (`ba36f6a` + `80b6408`):** Lora solo en los títulos grandes; las etiquetas pequeñas en mayúsculas (`h2`/`h3` con `uppercase`, 57) en Roboto Condensed. Verificado en producción en Chromium y WebKit.
+- **Cabeceras (punto 6), en producción (`03a73a2`):** `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, sin `x-powered-by` y CSP en Report-Only con `Reporting-Endpoints`. `/api/csp-report` responde 204. **No he podido leer los registros de Vercel** desde aquí (la API de registros da 403 y no hay CLI): las líneas `[csp]` hay que mirarlas en el panel de Vercel (Logs, buscar `[csp]`). Hay una línea de prueba enviada a mano a las 17:55 (`prova-manual-marc`) para saber que llegan.
+
 ### Capturas del después
 
 | Fichero | Qué muestra |
