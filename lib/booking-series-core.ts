@@ -5,19 +5,30 @@ import type { BookingFrequency } from "@/types/database";
  * poder-la raonar (i provar) sense muntar res.
  */
 
-/** Dies que s'avancen a cada salt. `monthly` va per mes natural, no per 28 dies. */
+/**
+ * Dies que s'avancen a cada salt. `monthly` va per mes natural, no per 28 dies.
+ *
+ * ARITMÈTICA EN UTC, a posta. Qui crida hi passa un DIA, no un instant: la
+ * mitjanit UTC d'aquell dia (`new Date("YYYY-MM-DDT00:00:00Z")`), i en llegeix
+ * el dia amb `toISOString().slice(0, 10)`. Amb `setDate` (hora LOCAL del
+ * procés), el resultat depenia de la zona del servidor: en un procés a hora de
+ * Madrid, la mitjanit UTC és la 01:00 d'hivern, i en passar a l'estiu aquella
+ * 01:00 queda a les 23:00 UTC del dia ANTERIOR. Una sèrie de dimarts començada a
+ * l'hivern passava a dilluns a partir del canvi d'hora de març. A Vercel (UTC)
+ * no es veia; en local i a `occupancy:check`, sí (14/10/2026).
+ */
 export function nextOccurrence(from: Date, frequency: BookingFrequency): Date {
   const d = new Date(from);
-  if (frequency === "weekly") d.setDate(d.getDate() + 7);
-  else if (frequency === "biweekly") d.setDate(d.getDate() + 14);
+  if (frequency === "weekly") d.setUTCDate(d.getUTCDate() + 7);
+  else if (frequency === "biweekly") d.setUTCDate(d.getUTCDate() + 14);
   else {
     // Mensual "el mateix dia del mes". Si el mes de destí no té aquell dia
     // (31 de gener + 1 mes), es queda a l'últim: mai salta al mes següent.
-    const day = d.getDate();
-    d.setDate(1);
-    d.setMonth(d.getMonth() + 1);
-    const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    d.setDate(Math.min(day, last));
+    const day = d.getUTCDate();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() + 1);
+    const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+    d.setUTCDate(Math.min(day, last));
   }
   return d;
 }
@@ -61,10 +72,13 @@ export function generateOccurrences(opts: {
   return out;
 }
 
-/** YYYY-MM-DD del dia local d'una data (sense passar per UTC). */
+/**
+ * YYYY-MM-DD del dia que porta una data de `generateOccurrences`: la mitjanit
+ * UTC d'aquell dia (vegeu `nextOccurrence`). Es llegeix en UTC pel mateix
+ * motiu: amb els getters locals, el dia depenia de la zona del servidor.
+ */
 export function localDayString(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return d.toISOString().slice(0, 10);
 }
 
 /**

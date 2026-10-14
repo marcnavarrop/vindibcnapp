@@ -26,6 +26,7 @@
 import { CENTER_TZ } from "../lib/config";
 import { slotOf } from "../lib/availability-slots";
 import * as now from "../lib/center-time";
+import { generateOccurrences, nextOccurrence } from "../lib/booking-series-core";
 
 // ─── EL CODI D'ABANS, COPIAT TAL QUAL (commit 2b499ac) ──────────────────────
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -210,6 +211,34 @@ check(run(() => now.centerLocalToInstant("2026-10-08", "99:99")) === "llança: D
 console.log("\nLa memòria del dia");
 const first = now.centerLocalToInstant("2026-07-15", "10:30").getTime();
 check(now.centerLocalToInstant("2026-07-15", "10:30").getTime() === first, "dues vegades la mateixa conversió, el mateix instant");
+
+console.log("\nLes dates d'una sèrie no depenen de la zona del procés");
+{
+  // Referència: aritmètica de dies sobre Date.UTC, sense cap zona.
+  const day = (s: string, plus: number) => {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d + plus)).toISOString().slice(0, 10);
+  };
+  const carrier = (s: string) => new Date(`${s}T00:00:00Z`);
+  const series = (first: string, frequency: "weekly" | "biweekly", n: number) =>
+    generateOccurrences({ first: carrier(first), frequency, occurrenceCount: n }).map((x) => x.toISOString().slice(0, 10));
+  // Començant a l'hivern i creuant el canvi a l'estiu (28/03/2027), i al revés
+  // (31/10/2027). Abans, en un procés a hora de Madrid, la primera saltava a
+  // dilluns a partir del canvi de març.
+  for (const [first, freq] of [["2026-10-27", "weekly"], ["2027-03-02", "weekly"], ["2027-09-07", "weekly"], ["2026-11-03", "biweekly"]] as const) {
+    const got = series(first, freq, 52);
+    const step = freq === "weekly" ? 7 : 14;
+    const want = got.map((_, i) => day(first, i * step));
+    check(got.join() === want.join(), `${freq === "weekly" ? "setmanal" : "quinzenal"} des del ${first}: 52 dates, totes el mateix dia de la setmana`);
+  }
+  // Mensual: el mateix dia del mes, o l'últim si no en té.
+  const m = [carrier("2027-01-31")];
+  for (let i = 0; i < 3; i++) m.push(nextOccurrence(m[m.length - 1], "monthly"));
+  check(m.map((x) => x.toISOString().slice(0, 10)).join() === "2027-01-31,2027-02-28,2027-03-28,2027-04-28", "mensual del 31 de gener: 28/2, i després es queda al 28");
+  // La data final es compara pel dia, també creuant el canvi d'hora.
+  const endIncl = generateOccurrences({ first: carrier("2027-03-16"), frequency: "weekly", endDate: "2027-03-30" }).map((x) => x.toISOString().slice(0, 10));
+  check(endIncl.join() === "2027-03-16,2027-03-23,2027-03-30", "la data final hi entra (30/03, després del canvi d'hora)");
+}
 
 console.log("\nVelocitat (la tira de 21 dies de /client/reservas: 21 × 28 mitges hores)");
 // Dies del 2028, que la memòria del dia encara no ha vist: és la primera
