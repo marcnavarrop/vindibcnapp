@@ -45,6 +45,7 @@
     "emailchange:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailchange-check.mts",
     "autherrors:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/autherrors-check.mts",
     "emailtaken:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/emailtaken-check.mts",
+    "prefs:check": "tsx --tsconfig scripts/tsconfig.paid.json scripts/prefs-check.mts",
     "demo:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/demo-check.mts",
     "videocodec:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/videocodec-check.mts"
   },

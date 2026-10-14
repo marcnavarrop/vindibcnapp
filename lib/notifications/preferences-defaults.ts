@@ -1,6 +1,9 @@
-import type {
-  NotificationEventType,
-  NotificationChannel,
+import {
+  EVENT_META,
+  EVENT_ORDER,
+  type NotificationAudience,
+  type NotificationEventType,
+  type NotificationChannel,
 } from "@/lib/notifications/types";
 
 /** Clau de preferència: `${tipus}_${canal}` (coincideix amb la columna a BD). */
@@ -188,6 +191,45 @@ export function prefKey(
   channel: NotificationChannel,
 ): PreferenceKey {
   return `${type}_${channel}` as PreferenceKey;
+}
+
+/**
+ * Els avisos que un rol veu —i pot canviar— a la seva pantalla de
+ * preferències. La mateixa llista pinta el formulari i decideix què es desa.
+ *
+ * Es filtra per `ALWAYS_SENT_EVENTS` i no posant `audience: []` a cada
+ * esdeveniment obligatori, que era l'altra manera. Primer, perquè l'audiència
+ * seguiria sent veritat: el client SÍ que és qui rep l'avís de la subscripció;
+ * el que passa és que no el pot apagar. I sobretot perquè així no es poden
+ * separar: la constant que treu la clau de la BD la treu del formulari.
+ */
+export function editableEvents(
+  role: NotificationAudience,
+): NotificationEventType[] {
+  return EVENT_ORDER.filter(
+    (t) =>
+      EVENT_META[t].audience.includes(role) &&
+      !(ALWAYS_SENT_EVENTS as string[]).includes(t),
+  );
+}
+
+/**
+ * Les columnes que pot escriure qui desa des de la pantalla del seu rol.
+ *
+ * NOMÉS aquestes. Abans es recorrien totes les `PREFERENCE_KEYS` i una casella
+ * que el formulari no pinta arribava com a absent, és a dir `false`: un client
+ * que desava apagava els avisos de professional i d'admin de la seva fila
+ * (vist a producció el 14/10/2026). Avui no ho notava ningú, però qui canviés
+ * de rol —o un admin que comencés a fer sessions— es trobava els avisos
+ * apagats sense haver-los tocat mai.
+ */
+export function editablePreferenceKeys(
+  role: NotificationAudience,
+): PersistedPreferenceKey[] {
+  const persisted = new Set<string>(PREFERENCE_KEYS);
+  return editableEvents(role)
+    .map((t) => prefKey(t, "email"))
+    .filter((k): k is PersistedPreferenceKey => persisted.has(k));
 }
 
 export type NotificationPreferences = Record<PreferenceKey, boolean>;

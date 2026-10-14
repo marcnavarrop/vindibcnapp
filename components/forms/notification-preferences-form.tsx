@@ -9,14 +9,13 @@ import {
 } from "@/lib/actions/notification-preferences";
 import {
   EVENT_META,
-  EVENT_ORDER,
   GROUP_LABELS,
   type NotificationEventType,
   type NotificationGroup,
 } from "@/lib/notifications/types";
 import {
   prefKey,
-  ALWAYS_SENT_EVENTS,
+  editableEvents,
   type NotificationPreferences,
 } from "@/lib/notifications/preferences-defaults";
 
@@ -122,24 +121,12 @@ function Body({
   const rowsKey = state.error ? `failed-${state.attempt}` : "saved";
 
   /*
-   * Es filtra per `ALWAYS_SENT_EVENTS` i no posant `audience: []` a cada
-   * esdeveniment obligatori, que era l'altra manera.
-   *
-   * Primer, perquè l'audiència seguiria sent veritat: el client SÍ que és qui
-   * rep l'avís de la subscripció; el que passa és que no el pot apagar.
-   * Buidar-la per amagar la casella hauria estat escriure una dada falsa per
-   * aconseguir un efecte de pantalla.
-   *
-   * I sobretot perquè així les dues llistes no poden separar-se: la mateixa
-   * constant que treu la clau de la BD la treu del formulari. Deixar la casella
-   * pintada mentre `PREFERENCE_KEYS` ja no desa la clau donaria un interruptor
-   * que no fa res, que és pitjor que no tenir-lo.
+   * La mateixa llista que fa servir l'acció per decidir què desa: el que es
+   * pinta és exactament el que s'escriu. Una casella pintada que no es desés
+   * seria un interruptor que no fa res; una que es desés sense pintar-la, un
+   * `false` que ningú ha triat.
    */
-  const events = EVENT_ORDER.filter(
-    (t) =>
-      EVENT_META[t].audience.includes(role) &&
-      !(ALWAYS_SENT_EVENTS as string[]).includes(t),
-  );
+  const events = editableEvents(role);
   const groups = GROUP_ORDER.map((g) => ({
     group: g,
     events: events.filter((t) => EVENT_META[t].group === g),

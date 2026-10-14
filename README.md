@@ -182,6 +182,7 @@ soles a cada build (`prebuild`):
 | `npm run contact:check` | El contacte del centre: format, peu i Reply-To dels correus, pàgines legals, avisos interns. |
 | `npm run emailchange:check` | El canvi de correu d'un professional que inicia l'admin. |
 | `npm run emailtaken:check` | Donar d'alta un client o un professional amb un correu que ja té compte: s'atura abans de crear res, en català. |
+| `npm run prefs:check` | Desar les preferències de notificació només toca les caselles que veu el rol de qui desa; les dels altres rols no es posen a «no». |
 | `npm run videocodec:check` | La detecció del còdec dels vídeos d'exercicis: HEVC i H.264, amb la descripció al principi o al final del fitxer. |
 
 **Si falla el `prebuild`**, el build s'atura i Vercel no publica res:

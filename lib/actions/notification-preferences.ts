@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
 import { getPreferences, updatePreferences } from "@/lib/notifications/preferences";
 import {
-  PREFERENCE_KEYS,
+  editablePreferenceKeys,
   type NotificationPreferences,
 } from "@/lib/notifications/preferences-defaults";
 
@@ -24,7 +24,7 @@ export type PrefsFormState = {
 
 /**
  * Desa les preferències de notificació del propi usuari (viewer). Només toca
- * les claus vàlides.
+ * les claus que el seu rol veu a la pantalla (`editablePreferenceKeys`).
  */
 export async function updateNotificationPreferencesAction(
   _prev: PrefsFormState,
@@ -33,8 +33,12 @@ export async function updateNotificationPreferencesAction(
   const viewer = await getViewer();
   if (!viewer) return { error: true };
 
+  // Només les caselles que aquest rol veu. Una casella absent del formulari
+  // vol dir «no marcada» només si s'ha pintat; les dels altres rols no hi són
+  // perquè no toquen, i no s'han de desar com a `false`.
   const values: Partial<NotificationPreferences> = {};
-  for (const k of PREFERENCE_KEYS) values[k] = formData.get(k) === "on";
+  for (const k of editablePreferenceKeys(viewer.role))
+    values[k] = formData.get(k) === "on";
 
   try {
     await updatePreferences(viewer.id, values);

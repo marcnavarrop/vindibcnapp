@@ -21,7 +21,8 @@ const db = (): Db => (globalThis as { __fakeDb?: Db }).__fakeDb!;
 type Res = { data: unknown; error: unknown; count?: number | null };
 
 class Query implements PromiseLike<Res> {
-  private op: "select" | "insert" | "update" | "delete" = "select";
+  private op: "select" | "insert" | "update" | "upsert" | "delete" = "select";
+  private conflict = "id";
   private filters: ((r: Row) => boolean)[] = [];
   private payload: Row | Row[] | null = null;
   private returning = false;
@@ -36,6 +37,11 @@ class Query implements PromiseLike<Res> {
   }
   insert(p: Row | Row[]) { this.op = "insert"; this.payload = p; return this; }
   update(p: Row) { this.op = "update"; this.payload = p; return this; }
+  // Com PostgREST: la fila que xoca per `onConflict` s'actualitza NOMÉS amb les
+  // columnes que porta el payload; si no n'hi ha cap, s'insereix.
+  upsert(p: Row, opts?: { onConflict?: string }) {
+    this.op = "upsert"; this.payload = p; this.conflict = opts?.onConflict ?? "id"; return this;
+  }
   delete() { this.op = "delete"; return this; }
   eq(c: string, v: unknown) { this.filters.push((r) => r[c] === v); return this; }
   neq(c: string, v: unknown) { this.filters.push((r) => r[c] !== v); return this; }
@@ -75,6 +81,12 @@ class Query implements PromiseLike<Res> {
       db().hooks.beforeUpdate?.(this.table, all);
       data = all.filter((r) => this.filters.every((f) => f(r)) && (db().hooks.canUpdate?.(this.table, r) ?? true));
       for (const r of data) Object.assign(r, this.payload);
+    } else if (this.op === "upsert") {
+      const p = this.payload as Row;
+      const hit = all.find((r) => r[this.conflict] === p[this.conflict]);
+      if (hit) Object.assign(hit, p);
+      else all.push({ id: crypto.randomUUID(), ...p });
+      data = [hit ?? all[all.length - 1]];
     } else if (this.op === "delete") {
       data = all.filter((r) => this.filters.every((f) => f(r)));
       db().tables[this.table] = all.filter((r) => !data.includes(r));
