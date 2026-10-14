@@ -1409,6 +1409,17 @@ export interface Database {
           assigned_by: string | null;
           notes: string | null;
           assigned_at: string;
+          /** Dia de la pauta (0112). Null = «Sense dia». */
+          day_id: string | null;
+          /** Ordre dins del dia (0112). El posa el trigger si no ve. */
+          position: number;
+          /** Pauta (0112), tota opcional. */
+          sets: number | null;
+          /** Repeticions o temps: «10», «8-10», «30 s». */
+          reps: string | null;
+          /** Càrrega: «20 kg», «RPE 7». */
+          load: string | null;
+          rest_seconds: number | null;
         };
         Insert: {
           id?: string;
@@ -1417,6 +1428,12 @@ export interface Database {
           assigned_by?: string | null;
           notes?: string | null;
           assigned_at?: string;
+          day_id?: string | null;
+          position?: number;
+          sets?: number | null;
+          reps?: string | null;
+          load?: string | null;
+          rest_seconds?: number | null;
         };
         Update: {
           id?: string;
@@ -1425,6 +1442,74 @@ export interface Database {
           assigned_by?: string | null;
           notes?: string | null;
           assigned_at?: string;
+          day_id?: string | null;
+          position?: number;
+          sets?: number | null;
+          reps?: string | null;
+          load?: string | null;
+          rest_seconds?: number | null;
+        };
+        Relationships: [];
+      };
+      /** Dies de la pauta d'un client (0112): «Dia 1, 2, 3…» en cicle, amb nom opcional. */
+      client_workout_days: {
+        Row: {
+          id: string;
+          client_id: string;
+          position: number;
+          name: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          position: number;
+          name?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          position?: number;
+          name?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      /**
+       * «Dia fet» (0112): el client marca que ha fet un dia, amb data d'avui.
+       * `day_name` i `day_number` són la foto del dia que posa la base.
+       */
+      client_workout_logs: {
+        Row: {
+          id: string;
+          client_id: string;
+          day_id: string | null;
+          day_name: string | null;
+          day_number: number;
+          done_on: string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          day_id: string;
+          day_name?: string | null;
+          day_number?: number;
+          done_on?: string;
+          created_by?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          day_id?: string | null;
+          day_name?: string | null;
+          day_number?: number;
+          done_on?: string;
+          created_by?: string;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -2007,6 +2092,29 @@ export interface Database {
         Returns: CancelReservationResult;
       };
       /** Consentiment de salut d'un client: data i versió, o cap fila (0110). */
+      /** Dies de la pauta (0112). Totes SECURITY INVOKER: decideix la RLS. */
+      create_client_workout_day: {
+        Args: { p_client: string; p_name?: string | null };
+        Returns: string;
+      };
+      reorder_client_workout_days: {
+        Args: { p_client: string; p_ids: string[] };
+        Returns: undefined;
+      };
+      reorder_client_exercises: {
+        Args: { p_client: string; p_day: string | null; p_ids: string[] };
+        Returns: undefined;
+      };
+      /** Canvia el dia (o a «Sense dia»): és un UPDATE, el progrés es queda. */
+      move_client_exercise: {
+        Args: { p_id: string; p_day: string | null };
+        Returns: undefined;
+      };
+      /** Còpia del dia al final, amb exercicis i pauta; sense progrés. */
+      duplicate_client_workout_day: {
+        Args: { p_day: string };
+        Returns: string;
+      };
       health_consent_status: {
         Args: { p_client: string };
         Returns: { granted_at: string; version: string }[];

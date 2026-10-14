@@ -1083,6 +1083,32 @@
       "close": "Tancar",
       "loading": "Carregant…",
       "videoError": "No s'ha pogut carregar el vídeo. Torna-ho a provar."
+    },
+    "plan": {
+      "tabsAria": "Dies de la teva pauta",
+      "day": "Dia {number}",
+      "dayNamed": "Dia {number} · {name}",
+      "noDay": "Sense dia",
+      "noDayHint": "Exercicis que el teu professional encara no ha posat a cap dia.",
+      "cycleHint": "Fes els dies en ordre. Quan acabis l'últim, torna a començar pel primer.",
+      "next": "Et toca",
+      "markDone": "Marcar com a fet",
+      "marking": "Marcant…",
+      "doneToday": "Fet avui",
+      "undo": "Desfer",
+      "undoing": "Desfent…",
+      "lastDone": "Últim cop que el vas fer: {date}",
+      "neverDone": "Encara no l'has marcat mai com a fet.",
+      "emptyDay": "Aquest dia encara no té exercicis.",
+      "sets": "Sèries",
+      "reps": "Reps o temps",
+      "load": "Càrrega",
+      "rest": "Descans",
+      "restS": "s",
+      "restMin": "min",
+      "errorGeneric": "No s'ha pogut completar. Torna-ho a provar.",
+      "errorMark": "No s'ha pogut marcar el dia com a fet. Torna-ho a provar.",
+      "errorUnmark": "No s'ha pogut desfer. Torna-ho a provar."
     }
   },
   "emails": {

@@ -1,10 +1,11 @@
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
-import { listClientExercises } from "@/lib/data/client-exercises";
+import { getWorkoutPlan } from "@/lib/data/client-exercises";
 import { listExercises } from "@/lib/data/exercises";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { ClientExerciseLibrary } from "@/components/exercise-library";
-import { AssignedExercises } from "@/components/client/assigned-exercises";
+import { ClientWorkoutPlan } from "@/components/client/workout-plan";
+import { centerToday } from "@/lib/center-time";
 import { ExercisesSeenMarker } from "@/components/exercises-seen-marker";
 import { listExerciseCategories } from "@/lib/data/exercise-categories";
 import { getTranslations } from "next-intl/server";
@@ -15,8 +16,10 @@ export default async function ClientExercicisPage() {
   const t = await getTranslations("workouts");
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
-  const [assigned, library, allProgress, categories] = await Promise.all([
-    client ? listClientExercises(client.id) : Promise.resolve([]),
+  const [plan, library, allProgress, categories] = await Promise.all([
+    client
+      ? getWorkoutPlan(client.id)
+      : Promise.resolve({ days: [], exercises: [], logs: [] }),
     listExercises(),
     client ? listAllProgressForClient(client.id) : Promise.resolve([]),
     listExerciseCategories(),
@@ -24,6 +27,7 @@ export default async function ClientExercicisPage() {
 
   // Objecte pla i no `Map`: això travessa la frontera cap a un component de
   // client, i un Map no és serialitzable.
+  const assigned = plan.exercises;
   const progressByAssignment = Object.fromEntries(
     assigned.map((a) => [
       a.id,
@@ -56,9 +60,10 @@ export default async function ClientExercicisPage() {
         <h2 className="mb-3 text-sm font-bold tracking-widest text-brand-purple uppercase">
           {t("yours")}
         </h2>
-        <AssignedExercises
-          assigned={assigned}
+        <ClientWorkoutPlan
+          plan={plan}
           progressByAssignment={progressByAssignment}
+          today={centerToday()}
         />
       </section>
 

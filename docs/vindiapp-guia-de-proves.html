@@ -243,7 +243,22 @@
       <li><strong>Resum</strong> <span class="flag">Nou</span>: els bons vius (els <strong>pendents primer</strong>, en blau clar, amb l'import per cobrar; els actius amb la barra de les que queden i la caducitat; els acabats, només comptats), les <strong>3 properes sessions</strong> amb dia, hora, servei i professional, «N més a Sessions», l'última feta i el recordatori; a la dreta (a sota al mòbil) les notes i els exercicis amb l'última mesura. «Sessions restants» ja no hi és</li>
       <li><strong>«+ Nova reserva»</strong> <span class="flag">Nou</span> des de la fitxa: el formulari s'obre amb el client <strong>ja posat</strong> (i a l'admin, també el seu professional); es pot canviar. Al professional, només amb clients seus; amb l'adreça d'un client d'un company, el camp surt buit</li>
       <li><strong>Sessions</strong> <span class="flag">Nou</span>: tres piles amb comptador, Properes · Passades · Cancel·lades. S'obre a Properes i <strong>les cancel·lades no surten si no les demanes</strong>. Cada fila: dia, hora, servei i professional. Una passada que segueix «Reservada» diu <strong>«Per marcar»</strong>. Amb més de 20, «Mostrar-ne més». A sota, «Recordatori de propera sessió»</li>
-      <li>A "Entrenament": exercicis, «Notificar exercicis nous» i el progrés (registra una càrrega kg+reps d'un exercici assignat)</li>
+      <li>A "Entrenament": la pauta per dies, «Notificar exercicis nous» i el progrés (registra una càrrega kg+reps d'un exercici assignat)</li>
+      <li><strong>Pauta per dies</strong> <span class="flag">Nou (0112)</span>, com a <strong>Entrenador Demo</strong> a la fitxa del Client Demo (o com a admin a qualsevol): pestanyes «Dia 1 · Dia 2 · … · Sense dia · + Dia».
+        <ul>
+          <li>Els exercicis que ja hi havia surten a <strong>«Sense dia»</strong>, en l'ordre en què es van assignar. «Sense dia» només surt si hi ha alguna cosa (o si encara no hi ha cap dia)</li>
+          <li><strong>«+ Dia»</strong> en crea un al final i l'obre. Posa-li nom («Cames») i «Desar»: la pestanya diu «Dia 1 · Cames». Nom buit = torna a «Dia 1». Més de 40 caràcters: no deixa</li>
+          <li><strong>«Moure a…»</strong> un exercici amb progrés de «Sense dia» a «Dia 1»: el progrés de sota segueix sent el mateix (no s'ha perdut cap registre). Quan «Sense dia» es queda buit, la pestanya desapareix</li>
+          <li><strong>Afegir un exercici</strong> al dia obert amb pauta: 3 · «30 s» · «Pes corporal» · 45 → la fila diu «3 × 30 s · Pes corporal · descans 45 s». Descans 9999: «El descans va en segons, de 0 a 3600.» i no desa. El <strong>mateix exercici</strong> es pot posar a dos dies</li>
+          <li><strong>↑↓</strong> canvien l'ordre (la primera ↑ i l'última ↓ surten apagades). <strong>«Pauta»</strong> obre el formulari i «Desar la pauta» el tanca amb la pauta nova</li>
+          <li><strong>«← Abans» / «Després →»</strong> mouen el dia obert; la numeració es refà sola. <strong>«Duplicar»</strong> crea «Dia N · Cames (còpia)» al final, amb els mateixos exercicis i pauta, i <strong>sense</strong> progrés</li>
+          <li><strong>«Esborrar»</strong> pregunta («Els seus N exercicis passen a «Sense dia», amb el progrés. No se n'esborra cap.») i, en confirmar, els exercicis apareixen a «Sense dia» amb el progrés intacte</li>
+          <li>A sota de tot, <strong>«Dia fet» recents</strong>: el que ha marcat el client (secció 4.4), amb la data. A la capçalera del dia, «Últim cop que el client l'ha marcat fet: …». Un dia esborrat surt com «Dia N · nom (esborrat)»</li>
+          <li>Al progrés de sota, cada exercici diu de quin dia és</li>
+          <li>Com a <strong>Fisio Demo</strong> (no és el seu client): ho veu tot però sense cap botó (ni «+ Dia», ni ↑↓, ni «Treure», ni el formulari)</li>
+          <li>A 375 px les pestanyes de dia salten de línia: <strong>sense scroll de costat</strong></li>
+        </ul>
+      </li>
       <li><strong>Nota ràpida</strong> <span class="flag">Nou</span> (només l'admin): al Resum, «Afegir una nota general…» i «Desar». Sense text, «Escriu la nota abans de desar-la.». Amb text, surt a «Generals» sense recarregar com a <strong>«08/10/2026 · <em>el teu nom</em> · text»</strong>, el camp es buida, i una segona va a sota de la primera. Les <strong>clíniques no canvien</strong>. Al professional, el formulari no hi és (les llegeix)</li>
       <li>A "Notes i documents": «Editar notes →» edita clíniques i generals per separat. <strong>Cap de les dues la veu el client</strong></li>
       <li>Amb un client que rebi fisioteràpia i encara no hagi acceptat el consentiment de salut, surt una <strong>franja blau fosc curta</strong> a la capçalera; «Més info» la desplega</li>
@@ -588,6 +603,16 @@
     <h3>4.4 Exercicis / Documents / Comunitat</h3>
     <ul class="checklist">
       <li>Exercicis: el teu progrés (evolució de càrrega), assignats amb vídeo, biblioteca completa</li>
+      <li><strong>Pauta per dies i «Dia fet»</strong> <span class="flag">Nou (0112)</span>, com a <strong>Client Demo</strong> (després de muntar-li dies a la 1.3):
+        <ul>
+          <li>Pestanyes «Dia 1 · Dia 2…» (i «Sense dia» si n'hi ha). S'obre pel dia que <strong>toca</strong> (el següent al darrer que vas marcar fet, en cicle), amb l'etiqueta «Et toca»</li>
+          <li>Cada targeta porta la <strong>pauta en caixes grans</strong> (Sèries · Reps o temps · Càrrega · Descans; només les que hi ha), la nota i el progrés com sempre. A 375 px s'ha de llegir bé i sense scroll de costat</li>
+          <li><strong>«Marcar com a fet»</strong>: surt «✓ Fet avui», la pestanya porta ✓ i «Últim cop que el vas fer: avui». Recarrega: es manté. «Desfer» el treu (només el mateix dia; els dels dies d'abans no es poden desfer)</li>
+          <li>Comprova que l'Entrenador Demo ho veu a la fitxa (1.3). <strong>No s'envia cap correu</strong></li>
+          <li>En castellà i anglès: «Día 1 / Day 1», «Te toca / Up next», «Marcar como hecho / Mark as done», «Hecho hoy / Done today»</li>
+          <li>Sense cap dia (un client amb exercicis però sense dies), la pantalla és la llista de sempre, sense pestanyes</li>
+        </ul>
+      </li>
       <li>Documents: puja/descarrega/esborra els teus (PDF, imatge, Word)</li>
       <li><span class="flag">Nou</span> <strong>Documents de fins a 15 MB de debò</strong>: abans, per sobre d'uns 4 MB fallaven sense dir per què. Ara el fitxer es puja directament a l'emmagatzematge, amb la sessió del client i una <strong>barra de progrés</strong>. Prova: un PDF o una foto de 10-14 MB (s'ha de pujar i sortir a la llista); un de més de 15 MB (avís abans de pujar); un fitxer .txt (format no acceptat); i tallar la connexió a mitja pujada (avís de pujada tallada). Si es tanca la pantalla a mitges, el fitxer sense document s'esborra sol l'endemà</li>
       <li>Comunitat: anuncis + <strong>respon una enquesta</strong> (un cop votat, veus els percentatges i queda fixat)</li>

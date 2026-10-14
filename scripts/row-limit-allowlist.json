@@ -127,9 +127,13 @@
     "category": "acotada",
     "reason": "Els documents d'un client."
   },
-  "lib/data/client-exercises.ts::listClientExercises::client_exercises": {
+  "lib/data/client-exercises.ts::getWorkoutPlan::client_exercises": {
     "category": "acotada",
-    "reason": "Els exercicis d'un client."
+    "reason": "Els exercicis assignats d'UN client (la seva pauta): desenes com a molt."
+  },
+  "lib/data/client-exercises.ts::getWorkoutPlan::client_workout_days": {
+    "category": "acotada",
+    "reason": "Els dies de la pauta d'UN client: un grapat."
   },
   "lib/data/client-tags.ts::createClientTag::client_tags": {
     "category": "acotada",
@@ -238,6 +242,14 @@
   "lib/data/gdpr-export.ts::exportClientData::client_exercises": {
     "category": "acotada",
     "reason": "Un client (RGPD)."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::client_workout_days": {
+    "category": "acotada",
+    "reason": "Un client (RGPD): els dies de la seva pauta."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::client_workout_logs": {
+    "category": "acotada",
+    "reason": "Un client (RGPD): l'exportació ha de ser sencera."
   },
   "lib/data/gdpr-export.ts::exportClientData::consents": {
     "category": "acotada",

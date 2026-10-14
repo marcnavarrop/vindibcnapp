@@ -1,7 +1,7 @@
 import { UndoableDelete } from "@/components/ui/undoable-delete";
 import { centerToday } from "@/lib/center-time";
 import { addProgressAction, deleteProgressAction } from "@/app/actions/client-progress-actions";
-import type { AssignedExercise } from "@/lib/data/client-exercises";
+import type { AssignedExercise, WorkoutDay } from "@/lib/data/client-exercises";
 import type { ExerciseProgressEntry } from "@/lib/data/exercise-progress";
 import { formatDate } from "@/lib/labels";
 import { TAP } from "@/lib/utils";
@@ -11,12 +11,23 @@ export function ClientProgressPanel({
   allProgress,
   canManage,
   redirectPath,
+  days = [],
 }: {
   assigned: AssignedExercise[];
   allProgress: ExerciseProgressEntry[];
   canManage: boolean;
   redirectPath: string;
+  /**
+   * Els dies de la pauta (0112). Un mateix exercici pot ser a dos dies, i cada
+   * assignació té el seu progrés: el dia diu de quina és cada bloc.
+   */
+  days?: WorkoutDay[];
 }) {
+  const dayOf = (id: string | null) => {
+    const d = id ? days.find((x) => x.id === id) : null;
+    if (!d) return days.length ? "Sense dia" : null;
+    return d.name ? `Dia ${d.number} · ${d.name}` : `Dia ${d.number}`;
+  };
   const progressByAssignment = new Map<string, ExerciseProgressEntry[]>();
   for (const ep of allProgress) {
     const list = progressByAssignment.get(ep.clientExerciseId) ?? [];
@@ -42,7 +53,12 @@ export function ClientProgressPanel({
             className="overflow-hidden rounded-2xl border border-brand-border bg-white"
           >
             <div className="border-b border-brand-border bg-brand-bg px-5 py-3">
-              <h3 className="text-sm font-bold text-brand-dark">{a.name}</h3>
+              <h3 className="text-sm font-bold text-brand-dark">
+                {a.name}
+                {dayOf(a.dayId) && (
+                  <span className="font-normal text-brand-muted"> · {dayOf(a.dayId)}</span>
+                )}
+              </h3>
               {a.notes && (
                 <p className="text-xs text-brand-muted">{a.notes}</p>
               )}

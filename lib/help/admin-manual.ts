@@ -351,7 +351,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Entrenament",
-              "Els exercicis que té assignats i el buscador per assignar-n'hi de nous de la biblioteca; «Notificar exercicis nous», que l'avisa per correu; i les mesures registrades de cada exercici.",
+              "La pauta per dies: una pestanya per dia («Dia 1», «Dia 2»…, amb nom opcional, en cicle) i «Sense dia» si n'hi ha. Pots crear, reanomenar, reordenar, duplicar i esborrar dies (esborrar-ne un passa els seus exercicis a «Sense dia», mai els esborra); dins de cada dia, ordenar els exercicis amb ↑↓, passar-los a un altre dia amb «Moure a…» (conserva el progrés) i editar-ne la pauta: sèries, repeticions o temps, càrrega i descans. També hi veus quan el client ha marcat cada dia com a fet. A més, «Notificar exercicis nous», que l'avisa per correu, i les mesures registrades de cada exercici.",
             ],
             [
               "Historial clínic",

@@ -7,7 +7,7 @@ import { InPageTabs } from "@/components/ui/in-page-tabs";
 import { getClient, listTrainers, type ClientBono } from "@/lib/data/clients";
 import { ClientBonoList } from "@/components/client-file/bonos";
 import { AssignTrainerForm } from "@/components/forms/assign-trainer-form";
-import { listClientExercises } from "@/lib/data/client-exercises";
+import { getWorkoutPlan } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
 import { ClientTagsPanel } from "@/components/client-tags-panel";
 import { listExercises } from "@/lib/data/exercises";
@@ -31,16 +31,12 @@ import {
 import { Panel, PANEL_ACTION } from "@/components/client-file/panel";
 import { BonosSummaryCard, NotesCard, TrainingCard, UpcomingSessionsCard } from "@/components/client-file/resum";
 import { SessionsList } from "@/components/client-file/sessions";
-import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
+import { WorkoutPlanPanel } from "@/components/workout-plan-panel";
 import { ClientProgressPanel } from "@/components/client-progress-panel";
 import {
   NextSessionReminderButton,
   NotifyNewExercisesButton,
 } from "@/components/client-notify-buttons";
-import {
-  assignExerciseTrainerAction,
-  removeExerciseTrainerAction,
-} from "@/app/(trainer)/trainer/clients/exercises-actions";
 import {
   markTrainerBonoPaidAction,
   cancelTrainerBonoAction,
@@ -67,7 +63,7 @@ export default async function TrainerClientDetailPage({
   const [
     viewer,
     client,
-    assignedExercises,
+    workoutPlan,
     library,
     documents,
     allProgress,
@@ -78,7 +74,7 @@ export default async function TrainerClientDetailPage({
   ] = await Promise.all([
     getViewer(),
     clientPromise,
-    listClientExercises(id),
+    getWorkoutPlan(id),
     listExercises(),
     listClientDocuments(id),
     listAllProgressForClient(id),
@@ -89,6 +85,7 @@ export default async function TrainerClientDetailPage({
     // falla, no s'anuncia res —millor el número d'abans que un zero inventat.
     countCenterCollectableBonos().catch(() => null),
   ]);
+  const assignedExercises = workoutPlan.exercises;
   if (!client) notFound();
 
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
@@ -262,15 +259,15 @@ export default async function TrainerClientDetailPage({
       label: "Entrenament",
       content: (
         <div className="flex flex-col gap-6">
-          <AssignedExercisesPanel
-            assigned={assignedExercises}
+          <WorkoutPlanPanel
+            clientId={client.id}
+            plan={workoutPlan}
             library={library}
             canManage={canManage}
-            assignAction={assignExerciseTrainerAction.bind(null, client.id)}
-            removeAction={removeExerciseTrainerAction.bind(null, client.id)}
           />
           <NotifyNewExercisesButton clientId={client.id} />
           <ClientProgressPanel
+            days={workoutPlan.days}
             assigned={assignedExercises}
             allProgress={allProgress}
             canManage={canManage}

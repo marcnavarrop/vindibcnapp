@@ -1467,9 +1467,25 @@ export function buildClientManual(
         {
           t: "p",
           text: T({
-            ca: "Cada targeta porta el nom de l'exercici, la seva categoria i, si n'hi ha, la nota que t'hi ha escrit el professional. Aquella nota és una instrucció per a tu, no una descripció del catàleg: hi surt sencera i destacada.",
-            es: "Cada tarjeta lleva el nombre del ejercicio, su categoría y, si la hay, la nota que te ha escrito el profesional. Esa nota es una instrucción para ti, no una descripción del catálogo: sale entera y destacada.",
-            en: "Each card carries the name of the exercise, its category and, where there is one, the note the professional wrote for you. That note is an instruction to you, not a catalogue description: it appears in full and highlighted.",
+            ca: "Si el teu professional t'ha organitzat la pauta per dies, a dalt hi tens una pestanya per dia: «Dia 1», «Dia 2»… (de vegades amb un nom, com «Cames»). Els dies van en ordre i en cicle: quan acabes l'últim, tornes a començar pel primer. La pantalla s'obre pel dia que et toca, marcat amb «Et toca». Si hi ha exercicis que encara no són a cap dia, surten a «Sense dia».",
+            es: "Si tu profesional te ha organizado la pauta por días, arriba tienes una pestaña por día: «Día 1», «Día 2»… (a veces con un nombre, como «Cames»). Los días van en orden y en ciclo: cuando acabas el último, vuelves a empezar por el primero. La pantalla se abre por el día que te toca, marcado con «Te toca». Si hay ejercicios que aún no están en ningún día, salen en «Sin día».",
+            en: "If your trainer or physio has organised your plan into days, there's a tab for each day at the top: «Day 1», «Day 2»… (sometimes with a name, such as «Cames»). The days go in order and in a cycle: when you finish the last one, you start again from the first. The screen opens on the day that's up next, marked «Up next». If some exercises aren't on any day yet, they appear under «No day».",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
+            ca: "Quan acabis l'entrenament d'un dia, prem «Marcar com a fet»: queda apuntat amb la data d'avui, i el teu professional ho veu. Si t'has equivocat, «Desfer» el treu, però només el mateix dia. Sota el nom del dia hi diu l'últim cop que el vas fer.",
+            es: "Cuando acabes el entrenamiento de un día, pulsa «Marcar como hecho»: queda apuntado con la fecha de hoy, y tu profesional lo ve. Si te has equivocado, «Deshacer» lo quita, pero solo el mismo día. Bajo el nombre del día pone la última vez que lo hiciste.",
+            en: "When you finish a day's workout, tap «Mark as done»: it's recorded with today's date, and your trainer or physio can see it. If you made a mistake, «Undo» removes it, but only on the same day. Under the day's name it shows the last time you did it.",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
+            ca: "Cada targeta porta el nom de l'exercici, la seva categoria i la pauta en caixes grans, fàcils de llegir al gimnàs: sèries, repeticions o temps, càrrega i descans (només les que t'hagi posat). A sota, si n'hi ha, la nota que t'hi ha escrit el professional. Aquella nota és una instrucció per a tu, no una descripció del catàleg: hi surt sencera i destacada.",
+            es: "Cada tarjeta lleva el nombre del ejercicio, su categoría y la pauta en cajas grandes, fáciles de leer en el gimnasio: series, repeticiones o tiempo, carga y descanso (solo las que te haya puesto). Debajo, si la hay, la nota que te ha escrito el profesional. Esa nota es una instrucción para ti, no una descripción del catálogo: sale entera y destacada.",
+            en: "Each card carries the name of the exercise, its category and the plan in large boxes, easy to read at the gym: sets, reps or time, load and rest (only the ones you've been given). Below it, where there is one, the note the professional wrote for you. That note is an instruction to you, not a catalogue description: it appears in full and highlighted.",
           }),
         },
         {

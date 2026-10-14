@@ -21,7 +21,7 @@ import { ClientBonoList, SubscriptionCard } from "@/components/client-file/bonos
 import { QuickNoteForm } from "@/components/client-file/quick-note";
 import { addGeneralNoteAction } from "@/app/(admin)/admin/clients/actions";
 import { centerToday } from "@/lib/center-time";
-import { listClientExercises } from "@/lib/data/client-exercises";
+import { getWorkoutPlan } from "@/lib/data/client-exercises";
 import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
 import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
@@ -37,16 +37,12 @@ import {
   TagsEditor,
   TrainerLine,
 } from "@/components/client-file/header-parts";
-import { AssignedExercisesPanel } from "@/components/assigned-exercises-panel";
+import { WorkoutPlanPanel } from "@/components/workout-plan-panel";
 import { ClientProgressPanel } from "@/components/client-progress-panel";
 import {
   NextSessionReminderButton,
   NotifyNewExercisesButton,
 } from "@/components/client-notify-buttons";
-import {
-  assignExerciseAction,
-  removeExerciseAction,
-} from "@/app/(admin)/admin/clients/exercises-actions";
 import {
   toggleClientTagAction,
   createAndAssignTagAction,
@@ -72,7 +68,7 @@ export default async function ClientDetailPage({
   );
   const [
     client,
-    assignedExercises,
+    workoutPlan,
     library,
     documents,
     allProgress,
@@ -84,7 +80,7 @@ export default async function ClientDetailPage({
     consent,
   ] = await Promise.all([
     clientPromise,
-    listClientExercises(id),
+    getWorkoutPlan(id),
     listExercises(),
     listClientDocuments(id),
     listAllProgressForClient(id),
@@ -97,6 +93,7 @@ export default async function ClientDetailPage({
     countCenterCollectableBonos().catch(() => null),
     consentPromise,
   ]);
+  const assignedExercises = workoutPlan.exercises;
   if (!client || !consent) notFound();
 
   // L'historial clínic (0110): l'admin ho veu i ho pot tot. El consentiment el
@@ -262,15 +259,15 @@ export default async function ClientDetailPage({
       label: "Entrenament",
       content: (
         <div className="flex flex-col gap-6">
-          <AssignedExercisesPanel
-            assigned={assignedExercises}
+          <WorkoutPlanPanel
+            clientId={client.id}
+            plan={workoutPlan}
             library={library}
             canManage
-            assignAction={assignExerciseAction.bind(null, client.id)}
-            removeAction={removeExerciseAction.bind(null, client.id)}
           />
           <NotifyNewExercisesButton clientId={client.id} />
           <ClientProgressPanel
+            days={workoutPlan.days}
             assigned={assignedExercises}
             allProgress={allProgress}
             canManage

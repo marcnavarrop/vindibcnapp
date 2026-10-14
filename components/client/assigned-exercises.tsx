@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { AssignedExercise } from "@/lib/data/client-exercises";
 import type { ExerciseProgressEntry } from "@/lib/data/exercise-progress";
+import { formatRest, hasPauta } from "@/lib/workout-pauta";
 
 /**
  * Els exercicis que el professional ha assignat, amb el seu progrés.
@@ -40,6 +41,7 @@ export function AssignedExercises({
 }) {
   const t = useTranslations("workouts");
   const tl = useTranslations("workouts.lib");
+  const tp = useTranslations("workouts.plan");
   const locale = useLocale() as Locale;
   const [playing, setPlaying] = useState<AssignedExercise | null>(null);
 
@@ -79,6 +81,22 @@ export function AssignedExercises({
                 </h3>
                 <Badge tone="info">{a.categoryName}</Badge>
               </div>
+
+              {/* La pauta (0112), en caixes grans: es llegeix al gimnàs, amb
+                  el mòbil a la mà i d'un cop d'ull. Només les que hi ha. */}
+              {hasPauta(a) && (
+                <dl className="grid grid-cols-2 gap-2">
+                  {a.sets != null && <PautaBox label={tp("sets")} value={String(a.sets)} />}
+                  {a.reps && <PautaBox label={tp("reps")} value={a.reps} />}
+                  {a.load && <PautaBox label={tp("load")} value={a.load} />}
+                  {a.restSeconds != null && (
+                    <PautaBox
+                      label={tp("rest")}
+                      value={formatRest(a.restSeconds, { s: tp("restS"), min: tp("restMin") })}
+                    />
+                  )}
+                </dl>
+              )}
 
               {/* La nota del professional va sencera: és una instrucció per a
                   aquesta persona, no una descripció del catàleg. */}
@@ -146,5 +164,14 @@ export function AssignedExercises({
         />
       )}
     </>
+  );
+}
+
+function PautaBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-white px-3 py-2">
+      <dt className="text-[11px] font-bold tracking-wide text-brand-muted uppercase">{label}</dt>
+      <dd className="text-lg leading-tight font-bold text-brand-dark break-words">{value}</dd>
+    </div>
   );
 }

@@ -1083,6 +1083,32 @@
       "close": "Close",
       "loading": "Loading…",
       "videoError": "We couldn't load the video. Please try again."
+    },
+    "plan": {
+      "tabsAria": "Days of your plan",
+      "day": "Day {number}",
+      "dayNamed": "Day {number} · {name}",
+      "noDay": "No day",
+      "noDayHint": "Exercises your trainer hasn't put on any day yet.",
+      "cycleHint": "Do the days in order. When you finish the last one, start again from the first.",
+      "next": "Up next",
+      "markDone": "Mark as done",
+      "marking": "Marking…",
+      "doneToday": "Done today",
+      "undo": "Undo",
+      "undoing": "Undoing…",
+      "lastDone": "Last time you did it: {date}",
+      "neverDone": "You haven't marked it as done yet.",
+      "emptyDay": "This day has no exercises yet.",
+      "sets": "Sets",
+      "reps": "Reps or time",
+      "load": "Load",
+      "rest": "Rest",
+      "restS": "s",
+      "restMin": "min",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "errorMark": "The day couldn't be marked as done. Please try again.",
+      "errorUnmark": "It couldn't be undone. Please try again."
     }
   },
   "emails": {

@@ -193,8 +193,16 @@ type ClientTagAssignment =
 export const seedClientTagAssignments: ClientTagAssignment[] = [];
 
 export const seedClientExercises: ClientExercise[] = [
-  { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now },
+  { id: "ce-1", client_id: "c-ana", exercise_id: "e-esquat", assigned_by: "u-trainer-laia", notes: "3 sèries de 12, dos cops/setmana", assigned_at: now, day_id: null, position: 10, sets: null, reps: null, load: null, rest_seconds: null },
 ];
+
+/**
+ * Sense cap dia a la llavor: l'exercici de l'Ana queda a «Sense dia», com els
+ * que ja hi havia a producció quan va arribar la 0112. Els dies es creen des
+ * de la fitxa, que és el que es vol provar.
+ */
+export const seedClientWorkoutDays: Tables["client_workout_days"]["Row"][] = [];
+export const seedClientWorkoutLogs: Tables["client_workout_logs"]["Row"][] = [];
 
 export const seedExerciseProgress: ExerciseProgress[] = [
   { id: "ep-1", client_exercise_id: "ce-1", recorded_at: "2026-05-01", weight_kg: 40, reps: 12, notes: "Primera sessió.", recorded_by: "u-trainer-laia", created_at: now },

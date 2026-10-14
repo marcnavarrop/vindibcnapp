@@ -1083,6 +1083,32 @@
       "close": "Cerrar",
       "loading": "Cargando…",
       "videoError": "No se ha podido cargar el vídeo. Inténtalo de nuevo."
+    },
+    "plan": {
+      "tabsAria": "Días de tu pauta",
+      "day": "Día {number}",
+      "dayNamed": "Día {number} · {name}",
+      "noDay": "Sin día",
+      "noDayHint": "Ejercicios que tu profesional aún no ha puesto en ningún día.",
+      "cycleHint": "Haz los días en orden. Cuando acabes el último, vuelve a empezar por el primero.",
+      "next": "Te toca",
+      "markDone": "Marcar como hecho",
+      "marking": "Marcando…",
+      "doneToday": "Hecho hoy",
+      "undo": "Deshacer",
+      "undoing": "Deshaciendo…",
+      "lastDone": "Última vez que lo hiciste: {date}",
+      "neverDone": "Aún no lo has marcado nunca como hecho.",
+      "emptyDay": "Este día aún no tiene ejercicios.",
+      "sets": "Series",
+      "reps": "Reps o tiempo",
+      "load": "Carga",
+      "rest": "Descanso",
+      "restS": "s",
+      "restMin": "min",
+      "errorGeneric": "No se ha podido completar. Vuelve a intentarlo.",
+      "errorMark": "No se ha podido marcar el día como hecho. Vuelve a intentarlo.",
+      "errorUnmark": "No se ha podido deshacer. Vuelve a intentarlo."
     }
   },
   "emails": {

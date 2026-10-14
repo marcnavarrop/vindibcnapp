@@ -307,7 +307,15 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Entrenament" },
         {
           t: "p",
-          text: "Els exercicis que té assignats i, si el client és teu, el formulari per assignar-ne un de la biblioteca amb una nota de pauta al costat («3 sèries de 12, dos cops/setmana» és l'exemple que hi surt). També pots treure'n un amb «Treure»: pregunta abans, perquè s'endú el progrés que s'hi hagi registrat.",
+          text: "La pauta del client, organitzada per DIES: a dalt, una pestanya per dia («Dia 1», «Dia 2»…, amb el nom que li vulguis posar, com «Cames» o «Tors») i, si n'hi ha, «Sense dia». Els dies van en cicle: quan el client acaba l'últim, torna a començar pel primer; no van lligats a dilluns o dimecres. Si el client és teu, «+ Dia» en crea un al final, i a la capçalera del dia obert pots posar-li nom, passar-lo «← Abans» o «Després →», «Duplicar»-lo (amb els exercicis i la pauta, però sense el progrés) o «Esborrar»-lo. Esborrar un dia no esborra cap exercici: els seus passen a «Sense dia», amb el progrés.",
+        },
+        {
+          t: "p",
+          text: "Dins de cada dia, els exercicis en ordre, cadascun amb la seva pauta: sèries, repeticions o temps («8-10», «30 s»), càrrega («20 kg», «RPE 7») i descans en segons, tot opcional, i les notes. Les fletxes ↑↓ canvien l'ordre; «Moure a…» el passa a un altre dia; «Pauta» l'obre per editar-la. Un mateix exercici pot ser a més d'un dia, cadascun amb la seva pauta. A sota, el formulari per afegir-ne un de la biblioteca al dia obert, ja amb la pauta. «Treure» pregunta abans, perquè s'endú el progrés que s'hi hagi registrat: per canviar-lo de dia, fes servir «Moure a…», que el conserva.",
+        },
+        {
+          t: "p",
+          text: "El client marca «Dia fet» des de la seva àrea el dia que l'ha fet (només amb la data d'avui, i el pot desfer el mateix dia). A la capçalera de cada dia veus l'últim cop que el va marcar, i al final de la pestanya, els «Dia fet» recents. No envia cap correu.",
         },
         {
           t: "note",
@@ -315,7 +323,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "p",
-          text: "Més avall, el progrés: les mesures registrades per a cada exercici assignat, amb data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne: s'esborra al moment i, uns segons, surt «Desfer». És on es veu si el que li has posat està funcionant.",
+          text: "Més avall, el progrés: les mesures registrades per a cada exercici assignat (amb el dia on és, perquè el mateix exercici en dos dies té dos històrics), amb data, pes en quilos, repeticions i una nota opcional. Si el client és teu, hi pots registrar entrades noves i esborrar-ne: s'esborra al moment i, uns segons, surt «Desfer». És on es veu si el que li has posat està funcionant.",
         },
         { t: "h", text: "Historial clínic" },
         {

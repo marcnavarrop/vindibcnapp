@@ -11,7 +11,11 @@ export type ClientDataExport = {
   reservations: unknown[];
   payments: unknown[];
   exercise_progress: unknown[];
+  /** Amb el dia, l'ordre i la pauta de cada exercici (0112). */
   exercises: unknown[];
+  /** Els dies de la pauta (0112) i els «dia fet» que ha marcat. */
+  workout_days: unknown[];
+  workout_logs: unknown[];
   consents: unknown[];
   documents: unknown[];
   /**
@@ -53,6 +57,8 @@ export async function exportClientData(
         exercises: store.client_exercises
           .filter((ce) => ce.client_id === clientId)
           .map((ce) => ({ ...ce, exercise_name: exMap.get(ce.exercise_id) })),
+        workout_days: store.client_workout_days.filter((d) => d.client_id === clientId),
+        workout_logs: store.client_workout_logs.filter((l) => l.client_id === clientId),
         consents: store.consents.filter(
           (c) => c.user_id === client.profile_id,
         ),
@@ -84,6 +90,8 @@ export async function exportClientData(
     payments,
     ces,
     exercise_progress,
+    workoutDays,
+    workoutLogs,
     consents,
     documents,
     firstVisit,
@@ -101,6 +109,16 @@ export async function exportClientData(
         .from("exercise_progress")
         .select("*, client_exercise:client_exercises!inner(client_id)")
         .eq("client_exercise.client_id", clientId),
+      admin
+        .from("client_workout_days")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("position", { ascending: true }),
+      admin
+        .from("client_workout_logs")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("done_on", { ascending: true }),
       admin.from("consents").select("*").eq("user_id", profileId),
       admin
         .from("client_documents")
@@ -127,6 +145,8 @@ export async function exportClientData(
       payments: payments.data ?? [],
       exercise_progress: exercise_progress.data ?? [],
       exercises: ces.data ?? [],
+      workout_days: workoutDays.data ?? [],
+      workout_logs: workoutLogs.data ?? [],
       consents: consents.data ?? [],
       documents: documents.data ?? [],
       clinical_history: { first_visit: firstVisit.data ?? null, followups: followups.data ?? [] },

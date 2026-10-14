@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**111 migracions SQL** a `supabase/migrations/` (`0001`–`0111`), numerades i
+**112 migracions SQL** a `supabase/migrations/` (`0001`–`0112`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -181,6 +181,17 @@ capçalera per fer-la obligatòria (i afegir-hi `frame-ancestors 'none'`).
   Les `clients.clinical_notes` (0 a producció) s'hi van copiar; la `0111` va
   buidar la columna i la va esborrar (comprovant abans que cap nota s'hagués
   quedat sense la seva «Primera visita»).
+- **Pauta per dies** (`0112`, tiquet d'en Raul): `client_workout_days` (dies
+  per client, en cicle, amb nom opcional; el número que es veu surt de l'ordre),
+  i a `client_exercises` el dia (`day_id`, nul = «Sense dia»), l'ordre
+  (`position`) i la pauta opcional (`sets`, `reps`, `load`, `rest_seconds`).
+  `client_workout_logs` és el «Dia fet»: el marca només el client, per a ell,
+  amb data d'avui a Madrid, i el desmarca el mateix dia; la base hi posa la foto
+  del dia (nom i número). RLS amb el patró de `client_exercises` més
+  `same_world`. Moure de dia, reordenar i duplicar són funcions SECURITY
+  INVOKER; **el progrés penja de l'assignació**, així que moure un exercici és
+  canviar-li el `day_id` (mai treure'l i tornar-lo a posar), i esborrar un dia
+  passa els seus exercicis a «Sense dia». `npm run workout:check`.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de
