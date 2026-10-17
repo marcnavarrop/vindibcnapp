@@ -14,6 +14,7 @@ import {
 } from "@/app/(trainer)/trainer/bonos/actions";
 import { TAP } from "@/lib/utils";
 import { demoCompatible } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { bonoServicesForOthersClients } from "@/lib/bono-rules";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function NewTrainerBonoPage({
   // (0108) i, si és fisio, de fisio (0109): sense paquets d'altres serveis ni
   // mensualitats (la subscripció segueix essent només per als propis). Demo
   // amb demo.
-  if (!viewer || !demoCompatible(client.id, viewer.id)) {
+  if (!viewer || !demoCompatible(await getDemoWorld(), client.id, viewer.id)) {
     redirect(`/trainer/clients/${clientId}`);
   }
   const own = client.assignedTrainerId === viewer.id;

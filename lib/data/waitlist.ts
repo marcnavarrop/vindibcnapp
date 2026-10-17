@@ -1,4 +1,5 @@
 import "server-only";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { isSessionOffered } from "@/lib/data/availability-check";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -198,6 +199,7 @@ export async function joinWaitlist(input: {
       trainerId: input.trainerId,
       assignedTrainerId: client.assigned_trainer_id ?? null,
       clientId: client.id,
+      world: await getDemoWorld(),
     });
 
     const bono = store.bonos.find(
@@ -258,6 +260,7 @@ export async function joinWaitlist(input: {
     trainerId: input.trainerId,
     assignedTrainerId: client.assigned_trainer_id ?? null,
     clientId: client.id,
+    world: await getDemoWorld(),
   });
 
   const { data: bonos } = await admin
@@ -447,6 +450,7 @@ export async function promoteFromWaitlist(freed: {
     // El dia del centre, UN cop: amb aquest es descarten els bons caducats i
     // amb aquest el torna a mirar la base (0103).
     const today = centerToday();
+    const world = await getDemoWorld();
     for (const c of candidates) {
       // Ja hi és? (pot passar en un grup on el mateix client hi tingui plaça)
       if (occupied.some((o) => o.client_id === c.client_id)) continue;
@@ -457,6 +461,7 @@ export async function promoteFromWaitlist(freed: {
           trainerId,
           assignedTrainerId: assignedOf.get(c.client_id) ?? null,
           clientId: c.client_id,
+          world,
         }) !== "ok"
       )
         continue;
@@ -633,6 +638,7 @@ async function promoteMock(
   if (!slotHasRoom(occupied, freed.serviceType))
     return { promoted: false, reason: "La franja segueix plena." };
 
+  const world = await getDemoWorld();
   for (const c of candidates) {
     if (occupied.some((o) => o.client_id === c.client_id)) continue;
     const assigned =
@@ -643,6 +649,7 @@ async function promoteMock(
         trainerId: freed.trainerId,
         assignedTrainerId: assigned,
         clientId: c.client_id,
+        world,
       }) !== "ok"
     )
       continue;

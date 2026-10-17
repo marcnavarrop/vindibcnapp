@@ -23,7 +23,9 @@ export type DataAccessLogAction =
   | "clinical_archive"
   | "clinical_archive_view"
   | "clinical_archive_export"
-  | "clinical_purge";
+  | "clinical_purge"
+  | "demo_profile_added"
+  | "demo_profile_removed";
 
 /** Què hi ha a cada entrada de l'arxiu clínic (0119). */
 export type ClinicalArchiveKind = "first_visit" | "followup" | "session_note" | "document" | "consent";
@@ -2318,6 +2320,11 @@ export interface Database {
       client_test_suggestions: {
         Args: Record<never, never>;
         Returns: { title: string; unit: string | null; uses: number }[];
+      };
+      /** Els perfils demo i la seva fitxa de client (0121), només clau de servei. */
+      demo_world: {
+        Args: Record<never, never>;
+        Returns: { profile_id: string; client_id: string | null }[];
       };
       /** Arxiu clínic (0119), només clau de servei: té historial? fins quan? */
       clinical_retention_for: {

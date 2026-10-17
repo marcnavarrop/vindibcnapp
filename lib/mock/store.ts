@@ -96,6 +96,8 @@ export type Store = {
   /** L'arxiu clínic (0119). En simulació no hi ha bucket: només les files. */
   clinical_archive_patients: Tables["clinical_archive_patients"]["Row"][];
   clinical_archive_entries: Tables["clinical_archive_entries"]["Row"][];
+  /** Els comptes demo (0110/0121). Buida a la llavor: la simulació no en té. */
+  demo_profiles: Tables["demo_profiles"]["Row"][];
   professional_colors: Tables["professional_colors"]["Row"][];
   service_type_colors: Tables["service_type_colors"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
@@ -154,6 +156,7 @@ function fromSeed(): Store {
     clinical_seen: [],
     clinical_archive_patients: [],
     clinical_archive_entries: [],
+    demo_profiles: [],
     service_rates: [],
     bonus_service_weights: [],
     bonus_tiers: [],

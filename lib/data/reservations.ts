@@ -1,4 +1,5 @@
 import "server-only";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { USE_MOCK } from "@/lib/config";
 import {
@@ -51,7 +52,7 @@ import {
   STAFF_SCOPE_MESSAGES,
   staffBookingScope,
 } from "@/lib/booking-scope";
-import { demoCompatible, isDemoClient } from "@/lib/demo-accounts";
+import { demoCompatible, isDemoClient, type DemoWorld } from "@/lib/demo-accounts";
 import { BonoUnusableError, bonoRejectionMessage, isBonoRejection } from "@/lib/bono-rejection";
 import {
   BookingConflictError,
@@ -596,13 +597,13 @@ export async function listUpcomingReservations(input: {
 /**
  * Comptes demo i reals no es barregen tampoc quan reserva l'equip (admin o
  * professional): el Client Demo només amb professionals demo, i un client real
- * mai amb un de demo (`lib/demo-accounts.ts`).
+ * mai amb un de demo (`demo_profiles`, `getDemoWorld()`).
  */
-function assertDemoSeparated(clientId: string, trainerId: string | null): void {
-  if (!demoCompatible(clientId, trainerId))
+function assertDemoSeparated(w: DemoWorld, clientId: string, trainerId: string | null): void {
+  if (!demoCompatible(w, clientId, trainerId))
     throw new Error(
-      isDemoClient(clientId)
-        ? "El Client Demo només pot reservar amb professionals demo."
+      isDemoClient(w, clientId)
+        ? "Un client de demo només pot reservar amb professionals demo."
         : "Els professionals demo no tenen agenda per a clients reals.",
     );
 }
@@ -901,7 +902,7 @@ export async function createReservation(
         `Aquest bo només té ${bono.remaining_sessions} sessions disponibles.`,
       );
     const clientId = bono ? bono.client_id : input.clientId!;
-    assertDemoSeparated(clientId, input.trainerId);
+    assertDemoSeparated(await getDemoWorld(), clientId, input.trainerId);
     const serviceType = bono ? bono.service_type : input.serviceType!;
     assertRepeatable(serviceType, weeks);
     // El permís, com al camí real: fins ara la simulació no el mirava, i un
@@ -1024,7 +1025,7 @@ export async function createReservation(
   }
 
   const clientId = bono ? bono.client_id : input.clientId!;
-  assertDemoSeparated(clientId, input.trainerId);
+  assertDemoSeparated(await getDemoWorld(), clientId, input.trainerId);
   const serviceType = bono ? bono.service_type : input.serviceType!;
   assertRepeatable(serviceType, weeks);
 
@@ -1386,7 +1387,7 @@ async function assertTeamMayTouch(id: string, action: "cancel" | "complete"): Pr
   if (!r) return;
   const refusal =
     action === "cancel" ? TEAM_CANCEL_ERROR.forbidden : NOT_COMPLETED.forbidden;
-  if (!demoCompatible(r.client_id, viewer.id)) throw new Error(refusal);
+  if (!demoCompatible(await getDemoWorld(), r.client_id, viewer.id)) throw new Error(refusal);
   if (USE_MOCK) {
     const own = getStore().clients.some(
       (c) => c.id === r.client_id && c.assigned_trainer_id === viewer.id,
@@ -1664,6 +1665,7 @@ export async function createClientReservation(
       trainerId,
       assignedTrainerId: client.assigned_trainer_id ?? null,
       clientId: client.id,
+      world: await getDemoWorld(),
     });
     const bono = store.bonos
       .filter(
@@ -1762,6 +1764,7 @@ export async function createClientReservation(
     trainerId,
     assignedTrainerId: client.assigned_trainer_id ?? null,
     clientId: client.id,
+    world: await getDemoWorld(),
   });
 
   // 1b. El client no pot tenir dues reserves vives que es trepitgin (0105).

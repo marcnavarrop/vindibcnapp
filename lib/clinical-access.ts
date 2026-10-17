@@ -11,14 +11,15 @@
  *   altres entrenadors    res      —                —                    —
  *   el client             res      —                —                    —
  *
- * I «demo amb demo» (que la base també mira, `same_world`): un professional
+ * I «demo amb demo» (que la base també mira, `same_world`; el món demo surt de
+ * `demo_profiles`, `getDemoWorld()`): un professional
  * demo només amb clients demo, i un de real mai amb un client demo. L'admin
  * ho veu tot.
  *
  * Sense `server-only`: la fan servir les fitxes (què s'ensenya) i les accions
  * (què s'accepta).
  */
-import { demoCompatible } from "@/lib/demo-accounts";
+import { demoCompatible, type DemoWorld } from "@/lib/demo-accounts";
 import type { Specialty, UserRole } from "@/types/database";
 
 export type ClinicalViewer = { id: string; role: UserRole; specialty: Specialty | null };
@@ -26,16 +27,16 @@ export type ClinicalSubject = { id: string; assignedTrainerId: string | null };
 
 const isPhysio = (v: ClinicalViewer) => v.role === "trainer" && v.specialty === "fisioterapeuta";
 
-export function canReadClinical(v: ClinicalViewer, c: ClinicalSubject): boolean {
+export function canReadClinical(v: ClinicalViewer, c: ClinicalSubject, w: DemoWorld): boolean {
   if (v.role === "admin") return true;
-  if (v.role !== "trainer" || !demoCompatible(c.id, v.id)) return false;
+  if (v.role !== "trainer" || !demoCompatible(w, c.id, v.id)) return false;
   return isPhysio(v) || c.assignedTrainerId === v.id;
 }
 
 /** Crear i editar la primera visita, i afegir seguiments. */
-export function canWriteClinical(v: ClinicalViewer, c: ClinicalSubject): boolean {
+export function canWriteClinical(v: ClinicalViewer, c: ClinicalSubject, w: DemoWorld): boolean {
   if (v.role === "admin") return true;
-  return isPhysio(v) && demoCompatible(c.id, v.id);
+  return isPhysio(v) && demoCompatible(w, c.id, v.id);
 }
 
 /** Editar UN seguiment: l'admin, o el fisio que el va escriure. */
@@ -43,9 +44,10 @@ export function canEditFollowup(
   v: ClinicalViewer,
   c: ClinicalSubject,
   authorId: string | null,
+  w: DemoWorld,
 ): boolean {
   if (v.role === "admin") return true;
-  return canWriteClinical(v, c) && authorId === v.id;
+  return canWriteClinical(v, c, w) && authorId === v.id;
 }
 
 /** Esborrar: només l'admin. */

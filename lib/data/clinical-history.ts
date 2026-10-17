@@ -3,6 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { isDemoClient } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { logDataAccess } from "@/lib/data/data-access-log";
 import {
   canReadClinical,
@@ -90,7 +91,7 @@ export async function getClinicalHistory(
   }[] = [];
 
   if (USE_MOCK) {
-    if (!canReadClinical(viewer, client)) return { firstVisit: null, followups: [] };
+    if (!canReadClinical(viewer, client, await getDemoWorld())) return { firstVisit: null, followups: [] };
     const s = getStore();
     first = s.clinical_first_visits.find((f) => f.client_id === client.id) ?? null;
     follows = s.clinical_followups
@@ -153,7 +154,7 @@ export async function getHealthConsentFor(
   viewer: Viewer,
 ): Promise<{ grantedAt: string; version: string } | null> {
   if (USE_MOCK) {
-    if (!canReadClinical(viewer, client)) return null;
+    if (!canReadClinical(viewer, client, await getDemoWorld())) return null;
     const c = getStore()
       .consents.filter((x) => x.user_id === client.profileId && x.type === "health_data" && !x.revoked_at)
       .sort((a, b) => b.granted_at.localeCompare(a.granted_at))[0];
@@ -312,7 +313,7 @@ export async function logClinicalView(input: {
   clientName: string;
 }): Promise<void> {
   if (input.viewer.role === "admin") return;
-  if (isDemoClient(input.clientId)) return;
+  if (isDemoClient(await getDemoWorld(), input.clientId)) return;
   await logDataAccess({
     actorId: input.viewer.id,
     subjectProfileId: input.clientProfileId,

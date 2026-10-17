@@ -2,51 +2,52 @@ import "server-only";
 import { cache } from "react";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { REAL_WORLD, type DemoWorld } from "@/lib/demo-accounts";
+import { mockFails } from "@/lib/mock/faults";
+
+export type { DemoWorld };
 
 /**
- * Els comptes demo, segons la BASE (`demo_profiles`, 0110).
+ * Els comptes demo, segons la BASE (`demo_profiles`), l'única font des de la
+ * 0121. La mateixa que fa servir `same_world()` a la RLS.
  *
- * És la mateixa font que fa servir `same_world()` a la RLS de l'historial
- * clínic: aquí no hi ha cap llista nova. Serveix perquè els números de l'Inici
- * de l'admin siguin els del centre de debò: abans hi entraven els pagaments de
- * prova del Client Demo (el 88 % dels ingressos d'octubre del 2026), els seus
- * bons i la disponibilitat de l'Entrenador Demo i el Fisio Demo.
+ * `demo_world()` els torna en UNA consulta (perfil i, si en té, la fitxa de
+ * client). Només la pot cridar la clau de servei, i només es crida al
+ * servidor. Amb `React.cache`: una lectura per petició, i només a les pantalles
+ * i accions que la necessiten (reservar, assignar, historial, /prova, Inici).
  *
- * `demo_profiles` no la pot llegir cap sessió (revoke a `authenticated`), així
- * que es llegeix amb la clau de servei, NOMÉS al servidor i només per saber
- * quins ids són demo. Amb `React.cache`: una lectura per petició.
+ * SI FALLA, TOTHOM ÉS REAL. Es registra l'error i es torna el món buit: cap
+ * compte es tracta com a demo per error. La base continua separant els mons
+ * on ho fa ella (`same_world` a l'historial clínic i els tests), i el mode PRE
+ * no deixa saltar enlloc (no pot confirmar que el compte sigui demo).
  *
- * En simulació no hi ha `demo_profiles`: el món demo és buit i els números no
- * canvien.
+ * En simulació es llegeix la col·lecció `demo_profiles` del magatzem (buida a la
+ * llavor: els scripts hi posen els comptes demo quan els cal).
  */
-export type DemoWorld = {
-  /** Perfils demo (professionals i clients). */
-  profileIds: Set<string>;
-  /** Fitxes `clients` dels perfils demo. */
-  clientIds: Set<string>;
-};
-
 export const getDemoWorld = cache(async (): Promise<DemoWorld> => {
-  const empty: DemoWorld = { profileIds: new Set(), clientIds: new Set() };
-  if (USE_MOCK) return empty;
+  if (USE_MOCK) {
+    // Per provar que, sense poder llegir, tothom és real: MOCK_FAIL=demo_world.
+    if (mockFails("demo_world")) {
+      console.error("[demo-world] no s'han pogut llegir els comptes demo: simulat");
+      return REAL_WORLD;
+    }
+    const { getStore } = await import("@/lib/mock/store");
+    const store = getStore();
+    const profileIds = new Set(store.demo_profiles.map((d) => d.profile_id));
+    const clientIds = new Set(store.clients.filter((c) => profileIds.has(c.profile_id)).map((c) => c.id));
+    return { profileIds, clientIds };
+  }
   try {
-    const admin = createAdminClient();
-    const { data: demo, error } = await admin.from("demo_profiles").select("profile_id").limit(100);
+    const { data, error } = await createAdminClient().rpc("demo_world");
     if (error) throw error;
-    const profileIds = new Set((demo ?? []).map((d) => d.profile_id as string));
-    if (profileIds.size === 0) return empty;
-    const { data: clients, error: cErr } = await admin
-      .from("clients")
-      .select("id")
-      .in("profile_id", [...profileIds])
-      .limit(100);
-    if (cErr) throw cErr;
-    return { profileIds, clientIds: new Set((clients ?? []).map((c) => c.id as string)) };
+    const rows = data ?? [];
+    return {
+      profileIds: new Set(rows.map((r) => r.profile_id)),
+      clientIds: new Set(rows.flatMap((r) => (r.client_id ? [r.client_id] : []))),
+    };
   } catch (e) {
-    // Sense saber quins són demo, millor els números amb demo que cap número:
-    // es registra i l'Inici es pinta igual.
     console.error("[demo-world] no s'han pogut llegir els comptes demo:", e instanceof Error ? e.message : e);
-    return empty;
+    return REAL_WORLD;
   }
 });
 

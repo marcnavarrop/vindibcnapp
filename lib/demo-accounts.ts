@@ -1,39 +1,43 @@
 /**
- * LES CONTES DEMO, separades de les reals (pas 1 del pla de l'entorn PRE).
+ * LES CONTES DEMO, separades de les reals.
+ *
+ * QUINS SÓN DEMO HO DIU LA BASE: `demo_profiles` (0110), l'única font des de la
+ * 0121. Aquí no hi ha cap id: les regles reben el «món demo» que en llegeix el
+ * servidor (`getDemoWorld()`, lib/data/demo-world.ts, una lectura per petició)
+ * i són funcions pures. Si la lectura falla, el món és buit i TOTHOM compta com
+ * a REAL: mai es tracta un compte com a demo per error.
  *
  * Mentre els comptes de demostració visquin a producció, un client real no ha
- * de poder VEURE ni RESERVAR amb l'Entrenador Demo o el Fisio Demo (calendari,
- * llista d'espera, sèries, cerca de forat), ni demanar-hi una prova a /prova; i
- * el Client Demo només reserva amb professionals demo. Així el mode PRE segueix
- * funcionant entre els tres comptes demo sense tocar l'agenda ni la caixa de
- * ningú real.
+ * de poder VEURE ni RESERVAR amb un professional demo (calendari, llista
+ * d'espera, sèries, cerca de forat), ni demanar-hi una prova a /prova; i un
+ * client demo només reserva amb professionals demo.
  *
- * Mòdul PUR (sense `server-only`): el fan servir el servidor per rebutjar i el
- * calendari del client per no ensenyar el que el servidor rebutjaria. Els ids
- * són els de `lib/pre-mode.ts` (que en treu els seus d'aquí); no són secrets.
+ * Mòdul PUR (sense `server-only`): el fa servir el servidor per rebutjar, i el
+ * formulari d'assignar professional per no oferir el que el servidor
+ * rebutjaria (rep el món ja llegit, mai el llegeix ell).
  *
- * Quan l'entorn PRE existeixi i els comptes demo s'hagin esborrat de
- * producció, aquestes llistes no casaran amb res i la regla no farà res.
+ * Els tres comptes als quals pot saltar el mode PRE són una altra cosa: una
+ * llista blanca al codi (lib/pre-accounts.ts) que, a més, ha de coincidir amb
+ * aquesta taula.
  */
 
-/** Perfils (= auth.users) dels professionals demo. */
-export const DEMO_TRAINER_IDS: readonly string[] = [
-  "5119e112-74af-4c85-862b-829f6d726ea2", // Entrenador Demo
-  "1c36928b-0668-4377-a5d8-c7befb2d78bc", // Fisio Demo
-];
+export type DemoWorld = {
+  /** Perfils demo (professionals i clients). */
+  profileIds: ReadonlySet<string>;
+  /** Fitxes `clients` dels perfils demo. */
+  clientIds: ReadonlySet<string>;
+};
 
-/** Perfil del Client Demo. */
-export const DEMO_CLIENT_PROFILE_ID = "d3b42dcb-7c11-4431-abc0-723b21add106";
-/** La seva fitxa a `clients` (el que porten les reserves, els bons…). */
-export const DEMO_CLIENT_ID = "84fa4786-3307-48ce-9bbf-e45c49f2fe7e";
+/** Sense demo: el que es fa servir si no s'ha pogut llegir. Tothom és real. */
+export const REAL_WORLD: DemoWorld = { profileIds: new Set(), clientIds: new Set() };
 
-export function isDemoTrainer(trainerId: string | null | undefined): boolean {
-  return !!trainerId && DEMO_TRAINER_IDS.includes(trainerId);
+export function isDemoTrainer(w: DemoWorld, trainerId: string | null | undefined): boolean {
+  return !!trainerId && w.profileIds.has(trainerId);
 }
 
-/** `clientId` és el de `clients` (o el perfil del Client Demo). */
-export function isDemoClient(clientId: string | null | undefined): boolean {
-  return clientId === DEMO_CLIENT_ID || clientId === DEMO_CLIENT_PROFILE_ID;
+/** `clientId` és el de `clients` (o el perfil d'un client demo). */
+export function isDemoClient(w: DemoWorld, clientId: string | null | undefined): boolean {
+  return !!clientId && (w.clientIds.has(clientId) || w.profileIds.has(clientId));
 }
 
 /**
@@ -42,24 +46,24 @@ export function isDemoClient(clientId: string | null | undefined): boolean {
  * sap). `trainerId` null = «m'és igual qui» (a la cua): la promoció ho torna a
  * mirar amb el professional real de la franja.
  */
-export function demoCompatible(clientId: string | null, trainerId: string | null): boolean {
+export function demoCompatible(w: DemoWorld, clientId: string | null, trainerId: string | null): boolean {
   if (!clientId || !trainerId) return true;
-  return isDemoClient(clientId) === isDemoTrainer(trainerId);
+  return isDemoClient(w, clientId) === isDemoTrainer(w, trainerId);
 }
 
 /**
  * ¿Es pot ASSIGNAR aquest professional a aquest client? La mateixa regla que en
  * reservar (`demoCompatible`), però aquí `clientId` null vol dir un client NOU,
- * que sempre és real (el Client Demo ja existeix i no es torna a crear).
+ * que sempre és real (un compte nou no és mai a `demo_profiles` en néixer).
  *
  *   · Sense professional («sense assignar»): sempre.
  *   · Client demo → només un professional demo.
  *   · Client real → mai un professional demo.
  */
-export function demoAssignmentAllowed(clientId: string | null, trainerId: string | null): boolean {
+export function demoAssignmentAllowed(w: DemoWorld, clientId: string | null, trainerId: string | null): boolean {
   if (!trainerId) return true;
-  const demoClient = clientId ? isDemoClient(clientId) : false;
-  return demoClient === isDemoTrainer(trainerId);
+  const demoClient = clientId ? isDemoClient(w, clientId) : false;
+  return demoClient === isDemoTrainer(w, trainerId);
 }
 
 /** El que es diu, en català, quan `demoAssignmentAllowed` diu que no. */
@@ -67,6 +71,6 @@ export const DEMO_ASSIGNMENT_ERROR =
   "Els comptes de demostració només van entre ells: a un client de demo només se li pot assignar un professional de demo (o cap), i a un client real, mai un professional de demo.";
 
 /** Per a qui no té compte (/prova): mai un professional demo. */
-export function publicTrainer(trainerId: string | null | undefined): boolean {
-  return !isDemoTrainer(trainerId);
+export function publicTrainer(w: DemoWorld, trainerId: string | null | undefined): boolean {
+  return !isDemoTrainer(w, trainerId);
 }

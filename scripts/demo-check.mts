@@ -28,7 +28,11 @@ const restaura = () => {
   else fs.writeFileSync(STORE, abans);
 };
 
-const { DEMO_TRAINER_IDS, DEMO_CLIENT_ID, DEMO_CLIENT_PROFILE_ID } = await import("../lib/demo-accounts");
+const { PRE_ENTRENADOR_ID, PRE_FISIO_ID, PRE_CLIENT_ID: DEMO_CLIENT_ID, PRE_CLIENT_PROFILE_ID: DEMO_CLIENT_PROFILE_ID } = await import("../lib/pre-accounts");
+const DEMO_TRAINER_IDS = [PRE_ENTRENADOR_ID, PRE_FISIO_ID];
+const { REAL_WORLD } = await import("../lib/demo-accounts");
+const { getDemoWorld } = await import("../lib/data/demo-world");
+const { DEMO_ACCOUNTS, demoById, demoTargetAllowed } = await import("../lib/pre-mode");
 const { clientBookingScope } = await import("../lib/booking-scope");
 const { getStore, saveStore } = await import("../lib/mock/store");
 const { getClientCenterData } = await import("../lib/data/client-calendar");
@@ -48,10 +52,13 @@ const [E, F] = DEMO_TRAINER_IDS;
 const REAL_CLIENT_PROFILE = "u-client-ana";
 const LAIA = "u-trainer-laia";
 
+// El món demo com el llegiria de `demo_profiles` (0121): els tres comptes.
+const W = { profileIds: new Set([E, F, DEMO_CLIENT_PROFILE_ID]), clientIds: new Set([DEMO_CLIENT_ID]) };
+
 try {
   console.log("\nLa regla");
   const sc = (clientId: string | null, trainerId: string | null, serviceType = "grupo_reducido" as const) =>
-    clientBookingScope({ serviceType, trainerId, assignedTrainerId: null, clientId });
+    clientBookingScope({ serviceType, trainerId, assignedTrainerId: null, clientId, world: W });
   check(sc("c-ana", E) === "demoMismatch", "client real + Entrenador Demo (grup): no");
   check(sc("c-ana", F) === "demoMismatch", "client real + Fisio Demo: no");
   check(sc(DEMO_CLIENT_ID, LAIA) === "demoMismatch", "Client Demo + professional real: no");
@@ -67,6 +74,13 @@ try {
   s.profiles.push({ ...laia, id: F, full_name: "Fisio Demo", email: "demo.fisio@vindibcn.com", specialty: "fisioterapeuta" } as never);
   s.profiles.push({ ...ana, id: DEMO_CLIENT_PROFILE_ID, full_name: "Client Demo", email: "demo.client@vindibcn.com" } as never);
   s.clients.push({ ...s.clients.find((c) => c.id === "c-ana")!, id: DEMO_CLIENT_ID, profile_id: DEMO_CLIENT_PROFILE_ID, assigned_trainer_id: E, referral_code: "DEMO-1" } as never);
+  // I que són demo ho diu `demo_profiles`, com a producció: sense aquestes
+  // files serien comptes reals amb un nom que diu «Demo».
+  s.demo_profiles.push(
+    { profile_id: E, label: "Entrenador Demo" },
+    { profile_id: F, label: "Fisio Demo" },
+    { profile_id: DEMO_CLIENT_PROFILE_ID, label: "Client Demo" },
+  );
   const rule = s.availability_rules.find((r) => r.trainer_id === LAIA)!;
   let k = 0;
   for (let wd = 0; wd < 7; wd++) {
@@ -118,7 +132,7 @@ try {
   const st1 = await fails(() => createReservation({ trainerId: E, scheduledAt: at11, bonoId: null, clientId: "c-ana", serviceType: "ep_individual" }));
   check(st1 === "Els professionals demo no tenen agenda per a clients reals.", `client real amb l'Entrenador Demo: «${st1}»`);
   const st2 = await fails(() => createReservation({ trainerId: LAIA, scheduledAt: at11, bonoId: null, clientId: DEMO_CLIENT_ID, serviceType: "ep_individual" }));
-  check(st2 === "El Client Demo només pot reservar amb professionals demo.", `Client Demo amb la Laia: «${st2}»`);
+  check(st2 === "Un client de demo només pot reservar amb professionals demo.", `Client Demo amb la Laia: «${st2}»`);
 
   console.log("\n/prova");
   const pub = await getPublicTrialData();
@@ -161,6 +175,46 @@ try {
     updateClientRecord("c-ana", { fullName: "Ana Ferrer", phone: "+34 600 100 001", assignedTrainerId: F, generalNotes: null }),
   );
   check(edit === DEMO_ASSIGNMENT_ERROR && assignat("c-ana") === anaAbans, `editar l'Ana posant-li el Fisio Demo: ${edit ? "rebutjat" : "desat!"}`);
+
+  console.log("\nUna sola font: demo_profiles");
+  {
+    const w = await getDemoWorld();
+    check(w.profileIds.has(E) && w.profileIds.has(F) && w.clientIds.has(DEMO_CLIENT_ID), "el món surt de la taula: els tres demo i la fitxa del Client Demo");
+    // Un client real marcat com a demo a la taula passa a ser demo a TOTA l'app.
+    const st = getStore();
+    st.demo_profiles.push({ profile_id: "u-client-oriol", label: "Prova" });
+    saveStore(st);
+    const r = await fails(() => createReservation({ trainerId: LAIA, scheduledAt: centerLocalToInstant(addDaysStr(centerToday(), 9), "11:00").toISOString(), bonoId: null, clientId: "c-oriol", serviceType: "ep_individual" }));
+    check(r === "Un client de demo només pot reservar amb professionals demo.", `l'Oriol, marcat demo a la taula: ja no reserva amb la Laia («${r}»)`);
+    const st2 = getStore();
+    st2.demo_profiles = st2.demo_profiles.filter((d) => d.profile_id !== "u-client-oriol");
+    saveStore(st2);
+  }
+
+  console.log("\nSi la taula no es pot llegir, tothom és real");
+  {
+    process.env.MOCK_FAIL = "demo_world";
+    const w = await getDemoWorld();
+    check(w.profileIds.size === 0 && w.clientIds.size === 0, "el món surt buit (cap compte demo)");
+    const pubF = await getPublicTrialData();
+    check(Array.isArray(pubF.rules), "/prova segueix funcionant");
+    delete process.env.MOCK_FAIL;
+  }
+
+  console.log("\nMode PRE: la llista del codi I la taula");
+  {
+    const [ent, fis, cli] = ["entrenador", "fisio", "client"].map((slug) => DEMO_ACCOUNTS.find((d) => d.slug === slug)!);
+    check(DEMO_ACCOUNTS.length === 3 && ent.id === E && fis.id === F && cli.id === DEMO_CLIENT_PROFILE_ID, "la llista blanca: els tres comptes de sempre");
+    check(demoTargetAllowed(ent, "trainer", W) && demoTargetAllowed(fis, "trainer", W) && demoTargetAllowed(cli, "client", W), "a la llista i a la taula: es pot saltar");
+    const sense = { profileIds: new Set([E, F]), clientIds: new Set<string>() };
+    check(!demoTargetAllowed(cli, "client", sense), "el Client Demo tret de la taula: no es pot saltar");
+    check(!demoTargetAllowed(ent, "trainer", REAL_WORLD), "la taula no es pot llegir: no es pot saltar");
+    check(!demoTargetAllowed(ent, "admin", W), "si el compte fos admin: mai");
+    check(!demoTargetAllowed(cli, "trainer", W), "si el rol no és el de la llista: no");
+    // Un compte real a la taula no apareix a la llista: el navegador només pot
+    // dir un dels tres noms curts, i `demoById` no el reconeix.
+    check(demoById("u-client-oriol") === null && demoById("u-admin") === null, "un compte real (encara que fos a la taula) no és saltable");
+  }
 } catch (e) {
   console.error(e);
   fallides++;

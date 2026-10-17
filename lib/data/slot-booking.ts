@@ -7,7 +7,8 @@ import { centerToday } from "@/lib/center-time";
 import { isBonoExpired } from "@/lib/data/bonos";
 import { matchesName, nameWords, wordRegex } from "@/lib/client-search-match";
 import { servicesForOthersClients } from "@/lib/booking-scope";
-import { demoCompatible } from "@/lib/demo-accounts";
+import { demoCompatible, type DemoWorld } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import type { BonoStatus, ServiceType, Specialty } from "@/types/database";
 
 /**
@@ -85,10 +86,11 @@ const toBookable = (b: BonoRow): BookableBono => ({
 function shape(
   c: { id: string; name: string; assignedTrainerId: string | null; bonos: BonoRow[] },
   trainer: BookingTrainer | null,
+  world: DemoWorld,
 ): BookableClient | null {
   const bonos = usable(c.bonos);
   if (!trainer) return { id: c.id, name: c.name, bonos: bonos.map(toBookable), restricted: false };
-  if (!demoCompatible(c.id, trainer.id)) return null;
+  if (!demoCompatible(world, c.id, trainer.id)) return null;
   if (c.assignedTrainerId === trainer.id)
     return { id: c.id, name: c.name, bonos: bonos.map(toBookable), restricted: false };
   const allowed = servicesForOthersClients(trainer.specialty);
@@ -111,6 +113,7 @@ export async function getBookableClient(
   clientId: string,
   trainer: BookingTrainer | null,
 ): Promise<BookableClient | null> {
+  const world = await getDemoWorld();
   if (USE_MOCK) {
     const s = getStore();
     const c = s.clients.find((x) => x.id === clientId);
@@ -122,8 +125,7 @@ export async function getBookableClient(
         assignedTrainerId: c.assigned_trainer_id,
         bonos: s.bonos.filter((b) => b.client_id === c.id) as BonoRow[],
       },
-      trainer,
-    );
+      trainer, world);
   }
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -150,8 +152,7 @@ export async function getBookableClient(
       assignedTrainerId: row.assigned_trainer_id,
       bonos: row.bonos,
     },
-    trainer,
-  );
+    trainer, world);
 }
 
 /** El bo que es gastaria: el més antic utilitzable d'aquest servei, o cap. */
@@ -212,6 +213,7 @@ export async function searchBookableClients(
   trainer: BookingTrainer | null,
 ): Promise<BookableClient[]> {
   const q = query.trim().slice(0, 60);
+  const world = await getDemoWorld();
   // Els seus, primer: són els que més reserva, i amb tot el que tenen.
   const ownFirst = (list: BookableClient[]) =>
     [...list].sort((a, b) => Number(a.restricted) - Number(b.restricted));
@@ -228,8 +230,7 @@ export async function searchBookableClients(
               assignedTrainerId: c.assigned_trainer_id,
               bonos: s.bonos.filter((b) => b.client_id === c.id) as BonoRow[],
             },
-            trainer,
-          ),
+            trainer, world),
         )
         .filter((c): c is BookableClient => !!c && (!q || matchesName(c.name, q)))
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -271,8 +272,7 @@ export async function searchBookableClients(
       const shaped = c
         ? shape(
             { id: c.id, name: p.full_name ?? "—", assignedTrainerId: c.assigned_trainer_id, bonos: c.bonos },
-            trainer,
-          )
+            trainer, world)
         : null;
       return shaped ? [shaped] : [];
     }),

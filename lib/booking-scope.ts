@@ -35,7 +35,7 @@
  * servidor per rebutjar-ho encara que algú enviï el formulari a mà.
  */
 import type { ServiceType, Specialty } from "@/types/database";
-import { demoCompatible } from "@/lib/demo-accounts";
+import { demoCompatible, type DemoWorld } from "@/lib/demo-accounts";
 
 /** Els serveis que només es poden fer amb l'entrenador assignat. */
 export const ASSIGNED_ONLY_SERVICES: readonly ServiceType[] = [
@@ -65,9 +65,11 @@ export function clientBookingScope(input: {
    * assenyala qualsevol camí que se n'oblidi. `null` = no se sap (pantalla).
    */
   clientId: string | null;
+  /** Els comptes demo, llegits de `demo_profiles` (`getDemoWorld()`). */
+  world: DemoWorld;
 }): BookingScope {
   // Demo amb demo, real amb real, per a TOTS els serveis.
-  if (!demoCompatible(input.clientId, input.trainerId)) return "demoMismatch";
+  if (!demoCompatible(input.world, input.clientId, input.trainerId)) return "demoMismatch";
   if (!requiresAssignedTrainer(input.serviceType)) return "ok";
   if (!input.assignedTrainerId) return "noAssignedTrainer";
   // A la cua, «m'és igual qui» en un servei d'assignat vol dir el seu

@@ -1,7 +1,8 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { UserRole } from "@/types/database";
-import { DEMO_CLIENT_PROFILE_ID, DEMO_TRAINER_IDS } from "@/lib/demo-accounts";
+import { PRE_CLIENT_PROFILE_ID, PRE_ENTRENADOR_ID, PRE_FISIO_ID } from "@/lib/pre-accounts";
+import type { DemoWorld } from "@/lib/demo-accounts";
 
 /**
  * Mode PRE: saltar entre els comptes de demostració sense tornar a entrar.
@@ -41,6 +42,12 @@ import { DEMO_CLIENT_PROFILE_ID, DEMO_TRAINER_IDS } from "@/lib/demo-accounts";
  * `profiles.is_demo`. Una llista blanca a la base la pot canviar qualsevol cosa
  * amb permís d'escriptura; la regla "mai un compte real" es mereix ser una
  * constant que es vegi al git. Els tres correus no són cap secret.
+ *
+ * I A MÉS, `demo_profiles` (0121). Quins comptes són demo ho diu la base
+ * (l'única font per a la resta de l'app), i el salt exigeix les DUES coses: que
+ * el compte sigui aquí i que sigui a la taula. Marcar un compte real com a demo
+ * no el fa saltable; treure'n un de la taula tanca el salt. Si la taula no es
+ * pot llegir, no es salta (el món demo surt buit: ningú és demo).
  */
 
 export type DemoSlug = "entrenador" | "fisio" | "client";
@@ -68,7 +75,7 @@ export type DemoAccount = {
 export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
   {
     slug: "entrenador",
-    id: DEMO_TRAINER_IDS[0],
+    id: PRE_ENTRENADOR_ID,
     email: "demo.entrenador@vindibcn.com",
     label: "Entrenador Demo",
     role: "trainer",
@@ -76,7 +83,7 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
   },
   {
     slug: "fisio",
-    id: DEMO_TRAINER_IDS[1],
+    id: PRE_FISIO_ID,
     email: "demo.fisio@vindibcn.com",
     label: "Fisio Demo",
     role: "trainer",
@@ -84,7 +91,7 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
   },
   {
     slug: "client",
-    id: DEMO_CLIENT_PROFILE_ID,
+    id: PRE_CLIENT_PROFILE_ID,
     email: "demo.client@vindibcn.com",
     label: "Client Demo",
     role: "client",
@@ -100,6 +107,25 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
 export function demoBySlug(slug: unknown): DemoAccount | null {
   if (typeof slug !== "string") return null;
   return DEMO_ACCOUNTS.find((d) => d.slug === slug) ?? null;
+}
+
+/**
+ * Les dues comprovacions del salt que no depenen d'Auth, en una funció pura (la
+ * prova `npm run demo:check`):
+ *  · el rol llegit ara: mai "admin", i el que diu la constant;
+ *  · que el compte sigui també a `demo_profiles` (0121).
+ */
+export function demoTargetAllowed(
+  target: DemoAccount,
+  role: UserRole | null | undefined,
+  world: DemoWorld,
+): boolean {
+  // L'ordre importa: primer "mai un admin" contra el rol CRU, i després que
+  // coincideixi amb el que diu la constant. Si algú ampliés `DemoAccount` per
+  // acceptar qualsevol rol, aquesta primera línia continuaria fent de pany.
+  if (!role || role === "admin") return false;
+  if (role !== target.role) return false;
+  return world.profileIds.has(target.id);
 }
 
 export function demoById(id: string | null | undefined): DemoAccount | null {

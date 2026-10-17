@@ -1,4 +1,5 @@
 import { demoAssignmentAllowed } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientForm } from "@/components/forms/client-form";
@@ -12,9 +13,10 @@ export default async function EditClientPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, trainers] = await Promise.all([
+  const [client, trainers, world] = await Promise.all([
     getClient(id),
     listTrainers(),
+    getDemoWorld(),
   ]);
   if (!client) notFound();
 
@@ -31,7 +33,7 @@ export default async function EditClientPage({
         <ClientForm
           action={updateClientAction.bind(null, id)}
           // Demo amb demo (`demoAssignmentAllowed`): no s'ofereix el que es rebutjaria.
-          trainers={trainers.filter((t) => demoAssignmentAllowed(id, t.id))}
+          trainers={trainers.filter((t) => demoAssignmentAllowed(world, id, t.id))}
           // Editant algú que ja existeix: el correu es veu però no es toca.
           editableEmail={false}
           submitLabel="Desar canvis"

@@ -46,6 +46,7 @@ import {
 import { addDaysStr, centerLocalToInstant } from "@/lib/center-time";
 import { hasRoom, occupancyFromSessions, type OccupancyLookup } from "@/lib/free-slots";
 import { clientBookingScope, requiresAssignedTrainer } from "@/lib/booking-scope";
+import { REAL_WORLD } from "@/lib/demo-accounts";
 import type { ServiceType } from "@/types/database";
 
 /** El que la llista necessita saber d'una reserva del centre. */
@@ -177,6 +178,10 @@ export function hoursFor(p: Prepared, day: string, service: ServiceType): HourRo
         trainerId: t,
         assignedTrainerId: input.assignedTrainerId,
         clientId: input.clientId ?? null,
+        // «Demo amb demo» ja ho ha fet el servidor (`demoScoped`,
+        // lib/data/client-calendar.ts): aquí només arriben professionals del
+        // mateix món, i el navegador no rep la llista de comptes demo.
+        world: REAL_WORLD,
       }) === "ok",
   );
   const rows: HourRow[] = [];

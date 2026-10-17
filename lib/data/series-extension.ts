@@ -1,4 +1,5 @@
 import "server-only";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore } from "@/lib/mock/store";
@@ -165,6 +166,7 @@ async function extendOne(s: SeriesToExtend): Promise<ExtensionOutcome> {
       { auto_extend: true, service_type: s.serviceType, base_trainer_id: s.baseTrainerId },
       s.assignedTrainerId,
       s.clientId,
+      await getDemoWorld(),
     )
   )
     return { ...empty, skipped: "trainerChanged" };

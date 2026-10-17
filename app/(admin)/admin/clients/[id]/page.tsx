@@ -26,6 +26,8 @@ import { listClientTags, listTagsOfClient } from "@/lib/data/client-tags";
 import { listExercises } from "@/lib/data/exercises";
 import { getConsentStatus } from "@/lib/data/consents";
 import { getViewer } from "@/lib/auth";
+import { getDemoWorld } from "@/lib/data/demo-world";
+import { demoAssignmentAllowed } from "@/lib/demo-accounts";
 import { FOLLOWUPS_LIMIT, getClinicalHistory } from "@/lib/data/clinical-history";
 import { ClinicalHistoryPanel } from "@/components/clinical-history-panel";
 import { listClientDocuments } from "@/lib/data/client-documents";
@@ -82,6 +84,7 @@ export default async function ClientDetailPage({
     subscription,
     centerCollectable,
     consent,
+    world,
   ] = await Promise.all([
     clientPromise,
     getWorkoutPlan(id),
@@ -99,6 +102,7 @@ export default async function ClientDetailPage({
     // professional. Si falla, no s'anuncia res.
     countCenterCollectableBonos().catch(() => null),
     consentPromise,
+    getDemoWorld(),
   ]);
   const assignedExercises = workoutPlan.exercises;
   if (!client || !consent) notFound();
@@ -353,7 +357,7 @@ export default async function ClientDetailPage({
             form={
               <AssignTrainerForm
                 clientId={client.id}
-                trainers={trainers}
+                trainers={trainers.filter((t) => demoAssignmentAllowed(world, client.id, t.id))}
                 currentTrainerId={client.assignedTrainerId}
                 label="Professional assignat/da"
               />

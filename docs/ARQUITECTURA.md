@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**120 migracions SQL** a `supabase/migrations/` (`0001`–`0120`), numerades i
+**121 migracions SQL** a `supabase/migrations/` (`0001`–`0121`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -284,15 +284,25 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   (`findClientOverlap`, `lib/data/reservations.ts`) i tradueix els motius a
   `lib/booking-conflict.ts`; l'error 23P01 es distingeix del de la 0082 pel
   nom de la constraint.
-- **Comptes demo separats dels reals** (`lib/demo-accounts.ts`): mentre
-  l'Entrenador Demo, el Fisio Demo i el Client Demo visquin a producció, la regla
-  «demo amb demo, real amb real» és dins de `clientBookingScope`
-  (`lib/booking-scope.ts`), amb la fitxa del client com a paràmetre
-  **obligatori**: el compilador assenyala qualsevol camí que se n'oblidi. Cobreix
-  reservar, la cua, les sèries i la promoció; el calendari del client i `/prova`
-  no reben res dels demo (tampoc l'ocupació, que és pública), i l'equip tampoc
-  els pot creuar (`createReservation`). El pla és treure'ls a un entorn PRE
-  separat.
+- **Comptes demo separats dels reals; una sola font, `demo_profiles`** (`0110`,
+  `0121`): quins comptes són demo ho diu la taula, a la base (`same_world`,
+  `is_demo_profile`) i a l'app. L'app la llegeix amb `getDemoWorld()`
+  (`lib/data/demo-world.ts`, la funció `demo_world()` amb la clau de servei, una
+  lectura per petició amb `React.cache`) i les regles de `lib/demo-accounts.ts`
+  són pures i reben aquest «món» com a paràmetre **obligatori**
+  (`clientBookingScope`, `canReadClinical`, `demoAssignmentAllowed`…): el
+  compilador assenyala qualsevol camí que se n'oblidi. El navegador no rep mai
+  la llista: el calendari del client i el selector de professional arriben ja
+  filtrats del servidor. **Si la lectura falla, tothom és real** (món buit), mai
+  demo. Escriure a `demo_profiles` només es pot per SQL (la 0121 treu el permís
+  a `service_role`) i cada alta, canvi o baixa queda a `data_access_log`
+  (`demo_profile_added` / `demo_profile_removed`). La regla cobreix reservar, la
+  cua, les sèries, la promoció, assignar professional, l'historial clínic, /prova
+  i l'Inici. El **mode PRE** és a part: la seva llista blanca és codi
+  (`lib/pre-accounts.ts`) i el salt exigeix, a més, que el compte sigui a
+  `demo_profiles` (`demoTargetAllowed`); marcar un compte real com a demo no el
+  fa saltable. Proves: `supabase/tests/0121_demo_profiles_rls.sql` (24 ✓) i
+  `npm run demo:check`. El pla és treure'ls a un entorn PRE separat.
 
 ## Integritat financera
 

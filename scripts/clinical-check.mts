@@ -33,7 +33,10 @@ const restaura = () => {
 const setRole = (r: string) => ((globalThis as { __mockRole?: string }).__mockRole = r);
 
 const access = await import("../lib/clinical-access");
-const { DEMO_CLIENT_ID, DEMO_TRAINER_IDS } = await import("../lib/demo-accounts");
+const { PRE_CLIENT_ID: DEMO_CLIENT_ID, PRE_ENTRENADOR_ID, PRE_FISIO_ID, PRE_CLIENT_PROFILE_ID } = await import("../lib/pre-accounts");
+const DEMO_TRAINER_IDS = [PRE_ENTRENADOR_ID, PRE_FISIO_ID];
+/** El món demo com el llegiria de `demo_profiles` (0121). */
+const WORLD = { profileIds: new Set([PRE_ENTRENADOR_ID, PRE_FISIO_ID, PRE_CLIENT_PROFILE_ID]), clientIds: new Set([DEMO_CLIENT_ID]) };
 const { getStore } = await import("../lib/mock/store");
 const { seedProfiles } = await import("../lib/mock/seed");
 const actions = await import("../app/actions/clinical-history-actions");
@@ -59,7 +62,11 @@ const seu = { id: "c1", assignedTrainerId: "ent" };
 const dAltre = { id: "c2", assignedTrainerId: "altre" };
 const demo = { id: DEMO_CLIENT_ID, assignedTrainerId: DEMO_TRAINER_IDS[0] };
 
-const R = access.canReadClinical, W = access.canWriteClinical, E = access.canEditFollowup;
+type V = Parameters<typeof access.canReadClinical>[0];
+type C = Parameters<typeof access.canReadClinical>[1];
+const R = (v: V, c: C) => access.canReadClinical(v, c, WORLD);
+const W = (v: V, c: C) => access.canWriteClinical(v, c, WORLD);
+const E = (v: V, c: C, a: string | null) => access.canEditFollowup(v, c, a, WORLD);
 check("admin llegeix, escriu i esborra", R(admin, dAltre) && W(admin, dAltre) && access.canDeleteClinical(admin));
 check("admin edita un seguiment d'un altre", E(admin, dAltre, "fis"));
 check("fisio llegeix i escriu un client que no és seu", R(fisio, dAltre) && W(fisio, dAltre));

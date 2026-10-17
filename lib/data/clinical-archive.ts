@@ -3,7 +3,8 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore, type Store } from "@/lib/mock/store";
-import { isDemoClient, isDemoTrainer } from "@/lib/demo-accounts";
+import { isDemoClient, isDemoTrainer, type DemoWorld } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { centerDateStr } from "@/lib/center-time";
 import { logDataAccess } from "@/lib/data/data-access-log";
 import { mockFails } from "@/lib/mock/faults";
@@ -93,7 +94,7 @@ export function canReadClinicalArchive(v: ClinicalViewer | null): boolean {
 
 /** Clau de servei: només des de la baixa, després de comprovar que és l'admin. */
 export async function getClinicalRetention(clientId: string): Promise<ClinicalRetention | null> {
-  if (USE_MOCK) return mockRetention(getStore(), clientId);
+  if (USE_MOCK) return mockRetention(getStore(), clientId, await getDemoWorld());
   const { data, error } = await createAdminClient().rpc("clinical_retention_for", { p_client: clientId });
   if (error) throw new Error(`No s'ha pogut consultar l'historial clínic: ${error.message}`);
   const r = data?.[0];
@@ -118,7 +119,7 @@ export async function getClinicalRetention(clientId: string): Promise<ClinicalRe
  * no hi serien i el que hi ha és el bo. Es continua amb la baixa.
  */
 export async function archiveClinicalHistory(clientId: string, actorId: string): Promise<ArchiveOutcome> {
-  if (USE_MOCK) return mockArchive(clientId, actorId);
+  if (USE_MOCK) return mockArchive(clientId, actorId, await getDemoWorld());
 
   const retention = await getClinicalRetention(clientId);
   if (!retention) throw new Error("Client no trobat.");
@@ -213,7 +214,8 @@ export async function listArchivedPatients(viewer: ClinicalViewer): Promise<Arch
   let entries: Pick<EntryRow, "patient_id" | "purge_after">[];
   if (USE_MOCK) {
     const store = getStore();
-    patients = store.clinical_archive_patients.filter((p) => mockCanSee(viewer, p));
+    const world = await getDemoWorld();
+    patients = store.clinical_archive_patients.filter((p) => mockCanSee(viewer, p, world));
     const ids = new Set(patients.map((p) => p.id));
     entries = store.clinical_archive_entries.filter((e) => ids.has(e.patient_id));
   } else {
@@ -254,7 +256,8 @@ export async function getArchivedPatient(
   let entries: EntryRow[];
   if (USE_MOCK) {
     const store = getStore();
-    patient = store.clinical_archive_patients.find((p) => p.id === id && mockCanSee(viewer, p)) ?? null;
+    const world = await getDemoWorld();
+    patient = store.clinical_archive_patients.find((p) => p.id === id && mockCanSee(viewer, p, world)) ?? null;
     entries = patient ? store.clinical_archive_entries.filter((e) => e.patient_id === id) : [];
   } else {
     const supabase = await createClient();
@@ -305,7 +308,7 @@ export async function getArchivedDocumentUrl(entryId: string, viewer: ClinicalVi
     const store = getStore();
     const e = store.clinical_archive_entries.find((x) => x.id === entryId && x.kind === "document");
     const p = e && store.clinical_archive_patients.find((x) => x.id === e.patient_id);
-    if (!e || !p || !mockCanSee(viewer, p)) return null;
+    if (!e || !p || !mockCanSee(viewer, p, await getDemoWorld())) return null;
     return `data:text/plain;charset=utf-8,${encodeURIComponent("[Document arxivat (simulació): " + (e.file_name ?? "") + "]")}`;
   }
   const supabase = await createClient();
@@ -400,15 +403,15 @@ function entryOf(e: EntryRow): ArchivedEntry {
 // ─── Simulació: la mateixa regla que la base ─────────────────────────────────
 
 /** La RLS de la 0119: l'admin, tot; un fisio, només el seu món (demo o real). */
-function mockCanSee(v: ClinicalViewer, p: PatientRow): boolean {
+function mockCanSee(v: ClinicalViewer, p: PatientRow, world: DemoWorld): boolean {
   if (v.role === "admin") return true;
-  return v.role === "trainer" && v.specialty === "fisioterapeuta" && p.is_demo === isDemoTrainer(v.id);
+  return v.role === "trainer" && v.specialty === "fisioterapeuta" && p.is_demo === isDemoTrainer(world, v.id);
 }
 
 const plus15 = (day: string) => `${Number(day.slice(0, 4)) + 15}${day.slice(4)}`;
 
 /** `clinical_retention_for`, en simulació. */
-function mockRetention(store: Store, clientId: string): ClinicalRetention | null {
+function mockRetention(store: Store, clientId: string, world: DemoWorld): ClinicalRetention | null {
   const client = store.clients.find((c) => c.id === clientId);
   if (!client) return null;
   const physio = store.reservations.filter((r) => r.client_id === clientId && r.service_type === "fisioterapia");
@@ -417,7 +420,7 @@ function mockRetention(store: Store, clientId: string): ClinicalRetention | null
   const visits = store.clinical_first_visits.filter((v) => v.client_id === clientId);
   const followups = store.clinical_followups.filter((f) => f.client_id === clientId);
   const hasHistory = visits.length > 0 || followups.length > 0 || notes.length > 0;
-  const isDemo = isDemoClient(clientId);
+  const isDemo = isDemoClient(world, clientId);
   if (!hasHistory) return { hasHistory, isDemo, lastCareOn: null, purgeAfter: null };
   const now = Date.now();
   const past = physio
@@ -437,9 +440,9 @@ function mockRetention(store: Store, clientId: string): ClinicalRetention | null
 }
 
 /** `archive_clinical_history` (i la còpia dels documents), en simulació. */
-function mockArchive(clientId: string, actorId: string): ArchiveOutcome {
+function mockArchive(clientId: string, actorId: string, world: DemoWorld): ArchiveOutcome {
   const store = getStore();
-  const r = mockRetention(store, clientId);
+  const r = mockRetention(store, clientId, world);
   if (!r) throw new Error("Client no trobat.");
   if (!r.hasHistory || !r.lastCareOn || !r.purgeAfter) return { archived: false };
   // Per provar que una fallada de l'arxivat atura la baixa: MOCK_FAIL=clinical_archive.

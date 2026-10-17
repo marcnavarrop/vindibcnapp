@@ -1,4 +1,5 @@
-import { demoCompatible } from "@/lib/demo-accounts";
+import { demoAssignmentAllowed, demoCompatible } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientNotesPanel } from "@/components/client-notes-panel";
@@ -76,6 +77,7 @@ export default async function TrainerClientDetailPage({
     allTags,
     clientTags,
     centerCollectable,
+    world,
   ] = await Promise.all([
     getViewer(),
     clientPromise,
@@ -92,6 +94,7 @@ export default async function TrainerClientDetailPage({
     // Per a la piloteta de «Bons» del menú: vegeu l'anunciador de sota. Si
     // falla, no s'anuncia res —millor el número d'abans que un zero inventat.
     countCenterCollectableBonos().catch(() => null),
+    getDemoWorld(),
   ]);
   const assignedExercises = workoutPlan.exercises;
   if (!client) notFound();
@@ -99,15 +102,15 @@ export default async function TrainerClientDetailPage({
   const canManage = !!viewer && client.assignedTrainerId === viewer.id;
   // Reservar-li alguna cosa, encara que no sigui seu (0107): un grup, o la seva
   // especialitat a la seva agenda. «Demo amb demo», com a tot arreu.
-  const canBook = !!viewer && demoCompatible(client.id, viewer.id);
+  const canBook = !!viewer && demoCompatible(world, client.id, viewer.id);
   // Els tests d'avaluació, en lectura, per a qualsevol fisio (0114).
-  const canReadTestsAsPhysio = !!viewer && viewer.specialty === "fisioterapeuta" && demoCompatible(client.id, viewer.id);
+  const canReadTestsAsPhysio = !!viewer && viewer.specialty === "fisioterapeuta" && demoCompatible(world, client.id, viewer.id);
 
   // L'HISTORIAL CLÍNIC (0110): el llegeixen els fisios (de qualsevol client) i
   // l'entrenador ASSIGNAT; l'escriuen els fisios. «Demo amb demo». La base ho
   // torna a mirar amb la seva RLS.
   const subject = { id: client.id, assignedTrainerId: client.assignedTrainerId };
-  const canReadHistory = !!viewer && canReadClinical(viewer, subject);
+  const canReadHistory = !!viewer && canReadClinical(viewer, subject, world);
   const [history, healthConsent, novelty] = canReadHistory
     ? await Promise.all([
         getClinicalHistory(subject, viewer!),
@@ -295,7 +298,7 @@ export default async function TrainerClientDetailPage({
                 clientId={client.id}
                 history={history}
                 consent={healthConsent}
-                canWrite={canWriteClinical(viewer!, subject)}
+                canWrite={canWriteClinical(viewer!, subject, world)}
                 canDelete={canDeleteClinical(viewer!)}
                 viewerId={viewer!.id}
                 isAdmin={false}
@@ -356,7 +359,7 @@ export default async function TrainerClientDetailPage({
             form={
               <AssignTrainerForm
                 clientId={client.id}
-                trainers={trainers}
+                trainers={trainers.filter((t) => demoAssignmentAllowed(world, client.id, t.id))}
                 currentTrainerId={client.assignedTrainerId}
                 label="Professional assignat/da"
               />

@@ -12,6 +12,7 @@ import {
   markClinicalSeen,
   saveFirstVisit,
 } from "@/lib/data/clinical-history";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import {
   canDeleteClinical,
   canEditFollowup,
@@ -47,7 +48,7 @@ export async function saveFirstVisitAction(
   const viewer = await requireRole("admin", "trainer");
   if (!viewer) return { error: "No autoritzat." };
   const client = await subjectOf(clientId);
-  if (!client || !canWriteClinical(viewer, client))
+  if (!client || !canWriteClinical(viewer, client, await getDemoWorld()))
     return { error: "No pots escriure l'historial d'aquest client." };
   try {
     await saveFirstVisit(clientId, String(fd.get("body") ?? ""), viewer.id);
@@ -66,7 +67,7 @@ export async function addFollowupAction(
   const viewer = await requireRole("admin", "trainer");
   if (!viewer) return { error: "No autoritzat." };
   const client = await subjectOf(clientId);
-  if (!client || !canWriteClinical(viewer, client))
+  if (!client || !canWriteClinical(viewer, client, await getDemoWorld()))
     return { error: "No pots escriure l'historial d'aquest client." };
   try {
     await addFollowup(clientId, String(fd.get("body") ?? ""), viewer.id);
@@ -87,7 +88,7 @@ export async function editFollowupAction(
   const meta = id ? await getFollowupMeta(id) : null;
   if (!meta) return { error: "Aquest seguiment ja no existeix." };
   const client = await subjectOf(meta.clientId);
-  if (!client || !canEditFollowup(viewer, client, meta.authorId))
+  if (!client || !canEditFollowup(viewer, client, meta.authorId, await getDemoWorld()))
     return { error: "Aquest seguiment només el pot editar qui el va escriure o l'administració." };
   try {
     await editFollowup(id, String(fd.get("body") ?? ""));
@@ -127,7 +128,7 @@ export async function clinicalHistoryOpenedAction(clientId: string): Promise<voi
   if (!viewer) return;
   try {
     const client = await subjectOf(clientId);
-    if (!client || !canReadClinical(viewer, client)) return;
+    if (!client || !canReadClinical(viewer, client, await getDemoWorld())) return;
     await Promise.all([
       markClinicalSeen(clientId, viewer.id),
       logClinicalView({

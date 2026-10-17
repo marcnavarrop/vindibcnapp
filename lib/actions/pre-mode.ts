@@ -1,5 +1,6 @@
 "use server";
 
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/auth";
@@ -12,6 +13,7 @@ import {
   clearPreTicket,
   demoById,
   demoBySlug,
+  demoTargetAllowed,
   readBackTicket,
   readPreTicket,
   writeBackTicket,
@@ -45,7 +47,7 @@ function fail(home: string, code: PreError): never {
 /**
  * Resol cap a QUI es salta, i ho torna a comprovar tot després de resoldre.
  *
- * Les tres comprovacions no són la mateixa tres cops:
+ * Les quatre comprovacions no són la mateixa quatre cops:
  *  1. El `slug` ha de ser un dels tres noms curts. El navegador no envia mai ni
  *     un correu ni un id.
  *  2. L'usuari que torna `generateLink` ha de tenir EXACTAMENT l'id i el correu
@@ -53,6 +55,8 @@ function fail(home: string, code: PreError): never {
  *     s'atura en comptes d'anar a parar a un altre compte.
  *  3. El rol que hi ha a `profiles` ha de ser el que diu la constant, i mai
  *     "admin". Aquesta és la que aguanta si algú amplia la llista sense pensar.
+ *  4. El compte ha de ser a `demo_profiles` (0121): la base i el codi han de
+ *     coincidir.
  */
 async function resolveDemoTarget(
   target: DemoAccount,
@@ -75,13 +79,11 @@ async function resolveDemoTarget(
     .select("role")
     .eq("id", target.id)
     .single();
-  const role = profile?.role;
-  if (!role) return null;
-  // L'ordre importa: primer "mai un admin" contra el rol CRU, i després que
-  // coincideixi amb el que diu la constant. Si algú ampliés `DemoAccount` per
-  // acceptar qualsevol rol, aquesta primera línia continuaria fent de pany.
-  if (role === "admin") return null;
-  if (role !== target.role) return null;
+  // (3) i (4): el rol, mai admin i el de la constant; i que la base també el
+  // tingui per demo (`demo_profiles`, 0121). La llista del codi sola no n'hi ha
+  // prou: si algú en treu el compte de la taula, o la taula no es pot llegir,
+  // no se salta.
+  if (!demoTargetAllowed(target, profile?.role, await getDemoWorld())) return null;
 
   return { tokenHash: data.properties.hashed_token };
 }

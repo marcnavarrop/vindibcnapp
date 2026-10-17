@@ -1,4 +1,6 @@
 import "server-only";
+import { getDemoWorld } from "@/lib/data/demo-world";
+import { REAL_WORLD, type DemoWorld } from "@/lib/demo-accounts";
 import { fetchAllRows } from "@/lib/supabase/fetch-all";
 import { SESSION_DURATION_MINUTES } from "@/lib/labels";
 import { USE_MOCK } from "@/lib/config";
@@ -416,6 +418,7 @@ function findAlternative(
         trainerId: t,
         assignedTrainerId: ctx.assignedTrainerId,
         clientId: ctx.clientId,
+        world: ctx.world,
       }) !== "ok"
     )
       continue;
@@ -444,6 +447,8 @@ type Ctx = {
   /** Sessions del CONJUNT de bons utilitzables d'aquest servei. */
   sessionsRemaining: number;
   clientId: string;
+  /** Els comptes demo (`demo_profiles`): demo amb demo. */
+  world: DemoWorld;
   slots: SlotRow[];
   rules: Awaited<ReturnType<typeof listAllTrainerRulesLite>>;
   blocks: Awaited<ReturnType<typeof listAllBlocksLite>>;
@@ -509,12 +514,14 @@ function scopeCheck(
   req: SeriesRequest,
   assignedTrainerId: string | null,
   clientId: string,
+  world: DemoWorld,
 ): { error: string; scope: Exclude<BookingScope, "ok"> } | null {
   const scope = clientBookingScope({
     serviceType: req.serviceType,
     trainerId: req.trainerId,
     assignedTrainerId,
     clientId,
+    world,
   });
   return scope === "ok"
     ? null
@@ -527,6 +534,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     bonoId: null,
     sessionsRemaining: 0,
     clientId: "",
+    world: REAL_WORLD,
     assignedTrainerId: null,
     slots: [],
     rules: [],
@@ -585,7 +593,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     const client = store.clients.find((c) => c.profile_id === req.profileId);
     if (!client) return { ...empty, error: "Client no trobat." };
     const assignedTrainerId = client.assigned_trainer_id ?? null;
-    const scoped = scopeCheck(req, assignedTrainerId, client.id);
+    const world = await getDemoWorld();
+    const scoped = scopeCheck(req, assignedTrainerId, client.id, world);
     if (scoped) return { ...empty, ...scoped };
     // TOTS els bons utilitzables, en ordre de consum. La primera reserva
     // gastarà del primer; quan s'acabi, la següent seguirà pel de darrere.
@@ -610,6 +619,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
       bonoId: bons[0].id,
       sessionsRemaining: sumSessions(bons),
       clientId: client.id,
+      world,
       assignedTrainerId,
       // Reserves + proves actives, com a la branca real: si en simulació el
       // planificador comptés diferent, provar-ho en local no voldria dir res.
@@ -671,7 +681,8 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     .maybeSingle();
   if (!client) return { ...empty, error: "Client no trobat." };
   const assignedTrainerId = client.assigned_trainer_id ?? null;
-  const scoped = scopeCheck(req, assignedTrainerId, client.id);
+  const world = await getDemoWorld();
+  const scoped = scopeCheck(req, assignedTrainerId, client.id, world);
   if (scoped) return { ...empty, ...scoped };
 
   const [{ data: bonos }, { data: res }, holds, { data: pros }, rules, blocks] =
@@ -716,6 +727,7 @@ async function loadContext(req: SeriesRequest): Promise<Ctx> {
     bonoId: bons[0].id,
     sessionsRemaining: sumSessions(bons),
     clientId: client.id,
+    world,
     assignedTrainerId,
     /*
      * Les reserves I les sessions de prova.
@@ -875,6 +887,7 @@ export async function applyOccurrences(
           trainerId: o.requestedTrainerId,
           assignedTrainerId: ctx.assignedTrainerId,
           clientId: ctx.clientId,
+          world: ctx.world,
         }) !== "ok"
       ) {
         failed++;
@@ -1142,6 +1155,7 @@ export function stopsForTrainerChange(
   s: { auto_extend?: boolean | null; service_type: ServiceType; base_trainer_id: string | null },
   assignedTrainerId: string | null,
   clientId: string | null,
+  world: DemoWorld,
 ): boolean {
   if (!s.auto_extend || !s.base_trainer_id) return false;
   return (
@@ -1150,6 +1164,7 @@ export function stopsForTrainerChange(
       trainerId: s.base_trainer_id,
       assignedTrainerId,
       clientId,
+      world,
     }) !== "ok"
   );
 }
@@ -1164,6 +1179,7 @@ function waitsBlocked(
   s: { service_type: ServiceType; base_trainer_id: string | null },
   assignedTrainerId: string | null,
   clientId: string | null,
+  world: DemoWorld,
 ): boolean {
   if (!s.base_trainer_id) return false;
   return (
@@ -1172,6 +1188,7 @@ function waitsBlocked(
       trainerId: s.base_trainer_id,
       assignedTrainerId,
       clientId,
+      world,
     }) !== "ok"
   );
 }
@@ -1206,6 +1223,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
   // Una espera d'una sessió que ja ha passat no pot rebre cap plaça: si no es
   // caduca abans, la sèrie que la té no es tancaria mai.
   await sweepExpiredWaitlist();
+  const world = await getDemoWorld();
 
   if (USE_MOCK) {
     const store = getStore();
@@ -1227,7 +1245,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
       const waiting = store.waitlist_entries.filter(
         (w) => w.series_id === s.id && w.status === "waiting",
       ).length;
-      const stopped = stopsForTrainerChange(s, assigned, clientId);
+      const stopped = stopsForTrainerChange(s, assigned, clientId, world);
       if (future.length === 0 && waiting === 0) {
         if (stopped || !(await canStillGrow(s, clientId))) {
           s.status = "completed";
@@ -1243,7 +1261,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
         nextAt: future[0]?.scheduled_at ?? null,
         stoppedTrainerChanged: stopped,
         waiting,
-        waitingBlocked: waiting > 0 && waitsBlocked(s, assigned, clientId),
+        waitingBlocked: waiting > 0 && waitsBlocked(s, assigned, clientId, world),
       });
     }
 
@@ -1291,7 +1309,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
   for (const s of series) {
     const future = (res ?? []).filter((r) => r.series_id === s.id);
     const waiting = (waits ?? []).filter((w) => w.series_id === s.id).length;
-    const stopped = stopsForTrainerChange(s, assigned, clientId);
+    const stopped = stopsForTrainerChange(s, assigned, clientId, world);
     // Una sèrie que només té esperes també surt: fins ara s'amagava (no tenia
     // cap reserva futura) i el client no la podia ni veure ni cancel·lar.
     if (future.length === 0 && waiting === 0) {
@@ -1306,7 +1324,7 @@ export async function listActiveSeries(clientId: string): Promise<SeriesSummary[
       nextAt: future[0]?.scheduled_at ?? null,
       stoppedTrainerChanged: stopped,
       waiting,
-      waitingBlocked: waiting > 0 && waitsBlocked(s, assigned, clientId),
+      waitingBlocked: waiting > 0 && waitsBlocked(s, assigned, clientId, world),
     });
   }
 

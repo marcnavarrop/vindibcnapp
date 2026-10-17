@@ -2,6 +2,7 @@ import Link from "next/link";
 import { searchClientsAction } from "@/app/actions/client-search-actions";
 import { staffBookingScope } from "@/lib/booking-scope";
 import { demoCompatible } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { TAP } from "@/lib/utils";
 import { GroupTabs } from "@/components/ui/group-tabs";
 import { SupportInlineButton } from "@/components/support-inline-button";
@@ -111,10 +112,11 @@ export default async function TrainerReservasPage({
     .filter((r) => myClientIds.has(r.clientId))
     .map((r) => r.id);
 
-  // «Demo amb demo» també aquí: la base no sap quins comptes són demo, i les
-  // portes de la 0107 obren grups de tot el centre.
+  // «Demo amb demo» també aquí: les portes de la 0107 obren grups de tot el
+  // centre. El món demo surt de `demo_profiles`.
+  const world = await getDemoWorld();
   const sameWorld = (r: (typeof reservations)[number]) =>
-    !!trainerId && demoCompatible(r.clientId, trainerId);
+    !!trainerId && demoCompatible(world, r.clientId, trainerId);
 
   // Cancel·lar (0091 + 0107): els seus clients, la SEVA agenda (qui fa la
   // sessió és qui sap si la podrà fer) i qualsevol plaça de GRUP del centre.

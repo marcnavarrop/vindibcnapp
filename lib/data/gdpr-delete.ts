@@ -99,6 +99,8 @@ export async function deleteClient(
     store.notification_log = store.notification_log.filter(
       (n) => n.profile_id !== profileId,
     );
+    // `demo_profiles` cau amb el perfil (`on delete cascade`, 0110).
+    store.demo_profiles = store.demo_profiles.filter((d) => d.profile_id !== profileId);
     store.clients = store.clients.filter((c) => c.id !== clientId);
     store.profiles = store.profiles.filter((p) => p.id !== profileId);
     saveStore(store);

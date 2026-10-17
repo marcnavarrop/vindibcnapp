@@ -11,6 +11,7 @@ import { getService } from "@/lib/data/services";
 import { getEffectivePrice } from "@/lib/data/promotions";
 import { bonoServicesForOthersClients, othersBonoStatus } from "@/lib/bono-rules";
 import { demoCompatible } from "@/lib/demo-accounts";
+import { getDemoWorld } from "@/lib/data/demo-world";
 import { subscribeAtCenter } from "@/lib/data/subscription-renewal";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 import type { ServiceType } from "@/types/database";
@@ -54,7 +55,7 @@ export async function createTrainerBonoAction(
   if (!client) return { error: "Client no trobat." };
   const own = client.assignedTrainerId === viewer.id;
   if (!own) {
-    if (!demoCompatible(client.id, viewer.id)) return { error: "Aquest client no és teu." };
+    if (!demoCompatible(await getDemoWorld(), client.id, viewer.id)) return { error: "Aquest client no és teu." };
     const allowed: string[] = bonoServicesForOthersClients(viewer.specialty);
     const pkg = await getService(serviceId);
     if (!pkg || pkg.serviceType !== serviceType || !allowed.includes(serviceType))

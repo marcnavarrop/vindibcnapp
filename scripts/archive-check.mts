@@ -32,7 +32,8 @@ const restaura = () => {
   else fs.writeFileSync(STORE, abans);
 };
 
-const { DEMO_TRAINER_IDS } = await import("../lib/demo-accounts");
+const { PRE_FISIO_ID } = await import("../lib/pre-accounts");
+const DEMO_TRAINER_IDS = ["", PRE_FISIO_ID];
 const { getStore, saveStore } = await import("../lib/mock/store");
 const archive = await import("../lib/data/clinical-archive");
 const { deleteClient } = await import("../lib/data/gdpr-delete");
@@ -135,6 +136,8 @@ try {
   console.log("\n6. Qui llegeix què\n");
   {
     const s = getStore();
+    // El Fisio Demo és demo perquè ho diu `demo_profiles` (0121).
+    s.demo_profiles.push({ profile_id: PRE_FISIO_ID, label: "Fisio Demo" });
     s.clinical_archive_patients.push({ id: "arx-demo", former_client_id: "c-demo-vell", full_name: "Pacient Demo", birth_date: null, email: null, phone: null, last_care_on: "2026-01-01", archived_at: new Date().toISOString(), archived_by: null, archived_by_name: null, is_demo: true });
     s.clinical_archive_entries.push({ id: "arx-demo-1", patient_id: "arx-demo", kind: "followup", body: "demo", author_name: "Fisio Demo", written_at: new Date().toISOString(), updated_at: null, session_on: null, source_id: null, storage_path: null, file_name: null, file_size: null, mime_type: null, description: null, consent_version: null, consent_revoked_at: null, purge_after: "2041-01-01" });
     saveStore(s);
