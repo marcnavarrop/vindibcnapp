@@ -50,6 +50,7 @@ import { countCenterCollectableBonos } from "@/lib/data/bonos";
 import { CollectableBonosAnnouncer } from "@/components/collectable-bonos-announcer";
 import { toggleClientTagAction } from "@/app/(admin)/admin/etiquetes/actions";
 import { centerToday } from "@/lib/center-time";
+import { isCurrentHealthConsent } from "@/lib/consent";
 import { TAP } from "@/lib/utils";
 import type { BonoStatus } from "@/types/database";
 
@@ -317,7 +318,7 @@ export default async function TrainerClientDetailPage({
                 clientId={client.id}
                 tests={tests}
                 suggestions={testSuggestions}
-                healthConsent={!!healthConsent}
+                healthConsent={isCurrentHealthConsent(healthConsent?.version) ? "current" : healthConsent ? "old" : "none"}
                 canManage={canManage}
                 today={today}
               />

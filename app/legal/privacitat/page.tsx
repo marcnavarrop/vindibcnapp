@@ -36,6 +36,9 @@ export default async function PrivacitatPage() {
 
       <H>{t("h2")}</H>
       <p>{t("p2")}</p>
+      {/* Dades de salut (0118): tests i mesures amb consentiment; historial de
+          fisioteràpia per l'art. 9.2.h. Text validat per l'assessor. */}
+      <p>{t.rich("p2b", v)}</p>
 
       <H>{t("h3")}</H>
       <p>{t("p3")}</p>

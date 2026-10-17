@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/auth";
 import { getClientByProfile } from "@/lib/data/clients";
+import { getConsentStatus } from "@/lib/data/consents";
 import { listAnnouncements } from "@/lib/data/announcements";
 import { listPollsForClient } from "@/lib/data/polls";
 import { getCenterSettings } from "@/lib/data/center-settings";
@@ -47,7 +48,7 @@ export default async function ClientHome() {
   // també la fitxa del client. Abans esperaven que acabés tota la primera tanda.
   const clientPromise = viewer ? getClientByProfile(viewer.id) : Promise.resolve(null);
   const settingsPromise = getCenterSettings();
-  const [client, centerSettings, palette, trainers, announcements, polls, referral] =
+  const [client, centerSettings, palette, trainers, announcements, polls, referral, consent] =
     await Promise.all([
       clientPromise,
       settingsPromise,
@@ -60,6 +61,8 @@ export default async function ClientHome() {
       settingsPromise.then((s) =>
         s.referralProgramActive && viewer ? getReferralStats(viewer.id) : null,
       ),
+      // Si li falta el consentiment de salut vigent (0118), se li demana aquí.
+      viewer ? getConsentStatus(viewer.id).catch(() => null) : Promise.resolve(null),
     ]);
   const showCommunity = centerSettings.modules.comunitat;
   const showReferral = centerSettings.referralProgramActive;
@@ -146,6 +149,27 @@ export default async function ClientHome() {
           welcome={t("welcome")}
           today={formatLongDate(new Date(), locale)}
         />
+
+      {/* El consentiment de salut 2026-10 (0118): es demana a tothom, i a qui en
+          té una versió anterior, que el torni a acceptar. És voluntari: no
+          bloqueja res de l'app, només surt aquí fins que l'accepti. */}
+      {consent && !consent.healthDataCurrent && (
+        <section
+          className="flex flex-col gap-3 rounded-2xl border border-attention bg-attention-bg p-4 text-sm text-attention sm:flex-row sm:items-center sm:justify-between sm:p-5"
+          data-health-consent-ask={consent.healthDataAt ? "old" : "none"}
+        >
+          <div>
+            <h2 className="font-bold">{t("healthConsent.title")}</h2>
+            <p className="mt-0.5">{consent.healthDataAt ? t("healthConsent.updated") : t("healthConsent.new")}</p>
+          </div>
+          <Link
+            href="/client/consentiment"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-brand-purple px-4 text-sm font-bold tracking-wide text-white uppercase hover:bg-brand-purple-light"
+          >
+            {t("healthConsent.cta")}
+          </Link>
+        </section>
+      )}
 
       {/* L'ordre de l'auditoria: el que et toca (la pròxima sessió), el que
           has de fer (reservar, renovar) i al final la resta. */}

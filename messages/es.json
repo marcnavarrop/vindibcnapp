@@ -207,7 +207,13 @@
       "book": "Reservar una sesión",
       "later": "Después"
     },
-    "communitySeeAll": "Ver todos →"
+    "communitySeeAll": "Ver todos →",
+    "healthConsent": {
+      "title": "Consentimiento de datos de salud",
+      "new": "Para registrar tus tests y medidas necesitamos tu consentimiento. Es voluntario.",
+      "updated": "Hemos actualizado el consentimiento de datos de salud. Léelo y, si estás de acuerdo, vuelve a aceptarlo.",
+      "cta": "Leer el consentimiento"
+    }
   },
   "brand": {
     "badge": "Área cliente",
@@ -858,17 +864,27 @@
       "accepted": "Aceptados el {date} (versión {version}).",
       "none": "Todavía no consta ninguna aceptación registrada.",
       "healthTitle": "Datos de salud",
-      "healthGiven": "Consentimiento dado el {date}. Puedes revocarlo escribiendo al centro.",
-      "healthAsk": "Si recibes fisioterapia, necesitamos tu consentimiento para tratar tus datos de salud.",
-      "consent": "Acepto el tratamiento de mis datos de salud para el seguimiento de fisioterapia, de acuerdo con la <link>Política de Privacidad</link>.",
+      "healthGiven": "Consentimiento dado el {date} (versión {version}).",
+      "healthAsk": "Para registrar tus tests de evaluación, las medidas corporales y, si haces fisioterapia, su seguimiento, necesitamos tu consentimiento. Es voluntario.",
+      "consent": "Acepto que Vindi BCN trate mis datos de salud (tests, medidas corporales y seguimiento de fisioterapia) para las finalidades descritas.",
       "accept": "Aceptar",
       "accepting": "Guardando…",
       "ok": "Consentimiento de datos de salud registrado. Gracias.",
       "errors": {
         "unauthorized": "No autorizado.",
         "mustAccept": "Tienes que marcar la casilla para aceptar.",
-        "failed": "No se ha podido guardar el consentimiento."
-      }
+        "failed": "No se ha podido guardar el consentimiento.",
+        "revokeFailed": "No se ha podido retirar. Vuelve a intentarlo."
+      },
+      "healthOld": "Tienes una versión anterior, del {date}. La hemos actualizado: léela y, si estás de acuerdo, vuelve a aceptarla.",
+      "healthOpen": "Leer el consentimiento",
+      "revoke": "Retirar el consentimiento",
+      "revokeQuestion": "¿Retirar el consentimiento de datos de salud?",
+      "revokeConsequence": "No podremos registrar nuevos tests ni medidas. Retirarlo no afecta a lo hecho antes.",
+      "revokeConfirm": "Sí, retíralo",
+      "revokePending": "Retirando…",
+      "revokeBack": "No, volver",
+      "revoked": "Has retirado el consentimiento de datos de salud."
     },
     "notifications": {
       "title": "Notificaciones",
@@ -1426,7 +1442,8 @@
       "h1": "1. Responsable del tratamiento",
       "p1": "{name, select, none {VindiBCN} other {{name}}}{nif, select, none {} other {, con NIF {nif}}}{address, select, none {} other { y domicilio en {address}}}.{email, select, none {} other { Correo de contacto: <mail>{email}</mail>.}}",
       "h2": "2. Qué datos tratamos",
-      "p2": "Datos identificativos y de contacto (nombre, correo electrónico, teléfono), fecha de nacimiento, género y datos físicos (altura, peso) y objetivos. En el caso de clientes que reciben fisioterapia, datos de salud vinculados al seguimiento terapéutico. También datos de la relación de servicio: bonos, reservas y pagos.",
+      "p2": "Datos identificativos y de contacto (nombre, correo electrónico, teléfono), fecha de nacimiento, género y datos físicos (altura, peso) y objetivos. También datos de la relación de servicio: bonos, reservas y pagos.",
+      "p2b": "<b>Datos de salud.</b> Con tu consentimiento explícito (art. 9.2.a RGPD), tratamos los tests de evaluación y las medidas corporales que registran nuestros profesionales (por ejemplo, fuerza, movilidad, perímetros o peso) para adaptar tu entrenamiento y mostrar su evolución. Tienen acceso tu profesional asignado, el equipo de fisioterapia y la administración del centro, y tú mismo en la app. Si haces fisioterapia, nuestra fisioterapeuta trata tu historia clínica para prestarte la asistencia sanitaria, bajo secreto profesional (art. 9.2.h RGPD), y la conservamos el tiempo que fija la normativa sanitaria. Puedes retirar el consentimiento cuando quieras desde tu perfil o {email, select, none {escribiendo al centro} other {en <mail>{email}</mail>}}, sin que afecte al tratamiento anterior; si no lo das, puedes seguir usando nuestros servicios de entrenamiento.",
       "h3": "3. Finalidades",
       "p3": "Gestión de altas de cliente, reservas y bonos; seguimiento del entrenamiento y, en su caso, del tratamiento de fisioterapia; facturación y cobros; y comunicaciones relativas al servicio y al centro.",
       "h4": "4. Base legal",
@@ -1493,5 +1510,28 @@
   },
   "shell": {
     "skipToContent": "Saltar al contenido"
+  },
+  "healthConsent": {
+    "metaTitle": "Consentimiento de datos de salud · VindiBCN",
+    "title": "Consentimiento para el tratamiento de datos de salud",
+    "intro": "{name, select, none {Vindi BCN} other {{name} (Vindi BCN)}}{nif, select, none {} other {, con NIF {nif}}}{address, select, none {} other { y domicilio en {address}}}, solo trata tus datos de salud si nos das tu consentimiento explícito.",
+    "whatLabel": "Qué datos:",
+    "what": "los tests de evaluación y las medidas corporales que registre tu entrenador o tu fisioterapeuta (por ejemplo, fuerza, movilidad, perímetros o peso), con la fecha y las observaciones; y, si haces fisioterapia, la información de tu seguimiento.",
+    "whyLabel": "Para qué:",
+    "why": "adaptar tu entrenamiento y el tratamiento, y que tú y tu equipo podáis ver su evolución.",
+    "whoLabel": "Quién tiene acceso:",
+    "who": "tu profesional asignado, el equipo de fisioterapia y la administración del centro. Tú también lo ves en la app. No lo cedemos a terceros ni lo usamos para publicidad.",
+    "howLongLabel": "Cuánto tiempo:",
+    "howLong": "mientras seas cliente; cuando te des de baja, los tests y las medidas se borran. La historia clínica de fisioterapia se conserva el tiempo que fija la ley.",
+    "voluntaryLabel": "Es voluntario:",
+    "voluntary": "si no lo das, puedes seguir entrenando con normalidad; solo no podremos registrar tus tests ni medidas.",
+    "withdrawLabel": "Puedes retirarlo",
+    "withdraw": "cuando quieras desde tu perfil en la app o {email, select, none {escribiendo al centro} other {escribiendo a <mail>{email}</mail>}}. Retirarlo no afecta a lo hecho antes.",
+    "rightsLabel": "Tus derechos:",
+    "rights": "acceso, rectificación, supresión, oposición, limitación y portabilidad, {email, select, none {en el centro} other {en <mail>{email}</mail>}}. También puedes reclamar ante la Agencia Española de Protección de Datos (<aepd>aepd.es</aepd>). Más información en la <privacy>política de privacidad</privacy>.",
+    "statusCurrent": "Consentimiento dado el {date} (versión {version}).",
+    "statusOld": "Aceptaste una versión anterior de este consentimiento el {date} (versión {version}). Lo hemos actualizado: léelo y, si estás de acuerdo, vuelve a aceptarlo.",
+    "statusNone": "Todavía no nos lo has dado.",
+    "back": "Volver a Configuración"
   }
 }

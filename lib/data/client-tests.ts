@@ -3,6 +3,7 @@ import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStore, saveStore } from "@/lib/mock/store";
 import { centerToday } from "@/lib/center-time";
+import { isCurrentHealthConsent } from "@/lib/consent";
 import { byDate, titleKey, type BetterWhen, type EntryValues, type TestValues } from "@/lib/client-tests";
 
 /**
@@ -67,7 +68,11 @@ export async function canCreateClientTests(clientId: string): Promise<boolean> {
 function mockHasHealthConsent(clientId: string): boolean {
   const store = getStore();
   const client = store.clients.find((c) => c.id === clientId);
-  return !!client && store.consents.some((c) => c.user_id === client.profile_id && c.type === "health_data");
+  // Com `client_tests_consent_ok` (0118): el més recent no retirat, versió vigent.
+  const latest = store.consents
+    .filter((c) => client && c.user_id === client.profile_id && c.type === "health_data" && !c.revoked_at)
+    .sort((a, b) => b.granted_at.localeCompare(a.granted_at))[0];
+  return !!client && isCurrentHealthConsent(latest?.version);
 }
 
 type EntryRow = {

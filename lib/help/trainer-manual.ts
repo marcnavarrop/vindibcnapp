@@ -362,7 +362,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "Els tests són DADES DE SALUT: per CREAR-ne un o afegir-hi un registre, el client ha de tenir signat el consentiment de dades de salut. Si no el té, a la pestanya surt «Consentiment de dades de salut pendent» i no hi ha «+ Nou test» ni «+ Registre»; el que ja hi ha es pot consultar, editar i esborrar. El client el signa des de la seva àrea, a Configuració → Privacitat i consentiments.",
+          text: "Els tests són DADES DE SALUT: per CREAR-ne un o afegir-hi un registre, el client ha de tenir signat el consentiment de dades de salut VIGENT (versió 2026-10). Si no el té, a la pestanya surt «Consentiment de dades de salut pendent» (o «d'una versió anterior», si va acceptar la d'abans) i no hi ha «+ Nou test» ni «+ Registre»; el que ja hi ha es pot consultar, editar i esborrar. El client l'accepta des de la seva àrea (li surt a l'inici i a Configuració → Privacitat), i també el pot retirar: llavors torna a sortir l'avís.",
         },
         {
           t: "note",

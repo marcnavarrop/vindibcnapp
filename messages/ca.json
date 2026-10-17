@@ -207,7 +207,13 @@
       "book": "Reservar una sessió",
       "later": "Després"
     },
-    "communitySeeAll": "Veure tots →"
+    "communitySeeAll": "Veure tots →",
+    "healthConsent": {
+      "title": "Consentiment de dades de salut",
+      "new": "Per registrar els teus tests i mesures necessitem el teu consentiment. És voluntari.",
+      "updated": "Hem actualitzat el consentiment de dades de salut. Llegeix-lo i, si hi estàs d'acord, torna'l a acceptar.",
+      "cta": "Llegir el consentiment"
+    }
   },
   "brand": {
     "badge": "Àrea client",
@@ -858,17 +864,27 @@
       "accepted": "Acceptats el {date} (versió {version}).",
       "none": "Encara no consta cap acceptació registrada.",
       "healthTitle": "Dades de salut",
-      "healthGiven": "Consentiment donat el {date}. Pots revocar-lo escrivint al centre.",
-      "healthAsk": "Si reps fisioteràpia, necessitem el teu consentiment per tractar les teves dades de salut.",
-      "consent": "Accepto el tractament de les meves dades de salut per al seguiment de fisioteràpia, d'acord amb la <link>Política de Privacitat</link>.",
+      "healthGiven": "Consentiment donat el {date} (versió {version}).",
+      "healthAsk": "Per registrar els teus tests d'avaluació, les mesures corporals i, si en fas, el seguiment de fisioteràpia, necessitem el teu consentiment. És voluntari.",
+      "consent": "Accepto que Vindi BCN tracti les meves dades de salut (tests, mesures corporals i seguiment de fisioteràpia) per a les finalitats descrites.",
       "accept": "Acceptar",
       "accepting": "Desant…",
       "ok": "Consentiment de dades de salut registrat. Gràcies.",
       "errors": {
         "unauthorized": "No autoritzat.",
         "mustAccept": "Has de marcar la casella per acceptar.",
-        "failed": "No s'ha pogut desar el consentiment."
-      }
+        "failed": "No s'ha pogut desar el consentiment.",
+        "revokeFailed": "No s'ha pogut retirar. Torna-ho a provar."
+      },
+      "healthOld": "Tens una versió anterior, del {date}. L'hem actualitzat: llegeix-la i, si hi estàs d'acord, torna-la a acceptar.",
+      "healthOpen": "Llegir el consentiment",
+      "revoke": "Retirar el consentiment",
+      "revokeQuestion": "Retirar el consentiment de dades de salut?",
+      "revokeConsequence": "No podrem registrar nous tests ni mesures. Retirar-lo no afecta el que s'hagi fet abans.",
+      "revokeConfirm": "Sí, retira'l",
+      "revokePending": "Retirant…",
+      "revokeBack": "No, torna",
+      "revoked": "Has retirat el consentiment de dades de salut."
     },
     "notifications": {
       "title": "Notificacions",
@@ -1426,7 +1442,8 @@
       "h1": "1. Responsable del tractament",
       "p1": "{name, select, none {VindiBCN} other {{name}}}{nif, select, none {} other {, amb NIF {nif}}}{address, select, none {} other { i domicili a {address}}}.{email, select, none {} other { Correu de contacte: <mail>{email}</mail>.}}",
       "h2": "2. Quines dades tractem",
-      "p2": "Dades identificatives i de contacte (nom, correu electrònic, telèfon), data de naixement, gènere i dades físiques (alçada, pes) i objectius. En el cas de clients que reben fisioteràpia, dades de salut vinculades al seguiment terapèutic. També dades de la relació de servei: bons, reserves i pagaments.",
+      "p2": "Dades identificatives i de contacte (nom, correu electrònic, telèfon), data de naixement, gènere i dades físiques (alçada, pes) i objectius. També dades de la relació de servei: bons, reserves i pagaments.",
+      "p2b": "<b>Dades de salut.</b> Amb el teu consentiment explícit (art. 9.2.a RGPD), tractem els tests d'avaluació i les mesures corporals que registren els nostres professionals (per exemple, força, mobilitat, perímetres o pes) per adaptar el teu entrenament i mostrar-ne l'evolució. Hi tenen accés el teu professional assignat, l'equip de fisioteràpia i l'administració del centre, i tu mateix a l'app. Si fas fisioteràpia, la nostra fisioterapeuta tracta el teu historial clínic per prestar-te l'assistència sanitària, sota secret professional (art. 9.2.h RGPD), i el conservem el temps que fixa la normativa sanitària. Pots retirar el consentiment quan vulguis des del teu perfil o {email, select, none {escrivint al centre} other {a <mail>{email}</mail>}}, sense que afecti el tractament anterior; si no el dónes, pots continuar fent servir els nostres serveis d'entrenament.",
       "h3": "3. Finalitats",
       "p3": "Gestió d'altes de client, reserves i bons; seguiment de l'entrenament i, si escau, del tractament de fisioteràpia; facturació i cobraments; i comunicacions relatives al servei i al centre.",
       "h4": "4. Base legal",
@@ -1493,5 +1510,28 @@
   },
   "shell": {
     "skipToContent": "Saltar al contingut"
+  },
+  "healthConsent": {
+    "metaTitle": "Consentiment de dades de salut · VindiBCN",
+    "title": "Consentiment per al tractament de dades de salut",
+    "intro": "{name, select, none {Vindi BCN} other {{name} (Vindi BCN)}}{nif, select, none {} other {, amb NIF {nif}}}{address, select, none {} other { i domicili a {address}}}, només tracta les teves dades de salut si ens hi dónes el teu consentiment explícit.",
+    "whatLabel": "Quines dades:",
+    "what": "els tests d'avaluació i les mesures corporals que registri el teu entrenador o la teva fisioterapeuta (per exemple, força, mobilitat, perímetres o pes), amb la data i les observacions; i, si en fas, la informació del teu seguiment de fisioteràpia.",
+    "whyLabel": "Per a què:",
+    "why": "adaptar el teu entrenament i el tractament, i que tu i el teu equip pugueu veure'n l'evolució.",
+    "whoLabel": "Qui hi té accés:",
+    "who": "el teu professional assignat, l'equip de fisioteràpia i l'administració del centre. Tu també ho veus a l'app. No ho cedim a tercers ni ho fem servir per a publicitat.",
+    "howLongLabel": "Quant de temps:",
+    "howLong": "mentre siguis client; quan et donis de baixa, els tests i les mesures s'esborren. L'historial clínic de fisioteràpia es conserva el temps que fixa la llei.",
+    "voluntaryLabel": "És voluntari:",
+    "voluntary": "si no el dónes, pots continuar entrenant amb normalitat; només no podrem registrar els teus tests ni mesures.",
+    "withdrawLabel": "El pots retirar",
+    "withdraw": "quan vulguis des del teu perfil a l'app o {email, select, none {escrivint al centre} other {escrivint a <mail>{email}</mail>}}. Retirar-lo no afecta el que s'hagi fet abans.",
+    "rightsLabel": "Els teus drets:",
+    "rights": "accés, rectificació, supressió, oposició, limitació i portabilitat, {email, select, none {al centre} other {a <mail>{email}</mail>}}. També pots reclamar a l'Agència Espanyola de Protecció de Dades (<aepd>aepd.es</aepd>). Més informació a la <privacy>política de privacitat</privacy>.",
+    "statusCurrent": "Consentiment donat el {date} (versió {version}).",
+    "statusOld": "Vas acceptar una versió anterior d'aquest consentiment el {date} (versió {version}). L'hem actualitzat: llegeix-lo i, si hi estàs d'acord, torna'l a acceptar.",
+    "statusNone": "Encara no ens l'has donat.",
+    "back": "Tornar a Configuració"
   }
 }

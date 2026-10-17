@@ -63,14 +63,15 @@ export function ClientTestsPanel({
   suggestions: TestSuggestion[];
   canManage: boolean;
   /**
-   * El client té signat el consentiment de dades de salut. Sense, no es poden
-   * CREAR tests ni registres (0117); el que ja hi ha es pot editar i esborrar.
+   * El consentiment de dades de salut del client: el vigent (2026-10, 0118), una
+   * versió anterior, o cap. Sense el vigent, no es poden CREAR tests ni
+   * registres (0117); el que ja hi ha es pot editar i esborrar.
    */
-  healthConsent: boolean;
+  healthConsent: "current" | "old" | "none";
   /** Avui a l'hora del centre (YYYY-MM-DD): la data per defecte i el màxim. */
   today: string;
 }) {
-  const canCreate = canManage && healthConsent;
+  const canCreate = canManage && healthConsent === "current";
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -105,11 +106,21 @@ export function ClientTestsPanel({
 
       {/* Els tests són dades de salut (0117): el mateix avís i el mateix camí que
           l'historial clínic. Aquí, a més, no es pot afegir res fins que el signi. */}
-      {canManage && !healthConsent && (
-        <p className="rounded-xl border border-attention bg-attention-bg px-3.5 py-2.5 text-sm text-attention" data-consent-missing>
-          <b className="font-bold">Consentiment de dades de salut pendent.</b> Els tests són dades de salut:
-          no s&apos;hi poden afegir tests ni registres fins que l&apos;accepti des de la seva àrea
-          (Configuració → Privacitat i consentiments). El que ja hi ha es pot consultar, editar i esborrar.
+      {canManage && healthConsent !== "current" && (
+        <p className="rounded-xl border border-attention bg-attention-bg px-3.5 py-2.5 text-sm text-attention" data-consent-missing={healthConsent}>
+          {healthConsent === "old" ? (
+            <>
+              <b className="font-bold">Consentiment de dades de salut d&apos;una versió anterior.</b> Els tests demanen
+              la versió nova (2026-10): no s&apos;hi poden afegir tests ni registres fins que el client la torni a
+              acceptar des de la seva àrea (li surt a l&apos;inici). El que ja hi ha es pot consultar, editar i esborrar.
+            </>
+          ) : (
+            <>
+              <b className="font-bold">Consentiment de dades de salut pendent.</b> Els tests són dades de salut:
+              no s&apos;hi poden afegir tests ni registres fins que l&apos;accepti des de la seva àrea
+              (Configuració → Privacitat). El que ja hi ha es pot consultar, editar i esborrar.
+            </>
+          )}
         </p>
       )}
 

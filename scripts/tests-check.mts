@@ -96,12 +96,28 @@ check((await code(() => data.addTestEntry("ct-marta-vell", { measuredOn: today, 
 check((await code(() => data.updateClientTest("ct-marta-vell", v("Salt CMJ", "cm", "up")))) === null, "…però editar el que hi ha, sí");
 check((await code(() => data.deleteClientTest("ct-marta-vell"))) === null, "…i esborrar-lo, també");
 {
-  // La Marta signa el consentiment.
+  // La Marta té la versió ANTERIOR del consentiment (2026-06).
   const s = getStore();
-  s.consents.push({ id: "cons-marta-health", user_id: "u-client-marta", type: "health_data", version: "2026-06", granted_at: new Date().toISOString(), ip: null, created_at: new Date().toISOString() });
+  s.consents.push({ id: "cons-marta-old", user_id: "u-client-marta", type: "health_data", version: "2026-06", granted_at: "2026-07-01T09:00:00.000Z", ip: null, created_at: "2026-07-01T09:00:00.000Z", revoked_at: null });
   saveStore(s);
 }
-check(await data.canCreateClientTests(MARTA), "quan el signa, ja pot");
+check(!(await data.canCreateClientTests(MARTA)), "amb la versió anterior (2026-06), encara no (0118)");
+const consents = await import("../lib/data/consents");
+let st = await consents.getConsentStatus("u-client-marta");
+check(st.healthDataVersion === "2026-06" && !st.healthDataCurrent, "l'estat diu «versió anterior»");
+await consents.recordConsent("u-client-marta", "health_data");
+st = await consents.getConsentStatus("u-client-marta");
+check(st.healthDataVersion === "2026-10" && st.healthDataCurrent, "acceptar el registra amb la versió 2026-10");
+check(await data.canCreateClientTests(MARTA), "quan accepta la 2026-10, ja pot");
+check((await consents.revokeHealthConsent("u-client-marta")) === 2, "retirar-lo marca les seves 2 files");
+st = await consents.getConsentStatus("u-client-marta");
+check(!st.healthDataAt && !st.healthDataCurrent, "retirat: ja no consta");
+check(getStore().consents.filter((c) => c.user_id === "u-client-marta").length === 2, "…però les files es queden (prova de quan es va donar)");
+check(!(await data.canCreateClientTests(MARTA)), "retirat: no pot");
+check((await consents.revokeHealthConsent("u-client-ana")) === 1 && (await data.canCreateClientTests(ANA)) === false, "retirar el de l'Ana no toca el de la Marta (i l'Ana ja no pot)");
+await consents.recordConsent("u-client-ana", "health_data");
+await consents.recordConsent("u-client-marta", "health_data");
+check(await data.canCreateClientTests(MARTA), "el torna a donar: ja pot");
 check((await code(() => data.createClientTest(MARTA, v("Dominades", "reps"), LAIA))) === null, "un altre client (amb consentiment) sí que pot tenir «Dominades»");
 await data.updateClientTest(t3, { title: "Salt CMJ", unit: "cm", description: "Contramoviment, mans a la cintura.", betterWhen: "up" });
 tests = await data.listClientTests(ANA);

@@ -313,7 +313,7 @@ export default async function ClientDetailPage({
           clientId={client.id}
           tests={tests}
           suggestions={testSuggestions}
-          healthConsent={!!consent.healthDataAt}
+          healthConsent={consent.healthDataCurrent ? "current" : consent.healthDataAt ? "old" : "none"}
           canManage
           today={today}
         />

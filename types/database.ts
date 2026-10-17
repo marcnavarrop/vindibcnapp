@@ -890,6 +890,8 @@ export interface Database {
           granted_at: string;
           ip: string | null;
           created_at: string;
+          /** Quan es va retirar (0118). NULL = vigent. */
+          revoked_at?: string | null;
         };
         Insert: {
           id?: string;
@@ -2206,6 +2208,11 @@ export interface Database {
       reorder_client_tests: {
         Args: { p_client: string; p_ids: string[] };
         Returns: undefined;
+      };
+      /** El propi usuari retira el seu consentiment de salut (0118). Torna quantes files. */
+      revoke_health_consent: {
+        Args: Record<never, never>;
+        Returns: number;
       };
       /** Es poden crear tests per a aquest client: té el consentiment de salut (0117). */
       client_tests_consent_ok: {

@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**117 migracions SQL** a `supabase/migrations/` (`0001`–`0117`), numerades i
+**118 migracions SQL** a `supabase/migrations/` (`0001`–`0118`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -236,6 +236,17 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   sense consentiment (només n'avisa, 0110). Pendent de l'assessor: el text del
   consentiment parla només de fisioteràpia. Proves:
   `supabase/tests/0117_client_tests_consent_rls.sql` (46 ✓).
+  La `0118` porta el **consentiment de salut 2026-10** (textos validats per
+  l'assessor): un sol consentiment per a tests, mesures i fisioteràpia, demanat
+  a tots els clients (targeta a l'Inici fins que l'acceptin;
+  `/client/consentiment` amb el text sencer). Versió pròpia,
+  `CURRENT_HEALTH_CONSENT_VERSION` a `lib/consent.ts` (la de privacitat segueix
+  a part). `consents.revoked_at` i `revoke_health_consent()`: el client el
+  retira des de la mateixa pàgina; la fila es queda com a prova.
+  `health_consent_status` ignora els retirats i `client_tests_consent_ok` demana
+  la 2026-10 o posterior. Proves: `supabase/tests/0118_health_consent_rls.sql`
+  (19 ✓). Pendent de decidir: l'historial clínic s'esborra sencer amb el borrat
+  RGPD (cascada), i la Llei 21/2000 obliga a conservar-lo.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de

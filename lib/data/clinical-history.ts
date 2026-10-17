@@ -155,7 +155,7 @@ export async function getHealthConsentFor(
   if (USE_MOCK) {
     if (!canReadClinical(viewer, client)) return null;
     const c = getStore()
-      .consents.filter((x) => x.user_id === client.profileId && x.type === "health_data")
+      .consents.filter((x) => x.user_id === client.profileId && x.type === "health_data" && !x.revoked_at)
       .sort((a, b) => b.granted_at.localeCompare(a.granted_at))[0];
     return c ? { grantedAt: c.granted_at, version: c.version } : null;
   }

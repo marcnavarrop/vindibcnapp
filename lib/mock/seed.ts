@@ -116,7 +116,7 @@ type Consent = Database["public"]["Tables"]["consents"]["Row"];
  * veu el bloqueig.
  */
 export const seedConsents: Consent[] = [
-  { id: "cons-ana-health", user_id: "u-client-ana", type: "health_data", version: "2026-06", granted_at: now, ip: null, created_at: now },
+  { id: "cons-ana-health", user_id: "u-client-ana", type: "health_data", version: "2026-10", granted_at: now, ip: null, created_at: now, revoked_at: null },
 ];
 
 type DataAccessLog = Database["public"]["Tables"]["data_access_log"]["Row"];

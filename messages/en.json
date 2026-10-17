@@ -207,7 +207,13 @@
       "book": "Book a session",
       "later": "Later"
     },
-    "communitySeeAll": "See all →"
+    "communitySeeAll": "See all →",
+    "healthConsent": {
+      "title": "Health data consent",
+      "new": "To record your tests and measurements we need your consent. It is voluntary.",
+      "updated": "We have updated the health data consent. Please read it and, if you agree, accept it again.",
+      "cta": "Read the consent"
+    }
   },
   "brand": {
     "badge": "Client area",
@@ -858,17 +864,27 @@
       "accepted": "Accepted on {date} (version {version}).",
       "none": "No acceptance on record yet.",
       "healthTitle": "Health data",
-      "healthGiven": "Consent given on {date}. You can withdraw it by writing to the centre.",
-      "healthAsk": "If you have physiotherapy, we need your consent to handle your health data.",
-      "consent": "I agree to my health data being handled for physiotherapy follow-up, in line with the <link>Privacy Policy</link>.",
+      "healthGiven": "Consent given on {date} (version {version}).",
+      "healthAsk": "To record your assessment tests, body measurements and, if you have physiotherapy, your follow-up, we need your consent. It is voluntary.",
+      "consent": "I agree that Vindi BCN may process my health data (tests, body measurements and physiotherapy follow-up) for the purposes described.",
       "accept": "Accept",
       "accepting": "Saving…",
       "ok": "Health data consent recorded. Thank you.",
       "errors": {
         "unauthorized": "Not authorised.",
         "mustAccept": "Tick the box to accept.",
-        "failed": "We couldn't save your consent."
-      }
+        "failed": "We couldn't save your consent.",
+        "revokeFailed": "It could not be withdrawn. Please try again."
+      },
+      "healthOld": "You have an earlier version, from {date}. We have updated it: please read it and, if you agree, accept it again.",
+      "healthOpen": "Read the consent",
+      "revoke": "Withdraw consent",
+      "revokeQuestion": "Withdraw your health data consent?",
+      "revokeConsequence": "We will not be able to record new tests or measurements. Withdrawing does not affect anything done before.",
+      "revokeConfirm": "Yes, withdraw it",
+      "revokePending": "Withdrawing…",
+      "revokeBack": "No, go back",
+      "revoked": "You have withdrawn your health data consent."
     },
     "notifications": {
       "title": "Notifications",
@@ -1426,7 +1442,8 @@
       "h1": "1. Data controller",
       "p1": "{name, select, none {VindiBCN} other {{name}}}{nif, select, none {} other {, with tax identification number (NIF) {nif}}}{address, select, none {} other { and registered address at {address}}}.{email, select, none {} other { Contact email: <mail>{email}</mail>.}}",
       "h2": "2. What data we process",
-      "p2": "Identification and contact data (name, email address, telephone), date of birth, gender and physical data (height, weight) and goals. In the case of clients receiving physiotherapy, health data linked to therapeutic follow-up. Also data relating to the service relationship: session packages, bookings and payments.",
+      "p2": "Identification and contact data (name, email address, telephone), date of birth, gender and physical data (height, weight) and goals. Also data relating to the service relationship: session packages, bookings and payments.",
+      "p2b": "<b>Health data.</b> With your explicit consent (Art. 9(2)(a) GDPR), we process the assessment tests and body measurements recorded by our professionals (for example strength, mobility, girths or weight) to tailor your training and show your progress. They can be seen by your assigned professional, the physiotherapy team, the centre's management and you in the app. If you have physiotherapy, our physiotherapist processes your clinical records to provide healthcare, under professional secrecy (Art. 9(2)(h) GDPR), and we keep them for the period required by health regulations. You can withdraw your consent at any time from your profile or {email, select, none {by writing to the centre} other {at <mail>{email}</mail>}}, without affecting earlier processing; if you do not consent, you can still use our training services.",
       "h3": "3. Purposes",
       "p3": "Management of client registrations, bookings and session packages; training follow-up and, where applicable, physiotherapy treatment; invoicing and payment collection; and communications relating to the service and the centre.",
       "h4": "4. Legal basis",
@@ -1493,5 +1510,28 @@
   },
   "shell": {
     "skipToContent": "Skip to content"
+  },
+  "healthConsent": {
+    "metaTitle": "Health data consent · VindiBCN",
+    "title": "Consent to the processing of health data",
+    "intro": "{name, select, none {Vindi BCN} other {{name} (Vindi BCN)}}{nif, select, none {} other {, tax ID {nif}}}{address, select, none {} other {, registered at {address}}}, only processes your health data if you give us your explicit consent.",
+    "whatLabel": "What data:",
+    "what": "the assessment tests and body measurements recorded by your trainer or physiotherapist (for example strength, mobility, girths or weight), with the date and notes; and, if you have physiotherapy, the information from your follow-up.",
+    "whyLabel": "What for:",
+    "why": "to tailor your training and treatment, and so that you and your team can see your progress.",
+    "whoLabel": "Who can see it:",
+    "who": "your assigned professional, the physiotherapy team and the centre's management. You can also see it in the app. We do not share it with third parties or use it for advertising.",
+    "howLongLabel": "How long:",
+    "howLong": "while you are a client; when you leave, your tests and measurements are deleted. Physiotherapy clinical records are kept for the period required by law.",
+    "voluntaryLabel": "It is voluntary:",
+    "voluntary": "if you do not consent, you can keep training as usual; we just will not be able to record your tests or measurements.",
+    "withdrawLabel": "You can withdraw it",
+    "withdraw": "at any time from your profile in the app or {email, select, none {by writing to the centre} other {by writing to <mail>{email}</mail>}}. Withdrawing does not affect anything done before.",
+    "rightsLabel": "Your rights:",
+    "rights": "access, rectification, erasure, objection, restriction and portability, {email, select, none {through the centre} other {at <mail>{email}</mail>}}. You can also complain to the Spanish Data Protection Agency (<aepd>aepd.es</aepd>). More information in the <privacy>privacy policy</privacy>.",
+    "statusCurrent": "Consent given on {date} (version {version}).",
+    "statusOld": "You accepted an earlier version of this consent on {date} (version {version}). We have updated it: please read it and, if you agree, accept it again.",
+    "statusNone": "You have not given it yet.",
+    "back": "Back to Settings"
   }
 }

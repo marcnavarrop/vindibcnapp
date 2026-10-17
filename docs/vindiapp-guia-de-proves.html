@@ -270,7 +270,7 @@
           <li>Registres: del més nou al més antic, amb l'observació. <strong>«Editar»</strong> i <strong>«Treure»</strong> (pregunta). Amb més de 3, plegats a «Registres (N)»</li>
           <li><strong>«Editar»</strong> el test (títol, unitat, sentit, descripció), <strong>↑↓</strong> per ordenar (el primer ↑ i el darrer ↓ apagats) i <strong>«Esborrar»</strong>: pregunta «S'esborren també els seus N registres. No es pot desfer.»</li>
           <li>Com a <strong>Fisio Demo</strong> (no és el seu client) <span class="flag">Nou (0114)</span>: la pestanya «Tests» <strong>hi és, en només lectura</strong>: «Només lectura: els crea i els omple el professional assignat…», la darrera marca, la diferència, la gràfica i els registres, i <strong>cap botó</strong> (ni «+ Nou test», ni «+ Registre», ni Editar, ↑↓, Treure o Esborrar). Sense cap test: «Aquest client encara no té cap test.»</li>
-          <li><strong>Consentiment de salut</strong> <span class="flag">Nou (0117)</span>: amb un client <strong>sense</strong> el consentiment de dades de salut signat (com a admin, o com a professional assignat), la pestanya «Tests» diu «Consentiment de dades de salut pendent…» i <strong>no hi ha «+ Nou test» ni «+ Registre»</strong>; els tests que ja hi ha es poden editar, ordenar i esborrar. Amb el Client Demo (que el té signat), tot com sempre. Si el client el signa (Configuració → Privacitat i consentiments), en recarregar la fitxa tornen a sortir els botons</li>
+          <li><strong>Consentiment de salut</strong> <span class="flag">Nou (0117, 0118)</span>: amb un client <strong>sense</strong> el consentiment de dades de salut vigent (2026-10) — si en té la versió anterior, l'avís diu «d'una versió anterior» (com a admin, o com a professional assignat), la pestanya «Tests» diu «Consentiment de dades de salut pendent…» i <strong>no hi ha «+ Nou test» ni «+ Registre»</strong>; els tests que ja hi ha es poden editar, ordenar i esborrar. Amb el Client Demo (que el té signat), tot com sempre. Si el client el signa (Configuració → Privacitat i consentiments), en recarregar la fitxa tornen a sortir els botons</li>
           <li>Un professional que <strong>no és fisio</strong> i no és l'assignat (p. ex. l'Entrenador Demo amb un client d'un altre): la pestanya <strong>no hi és</strong></li>
           <li>A 375 px: targetes a tota l'amplada, la gràfica es llegeix i <strong>sense scroll de costat</strong>; a 1280, dues targetes per fila</li>
         </ul>
@@ -627,6 +627,15 @@
           <li>Comprova que l'Entrenador Demo ho veu a la fitxa (1.3). <strong>No s'envia cap correu</strong></li>
           <li>En castellà i anglès: «Día 1 / Day 1», «Te toca / Up next», «Marcar como hecho / Mark as done», «Hecho hoy / Done today»</li>
           <li>Sense cap dia (un client amb exercicis però sense dies), la pantalla és la llista de sempre, sense pestanyes</li>
+        </ul>
+      </li>
+      <li><strong>Consentiment de dades de salut</strong> <span class="flag">Nou (0118)</span>, com a <strong>Client Demo</strong>:
+        <ul>
+          <li><strong>Sense consentiment o amb la versió anterior (2026-06):</strong> a l'Inici, sota la salutació, la targeta «Consentiment de dades de salut» («Per registrar els teus tests…» o «Hem actualitzat…») amb «Llegir el consentiment». A Configuració → Privacitat, el mateix estat i l'enllaç</li>
+          <li><strong>La pàgina del consentiment</strong> (/client/consentiment): el text sencer validat per l'assessor, amb el responsable (raó social, NIF, adreça i correu de la configuració del centre), els 7 punts i la casella. Sense marcar la casella: no deixa acceptar</li>
+          <li><strong>Acceptar:</strong> «Consentiment de dades de salut registrat». A la pàgina: «Consentiment donat el … (versió 2026-10)»; la targeta de l'Inici desapareix. A la fitxa (Entrenador Demo), a «Tests» tornen «+ Nou test» i «+ Registre»</li>
+          <li><strong>Retirar:</strong> «Retirar el consentiment» pregunta («No podrem registrar nous tests ni mesures…»). En confirmar: «Has retirat el consentiment…»; torna la targeta a l'Inici i, a la fitxa, l'avís i cap «+». Els tests d'abans es continuen veient</li>
+          <li>En castellà i anglès: el text i els botons traduïts («Retirar el consentimiento» / «Withdraw consent»)</li>
         </ul>
       </li>
       <li><strong>Els teus tests</strong> <span class="flag">Nou (0113)</span>, com a <strong>Client Demo</strong> (després de crear-li tests a la 1.3): a Exercicis, entre «Els teus exercicis» i la biblioteca. Cada test amb la darrera marca, la diferència en color i la gràfica, i els registres a sota. <strong>Cap botó</strong> per crear ni editar. Sense cap test, la secció no surt. En castellà i anglès: «Tus tests / Your tests», «respecto a la anterior / vs. the previous one», «mejor si sube / higher is better»; en anglès els decimals amb punt («10.5»)</li>
@@ -1070,7 +1079,7 @@
     <ul class="checklist">
       <li>Consentiment obligatori al registre (Política de Privacitat + Avís Legal), amb <strong>data i versió</strong> desades i visibles per al client</li>
       <li><strong>Consentiment específic de dades de salut</strong>: el dóna el client des de la seva àrea. Mentre no hi sigui, la fitxa avisa amb un requadre blau fosc i <strong>no s'hi han de registrar notes mèdiques</strong></li>
-      <li><strong>"Exportar dades"</strong> des de la fitxa: perfil, fitxa, bons, reserves, pagaments, exercicis, progrés, tests d'avaluació amb els seus registres (<code>tests</code>), consentiments i llista de documents</li>
+      <li><strong>"Exportar dades"</strong> des de la fitxa: perfil, fitxa, bons, reserves, pagaments, exercicis, progrés, tests d'avaluació amb els seus registres (<code>tests</code>), consentiments (amb la data de retirada, <code>revoked_at</code>, si n'hi ha) i llista de documents</li>
       <li><strong>"Eliminar client"</strong>: cal <strong>escriure el nom exacte</strong> de la persona. És irreversible</li>
       <li>Comprova què sobreviu a l'esborrat: <strong>els pagaments es conserven anonimitzats</strong> per obligació fiscal; bons, reserves, mesures, exercicis i consentiments cauen</li>
       <li>Les pàgines legals (<code>/legal/*</code>) estan <strong>en tres idiomes</strong> i porten <strong>banner d'esborrany</strong></li>

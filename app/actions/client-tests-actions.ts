@@ -38,7 +38,7 @@ function revalidate(clientId: string) {
 }
 
 const NO_CONSENT =
-  "Aquest client no té signat el consentiment de dades de salut. Fins que no l'accepti des de la seva àrea, no s'hi poden afegir tests ni registres.";
+  "Aquest client no té signat el consentiment de dades de salut vigent (versió 2026-10). Fins que no l'accepti des de la seva àrea, no s'hi poden afegir tests ni registres.";
 
 /**
  * En crear, un 42501 pot ser falta de permís o falta del consentiment de salut

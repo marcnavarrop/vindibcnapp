@@ -8,7 +8,7 @@ import { getPendingEmailChange } from "@/lib/data/email-change";
 import { ProfileSettingsForm } from "@/components/forms/profile-settings-form";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { resolveLocale } from "@/lib/i18n/resolve";
-import { HealthConsentForm } from "@/components/forms/health-consent-form";
+import Link from "next/link";
 import { NotificationPreferencesForm } from "@/components/forms/notification-preferences-form";
 import { ChangePasswordForm } from "@/components/forms/change-password-form";
 import { ChangeEmailForm } from "@/components/forms/change-email-form";
@@ -19,7 +19,6 @@ import { formatDate } from "@/lib/labels";
 import { getTranslations } from "next-intl/server";
 import type { ConsentStatus } from "@/lib/data/consents";
 import type { Locale } from "@/lib/i18n/config";
-import { CenterContactLine } from "@/components/center-contact-line";
 
 export const dynamic = "force-dynamic";
 
@@ -162,21 +161,21 @@ async function PrivacySection({
 
       <div className="flex flex-col gap-2 border-t border-brand-border pt-4 text-sm">
         <span className="font-bold text-brand-dark">{t("healthTitle")}</span>
-        {consent.healthDataAt ? (
-          <span className="text-brand-muted">
-            {t("healthGiven", {
-              date: formatDate(consent.healthDataAt, locale),
-            })}
-            <CenterContactLine className="mt-1" />
-          </span>
-        ) : (
-          <>
-            <span className="text-brand-muted">
-              {t("healthAsk")}
-            </span>
-            <HealthConsentForm />
-          </>
-        )}
+        {/* El text sencer, donar-lo, tornar-lo a donar i retirar-lo: a la seva
+            pàgina (0118). Aquí, només com està i l'enllaç. */}
+        <span className="text-brand-muted" data-health-consent={consent.healthDataCurrent ? "current" : consent.healthDataAt ? "old" : "none"}>
+          {consent.healthDataCurrent
+            ? t("healthGiven", {
+                date: formatDate(consent.healthDataAt!, locale),
+                version: consent.healthDataVersion ?? "—",
+              })
+            : consent.healthDataAt
+              ? t("healthOld", { date: formatDate(consent.healthDataAt, locale) })
+              : t("healthAsk")}
+        </span>
+        <Link href="/client/consentiment" className="font-bold text-brand-purple hover:text-brand-purple-dark hover:underline">
+          {t("healthOpen")} →
+        </Link>
       </div>
     </section>
   );
