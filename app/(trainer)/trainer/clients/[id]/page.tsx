@@ -23,6 +23,8 @@ import {
 } from "@/lib/data/clinical-history";
 import { canDeleteClinical, canReadClinical, canWriteClinical } from "@/lib/clinical-access";
 import { ClinicalHistoryPanel } from "@/components/clinical-history-panel";
+import { SessionNotesList } from "@/components/client-file/session-notes-list";
+import { listClientSessionNotes } from "@/lib/data/session-notes";
 import { ClientFileHeader } from "@/components/client-file/header";
 import {
   ClientFileMenu,
@@ -70,6 +72,7 @@ export default async function TrainerClientDetailPage({
     workoutPlan,
     library,
     documents,
+    sessionNotes,
     allProgress,
     tests,
     testSuggestions,
@@ -84,6 +87,8 @@ export default async function TrainerClientDetailPage({
     getWorkoutPlan(id),
     listExercises(),
     listClientDocuments(id),
+    // Les notes de sessió que qui mira pot llegir (0125): la base decideix quines.
+    listClientSessionNotes(id).catch(() => ({ notes: [], failed: true })),
     listAllProgressForClient(id),
     listClientTests(id),
     // Només són suggeriments: si fallen, el formulari funciona igual sense.
@@ -294,16 +299,28 @@ export default async function TrainerClientDetailPage({
           {
             label: "Historial clínic",
             content: (
-              <ClinicalHistoryPanel
-                clientId={client.id}
-                history={history}
-                consent={healthConsent}
-                canWrite={canWriteClinical(viewer!, subject, world)}
-                canDelete={canDeleteClinical(viewer!)}
-                viewerId={viewer!.id}
-                isAdmin={false}
-                truncated={history.followups.length === FOLLOWUPS_LIMIT}
-              />
+              <div className="flex flex-col gap-6">
+                <ClinicalHistoryPanel
+                  clientId={client.id}
+                  history={history}
+                  consent={healthConsent}
+                  canWrite={canWriteClinical(viewer!, subject, world)}
+                  canDelete={canDeleteClinical(viewer!)}
+                  viewerId={viewer!.id}
+                  isAdmin={false}
+                  truncated={history.followups.length === FOLLOWUPS_LIMIT}
+                />
+                {/* Les notes de les sessions de fisioteràpia (0125): qui llegeix
+                    l'historial, en lectura; s'escriuen des de la reserva. */}
+                <SessionNotesList
+                  title="Notes de sessió de fisioteràpia"
+                  notes={sessionNotes.notes.filter((n) => n.serviceType === "fisioterapia")}
+                  failed={sessionNotes.failed}
+                  agendaBase="/trainer/reservas"
+                  empty="Encara no hi ha cap nota de sessió de fisioteràpia."
+                  marker="physio"
+                />
+              </div>
             ),
           },
         ]
@@ -335,6 +352,17 @@ export default async function TrainerClientDetailPage({
         <div className="flex flex-col gap-6">
           <ClientNotesPanel generalNotes={client.generalNotes} />
           <DocumentsReadonlyPanel documents={documents} clientId={id} />
+          {/* Les notes de les sessions que pots llegir (0125): si el client és
+              teu, totes les que no són de fisioteràpia; si no, les de les
+              sessions que has fet tu. */}
+          <SessionNotesList
+            title="Notes de sessió"
+            notes={sessionNotes.notes.filter((n) => n.serviceType !== "fisioterapia")}
+            failed={sessionNotes.failed}
+            agendaBase="/trainer/reservas"
+            empty="Encara no hi ha cap nota de sessió que puguis veure."
+            marker="training"
+          />
         </div>
       ),
     },

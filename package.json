@@ -26,6 +26,7 @@
     "staffscope:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/staff-scope-check.mts",
     "clinical:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/clinical-check.mts",
     "archive:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/archive-check.mts",
+    "session-notes:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/session-notes-check.mts",
     "occupancy:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/occupancy-check.mts",
     "actions:check": "node scripts/actions-check.mjs",
     "rows:check": "node scripts/row-limit-check.mjs",

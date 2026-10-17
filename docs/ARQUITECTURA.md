@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**124 migracions SQL** a `supabase/migrations/` (`0001`–`0124`), numerades i
+**126 migracions SQL** a `supabase/migrations/` (`0001`–`0126`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -122,11 +122,18 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   UPDATE` a `profiles` que impedeix que ningú s'autoatorgui `role='admin'`, i
   `handle_new_user()` reescrit perquè el metadata públic del registre mai
   decideixi el rol d'un compte nou.
-- **`session_notes`** (`0079`): l'escriu només el professional d'AQUELLA reserva
-  (`is_session_trainer`, no `is_trainer_of`), la llegeix ell, el client i
-  l'admin, i explícitament no la resta de professionals del mateix client, amb
-  un comentari a la mateixa migració advertint que afegir-hi la clàusula de
-  coordinació «per coherència» desfaria l'única raó de ser de la taula.
+- **`session_notes`** (`0079`, `0125`, `0126`): l'escriu només el professional
+  d'AQUELLA reserva (`is_session_trainer`), signant com a autor i sempre demo
+  amb demo (0126 va separar la policy `for all` de la 0079, que deixava llegir
+  sense mirar el món). LLEGIR-LA (`can_read_session_note`, 0125, decisió d'en
+  Marc del 17/10/2026 que eixampla la 0079): l'admin, el client, qui va fer la
+  sessió i l'entrenador ASSIGNAT del client (només llegir); i, si és de
+  fisioteràpia (historial clínic, com la 0110), qualsevol fisio. La resta de
+  professionals, no: per això continua sent una taula a part de `reservations`,
+  que llegeix tot l'equip. A la fitxa del client: «Notes i documents» → «Notes
+  de sessió» i «Historial clínic» → «Notes de sessió de fisioteràpia»
+  (`listClientSessionNotes`: la RLS decideix quines). Proves:
+  `supabase/tests/0125_session_notes_read_rls.sql` i `npm run session-notes:check`.
 - **`email_change_requests`** (`0078`): RLS activada, cap política i `revoke all`
   a `public`, `anon` i `authenticated`. Cap sessió hi arriba; només el servidor,
   amb la clau de servei. La taula desa el secret de l'enllaç **només en hash**.

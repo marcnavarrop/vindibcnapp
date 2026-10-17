@@ -25,6 +25,12 @@ export type ClientDataExport = {
    * dades, hi va sencer: primera visita i seguiments (amb qui els va escriure).
    */
   clinical_history: { first_visit: unknown | null; followups: unknown[] };
+  /**
+   * Les notes de sessió (0079), de totes les seves sessions: la data i el
+   * servei de la sessió, qui la va escriure i el text. També les de
+   * fisioteràpia (formen part de l'historial clínic).
+   */
+  session_notes: unknown[];
 };
 
 /**
@@ -81,6 +87,16 @@ export async function exportClientData(
           first_visit: store.clinical_first_visits.find((f) => f.client_id === clientId) ?? null,
           followups: store.clinical_followups.filter((f) => f.client_id === clientId),
         },
+        session_notes: store.session_notes
+          .map((n) => ({ n, r: store.reservations.find((r) => r.id === n.reservation_id) }))
+          .filter(({ r }) => r?.client_id === clientId)
+          .sort((a, b) => a.r!.scheduled_at.localeCompare(b.r!.scheduled_at))
+          .map(({ n, r }) => ({
+            ...n,
+            session_at: r!.scheduled_at,
+            service_type: r!.service_type,
+            author_name: store.profiles.find((p) => p.id === n.author_id)?.full_name ?? null,
+          })),
       },
     };
   }
@@ -109,6 +125,7 @@ export async function exportClientData(
     documents,
     firstVisit,
     followups,
+    sessionNotes,
   ] = await Promise.all([
       admin.from("profiles").select("*").eq("id", profileId).single(),
       admin.from("bonos").select("*").eq("client_id", clientId),
@@ -154,6 +171,11 @@ export async function exportClientData(
         .select("*")
         .eq("client_id", clientId)
         .order("created_at", { ascending: true }),
+      admin
+        .from("session_notes")
+        .select("*, reservation:reservations!inner(client_id, scheduled_at, service_type), author:profiles!session_notes_author_id_fkey(full_name)")
+        .eq("reservation.client_id", clientId)
+        .limit(5000),
     ]);
 
   const p = profile.data as { full_name?: string; email?: string } | null;
@@ -178,6 +200,22 @@ export async function exportClientData(
       consents: consents.data ?? [],
       documents: documents.data ?? [],
       clinical_history: { first_visit: firstVisit.data ?? null, followups: followups.data ?? [] },
+      session_notes: ((sessionNotes.data ?? []) as unknown as {
+        reservation_id: string;
+        author_id: string | null;
+        body: string;
+        created_at: string;
+        updated_at: string;
+        reservation: { scheduled_at: string; service_type: string } | null;
+        author: { full_name: string | null } | null;
+      }[])
+        .map(({ reservation, author, ...n }) => ({
+          ...n,
+          session_at: reservation?.scheduled_at ?? null,
+          service_type: reservation?.service_type ?? null,
+          author_name: author?.full_name ?? null,
+        }))
+        .sort((a, b) => String(a.session_at).localeCompare(String(b.session_at))),
     },
   };
 }

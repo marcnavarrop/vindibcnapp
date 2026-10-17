@@ -6,6 +6,8 @@ import { getStore, saveStore, type Store } from "@/lib/mock/store";
 import { getViewer, type Viewer } from "@/lib/auth";
 import { mockFails } from "@/lib/mock/faults";
 import type { ServiceType, ReservationStatus } from "@/types/database";
+import { canReadSessionNote } from "@/lib/session-note-access";
+import { getDemoWorld, type DemoWorld } from "@/lib/data/demo-world";
 
 /**
  * Nota de seguiment d'una sessió (0079).
@@ -81,13 +83,22 @@ function mockIsSessionTrainer(store: Store, viewer: Viewer, reservationId: strin
   return !!r && r.trainer_id === viewer.id;
 }
 
-/** `session_notes_select`: l'admin, el professional de la sessió i el seu client. */
-function mockCanRead(store: Store, viewer: Viewer, reservationId: string): boolean {
-  if (viewer.role === "admin") return true;
-  if (mockIsSessionTrainer(store, viewer, reservationId)) return true;
+/** `session_notes_select` (0125): la regla de `lib/session-note-access.ts`. */
+function mockCanRead(store: Store, viewer: Viewer, reservationId: string, world: DemoWorld): boolean {
   const r = store.reservations.find((x) => x.id === reservationId);
-  const client = r && store.clients.find((c) => c.id === r.client_id);
-  return !!client && client.profile_id === viewer.id;
+  if (!r) return false;
+  const client = store.clients.find((c) => c.id === r.client_id);
+  return canReadSessionNote(
+    viewer,
+    {
+      clientId: r.client_id,
+      clientProfileId: client?.profile_id ?? null,
+      trainerId: r.trainer_id,
+      serviceType: r.service_type,
+      assignedTrainerId: client?.assigned_trainer_id ?? null,
+    },
+    world,
+  );
 }
 
 function mockNames(store: Store, ids: (string | null)[]): Map<string, string> {
@@ -158,10 +169,11 @@ export async function getNotesForReservations(
   if (USE_MOCK) {
     const store = getStore();
     const viewer = await getViewer();
+    const world = await getDemoWorld();
     const wanted = new Set(reservationIds);
     rows = viewer
       ? store.session_notes.filter(
-          (n) => wanted.has(n.reservation_id) && mockCanRead(store, viewer, n.reservation_id),
+          (n) => wanted.has(n.reservation_id) && mockCanRead(store, viewer, n.reservation_id, world),
         )
       : [];
     names = mockNames(store, rows.map((r) => r.author_id));
@@ -347,4 +359,64 @@ export async function listPastSessions(clientId: string): Promise<PastSession[]>
     trainerName: r.trainer_id ? (trainerNames.get(r.trainer_id) ?? null) : null,
     note: notes.get(r.id) ?? null,
   }));
+}
+
+/** Una nota de sessió a la fitxa del client, amb la sessió d'on surt. */
+export type ClientSessionNote = SessionNote & {
+  scheduledAt: string;
+  serviceType: ServiceType;
+  status: ReservationStatus;
+  trainerName: string | null;
+};
+
+/** Quantes sessions d'un client es miren per buscar-hi notes (les més recents). */
+export const CLIENT_NOTES_SESSIONS_LIMIT = 2000;
+
+/**
+ * Totes les notes de sessió d'un client que QUI MIRA pot llegir, de la més
+ * recent a la més antiga (per la data de la sessió).
+ *
+ * Mateix principi que la resta del fitxer: QUINES notes surten ho decideix la
+ * RLS (`getNotesForReservations`, amb la sessió de qui mira). La clau de servei
+ * només dona els ids de les sessions del client i, després, la data, el servei
+ * i el professional de les que la RLS ja ha deixat sortir.
+ */
+export async function listClientSessionNotes(
+  clientId: string,
+): Promise<{ notes: ClientSessionNote[]; failed: boolean }> {
+  type Res = { id: string; scheduled_at: string; service_type: ServiceType; status: ReservationStatus; trainer_id: string | null };
+  let sessions: Res[];
+  if (USE_MOCK) {
+    sessions = getStore()
+      .reservations.filter((r) => r.client_id === clientId)
+      .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))
+      .slice(0, CLIENT_NOTES_SESSIONS_LIMIT);
+  } else {
+    const { data, error } = await createAdminClient()
+      .from("reservations")
+      .select("id, scheduled_at, service_type, status, trainer_id")
+      .eq("client_id", clientId)
+      .order("scheduled_at", { ascending: false })
+      .limit(CLIENT_NOTES_SESSIONS_LIMIT);
+    if (error) {
+      console.error("[notes] no s'han pogut llegir les sessions del client:", error.message);
+      return { notes: [], failed: true };
+    }
+    sessions = (data ?? []) as Res[];
+  }
+  const { notes, failed } = await getNotesForReservations(sessions.map((s) => s.id));
+  const withNote = sessions.filter((s) => notes.has(s.id));
+  const names = USE_MOCK
+    ? mockNames(getStore(), withNote.map((s) => s.trainer_id))
+    : await resolveNames(withNote.map((s) => s.trainer_id));
+  return {
+    failed,
+    notes: withNote.map((s) => ({
+      ...notes.get(s.id)!,
+      scheduledAt: s.scheduled_at,
+      serviceType: s.service_type,
+      status: s.status,
+      trainerName: s.trainer_id ? (names.get(s.trainer_id) ?? null) : null,
+    })),
+  };
 }

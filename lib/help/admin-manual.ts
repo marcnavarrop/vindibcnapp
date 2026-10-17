@@ -363,7 +363,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Notes i documents",
-              "Les notes generals, amb l'enllaç per editar-les, i els documents que el client ha pujat des de la seva àrea. Els documents són només lectura: aquí no se'n puja cap.",
+              "Les notes generals, amb l'enllaç per editar-les, els documents que el client ha pujat des de la seva àrea (només lectura: aquí no se'n puja cap) i «Notes de sessió»: totes les notes que els professionals han deixat a les seves sessions, la més recent a dalt, amb data, servei, professional i «Veure la sessió». Les de fisioteràpia són a «Historial clínic». Les notes s'escriuen i s'editen des de la reserva, com sempre; aquí només es llegeixen.",
             ],
           ],
         },

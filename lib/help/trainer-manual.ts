@@ -668,7 +668,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "Cada sessió ja feta pot portar una nota: com ha anat, què s'ha treballat, què cal recordar per a la propera. Surt a la fitxa de la reserva, tocant-la al calendari, i a la vista de llista de Reserves, a l'apartat «Passades», sota la reserva. Es pot escriure des de tots dos llocs. A les properes no hi és, perquè parla d'una cosa que encara no ha passat.",
+          text: "Cada sessió ja feta pot portar una nota: com ha anat, què s'ha treballat, què cal recordar per a la propera. Surt a la fitxa de la reserva, tocant-la al calendari, i a la vista de llista de Reserves, a l'apartat «Passades», sota la reserva. Es pot escriure des de tots dos llocs. A les properes no hi és, perquè parla d'una cosa que encara no ha passat. Totes juntes, les tens a la fitxa del client: «Notes i documents» → «Notes de sessió» (la més recent a dalt, amb «Veure la sessió»), i les de fisioteràpia a «Historial clínic» → «Notes de sessió de fisioteràpia».",
         },
         { t: "h", text: "Qui l'escriu" },
         {
@@ -682,7 +682,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         { t: "h", text: "Qui la llegeix" },
         {
           t: "warn",
-          text: "La llegiu tres: tu, el client de la sessió —a la seva àrea, amb les sessions que ja ha fet— i l'administració. Els teus companys no, ni tan sols el que tingui aquell client assignat. Escriu-la, doncs, pensant que la llegirà ell.",
+          text: "La llegeixen: tu, el client de la sessió —a la seva àrea, amb les sessions que ja ha fet—, l'administració i l'entrenador ASSIGNAT d'aquell client (només llegir-la). Si és una sessió de fisioteràpia, a més, qualsevol fisio, perquè forma part de l'historial clínic. La resta de companys, no. Escriu-la, doncs, pensant que la llegirà el client.",
         },
       ],
     },

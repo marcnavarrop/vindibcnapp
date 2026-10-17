@@ -30,6 +30,8 @@ import { getDemoWorld } from "@/lib/data/demo-world";
 import { demoAssignmentAllowed } from "@/lib/demo-accounts";
 import { FOLLOWUPS_LIMIT, getClinicalHistory } from "@/lib/data/clinical-history";
 import { ClinicalHistoryPanel } from "@/components/clinical-history-panel";
+import { SessionNotesList } from "@/components/client-file/session-notes-list";
+import { listClientSessionNotes } from "@/lib/data/session-notes";
 import { listClientDocuments } from "@/lib/data/client-documents";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { DocumentsReadonlyPanel } from "@/components/documents-readonly-panel";
@@ -75,6 +77,7 @@ export default async function ClientDetailPage({
     workoutPlan,
     library,
     documents,
+    sessionNotes,
     allProgress,
     tests,
     testSuggestions,
@@ -90,6 +93,8 @@ export default async function ClientDetailPage({
     getWorkoutPlan(id),
     listExercises(),
     listClientDocuments(id),
+    // Les notes de sessió que qui mira pot llegir (0125): la base decideix quines.
+    listClientSessionNotes(id).catch(() => ({ notes: [], failed: true })),
     listAllProgressForClient(id),
     listClientTests(id),
     // Només són suggeriments: si fallen, el formulari funciona igual sense.
@@ -292,20 +297,30 @@ export default async function ClientDetailPage({
           {
             label: "Historial clínic",
             content: (
-              <ClinicalHistoryPanel
-                clientId={client.id}
-                history={history}
-                consent={
-                  consent.healthDataAt
-                    ? { grantedAt: consent.healthDataAt, version: consent.healthDataVersion ?? "—" }
-                    : null
-                }
-                canWrite
-                canDelete
-                viewerId={viewer.id}
-                isAdmin
-                truncated={history.followups.length === FOLLOWUPS_LIMIT}
-              />
+              <div className="flex flex-col gap-6">
+                <ClinicalHistoryPanel
+                  clientId={client.id}
+                  history={history}
+                  consent={
+                    consent.healthDataAt
+                      ? { grantedAt: consent.healthDataAt, version: consent.healthDataVersion ?? "—" }
+                      : null
+                  }
+                  canWrite
+                  canDelete
+                  viewerId={viewer.id}
+                  isAdmin
+                  truncated={history.followups.length === FOLLOWUPS_LIMIT}
+                />
+                <SessionNotesList
+                  title="Notes de sessió de fisioteràpia"
+                  notes={sessionNotes.notes.filter((n) => n.serviceType === "fisioterapia")}
+                  failed={sessionNotes.failed}
+                  agendaBase="/admin/reservas"
+                  empty="Encara no hi ha cap nota de sessió de fisioteràpia."
+                  marker="physio"
+                />
+              </div>
             ),
           },
         ]
@@ -332,6 +347,14 @@ export default async function ClientDetailPage({
             editHref={`/admin/clients/${client.id}/edit`}
           />
           <DocumentsReadonlyPanel documents={documents} clientId={id} />
+          <SessionNotesList
+            title="Notes de sessió"
+            notes={sessionNotes.notes.filter((n) => n.serviceType !== "fisioterapia")}
+            failed={sessionNotes.failed}
+            agendaBase="/admin/reservas"
+            empty="Encara no hi ha cap nota de sessió. Les de fisioteràpia són a «Historial clínic»."
+            marker="training"
+          />
         </div>
       ),
     },

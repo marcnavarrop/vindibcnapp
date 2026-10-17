@@ -125,10 +125,11 @@ export function SessionNotePanel({
               clínica —aquella va a l'historial clínic del client (0110), que el
               client no veu i que té el seu propi consentiment. */}
           <p className="text-xs text-brand-muted">
-            Aquesta nota <strong>la llegeix el client</strong>, a més de tu i de
-            l&apos;administració. És seguiment de la sessió: si has d&apos;anotar
-            informació de salut, va a l&apos;historial clínic de la fitxa del
-            client, no aquí.
+            Aquesta nota <strong>la llegeix el client</strong>, a més de tu, de
+            l&apos;administració i de l&apos;entrenador assignat del client (i, si
+            és de fisioteràpia, dels fisios). És seguiment de la sessió: si has
+            d&apos;anotar informació de salut, va a l&apos;historial clínic de la
+            fitxa del client, no aquí.
           </p>
           {state.error && <p className="text-sm text-error">{state.error}</p>}
           <div className="flex flex-wrap items-center gap-2">
