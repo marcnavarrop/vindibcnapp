@@ -359,7 +359,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
             [
               "Tests",
-              "Els tests d'avaluació del client, sense catàleg: cadascun amb títol, unitat, descripció i, si vols, «Millor si puja» o «Millor si baixa». Cada targeta ensenya la darrera marca, la diferència amb l'anterior (verd si millora, vermell si empitjora, gris si és neutre) i la gràfica. «+ Nou test» suggereix els títols que ja es fan servir al centre, amb la unitat; «+ Registre» hi afegeix data, valor (amb decimals) i observació. Es poden editar, treure, reordenar i esborrar (el test, amb tots els seus registres). Els escriuen l'admin i el professional assignat; el client els veu a Exercicis.",
+              "Els tests d'avaluació del client, sense catàleg: cadascun amb títol, unitat, descripció i, si vols, «Millor si puja» o «Millor si baixa». Cada targeta ensenya la darrera marca, la diferència amb l'anterior (verd si millora, vermell si empitjora, gris si és neutre) i la gràfica. «+ Nou test» suggereix els títols que ja es fan servir al centre, amb la unitat; «+ Registre» hi afegeix data, valor (amb decimals) i observació. Es poden editar, treure, reordenar i esborrar (el test, amb tots els seus registres). Els escriuen l'admin i el professional assignat; els fisios els llegeixen de qualsevol client, sense poder-los tocar; el client els veu a Exercicis.",
             ],
             [
               "Notes i documents",

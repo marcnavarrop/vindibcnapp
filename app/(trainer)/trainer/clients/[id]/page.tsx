@@ -99,6 +99,8 @@ export default async function TrainerClientDetailPage({
   // Reservar-li alguna cosa, encara que no sigui seu (0107): un grup, o la seva
   // especialitat a la seva agenda. «Demo amb demo», com a tot arreu.
   const canBook = !!viewer && demoCompatible(client.id, viewer.id);
+  // Els tests d'avaluació, en lectura, per a qualsevol fisio (0114).
+  const canReadTestsAsPhysio = !!viewer && viewer.specialty === "fisioterapeuta" && demoCompatible(client.id, viewer.id);
 
   // L'HISTORIAL CLÍNIC (0110): el llegeixen els fisios (de qualsevol client) i
   // l'entrenador ASSIGNAT; l'escriuen els fisios. «Demo amb demo». La base ho
@@ -302,10 +304,11 @@ export default async function TrainerClientDetailPage({
           },
         ]
       : []),
-    // Els tests d'avaluació (0113) només els veu el professional ASSIGNAT
-    // (i l'admin): la RLS no en torna cap a ningú més, i una pestanya buida
-    // faria creure que el client no en té.
-    ...(canManage
+    // Els tests d'avaluació (0113): el professional ASSIGNAT els escriu; un
+    // fisio de qualsevol client els LLEGEIX (0114), sense cap botó. A ningú
+    // més la RLS no li'n torna cap, i una pestanya buida faria creure que el
+    // client no en té. «Demo amb demo», com la base (`same_world`).
+    ...(canManage || canReadTestsAsPhysio
       ? [
           {
             label: "Tests",
@@ -314,7 +317,7 @@ export default async function TrainerClientDetailPage({
                 clientId={client.id}
                 tests={tests}
                 suggestions={testSuggestions}
-                canManage
+                canManage={canManage}
                 today={today}
               />
             ),

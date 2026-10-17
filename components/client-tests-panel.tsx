@@ -25,8 +25,8 @@ import { TAP, clsx, normalizeForSearch } from "@/lib/utils";
  *
  * Cada test és una targeta: la darrera marca amb la diferència respecte de
  * l'anterior (verd si millora, vermell si empitjora, gris si és neutre), la
- * gràfica i els registres. Sense `canManage` tot és de lectura: la RLS tampoc
- * deixaria escriure.
+ * gràfica i els registres. Sense `canManage` tot és de lectura (un fisio que no
+ * és l'assignat, 0114): la RLS tampoc el deixaria escriure.
  *
  * En escriure el títol d'un test nou se suggereixen els que ja es fan servir al
  * centre (amb la unitat): només suggeriment, per no acabar amb «Dominades» i
@@ -84,7 +84,9 @@ export function ClientTestsPanel({
         <div>
           <h2 className="text-sm font-bold tracking-wide text-brand-muted uppercase">Tests d&apos;avaluació</h2>
           <p className="mt-0.5 text-xs text-brand-muted">
-            Cada test és d&apos;aquest client: títol, unitat i registres amb data. El client els veu a la seva àrea.
+            {canManage
+              ? "Cada test és d'aquest client: títol, unitat i registres amb data. El client els veu a la seva àrea."
+              : "Només lectura: els crea i els omple el professional assignat (o l'administració)."}
           </p>
         </div>
         {canManage && !creating && (

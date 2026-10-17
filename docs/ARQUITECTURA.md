@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**113 migracions SQL** a `supabase/migrations/` (`0001`–`0113`), numerades i
+**114 migracions SQL** a `supabase/migrations/` (`0001`–`0114`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -206,6 +206,11 @@ capçalera per fer-la obligatòria (i afegir-hi `frame-ancestors 'none'`).
   centre, del mateix món, sense client ni valors. Gràfica SVG pròpia
   (`components/client-tests/test-visuals.tsx`). `npm run tests:check`; RLS a
   `supabase/tests/0113_client_tests_rls.sql` (31 ✓, passades per en Marc al SQL Editor).
+  La `0114` hi afegeix dues polítiques NOMÉS DE LECTURA per als fisios
+  (`is_physio()` i `same_world`): veuen els tests de qualsevol client, com el
+  seu accés transversal de la 0109, i no hi escriuen. A la fitxa del
+  professional, la pestanya «Tests» surt en lectura per al fisio que no és
+  l'assignat. Proves: `supabase/tests/0114_client_tests_physio_read_rls.sql`.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de

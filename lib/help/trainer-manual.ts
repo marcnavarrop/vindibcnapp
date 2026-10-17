@@ -245,7 +245,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "A dalt, la capçalera: el nom, qui el porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes, més «Tests» si el client és teu i «Historial clínic» si el pots veure. La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
+          text: "A dalt, la capçalera: el nom, qui el porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes, més «Tests» si el client és teu o ets fisio i «Historial clínic» si el pots veure. La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
         },
         {
           t: "p",
@@ -362,7 +362,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "La pestanya només hi és si el client és teu: els tests els veuen i els escriuen el seu professional assignat i l'administració, i el client els veu a la seva àrea, a Exercicis. Si un client canvia de professional, els tests es queden amb ell i els passa a veure el nou.",
+          text: "Els escriuen el professional assignat i l'administració. Si ets fisio, veus la pestanya a la fitxa de qualsevol client, però en NOMÉS LECTURA (sense «+ Nou test», ni «+ Registre», ni editar o esborrar), llevat dels clients que tinguis assignats. Si no ets fisio i el client no és teu, la pestanya no hi és. El client els veu a la seva àrea, a Exercicis. Si un client canvia de professional, els tests es queden amb ell i els passa a escriure el nou.",
         },
         { t: "h", text: "Notes i documents" },
         {
