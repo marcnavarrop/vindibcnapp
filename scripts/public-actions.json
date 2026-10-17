@@ -14,6 +14,9 @@
   "app/auth/confirm-email/actions.ts::confirmEmailChangeAction": {
     "reason": "Confirmar un canvi de correu amb el secret de l'enllaç: qui el té és qui l'ha rebut."
   },
+  "app/baixa/comunitat/actions.ts::unsubscribeCommunityAction": {
+    "reason": "Deixar de rebre les novetats per correu des de l'enllaç del correu, sense sessió (art. 21.2 LSSI). La barrera és la signatura HMAC de l'enllaç (UNSUBSCRIBE_SECRET), que es comprova aquí; només apaga community_email d'aquell perfil."
+  },
   "app/prova/actions.ts::requestTrialAction": {
     "reason": "Demanar una sessió de prova és públic (visitants). Antiabús per correu i telèfon, i la franja es torna a comprovar al servidor."
   },

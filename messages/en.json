@@ -151,7 +151,9 @@
       "passwordMismatch": "The passwords don't match."
     },
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "communityOptIn": "I want to receive the centre's news by email.",
+    "communityNote": "You'll receive the centre's news by email. You can turn this off now or at any time in Settings → Notifications."
   },
   "home": {
     "greeting": "Hi, {name}! 👋",
@@ -213,6 +215,17 @@
       "new": "To record your tests and measurements we need your consent. It is voluntary.",
       "updated": "We have updated the health data consent. Please read it and, if you agree, accept it again.",
       "cta": "Read the consent"
+    },
+    "welcomeNotice": {
+      "title": "Before you start",
+      "privacy": "We've created your account at the centre. We process your data as explained in our <privacy>privacy policy</privacy>: who is responsible for it, what we use it for, how long we keep it and what rights you have.",
+      "communityOptIn": "I want to receive the centre's news by email.",
+      "communityNote": "You'll receive the centre's news by email. You can turn this off now or at any time in Settings → Notifications.",
+      "ok": "OK",
+      "saving": "Saving…",
+      "done": "Saved. You can change this at any time in Settings.",
+      "errorUnauthorized": "Not authorised.",
+      "errorFailed": "It couldn't be saved. Please try again."
     }
   },
   "brand": {
@@ -1306,7 +1319,8 @@
       "subject": "News from VindiBCN",
       "heading": "News from the centre",
       "fallback": "We have some news to share with you.",
-      "cta": "See it in the community"
+      "cta": "See it in the community",
+      "unsubscribe": "Stop receiving the centre's news by email"
     },
     "welcome": {
       "eyebrow": "Account created",
@@ -1457,7 +1471,7 @@
       "basis2": "<b>Assessment tests and body measurements:</b> your explicit consent (Art. 9(2)(a) GDPR).",
       "basis3": "<b>Physiotherapy records:</b> the provision of healthcare under professional secrecy (Art. 9(2)(h) GDPR) and the legal obligation to keep them (Art. 6(1)(c) GDPR).",
       "basis4": "<b>Invoicing and tax obligations:</b> compliance with legal obligations (Art. 6(1)(c) GDPR).",
-      "basis5": "<b>Service notices and reminders:</b> performance of the contract; you can turn off the optional ones in Settings. If we ever send you marketing communications, it will only be with your consent.",
+      "basis5": "<b>Service notices and reminders:</b> performance of the contract; you can turn off the optional ones in Settings. As a client, we may send you news about the centre and our services by email (Art. 21(2) of the Spanish Information Society Services Act, LSSI). We tell you when you sign up, and you can turn them off at that moment, in Settings → Notifications or from the link in every email.",
       "h5": "5. Recipients and processors",
       "p5": "We do not disclose your data to third parties, except where required by law (for example, to the tax authorities). To provide the service we use the following providers, which act as data processors under contract:",
       "item1": "<b>Supabase</b> — database, sign-in and files. The data is stored on servers in the European Union (Ireland).",
@@ -1564,5 +1578,16 @@
     "statusOld": "You accepted an earlier version of this consent on {date} (version {version}). We have updated it: please read it and, if you agree, accept it again.",
     "statusNone": "You have not given it yet.",
     "back": "Back to Settings"
+  },
+  "unsubscribe": {
+    "title": "The centre's news by email",
+    "question": "Do you want to stop receiving the centre's news by email?",
+    "stillReceive": "You'll keep receiving the notices about your bookings and session packages.",
+    "confirm": "Yes, stop sending them",
+    "done": "Done. You'll no longer receive the centre's news by email.",
+    "changeMind": "If you change your mind, you can turn them back on in",
+    "settingsLink": "Settings → Notifications",
+    "invalid": "This link is not valid. You can turn them off from your client area, in",
+    "error": "It couldn't be saved. Please try again."
   }
 }

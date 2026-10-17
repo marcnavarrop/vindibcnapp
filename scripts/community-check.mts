@@ -114,6 +114,41 @@ try {
   const trainerMail = first.find((e) => e.to === "p0@example.test")!;
   check(trainerMail.html.includes(CTA.ca), "el professional el rep en català");
 
+  console.log("\nLa baixa a cada correu (0124, art. 21.2 LSSI)");
+  {
+    const { verifyUnsubscribe } = await import("../lib/unsubscribe");
+    const m = first[0];
+    const href = /href="([^"]*\/baixa\/comunitat\?[^"]*)"/.exec(m.html)?.[1]?.replace(/&amp;/g, "&");
+    check(!!href && m.html.includes("data-unsubscribe"), "el correu porta l'enllaç visible per deixar de rebre'ls");
+    const u = new URL(href ?? "http://x/");
+    const pid = u.searchParams.get("p");
+    check(!!pid && verifyUnsubscribe(pid, u.searchParams.get("t")), "l'enllaç va signat per a qui el rep");
+    check(!verifyUnsubscribe(pid, "x".repeat(32)) && !verifyUnsubscribe("altre-perfil", u.searchParams.get("t")), "una signatura falsa o d'un altre perfil no val");
+    check(/\/baixa\/comunitat\?/.test(m.text ?? ""), "també al text pla");
+    check(!!m.headers?.["List-Unsubscribe"]?.includes("/api/unsubscribe/community?") && m.headers?.["List-Unsubscribe-Post"] === "List-Unsubscribe=One-Click", "capçaleres List-Unsubscribe d'un sol clic");
+    const { unsubscribeCommunity } = await import("../lib/data/community-notice");
+    const r1 = await unsubscribeCommunity(pid!);
+    const row = getStore().notification_preferences.find((x) => x.profile_id === pid);
+    check(r1?.alreadyOff === false && row?.community_email === false, "en donar-se de baixa, community_email queda a false");
+    const r2 = await unsubscribeCommunity(pid!);
+    check(r2?.alreadyOff === true, "un segon cop: ja estava de baixa");
+  }
+
+  console.log("\nUn client nou (0124)");
+  {
+    const { createClientRecord } = await import("../lib/data/clients");
+    const { getCommunityNotice, confirmCommunityNotice } = await import("../lib/data/community-notice");
+    const cid = await createClientRecord({ fullName: "Client Nou 0124", email: "nou0124@example.test", phone: null, assignedTrainerId: null, generalNotes: null });
+    const prof = getStore().clients.find((c) => c.id === cid)!.profile_id;
+    let n = await getCommunityNotice(prof);
+    check(n.pending && n.communityEmail, "neix amb les novetats per correu activades i l'avís pendent");
+    await confirmCommunityNotice(prof, false);
+    n = await getCommunityNotice(prof);
+    check(!n.pending && !n.communityEmail, "si al primer accés desmarca la casella: desactivades i ja avisat");
+    const ana = await getCommunityNotice("u-client-ana");
+    check(!ana.pending, "un client d'abans no té res pendent");
+  }
+
   console.log("\nLog");
   const log = getStore().notification_log.filter((l) => l.related_id === annId);
   check(log.length === N, `${log.length} files al log, una per persona (cap de duplicada)`);

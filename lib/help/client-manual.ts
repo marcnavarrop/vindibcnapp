@@ -183,6 +183,14 @@ export function buildClientManual(
           }),
         },
         {
+          t: "p",
+          text: T({
+            ca: "A sota hi ha una casella ja marcada: «Vull rebre per correu les novetats del centre». Si no les vols, desmarca-la. També les pots desactivar més endavant a Configuració → Notificacions, o des de l'enllaç que porta cada correu de novetats. Si el compte te l'ha creat el centre, el primer cop que entris et sortirà això mateix a l'Inici, juntament amb l'enllaç a la política de privacitat.",
+            es: "Debajo hay una casilla ya marcada: «Quiero recibir por correo las novedades del centro». Si no las quieres, desmárcala. También puedes desactivarlas más adelante en Configuración → Notificaciones, o desde el enlace que lleva cada correo de novedades. Si la cuenta te la ha creado el centro, la primera vez que entres te saldrá esto mismo en el Inicio, junto con el enlace a la política de privacidad.",
+            en: "Below there's a box that's already ticked: «I want to receive the centre's news by email». If you don't want it, untick it. You can also turn it off later in Settings → Notifications, or from the link in every news email. If the centre created your account, the first time you sign in you'll see this same notice on your Home screen, together with the link to the privacy policy.",
+          }),
+        },
+        {
           t: "note",
           text: T({
             ca: "El correu que hi posis serà el teu usuari d'accés i la bústia on rebràs els avisos. Si el centre té activada la confirmació per correu, revisa la safata abans d'intentar entrar.",
@@ -2219,9 +2227,9 @@ export function buildClientManual(
                       en: "Community news",
                     }),
                     T({
-                      ca: "Nous anuncis del centre.",
-                      es: "Nuevos anuncios del centro.",
-                      en: "New announcements from the centre.",
+                      ca: "Nous anuncis del centre. Cada correu porta l'enllaç per deixar de rebre'ls.",
+                      es: "Nuevos anuncios del centro. Cada correo lleva el enlace para dejar de recibirlos.",
+                      en: "New announcements from the centre. Every email has a link to stop receiving them.",
                     }),
                     T({ ca: "Sí", es: "Sí", en: "Yes" }),
                   ],

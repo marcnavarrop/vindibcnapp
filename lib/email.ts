@@ -136,7 +136,15 @@ export type BatchResult =
   | { ok: true; ids: (string | undefined)[] }
   | { ok: false; error: string; kind: "quota" | "rate" | "other"; retryAfterMs?: number };
 
-export type BatchEmail = { to: string; subject: string; html: string; text?: string; replyTo?: string | null };
+export type BatchEmail = {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  replyTo?: string | null;
+  /** Capçaleres pròpies (p. ex. `List-Unsubscribe` de les novetats de la comunitat). */
+  headers?: Record<string, string>;
+};
 
 /** Màxim de correus per crida a /emails/batch (límit de Resend). */
 export const RESEND_BATCH_MAX = 100;
@@ -182,6 +190,7 @@ export async function sendEmailBatch(
           html: e.html,
           ...(e.text ? { text: e.text } : {}),
           ...(e.replyTo ? { reply_to: e.replyTo } : {}),
+          ...(e.headers && Object.keys(e.headers).length ? { headers: e.headers } : {}),
         })),
       ),
     });

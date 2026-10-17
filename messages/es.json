@@ -151,7 +151,9 @@
       "passwordMismatch": "Las contraseñas no coinciden."
     },
     "showPassword": "Mostrar la contraseña",
-    "hidePassword": "Ocultar la contraseña"
+    "hidePassword": "Ocultar la contraseña",
+    "communityOptIn": "Quiero recibir por correo las novedades del centro.",
+    "communityNote": "Recibirás por correo las novedades del centro. Puedes desactivarlas ahora o cuando quieras en Configuración → Notificaciones."
   },
   "home": {
     "greeting": "¡Hola, {name}! 👋",
@@ -213,6 +215,17 @@
       "new": "Para registrar tus tests y medidas necesitamos tu consentimiento. Es voluntario.",
       "updated": "Hemos actualizado el consentimiento de datos de salud. Léelo y, si estás de acuerdo, vuelve a aceptarlo.",
       "cta": "Leer el consentimiento"
+    },
+    "welcomeNotice": {
+      "title": "Antes de empezar",
+      "privacy": "Hemos creado tu cuenta en el centro. Tratamos tus datos tal como explica nuestra <privacy>política de privacidad</privacy>: quién es el responsable, para qué los usamos, cuánto tiempo los guardamos y qué derechos tienes.",
+      "communityOptIn": "Quiero recibir por correo las novedades del centro.",
+      "communityNote": "Recibirás por correo las novedades del centro. Puedes desactivarlas ahora o cuando quieras en Configuración → Notificaciones.",
+      "ok": "De acuerdo",
+      "saving": "Guardando…",
+      "done": "Guardado. Puedes cambiarlo cuando quieras en Configuración.",
+      "errorUnauthorized": "No autorizado.",
+      "errorFailed": "No se ha podido guardar. Vuelve a intentarlo."
     }
   },
   "brand": {
@@ -1306,7 +1319,8 @@
       "subject": "Novedades de VindiBCN",
       "heading": "Novedades del centro",
       "fallback": "Tenemos novedades que compartir contigo.",
-      "cta": "Verlo en la comunidad"
+      "cta": "Verlo en la comunidad",
+      "unsubscribe": "Dejar de recibir las novedades del centro por correo"
     },
     "welcome": {
       "eyebrow": "Cuenta creada",
@@ -1457,7 +1471,7 @@
       "basis2": "<b>Tests de evaluación y medidas corporales:</b> tu consentimiento explícito (art. 9.2.a RGPD).",
       "basis3": "<b>Historia de fisioterapia:</b> la prestación de asistencia sanitaria bajo secreto profesional (art. 9.2.h RGPD) y la obligación legal de conservarla (art. 6.1.c RGPD).",
       "basis4": "<b>Facturación y obligaciones fiscales:</b> el cumplimiento de obligaciones legales (art. 6.1.c RGPD).",
-      "basis5": "<b>Avisos y recordatorios del servicio:</b> la ejecución del contrato; los opcionales puedes desactivarlos en Configuración. Si algún día te enviamos comunicaciones comerciales, será solo con tu consentimiento.",
+      "basis5": "<b>Avisos y recordatorios del servicio:</b> la ejecución del contrato; los opcionales puedes desactivarlos en Configuración. Como cliente, podemos enviarte por correo las novedades del centro y de nuestros servicios (art. 21.2 LSSI). Te lo decimos al darte de alta, y puedes desactivarlas en ese momento, en Configuración → Notificaciones o desde el enlace de cada correo.",
       "h5": "5. Destinatarios y encargados del tratamiento",
       "p5": "No cedemos tus datos a terceros, salvo obligación legal (por ejemplo, a la Administración tributaria). Para prestar el servicio utilizamos estos proveedores, que actúan como encargados del tratamiento con contrato:",
       "item1": "<b>Supabase</b> — base de datos, inicio de sesión y archivos. Los datos se guardan en servidores de la Unión Europea (Irlanda).",
@@ -1564,5 +1578,16 @@
     "statusOld": "Aceptaste una versión anterior de este consentimiento el {date} (versión {version}). Lo hemos actualizado: léelo y, si estás de acuerdo, vuelve a aceptarlo.",
     "statusNone": "Todavía no nos lo has dado.",
     "back": "Volver a Configuración"
+  },
+  "unsubscribe": {
+    "title": "Novedades del centro por correo",
+    "question": "¿Quieres dejar de recibir por correo las novedades del centro?",
+    "stillReceive": "Los avisos de tus reservas y de tus bonos los seguirás recibiendo.",
+    "confirm": "Sí, no quiero recibirlas",
+    "done": "Hecho. Ya no recibirás por correo las novedades del centro.",
+    "changeMind": "Si cambias de opinión, puedes volver a activarlas en",
+    "settingsLink": "Configuración → Notificaciones",
+    "invalid": "Este enlace no es válido. Puedes desactivarlas desde tu área, en",
+    "error": "No se ha podido guardar. Vuelve a intentarlo."
   }
 }

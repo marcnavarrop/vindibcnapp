@@ -1,3 +1,4 @@
+import { communityUnsubscribeOneClickUrl, communityUnsubscribeUrl } from "@/lib/unsubscribe";
 import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -119,11 +120,22 @@ export async function deliverCommunity(
             type: "community",
             recipient,
             relatedId: post.announcementId,
-            data: { name: recipient.name ?? "", title: post.title, body: post.body },
+            data: {
+              name: recipient.name ?? "",
+              title: post.title,
+              body: post.body,
+              // La baixa d'aquest correu, sense sessió (art. 21.2 LSSI).
+              unsubscribeUrl: (recipient.profileId && communityUnsubscribeUrl(recipient.profileId)) || "",
+            },
           },
           contact,
         );
-        return { to: recipient.email!, subject, html, text, replyTo };
+        // I el botó «Donar-se de baixa» dels clients de correu (RFC 8058).
+        const oneClick = recipient.profileId ? communityUnsubscribeOneClickUrl(recipient.profileId) : null;
+        const headers: Record<string, string> = oneClick
+          ? { "List-Unsubscribe": `<${oneClick}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+          : {};
+        return { to: recipient.email!, subject, html, text, replyTo, headers };
       });
       const key = `community-${post.announcementId}-${i / RESEND_BATCH_MAX}`;
       res = await send(emails, key);

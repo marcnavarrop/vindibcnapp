@@ -1528,7 +1528,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "note",
-          text: "Els clients i professionals que tinguin activat l'avís de comunitat reben un correu quan es publica un anunci nou. Ve apagat per defecte, així que no ho rebrà tothom.",
+          text: "Els clients i professionals que tinguin activat l'avís de comunitat reben un correu quan es publica un anunci nou. Als clients NOUS (des d'octubre del 2026) els ve activat: el registre els ho diu amb una casella per desmarcar-ho, i al client que dones d'alta tu li surt el primer cop que entra, a l'Inici, juntament amb l'avís de la política de privacitat. Als clients d'abans, als professionals i als admins els ve apagat. Cada correu porta un enllaç per deixar de rebre'ls sense iniciar sessió (art. 21.2 LSSI).",
         },
         {
           t: "p",

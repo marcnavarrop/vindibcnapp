@@ -25,6 +25,8 @@ import {
 import { GiftCta, ReferralCta } from "@/components/client/growth-cards";
 import { formatLongDate } from "@/lib/labels";
 import { getLocale, getTranslations } from "next-intl/server";
+import { getCommunityNotice } from "@/lib/data/community-notice";
+import { WelcomeNotice } from "@/components/client/welcome-notice";
 import type { Locale } from "@/lib/i18n/config";
 import { CenterContactLine } from "@/components/center-contact-line";
 
@@ -48,7 +50,7 @@ export default async function ClientHome() {
   // també la fitxa del client. Abans esperaven que acabés tota la primera tanda.
   const clientPromise = viewer ? getClientByProfile(viewer.id) : Promise.resolve(null);
   const settingsPromise = getCenterSettings();
-  const [client, centerSettings, palette, trainers, announcements, polls, referral, consent] =
+  const [client, centerSettings, palette, trainers, announcements, polls, referral, consent, notice] =
     await Promise.all([
       clientPromise,
       settingsPromise,
@@ -63,7 +65,13 @@ export default async function ClientHome() {
       ),
       // Si li falta el consentiment de salut vigent (0118), se li demana aquí.
       viewer ? getConsentStatus(viewer.id).catch(() => null) : Promise.resolve(null),
+      // L'avís del primer accés (0124): novetats per correu pendents de dir.
+      viewer ? getCommunityNotice(viewer.id).catch(() => null) : Promise.resolve(null),
     ]);
+  // Primer accés d'un client que no ha passat pel registre: la privacitat
+  // (sense cap acceptació desada) i les novetats per correu (sense dir-les-hi).
+  const welcomePrivacy = !!consent && !consent.privacyAt;
+  const welcomeCommunity = !!notice?.pending;
   const showCommunity = centerSettings.modules.comunitat;
   const showReferral = centerSettings.referralProgramActive;
 
@@ -149,6 +157,10 @@ export default async function ClientHome() {
           welcome={t("welcome")}
           today={formatLongDate(new Date(), locale)}
         />
+
+      {/* Sempre muntada (decideix ella què pinta): així, quan la pàgina es
+          refresca després de prémer «D'acord», el «Desat» es queda. */}
+      <WelcomeNotice showPrivacy={welcomePrivacy} showCommunity={welcomeCommunity} />
 
       {/* El consentiment de salut 2026-10 (0118): es demana a tothom, i a qui en
           té una versió anterior, que el torni a acceptar. És voluntari: no

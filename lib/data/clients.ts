@@ -1,4 +1,5 @@
 import "server-only";
+import { mockNewClientPrefs } from "@/lib/data/community-notice";
 import { cache } from "react";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
@@ -762,6 +763,9 @@ export async function createClientRecord(raw: ClientInput): Promise<string> {
       referred_by_client_id: null,
       created_at: createdAt,
     });
+    // El que fa la base en néixer un client (0124): novetats per correu
+    // activades i l'avís pendent per al primer accés.
+    mockNewClientPrefs(store, profileId);
     saveStore(store);
     return clientId;
   }

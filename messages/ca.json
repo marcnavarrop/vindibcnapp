@@ -151,7 +151,9 @@
       "passwordMismatch": "Les contrasenyes no coincideixen."
     },
     "showPassword": "Mostrar la contrasenya",
-    "hidePassword": "Amagar la contrasenya"
+    "hidePassword": "Amagar la contrasenya",
+    "communityOptIn": "Vull rebre per correu les novetats del centre.",
+    "communityNote": "Rebràs per correu les novetats del centre. Les pots desactivar ara o quan vulguis a Configuració → Notificacions."
   },
   "home": {
     "greeting": "Hola, {name}! 👋",
@@ -213,6 +215,17 @@
       "new": "Per registrar els teus tests i mesures necessitem el teu consentiment. És voluntari.",
       "updated": "Hem actualitzat el consentiment de dades de salut. Llegeix-lo i, si hi estàs d'acord, torna'l a acceptar.",
       "cta": "Llegir el consentiment"
+    },
+    "welcomeNotice": {
+      "title": "Abans de començar",
+      "privacy": "Hem creat el teu compte al centre. Tractem les teves dades tal com explica la nostra <privacy>política de privacitat</privacy>: qui n'és el responsable, per a què les fem servir, quant de temps les guardem i quins drets tens.",
+      "communityOptIn": "Vull rebre per correu les novetats del centre.",
+      "communityNote": "Rebràs per correu les novetats del centre. Les pots desactivar ara o quan vulguis a Configuració → Notificacions.",
+      "ok": "D'acord",
+      "saving": "Desant…",
+      "done": "Desat. Ho pots canviar quan vulguis a Configuració.",
+      "errorUnauthorized": "No autoritzat.",
+      "errorFailed": "No s'ha pogut desar. Torna-ho a provar."
     }
   },
   "brand": {
@@ -1306,7 +1319,8 @@
       "subject": "Novetats de VindiBCN",
       "heading": "Novetats del centre",
       "fallback": "Tenim novetats per compartir amb tu.",
-      "cta": "Veure-ho a la comunitat"
+      "cta": "Veure-ho a la comunitat",
+      "unsubscribe": "Deixar de rebre les novetats del centre per correu"
     },
     "welcome": {
       "eyebrow": "Compte creat",
@@ -1457,7 +1471,7 @@
       "basis2": "<b>Tests d'avaluació i mesures corporals:</b> el teu consentiment explícit (art. 9.2.a RGPD).",
       "basis3": "<b>Historial de fisioteràpia:</b> la prestació d'assistència sanitària sota secret professional (art. 9.2.h RGPD) i l'obligació legal de conservar-lo (art. 6.1.c RGPD).",
       "basis4": "<b>Facturació i obligacions fiscals:</b> el compliment d'obligacions legals (art. 6.1.c RGPD).",
-      "basis5": "<b>Avisos i recordatoris del servei:</b> l'execució del contracte; els opcionals els pots desactivar a Configuració. Si algun dia t'enviem comunicacions comercials, serà només amb el teu consentiment.",
+      "basis5": "<b>Avisos i recordatoris del servei:</b> l'execució del contracte; els opcionals els pots desactivar a Configuració. Com a client, et podem enviar per correu les novetats del centre i dels nostres serveis (art. 21.2 LSSI). T'ho diem quan et dones d'alta, pots desactivar-les en aquell moment, a Configuració → Notificacions o des de l'enllaç de cada correu.",
       "h5": "5. Destinataris i encarregats del tractament",
       "p5": "No cedim les teves dades a tercers, llevat d'obligació legal (per exemple, a l'Administració tributària). Per prestar el servei fem servir aquests proveïdors, que actuen com a encarregats del tractament amb contracte:",
       "item1": "<b>Supabase</b> — base de dades, inici de sessió i fitxers. Les dades es guarden en servidors de la Unió Europea (Irlanda).",
@@ -1564,5 +1578,16 @@
     "statusOld": "Vas acceptar una versió anterior d'aquest consentiment el {date} (versió {version}). L'hem actualitzat: llegeix-lo i, si hi estàs d'acord, torna'l a acceptar.",
     "statusNone": "Encara no ens l'has donat.",
     "back": "Tornar a Configuració"
+  },
+  "unsubscribe": {
+    "title": "Novetats del centre per correu",
+    "question": "Vols deixar de rebre per correu les novetats del centre?",
+    "stillReceive": "Els avisos de les teves reserves i dels teus bons els continuaràs rebent.",
+    "confirm": "Sí, no les vull rebre",
+    "done": "Fet. Ja no rebràs per correu les novetats del centre.",
+    "changeMind": "Si canvies d'opinió, les pots tornar a activar a",
+    "settingsLink": "Configuració → Notificacions",
+    "invalid": "Aquest enllaç no és vàlid. Les pots desactivar des de la teva àrea, a",
+    "error": "No s'ha pogut desar. Torna-ho a provar."
   }
 }

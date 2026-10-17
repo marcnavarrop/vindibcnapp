@@ -151,6 +151,7 @@ export const seedNotificationPreferences: NotifPrefs[] = seedProfiles.map(
     bono_expiring_soon_email: true,
     bono_unpaid_cancelled_email: true,
     community_email: false,
+    community_notice_at: now,
     trainer_booking_received_email: true,
     trainer_booking_cancelled_email: true,
     trainer_daily_agenda_email: false,

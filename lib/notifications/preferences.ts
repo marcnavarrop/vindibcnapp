@@ -43,6 +43,9 @@ export async function getPreferences(
         id: `np-${profileId}`,
         profile_id: profileId,
         ...DEFAULT_PREFERENCES,
+        // Els perfils de la simulació ja hi eren: res per dir-los (0124). Un
+        // client nou el posa `mockNewClientPrefs`.
+        community_notice_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
       } as (typeof store.notification_preferences)[number];
       store.notification_preferences.push(row);
@@ -93,6 +96,9 @@ export async function updatePreferences(
         id: `np-${profileId}`,
         profile_id: profileId,
         ...DEFAULT_PREFERENCES,
+        // Els perfils de la simulació ja hi eren: res per dir-los (0124). Un
+        // client nou el posa `mockNewClientPrefs`.
+        community_notice_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
       } as (typeof store.notification_preferences)[number];
       store.notification_preferences.push(row);

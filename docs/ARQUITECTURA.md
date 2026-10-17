@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**123 migracions SQL** a `supabase/migrations/` (`0001`–`0123`), numerades i
+**124 migracions SQL** a `supabase/migrations/` (`0001`–`0124`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -397,6 +397,19 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   Centre): manual, pantalles, peu dels correus, pàgines legals i val de regal en
   surten. El remitent dels avisos no es llegeix: el `Reply-To` és el correu de
   contacte i **només si n'hi ha**; sense, cap correu convida a respondre.
+- **Novetats del centre per correu als clients nous** (`0124`, art. 21.2 LSSI,
+  decisió d'en Marc del 17/10/2026): el trigger de preferències posa
+  `community_email = true` si el perfil neix client (tots neixen client, 0064)
+  i un altre trigger el torna a `false` si el servidor el puja a professional o
+  admin abans d'avisar-lo. `community_notice_at` NULL = encara no se li ha dit:
+  el registre ho desa amb la casella (`recordRegistrationCommunityChoiceAction`)
+  i, al client creat per l'admin, li surt a l'Inici (`WelcomeNotice`), que de
+  passada desa la privacitat (art. 14 RGPD) si no en consta cap. Cada correu de
+  comunitat porta un enllaç de baixa sense sessió, signat amb HMAC
+  (`lib/unsubscribe.ts`, `UNSUBSCRIBE_SECRET`): la pàgina `/baixa/comunitat`
+  demana confirmar (POST) i `/api/unsubscribe/community` és el d'un sol clic de
+  les capçaleres `List-Unsubscribe` (RFC 8058). Proves:
+  `supabase/tests/0124_community_email_new_clients.sql` i `npm run community:check`.
 - **Textos legals definitius** (versió 2026-10): avís legal, privacitat i
   cookies a `messages/*.json` (`legalPages.*`), el català mana i sense cap
   claudàtor. Les dades variables surten de Configuració → Centre: titular, NIF,

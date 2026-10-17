@@ -59,6 +59,11 @@ type Block = {
   outro?: (string | Notice)[];
   footer: FooterKind;
   /**
+   * L'enllaç per deixar de rebre AQUEST tipus de correu, visible al peu (art.
+   * 21.2 LSSI). El porten les novetats de la comunitat.
+   */
+  unsubscribe?: Cta;
+  /**
    * Reply-To propi, per sobre del de per defecte (el contacte del centre als
    * correus de fora). El tiquet de suport hi posa qui l'ha obert.
    */
@@ -154,7 +159,7 @@ function mapsUrl(address: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`VindiBCN, ${address}`)}`;
 }
 
-function footer(kind: FooterKind, i: StaticI18n, contact?: PublicContact | null): string {
+function footer(kind: FooterKind, i: StaticI18n, contact?: PublicContact | null, unsubscribe?: Cta): string {
   const f = i.ns("emails.footer");
   const link = (href: string, text: string) =>
     `<a href="${esc(href)}" target="_blank" style="color:${BRAND.soft};text-decoration:underline;">${esc(text)}</a>`;
@@ -177,6 +182,8 @@ function footer(kind: FooterKind, i: StaticI18n, contact?: PublicContact | null)
   const c = contactFooterHtml(kind, i, contact);
   if (c) lines.push(c);
   lines.push(line(`${prefsLine ? `${prefsLine} · ` : ""}${privacy}`));
+  // La baixa d'aquest tipus de correu, en una línia a part i ben visible.
+  if (unsubscribe) lines.push(line(`<strong>${link(unsubscribe.url, unsubscribe.label)}</strong>`, ' data-unsubscribe'));
   return lines.join("");
 }
 
@@ -225,7 +232,7 @@ function layout(block: Block, i: StaticI18n, contact?: PublicContact | null): st
     <tr><td align="center" bgcolor="${BRAND.purple}" style="background:${BRAND.purple};padding:22px 32px;">${brandHeader(width, height)}</td></tr>
     <tr><td class="px" style="padding:32px 36px 12px;">${body.join("")}</td></tr>
   </table>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;"><tr><td class="foot" align="center" style="padding:20px 24px 8px;text-align:center;">${footer(block.footer, i, contact)}</td></tr></table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;"><tr><td class="foot" align="center" style="padding:20px 24px 8px;text-align:center;">${footer(block.footer, i, contact, block.unsubscribe)}</td></tr></table>
   <!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table>
 </body></html>`;
@@ -281,6 +288,7 @@ function plain(block: Block, i: StaticI18n, contact?: PublicContact | null): str
   else if (block.footer === "trainer")
     lines.push(`Gestiona els teus avisos: ${appLink("/trainer/configuracio")}`);
   lines.push(f("privacyPlain", { url: appLink("/legal/privacitat") }));
+  if (block.unsubscribe) lines.push(`${block.unsubscribe.label}: ${block.unsubscribe.url}`);
   return lines.join("\n");
 }
 
@@ -1039,6 +1047,12 @@ export function renderEmail(
         intro: [hola, (d.body ?? "").trim() || t("fallback")],
         cta: { label: t("cta"), url: appLink("/client/comunitat") },
         footer: "client",
+        // Sense secret de baixa (no hauria de passar a producció), el de
+        // Configuració → Notificacions, que demana sessió.
+        unsubscribe: {
+          label: t("unsubscribe"),
+          url: d.unsubscribeUrl || appLink("/client/configuracio"),
+        },
       };
       break;
     }

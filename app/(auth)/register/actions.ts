@@ -1,6 +1,7 @@
 "use server";
 
 import { recordConsent } from "@/lib/data/consents";
+import { confirmCommunityNotice } from "@/lib/data/community-notice";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
 import { USE_MOCK } from "@/lib/config";
@@ -16,6 +17,8 @@ export async function mockRegisterAction(input: {
   fullName: string;
   email: string;
   referralCode?: string;
+  /** Les novetats per correu (0124): el que ha triat a la casella. */
+  communityEmail?: boolean;
 }): Promise<string> {
   if (!USE_MOCK) throw new Error("Només disponible en mode demo.");
 
@@ -44,6 +47,15 @@ export async function mockRegisterAction(input: {
     created_at: new Date().toISOString(),
   });
   saveStore(store);
+  // El que fa la base en néixer un client (0124) i, tot seguit, el que ha
+  // triat a la casella del registre.
+  {
+    const { mockNewClientPrefs, confirmCommunityNotice } = await import("@/lib/data/community-notice");
+    const s2 = getStore();
+    mockNewClientPrefs(s2, profileId);
+    saveStore(s2);
+    await confirmCommunityNotice(profileId, input.communityEmail !== false);
+  }
 
   await onNewClientRegistered(profileId, input.referralCode);
   return profileId;
@@ -67,6 +79,20 @@ export async function recordRegistrationConsentAction(
   const viewer = await getViewer();
   if (!viewer || !userId || viewer.id !== userId) return;
   await recordConsent(viewer.id, "privacy");
+}
+
+/**
+ * Les novetats del centre per correu (0124, art. 21.2 LSSI): el que el client
+ * ha triat a la casella del registre. Com el consentiment de privacitat, només
+ * per a qui té la sessió (just després del `signUp` ja n'hi ha).
+ */
+export async function recordRegistrationCommunityChoiceAction(
+  userId: string,
+  receive: boolean,
+): Promise<void> {
+  const viewer = await getViewer();
+  if (!viewer || !userId || viewer.id !== userId || viewer.role !== "client") return;
+  await confirmCommunityNotice(viewer.id, receive === true);
 }
 
 /**

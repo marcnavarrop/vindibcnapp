@@ -17,6 +17,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { LOCALES, type Locale } from "@/lib/i18n/config";
 import {
   recordRegistrationConsentAction,
+  recordRegistrationCommunityChoiceAction,
   notifyNewRegistrationAction,
   completeRegistrationProfileAction,
   validateRegistrationAction,
@@ -64,6 +65,9 @@ export function RegisterPanel() {
   // Només queda com a estat el que controla la UI (el gate del checkbox);
   // els camps de text es llegeixen del FormData, immunes a l'autocompletat.
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+  // Les novetats del centre per correu (0124, art. 21.2 LSSI): marcat per
+  // defecte, i es pot desmarcar aquí mateix.
+  const [communityEmail, setCommunityEmail] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -108,7 +112,7 @@ export function RegisterPanel() {
     try {
       // En mode demo no cridem Supabase: crearia un usuari real al projecte.
       if (USE_MOCK) {
-        await mockRegisterAction({ fullName, email, referralCode });
+        await mockRegisterAction({ fullName, email, referralCode, communityEmail });
         setDone(true);
         return;
       }
@@ -170,6 +174,12 @@ export function RegisterPanel() {
         } catch {
           // No bloquegem l'alta si el registre del consentiment falla; queda
           // marcada pendent i es pot tornar a demanar des de Configuració.
+        }
+        // El que ha triat de les novetats per correu: queda dit en l'alta.
+        try {
+          await recordRegistrationCommunityChoiceAction(data.user.id, communityEmail);
+        } catch {
+          // No bloqueja l'alta: si falla, l'avís li sortirà a l'Inici.
         }
         // Telèfon i la resta de dades del perfil. Van abans dels avisos
         // perquè el correu de benvinguda ja trobi la fitxa completa.
@@ -397,6 +407,20 @@ export function RegisterPanel() {
             })}
           </span>
         </label>
+
+        <div className="flex flex-col gap-1 rounded-lg bg-brand-bg px-3 py-2.5" data-community-optin>
+          <label className="flex items-start gap-2 text-sm text-brand-charcoal">
+            <input
+              type="checkbox"
+              name="communityEmail"
+              checked={communityEmail}
+              onChange={(e) => setCommunityEmail(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-brand-purple"
+            />
+            <span>{t("communityOptIn")}</span>
+          </label>
+          <p className="pl-6 text-xs text-brand-muted">{t("communityNote")}</p>
+        </div>
 
         <RequiredNote>{t("requiredNote")}</RequiredNote>
 

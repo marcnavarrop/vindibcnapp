@@ -1009,6 +1009,8 @@ export interface Database {
           trial_status_email: boolean;
           bono_low_email: boolean;
           community_email: boolean;
+          /** Quan se li va dir al client que rebrà les novetats (0124). Null = encara no. */
+          community_notice_at: string | null;
           trainer_booking_received_email: boolean;
           trainer_booking_cancelled_email: boolean;
           trainer_daily_agenda_email: boolean;
@@ -1036,6 +1038,7 @@ export interface Database {
           trial_status_email?: boolean;
           bono_low_email?: boolean;
           community_email?: boolean;
+          community_notice_at?: string | null;
           trainer_booking_received_email?: boolean;
           trainer_booking_cancelled_email?: boolean;
           trainer_daily_agenda_email?: boolean;
@@ -1063,6 +1066,7 @@ export interface Database {
           trial_status_email: boolean;
           bono_low_email: boolean;
           community_email: boolean;
+          community_notice_at: string | null;
           trainer_booking_received_email: boolean;
           trainer_booking_cancelled_email: boolean;
           trainer_daily_agenda_email: boolean;
