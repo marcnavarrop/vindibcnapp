@@ -1872,7 +1872,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, tests d'avaluació, historial clínic i consentiments. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona.",
+          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, tests d'avaluació, historial clínic, consentiments, documents i foto de perfil. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona. Si havia recomanat algú amb «Porta un amic», la persona que va venir es queda client i conserva el seu descompte; a Referits hi surt «—» on hi havia el seu nom.",
         },
         { t: "h", text: "L'historial clínic es conserva: l'arxiu clínic" },
         {

@@ -1935,8 +1935,8 @@ export interface Database {
       referral_rewards: {
         Row: {
           id: string;
-          referrer_client_id: string;
-          referee_client_id: string;
+          referrer_client_id: string | null;
+          referee_client_id: string | null;
           beneficiary_client_id: string;
           discount_percent: number;
           status: ReferralRewardStatus;
@@ -1945,8 +1945,8 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          referrer_client_id: string;
-          referee_client_id: string;
+          referrer_client_id: string | null;
+          referee_client_id: string | null;
           beneficiary_client_id: string;
           discount_percent: number;
           status?: ReferralRewardStatus;

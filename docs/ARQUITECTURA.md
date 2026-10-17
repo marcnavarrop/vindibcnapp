@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**121 migracions SQL** a `supabase/migrations/` (`0001`–`0121`), numerades i
+**122 migracions SQL** a `supabase/migrations/` (`0001`–`0122`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -284,6 +284,14 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   (`findClientOverlap`, `lib/data/reservations.ts`) i tradueix els motius a
   `lib/booking-conflict.ts`; l'error 23P01 es distingeix del de la 0082 pel
   nom de la constraint.
+- **La baixa RGPD acaba sempre** (`lib/data/gdpr-delete.ts`): arxiu clínic
+  primer (0119), després documents, proves i pagaments anonimitzats, el compte
+  d'Auth (cascada) i, al final, la foto de perfil (`profile-avatars/{perfil}/`,
+  `deleteAllAvatarsOf`). Els referits (`0122`) ja no la frenen: la recompensa de
+  qui plega cau amb ell (`beneficiary` en cascada), la d'un altre on surt de
+  padrí o de referit es queda amb el camp a NULL, i qui va venir amb el seu codi
+  es queda sense padrí (`referred_by_client_id` a NULL). Proves:
+  `supabase/tests/0122_referrals_on_client_delete.sql` i `npm run archive:check`.
 - **Comptes demo separats dels reals; una sola font, `demo_profiles`** (`0110`,
   `0121`): quins comptes són demo ho diu la taula, a la base (`same_world`,
   `is_demo_profile`) i a l'app. L'app la llegeix amb `getDemoWorld()`

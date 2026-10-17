@@ -329,7 +329,7 @@ export async function listReferralRewardsAdmin(): Promise<ReferralRewardAdminRow
     const store = getStore();
     return store.referral_rewards
       .map((r) => {
-        const getName = (clientId: string) => {
+        const getName = (clientId: string | null) => {
           const c = store.clients.find((x) => x.id === clientId);
           return store.profiles.find((p) => p.id === c?.profile_id)?.full_name ?? "—";
         };

@@ -101,6 +101,9 @@ try {
   check("el compte ja no hi és", !s2.clients.some((c) => c.id === "c-marta") && !s2.profiles.some((p) => p.id === "u-client-marta"));
   check("ni el seu historial viu", !s2.clinical_followups.some((f) => f.client_id === "c-marta") && !s2.client_documents.some((d) => d.client_id === "c-marta"));
   check("anotat (clinical_archive)", s2.data_access_log.some((l) => l.action === "clinical_archive" && l.subject_profile_id === "u-client-marta"));
+  // Els referits (0122): la Marta va venir de l'Ana.
+  check("la recompensa de la Marta se'n va amb ella", !s2.referral_rewards.some((r) => r.id === "rr-marta-reward"));
+  check("la de l'Ana es queda, sense el nom de la Marta", s2.referral_rewards.find((r) => r.id === "rr-ana-reward")?.referee_client_id === null);
 
   console.log("\n3. Si l'arxivat falla, no s'esborra res\n");
   process.env.MOCK_FAIL = "clinical_archive";
@@ -159,6 +162,25 @@ try {
   check("exportar queda com a clinical_archive_export", getStore().data_access_log.at(-1)?.action === "clinical_archive_export");
   check("el document, amb permís sí", !!(await archive.getArchivedDocumentUrl(doc!.id, jordi)));
   check("el document, sense permís no", (await archive.getArchivedDocumentUrl(doc!.id, laia)) === null && (await archive.getArchivedDocumentUrl(doc!.id, fisioDemo)) === null);
+
+  console.log("\n6b. La baixa d'un padrí (0122)\n");
+  {
+    const s = getStore();
+    s.clients.find((c) => c.id === "c-oriol")!.referred_by_client_id = "c-ana";
+    s.referral_rewards.push({ id: "rr-oriol", referrer_client_id: "c-ana", referee_client_id: "c-oriol", beneficiary_client_id: "c-oriol", discount_percent: 10, status: "pending", used_in_bono_id: null, created_at: new Date().toISOString() });
+    saveStore(s);
+  }
+  let padriError = "";
+  try {
+    await deleteClient("c-ana", "u-admin");
+  } catch (e) {
+    padriError = e instanceof Error ? e.message : String(e);
+  }
+  const s6 = getStore();
+  check("l'Ana (padrina) es pot donar de baixa", !padriError && !s6.clients.some((c) => c.id === "c-ana"), padriError);
+  check("l'Oriol continua, sense padrí", s6.clients.find((c) => c.id === "c-oriol")?.referred_by_client_id === null);
+  check("la recompensa de l'Oriol es queda, sense padrí", s6.referral_rewards.find((r) => r.id === "rr-oriol")?.referrer_client_id === null);
+  check("la de l'Ana (beneficiària) se'n va amb ella", !s6.referral_rewards.some((r) => r.id === "rr-ana-reward"));
 
   console.log("\n7. La purga\n");
   {

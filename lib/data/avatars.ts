@@ -68,6 +68,24 @@ export async function deleteAvatar(path: string | null): Promise<void> {
 }
 
 /**
+ * Esborra TOTES les fotos d'un perfil (la carpeta `{profileId}/`): la que té
+ * i qualsevol que hagi quedat d'abans. Per a la baixa RGPD: el perfil ja no
+ * existeix i la foto és una dada personal. Torna quantes n'ha esborrat; si no
+ * pot, llença (qui crida decideix què en fa).
+ */
+export async function deleteAllAvatarsOf(profileId: string): Promise<number> {
+  if (USE_MOCK) return 0;
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage.from(BUCKET).list(profileId, { limit: 1000 });
+  if (error) throw new Error(error.message);
+  const paths = (data ?? []).filter((f) => f.id).map((f) => `${profileId}/${f.name}`);
+  if (!paths.length) return 0;
+  const { error: rmError } = await admin.storage.from(BUCKET).remove(paths);
+  if (rmError) throw new Error(rmError.message);
+  return paths.length;
+}
+
+/**
  * Signed URLs per a diverses rutes d'un cop.
  *
  * En lot i no una a una perquè les pantalles que en necessiten (el llistat

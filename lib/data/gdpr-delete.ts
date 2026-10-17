@@ -8,6 +8,7 @@ import { deleteAllClientDocuments } from "@/lib/data/client-documents";
 import type { ServiceType } from "@/types/database";
 import { authErrorCa } from "@/lib/auth-errors";
 import { archiveClinicalHistory, type ArchiveOutcome } from "@/lib/data/clinical-archive";
+import { deleteAllAvatarsOf } from "@/lib/data/avatars";
 
 export type DeleteResult = { profileId: string; label: string; archive: ArchiveOutcome };
 
@@ -26,6 +27,14 @@ export type DeleteResult = { profileId: string; label: string; archive: ArchiveO
  *    fisioteràpia, es copia a l'arxiu (Llei 21/2000: 15 anys des de l'alta).
  *    Si l'arxivat falla, `archiveClinicalHistory` llença i aquí NO s'esborra
  *    res: ni els documents, ni les proves, ni el compte.
+ * 3. Un cop esborrat el compte, la foto de perfil (bucket `profile-avatars`):
+ *    abans es quedava orfe. Si falla, es registra i la baixa es dona per feta
+ *    (el compte ja no hi és); el fitxer es pot treure després per la ruta.
+ *
+ * Els referits (0122): les recompenses de qui plega cauen amb ell; les d'un
+ * altre en què surt de padrí o de referit es queden, sense el seu nom, i qui
+ * es va registrar amb el seu codi es queda sense padrí. Abans, qualsevol
+ * d'aquests casos feia fallar la baixa a mitges.
  */
 export async function deleteClient(
   clientId: string,
@@ -99,6 +108,15 @@ export async function deleteClient(
     store.notification_log = store.notification_log.filter(
       (n) => n.profile_id !== profileId,
     );
+    // Els referits (0122): la recompensa de qui plega, fora; la d'un altre on
+    // surt de padrí o de referit, sense el seu nom; i qui es va registrar amb
+    // el seu codi, sense padrí.
+    store.referral_rewards = store.referral_rewards.filter((r) => r.beneficiary_client_id !== clientId);
+    for (const r of store.referral_rewards) {
+      if (r.referrer_client_id === clientId) r.referrer_client_id = null;
+      if (r.referee_client_id === clientId) r.referee_client_id = null;
+    }
+    for (const c of store.clients) if (c.referred_by_client_id === clientId) c.referred_by_client_id = null;
     // `demo_profiles` cau amb el perfil (`on delete cascade`, 0110).
     store.demo_profiles = store.demo_profiles.filter((d) => d.profile_id !== profileId);
     store.clients = store.clients.filter((c) => c.id !== clientId);
@@ -157,6 +175,12 @@ export async function deleteClient(
   // 2. Elimina l'usuari d'Auth → cascada + payments.client_id = NULL.
   const { error } = await admin.auth.admin.deleteUser(profileId);
   if (error) throw new Error(authErrorCa(error, "No s'ha pogut eliminar el compte d'accés."));
+
+  // 3. La foto de perfil: el compte ja no hi és, així que una fallada aquí no
+  //    desfà la baixa; queda al log amb la carpeta per treure-la a mà.
+  await deleteAllAvatarsOf(profileId).catch((e) =>
+    console.error(`[gdpr-delete] no s'ha pogut esborrar la foto de profile-avatars/${profileId}/`, e),
+  );
 
   return { profileId, label, archive };
 }
