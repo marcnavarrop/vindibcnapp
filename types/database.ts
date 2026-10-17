@@ -1513,6 +1513,91 @@ export interface Database {
         };
         Relationships: [];
       };
+      /**
+       * Tests d'avaluació d'un client (0113): títol lliure, unitat, descripció
+       * i sentit de millora. Sense catàleg: cada test és d'un client.
+       */
+      client_tests: {
+        Row: {
+          id: string;
+          client_id: string;
+          title: string;
+          unit: string | null;
+          description: string | null;
+          /** up = millor si puja, down = millor si baixa, neutral = sense color. */
+          better_when: "up" | "down" | "neutral";
+          /** Ordre a la pestanya. El posa el trigger si no ve (al final). */
+          position: number;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          title: string;
+          unit?: string | null;
+          description?: string | null;
+          better_when?: "up" | "down" | "neutral";
+          position?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          title?: string;
+          unit?: string | null;
+          description?: string | null;
+          better_when?: "up" | "down" | "neutral";
+          position?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      /**
+       * Registres d'un test (0113): data, un valor i observació opcional. El
+       * `client_id` el posa la base a partir del test.
+       */
+      client_test_entries: {
+        Row: {
+          id: string;
+          test_id: string;
+          client_id: string;
+          measured_on: string;
+          value: number;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          test_id: string;
+          client_id?: string;
+          measured_on?: string;
+          value: number;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          test_id?: string;
+          client_id?: string;
+          measured_on?: string;
+          value?: number;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       client_documents: {
         Row: {
           id: string;
@@ -2114,6 +2199,16 @@ export interface Database {
       duplicate_client_workout_day: {
         Args: { p_day: string };
         Returns: string;
+      };
+      /** Tests d'avaluació (0113): nou ordre, SECURITY INVOKER (decideix la RLS). */
+      reorder_client_tests: {
+        Args: { p_client: string; p_ids: string[] };
+        Returns: undefined;
+      };
+      /** Títols ja usats al centre (sense client ni valors), mateix món. */
+      client_test_suggestions: {
+        Args: Record<never, never>;
+        Returns: { title: string; unit: string | null; uses: number }[];
       };
       health_consent_status: {
         Args: { p_client: string };

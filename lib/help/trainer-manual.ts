@@ -245,7 +245,7 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
       blocks: [
         {
           t: "p",
-          text: "A dalt, la capçalera: el nom, qui el porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes (sis si pots veure'n l'historial clínic). La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
+          text: "A dalt, la capçalera: el nom, qui el porta, les etiquetes, el contacte i el menú «Més». A sota, cinc pestanyes, més «Tests» si el client és teu i «Historial clínic» si el pots veure. La pestanya oberta queda a l'adreça: si recarregues o tornes enrere, segueixes on eres.",
         },
         {
           t: "p",
@@ -350,6 +350,19 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         {
           t: "note",
           text: "Cada vegada que obres un historial clínic queda anotat al registre d'accessos del centre (qui, de quin client i quan). És el que demana la llei per a les dades de salut. El client no el veu a l'app, però si demana les seves dades, hi va inclòs.",
+        },
+        { t: "h", text: "Tests" },
+        {
+          t: "p",
+          text: "Els tests d'avaluació del client: tants com en vulguis, cadascun amb el seu títol («Dominades», «Perímetre abdominal»), la unitat («reps», «cm», «s»), una descripció de com es fa i, si vols, «Millor si puja» o «Millor si baixa». No hi ha catàleg: cada test és d'aquell client. Esquerra i dreta són dos tests («Isquios esquerra», «Isquios dreta»). Cada test és una targeta amb la darrera marca, la diferència amb l'anterior —en verd si millora, en vermell si empitjora, en gris si el test és neutre o no ha canviat— i la gràfica de l'evolució.",
+        },
+        {
+          t: "p",
+          text: "«+ Nou test» el crea. Mentre escrius el títol, a sota surten els que ja es fan servir al centre, amb la seva unitat: tocar-ne un omple el títol i la unitat. És per no acabar amb «Dominades» en un client i «dominadas» en un altre, i no obliga a res. Dins de cada targeta, «+ Registre» hi afegeix una mesura: la data (avui, per defecte; mai futura), el valor —un número, amb decimals si cal: «12,5»— i una observació opcional. Els registres es poden editar i treure un a un; «Editar» canvia el test, ↑↓ l'ordre, i «Esborrar» el treu amb tots els seus registres, després de preguntar.",
+        },
+        {
+          t: "note",
+          text: "La pestanya només hi és si el client és teu: els tests els veuen i els escriuen el seu professional assignat i l'administració, i el client els veu a la seva àrea, a Exercicis. Si un client canvia de professional, els tests es queden amb ell i els passa a veure el nou.",
         },
         { t: "h", text: "Notes i documents" },
         {

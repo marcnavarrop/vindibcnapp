@@ -5,6 +5,8 @@ import { listExercises } from "@/lib/data/exercises";
 import { listAllProgressForClient } from "@/lib/data/exercise-progress";
 import { ClientExerciseLibrary } from "@/components/exercise-library";
 import { ClientWorkoutPlan } from "@/components/client/workout-plan";
+import { ClientTests } from "@/components/client/client-tests";
+import { listClientTests } from "@/lib/data/client-tests";
 import { centerToday } from "@/lib/center-time";
 import { ExercisesSeenMarker } from "@/components/exercises-seen-marker";
 import { listExerciseCategories } from "@/lib/data/exercise-categories";
@@ -16,13 +18,15 @@ export default async function ClientExercicisPage() {
   const t = await getTranslations("workouts");
   const viewer = await getViewer();
   const client = viewer ? await getClientByProfile(viewer.id) : null;
-  const [plan, library, allProgress, categories] = await Promise.all([
+  const [plan, library, allProgress, categories, tests] = await Promise.all([
     client
       ? getWorkoutPlan(client.id)
       : Promise.resolve({ days: [], exercises: [], logs: [] }),
     listExercises(),
     client ? listAllProgressForClient(client.id) : Promise.resolve([]),
     listExerciseCategories(),
+    // Els seus tests d'avaluació (0113): la RLS només li'n torna els seus.
+    client ? listClientTests(client.id) : Promise.resolve([]),
   ]);
 
   // Objecte pla i no `Map`: això travessa la frontera cap a un component de
@@ -66,6 +70,17 @@ export default async function ClientExercicisPage() {
           today={centerToday()}
         />
       </section>
+
+      {/* Els tests d'avaluació, si en té: sense cap, la secció no surt. */}
+      {tests.length > 0 && (
+        <section className="mb-8" aria-labelledby="client-tests-title">
+          <h2 id="client-tests-title" className="mb-1 text-sm font-bold tracking-widest text-brand-purple uppercase">
+            {t("tests.title")}
+          </h2>
+          <p className="mb-3 text-sm text-brand-muted">{t("tests.intro")}</p>
+          <ClientTests tests={tests} />
+        </section>
+      )}
 
       {/* Biblioteca completa (lectura) */}
       <section>

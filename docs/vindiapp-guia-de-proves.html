@@ -259,6 +259,20 @@
           <li>A 375 px les pestanyes de dia salten de línia: <strong>sense scroll de costat</strong></li>
         </ul>
       </li>
+      <li><strong>Tests d'avaluació</strong> <span class="flag">Nou (0113)</span>, com a <strong>Entrenador Demo</strong> a la fitxa del Client Demo (o com a admin a qualsevol): pestanya <strong>«Tests»</strong>, abans de «Notes i documents».
+        <ul>
+          <li>Sense cap test: «Encara no hi ha cap test. Crea'n un amb «+ Nou test»…»</li>
+          <li><strong>«+ Nou test»</strong>: amb el títol buit surten «Els més fets servir al centre» (si n'hi ha); escrivint «dom», els que hi coincideixen amb la unitat i quantes vegades («Dominades · reps (2)»). Tocar-ne un omple <strong>títol i unitat</strong>. Crea «Dominades» · «reps» · «Millor si puja»</li>
+          <li>Un segon test «DOMINADES» al mateix client: avís vermell «Aquest client ja té el test «Dominades»…» i el botó apagat. A un altre client sí que deixa</li>
+          <li><strong>«+ Registre»</strong>: la data surt amb avui i no deixa triar-ne una de futura. Valor «abc»: «El valor ha de ser un número…». Valor «8» i després «10,5» (amb coma): la targeta diu <strong>«10,5 reps»</strong> i, en verd, <strong>«+2,5 reps respecte de l'anterior»</strong></li>
+          <li>Un test «Perímetre abdominal» · «cm» · «Millor si baixa»: 95 i després 92,5 → <strong>«−2,5 cm» en verd</strong>; 92,5 i després 94 → en vermell. Un test «Neutre» sempre en gris</li>
+          <li>La <strong>gràfica</strong>: un punt per registre, el darrer més gros, el màxim i el mínim a l'esquerra i la primera i la darrera data a sota. Un registre d'un mes abans queda més lluny que un d'una setmana. Amb un sol registre, un punt al mig</li>
+          <li>Registres: del més nou al més antic, amb l'observació. <strong>«Editar»</strong> i <strong>«Treure»</strong> (pregunta). Amb més de 3, plegats a «Registres (N)»</li>
+          <li><strong>«Editar»</strong> el test (títol, unitat, sentit, descripció), <strong>↑↓</strong> per ordenar (el primer ↑ i el darrer ↓ apagats) i <strong>«Esborrar»</strong>: pregunta «S'esborren també els seus N registres. No es pot desfer.»</li>
+          <li>Com a <strong>Fisio Demo</strong> (no és el seu client): la pestanya «Tests» <strong>no hi és</strong></li>
+          <li>A 375 px: targetes a tota l'amplada, la gràfica es llegeix i <strong>sense scroll de costat</strong>; a 1280, dues targetes per fila</li>
+        </ul>
+      </li>
       <li><strong>Nota ràpida</strong> <span class="flag">Nou</span> (només l'admin): al Resum, «Afegir una nota general…» i «Desar». Sense text, «Escriu la nota abans de desar-la.». Amb text, surt a «Generals» sense recarregar com a <strong>«08/10/2026 · <em>el teu nom</em> · text»</strong>, el camp es buida, i una segona va a sota de la primera. Les <strong>clíniques no canvien</strong>. Al professional, el formulari no hi és (les llegeix)</li>
       <li>A "Notes i documents": «Editar notes →» edita clíniques i generals per separat. <strong>Cap de les dues la veu el client</strong></li>
       <li>Amb un client que rebi fisioteràpia i encara no hagi acceptat el consentiment de salut, surt una <strong>franja blau fosc curta</strong> a la capçalera; «Més info» la desplega</li>
@@ -613,6 +627,7 @@
           <li>Sense cap dia (un client amb exercicis però sense dies), la pantalla és la llista de sempre, sense pestanyes</li>
         </ul>
       </li>
+      <li><strong>Els teus tests</strong> <span class="flag">Nou (0113)</span>, com a <strong>Client Demo</strong> (després de crear-li tests a la 1.3): a Exercicis, entre «Els teus exercicis» i la biblioteca. Cada test amb la darrera marca, la diferència en color i la gràfica, i els registres a sota. <strong>Cap botó</strong> per crear ni editar. Sense cap test, la secció no surt. En castellà i anglès: «Tus tests / Your tests», «respecto a la anterior / vs. the previous one», «mejor si sube / higher is better»; en anglès els decimals amb punt («10.5»)</li>
       <li>Documents: puja/descarrega/esborra els teus (PDF, imatge, Word)</li>
       <li><span class="flag">Nou</span> <strong>Documents de fins a 15 MB de debò</strong>: abans, per sobre d'uns 4 MB fallaven sense dir per què. Ara el fitxer es puja directament a l'emmagatzematge, amb la sessió del client i una <strong>barra de progrés</strong>. Prova: un PDF o una foto de 10-14 MB (s'ha de pujar i sortir a la llista); un de més de 15 MB (avís abans de pujar); un fitxer .txt (format no acceptat); i tallar la connexió a mitja pujada (avís de pujada tallada). Si es tanca la pantalla a mitges, el fitxer sense document s'esborra sol l'endemà</li>
       <li>Comunitat: anuncis + <strong>respon una enquesta</strong> (un cop votat, veus els percentatges i queda fixat)</li>
@@ -1053,7 +1068,7 @@
     <ul class="checklist">
       <li>Consentiment obligatori al registre (Política de Privacitat + Avís Legal), amb <strong>data i versió</strong> desades i visibles per al client</li>
       <li><strong>Consentiment específic de dades de salut</strong>: el dóna el client des de la seva àrea. Mentre no hi sigui, la fitxa avisa amb un requadre blau fosc i <strong>no s'hi han de registrar notes mèdiques</strong></li>
-      <li><strong>"Exportar dades"</strong> des de la fitxa: perfil, fitxa, bons, reserves, pagaments, exercicis, progrés, consentiments i llista de documents</li>
+      <li><strong>"Exportar dades"</strong> des de la fitxa: perfil, fitxa, bons, reserves, pagaments, exercicis, progrés, tests d'avaluació amb els seus registres (<code>tests</code>), consentiments i llista de documents</li>
       <li><strong>"Eliminar client"</strong>: cal <strong>escriure el nom exacte</strong> de la persona. És irreversible</li>
       <li>Comprova què sobreviu a l'esborrat: <strong>els pagaments es conserven anonimitzats</strong> per obligació fiscal; bons, reserves, mesures, exercicis i consentiments cauen</li>
       <li>Les pàgines legals (<code>/legal/*</code>) estan <strong>en tres idiomes</strong> i porten <strong>banner d'esborrany</strong></li>

@@ -1109,6 +1109,17 @@
       "errorGeneric": "No se ha podido completar. Vuelve a intentarlo.",
       "errorMark": "No se ha podido marcar el día como hecho. Vuelve a intentarlo.",
       "errorUnmark": "No se ha podido deshacer. Vuelve a intentarlo."
+    },
+    "tests": {
+      "title": "Tus tests",
+      "intro": "Las pruebas que te hace tu profesional, con la evolución de cada una.",
+      "last": "Última marca",
+      "vsPrevious": "respecto a la anterior",
+      "noEntries": "Todavía no hay ningún registro.",
+      "entries": "{count, plural, one {# registro} other {# registros}}",
+      "betterUp": "mejor si sube",
+      "betterDown": "mejor si baja",
+      "chartAria": "{title}: de {first} ({from}) a {last} ({to})."
     }
   },
   "emails": {

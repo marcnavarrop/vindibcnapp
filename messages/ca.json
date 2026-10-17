@@ -1109,6 +1109,17 @@
       "errorGeneric": "No s'ha pogut completar. Torna-ho a provar.",
       "errorMark": "No s'ha pogut marcar el dia com a fet. Torna-ho a provar.",
       "errorUnmark": "No s'ha pogut desfer. Torna-ho a provar."
+    },
+    "tests": {
+      "title": "Els teus tests",
+      "intro": "Les proves que et fa el teu professional, amb l'evolució de cada una.",
+      "last": "Darrera marca",
+      "vsPrevious": "respecte de l'anterior",
+      "noEntries": "Encara no hi ha cap registre.",
+      "entries": "{count, plural, one {# registre} other {# registres}}",
+      "betterUp": "millor si puja",
+      "betterDown": "millor si baixa",
+      "chartAria": "{title}: de {first} ({from}) a {last} ({to})."
     }
   },
   "emails": {

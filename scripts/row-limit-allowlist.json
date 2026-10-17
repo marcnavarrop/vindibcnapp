@@ -466,5 +466,21 @@
   "lib/data/waitlist.ts::promoteFromWaitlist::waitlist_entries": {
     "category": "acotada",
     "reason": "Una franja."
+  },
+  "lib/data/client-tests.ts::listClientTests::client_tests": {
+    "category": "acotada",
+    "reason": "Els tests d'avaluació d'UN client: un grapat."
+  },
+  "lib/data/client-tests.ts::listClientTests::client_test_entries": {
+    "category": "acotada",
+    "reason": "Els registres dels tests d'UN client: desenes, poques centenes amb els anys."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::client_tests": {
+    "category": "acotada",
+    "reason": "Un client (RGPD): els seus tests d'avaluació."
+  },
+  "lib/data/gdpr-export.ts::exportClientData::client_test_entries": {
+    "category": "acotada",
+    "reason": "Un client (RGPD): l'exportació ha de ser sencera."
   }
 }

@@ -39,6 +39,8 @@ import {
 } from "@/components/client-file/header-parts";
 import { WorkoutPlanPanel } from "@/components/workout-plan-panel";
 import { ClientProgressPanel } from "@/components/client-progress-panel";
+import { ClientTestsPanel } from "@/components/client-tests-panel";
+import { listClientTests, listTestSuggestions } from "@/lib/data/client-tests";
 import {
   NextSessionReminderButton,
   NotifyNewExercisesButton,
@@ -72,6 +74,8 @@ export default async function ClientDetailPage({
     library,
     documents,
     allProgress,
+    tests,
+    testSuggestions,
     allTags,
     clientTags,
     trainers,
@@ -84,6 +88,9 @@ export default async function ClientDetailPage({
     listExercises(),
     listClientDocuments(id),
     listAllProgressForClient(id),
+    listClientTests(id),
+    // Només són suggeriments: si fallen, el formulari funciona igual sense.
+    listTestSuggestions().catch(() => []),
     listClientTags(),
     listTagsOfClient(id),
     listTrainers(),
@@ -299,6 +306,18 @@ export default async function ClientDetailPage({
           },
         ]
       : []),
+    {
+      label: "Tests",
+      content: (
+        <ClientTestsPanel
+          clientId={client.id}
+          tests={tests}
+          suggestions={testSuggestions}
+          canManage
+          today={today}
+        />
+      ),
+    },
     {
       label: "Notes i documents",
       content: (

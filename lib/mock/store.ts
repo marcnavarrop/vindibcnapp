@@ -19,6 +19,8 @@ import {
   seedClientExercises,
   seedClientWorkoutDays,
   seedClientWorkoutLogs,
+  seedClientTests,
+  seedClientTestEntries,
   seedAvailabilityRules,
   seedConsents,
   seedDataAccessLog,
@@ -50,6 +52,8 @@ export type Store = {
   client_exercises: Tables["client_exercises"]["Row"][];
   client_workout_days: Tables["client_workout_days"]["Row"][];
   client_workout_logs: Tables["client_workout_logs"]["Row"][];
+  client_tests: Tables["client_tests"]["Row"][];
+  client_test_entries: Tables["client_test_entries"]["Row"][];
   availability_rules: Tables["availability_rules"]["Row"][];
   availability_blocks: Tables["availability_blocks"]["Row"][];
   consents: Tables["consents"]["Row"][];
@@ -122,6 +126,8 @@ function fromSeed(): Store {
     client_exercises: structuredClone(seedClientExercises),
     client_workout_days: structuredClone(seedClientWorkoutDays),
     client_workout_logs: structuredClone(seedClientWorkoutLogs),
+    client_tests: structuredClone(seedClientTests),
+    client_test_entries: structuredClone(seedClientTestEntries),
     availability_rules: structuredClone(seedAvailabilityRules),
     availability_blocks: [],
     consents: structuredClone(seedConsents),

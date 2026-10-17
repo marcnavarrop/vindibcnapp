@@ -1507,6 +1507,22 @@ export function buildClientManual(
         {
           t: "h",
           text: T({
+            ca: "Els teus tests",
+            es: "Tus tests",
+            en: "Your tests",
+          }),
+        },
+        {
+          t: "p",
+          text: T({
+            ca: "Si el teu professional et fa tests d'avaluació (unes dominades, un perímetre, un salt…), surten aquí, entre els teus exercicis i la biblioteca. Cada test té la seva targeta: la darrera marca amb la data, la diferència amb l'anterior —en verd si has millorat, en vermell si no, en gris si no canvia— i una gràfica amb l'evolució. A sota, tots els registres, amb les observacions. Els posa el professional; tu els consultes. Si no en tens cap, la secció no surt.",
+            es: "Si tu profesional te hace tests de evaluación (unas dominadas, un perímetro, un salto…), salen aquí, entre tus ejercicios y la biblioteca. Cada test tiene su tarjeta: la última marca con la fecha, la diferencia con la anterior —en verde si has mejorado, en rojo si no, en gris si no cambia— y una gráfica con la evolución. Debajo, todos los registros, con las observaciones. Los pone el profesional; tú los consultas. Si no tienes ninguno, la sección no sale.",
+            en: "If your trainer or physio runs assessment tests with you (pull-ups, a measurement, a jump…), they appear here, between your exercises and the library. Each test has its own card: the latest result with its date, the difference from the previous one —green if you've improved, red if not, grey if it hasn't changed— and a chart of how it's going. Below it, every result, with any notes. The professional records them; you read them. If you don't have any, the section doesn't appear.",
+          }),
+        },
+        {
+          t: "h",
+          text: T({
             ca: "La biblioteca del centre",
             es: "La biblioteca del centro",
             en: "The centre's library",

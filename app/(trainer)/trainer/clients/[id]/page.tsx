@@ -33,6 +33,8 @@ import { BonosSummaryCard, NotesCard, TrainingCard, UpcomingSessionsCard } from 
 import { SessionsList } from "@/components/client-file/sessions";
 import { WorkoutPlanPanel } from "@/components/workout-plan-panel";
 import { ClientProgressPanel } from "@/components/client-progress-panel";
+import { ClientTestsPanel } from "@/components/client-tests-panel";
+import { listClientTests, listTestSuggestions } from "@/lib/data/client-tests";
 import {
   NextSessionReminderButton,
   NotifyNewExercisesButton,
@@ -67,6 +69,8 @@ export default async function TrainerClientDetailPage({
     library,
     documents,
     allProgress,
+    tests,
+    testSuggestions,
     trainers,
     allTags,
     clientTags,
@@ -78,6 +82,9 @@ export default async function TrainerClientDetailPage({
     listExercises(),
     listClientDocuments(id),
     listAllProgressForClient(id),
+    listClientTests(id),
+    // Només són suggeriments: si fallen, el formulari funciona igual sense.
+    listTestSuggestions().catch(() => []),
     listTrainers(),
     listClientTags(),
     listTagsOfClient(id),
@@ -290,6 +297,25 @@ export default async function TrainerClientDetailPage({
                 viewerId={viewer!.id}
                 isAdmin={false}
                 truncated={history.followups.length === FOLLOWUPS_LIMIT}
+              />
+            ),
+          },
+        ]
+      : []),
+    // Els tests d'avaluació (0113) només els veu el professional ASSIGNAT
+    // (i l'admin): la RLS no en torna cap a ningú més, i una pestanya buida
+    // faria creure que el client no en té.
+    ...(canManage
+      ? [
+          {
+            label: "Tests",
+            content: (
+              <ClientTestsPanel
+                clientId={client.id}
+                tests={tests}
+                suggestions={testSuggestions}
+                canManage
+                today={today}
               />
             ),
           },

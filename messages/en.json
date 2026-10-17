@@ -1109,6 +1109,17 @@
       "errorGeneric": "Something went wrong. Please try again.",
       "errorMark": "The day couldn't be marked as done. Please try again.",
       "errorUnmark": "It couldn't be undone. Please try again."
+    },
+    "tests": {
+      "title": "Your tests",
+      "intro": "The assessments your professional runs with you, and how each one is going.",
+      "last": "Latest result",
+      "vsPrevious": "vs. the previous one",
+      "noEntries": "No results yet.",
+      "entries": "{count, plural, one {# result} other {# results}}",
+      "betterUp": "higher is better",
+      "betterDown": "lower is better",
+      "chartAria": "{title}: from {first} ({from}) to {last} ({to})."
     }
   },
   "emails": {

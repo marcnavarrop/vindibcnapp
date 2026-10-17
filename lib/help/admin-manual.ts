@@ -358,6 +358,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
               "La informació de salut, en dues parts: la «Primera visita» (una per client) i el «Seguiment» (entrades amb data i autor, la més recent a dalt). A dalt, si el client ha signat el consentiment de dades de salut i quan, o l'avís de pendent. Tu ho pots tot: escriure, editar qualsevol entrada i esborrar seguiments (amb confirmació; no es recupera).",
             ],
             [
+              "Tests",
+              "Els tests d'avaluació del client, sense catàleg: cadascun amb títol, unitat, descripció i, si vols, «Millor si puja» o «Millor si baixa». Cada targeta ensenya la darrera marca, la diferència amb l'anterior (verd si millora, vermell si empitjora, gris si és neutre) i la gràfica. «+ Nou test» suggereix els títols que ja es fan servir al centre, amb la unitat; «+ Registre» hi afegeix data, valor (amb decimals) i observació. Es poden editar, treure, reordenar i esborrar (el test, amb tots els seus registres). Els escriuen l'admin i el professional assignat; el client els veu a Exercicis.",
+            ],
+            [
               "Notes i documents",
               "Les notes generals, amb l'enllaç per editar-les, i els documents que el client ha pujat des de la seva àrea. Els documents són només lectura: aquí no se'n puja cap.",
             ],
@@ -1853,7 +1857,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         { t: "h", text: "Exportar les dades" },
         {
           t: "p",
-          text: "«Exportar dades» descarrega un fitxer amb tot el que el centre guarda d'aquesta persona: el perfil, la fitxa, els bons, les reserves, els pagaments, els exercicis assignats, el progrés registrat, els consentiments, la llista dels seus documents i l'historial clínic (primera visita i seguiments).",
+          text: "«Exportar dades» descarrega un fitxer amb tot el que el centre guarda d'aquesta persona: el perfil, la fitxa, els bons, les reserves, els pagaments, els exercicis assignats, el progrés registrat, els tests d'avaluació amb els seus registres, els consentiments, la llista dels seus documents i l'historial clínic (primera visita i seguiments).",
         },
         {
           t: "note",
@@ -1866,7 +1870,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, historial clínic i consentiments. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona.",
+          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, tests d'avaluació, historial clínic i consentiments. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona.",
         },
         {
           t: "p",

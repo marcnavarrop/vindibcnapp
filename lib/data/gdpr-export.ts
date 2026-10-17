@@ -16,6 +16,8 @@ export type ClientDataExport = {
   /** Els dies de la pauta (0112) i els «dia fet» que ha marcat. */
   workout_days: unknown[];
   workout_logs: unknown[];
+  /** Els tests d'avaluació (0113), cadascun amb els seus registres. */
+  tests: unknown[];
   consents: unknown[];
   documents: unknown[];
   /**
@@ -59,6 +61,15 @@ export async function exportClientData(
           .map((ce) => ({ ...ce, exercise_name: exMap.get(ce.exercise_id) })),
         workout_days: store.client_workout_days.filter((d) => d.client_id === clientId),
         workout_logs: store.client_workout_logs.filter((l) => l.client_id === clientId),
+        tests: store.client_tests
+          .filter((t) => t.client_id === clientId)
+          .sort((a, b) => a.position - b.position)
+          .map((t) => ({
+            ...t,
+            entries: store.client_test_entries
+              .filter((e) => e.test_id === t.id)
+              .sort((a, b) => a.measured_on.localeCompare(b.measured_on)),
+          })),
         consents: store.consents.filter(
           (c) => c.user_id === client.profile_id,
         ),
@@ -92,6 +103,8 @@ export async function exportClientData(
     exercise_progress,
     workoutDays,
     workoutLogs,
+    tests,
+    testEntries,
     consents,
     documents,
     firstVisit,
@@ -119,6 +132,17 @@ export async function exportClientData(
         .select("*")
         .eq("client_id", clientId)
         .order("done_on", { ascending: true }),
+      admin
+        .from("client_tests")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("position", { ascending: true }),
+      admin
+        .from("client_test_entries")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("measured_on", { ascending: true })
+        .order("created_at", { ascending: true }),
       admin.from("consents").select("*").eq("user_id", profileId),
       admin
         .from("client_documents")
@@ -147,6 +171,10 @@ export async function exportClientData(
       exercises: ces.data ?? [],
       workout_days: workoutDays.data ?? [],
       workout_logs: workoutLogs.data ?? [],
+      tests: (tests.data ?? []).map((t) => ({
+        ...t,
+        entries: (testEntries.data ?? []).filter((e) => e.test_id === t.id),
+      })),
       consents: consents.data ?? [],
       documents: documents.data ?? [],
       clinical_history: { first_visit: firstVisit.data ?? null, followups: followups.data ?? [] },

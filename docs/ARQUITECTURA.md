@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**112 migracions SQL** a `supabase/migrations/` (`0001`–`0112`), numerades i
+**113 migracions SQL** a `supabase/migrations/` (`0001`–`0113`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -192,6 +192,20 @@ capçalera per fer-la obligatòria (i afegir-hi `frame-ancestors 'none'`).
   INVOKER; **el progrés penja de l'assignació**, així que moure un exercici és
   canviar-li el `day_id` (mai treure'l i tornar-lo a posar), i esborrar un dia
   passa els seus exercicis a «Sense dia». `npm run workout:check`.
+- **Tests d'avaluació** (`0113`, tiquet d'en Raul): `client_tests` (títol lliure
+  únic per client sense mirar majúscules, unitat, descripció, `better_when`
+  up/down/neutral, ordre) i `client_test_entries` (data no futura, un valor
+  `numeric(12,3)`, observació). Sense catàleg: el test és del client. El
+  `client_id` del registre el posa el trigger a partir del test, i una clau
+  forània composta `(test_id, client_id)` el lliga. RLS: llegeixen l'admin, el
+  professional ASSIGNAT i el client; escriuen l'admin i l'assignat; sempre
+  `same_world`. **Tota la regla viu a `client_tests_can_read` i
+  `client_tests_can_write`**: si l'assessor diu que són dades de salut, es
+  reescriuen aquestes dues funcions sense tocar taules ni polítiques.
+  `client_test_suggestions()` (SECURITY DEFINER) dona títol, unitat i usos del
+  centre, del mateix món, sense client ni valors. Gràfica SVG pròpia
+  (`components/client-tests/test-visuals.tsx`). `npm run tests:check`; RLS a
+  `supabase/tests/0113_client_tests_rls.sql` (31 ✓, passades per en Marc al SQL Editor).
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de

@@ -204,6 +204,20 @@ export const seedClientExercises: ClientExercise[] = [
 export const seedClientWorkoutDays: Tables["client_workout_days"]["Row"][] = [];
 export const seedClientWorkoutLogs: Tables["client_workout_logs"]["Row"][] = [];
 
+/**
+ * Un test d'avaluació (0113) per a l'Ana, amb tres registres: prou per veure la
+ * gràfica, la darrera marca i la diferència en verd. La resta es creen des de
+ * la fitxa.
+ */
+export const seedClientTests: Tables["client_tests"]["Row"][] = [
+  { id: "ct-1", client_id: "c-ana", title: "Dominades", unit: "reps", description: "Màxim de repeticions seguides, pronació, sense balanceig.", better_when: "up", position: 1, created_by: "u-trainer-laia", created_at: now, updated_at: now },
+];
+export const seedClientTestEntries: Tables["client_test_entries"]["Row"][] = [
+  { id: "cte-1", test_id: "ct-1", client_id: "c-ana", measured_on: "2026-05-04", value: 3, notes: "Amb goma lila.", created_by: "u-trainer-laia", created_at: now, updated_at: now },
+  { id: "cte-2", test_id: "ct-1", client_id: "c-ana", measured_on: "2026-06-08", value: 5, notes: null, created_by: "u-trainer-laia", created_at: now, updated_at: now },
+  { id: "cte-3", test_id: "ct-1", client_id: "c-ana", measured_on: "2026-07-13", value: 7, notes: "Sense goma.", created_by: "u-trainer-laia", created_at: now, updated_at: now },
+];
+
 export const seedExerciseProgress: ExerciseProgress[] = [
   { id: "ep-1", client_exercise_id: "ce-1", recorded_at: "2026-05-01", weight_kg: 40, reps: 12, notes: "Primera sessió.", recorded_by: "u-trainer-laia", created_at: now },
   { id: "ep-2", client_exercise_id: "ce-1", recorded_at: "2026-06-01", weight_kg: 45, reps: 12, notes: "Bona progressió.", recorded_by: "u-trainer-laia", created_at: now },
