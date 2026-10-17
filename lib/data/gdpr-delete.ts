@@ -31,6 +31,10 @@ export type DeleteResult = { profileId: string; label: string; archive: ArchiveO
  *    abans es quedava orfe. Si falla, es registra i la baixa es dona per feta
  *    (el compte ja no hi és); el fitxer es pot treure després per la ruta.
  *
+ * Els vals de regal (0123): un val que va comprar segueix viu i bescanviable
+ * (el regal és de qui el rep), sense comprador, amb el seu PDF; un que va
+ * bescanviar es queda «bescanviat», sense el seu nom.
+ *
  * Els referits (0122): les recompenses de qui plega cauen amb ell; les d'un
  * altre en què surt de padrí o de referit es queden, sense el seu nom, i qui
  * es va registrar amb el seu codi es queda sense padrí. Abans, qualsevol
@@ -108,6 +112,12 @@ export async function deleteClient(
     store.notification_log = store.notification_log.filter(
       (n) => n.profile_id !== profileId,
     );
+    // Els vals de regal (0123): el que va comprar segueix viu i bescanviable,
+    // sense comprador; el que va bescanviar recorda el bescanvi, sense ell.
+    for (const v of store.gift_vouchers) {
+      if (v.buyer_client_id === clientId) v.buyer_client_id = null;
+      if (v.redeemed_by_client_id === clientId) v.redeemed_by_client_id = null;
+    }
     // Els referits (0122): la recompensa de qui plega, fora; la d'un altre on
     // surt de padrí o de referit, sense el seu nom; i qui es va registrar amb
     // el seu codi, sense padrí.

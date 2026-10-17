@@ -263,7 +263,11 @@ export async function paymentsByMonth(months: number): Promise<MonthRevenue[]> {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export type PaymentInput = {
-  clientId: string;
+  /**
+   * Null: el cobrament d'un val de regal el comprador del qual ja s'ha donat
+   * de baixa (0123). Queda anonimitzat, com els pagaments retinguts (0016).
+   */
+  clientId: string | null;
   bonoId: string | null;
   amount: number;
   method: PaymentMethod;

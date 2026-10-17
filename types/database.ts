@@ -474,7 +474,8 @@ export interface Database {
           id: string;
           code: string;
           service_id: string;
-          buyer_client_id: string;
+          /** Null si qui el va comprar s'ha donat de baixa (0123): el val segueix. */
+          buyer_client_id: string | null;
           recipient_name: string | null;
           recipient_email: string | null;
           message: string | null;

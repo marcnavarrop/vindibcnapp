@@ -144,7 +144,7 @@ export function GiftVouchersAdminTable({ vouchers }: { vouchers: GiftVoucher[] }
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     <a
-                      href={`/client/regals/${v.id}/pdf`}
+                      href={`/admin/vals-regal/${v.id}/pdf`}
                       className={`text-xs font-bold text-brand-muted hover:text-brand-purple ${TAP}`}
                     >
                       PDF
@@ -254,7 +254,7 @@ function VoucherCard({ v }: { v: GiftVoucher }) {
           </div>
         )}
         <a
-          href={`/client/regals/${v.id}/pdf`}
+          href={`/admin/vals-regal/${v.id}/pdf`}
           className={`inline-flex h-11 items-center px-1 text-sm font-bold text-brand-purple hover:underline ${TAP}`}
         >
           PDF

@@ -37,6 +37,7 @@ const DEMO_TRAINER_IDS = ["", PRE_FISIO_ID];
 const { getStore, saveStore } = await import("../lib/mock/store");
 const archive = await import("../lib/data/clinical-archive");
 const { deleteClient } = await import("../lib/data/gdpr-delete");
+const { redeemGiftVoucher } = await import("../lib/data/gift-vouchers");
 
 let bad = 0;
 const check = (nom: string, ok: boolean, detall = "") => {
@@ -170,6 +171,17 @@ try {
     s.referral_rewards.push({ id: "rr-oriol", referrer_client_id: "c-ana", referee_client_id: "c-oriol", beneficiary_client_id: "c-oriol", discount_percent: 10, status: "pending", used_in_bono_id: null, created_at: new Date().toISOString() });
     saveStore(s);
   }
+  // I els vals de regal (0123): un que l'Ana va comprar (actiu) i un que va bescanviar.
+  {
+    const s = getStore();
+    const svc = s.services[0];
+    const base = { service_id: svc.id, recipient_email: null, message: null, price: 50, service_type: svc.service_type, total_sessions: 4, package_name: svc.name, purchased_at: new Date().toISOString(), expires_at: "2099-01-01", redeemed_bono_id: null, created_at: new Date().toISOString(), stripe_checkout_session_id: null };
+    s.gift_vouchers.push(
+      { ...base, id: "gv-ana-comprat", code: "VINDI-ARXA-COMP", buyer_client_id: "c-ana", recipient_name: "L'Oriol", status: "active", redeemed_at: null, redeemed_by_client_id: null, pdf_path: "c-ana/gv-ana-comprat.pdf" } as never,
+      { ...base, id: "gv-ana-bescanviat", code: "VINDI-ARXA-BESC", buyer_client_id: "c-oriol", recipient_name: "L'Ana", status: "redeemed", redeemed_at: new Date().toISOString(), redeemed_by_client_id: "c-ana", pdf_path: null } as never,
+    );
+    saveStore(s);
+  }
   let padriError = "";
   try {
     await deleteClient("c-ana", "u-admin");
@@ -181,6 +193,12 @@ try {
   check("l'Oriol continua, sense padrí", s6.clients.find((c) => c.id === "c-oriol")?.referred_by_client_id === null);
   check("la recompensa de l'Oriol es queda, sense padrí", s6.referral_rewards.find((r) => r.id === "rr-oriol")?.referrer_client_id === null);
   check("la de l'Ana (beneficiària) se'n va amb ella", !s6.referral_rewards.some((r) => r.id === "rr-ana-reward"));
+  const comprat = s6.gift_vouchers.find((v) => v.id === "gv-ana-comprat");
+  check("el val que va comprar segueix viu, actiu i sense comprador", comprat?.status === "active" && comprat.buyer_client_id === null && comprat.pdf_path === "c-ana/gv-ana-comprat.pdf");
+  const besc = s6.gift_vouchers.find((v) => v.id === "gv-ana-bescanviat");
+  check("el que va bescanviar segueix bescanviat, sense ella", besc?.status === "redeemed" && besc.redeemed_by_client_id === null);
+  const red = await redeemGiftVoucher({ code: "VINDI-ARXA-COMP", profileId: "u-client-oriol" });
+  check("l'Oriol bescanvia el val de l'Ana", red.ok === true && getStore().gift_vouchers.find((v) => v.id === "gv-ana-comprat")?.redeemed_by_client_id === "c-oriol", JSON.stringify(red));
 
   console.log("\n7. La purga\n");
   {

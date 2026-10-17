@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**122 migracions SQL** a `supabase/migrations/` (`0001`–`0122`), numerades i
+**123 migracions SQL** a `supabase/migrations/` (`0001`–`0123`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -290,8 +290,14 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   `deleteAllAvatarsOf`). Els referits (`0122`) ja no la frenen: la recompensa de
   qui plega cau amb ell (`beneficiary` en cascada), la d'un altre on surt de
   padrí o de referit es queda amb el camp a NULL, i qui va venir amb el seu codi
-  es queda sense padrí (`referred_by_client_id` a NULL). Proves:
-  `supabase/tests/0122_referrals_on_client_delete.sql` i `npm run archive:check`.
+  es queda sense padrí (`referred_by_client_id` a NULL). Els vals de regal
+  (`0123`): el que va comprar sobreviu (`buyer_client_id` a NULL), bescanviable i
+  amb el seu PDF (si cal regenerar-lo, a `sense-comprador/`); el que va
+  bescanviar es queda «bescanviat» sense ell (el check ja no exigeix
+  `redeemed_by_client_id`). L'admin descarrega els PDF per
+  `/admin/vals-regal/[id]/pdf` (`lib/gift-voucher-pdf-response.ts`). Proves:
+  `supabase/tests/0122_referrals_on_client_delete.sql`,
+  `supabase/tests/0123_gift_vouchers_buyer_delete.sql` i `npm run archive:check`.
 - **Comptes demo separats dels reals; una sola font, `demo_profiles`** (`0110`,
   `0121`): quins comptes són demo ho diu la taula, a la base (`same_world`,
   `is_demo_profile`) i a l'app. L'app la llegeix amb `getDemoWorld()`

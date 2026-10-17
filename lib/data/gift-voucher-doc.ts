@@ -27,6 +27,13 @@ const SIGNED_URL_TTL = 300;
  * El prefix és el comprador perquè la política de Storage pugui decidir amb
  * `split_part(name, '/', 1)` sense consultar cap taula.
  */
+/**
+ * La carpeta dels vals el comprador dels quals s'ha donat de baixa (0123). No
+ * és cap id de client: cap política de Storage hi deixa entrar ningú amb
+ * sessió, només l'app amb la clau de servei (l'admin, per descarregar-lo).
+ */
+export const NO_BUYER_FOLDER = "sense-comprador";
+
 export function voucherStoragePath(buyerClientId: string, voucherId: string): string {
   return `${buyerClientId}/${voucherId}.pdf`;
 }
