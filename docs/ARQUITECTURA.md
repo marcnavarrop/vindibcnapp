@@ -103,12 +103,18 @@ esborra els fitxers de més d'un dia sense fila (`cleanupOrphanDocuments`). Lím
 DENY` (cap web aliena pot posar l'app en un iframe), `X-Content-Type-Options:
 nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, una
 `Permissions-Policy` que tanca càmera, micròfon, geolocalització i pagament del
-navegador, i sense `x-powered-by`. La CSP va de moment en **Report-Only**: els
-orígens permesos són Supabase (API i Storage), YouTube sense galetes (vídeos
-d'exercicis), vercel.live (previsualitzacions) i Stripe Checkout com a destí de
-formulari. Els avisos arriben a `app/api/csp-report` i queden als registres de
-Vercel com a `[csp] …`; quan no n'hi hagi, n'hi ha prou de canviar el nom de la
-capçalera per fer-la obligatòria (i afegir-hi `frame-ancestors 'none'`).
+navegador, i sense `x-powered-by`. La **CSP bloqueja** des del 17/10/2026 (del
+13/10 fins llavors, en Report-Only; es va activar després d'una passada amb
+Playwright sense cap avís). Orígens permesos: Supabase (API i Storage),
+YouTube sense galetes (vídeos d'exercicis), vercel.live (previsualitzacions) i,
+com a destí de formulari, Stripe Checkout i el portal (`billing.stripe.com`);
+`frame-ancestors 'none'`. El que bloqueja arriba igualment a
+`app/api/csp-report` i queda als registres de Vercel com a `[csp] …`.
+
+**Tornar enrere en un pas:** a `next.config.ts`, `const CSP_ENFORCE = true;` →
+`false`. La capçalera passa a `Content-Security-Policy-Report-Only` (avisa i no
+bloqueja) amb la mateixa política, i `frame-ancestors` en surt (en Report-Only
+no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
 
 ### Coses concretes a mirar
 

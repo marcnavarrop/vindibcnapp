@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 /**
- * Receptor dels avisos de la CSP (`Content-Security-Policy-Report-Only`).
+ * Receptor dels avisos de la CSP.
  *
- * El navegador hi envia què hauria bloquejat la política si fos de debò. Aquí
- * només es deixa una línia als registres de Vercel ([csp] …) per poder-ho
- * revisar abans de passar la CSP a obligatòria. No es desa res a la base ni
+ * El navegador hi envia el que la política ha bloquejat (des del 17/10/2026,
+ * que bloqueja) o hauria bloquejat (si torna a Report-Only, `CSP_ENFORCE` a
+ * next.config.ts). Aquí només es deixa una línia als registres de Vercel
+ * ([csp] …) per veure si s'ha trencat alguna cosa. No es desa res a la base ni
  * es respon res: és públic per força (l'envia el navegador sense sessió), i el
  * pitjor que pot fer algú és omplir el registre.
  *

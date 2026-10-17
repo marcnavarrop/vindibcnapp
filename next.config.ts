@@ -12,17 +12,23 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 /**
  * Capçaleres de seguretat de totes les respostes.
  *
- * La CSP va en mode `Report-Only`: el navegador avisa a la consola del que
- * hauria bloquejat, però no bloqueja res. Quan s'hagi comprovat a producció
- * (pagament amb Stripe, vídeos, documents, fotos) que no surt cap avís, es pot
- * passar a `Content-Security-Policy` canviant només el nom de la capçalera.
+ * La CSP BLOQUEJA des del 17/10/2026 (abans, del 13/10, en `Report-Only`).
+ * Es va activar després d'una passada amb Playwright sense cap avís: les pàgines
+ * públiques de producció i les pantalles amb sessió dels tres rols. El que
+ * bloqueja s'apunta igualment als registres de Vercel ([csp], vegeu
+ * app/api/csp-report).
+ *
+ * TORNAR ENRERE EN UN PAS: posar `CSP_ENFORCE = false` (aquí sota). La
+ * capçalera passa a ser `Content-Security-Policy-Report-Only`: avisa i no
+ * bloqueja res, amb la mateixa política.
  *
  * D'on ve cada origen extern:
  * - Supabase (`NEXT_PUBLIC_SUPABASE_URL`): l'API, l'accés i Storage (fotos,
  *   vídeos i documents amb URL signada).
  * - YouTube sense galetes: els vídeos d'exercicis enllaçats (exercise-library).
  * - vercel.live: la barra de comentaris de Vercel a les previsualitzacions.
- * - Stripe: només es surt cap a Checkout (`form-action`); no hi ha cap script
+ * - Stripe: només s'hi surt (`form-action`): Checkout per pagar i el portal
+ *   (`billing.stripe.com`) per gestionar la subscripció. No hi ha cap script
  *   de Stripe a l'app.
  * `'unsafe-inline'` als scripts és el que demana Next sense nonces (els seus
  * scripts en línia); `'unsafe-eval'` només en desenvolupament.
@@ -37,6 +43,9 @@ const SUPABASE = (() => {
 const SUPABASE_WS = SUPABASE.replace(/^https:/, "wss:");
 const DEV = process.env.NODE_ENV !== "production";
 
+/** Vegeu dalt: `false` torna la CSP a Report-Only (avisa, no bloqueja). */
+const CSP_ENFORCE = true;
+
 const CSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${DEV ? " 'unsafe-eval'" : ""} https://vercel.live`,
@@ -46,24 +55,25 @@ const CSP = [
   "font-src 'self' data: https://vercel.live",
   `connect-src 'self' ${SUPABASE} ${SUPABASE_WS} https://vercel.live wss://ws-us3.pusher.com`,
   "frame-src https://www.youtube-nocookie.com https://vercel.live",
-  "form-action 'self' https://checkout.stripe.com",
+  "form-action 'self' https://checkout.stripe.com https://billing.stripe.com",
   "base-uri 'self'",
   "object-src 'none'",
+  // Ningú pot posar l'app dins d'un iframe (clickjacking al login). En
+  // Report-Only el navegador l'ignora (i Safari avisa a cada pàgina): només hi
+  // va quan la CSP bloqueja.
+  ...(CSP_ENFORCE ? ["frame-ancestors 'none'"] : []),
   // On van els avisos (app/api/csp-report). Sense, Safari ni els genera.
   "report-uri /api/csp-report",
   "report-to csp",
-  // `frame-ancestors 'none'` s'hi afegirà quan la CSP sigui obligatòria: en
-  // Report-Only el navegador l'ignora (i Safari ho diu a cada pàgina).
 ]
   .join("; ")
   .replace(/\s+/g, " ");
 
 const SECURITY_HEADERS = [
-  { key: "Content-Security-Policy-Report-Only", value: CSP },
+  { key: CSP_ENFORCE ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only", value: CSP },
   { key: "Reporting-Endpoints", value: 'csp="/api/csp-report"' },
-  // Ningú pot posar l'app dins d'un iframe d'una altra web (clickjacking al
-  // login). Va a part de la CSP perquè, en Report-Only, `frame-ancestors` no
-  // bloqueja.
+  // El mateix que `frame-ancestors 'none'`, per als navegadors que no la
+  // llegeixen i per si la CSP torna a Report-Only.
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
