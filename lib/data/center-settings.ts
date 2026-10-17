@@ -3,7 +3,7 @@ import { cache } from "react";
 import { USE_MOCK } from "@/lib/config";
 import { slotOf, slotToHour } from "@/lib/availability-slots";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { EMPTY_CONTACT, type CenterContact } from "@/lib/center-contact";
+import { EMPTY_CONTACT, type CenterContact, type PhysioCollegiate } from "@/lib/center-contact";
 
 export type CenterSettings = {
   minCancellationHours: number;
@@ -182,7 +182,7 @@ export const getCenterSettings = cache(async (): Promise<CenterSettings> => {
     .from("center_settings")
     // Literal inline a propòsit: amb una constant, Supabase perd la inferència.
     .select(
-      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, pending_payment_cancel_enabled, pending_payment_cancel_hours, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled, gift_vouchers_enabled, gift_voucher_expiry_months, waitlist_enabled, subscriptions_enabled, subscription_extra_sessions_max, contact_phone, contact_whatsapp, contact_email, notify_email, address, legal_name, tax_id",
+      "min_cancellation_hours, trainers_see_colleagues_reservations, referral_program_active, referral_reward_referee, referral_discount_percent, opening_time, closing_time, min_booking_hours, bono_low_threshold, reminder_hour_local, bono_expiry_months, pending_payment_cancel_enabled, pending_payment_cancel_hours, module_comunitat_enabled, module_sessions_prova_enabled, module_documents_enabled, gift_vouchers_enabled, gift_voucher_expiry_months, waitlist_enabled, subscriptions_enabled, subscription_extra_sessions_max, contact_phone, contact_whatsapp, contact_email, notify_email, address, legal_name, tax_id, health_registry_number, physio_collegiates",
     )
     .single();
 
@@ -226,6 +226,8 @@ function contactOf(
         address?: string | null;
         legal_name?: string | null;
         tax_id?: string | null;
+        health_registry_number?: string | null;
+        physio_collegiates?: unknown;
       }
     | null
     | undefined,
@@ -239,7 +241,19 @@ function contactOf(
     address: v(r?.address),
     legalName: v(r?.legal_name),
     taxId: v(r?.tax_id),
+    healthRegistryNumber: v(r?.health_registry_number),
+    physioCollegiates: collegiatesOf(r?.physio_collegiates),
   };
+}
+
+/** La llista de la 0120, a la defensiva: qualsevol cosa estranya es descarta. */
+function collegiatesOf(raw: unknown): PhysioCollegiate[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((x) =>
+    x && typeof x === "object" && typeof x.name === "string" && typeof x.number === "string" && x.name.trim() && x.number.trim()
+      ? [{ name: x.name, number: x.number }]
+      : [],
+  );
 }
 
 export async function updateCenterSettings(
@@ -343,6 +357,8 @@ function contactRow(c: CenterContact) {
     address: c.address,
     legal_name: c.legalName,
     tax_id: c.taxId,
+    health_registry_number: c.healthRegistryNumber,
+    physio_collegiates: c.physioCollegiates,
   };
 }
 

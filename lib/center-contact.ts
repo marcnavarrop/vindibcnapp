@@ -22,12 +22,19 @@ export type PublicContact = {
   address: string | null;
 };
 
+/** Un fisioterapeuta col·legiat, per a l'avís legal (0120). */
+export type PhysioCollegiate = { name: string; number: string };
+
 /** Tot el que es desa (inclou les dades legals i el correu intern). */
 export type CenterContact = PublicContact & {
   /** On van els avisos interns. Només el servidor. */
   notifyEmail: string | null;
   legalName: string | null;
   taxId: string | null;
+  /** Núm. del Registre de centres sanitaris de Catalunya (0120). Opcional. */
+  healthRegistryNumber: string | null;
+  /** Fisioterapeutes col·legiats (0120). Buit: l'avís legal no en parla. */
+  physioCollegiates: PhysioCollegiate[];
 };
 
 export const EMPTY_CONTACT: CenterContact = {
@@ -38,6 +45,8 @@ export const EMPTY_CONTACT: CenterContact = {
   address: null,
   legalName: null,
   taxId: null,
+  healthRegistryNumber: null,
+  physioCollegiates: [],
 };
 
 export function publicContact(c: CenterContact): PublicContact {
@@ -130,6 +139,31 @@ export function normalizeTaxId(input: string): { value: string | null } | { erro
   if (!v) return { value: null };
   if (!/^[A-Z0-9][A-Z0-9-]{6,13}[A-Z0-9]$/.test(v)) return { error: "El NIF / CIF no sembla vàlid (lletres i xifres, sense espais)." };
   return { value: v };
+}
+
+/** Màxim de col·legiats a l'avís legal: el mateix que el check de la 0120. */
+export const PHYSIO_COLLEGIATES_MAX = 20;
+
+/**
+ * Les files del formulari → la llista desada, o un error. Una fila sense res
+ * es descarta; una amb només un dels dos camps és un error (no es pot publicar
+ * un nom sense número ni a l'inrevés). Els límits, els de la 0120.
+ */
+export function normalizePhysioCollegiates(
+  rows: { name: string; number: string }[],
+): { value: PhysioCollegiate[] } | { error: string } {
+  const out: PhysioCollegiate[] = [];
+  for (const r of rows) {
+    const name = r.name.trim().replace(/\s+/g, " ");
+    const number = r.number.trim().replace(/\s+/g, " ");
+    if (!name && !number) continue;
+    if (!name || !number) return { error: "Cada fisioterapeuta necessita el nom i el número de col·legiat." };
+    if (name.length < 2 || name.length > 120) return { error: "El nom del fisioterapeuta: entre 2 i 120 caràcters." };
+    if (number.length > 20) return { error: "El número de col·legiat: com a molt 20 caràcters." };
+    out.push({ name, number });
+  }
+  if (out.length > PHYSIO_COLLEGIATES_MAX) return { error: `Com a molt ${PHYSIO_COLLEGIATES_MAX} fisioterapeutes.` };
+  return { value: out };
 }
 
 // ─── Text pla ───────────────────────────────────────────────────────────────

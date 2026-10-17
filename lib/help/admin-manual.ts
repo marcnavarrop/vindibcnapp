@@ -1571,6 +1571,8 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ["Correu de contacte", "La bústia que el centre LLEGEIX. Els correus als clients porten aquesta adreça com a «respondre a»: si un client respon, li arriba aquí. Si la deixes buida, els correus no conviden a respondre."],
             ["Correu per als avisos interns", "On arriben les sol·licituds de prova i les altes noves. Buit: el correu de contacte."],
             ["Adreça, titular i NIF", "Per a les pàgines legals. L'adreça, a més, va a l'esdeveniment de calendari i als correus: al peu dels que reben clients i visitants, i com a «Lloc» a les reserves, els recordatoris i la prova confirmada."],
+            ["Núm. de registre sanitari", "El número d'inscripció del centre al Registre de centres, serveis i establiments sanitaris de Catalunya. Surt a l'avís legal, a l'apartat de fisioteràpia. Buit, aquella frase no hi és."],
+            ["Fisioterapeutes col·legiats", "Nom i número de col·legiat de cada fisioterapeuta («+ Afegir fisioterapeuta» per posar-ne més; ✕ per treure'n). Surten a l'avís legal amb el seu número. Una fila amb només el nom o només el número no es desa. Sense cap, l'avís legal no en parla."],
           ],
         },
         {

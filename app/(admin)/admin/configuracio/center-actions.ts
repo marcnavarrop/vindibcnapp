@@ -6,6 +6,7 @@ import { updateCenterSettings } from "@/lib/data/center-settings";
 import {
   normalizeEmail,
   normalizePhone,
+  normalizePhysioCollegiates,
   normalizeTaxId,
   normalizeText,
   type CenterContact,
@@ -103,6 +104,13 @@ export async function updateCenterSettingsAction(
   for (const [k, r] of Object.entries(checks))
     if ("error" in r) return { error: k === "notifyEmail" ? `Correu dels avisos interns: ${r.error}` : r.error };
   const val = (r: { value: string | null } | { error: string }) => ("value" in r ? r.value : null);
+  // L'avís legal (0120): el registre sanitari i els fisios col·legiats.
+  const registry = normalizeText(str("healthRegistryNumber"), 2, 40, "El número de registre sanitari");
+  if ("error" in registry) return { error: registry.error };
+  const names = fd.getAll("physioName").map(String);
+  const numbers = fd.getAll("physioNumber").map(String);
+  const collegiates = normalizePhysioCollegiates(names.map((name, i) => ({ name, number: numbers[i] ?? "" })));
+  if ("error" in collegiates) return { error: collegiates.error };
   const contact: CenterContact = {
     phone: val(checks.phone),
     whatsapp: !!val(checks.phone) && fd.get("contactWhatsapp") === "true",
@@ -111,6 +119,8 @@ export async function updateCenterSettingsAction(
     address: val(checks.address),
     legalName: val(checks.legalName),
     taxId: val(checks.taxId),
+    healthRegistryNumber: registry.value,
+    physioCollegiates: collegiates.value,
   };
 
   const reminderHourLocal = intInRange(fd, "reminderHourLocal", 0, 23);

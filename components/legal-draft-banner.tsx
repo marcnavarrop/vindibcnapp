@@ -16,9 +16,12 @@ import { getTranslations } from "next-intl/server";
  * que la política de cookies quedi tancada abans que la de privacitat.
  */
 export const LEGAL_DRAFT = {
+  // Fins que en Marc confirmi que el registre sanitari i els fisioterapeutes
+  // col·legiats (0120) estan omplerts a Configuració → Centre.
   avisLegal: true,
-  privacitat: true,
-  cookies: true,
+  // Text definitiu, octubre del 2026.
+  privacitat: false,
+  cookies: false,
 } as const;
 
 export type LegalDoc = keyof typeof LEGAL_DRAFT;
@@ -26,7 +29,6 @@ export type LegalDoc = keyof typeof LEGAL_DRAFT;
 export async function LegalDraftBanner({ doc }: { doc: LegalDoc }) {
   if (!LEGAL_DRAFT[doc]) return null;
   const t = await getTranslations("legalPages.draftBanner");
-  const isDev = process.env.NODE_ENV !== "production";
 
   return (
     <div
@@ -35,13 +37,6 @@ export async function LegalDraftBanner({ doc }: { doc: LegalDoc }) {
     >
       <strong className="font-bold text-attention">{t("title")}</strong>{" "}
       {t("body")}
-      {/* El detall de què falta per fer és per a l'equip, no per a qui llegeix
-          la política: en producció seria soroll i confondria. */}
-      {isDev && (
-        <span className="mt-1 block text-xs text-brand-muted">
-          {t("devNote")}
-        </span>
-      )}
     </div>
   );
 }

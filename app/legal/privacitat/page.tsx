@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { getCenterContact } from "@/lib/data/center-settings";
 import { H, RICH, legalValues, Prevalence } from "@/components/legal/legal-text";
 import { LegalDraftBanner } from "@/components/legal-draft-banner";
 
 /**
- * ⚠️ BORRADOR LEGAL — TEXT DE PARTIDA, NO DEFINITIU.
- * Generat automàticament com a punt de partida per a un centre d'entrenament
- * personal i fisioteràpia a Barcelona. PENDENT DE REVISIÓ per un assessor legal
- * abans de publicar. Cal omplir els camps entre [CLAUDÀTORS] i validar les
- * bases legals, terminis de conservació i encarregats del tractament.
+ * Política de privacitat, text definitiu (versió 2026-10). Els paràgrafs de
+ * dades de salut (`p2b`, 0118) i de la supressió amb l'arxiu clínic (`p2c`,
+ * 0119) són els validats; la resta, el text definitiu de l'octubre del 2026.
  *
- * El text viu a `messages/*.json`, sota `legalPages.privacitat`. Si l'assessor
- * canvia el català, les altres dues traduccions s'han de tornar a revisar: són
+ * El text viu a `messages/*.json`, sota `legalPages.privacitat`. Si canvia el
+ * català, les altres dues traduccions s'han de tornar a revisar: són
  * traduccions d'aquest, no textos independents.
  */
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,45 +22,59 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PrivacitatPage() {
   const t = await getTranslations("legalPages.privacitat");
   const g = await getTranslations("legalPages");
-  const v = legalValues(await getCenterContact());
+  const v = {
+    ...legalValues(await getCenterContact()),
+    aepd: (chunks: ReactNode) => (
+      <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer" className="font-bold text-brand-purple underline">
+        {chunks}
+      </a>
+    ),
+  };
 
   return (
     <>
       <LegalDraftBanner doc="privacitat" />
       <h1 className="text-2xl text-brand-dark">{t("title")}</h1>
-      <p className="text-xs text-brand-muted">{g("draftVersion")}</p>
+      <p className="text-xs text-brand-muted">{g("version")}</p>
 
       <H>{t("h1")}</H>
       <p>{t.rich("p1", v)}</p>
 
       <H>{t("h2")}</H>
       <p>{t("p2")}</p>
-      {/* Dades de salut (0118): tests i mesures amb consentiment; historial de
-          fisioteràpia per l'art. 9.2.h. Text validat per l'assessor. */}
+      {/* Dades de salut (0118) i què passa amb l'historial en la supressió (0119). */}
       <p>{t.rich("p2b", v)}</p>
-      {/* Què passa amb l'historial clínic quan es demana la supressió (0119). */}
       <p>{t.rich("p2c", v)}</p>
 
       <H>{t("h3")}</H>
       <p>{t("p3")}</p>
 
       <H>{t("h4")}</H>
-      <p>{t.rich("p4", RICH)}</p>
+      <ul className="ml-5 list-disc">
+        {(["basis1", "basis2", "basis3", "basis4", "basis5"] as const).map((k) => (
+          <li key={k}>{t.rich(k, RICH)}</li>
+        ))}
+      </ul>
 
       <H>{t("h5")}</H>
       <p>{t("p5")}</p>
       <ul className="ml-5 list-disc">
-        <li>{t.rich("item1", RICH)}</li>
-        <li>{t.rich("item2", RICH)}</li>
-        <li>{t.rich("item3", RICH)}</li>
+        {(["item1", "item2", "item3", "item4"] as const).map((k) => (
+          <li key={k}>{t.rich(k, RICH)}</li>
+        ))}
       </ul>
       <p>{t("p5b")}</p>
 
       <H>{t("h6")}</H>
-      <p>{t("p6")}</p>
+      <ul className="ml-5 list-disc">
+        {(["retention1", "retention2", "retention3", "retention4"] as const).map((k) => (
+          <li key={k}>{t.rich(k, RICH)}</li>
+        ))}
+      </ul>
 
       <H>{t("h7")}</H>
-      <p>{t.rich("p7", RICH)}</p>
+      <p>{t.rich("p7", v)}</p>
+      <p>{t("p7b")}</p>
 
       <H>{t("h8")}</H>
       <p>{t.rich("p8", v)}</p>

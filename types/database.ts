@@ -1855,6 +1855,8 @@ export interface Database {
           address: string | null;
           legal_name: string | null;
           tax_id: string | null;
+          health_registry_number: string | null;
+          physio_collegiates: Json;
           created_at: string;
           updated_at: string;
         };
@@ -1888,6 +1890,8 @@ export interface Database {
           address?: string | null;
           legal_name?: string | null;
           tax_id?: string | null;
+          health_registry_number?: string | null;
+          physio_collegiates?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -1920,6 +1924,8 @@ export interface Database {
           address?: string | null;
           legal_name?: string | null;
           tax_id?: string | null;
+          health_registry_number?: string | null;
+          physio_collegiates?: Json;
           updated_at?: string;
         };
         Relationships: [];

@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**119 migracions SQL** a `supabase/migrations/` (`0001`–`0119`), numerades i
+**120 migracions SQL** a `supabase/migrations/` (`0001`–`0120`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -368,6 +368,18 @@ Supabase talla cada resposta a 1000 files sense avisar. Tres peces:
   Centre): manual, pantalles, peu dels correus, pàgines legals i val de regal en
   surten. El remitent dels avisos no es llegeix: el `Reply-To` és el correu de
   contacte i **només si n'hi ha**; sense, cap correu convida a respondre.
+- **Textos legals definitius** (versió 2026-10): avís legal, privacitat i
+  cookies a `messages/*.json` (`legalPages.*`), el català mana i sense cap
+  claudàtor. Les dades variables surten de Configuració → Centre: titular, NIF,
+  adreça i correu (`0100`) i, per a l'apartat de fisioteràpia de l'avís legal,
+  el registre sanitari i els fisioterapeutes col·legiats (`0120`,
+  `health_registry_number` i `physio_collegiates`); sense dades, la frase no es
+  pinta. El banner «Document provisional» va per document (`LEGAL_DRAFT` a
+  `components/legal-draft-banner.tsx`): privacitat i cookies ja a `false`;
+  l'avís legal, fins que en Marc confirmi aquests dos camps. La taula de cookies
+  és l'inventari del codi: si se n'afegeix una, s'ha d'afegir allà.
+  `CURRENT_CONSENT_VERSION` (la versió que es desa en acceptar la privacitat)
+  és 2026-10.
 - **Canvi de correu propi** (`0077`–`0078`, `lib/data/email-change.ts`):
   `supabase.auth.updateUser({ email })` envia al correu VELL un enllaç viu que
   completa el canvi amb un sol clic (comprovat contra el projecte real). Aquí

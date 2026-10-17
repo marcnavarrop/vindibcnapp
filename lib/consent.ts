@@ -4,7 +4,7 @@
  * els consentiments antics quedaran registrats amb la seva versió i es podrà
  * demanar de nou l'acceptació de la versió actual.
  */
-export const CURRENT_CONSENT_VERSION = "2026-06";
+export const CURRENT_CONSENT_VERSION = "2026-10";
 
 /**
  * Versió vigent del CONSENTIMENT DE DADES DE SALUT (0118). Va a part de la de

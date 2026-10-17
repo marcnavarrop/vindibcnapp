@@ -1086,9 +1086,11 @@
       <li>Després: <strong>Persones → Arxiu clínic</strong> el llista (amb l'etiqueta «Demo»); la fitxa ensenya les dades de contacte, l'última atenció, fins quan es conserva i cada entrada (seguiments, notes de sessió, documents, consentiments amb el retirat marcat), <strong>sense cap botó per editar ni esborrar</strong>. «Exportar» descarrega el JSON; el document s'obre en una pestanya</li>
       <li>Com a <strong>Fisio Demo</strong>: «Arxiu clínic» al menú, amb el pacient demo i cap de real. Com a <strong>Entrenador Demo</strong>: no hi és al menú i <code>/trainer/arxiu-clinic</code> torna a l'Inici</li>
       <li>La <strong>política de privacitat</strong> (ca/es/en) porta, sota «Dades de salut», el paràgraf «Si demanes la supressió.»</li>
-      <li>Les pàgines legals (<code>/legal/*</code>) estan <strong>en tres idiomes</strong> i porten <strong>banner d'esborrany</strong></li>
+      <li>Les pàgines legals (<code>/legal/*</code>) estan <strong>en tres idiomes</strong> <span class="flag">Text definitiu, 2026-10</span>: diuen «Versió 2026-10» i <strong>no hi ha cap claudàtor</strong>. Privacitat i cookies <strong>sense</strong> el banner «Document provisional»; l'avís legal el manté fins que el registre sanitari i els fisioterapeutes estiguin omplerts</li>
+      <li><strong>Avís legal → Titular</strong>: «Activitat: centre d'entrenament personal i fisioteràpia». A <strong>Configuració → Centre</strong>, omple «Núm. de registre sanitari» i un «Fisioterapeuta col·legiat»: l'avís legal pinta «Fisioteràpia.» amb el nom i el número i la frase del registre. Buida l'una o l'altra, aquella frase desapareix; totes dues buides, no hi ha apartat. Una fila amb només el nom no es desa</li>
+      <li><strong>Privacitat</strong>: la base legal i la conservació en llista, els quatre proveïdors (Supabase, Vercel, Resend, Stripe) amb les transferències, l'enllaç a aepd.es, «menys de 14 anys» i «en el termini màxim d'un mes». <strong>Cookies</strong>: la taula (sessió de Supabase, <code>vindi_locale</code>, <code>vindi_pre</code>); al mòbil surt com a targetes, sense scroll de costat</li>
     </ul>
-    <div class="warn"><strong>Textos legals pendents</strong> de revisió per l'assessor (també el de la supressió amb l'arxiu clínic, 0119). I <strong>no hi ha pantalla</strong> per consultar el registre d'accessos: les exportacions, supressions i consultes de l'arxiu clínic s'apunten, però es consulten des de la base de dades.</div>
+    <div class="warn">El text per a la persona que demana la supressió (a la confirmació de la baixa, 0119) encara no l'ha revisat l'assessor. I <strong>no hi ha pantalla</strong> per consultar el registre d'accessos: les exportacions, supressions i consultes de l'arxiu clínic s'apunten, però es consulten des de la base de dades.</div>
 
     <h2 id="manuals"><span class="num">19</span> Els manuals d'usuari (Ajuda) <span class="new-badge">Nou</span></h2>
     <p>Els tres rols tenen ara un manual dins de la mateixa app, com a <strong>última entrada del menú</strong>. No cal llegir-los per provar; el que sí que val la pena és <strong>comprovar que diuen la veritat</strong>.</p>
@@ -1142,7 +1144,7 @@
         <tr><td>Les factures del professional no són fiscals</td><td>Càlcul intern; el format oficial es confirmarà amb l'assessoria</td></tr>
         <tr><td>Pausa de subscripció més llarga que un cicle</td><td>Retorna el temps de la renovació però no reemet el bo d'aquell mes. Sortida manual des de l'admin</td></tr>
         <tr><td>No hi ha pantalla del registre d'accessos RGPD</td><td>Les exportacions i supressions s'apunten, però es consulten des de la base de dades</td></tr>
-        <tr><td>Textos legals en esborrany</td><td>Pendents de l'assessor. Ho diu un banner a les mateixes pàgines</td></tr>
+        <tr><td>Avís legal amb el banner «provisional»</td><td>Fins que el registre sanitari i els fisioterapeutes col·legiats estiguin omplerts a Configuració → Centre. Privacitat i cookies ja són definitius (2026-10)</td></tr>
       </tbody>
     </table>
 

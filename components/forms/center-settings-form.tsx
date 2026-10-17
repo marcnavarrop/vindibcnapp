@@ -178,6 +178,11 @@ export function CenterSettingsForm({
   const [address, setAddress] = useState(c.address ?? "");
   const [legalName, setLegalName] = useState(c.legalName ?? "");
   const [taxId, setTaxId] = useState(c.taxId ?? "");
+  const [registry, setRegistry] = useState(c.healthRegistryNumber ?? "");
+  // Sempre una fila buida a mà: així afegir el primer no demana cap botó.
+  const [physios, setPhysios] = useState<{ name: string; number: string }[]>(
+    c.physioCollegiates.length ? c.physioCollegiates : [{ name: "", number: "" }],
+  );
   // Validació en directe (la definitiva és la del servidor).
   const phoneCheck = normalizePhone(phone);
   const emailCheck = normalizeEmail(email);
@@ -294,6 +299,61 @@ export function CenterSettingsForm({
           value={taxId}
           onChange={setTaxId}
         />
+        <TextField
+          name="healthRegistryNumber"
+          label="Núm. de registre sanitari"
+          help="El número d'inscripció al Registre de centres, serveis i establiments sanitaris de Catalunya. Opcional: buit, l'avís legal no en parla."
+          value={registry}
+          onChange={setRegistry}
+        />
+        <fieldset data-physio-collegiates>
+          <legend className="mb-1 block text-sm font-bold text-brand-dark">Fisioterapeutes col·legiats</legend>
+          <p className="mb-2 text-xs text-brand-muted">
+            Nom i número de col·legiat al Col·legi de Fisioterapeutes de Catalunya. Surten a l&apos;avís legal. Opcional: sense
+            cap, l&apos;avís legal no en parla.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {physios.map((p, i) => (
+              <li key={i} className="flex max-w-md flex-wrap items-center gap-2">
+                <input
+                  name="physioName"
+                  aria-label={`Nom del fisioterapeuta ${i + 1}`}
+                  placeholder="Nom i cognoms"
+                  value={p.name}
+                  onChange={(e) => setPhysios(physios.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+                  className="min-w-0 flex-[2] rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none"
+                />
+                <input
+                  name="physioNumber"
+                  aria-label={`Núm. de col·legiat ${i + 1}`}
+                  placeholder="Núm."
+                  value={p.number}
+                  onChange={(e) => setPhysios(physios.map((x, j) => (j === i ? { ...x, number: e.target.value } : x)))}
+                  className="w-24 min-w-0 flex-1 rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-dark focus:border-brand-purple focus:outline-none"
+                />
+                {physios.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setPhysios(physios.filter((_, j) => j !== i))}
+                    aria-label={`Treure el fisioterapeuta ${i + 1}`}
+                    className="px-1 text-sm font-bold text-brand-muted hover:text-error"
+                  >
+                    ✕
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {physios.length < 20 && (
+            <button
+              type="button"
+              onClick={() => setPhysios([...physios, { name: "", number: "" }])}
+              className="mt-2 text-sm font-bold text-brand-purple hover:underline"
+            >
+              + Afegir fisioterapeuta
+            </button>
+          )}
+        </fieldset>
         <div className="rounded-xl bg-brand-bg p-4" data-contact-preview>
           <p className="text-xs font-bold tracking-wide text-brand-muted uppercase">Així ho veurà el client</p>
           {previewPhone || previewEmail ? (
