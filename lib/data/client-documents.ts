@@ -18,7 +18,8 @@ const SIGNED_URL_TTL = 3600;
 export type ClientDocument = {
   id: string;
   clientId: string;
-  uploadedBy: string;
+  /** Null si el perfil de qui el va pujar s'ha esborrat (0116). */
+  uploadedBy: string | null;
   storagePath: string;
   fileName: string;
   fileSize: number | null;
@@ -301,7 +302,7 @@ export async function deleteAllClientDocuments(clientId: string): Promise<void> 
 function toClientDocument(row: {
   id: string;
   client_id: string;
-  uploaded_by: string;
+  uploaded_by: string | null;
   storage_path: string;
   file_name: string;
   file_size: number | null;

@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**115 migracions SQL** a `supabase/migrations/` (`0001`–`0115`), numerades i
+**116 migracions SQL** a `supabase/migrations/` (`0001`–`0116`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -178,9 +178,11 @@ capçalera per fer-la obligatòria (i afegir-hi `frame-ancestors 'none'`).
   el desfeia (seguiments orfes, i esborrar algú amb una primera visita fallava
   amb 23503). Un UPDATE que no canvia el text no toca la data d'edició.
   Proves: `supabase/tests/0115_clinical_*.sql` (comprovat a producció abans i
-  després). Pendent a part: `exercise_progress.recorded_by` i
-  `client_documents.uploaded_by` són NOT NULL amb `on delete set null`, i
-  esborrar un professional amb progrés o documents fallaria (23502).
+  després). La `0116` treu el NOT NULL de `exercise_progress.recorded_by` i
+  `client_documents.uploaded_by`, que eren alhora `on delete set null`: esborrar
+  un professional amb progrés registrat fallava (23502). Ara el registre es
+  queda sense autor; l'app no l'ensenya enlloc i el tipus admet null.
+  Proves: `supabase/tests/0116_author_nullable*.sql`.
   **«Demo amb demo» també a la base**: `demo_profiles` (sense accés per a
   `authenticated`) i `same_world(client)` a totes les polítiques de l'historial
   i a `health_consent_status(client)`, que diu si hi ha consentiment de salut i

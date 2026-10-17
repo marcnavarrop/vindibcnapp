@@ -801,7 +801,8 @@ export interface Database {
           weight_kg: number;
           reps: number | null;
           notes: string | null;
-          recorded_by: string;
+          /** Qui ho va registrar. NULL si el seu perfil s'ha esborrat (0116). */
+          recorded_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -811,7 +812,7 @@ export interface Database {
           weight_kg: number;
           reps?: number | null;
           notes?: string | null;
-          recorded_by: string;
+          recorded_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -821,7 +822,7 @@ export interface Database {
           weight_kg?: number;
           reps?: number | null;
           notes?: string | null;
-          recorded_by?: string;
+          recorded_by?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -1602,7 +1603,8 @@ export interface Database {
         Row: {
           id: string;
           client_id: string;
-          uploaded_by: string;
+          /** Qui el va pujar. NULL si el seu perfil s'ha esborrat (0116). */
+          uploaded_by: string | null;
           storage_path: string;
           file_name: string;
           file_size: number | null;
@@ -1613,7 +1615,7 @@ export interface Database {
         Insert: {
           id?: string;
           client_id: string;
-          uploaded_by: string;
+          uploaded_by?: string | null;
           storage_path: string;
           file_name: string;
           file_size?: number | null;

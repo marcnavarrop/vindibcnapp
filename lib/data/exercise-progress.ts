@@ -10,7 +10,8 @@ export type ExerciseProgressEntry = {
   weightKg: number;
   reps: number | null;
   notes: string | null;
-  recordedBy: string;
+  /** Null si el perfil de qui ho va registrar s'ha esborrat (0116). */
+  recordedBy: string | null;
   createdAt: string;
 };
 
@@ -30,7 +31,7 @@ type Row = {
   weight_kg: number;
   reps: number | null;
   notes: string | null;
-  recorded_by: string;
+  recorded_by: string | null;
   created_at: string;
 };
 
