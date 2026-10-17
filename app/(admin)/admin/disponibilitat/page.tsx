@@ -33,7 +33,8 @@ export default async function AdminDisponibilitatPage({
   searchParams: Promise<{ trainer?: string }>;
 }) {
   const { trainer: selectedId } = await searchParams;
-  const trainers = await listTrainersDetailed();
+  // Sense els donats de baixa (0128): la seva disponibilitat no s'ofereix.
+  const trainers = (await listTrainersDetailed()).filter((t) => !t.deactivatedAt);
   const selected =
     trainers.find((t) => t.id === selectedId) ?? trainers[0] ?? null;
   const centerSettings = await getCenterSettings();

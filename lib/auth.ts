@@ -125,10 +125,11 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role, specialty")
+    .select("full_name, role, specialty, deactivated_at")
     .eq("id", user.id)
     .single();
-  if (!profile) return null;
+  // Donat de baixa (0128): com si no hi hagués sessió.
+  if (!profile || profile.deactivated_at) return null;
 
   return {
     id: user.id,

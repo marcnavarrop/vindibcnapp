@@ -1233,6 +1233,25 @@ export function renderEmail(
       };
       break;
     }
+    case "waitlist_cancelled": {
+      // El professional s'ha donat de baixa (0127/0128). `trainer` pot faltar:
+      // si se n'ha esborrat el perfil, ja no en queda el nom.
+      const t = i.ns("emails.waitlistCancelled");
+      const s = sessionParts(i, d, contact);
+      subject = t("subject");
+      block = {
+        eyebrow: { tone: "attention", text: t("eyebrow") },
+        heading: t("heading"),
+        preheader: s.preheader,
+        intro: [hola, t("intro")],
+        hero: s.hero,
+        details: s.rows,
+        cta: { label: t("cta"), url: appLink("/client/reservas") },
+        outro: [t("outro")],
+        footer: "client",
+      };
+      break;
+    }
     case "gift_voucher_redeemed": {
       const t = i.ns("emails.giftRedeemed");
       subject = t("subject");

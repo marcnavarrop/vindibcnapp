@@ -48,7 +48,7 @@ function Group({
 export default async function BonusPage() {
   const [trainers, weights, tiersAnnual, tiersBiennial, workerSettings, payouts] =
     await Promise.all([
-    listTrainers(),
+    listTrainers({ includeInactive: true }),
     currentWeightMap(),
     listTiers("annual"),
     listTiers("biennial"),
@@ -75,7 +75,7 @@ export default async function BonusPage() {
       if (!enabled) {
         return {
           trainerId: t.id,
-          name: t.name,
+          name: t.active ? t.name : `${t.name} (de baixa)`,
           enabled,
           payoutFrequency: frequency,
           current: null,
@@ -97,7 +97,7 @@ export default async function BonusPage() {
       }));
       return {
         trainerId: t.id,
-        name: t.name,
+        name: t.active ? t.name : `${t.name} (de baixa)`,
         enabled,
         payoutFrequency: frequency,
         current: {
@@ -111,8 +111,9 @@ export default async function BonusPage() {
     }),
   );
 
-  const trainerName = (id: string) =>
-    trainers.find((t) => t.id === id)?.name ?? "—";
+  // `saved`: el nom copiat al bonus, per si se n'ha esborrat el perfil (0127).
+  const trainerName = (id: string | null, saved?: string | null) =>
+    (id ? trainers.find((t) => t.id === id)?.name : undefined) ?? saved ?? "—";
 
   return (
     <>
@@ -200,7 +201,7 @@ export default async function BonusPage() {
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <div>
                       <p className="font-bold text-brand-dark">
-                        {trainerName(p.trainerId)}
+                        {trainerName(p.trainerId, p.trainerName)}
                       </p>
                       <p className="text-xs text-brand-muted">
                         {formatDate(p.periodStart)} – {formatDate(p.periodEnd)} ·{" "}

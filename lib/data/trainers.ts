@@ -17,6 +17,8 @@ export type TrainerListItem = {
   clientCount: number;
   /** Ruta de la foto al Storage. Null = sense foto (es mostra la inicial). */
   avatarPath: string | null;
+  /** Donat de baixa (0128); null = actiu. */
+  deactivatedAt: string | null;
 };
 
 export type TrainerDetail = {
@@ -25,6 +27,7 @@ export type TrainerDetail = {
   email: string;
   specialty: Specialty | null;
   avatarPath: string | null;
+  deactivatedAt: string | null;
 };
 
 export type TrainerInput = {
@@ -33,7 +36,11 @@ export type TrainerInput = {
   specialty: Specialty | null;
 };
 
-/** Listado de entrenadores con su especialidad y nº de clientes asignados. */
+/**
+ * Listado de entrenadores con su especialidad y nº de clientes asignados.
+ * També els donats de baixa (0128), amb `deactivatedAt`: la pantalla els posa
+ * a part, a «Antics professionals».
+ */
 export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
   if (USE_MOCK) {
     const store = getStore();
@@ -45,6 +52,7 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
         email: p.email ?? "",
         specialty: p.specialty,
         avatarPath: p.avatar_path ?? null,
+        deactivatedAt: p.deactivated_at ?? null,
         clientCount: store.clients.filter(
           (c) => c.assigned_trainer_id === p.id,
         ).length,
@@ -54,7 +62,7 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
   const supabase = await createClient();
   const { data: trainers, error: tErr } = await supabase
     .from("profiles")
-    .select("id, full_name, email, specialty, avatar_path")
+    .select("id, full_name, email, specialty, avatar_path, deactivated_at")
     .eq("role", "trainer")
     .order("full_name");
   if (tErr) throw tErr;
@@ -80,6 +88,7 @@ export async function listTrainersDetailed(): Promise<TrainerListItem[]> {
     email: t.email ?? "",
     specialty: t.specialty,
     avatarPath: t.avatar_path ?? null,
+    deactivatedAt: t.deactivated_at ?? null,
     clientCount: counts.get(t.id) ?? 0,
   }));
 }
@@ -113,6 +122,7 @@ export async function getTrainer(id: string): Promise<TrainerDetail | null> {
           email: p.email ?? "",
           specialty: p.specialty,
           avatarPath: p.avatar_path ?? null,
+          deactivatedAt: p.deactivated_at ?? null,
         }
       : null;
   }
@@ -120,7 +130,7 @@ export async function getTrainer(id: string): Promise<TrainerDetail | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, specialty, role, avatar_path")
+    .select("id, full_name, email, specialty, role, avatar_path, deactivated_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -131,6 +141,7 @@ export async function getTrainer(id: string): Promise<TrainerDetail | null> {
     email: data.email ?? "",
     specialty: data.specialty,
     avatarPath: data.avatar_path ?? null,
+    deactivatedAt: data.deactivated_at ?? null,
   };
 }
 

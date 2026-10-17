@@ -207,10 +207,11 @@ export async function getClientCenterData(
     const meusBonos = store.bonos.filter((b) => b.client_id === client.id);
     const bonoSessions = sessionsByService(meusBonos);
     const bonoTypes = Object.keys(bonoSessions) as ServiceType[];
+    // Sense els donats de baixa (0128), ni ells ni les seves franges.
     const trainers = store.profiles
-      .filter((p) => p.role === "trainer")
+      .filter((p) => p.role === "trainer" && !p.deactivated_at)
       .map((p) => ({ id: p.id, name: p.full_name ?? "—", avatarUrl: null }));
-    const rules = store.availability_rules.map((r) => ({
+    const rules = store.availability_rules.filter((r) => trainers.some((t) => t.id === r.trainer_id)).map((r) => ({
       trainerId: r.trainer_id,
       weekday: r.weekday,
       startSlot: startSlotOf(r.start_time),
@@ -265,7 +266,9 @@ export async function getClientCenterData(
       .single(),
   );
   const trainersPromise = Promise.resolve(
-    admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer"),
+    // Sense els donats de baixa (0128); les seves franges ja no hi són
+    // (`listAllTrainerRulesLite`).
+    admin.from("profiles").select("id, full_name, avatar_path").eq("role", "trainer").is("deactivated_at", null),
   );
 
   const [holds, { data: client }, bonoRows, trainerRows, avatars, rules, blocks, resRows] = await Promise.all([

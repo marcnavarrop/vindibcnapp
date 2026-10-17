@@ -106,6 +106,7 @@ const DATA: Record<NotificationEventType, Record<string, string>> = {
   new_exercises_assigned: { name: "Ana Ferrer" },
   invoice_generated: { name: "Laia Puig", period: "Març 2026", total: "1.240,00 €" },
   waitlist_fulfilled: { name: "Ana Ferrer", ...WHENS, ...GRUP, trainer: "Laia Puig" },
+  waitlist_cancelled: { name: "Ana Ferrer", ...WHENS, ...GRUP, trainer: "Laia Puig" },
   subscription_renewed: { name: "Ana Ferrer", ...GRUP, sessions: "8", untilIso: "2026-10-06T00:00:00.000Z" },
   subscription_payment_failed: { name: "Ana Ferrer", ...GRUP, amountEur: "140" },
   subscription_cancelled: { name: "Ana Ferrer", ...GRUP },

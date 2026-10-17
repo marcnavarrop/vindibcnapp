@@ -174,9 +174,10 @@ export async function downloadInvoiceAdminAction(fd: FormData): Promise<void> {
   const settlement = settlementId ? await getSettlement(settlementId) : null;
   if (!settlement?.invoicePath) redirect("/admin/facturacio/liquidacions");
 
-  const contact = await getProfileContact(settlement.trainerId);
+  // Si se n'ha esborrat el perfil (0127), el nom que es va copiar en generar-la.
+  const contact = settlement.trainerId ? await getProfileContact(settlement.trainerId) : null;
   const url = await invoiceSignedUrl(settlement.invoicePath, {
-    trainerName: contact?.name ?? "Professional",
+    trainerName: contact?.name ?? settlement.trainerName ?? "Professional",
     periodStart: settlement.periodStart,
     periodEnd: settlement.periodEnd,
     lines: settlement.breakdown,

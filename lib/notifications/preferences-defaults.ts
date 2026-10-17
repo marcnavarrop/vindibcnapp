@@ -74,6 +74,10 @@ export const DEFAULT_PREFERENCES: Record<PreferenceKey, boolean> = {
   // Sempre (ALWAYS_SENT_EVENTS): se li acaba de crear una reserva sense
   // demanar-la en aquell moment; si no ho sap, no hi va i crema la sessió.
   waitlist_fulfilled_email: true,
+  // Sempre (ALWAYS_SENT_EVENTS): li hem anul·lat una espera perquè el
+  // professional s'ha donat de baixa (0127/0128). No ho ha demanat ell i a l'app
+  // l'espera simplement desapareix.
+  waitlist_cancelled_email: true,
   // Sempre (ALWAYS_SENT_EVENTS): un val és al portador i aquest correu és
   // l'única senyal que li arriba si algú el bescanvia per error o de mala fe.
   gift_voucher_redeemed_email: true,
@@ -144,6 +148,7 @@ export type AlwaysSentEvent =
   | "reservation_rescheduled"
   | "bono_unpaid_cancelled"
   | "waitlist_fulfilled"
+  | "waitlist_cancelled"
   | "trial_status"
   | "gift_voucher_redeemed";
 
@@ -164,6 +169,7 @@ export const ALWAYS_SENT_EVENTS: AlwaysSentEvent[] = [
   "reservation_rescheduled",
   "bono_unpaid_cancelled",
   "waitlist_fulfilled",
+  "waitlist_cancelled",
   "trial_status",
   "gift_voucher_redeemed",
 ];

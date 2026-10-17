@@ -149,9 +149,24 @@ export async function middleware(request: NextRequest) {
   //    completan lo que `getViewer()` necesita para no repetir la consulta.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, specialty, preferred_language")
+    .select("role, full_name, specialty, preferred_language, deactivated_at")
     .eq("id", user.id)
     .single();
+
+  // Donat de baixa (0128). L'admin ja el bloqueja a Auth (ban) i en revoca les
+  // sessions, però el token d'accés que ja tenia val fins que caduca (una
+  // hora). Aquí no passa d'aquí: fora les cookies de sessió i al login, amb
+  // l'avís. A la base tampoc no li quedaria res (`current_role()` torna NULL).
+  if (profile?.deactivated_at) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("error", "deactivated");
+    const out = NextResponse.redirect(url);
+    for (const c of request.cookies.getAll())
+      if (c.name.startsWith("sb-")) out.cookies.delete(c.name);
+    return out;
+  }
 
   if (!profile || profile.role !== ROUTE_ROLES[protectedPrefix]) {
     // Rol incorrecto → a su propia área (o al login si no hay rol).

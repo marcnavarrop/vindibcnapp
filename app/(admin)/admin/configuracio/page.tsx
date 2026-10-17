@@ -41,8 +41,10 @@ export default async function AdminConfigPage({
       searchParams,
       readPreTicket(),
     ]);
-  const avatars = await avatarUrls(trainers.map((t) => t.avatarPath));
-  const professionals = trainers.map((t) => ({
+  // Els colors, només dels actius: un donat de baixa (0128) ja no surt a cap calendari.
+  const actius = trainers.filter((t) => !t.deactivatedAt);
+  const avatars = await avatarUrls(actius.map((t) => t.avatarPath));
+  const professionals = actius.map((t) => ({
     id: t.id,
     name: t.fullName,
     avatarUrl: avatars.get(t.avatarPath ?? "") ?? null,

@@ -20,7 +20,10 @@ export type ServiceRate = {
 
 export type Settlement = {
   id: string;
-  trainerId: string;
+  /** NULL si se n'ha esborrat el perfil (0127): llavors compta `trainerName`. */
+  trainerId: string | null;
+  /** El nom en generar-la, copiat a la base (0127). */
+  trainerName: string | null;
   periodStart: string;
   periodEnd: string;
   totalAmount: number;
@@ -63,11 +66,12 @@ function rowToRate(r: {
 }
 
 const SETTLEMENT_COLUMNS =
-  "id, trainer_id, period_start, period_end, total_amount, session_breakdown, generated_at, generated_by, invoice_path";
+  "id, trainer_id, trainer_name, period_start, period_end, total_amount, session_breakdown, generated_at, generated_by, invoice_path";
 
 function rowToSettlement(s: {
   id: string;
-  trainer_id: string;
+  trainer_id: string | null;
+  trainer_name?: string | null;
   period_start: string;
   period_end: string;
   total_amount: number | string;
@@ -79,6 +83,7 @@ function rowToSettlement(s: {
   return {
     id: s.id,
     trainerId: s.trainer_id,
+    trainerName: s.trainer_name ?? null,
     periodStart: s.period_start,
     periodEnd: s.period_end,
     totalAmount: Number(s.total_amount),

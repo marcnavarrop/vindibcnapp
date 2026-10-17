@@ -27,6 +27,7 @@
     "clinical:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/clinical-check.mts",
     "archive:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/archive-check.mts",
     "session-notes:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/session-notes-check.mts",
+    "baixa:check": "tsx --tsconfig scripts/tsconfig.roles.json scripts/baixa-check.mts",
     "occupancy:check": "tsx --tsconfig scripts/tsconfig.snapshot.json scripts/occupancy-check.mts",
     "actions:check": "node scripts/actions-check.mjs",
     "rows:check": "node scripts/row-limit-check.mjs",

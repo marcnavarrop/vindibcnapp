@@ -966,6 +966,10 @@
           "label": "Waiting-list space",
           "description": "When a space you were waiting for frees up and we confirm it."
         },
+        "waitlist_cancelled": {
+          "label": "Waitlist cancelled",
+          "description": "When we cancel one of your waitlist spots because the professional no longer has a schedule at the centre."
+        },
         "gift_voucher_redeemed": {
           "label": "Your gift was redeemed",
           "description": "When someone uses a gift voucher you bought."
@@ -1287,6 +1291,14 @@
       "cta": "View my booking",
       "outro": "If you can't make it after all, cancel it as early as you can so someone else can take the slot."
     },
+    "waitlistCancelled": {
+      "eyebrow": "Waitlist cancelled",
+      "subject": "We've cancelled your waitlist spot",
+      "heading": "The spot you were waiting for won't open up",
+      "intro": "The professional for this session no longer has a schedule at the centre, so we've cancelled your place on the waitlist:",
+      "cta": "Book another time",
+      "outro": "You can pick another time or another professional whenever you like. If you have any questions, talk to the centre."
+    },
     "newExercisesAssigned": {
       "eyebrow": "New exercises",
       "subject": "New exercises assigned",
@@ -1545,7 +1557,8 @@
     "signupDisabled": "New accounts can't be created right now. Please contact the centre.",
     "generic": "That didn't work. Please try again.",
     "link": "The link isn't valid or has expired. Please try again.",
-    "preExpired": "Your admin session expired while you were testing. Please sign in again."
+    "preExpired": "Your admin session expired while you were testing. Please sign in again.",
+    "deactivated": "This account has been deactivated. If you think this is a mistake, please contact the centre."
   },
   "meta": {
     "description": "VindiBCN, the client area of the personal training and physiotherapy centre in Gràcia (Barcelona)."

@@ -193,7 +193,7 @@ export async function listTomorrowTrainerAgendas(
         .map((p) => p.profile_id),
     );
     const trainers = store.profiles.filter(
-      (p) => p.role === "trainer" && optedIn.has(p.id),
+      (p) => p.role === "trainer" && !p.deactivated_at && optedIn.has(p.id),
     );
     const clientName = (clientId: string) => {
       const c = store.clients.find((x) => x.id === clientId);
@@ -243,15 +243,16 @@ export async function listTomorrowTrainerAgendas(
   const { data: prefs } = await admin
     .from("notification_preferences")
     .select(
-      "profile_id, profile:profiles!notification_preferences_profile_id_fkey(id, email, phone, full_name, role)",
+      "profile_id, profile:profiles!notification_preferences_profile_id_fkey(id, email, phone, full_name, role, deactivated_at)",
     )
     .eq("trainer_daily_agenda_email", true);
   type PrefRow = {
     profile_id: string;
-    profile: { id: string; email: string | null; phone: string | null; full_name: string | null; role: string } | null;
+    profile: { id: string; email: string | null; phone: string | null; full_name: string | null; role: string; deactivated_at: string | null } | null;
   };
+  // Un donat de baixa (0128) ja no rep l'agenda de l'endemà.
   const trainers = ((prefs as unknown as PrefRow[]) ?? []).filter(
-    (p) => p.profile && p.profile.role === "trainer",
+    (p) => p.profile && p.profile.role === "trainer" && !p.profile.deactivated_at,
   );
   if (trainers.length === 0) return [];
 

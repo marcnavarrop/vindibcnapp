@@ -482,5 +482,34 @@
   "lib/data/gdpr-export.ts::exportClientData::client_test_entries": {
     "category": "acotada",
     "reason": "Un client (RGPD): l'exportació ha de ser sencera."
+  },
+  "lib/data/professional-deactivation.ts::getBaixaImpact::clients": {
+    "category": "acotada",
+    "reason": "Els clients assignats a UN professional, i els noms d'aquests mateixos ids.",
+    "count": 2
+  },
+  "lib/data/professional-deactivation.ts::getBaixaImpact::reservations": {
+    "category": "acotada",
+    "reason": "Les reserves futures d'UN professional."
+  },
+  "lib/data/professional-deactivation.ts::getBaixaImpact::booking_series": {
+    "category": "acotada",
+    "reason": "Les sèries actives d'UN professional."
+  },
+  "lib/data/professional-deactivation.ts::getBaixaImpact::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Les esperes vives d'UN professional."
+  },
+  "lib/data/professional-deactivation.ts::getBaixaImpact::trial_bookings": {
+    "category": "acotada",
+    "reason": "Les proves pendents o confirmades d'UN professional."
+  },
+  "lib/data/professional-status.ts::(mòdul)::profiles": {
+    "category": "acotada",
+    "reason": "Només els perfils donats de baixa (0128): uns pocs."
+  },
+  "lib/data/waitlist.ts::notifyCancelledWaits::waitlist_entries": {
+    "category": "acotada",
+    "reason": "Només les anul·lades per una baixa i encara sense avisar: es buida cada nit."
   }
 }

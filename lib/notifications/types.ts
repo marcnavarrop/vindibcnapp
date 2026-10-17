@@ -44,6 +44,7 @@ export type NotificationEventType =
   | "invoice_generated"
   // Llista d'espera:
   | "waitlist_fulfilled"
+  | "waitlist_cancelled"
   // Subscripcions (0072):
   | "subscription_renewed"
   | "subscription_payment_failed"
@@ -224,6 +225,11 @@ export const EVENT_META: Record<
     audience: ["client"],
     group: "general",
   },
+  waitlist_cancelled: {
+    ...CLIENT_EVENT_TEXT.waitlist_cancelled,
+    audience: ["client"],
+    group: "general",
+  },
   subscription_renewed: {
     ...CLIENT_EVENT_TEXT.subscription_renewed,
     audience: ["client"],
@@ -309,6 +315,7 @@ export const EVENT_ORDER: NotificationEventType[] = [
   "new_exercises_assigned",
   "invoice_generated",
   "waitlist_fulfilled",
+  "waitlist_cancelled",
   "gift_voucher_redeemed",
   "gift_voucher_gifted",
   "support_ticket_created",

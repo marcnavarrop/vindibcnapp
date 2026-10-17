@@ -12,17 +12,22 @@ import { PERSONES_TABS } from "@/lib/admin-tabs";
 const TABS = PERSONES_TABS;
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import { ResendInviteButton } from "@/components/resend-invite-button";
+import { ReactivateProfessionalButton } from "@/components/reactivate-professional-button";
+import { formatDate } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
 type Trainer = Awaited<ReturnType<typeof listTrainersDetailed>>[number];
 
 export default async function EntrenadorsPage() {
-  const [trainers, palette, withoutTrainer] = await Promise.all([
+  const [all, palette, withoutTrainer] = await Promise.all([
     listTrainersDetailed(),
     getColorPalette(),
     countClientsWithoutTrainer(),
   ]);
+  // Els donats de baixa (0128), a part: «Antics professionals», a sota.
+  const trainers = all.filter((t) => !t.deactivatedAt);
+  const former = all.filter((t) => t.deactivatedAt);
   // Les signed URLs es demanen totes d'un cop: una per fila serien N viatges.
   const avatars = await avatarUrls(trainers.map((t) => t.avatarPath));
 
@@ -160,6 +165,38 @@ export default async function EntrenadorsPage() {
             </tbody>
           </table>
         </div>
+
+        {former.length > 0 && (
+          <section className="mt-10" data-testid="former-pros">
+            <h2 className="text-lg text-brand-dark">Antics professionals</h2>
+            <p className="mt-1 mb-3 text-sm text-brand-muted">
+              Donats de baixa: no poden entrar ni surten a l&apos;agenda. El seu historial es conserva.
+            </p>
+            <ul className="flex flex-col gap-2">
+              {former.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex flex-col gap-2 rounded-2xl border border-brand-border bg-white px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
+                  data-former-pro={t.id}
+                >
+                  <div className="min-w-0">
+                    <Link
+                      href={`/admin/entrenadors/${t.id}/edit`}
+                      className={`font-bold text-brand-dark hover:text-brand-purple ${TAP}`}
+                    >
+                      {t.fullName}
+                    </Link>
+                    <p className="truncate text-[13px] text-brand-muted">{t.email}</p>
+                    <p className="text-[13px] text-brand-muted">De baixa des del {formatDate(t.deactivatedAt!)}</p>
+                  </div>
+                  <div className="sm:max-w-xs">
+                    <ReactivateProfessionalButton id={t.id} name={t.fullName} compact />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </main>
     </>
   );

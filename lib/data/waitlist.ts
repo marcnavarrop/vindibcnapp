@@ -746,6 +746,131 @@ async function profileOfClient(clientId: string): Promise<string | null> {
   return data?.profile_id ?? null;
 }
 
+// ─── Esperes anul·lades per la baixa d'un professional (0127/0128) ─────────
+
+/** Per què una espera es va anul·lar sense que el client ho demanés. */
+export const WAIT_CANCEL_PROFESSIONAL_GONE = "professional_baixa";
+
+/**
+ * Anul·la les esperes d'un professional que es dona de baixa (0128) i les deixa
+ * PENDENTS D'AVISAR (`cancel_notified_at` NULL). Les que ja no esperaven no es
+ * toquen. Torna quantes s'han anul·lat.
+ *
+ * Si se n'esborra el perfil directament (des de Supabase), això ho fa la base
+ * sola: el trigger `waitlist_trainer_gone` de la 0127.
+ */
+export async function cancelWaitsOfProfessional(trainerId: string): Promise<number> {
+  if (USE_MOCK) {
+    const store = getStore();
+    let n = 0;
+    for (const w of store.waitlist_entries)
+      if (w.trainer_id === trainerId && w.status === "waiting") {
+        w.status = "cancelled";
+        w.cancel_reason = WAIT_CANCEL_PROFESSIONAL_GONE;
+        w.cancel_notified_at = null;
+        n++;
+      }
+    saveStore(store);
+    return n;
+  }
+  const { data, error } = await createAdminClient()
+    .from("waitlist_entries")
+    .update({ status: "cancelled", cancel_reason: WAIT_CANCEL_PROFESSIONAL_GONE, cancel_notified_at: null })
+    .eq("trainer_id", trainerId)
+    .eq("status", "waiting")
+    .select("id");
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+/**
+ * Avisa els clients de les esperes anul·lades per la baixa d'un professional
+ * que encara no s'han avisat, i les marca (`cancel_notified_at`).
+ *
+ * La crida la mateixa baixa, en acabar, i el cron de cada nit, que és el que
+ * avisa quan el professional s'ha esborrat directament des de Supabase (0127).
+ * Una espera d'una hora que ja ha passat es marca sense correu: ja no li diria
+ * res. Es marca després d'intentar-ho: el resultat del correu queda a
+ * `notification_log` (`notify` no llança mai), i així ningú no el rep dos cops.
+ */
+export async function notifyCancelledWaits(now = new Date()): Promise<{ notified: number; skipped: number }> {
+  type Row = {
+    id: string;
+    client_id: string;
+    service_type: ServiceType;
+    trainer_id: string | null;
+    desired_date: string;
+    desired_time: string;
+  };
+  let rows: Row[];
+  if (USE_MOCK) {
+    rows = getStore().waitlist_entries.filter(
+      (w) => w.status === "cancelled" && w.cancel_reason === WAIT_CANCEL_PROFESSIONAL_GONE && !w.cancel_notified_at,
+    );
+  } else {
+    const { data, error } = await createAdminClient()
+      .from("waitlist_entries")
+      .select("id, client_id, service_type, trainer_id, desired_date, desired_time")
+      .eq("status", "cancelled")
+      .eq("cancel_reason", WAIT_CANCEL_PROFESSIONAL_GONE)
+      .is("cancel_notified_at", null);
+    if (error) throw error;
+    rows = data ?? [];
+  }
+
+  let notified = 0;
+  let skipped = 0;
+  for (const w of rows) {
+    let whenIso: string | null = null;
+    try {
+      whenIso = centerLocalToInstant(w.desired_date, w.desired_time.slice(0, 5)).toISOString();
+    } catch {
+      whenIso = null;
+    }
+    const profileId = await profileOfClient(w.client_id);
+    const contact = profileId ? await getProfileContact(profileId) : null;
+    if (whenIso && whenIso > now.toISOString() && contact) {
+      // El nom, si el perfil encara hi és (baixa des de l'app); si se n'ha
+      // esborrat el perfil, el correu surt sense.
+      const trainer = w.trainer_id ? await getProfileContact(w.trainer_id) : null;
+      await notify(
+        {
+          type: "waitlist_cancelled",
+          recipient: contact,
+          relatedId: w.id,
+          data: {
+            name: contact.name ?? "",
+            whenIso,
+            serviceType: w.service_type,
+            trainer: trainer?.name ?? "",
+          },
+        },
+        // Obligatori (ALWAYS_SENT_EVENTS): l'espera desapareix de la seva
+        // pantalla sense que ho hagi demanat.
+        { ignorePreferences: true },
+      );
+      notified++;
+    } else skipped++;
+    await markWaitNotified(w.id, now);
+  }
+  return { notified, skipped };
+}
+
+async function markWaitNotified(id: string, now: Date): Promise<void> {
+  if (USE_MOCK) {
+    const store = getStore();
+    const w = store.waitlist_entries.find((x) => x.id === id);
+    if (w) w.cancel_notified_at = now.toISOString();
+    saveStore(store);
+    return;
+  }
+  await createAdminClient()
+    .from("waitlist_entries")
+    .update({ cancel_notified_at: now.toISOString() })
+    .eq("id", id)
+    .is("cancel_notified_at", null);
+}
+
 // ─── Lectura per a la UI ────────────────────────────────────────────────────
 
 export type WaitlistItem = {

@@ -966,6 +966,10 @@
           "label": "Plaça de la llista d'espera",
           "description": "Quan s'allibera una plaça que esperaves i te la confirmem."
         },
+        "waitlist_cancelled": {
+          "label": "Espera anul·lada",
+          "description": "Quan anul·lem una espera teva perquè el professional ja no té agenda al centre."
+        },
         "gift_voucher_redeemed": {
           "label": "T'han bescanviat un regal",
           "description": "Quan algú fa servir un val de regal que has comprat."
@@ -1287,6 +1291,14 @@
       "cta": "Veure la meva reserva",
       "outro": "Si al final no hi pots anar, cancel·la-la com abans millor perquè una altra persona la pugui aprofitar."
     },
+    "waitlistCancelled": {
+      "eyebrow": "Espera anul·lada",
+      "subject": "Hem anul·lat la teva espera",
+      "heading": "La plaça que esperaves ja no s'alliberarà",
+      "intro": "El professional d'aquesta sessió ha deixat de tenir agenda al centre, així que hem anul·lat la teva espera:",
+      "cta": "Reservar una altra hora",
+      "outro": "Pots triar una altra hora o un altre professional quan vulguis. Si tens cap dubte, parla amb el centre."
+    },
     "newExercisesAssigned": {
       "eyebrow": "Exercicis nous",
       "subject": "Nous exercicis assignats",
@@ -1545,7 +1557,8 @@
     "signupDisabled": "Ara mateix no es poden crear comptes nous. Posa't en contacte amb el centre.",
     "generic": "No s'ha pogut completar. Torna-ho a provar.",
     "link": "L'enllaç no és vàlid o ha caducat. Torna-ho a provar.",
-    "preExpired": "La sessió d'administrador ha caducat mentre provaves. Torna a entrar."
+    "preExpired": "La sessió d'administrador ha caducat mentre provaves. Torna a entrar.",
+    "deactivated": "Aquest compte s'ha donat de baixa. Si creus que és un error, posa't en contacte amb el centre."
   },
   "meta": {
     "description": "VindiBCN, l'àrea client del centre d'entrenament personal i fisioteràpia de Gràcia (Barcelona)."

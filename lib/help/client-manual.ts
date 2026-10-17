@@ -1235,9 +1235,9 @@ export function buildClientManual(
               {
                 t: "p",
                 text: T({
-                  ca: "Quan una sessió de grup està plena no és un carreró sense sortida: pots apuntar-te a la llista d'espera. Si algú cancel·la, la plaça passa a ser teva automàticament, es fa la reserva sola, es descompta la sessió del bo i t'avisem per correu. Si el centre tanca aquella hora —per exemple, per unes vacances del professional—, ja no hi haurà cap plaça a donar: no hi entraràs, i la teva espera es pot tancar.",
-                  es: "Cuando una sesión de grupo está llena no es un callejón sin salida: puedes apuntarte a la lista de espera. Si alguien cancela, la plaza pasa a ser tuya automáticamente, se hace la reserva sola, se descuenta la sesión del bono y te avisamos por correo. Si el centro cierra esa hora —por ejemplo, por unas vacaciones del profesional—, ya no habrá ninguna plaza que dar: no entrarás, y tu espera se puede cerrar.",
-                  en: "A full group session isn't a dead end: you can join the waiting list. If someone cancels, the space becomes yours automatically, the booking makes itself, the session comes off your pass and we email you. If the centre closes that hour —for example, while the professional is on holiday—, there's no longer a space to give: you won't get in, and your wait may be closed.",
+                  ca: "Quan una sessió de grup està plena no és un carreró sense sortida: pots apuntar-te a la llista d'espera. Si algú cancel·la, la plaça passa a ser teva automàticament, es fa la reserva sola, es descompta la sessió del bo i t'avisem per correu. Si el centre tanca aquella hora —per exemple, per unes vacances del professional—, ja no hi haurà cap plaça a donar: no hi entraràs, i la teva espera es pot tancar. I si el professional deixa de tenir agenda al centre, l'espera s'anul·la i t'avisem per correu.",
+                  es: "Cuando una sesión de grupo está llena no es un callejón sin salida: puedes apuntarte a la lista de espera. Si alguien cancela, la plaza pasa a ser tuya automáticamente, se hace la reserva sola, se descuenta la sesión del bono y te avisamos por correo. Si el centro cierra esa hora —por ejemplo, por unas vacaciones del profesional—, ya no habrá ninguna plaza que dar: no entrarás, y tu espera se puede cerrar. Y si el profesional deja de tener agenda en el centro, la espera se anula y te avisamos por correo.",
+                  en: "A full group session isn't a dead end: you can join the waiting list. If someone cancels, the space becomes yours automatically, the booking makes itself, the session comes off your pass and we email you. If the centre closes that hour —for example, while the professional is on holiday—, there's no longer a space to give: you won't get in, and your wait may be closed. And if the professional no longer has a schedule at the centre, the wait is cancelled and we email you.",
                 }),
               },
               {
@@ -2247,6 +2247,19 @@ export function buildClientManual(
                       ca: "Quan s'allibera una plaça que esperaves i te la reservem.",
                       es: "Cuando se libera una plaza que esperabas y te la reservamos.",
                       en: "When a space you were waiting for frees up and we book it for you.",
+                    }),
+                    T({ ca: "No", es: "No", en: "No" }),
+                  ],
+                  [
+                    T({
+                      ca: "Espera anul·lada",
+                      es: "Espera anulada",
+                      en: "Waitlist cancelled",
+                    }),
+                    T({
+                      ca: "Quan anul·lem una espera teva perquè el professional ja no té agenda al centre.",
+                      es: "Cuando anulamos una espera tuya porque el profesional ya no tiene agenda en el centro.",
+                      en: "When we cancel one of your waits because the professional no longer has a schedule at the centre.",
                     }),
                     T({ ca: "No", es: "No", en: "No" }),
                   ],

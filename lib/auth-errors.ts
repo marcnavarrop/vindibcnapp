@@ -65,7 +65,8 @@ export type AuthErrorKey =
   | "rateLimited"
   | "emailRateLimited"
   | "timeout"
-  | "signupDisabled";
+  | "signupDisabled"
+  | "deactivated";
 
 const KEY_BY_CODE: Record<string, AuthErrorKey> = {
   invalid_credentials: "invalidCredentials",
@@ -81,6 +82,8 @@ const KEY_BY_CODE: Record<string, AuthErrorKey> = {
   request_timeout: "timeout",
   signup_disabled: "signupDisabled",
   email_provider_disabled: "signupDisabled",
+  // L'admin l'ha donat de baixa (0128): el compte està bloquejat a Auth.
+  user_banned: "deactivated",
 };
 
 const KEY_BY_TEXT: [RegExp, AuthErrorKey][] = [
@@ -94,6 +97,7 @@ const KEY_BY_TEXT: [RegExp, AuthErrorKey][] = [
   [/invalid format|unable to validate email|invalid email/i, "emailInvalid"],
   [/signups? not allowed|signups? (are )?disabled/i, "signupDisabled"],
   [/timeout|timed out/i, "timeout"],
+  [/banned/i, "deactivated"],
 ];
 
 export function authErrorKey(error: AuthLikeError): AuthErrorKey | null {
@@ -113,7 +117,7 @@ export function authErrorKey(error: AuthLikeError): AuthErrorKey | null {
  * el text que volgués («El teu compte està bloquejat, truca al…»). Ara només hi
  * va un codi d'aquesta llista; qualsevol altra cosa no es pinta.
  */
-export const LOGIN_URL_ERRORS = ["link", "preExpired"] as const;
+export const LOGIN_URL_ERRORS = ["link", "preExpired", "deactivated"] as const;
 export type LoginUrlError = (typeof LOGIN_URL_ERRORS)[number];
 export function loginUrlError(value: string | null): LoginUrlError | null {
   return (LOGIN_URL_ERRORS as readonly string[]).includes(value ?? "")

@@ -6,7 +6,8 @@ import type { SupportCategory, SupportStatus } from "@/types/database";
 
 export type SupportTicket = {
   id: string;
-  createdBy: string;
+  /** NULL si se n'ha esborrat el perfil; el nom queda a `authorName` (0127). */
+  createdBy: string | null;
   authorName: string;
   title: string;
   description: string;
@@ -62,8 +63,8 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
     const store = getStore();
     const { getViewer } = await import("@/lib/auth");
     const viewer = await getViewer();
-    const nameOf = (id: string) =>
-      store.profiles.find((p) => p.id === id)?.full_name ?? "—";
+    const nameOf = (id: string | null) =>
+      (id && store.profiles.find((p) => p.id === id)?.full_name) || null;
     return store.support_tickets
       .filter(
         (t) => viewer?.role === "admin" || t.created_by === (viewer?.id ?? ""),
@@ -72,7 +73,7 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
       .map((t) => ({
         id: t.id,
         createdBy: t.created_by,
-        authorName: nameOf(t.created_by),
+        authorName: nameOf(t.created_by) ?? t.created_by_name ?? "—",
         title: t.title,
         description: t.description,
         category: t.category,
@@ -81,7 +82,7 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
         updatedAt: t.updated_at,
         answer: t.answer ?? null,
         answeredAt: t.answered_at ?? null,
-        answeredByName: t.answered_by ? nameOf(t.answered_by) : null,
+        answeredByName: t.answered_by ? (nameOf(t.answered_by) ?? "—") : null,
       }));
   }
 
@@ -89,14 +90,15 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
   const { data, error } = await supabase
     .from("support_tickets")
     .select(
-      "id, created_by, title, description, category, status, created_at, updated_at, answer, answered_at, author:profiles!support_tickets_created_by_fkey(full_name), answerer:profiles!support_tickets_answered_by_fkey(full_name)",
+      "id, created_by, created_by_name, title, description, category, status, created_at, updated_at, answer, answered_at, author:profiles!support_tickets_created_by_fkey(full_name), answerer:profiles!support_tickets_answered_by_fkey(full_name)",
     )
     .order("created_at", { ascending: false });
   if (error) throw error;
 
   type Row = {
     id: string;
-    created_by: string;
+    created_by: string | null;
+    created_by_name: string | null;
     title: string;
     description: string;
     category: SupportCategory;
@@ -111,7 +113,7 @@ export async function listSupportTickets(): Promise<SupportTicket[]> {
   return (data as unknown as Row[]).map((t) => ({
     id: t.id,
     createdBy: t.created_by,
-    authorName: t.author?.full_name ?? "—",
+    authorName: t.author?.full_name ?? t.created_by_name ?? "—",
     title: t.title,
     description: t.description,
     category: t.category,
@@ -263,7 +265,8 @@ export function validateAnswer(
 /** El que cal per avisar qui va obrir el tiquet que ja té resposta. */
 export type AnsweredTicket = {
   id: string;
-  createdBy: string;
+  /** NULL si se n'ha esborrat el perfil (0127): no hi ha a qui avisar. */
+  createdBy: string | null;
   title: string;
   status: SupportStatus;
   /** La resposta d'abans: si és la mateixa, no es torna a avisar. */

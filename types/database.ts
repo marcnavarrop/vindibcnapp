@@ -15,7 +15,7 @@ export type Specialty = "entrenador" | "fisioterapeuta";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-/** Què es deixa a `data_access_log` (0015, 0110, 0119). */
+/** Què es deixa a `data_access_log` (0015, 0110, 0119, 0128). */
 export type DataAccessLogAction =
   | "export"
   | "delete"
@@ -25,7 +25,9 @@ export type DataAccessLogAction =
   | "clinical_archive_export"
   | "clinical_purge"
   | "demo_profile_added"
-  | "demo_profile_removed";
+  | "demo_profile_removed"
+  | "professional_deactivated"
+  | "professional_reactivated";
 
 /** Què hi ha a cada entrada de l'arxiu clínic (0119). */
 export type ClinicalArchiveKind = "first_visit" | "followup" | "session_note" | "document" | "consent";
@@ -262,6 +264,10 @@ export interface Database {
           objective: string | null;
           avatar_path: string | null;
           created_at: string;
+          /** Donat de baixa (desactivat) per l'admin; NULL = actiu (0128).
+           *  Opcional al tipus perquè el mock no el porta a totes les files. */
+          deactivated_at?: string | null;
+          deactivated_by?: string | null;
         };
         Insert: {
           id: string;
@@ -279,6 +285,8 @@ export interface Database {
           objective?: string | null;
           avatar_path?: string | null;
           created_at?: string;
+          deactivated_at?: string | null;
+          deactivated_by?: string | null;
         };
         Update: {
           id?: string;
@@ -296,6 +304,8 @@ export interface Database {
           objective?: string | null;
           avatar_path?: string | null;
           created_at?: string;
+          deactivated_at?: string | null;
+          deactivated_by?: string | null;
         };
         Relationships: [];
       };
@@ -609,6 +619,11 @@ export interface Database {
           fulfilled_reservation_id: string | null;
           /** La va tancar el centre en tancar disponibilitat (0091). */
           cancelled_by_center: boolean;
+          /** Per què s'ha anul·lat sense que el client ho demanés (0127):
+           *  'professional_baixa'. Opcionals: el mock no els porta sempre. */
+          cancel_reason?: string | null;
+          /** Quan se n'ha avisat el client; NULL = encara no (0127). */
+          cancel_notified_at?: string | null;
         };
         Insert: {
           id?: string;
@@ -624,6 +639,8 @@ export interface Database {
           fulfilled_at?: string | null;
           fulfilled_reservation_id?: string | null;
           cancelled_by_center?: boolean;
+          cancel_reason?: string | null;
+          cancel_notified_at?: string | null;
         };
         Update: Partial<{
           id: string;
@@ -639,6 +656,8 @@ export interface Database {
           fulfilled_at: string | null;
           fulfilled_reservation_id: string | null;
           cancelled_by_center: boolean;
+          cancel_reason: string | null;
+          cancel_notified_at: string | null;
         }>;
         Relationships: [];
       };
@@ -878,6 +897,8 @@ export interface Database {
           action: DataAccessLogAction;
           details: string | null;
           created_at: string;
+          /** Nom i correu de qui ho va fer, copiats per un trigger (0127). */
+          actor_label?: string | null;
         };
         Insert: {
           id?: string;
@@ -1587,7 +1608,8 @@ export interface Database {
           day_name: string | null;
           day_number: number;
           done_on: string;
-          created_by: string;
+          /** NULL si se n'ha esborrat el perfil (0127). */
+          created_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -1991,7 +2013,9 @@ export interface Database {
       support_tickets: {
         Row: {
           id: string;
-          created_by: string;
+          /** NULL si se n'ha esborrat el perfil; el nom queda a `created_by_name` (0127). */
+          created_by: string | null;
+          created_by_name?: string | null;
           title: string;
           description: string;
           category: SupportCategory;
@@ -2134,7 +2158,9 @@ export interface Database {
       bonus_payouts: {
         Row: {
           id: string;
-          trainer_id: string;
+          /** NULL si se n'ha esborrat el perfil; el nom queda a `trainer_name` (0127). */
+          trainer_id: string | null;
+          trainer_name?: string | null;
           period_start: string;
           period_end: string;
           frequency: BonusPayoutFrequency;
@@ -2166,7 +2192,9 @@ export interface Database {
       settlements: {
         Row: {
           id: string;
-          trainer_id: string;
+          /** NULL si se n'ha esborrat el perfil; el nom queda a `trainer_name` (0127). */
+          trainer_id: string | null;
+          trainer_name?: string | null;
           period_start: string;
           period_end: string;
           total_amount: number;

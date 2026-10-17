@@ -2,6 +2,7 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getInactiveProfileIds } from "@/lib/data/professional-status";
 import { getStore, saveStore } from "@/lib/mock/store";
 import {
   localDateStr,
@@ -95,6 +96,9 @@ export async function listAvailabilityRules(
 export async function listAvailabilityLite(
   trainerId: string,
 ): Promise<AvailabilityRuleLite[]> {
+  // Un donat de baixa (0128) no té disponibilitat: així `assertWithinAvailability`
+  // no deixa reservar-li res, vingui d'on vingui la reserva.
+  if ((await getInactiveProfileIds()).has(trainerId)) return [];
   if (USE_MOCK) {
     return getStore()
       .availability_rules.filter((r) => r.trainer_id === trainerId)
@@ -130,11 +134,16 @@ export async function listAvailabilityLite(
  * qualsevol autenticat ja les podia llegir totes, i són horaris d'obertura.
  */
 export async function listAllTrainerRulesLite(): Promise<TrainerRuleLite[]> {
+  // Sense les dels donats de baixa (0128): conserven les regles (per si es
+  // reactiven), però ningú no les ha de poder reservar, tampoc a /prova.
+  const inactive = await getInactiveProfileIds();
   if (USE_MOCK) {
-    return getStore().availability_rules.map((r) => ({
-      trainerId: r.trainer_id,
-      ...toLite(r),
-    }));
+    return getStore()
+      .availability_rules.filter((r) => !inactive.has(r.trainer_id))
+      .map((r) => ({
+        trainerId: r.trainer_id,
+        ...toLite(r),
+      }));
   }
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -143,7 +152,9 @@ export async function listAllTrainerRulesLite(): Promise<TrainerRuleLite[]> {
       "trainer_id, weekday, start_time, end_time, valid_from, valid_until, service_types",
     );
   if (error) throw error;
-  return (data ?? []).map((r) => ({ trainerId: r.trainer_id, ...toLite(r) }));
+  return (data ?? [])
+    .filter((r) => !inactive.has(r.trainer_id))
+    .map((r) => ({ trainerId: r.trainer_id, ...toLite(r) }));
 }
 
 /**

@@ -21,6 +21,7 @@ import { prunePasswordResetRequests } from "@/lib/data/password-reset";
 import { cleanupPendingExerciseVideos } from "@/lib/data/exercise-videos";
 import { cleanupOrphanDocuments } from "@/lib/data/client-documents";
 import { purgeExpiredClinicalArchive } from "@/lib/data/clinical-archive";
+import { notifyCancelledWaits } from "@/lib/data/waitlist";
 
 export const dynamic = "force-dynamic";
 
@@ -170,6 +171,16 @@ async function handle(req: NextRequest) {
     return { error: e instanceof Error ? e.message : String(e) };
   });
 
+  // ─── Esperes anul·lades per la baixa d'un professional (0127/0128) ───
+  // La baixa des de l'app ja avisa en el moment; això recull les que no s'han
+  // pogut avisar i, sobretot, les d'un professional esborrat directament des de
+  // Supabase (les anul·la el trigger de la 0127). Per sobre de la guarda: és un
+  // avís d'una cosa ja feta, com el dels bons no pagats.
+  const waitsCancelled = await notifyCancelledWaits().catch((e) => {
+    console.error("[cron] avís d'esperes anul·lades", e);
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+
   // ─── Hora d'enviament configurable ───
   //
   // A partir d'aquí ve el que SÍ que és una preferència d'enviament: avisos de
@@ -197,6 +208,7 @@ async function handle(req: NextRequest) {
       pendingVideosRemoved,
       orphanDocumentsRemoved,
       clinicalPurge,
+      waitsCancelled,
     });
   }
 
@@ -269,6 +281,7 @@ async function handle(req: NextRequest) {
     pendingVideosRemoved,
     orphanDocumentsRemoved,
     clinicalPurge,
+    waitsCancelled,
     bonosExpiring: {
       window_days: BONO_EXPIRY_WARNING_DAYS,
       targets: expiring.length,

@@ -118,7 +118,7 @@ export async function answerCore(
     };
   }
 
-  if (saved.previousAnswer !== checked.value && saved.createdBy !== viewer.id)
+  if (saved.createdBy && saved.previousAnswer !== checked.value && saved.createdBy !== viewer.id)
     await notifySupportAnswer({
       ticketId: saved.id,
       authorId: saved.createdBy,

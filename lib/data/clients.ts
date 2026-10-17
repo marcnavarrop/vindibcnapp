@@ -647,21 +647,33 @@ export const getClientRefByProfile = cache(async (
   return data ? { id: data.id, createdAt: data.created_at } : null;
 });
 
-/** Entrenadores disponibles para asignar (para los selects de formularios). */
-export async function listTrainers(): Promise<{ id: string; name: string }[]> {
+const INACTIVE_TRAINER_ERROR = "Aquest professional està donat de baixa: tria'n un altre.";
+
+/**
+ * Entrenadores disponibles para asignar (para los selects de formularios).
+ *
+ * Sense els donats de baixa (0128), que no s'han de poder triar enlloc.
+ * `includeInactive`: només per a facturació, on se'ls ha de poder tancar
+ * l'última liquidació o bonus; `active` diu quins són.
+ */
+export async function listTrainers(
+  opts: { includeInactive?: boolean } = {},
+): Promise<{ id: string; name: string; active: boolean }[]> {
   if (USE_MOCK) {
     return getStore()
-      .profiles.filter((p) => p.role === "trainer")
-      .map((p) => ({ id: p.id, name: p.full_name ?? "—" }));
+      .profiles.filter((p) => p.role === "trainer" && (opts.includeInactive || !p.deactivated_at))
+      .map((p) => ({ id: p.id, name: p.full_name ?? "—", active: !p.deactivated_at }));
   }
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("profiles")
-    .select("id, full_name")
+    .select("id, full_name, deactivated_at")
     .eq("role", "trainer")
     .order("full_name");
+  if (!opts.includeInactive) query = query.is("deactivated_at", null);
+  const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map((p) => ({ id: p.id, name: p.full_name ?? "—" }));
+  return (data ?? []).map((p) => ({ id: p.id, name: p.full_name ?? "—", active: !p.deactivated_at }));
 }
 
 /**
@@ -699,6 +711,7 @@ export async function reassignClientTrainer(
       const target = store.profiles.find((p) => p.id === trainerId);
       if (target?.role !== "trainer")
         throw new Error("El professional indicat no existeix.");
+      if (target.deactivated_at) throw new Error(INACTIVE_TRAINER_ERROR);
     }
     client.assigned_trainer_id = trainerId;
     saveStore(store);
@@ -710,12 +723,14 @@ export async function reassignClientTrainer(
   if (trainerId) {
     const { data: target, error: tErr } = await admin
       .from("profiles")
-      .select("role")
+      .select("role, deactivated_at")
       .eq("id", trainerId)
       .maybeSingle();
     if (tErr) throw tErr;
     if (target?.role !== "trainer")
       throw new Error("El professional indicat no existeix.");
+    // Un donat de baixa (0128) ja no surt als selectors; per si arriba igualment.
+    if (target.deactivated_at) throw new Error(INACTIVE_TRAINER_ERROR);
   }
 
   const { error } = await admin

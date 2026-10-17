@@ -491,9 +491,27 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
             ],
           ],
         },
+        { t: "h", text: "Donar-lo de baixa" },
+        {
+          t: "p",
+          text: "Quan algú marxa, a baix de tot de la seva fitxa hi ha «Donar de baixa». No s'esborra: es desactiva. No pot entrar, deixa de sortir a l'agenda, als selectors i a /prova, i la seva disponibilitat ja no s'ofereix a ningú. Tot el seu historial es queda amb el seu nom: sessions fetes, notes, liquidacions i bonus.",
+        },
+        {
+          t: "p",
+          text: "Abans de confirmar, la pantalla ensenya tot el que en depèn i què li passarà a cada cosa: els clients assignats passen al professional que triïs (o es queden sense); les reserves futures es cancel·len en nom del centre, la sessió torna al bo i el client rep un correu; les sèries periòdiques es tanquen; les llistes d'espera s'anul·len i s'avisa el client; i les sessions de prova s'anul·len i s'avisa la persona. Si vols passar alguna reserva a un altre professional en comptes de cancel·lar-la, fes-ho abans des de l'agenda. Per confirmar, cal escriure el seu nom complet.",
+        },
+        {
+          t: "p",
+          text: "Un cop fet, la mateixa pantalla diu què s'ha fet, i queda anotat al registre d'accions. A la llista de Professionals passa a «Antics professionals», a sota de tot, amb la data de la baixa.",
+        },
+        { t: "h", text: "Reactivar-lo" },
+        {
+          t: "p",
+          text: "A «Antics professionals» (o a la seva fitxa), «Reactivar» i confirmar. Torna a poder entrar amb la mateixa contrasenya i la seva disponibilitat es torna a oferir. El que es va resoldre en donar-lo de baixa no torna: els clients, reserves i esperes s'han d'assignar de nou si cal.",
+        },
         {
           t: "warn",
-          text: "Aquesta pantalla no té botó d'esborrar. Un professional amb sessions fetes és a liquidacions, a bonus i a l'historial de reserves de mig centre; treure'l no és una operació de pantalla. Si algú marxa, deixa-li la fitxa i buida-li la disponibilitat: sense franges, ningú no li pot reservar res.",
+          text: "No et pots donar de baixa a tu mateix, i des d'aquí només es donen de baixa professionals, mai un administrador. Amb el mode PRE armat, ni la baixa ni la reactivació es fan. I no l'esborris des de Supabase: la baixa d'aquí és la que avisa tothom i es pot desfer.",
         },
       ],
     },

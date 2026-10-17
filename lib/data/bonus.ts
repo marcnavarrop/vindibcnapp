@@ -43,7 +43,10 @@ export type BonusPayout = {
   /** Amb quina freqüència es va tancar, i per tant quin joc de trams es va aplicar. */
   frequency: BonusPayoutFrequency;
   id: string;
-  trainerId: string;
+  /** NULL si se n'ha esborrat el perfil (0127): llavors compta `trainerName`. */
+  trainerId: string | null;
+  /** El nom en generar-lo, copiat a la base (0127). */
+  trainerName: string | null;
   periodStart: string;
   periodEnd: string;
   totalUnits: number;
@@ -669,6 +672,7 @@ export async function listPayouts(trainerId?: string): Promise<BonusPayout[]> {
       .map((p) => ({
         id: p.id,
         trainerId: p.trainer_id,
+        trainerName: p.trainer_name ?? null,
         periodStart: p.period_start,
         periodEnd: p.period_end,
         frequency: p.frequency,
@@ -684,7 +688,7 @@ export async function listPayouts(trainerId?: string): Promise<BonusPayout[]> {
   let query = supabase
     .from("bonus_payouts")
     .select(
-      "id, trainer_id, period_start, period_end, frequency, total_units, total_amount, tier_breakdown, generated_at, generated_by",
+      "id, trainer_id, trainer_name, period_start, period_end, frequency, total_units, total_amount, tier_breakdown, generated_at, generated_by",
     )
     .order("generated_at", { ascending: false });
   if (trainerId) query = query.eq("trainer_id", trainerId);
@@ -694,6 +698,7 @@ export async function listPayouts(trainerId?: string): Promise<BonusPayout[]> {
   return (data ?? []).map((p) => ({
     id: p.id,
     trainerId: p.trainer_id,
+    trainerName: p.trainer_name ?? null,
     periodStart: p.period_start,
     periodEnd: p.period_end,
     frequency: p.frequency,

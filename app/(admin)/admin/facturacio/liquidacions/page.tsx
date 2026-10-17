@@ -36,7 +36,8 @@ export default async function LiquidacionsPage({
   }>;
 }) {
   const sp = await searchParams;
-  const trainers = await listTrainers();
+  // També els donats de baixa (0128): se'ls ha de poder tancar l'última.
+  const trainers = await listTrainers({ includeInactive: true });
 
   const trainerId =
     sp.trainer && trainers.some((t) => t.id === sp.trainer) ? sp.trainer : "";
@@ -53,8 +54,9 @@ export default async function LiquidacionsPage({
     listSettlements(),
   ]);
 
-  const trainerName = (id: string) =>
-    trainers.find((t) => t.id === id)?.name ?? "—";
+  // `saved`: el nom copiat a la liquidació, per si se n'ha esborrat el perfil (0127).
+  const trainerName = (id: string | null, saved?: string | null) =>
+    (id ? trainers.find((t) => t.id === id)?.name : undefined) ?? saved ?? "—";
 
   return (
     <>
@@ -86,7 +88,7 @@ export default async function LiquidacionsPage({
                 <option value="">Tria un professional…</option>
                 {trainers.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name}
+                    {t.active ? t.name : `${t.name} (de baixa)`}
                   </option>
                 ))}
               </select>
@@ -248,7 +250,7 @@ export default async function LiquidacionsPage({
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <div>
                     <p className="font-bold text-brand-dark">
-                      {trainerName(s.trainerId)}
+                      {trainerName(s.trainerId, s.trainerName)}
                     </p>
                     <p className="text-xs text-brand-muted">
                       {formatDate(s.periodStart)} – {formatDate(s.periodEnd)} ·
