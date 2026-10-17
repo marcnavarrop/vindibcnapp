@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**114 migracions SQL** a `supabase/migrations/` (`0001`–`0114`), numerades i
+**115 migracions SQL** a `supabase/migrations/` (`0001`–`0115`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -172,6 +172,15 @@ capçalera per fer-la obligatòria (i afegir-hi `frame-ancestors 'none'`).
   l'entrenador assignat; escriuen l'admin i els fisios; un seguiment l'edita
   només el seu autor o l'admin; esborrar, només l'admin. El client, res (sí a
   l'exportació RGPD). Els triggers fixen `client_id`, autor i `created_at`.
+  Des de la `0115`, l'autor només pot passar a NULL si el seu perfil ja no
+  existeix (`clinical_keep_author`, amb `profile_exists` SECURITY DEFINER): és
+  el `on delete set null` en donar de baixa un professional. Abans, el trigger
+  el desfeia (seguiments orfes, i esborrar algú amb una primera visita fallava
+  amb 23503). Un UPDATE que no canvia el text no toca la data d'edició.
+  Proves: `supabase/tests/0115_clinical_*.sql` (comprovat a producció abans i
+  després). Pendent a part: `exercise_progress.recorded_by` i
+  `client_documents.uploaded_by` són NOT NULL amb `on delete set null`, i
+  esborrar un professional amb progrés o documents fallaria (23502).
   **«Demo amb demo» també a la base**: `demo_profiles` (sense accés per a
   `authenticated`) i `same_world(client)` a totes les polítiques de l'historial
   i a `health_consent_status(client)`, que diu si hi ha consentiment de salut i
