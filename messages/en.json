@@ -1444,6 +1444,7 @@
       "h2": "2. What data we process",
       "p2": "Identification and contact data (name, email address, telephone), date of birth, gender and physical data (height, weight) and goals. Also data relating to the service relationship: session packages, bookings and payments.",
       "p2b": "<b>Health data.</b> With your explicit consent (Art. 9(2)(a) GDPR), we process the assessment tests and body measurements recorded by our professionals (for example strength, mobility, girths or weight) to tailor your training and show your progress. They can be seen by your assigned professional, the physiotherapy team, the centre's management and you in the app. If you have physiotherapy, our physiotherapist processes your clinical records to provide healthcare, under professional secrecy (Art. 9(2)(h) GDPR), and we keep them for the period required by health regulations. You can withdraw your consent at any time from your profile or {email, select, none {by writing to the centre} other {at <mail>{email}</mail>}}, without affecting earlier processing; if you do not consent, you can still use our training services.",
+      "p2c": "<b>If you ask us to erase your data.</b> We delete your account and all your personal data, except your physiotherapy clinical record (first visit, follow-ups, session notes, any documents you gave us and your health data consents), which healthcare law requires us to keep (Art. 17(3)(b) GDPR and Art. 12 of Catalan Law 21/2000): 15 years from your last care. Until then it is stored separately, with no access through the app; only the physiotherapy team and the centre's management can consult it, and every consultation is logged. When the period ends, it is deleted. In the meantime, you can ask for a copy {email, select, none {from the centre} other {at <mail>{email}</mail>}}.",
       "h3": "3. Purposes",
       "p3": "Management of client registrations, bookings and session packages; training follow-up and, where applicable, physiotherapy treatment; invoicing and payment collection; and communications relating to the service and the centre.",
       "h4": "4. Legal basis",
@@ -1510,6 +1511,9 @@
   },
   "shell": {
     "skipToContent": "Skip to content"
+  },
+  "clinicalErasure": {
+    "text": "We have deleted your account and your personal data. The only exception is your physiotherapy clinical record, which the law requires us to keep (Art. 17(3)(b) GDPR and Art. 12 of Catalan Law 21/2000) until {date}. Until then it is stored separately, with no access through the app, and only the physiotherapy team and the centre's management can consult it; after that it is deleted. In the meantime, you can ask the centre for a copy."
   },
   "healthConsent": {
     "metaTitle": "Health data consent · VindiBCN",

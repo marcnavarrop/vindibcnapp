@@ -7,11 +7,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { countClientsWithoutTrainer, listTrainersDetailed } from "@/lib/data/trainers";
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { PERSONES_TABS } from "@/lib/admin-tabs";
 
-const TABS = [
-  { href: "/admin/clients", label: "Clients" },
-  { href: "/admin/entrenadors", label: "Professionals" },
-];
+const TABS = PERSONES_TABS;
 import { SPECIALTY_LABELS } from "@/lib/labels";
 import { ResendInviteButton } from "@/components/resend-invite-button";
 

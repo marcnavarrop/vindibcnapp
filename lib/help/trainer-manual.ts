@@ -351,6 +351,11 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
           t: "note",
           text: "Cada vegada que obres un historial clínic queda anotat al registre d'accessos del centre (qui, de quin client i quan). És el que demana la llei per a les dades de salut. El client no el veu a l'app, però si demana les seves dades, hi va inclòs.",
         },
+        { t: "h", text: "Arxiu clínic (fisioteràpia)" },
+        {
+          t: "p",
+          text: "Quan un client amb historial de fisioteràpia es dona de baixa, el seu historial no desapareix: la llei obliga a conservar-lo 15 anys des de l'última atenció, i va a l'arxiu clínic. Si ets fisio, el tens al menú, «Arxiu clínic»: la llista de pacients arxivats i, en cada un, la primera visita, els seguiments, les notes de sessió, els documents que havia aportat i els seus consentiments. Tot en només lectura: no s'hi pot escriure ni esborrar res, i cada vegada que obres una fitxa queda anotat. Si un antic pacient demana una còpia, ho fa l'administració.",
+        },
         { t: "h", text: "Tests" },
         {
           t: "p",

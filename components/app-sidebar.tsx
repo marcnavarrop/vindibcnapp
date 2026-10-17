@@ -292,7 +292,9 @@ function SidebarContent({
 
       <nav className="flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1">
-          {filterNavByModules(NAV_GROUPS[role], modules).map((entry) => {
+          {filterNavByModules(NAV_GROUPS[role], modules)
+            .filter((e) => isNavGroup(e) || !e.physioOnly || specialty === "fisioterapeuta")
+            .map((entry) => {
             if (isNavGroup(entry) && expandGroups) {
               // Al mòbil, el que hi ha dins de cada grup es veu sense entrar-hi:
               // abans, «Vals de regal» o «Referits» eren pestanyes que ni tan

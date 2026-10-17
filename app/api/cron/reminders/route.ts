@@ -20,6 +20,7 @@ import { toucaEnviarAvisos } from "@/lib/cron-window";
 import { prunePasswordResetRequests } from "@/lib/data/password-reset";
 import { cleanupPendingExerciseVideos } from "@/lib/data/exercise-videos";
 import { cleanupOrphanDocuments } from "@/lib/data/client-documents";
+import { purgeExpiredClinicalArchive } from "@/lib/data/clinical-archive";
 
 export const dynamic = "force-dynamic";
 
@@ -158,6 +159,17 @@ async function handle(req: NextRequest) {
     return 0;
   });
 
+  // ─── Arxiu clínic vençut (0119) ───
+  // El que ha passat els 15 anys s'esborra: primer els fitxers del bucket i
+  // després les files, i queda anotat (sense el nom) a `data_access_log`. Va
+  // aquí i no en un cron propi perquè el pla gratuït en permet un al dia, i per
+  // sobre de la guarda perquè és una obligació, no un avís. Una fallada no ha
+  // d'aturar la resta: demà ho torna a provar.
+  const clinicalPurge = await purgeExpiredClinicalArchive(centerToday()).catch((e) => {
+    console.error("[cron] purga de l'arxiu clínic", e);
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+
   // ─── Hora d'enviament configurable ───
   //
   // A partir d'aquí ve el que SÍ que és una preferència d'enviament: avisos de
@@ -184,6 +196,7 @@ async function handle(req: NextRequest) {
       resetPruned,
       pendingVideosRemoved,
       orphanDocumentsRemoved,
+      clinicalPurge,
     });
   }
 
@@ -255,6 +268,7 @@ async function handle(req: NextRequest) {
     resetPruned,
     pendingVideosRemoved,
     orphanDocumentsRemoved,
+    clinicalPurge,
     bonosExpiring: {
       window_days: BONO_EXPIRY_WARNING_DAYS,
       targets: expiring.length,

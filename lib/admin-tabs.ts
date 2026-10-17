@@ -18,3 +18,10 @@ export const BONS_TABS = [
   { href: "/admin/vals-regal", label: "Vals de regal" },
   { href: "/admin/referits", label: "Referits" },
 ];
+
+/** Persones: clients, professionals i l'arxiu clínic dels que han plegat (0119). */
+export const PERSONES_TABS = [
+  { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/entrenadors", label: "Professionals" },
+  { href: "/admin/arxiu-clinic", label: "Arxiu clínic" },
+];

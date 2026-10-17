@@ -1872,6 +1872,27 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
           t: "warn",
           text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, tests d'avaluació, historial clínic i consentiments. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona.",
         },
+        { t: "h", text: "L'historial clínic es conserva: l'arxiu clínic" },
+        {
+          t: "p",
+          text: "Si el client té historial de fisioteràpia (primera visita, seguiments o notes de sessions de fisio), la llei (Llei 21/2000) obliga a conservar-lo 15 anys des de l'última atenció. Per això, abans d'esborrar-lo, l'app el copia a l'arxiu clínic: l'historial, les notes, els documents que havia aportat i els seus consentiments de salut. El diàleg d'eliminar t'ho diu: «L'historial clínic es conservarà fins al dd/mm/aaaa (Llei 21/2000)». Si no en té, diu que no s'arxiva res.",
+        },
+        {
+          t: "p",
+          text: "Al mateix diàleg, «Text per a la persona que ha demanat la supressió» porta el que li has de dir, en català, castellà i anglès, amb la data: s'ha esborrat tot llevat de l'historial clínic, que es conserva per obligació legal fins a aquell dia. «Copiar» el deixa a punt per enganxar al correu.",
+        },
+        {
+          t: "warn",
+          text: "Si l'arxivat falla, no s'esborra res: surt l'error i el client continua com estava. Torna-ho a provar més tard o obre un tiquet de suport.",
+        },
+        {
+          t: "p",
+          text: "L'arxiu és a Persones → Arxiu clínic: la llista de pacients arxivats i, en cada un, la fitxa en només lectura (dades de contacte, última atenció, fins quan es conserva i cada entrada). No es pot editar ni esborrar res. «Exportar» descarrega un fitxer amb tot, per si l'antic pacient exerceix el dret d'accés; els documents s'obren un a un des de la fitxa. Cada consulta i cada exportació queden registrades. Quan una entrada venç, s'esborra sola (cada nit) i queda anotat sense el nom.",
+        },
+        {
+          t: "note",
+          text: "Els fisioterapeutes també hi tenen accés, en lectura i sense exportar. Els comptes demo s'arxiven marcats com a «Demo» i només els veuen el Fisio Demo i l'administració.",
+        },
         {
           t: "p",
           text: "Abans d'esborrar, plantejat si el que necessites és realment això. Un client que ja no ve però que pot tornar no cal esborrar-lo; un que ho demana per escrit, sí.",

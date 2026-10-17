@@ -93,6 +93,9 @@ export type Store = {
   clinical_first_visits: Tables["clinical_first_visits"]["Row"][];
   clinical_followups: Tables["clinical_followups"]["Row"][];
   clinical_seen: Tables["clinical_seen"]["Row"][];
+  /** L'arxiu clínic (0119). En simulació no hi ha bucket: només les files. */
+  clinical_archive_patients: Tables["clinical_archive_patients"]["Row"][];
+  clinical_archive_entries: Tables["clinical_archive_entries"]["Row"][];
   professional_colors: Tables["professional_colors"]["Row"][];
   service_type_colors: Tables["service_type_colors"]["Row"][];
   centerSettings: Tables["center_settings"]["Row"] | null;
@@ -149,6 +152,8 @@ function fromSeed(): Store {
     clinical_first_visits: structuredClone(seedClinicalFirstVisits),
     clinical_followups: [],
     clinical_seen: [],
+    clinical_archive_patients: [],
+    clinical_archive_entries: [],
     service_rates: [],
     bonus_service_weights: [],
     bonus_tiers: [],

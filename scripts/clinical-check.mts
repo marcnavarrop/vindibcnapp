@@ -169,12 +169,17 @@ try {
   const exp = await exportClientData("c-marta");
   const ch = exp?.data.clinical_history as { first_visit: { body: string } | null; followups: unknown[] } | undefined;
   check("l'exportació porta la primera visita i els seguiments", ch?.first_visit?.body === "Dolor lumbar. Exploració: …" && ch?.followups.length === 1);
-  await deleteClient("c-marta");
+  const del = await deleteClient("c-marta", "u-admin");
   check(
-    "l'esborrat se l'endú tot",
+    "l'esborrat se l'endú tot del compte",
     !s().clinical_first_visits.some((f) => f.client_id === "c-marta") &&
       followupsDe("c-marta").length === 0 &&
       !s().clinical_seen.some((x) => x.client_id === "c-marta"),
+  );
+  // …però abans l'ha arxivat (0119): els detalls, a `npm run archive:check`.
+  check(
+    "…i abans l'ha passat a l'arxiu clínic",
+    del?.archive.archived === true && s().clinical_archive_patients.some((p) => p.former_client_id === "c-marta"),
   );
 } catch (e) {
   bad++;

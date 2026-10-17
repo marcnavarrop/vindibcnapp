@@ -4,11 +4,9 @@ import { ClientsTable } from "@/components/clients-table";
 import { listClientsPage, NO_TRAINER } from "@/lib/data/clients";
 import { getTrainer } from "@/lib/data/trainers";
 import { GroupTabs } from "@/components/ui/group-tabs";
+import { PERSONES_TABS } from "@/lib/admin-tabs";
 
-const TABS = [
-  { href: "/admin/clients", label: "Clients" },
-  { href: "/admin/entrenadors", label: "Professionals" },
-];
+const TABS = PERSONES_TABS;
 
 export const dynamic = "force-dynamic";
 

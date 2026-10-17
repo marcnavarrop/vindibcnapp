@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**118 migracions SQL** a `supabase/migrations/` (`0001`–`0118`), numerades i
+**119 migracions SQL** a `supabase/migrations/` (`0001`–`0119`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -245,8 +245,36 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   retira des de la mateixa pàgina; la fila es queda com a prova.
   `health_consent_status` ignora els retirats i `client_tests_consent_ok` demana
   la 2026-10 o posterior. Proves: `supabase/tests/0118_health_consent_rls.sql`
-  (19 ✓). Pendent de decidir: l'historial clínic s'esborra sencer amb el borrat
-  RGPD (cascada), i la Llei 21/2000 obliga a conservar-lo.
+  (19 ✓).
+- **Arxiu clínic** (`0119`, decisió d'en Marc del 17/10/2026 amb els criteris
+  més conservadors; Llei 21/2000, art. 12). Quan l'admin elimina un client amb
+  historial de fisioteràpia (primera visita, seguiments o notes de sessió de
+  fisio), `deleteClient` (`lib/data/gdpr-delete.ts`) l'ARXIVA ABANS d'esborrar
+  res: `archiveClinicalHistory` (`lib/data/clinical-archive.ts`) copia els
+  documents del client al bucket privat `clinical-archive` (`{patient_id}/…`,
+  sense cap política: només la clau de servei) i crida
+  `archive_clinical_history`, que desa tot o res a `clinical_archive_patients`
+  (nom, naixement, correu, telèfon, última atenció) i
+  `clinical_archive_entries` (primera visita, seguiments, notes de sessió,
+  documents i TOTS els consentiments de salut, amb la retirada; autors com a
+  text). Si qualsevol pas falla, es treuen les còpies i la baixa s'atura sense
+  haver esborrat res. Termini: 15 anys des de l'última sessió de fisio passada
+  (o l'última entrada clínica), per entrada (`purge_after`), per poder passar
+  algun tipus a 5 anys. La confirmació de la baixa ho diu («L'historial clínic
+  es conservarà fins al dd/mm/aaaa (Llei 21/2000)») i dona el text per a la
+  persona en ca/es/en (`clinicalErasure.text`); la política de privacitat en
+  porta la versió general (`p2c`). Lectura: RLS, l'admin tot i els fisios demo
+  amb demo (`is_demo`, que surt de `demo_profiles`); ningú no hi escriu per
+  l'API. Pantalles: `/admin/arxiu-clinic` (pestanya de Persones, amb
+  exportació JSON) i `/trainer/arxiu-clinic` (només fisios); cada obertura i
+  exportació va a `data_access_log` (`clinical_archive_view`,
+  `clinical_archive_export`); els documents, amb URL signada de 10 minuts
+  després de llegir la fila amb la sessió. Purga: dins del cron diari
+  (`/api/cron/reminders`, el pla gratuït només en permet un):
+  `purgeExpiredClinicalArchive` esborra primer els fitxers per l'API de
+  Storage i després `purge_clinical_archive`, que anota `clinical_purge` sense
+  el nom. Proves: `supabase/tests/0119_clinical_archive_rls.sql` (35 ✓) i
+  `npm run archive:check`.
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de

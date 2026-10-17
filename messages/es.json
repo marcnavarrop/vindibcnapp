@@ -1444,6 +1444,7 @@
       "h2": "2. Qué datos tratamos",
       "p2": "Datos identificativos y de contacto (nombre, correo electrónico, teléfono), fecha de nacimiento, género y datos físicos (altura, peso) y objetivos. También datos de la relación de servicio: bonos, reservas y pagos.",
       "p2b": "<b>Datos de salud.</b> Con tu consentimiento explícito (art. 9.2.a RGPD), tratamos los tests de evaluación y las medidas corporales que registran nuestros profesionales (por ejemplo, fuerza, movilidad, perímetros o peso) para adaptar tu entrenamiento y mostrar su evolución. Tienen acceso tu profesional asignado, el equipo de fisioterapia y la administración del centro, y tú mismo en la app. Si haces fisioterapia, nuestra fisioterapeuta trata tu historia clínica para prestarte la asistencia sanitaria, bajo secreto profesional (art. 9.2.h RGPD), y la conservamos el tiempo que fija la normativa sanitaria. Puedes retirar el consentimiento cuando quieras desde tu perfil o {email, select, none {escribiendo al centro} other {en <mail>{email}</mail>}}, sin que afecte al tratamiento anterior; si no lo das, puedes seguir usando nuestros servicios de entrenamiento.",
+      "p2c": "<b>Si pides la supresión.</b> Borramos tu cuenta y todos tus datos personales, salvo tu historia clínica de fisioterapia (primera visita, seguimientos, notas de las sesiones, los documentos que nos hayas aportado y los consentimientos de datos de salud), que la normativa sanitaria nos obliga a conservar (art. 17.3.b RGPD y art. 12 de la Ley 21/2000): 15 años desde la última atención. Hasta entonces se guarda aparte, sin acceso desde la app; solo pueden consultarla el equipo de fisioterapia y la administración del centro, y cada consulta queda registrada. Pasado el plazo, se borra. Mientras tanto, puedes pedir una copia {email, select, none {al centro} other {en <mail>{email}</mail>}}.",
       "h3": "3. Finalidades",
       "p3": "Gestión de altas de cliente, reservas y bonos; seguimiento del entrenamiento y, en su caso, del tratamiento de fisioterapia; facturación y cobros; y comunicaciones relativas al servicio y al centro.",
       "h4": "4. Base legal",
@@ -1510,6 +1511,9 @@
   },
   "shell": {
     "skipToContent": "Saltar al contenido"
+  },
+  "clinicalErasure": {
+    "text": "Hemos borrado tu cuenta y tus datos personales. La única excepción es tu historia clínica de fisioterapia, que la ley nos obliga a conservar (art. 17.3.b RGPD y art. 12 de la Ley 21/2000) hasta el {date}. Hasta entonces se guarda aparte, sin acceso desde la app, y solo pueden consultarla el equipo de fisioterapia y la administración del centro; después se borra. Mientras tanto, puedes pedir una copia escribiendo al centro."
   },
   "healthConsent": {
     "metaTitle": "Consentimiento de datos de salud · VindiBCN",

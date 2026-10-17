@@ -50,6 +50,8 @@ export type NavItem = {
    * s'ha de tornar a pensar.
    */
   shortcut?: boolean;
+  /** Només per als fisioterapeutes (l'arxiu clínic, 0119). */
+  physioOnly?: boolean;
 };
 
 /** Grup de seccions relacionades que apareix com una sola entrada al sidebar. */
@@ -102,6 +104,9 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
       children: [
         { href: "/admin/clients", label: "Clients" },
         { href: "/admin/entrenadors", label: "Professionals" },
+        // L'historial clínic dels que s'han donat de baixa (0119). És gent, no
+        // un document: va amb Clients i Professionals.
+        { href: "/admin/arxiu-clinic", label: "Arxiu clínic", shortLabel: "Arxiu" },
       ],
     },
     {
@@ -181,6 +186,8 @@ export const NAV_GROUPS: Record<Role, NavEntry[]> = {
     },
     { href: "/trainer/exercicis", label: "Exercicis", icon: "dumbbell" },
     { href: "/trainer/comunitat", label: "Comunitat", icon: "community" },
+    // Només el fisio: és l'únic professional que hi pot llegir (0119).
+    { href: "/trainer/arxiu-clinic", label: "Arxiu clínic", icon: "document", physioOnly: true },
     { href: "/trainer/configuracio", label: "Configuració", icon: "settings" },
     // L'última del menú, com al client i pel mateix motiu: no és una àrea on
     // es faci res, és on s'hi va quan alguna de les altres no s'entén.

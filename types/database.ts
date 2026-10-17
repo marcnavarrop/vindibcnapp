@@ -13,6 +13,21 @@
 export type UserRole = "admin" | "trainer" | "client";
 export type Specialty = "entrenador" | "fisioterapeuta";
 
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+/** Què es deixa a `data_access_log` (0015, 0110, 0119). */
+export type DataAccessLogAction =
+  | "export"
+  | "delete"
+  | "clinical_view"
+  | "clinical_archive"
+  | "clinical_archive_view"
+  | "clinical_archive_export"
+  | "clinical_purge";
+
+/** Què hi ha a cada entrada de l'arxiu clínic (0119). */
+export type ClinicalArchiveKind = "first_visit" | "followup" | "session_note" | "document" | "consent";
+
 export type SupportCategory = "bug" | "pregunta" | "suggeriment";
 export type SupportStatus = "open" | "in_progress" | "resolved";
 export type PreferredLanguage = "ca" | "es" | "en";
@@ -857,7 +872,7 @@ export interface Database {
           actor_id: string | null;
           subject_profile_id: string | null;
           subject_label: string | null;
-          action: "export" | "delete" | "clinical_view";
+          action: DataAccessLogAction;
           details: string | null;
           created_at: string;
         };
@@ -866,7 +881,7 @@ export interface Database {
           actor_id?: string | null;
           subject_profile_id?: string | null;
           subject_label?: string | null;
-          action: "export" | "delete" | "clinical_view";
+          action: DataAccessLogAction;
           details?: string | null;
           created_at?: string;
         };
@@ -1211,6 +1226,80 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      /** Arxiu clínic (0119): el pacient donat de baixa. Només lectura per l'API. */
+      clinical_archive_patients: {
+        Row: {
+          id: string;
+          former_client_id: string;
+          full_name: string;
+          birth_date: string | null;
+          email: string | null;
+          phone: string | null;
+          last_care_on: string;
+          archived_at: string;
+          archived_by: string | null;
+          archived_by_name: string | null;
+          is_demo: boolean;
+        };
+        Insert: {
+          id: string;
+          former_client_id: string;
+          full_name: string;
+          birth_date?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          last_care_on: string;
+          archived_at?: string;
+          archived_by?: string | null;
+          archived_by_name?: string | null;
+          is_demo?: boolean;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      /** Arxiu clínic (0119): el que es conserva, una fila per element. */
+      clinical_archive_entries: {
+        Row: {
+          id: string;
+          patient_id: string;
+          kind: ClinicalArchiveKind;
+          body: string | null;
+          author_name: string | null;
+          written_at: string;
+          updated_at: string | null;
+          session_on: string | null;
+          source_id: string | null;
+          storage_path: string | null;
+          file_name: string | null;
+          file_size: number | null;
+          mime_type: string | null;
+          description: string | null;
+          consent_version: string | null;
+          consent_revoked_at: string | null;
+          purge_after: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          kind: ClinicalArchiveKind;
+          body?: string | null;
+          author_name?: string | null;
+          written_at: string;
+          updated_at?: string | null;
+          session_on?: string | null;
+          source_id?: string | null;
+          storage_path?: string | null;
+          file_name?: string | null;
+          file_size?: number | null;
+          mime_type?: string | null;
+          description?: string | null;
+          consent_version?: string | null;
+          consent_revoked_at?: string | null;
+          purge_after: string;
+        };
+        Update: Record<string, never>;
         Relationships: [];
       };
       /** Peticions de canvi de correu d'accés pendents de confirmar (0078). */
@@ -2223,6 +2312,26 @@ export interface Database {
       client_test_suggestions: {
         Args: Record<never, never>;
         Returns: { title: string; unit: string | null; uses: number }[];
+      };
+      /** Arxiu clínic (0119), només clau de servei: té historial? fins quan? */
+      clinical_retention_for: {
+        Args: { p_client: string };
+        Returns: { has_history: boolean; is_demo: boolean; last_care_on: string | null; purge_after: string | null }[];
+      };
+      /** Arxiu clínic (0119), només clau de servei: arxiva tot o res. */
+      archive_clinical_history: {
+        Args: { p_client: string; p_patient_id: string; p_documents: Json; p_actor: string | null };
+        Returns: Json;
+      };
+      /** Arxiu clínic (0119), només clau de servei: entrades vençudes. */
+      clinical_archive_expired: {
+        Args: { p_today: string };
+        Returns: { entry_id: string; patient_id: string; storage_path: string | null }[];
+      };
+      /** Arxiu clínic (0119), només clau de servei: esborra el vençut. */
+      purge_clinical_archive: {
+        Args: { p_entry_ids: string[]; p_today: string };
+        Returns: number;
       };
       health_consent_status: {
         Args: { p_client: string };

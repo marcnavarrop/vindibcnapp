@@ -39,6 +39,8 @@ export default async function PrivacitatPage() {
       {/* Dades de salut (0118): tests i mesures amb consentiment; historial de
           fisioteràpia per l'art. 9.2.h. Text validat per l'assessor. */}
       <p>{t.rich("p2b", v)}</p>
+      {/* Què passa amb l'historial clínic quan es demana la supressió (0119). */}
+      <p>{t.rich("p2c", v)}</p>
 
       <H>{t("h3")}</H>
       <p>{t("p3")}</p>

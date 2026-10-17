@@ -7,8 +7,9 @@ import { deleteTrialsForClient } from "@/lib/data/trial-bookings";
 import { deleteAllClientDocuments } from "@/lib/data/client-documents";
 import type { ServiceType } from "@/types/database";
 import { authErrorCa } from "@/lib/auth-errors";
+import { archiveClinicalHistory, type ArchiveOutcome } from "@/lib/data/clinical-archive";
 
-export type DeleteResult = { profileId: string; label: string };
+export type DeleteResult = { profileId: string; label: string; archive: ArchiveOutcome };
 
 /**
  * Supressió d'un client (dret a l'oblit). Estratègia: hard delete de tot el
@@ -20,15 +21,24 @@ export type DeleteResult = { profileId: string; label: string };
  * 2. S'elimina l'usuari de Supabase Auth (Admin API). Això cascadeja:
  *    auth.users → profiles → clients → (bons, reserves, mesures, exercicis,
  *    tests d'avaluació, historial clínic) i consents. Els pagaments queden amb client_id = NULL (retinguts).
+ *
+ * 0. PERÒ ABANS DE RES, l'arxiu clínic (0119): si el client té historial de
+ *    fisioteràpia, es copia a l'arxiu (Llei 21/2000: 15 anys des de l'alta).
+ *    Si l'arxivat falla, `archiveClinicalHistory` llença i aquí NO s'esborra
+ *    res: ni els documents, ni les proves, ni el compte.
  */
 export async function deleteClient(
   clientId: string,
+  actorId: string,
 ): Promise<DeleteResult | null> {
   if (USE_MOCK) {
-    const store = getStore();
-    const client = store.clients.find((c) => c.id === clientId);
-    if (!client) return null;
-    const profile = store.profiles.find((p) => p.id === client.profile_id);
+    const exists = getStore().clients.some((c) => c.id === clientId);
+    if (!exists) return null;
+    // Primer de tot: si falla, llença i no s'ha tocat res.
+    const archive = await archiveClinicalHistory(clientId, actorId);
+    const before = getStore();
+    const client = before.clients.find((c) => c.id === clientId)!;
+    const profile = before.profiles.find((p) => p.id === client.profile_id);
     const label = `${profile?.full_name ?? "—"} <${profile?.email ?? ""}>`;
     const profileId = client.profile_id;
 
@@ -38,6 +48,12 @@ export async function deleteClient(
       email: profile?.email ?? null,
       phone: profile?.phone ?? null,
     });
+    // Esborra documents del Storage (mock: només metadades).
+    await deleteAllClientDocuments(clientId);
+    // El magatzem es torna a llegir DESPRÉS: les dues crides d'abans desen el
+    // seu, i amb el llegit abans es tornaven a escriure les proves i els
+    // documents que acabaven d'esborrar.
+    const store = getStore();
 
     // Retenció anonimitzada dels pagaments amb concepte.
     for (const p of store.payments.filter((x) => x.client_id === clientId)) {
@@ -50,8 +66,6 @@ export async function deleteClient(
       p.client_id = null;
       p.bono_id = null;
     }
-    // Esborra documents del Storage (mock: només metadades).
-    await deleteAllClientDocuments(clientId);
     // Hard delete de la resta.
     store.bonos = store.bonos.filter((b) => b.client_id !== clientId);
     store.reservations = store.reservations.filter(
@@ -88,7 +102,7 @@ export async function deleteClient(
     store.clients = store.clients.filter((c) => c.id !== clientId);
     store.profiles = store.profiles.filter((p) => p.id !== profileId);
     saveStore(store);
-    return { profileId, label };
+    return { profileId, label, archive };
   }
 
   const admin = createAdminClient();
@@ -107,6 +121,9 @@ export async function deleteClient(
     }
   ).profile;
   const label = `${p?.full_name ?? "—"} <${p?.email ?? ""}>`;
+
+  // Arxiu clínic, ABANS de qualsevol esborrat. Si falla, llença: no s'esborra res.
+  const archive = await archiveClinicalHistory(clientId, actorId);
 
   // RGPD: elimina també les seves sessions de prova (convertides o per email/tel).
   await deleteTrialsForClient({
@@ -139,5 +156,5 @@ export async function deleteClient(
   const { error } = await admin.auth.admin.deleteUser(profileId);
   if (error) throw new Error(authErrorCa(error, "No s'ha pogut eliminar el compte d'accés."));
 
-  return { profileId, label };
+  return { profileId, label, archive };
 }

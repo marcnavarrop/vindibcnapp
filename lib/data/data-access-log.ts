@@ -2,8 +2,9 @@ import "server-only";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStore, saveStore } from "@/lib/mock/store";
+import type { DataAccessLogAction } from "@/types/database";
 
-export type DataAccessAction = "export" | "delete" | "clinical_view";
+export type DataAccessAction = DataAccessLogAction;
 
 /**
  * Deixa constància d'una acció RGPD (exportació o supressió) sobre les dades
@@ -12,7 +13,8 @@ export type DataAccessAction = "export" | "delete" | "clinical_view";
  */
 export async function logDataAccess(input: {
   actorId: string | null;
-  subjectProfileId: string;
+  /** Null quan el perfil ja no existeix (l'arxiu clínic d'un client esborrat). */
+  subjectProfileId: string | null;
   subjectLabel: string;
   action: DataAccessAction;
   details?: string | null;
