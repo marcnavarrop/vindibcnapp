@@ -15,7 +15,9 @@
  *   · ESBORRAR UN TEST S'EMPORTA ELS SEUS REGISTRES, i res més;
  *   · suggeriments: títol i unitat, comptats, sense client ni valors;
  *   · la diferència i el seu color (puja, baixa, neutre) i la gràfica;
- *   · la lectura dels valors escrits a mà («12,5», «1.234,5»).
+ *   · la lectura dels valors escrits a mà («12,5», «1.234,5»);
+ *   · crear tests i registres demana el consentiment de salut (0117); editar i
+ *     esborrar el que hi ha, no.
  *
  * Les regles de QUI pot fer-ho són de la RLS (0113) i es proven al SQL Editor
  * (`supabase/tests/0113_client_tests_rls.sql`).
@@ -78,7 +80,29 @@ const t3 = await data.createClientTest(ANA, v("Salt vertical", "cm", "up"), LAIA
 tests = await data.listClientTests(ANA);
 check(tests.map((t) => t.title).join() === "Dominades,Perímetre abdominal,Salt vertical", "un test nou va al final");
 check((await code(() => data.createClientTest(ANA, v("  DOMINADES "), LAIA))) === "23505", "títol repetit (majúscules i espais): 23505");
-check((await code(() => data.createClientTest(MARTA, v("Dominades", "reps"), LAIA))) === null, "un altre client sí que pot tenir «Dominades»");
+
+console.log("\nConsentiment de salut (0117)");
+check(await data.canCreateClientTests(ANA), "l'Ana té el consentiment de salut (llavor): pot tenir tests nous");
+check(!(await data.canCreateClientTests(MARTA)), "la Marta no el té");
+check((await code(() => data.createClientTest(MARTA, v("Dominades", "reps"), LAIA))) === "42501", "sense consentiment, crear un test: 42501");
+{
+  // Un test de la Marta d'abans (com si fos anterior a la 0117), posat a mà.
+  const s = getStore();
+  const now = new Date().toISOString();
+  s.client_tests.push({ id: "ct-marta-vell", client_id: MARTA, title: "Salt", unit: "cm", description: null, better_when: "up", position: 1, created_by: LAIA, created_at: now, updated_at: now });
+  saveStore(s);
+}
+check((await code(() => data.addTestEntry("ct-marta-vell", { measuredOn: today, value: 30, notes: null }, LAIA))) === "42501", "…ni un registre en un test que ja hi era");
+check((await code(() => data.updateClientTest("ct-marta-vell", v("Salt CMJ", "cm", "up")))) === null, "…però editar el que hi ha, sí");
+check((await code(() => data.deleteClientTest("ct-marta-vell"))) === null, "…i esborrar-lo, també");
+{
+  // La Marta signa el consentiment.
+  const s = getStore();
+  s.consents.push({ id: "cons-marta-health", user_id: "u-client-marta", type: "health_data", version: "2026-06", granted_at: new Date().toISOString(), ip: null, created_at: new Date().toISOString() });
+  saveStore(s);
+}
+check(await data.canCreateClientTests(MARTA), "quan el signa, ja pot");
+check((await code(() => data.createClientTest(MARTA, v("Dominades", "reps"), LAIA))) === null, "un altre client (amb consentiment) sí que pot tenir «Dominades»");
 await data.updateClientTest(t3, { title: "Salt CMJ", unit: "cm", description: "Contramoviment, mans a la cintura.", betterWhen: "up" });
 tests = await data.listClientTests(ANA);
 check(tests[2].title === "Salt CMJ" && tests[2].description?.startsWith("Contramoviment") === true, "editar títol i descripció");

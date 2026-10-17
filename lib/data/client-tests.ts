@@ -15,6 +15,9 @@ import { byDate, titleKey, type BetterWhen, type EntryValues, type TestValues } 
  * real). Si no hi té permís, la lectura no torna res i l'escriptura falla o no
  * troba la fila, i aquí es converteix en error.
  *
+ * CREAR (tests i registres) demana, a més, el consentiment de dades de salut
+ * del client (0117): són dades de salut. Llegir, editar i esborrar, no.
+ *
  * Els errors de la base que les accions tradueixen:
  *   · 23505: el client ja té un test amb aquest títol (sense majúscules).
  *   · 23514: data futura.
@@ -46,6 +49,25 @@ export type TestSuggestion = { title: string; unit: string | null; uses: number 
 /** Un error amb el codi de Postgres, perquè el simulador falli com la base. */
 function pgError(code: string, message: string): Error {
   return Object.assign(new Error(message), { code });
+}
+
+/**
+ * Es poden crear tests i registres per a aquest client: té signat el
+ * consentiment de dades de salut (0117). Llegir, editar i esborrar no ho
+ * demanen. La base ho torna a mirar (política restrictiva d'INSERT).
+ */
+export async function canCreateClientTests(clientId: string): Promise<boolean> {
+  if (USE_MOCK) return mockHasHealthConsent(clientId);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("client_tests_consent_ok", { p_client: clientId });
+  if (error) throw error;
+  return data === true;
+}
+
+function mockHasHealthConsent(clientId: string): boolean {
+  const store = getStore();
+  const client = store.clients.find((c) => c.id === clientId);
+  return !!client && store.consents.some((c) => c.user_id === client.profile_id && c.type === "health_data");
 }
 
 type EntryRow = {
@@ -155,6 +177,8 @@ export async function createClientTest(clientId: string, v: TestValues, createdB
   if (USE_MOCK) {
     const store = getStore();
     if (!store.clients.some((c) => c.id === clientId)) throw pgError("42501", "Client desconegut.");
+    // Com la política restrictiva de la 0117: sense consentiment de salut, no.
+    if (!mockHasHealthConsent(clientId)) throw pgError("42501", "Sense consentiment de salut.");
     if (mockTitleTaken(clientId, v.title)) throw pgError("23505", "Títol repetit.");
     const now = new Date().toISOString();
     const id = crypto.randomUUID();
@@ -259,6 +283,7 @@ export async function addTestEntry(testId: string, v: EntryValues, createdBy: st
     const store = getStore();
     const t = store.client_tests.find((x) => x.id === testId);
     if (!t) throw pgError("P0002", "Aquest test ja no existeix.");
+    if (!mockHasHealthConsent(t.client_id)) throw pgError("42501", "Sense consentiment de salut.");
     if (v.measuredOn > centerToday()) throw pgError("23514", "Data futura.");
     const now = new Date().toISOString();
     store.client_test_entries.push({

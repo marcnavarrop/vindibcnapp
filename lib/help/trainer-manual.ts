@@ -362,6 +362,10 @@ export function buildTrainerManual(s: TrainerManualSettings): Chapter[] {
         },
         {
           t: "note",
+          text: "Els tests són DADES DE SALUT: per CREAR-ne un o afegir-hi un registre, el client ha de tenir signat el consentiment de dades de salut. Si no el té, a la pestanya surt «Consentiment de dades de salut pendent» i no hi ha «+ Nou test» ni «+ Registre»; el que ja hi ha es pot consultar, editar i esborrar. El client el signa des de la seva àrea, a Configuració → Privacitat i consentiments.",
+        },
+        {
+          t: "note",
           text: "Els escriuen el professional assignat i l'administració. Si ets fisio, veus la pestanya a la fitxa de qualsevol client, però en NOMÉS LECTURA (sense «+ Nou test», ni «+ Registre», ni editar o esborrar), llevat dels clients que tinguis assignats. Si no ets fisio i el client no és teu, la pestanya no hi és. El client els veu a la seva àrea, a Exercicis. Si un client canvia de professional, els tests es queden amb ell i els passa a escriure el nou.",
         },
         { t: "h", text: "Notes i documents" },

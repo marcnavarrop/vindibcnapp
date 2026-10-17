@@ -110,7 +110,14 @@ export const seedAvailabilityRules: AvailabilityRule[] = [
 ];
 
 type Consent = Database["public"]["Tables"]["consents"]["Row"];
-export const seedConsents: Consent[] = [];
+/**
+ * L'Ana rep fisioteràpia i té el consentiment de dades de salut signat (així a
+ * la seva fitxa es poden crear tests d'avaluació, 0117). La Marta, no: és on es
+ * veu el bloqueig.
+ */
+export const seedConsents: Consent[] = [
+  { id: "cons-ana-health", user_id: "u-client-ana", type: "health_data", version: "2026-06", granted_at: now, ip: null, created_at: now },
+];
 
 type DataAccessLog = Database["public"]["Tables"]["data_access_log"]["Row"];
 export const seedDataAccessLog: DataAccessLog[] = [];

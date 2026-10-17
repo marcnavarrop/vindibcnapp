@@ -6,6 +6,7 @@ import { centerToday } from "@/lib/center-time";
 import { parseEntry, parseTest } from "@/lib/client-tests";
 import {
   addTestEntry,
+  canCreateClientTests,
   createClientTest,
   deleteClientTest,
   deleteTestEntry,
@@ -36,6 +37,19 @@ function revalidate(clientId: string) {
   revalidatePath("/client/exercicis");
 }
 
+const NO_CONSENT =
+  "Aquest client no té signat el consentiment de dades de salut. Fins que no l'accepti des de la seva àrea, no s'hi poden afegir tests ni registres.";
+
+/**
+ * En crear, un 42501 pot ser falta de permís o falta del consentiment de salut
+ * (0117): es pregunta quin dels dos per dir-ho bé.
+ */
+async function explainCreate(e: unknown, clientId: string, fallback: string): Promise<string> {
+  if ((e as { code?: string })?.code === "42501" && !(await canCreateClientTests(clientId).catch(() => true)))
+    return NO_CONSENT;
+  return explain(e, fallback);
+}
+
 /** Error de la base → frase per a la fitxa. */
 function explain(e: unknown, fallback: string): string {
   const err = e as { code?: string };
@@ -64,7 +78,7 @@ export async function createTestAction(
     revalidate(clientId);
     return { ok: true, id };
   } catch (e) {
-    return { ok: false, error: explain(e, "No s'ha pogut crear el test.") };
+    return { ok: false, error: await explainCreate(e, clientId, "No s'ha pogut crear el test.") };
   }
 }
 
@@ -125,7 +139,7 @@ export async function addEntryAction(
   try {
     await addTestEntry(testId, parsed.value, viewer.id);
   } catch (e) {
-    return { ok: false, error: explain(e, "No s'ha pogut desar el registre.") };
+    return { ok: false, error: await explainCreate(e, clientId, "No s'ha pogut desar el registre.") };
   }
   revalidate(clientId);
   return { ok: true };

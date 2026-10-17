@@ -2207,6 +2207,11 @@ export interface Database {
         Args: { p_client: string; p_ids: string[] };
         Returns: undefined;
       };
+      /** Es poden crear tests per a aquest client: té el consentiment de salut (0117). */
+      client_tests_consent_ok: {
+        Args: { p_client: string };
+        Returns: boolean;
+      };
       /** Títols ja usats al centre (sense client ni valors), mateix món. */
       client_test_suggestions: {
         Args: Record<never, never>;

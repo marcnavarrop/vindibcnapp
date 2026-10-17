@@ -55,15 +55,22 @@ export function ClientTestsPanel({
   tests,
   suggestions,
   canManage,
+  healthConsent,
   today,
 }: {
   clientId: string;
   tests: ClientTest[];
   suggestions: TestSuggestion[];
   canManage: boolean;
+  /**
+   * El client té signat el consentiment de dades de salut. Sense, no es poden
+   * CREAR tests ni registres (0117); el que ja hi ha es pot editar i esborrar.
+   */
+  healthConsent: boolean;
   /** Avui a l'hora del centre (YYYY-MM-DD): la data per defecte i el màxim. */
   today: string;
 }) {
+  const canCreate = canManage && healthConsent;
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -89,12 +96,22 @@ export function ClientTestsPanel({
               : "Només lectura: els crea i els omple el professional assignat (o l'administració)."}
           </p>
         </div>
-        {canManage && !creating && (
+        {canCreate && !creating && (
           <button type="button" onClick={() => setCreating(true)} className={PRIMARY}>
             + Nou test
           </button>
         )}
       </div>
+
+      {/* Els tests són dades de salut (0117): el mateix avís i el mateix camí que
+          l'historial clínic. Aquí, a més, no es pot afegir res fins que el signi. */}
+      {canManage && !healthConsent && (
+        <p className="rounded-xl border border-attention bg-attention-bg px-3.5 py-2.5 text-sm text-attention" data-consent-missing>
+          <b className="font-bold">Consentiment de dades de salut pendent.</b> Els tests són dades de salut:
+          no s&apos;hi poden afegir tests ni registres fins que l&apos;accepti des de la seva àrea
+          (Configuració → Privacitat i consentiments). El que ja hi ha es pot consultar, editar i esborrar.
+        </p>
+      )}
 
       {error && (
         <p role="alert" className="rounded-xl bg-error/5 px-4 py-2 text-sm text-error">
@@ -102,7 +119,7 @@ export function ClientTestsPanel({
         </p>
       )}
 
-      {canManage && creating && (
+      {canCreate && creating && (
         <NewTestForm
           clientId={clientId}
           suggestions={suggestions}
@@ -113,7 +130,7 @@ export function ClientTestsPanel({
 
       {tests.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-brand-border bg-white px-5 py-6 text-center text-sm text-brand-muted">
-          {canManage
+          {canCreate
             ? "Encara no hi ha cap test. Crea'n un amb «+ Nou test» (p. ex. «Dominades», «Perímetre abdominal»)."
             : "Aquest client encara no té cap test."}
         </p>
@@ -125,6 +142,7 @@ export function ClientTestsPanel({
               clientId={clientId}
               test={t}
               canManage={canManage}
+              canCreate={canCreate}
               pending={pending}
               today={today}
               suggestions={suggestions}
@@ -150,6 +168,7 @@ function TestCard({
   clientId,
   test,
   canManage,
+  canCreate,
   pending,
   today,
   suggestions,
@@ -162,6 +181,8 @@ function TestCard({
   clientId: string;
   test: ClientTest;
   canManage: boolean;
+  /** Es poden afegir registres (hi ha consentiment de salut, 0117). */
+  canCreate: boolean;
   pending: boolean;
   today: string;
   suggestions: TestSuggestion[];
@@ -200,9 +221,11 @@ function TestCard({
 
       {canManage && (
         <div className="flex flex-wrap items-center gap-2 border-t border-brand-border px-4 py-3 sm:px-5">
-          <button type="button" onClick={() => setAdding((v) => !v)} aria-expanded={adding} className={SMALL_BTN}>
-            {adding ? "Tancar" : "+ Registre"}
-          </button>
+          {canCreate && (
+            <button type="button" onClick={() => setAdding((v) => !v)} aria-expanded={adding} className={SMALL_BTN}>
+              {adding ? "Tancar" : "+ Registre"}
+            </button>
+          )}
           <button type="button" onClick={() => setEditing((v) => !v)} aria-expanded={editing} className={SMALL_BTN}>
             {editing ? "Tancar l'edició" : "Editar"}
           </button>
@@ -231,7 +254,7 @@ function TestCard({
         </div>
       )}
 
-      {canManage && adding && (
+      {canCreate && adding && (
         <EntryForm
           action={addEntryAction.bind(null, clientId, test.id)}
           today={today}

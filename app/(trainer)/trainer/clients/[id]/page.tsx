@@ -317,6 +317,7 @@ export default async function TrainerClientDetailPage({
                 clientId={client.id}
                 tests={tests}
                 suggestions={testSuggestions}
+                healthConsent={!!healthConsent}
                 canManage={canManage}
                 today={today}
               />

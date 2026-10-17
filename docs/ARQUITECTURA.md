@@ -24,7 +24,7 @@ client).
 - Resend: tot el correu transaccional, mai el mailer intern de Supabase.
 - Tailwind CSS, sense cap framework de components pesat.
 
-**116 migracions SQL** a `supabase/migrations/` (`0001`–`0116`), numerades i
+**117 migracions SQL** a `supabase/migrations/` (`0001`–`0117`), numerades i
 aplicades a mà per en Marc, mai per l'agent d'IA que ha construït gran part del
 projecte: és una norma explícita del flux de treball. El codi que en depèn no
 s'apuja fins que la migració és a producció.
@@ -228,6 +228,14 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   seu accés transversal de la 0109, i no hi escriuen. A la fitxa del
   professional, la pestanya «Tests» surt en lectura per al fisio que no és
   l'assignat. Proves: `supabase/tests/0114_client_tests_physio_read_rls.sql`.
+  La `0117` els tracta com a **dades de salut** (decisió d'en Marc, 17/10/2026):
+  CREAR un test o un registre demana el consentiment de salut del client
+  (dues polítiques RESTRICTIVES d'INSERT, `client_tests_consent_ok`, que
+  pregunta a `health_consent_status`); llegir, editar i esborrar no. A la
+  pestanya, sense consentiment, l'avís i cap «+». L'historial clínic NO bloqueja
+  sense consentiment (només n'avisa, 0110). Pendent de l'assessor: el text del
+  consentiment parla només de fisioteràpia. Proves:
+  `supabase/tests/0117_client_tests_consent_rls.sql` (46 ✓).
 - **Un client no pot ser a dos llocs alhora** (`0105`): la constraint
   `reservations_no_client_overlap` (exclusió per `client_id` i franja `[)`,
   només reserves `booked`) ho garanteix a tots els camins, i les funcions de
