@@ -1532,6 +1532,10 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "p",
+          text: "Abans de publicar, «Enviar-me una prova» (sota el text, al formulari de l'anunci) t'envia a tu, al correu del teu compte, el correu tal com el rebrà un client, amb «[Prova]» a l'assumpte. No publica res, no l'envia a ningú més i no compta a «Correu: enviat a N de M». L'enllaç per deixar de rebre'ls que porta és el del Client Demo: el pots obrir i provar sense tocar cap compte real.",
+        },
+        {
+          t: "p",
           text: "Sota cada anunci de l'últim mes surt com ha anat el correu: «Correu: enviat a 120 de 150». Si n'hi ha de fallits, la línia surt en vermell amb el motiu; el més habitual és «Límit diari de correus de Resend esgotat», que vol dir que aquell dia el centre ja havia enviat tots els correus que permet el pla, i els que falten no surten. «Enviat» vol dir que Resend l'ha acceptat: si després rebota, es veu a Resend. Mentre s'envia, la línia diu «enviant-ne…»; si al cap d'un quart d'hora encara en queden, diu que l'enviament es va aturar.",
         },
         { t: "h", text: "Enquestes" },

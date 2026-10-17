@@ -134,6 +134,31 @@ try {
     check(r2?.alreadyOff === true, "un segon cop: ja estava de baixa");
   }
 
+  console.log("\nEnviar-me una prova");
+  {
+    const { sendCommunityTest } = await import("../lib/notifications/community");
+    const { verifyUnsubscribe } = await import("../lib/unsubscribe");
+    const { PRE_CLIENT_PROFILE_ID } = await import("../lib/pre-accounts");
+    const logBefore = getStore().notification_log.length;
+    const annBefore = getStore().announcements.length;
+    const sent: BatchEmail[][] = [];
+    const fakeOne = async (emails: BatchEmail[]): Promise<BatchResult> => { sent.push(emails); return { ok: true, ids: ["fake-prova"] }; };
+    // Sense el Client Demo a demo_profiles, no s'envia res.
+    let r = await sendCommunityTest({ title: "Prova", body: "Text", toEmail: "admin@vindibcn.com", toName: "Marc" }, fakeOne);
+    check(!r.ok && sent.length === 0, "sense el Client Demo a demo_profiles: no s'envia (mai una baixa per a un compte real)");
+    { const st = getStore(); st.demo_profiles.push({ profile_id: PRE_CLIENT_PROFILE_ID, label: "Client Demo" }); saveStore(st); }
+    r = await sendCommunityTest({ title: "Benvinguts", body: "Hola a tothom", toEmail: "admin@vindibcn.com", toName: "Marc" }, fakeOne);
+    const m = sent[0]?.[0];
+    check(r.ok && sent.length === 1 && sent[0].length === 1 && m?.to === "admin@vindibcn.com", "un sol correu, només a qui l'ha demanat");
+    check(!!m && m.subject.startsWith("[Prova] Benvinguts") && m.html.includes("Hola a tothom"), "l'assumpte comença per «[Prova]» i porta el text de l'anunci");
+    const href = m && /href="([^"]*\/baixa\/comunitat\?[^"]*)"/.exec(m.html)?.[1]?.replace(/&amp;/g, "&");
+    const u = new URL(href ?? "http://x/");
+    check(u.searchParams.get("p") === PRE_CLIENT_PROFILE_ID && verifyUnsubscribe(PRE_CLIENT_PROFILE_ID, u.searchParams.get("t")), "l'enllaç de baixa va signat per al Client Demo");
+    check(!!m?.headers?.["List-Unsubscribe"]?.includes(`p=${PRE_CLIENT_PROFILE_ID}`), "i la capçalera List-Unsubscribe, també del Client Demo");
+    check(getStore().notification_log.length === logBefore && getStore().announcements.length === annBefore, "no publica res ni escriu a notification_log");
+    { const st = getStore(); st.demo_profiles = st.demo_profiles.filter((d) => d.profile_id !== PRE_CLIENT_PROFILE_ID); saveStore(st); }
+  }
+
   console.log("\nUn client nou (0124)");
   {
     const { createClientRecord } = await import("../lib/data/clients");

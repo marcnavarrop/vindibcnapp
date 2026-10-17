@@ -9,7 +9,7 @@ import {
   deleteAnnouncement,
   type AnnouncementInput,
 } from "@/lib/data/announcements";
-import { deliverCommunity, queueCommunity } from "@/lib/notifications/community";
+import { deliverCommunity, queueCommunity, sendCommunityTest } from "@/lib/notifications/community";
 import { requireRole } from "@/lib/auth";
 import type { FormState } from "@/app/(admin)/admin/clients/actions";
 
@@ -24,6 +24,27 @@ function validate(input: AnnouncementInput): string | null {
   if (!input.title) return "El títol és obligatori.";
   if (!input.body) return "El contingut és obligatori.";
   return null;
+}
+
+export type TestSendState = { sentTo?: string; error?: string };
+
+/**
+ * «Enviar-me una prova»: el correu de l'anunci tal com està escrit ara, NOMÉS
+ * a l'admin de la sessió. No publica res ni s'anota enlloc; la baixa que porta
+ * és la del Client Demo (`sendCommunityTest`).
+ */
+export async function sendCommunityTestAction(
+  _prev: TestSendState,
+  formData: FormData,
+): Promise<TestSendState> {
+  const viewer = await requireRole("admin");
+  if (!viewer) return { error: "No autoritzat." };
+  const input = parse(formData);
+  const error = validate(input);
+  if (error) return { error };
+  if (!viewer.email) return { error: "El teu compte no té correu on enviar la prova." };
+  const res = await sendCommunityTest({ ...input, toEmail: viewer.email, toName: viewer.fullName });
+  return res.ok ? { sentTo: viewer.email } : { error: res.error };
 }
 
 export async function createAnnouncementAction(

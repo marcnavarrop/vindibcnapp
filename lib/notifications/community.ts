@@ -1,5 +1,5 @@
-import { communityUnsubscribeOneClickUrl, communityUnsubscribeUrl } from "@/lib/unsubscribe";
 import "server-only";
+import { communityUnsubscribeOneClickUrl, communityUnsubscribeUrl } from "@/lib/unsubscribe";
 import { USE_MOCK } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchAllRows } from "@/lib/supabase/fetch-all";
@@ -114,29 +114,7 @@ export async function deliverCommunity(
     if (quotaError) {
       res = { ok: false, kind: "quota", error: quotaError };
     } else {
-      const emails = lot.map(({ recipient }) => {
-        const { subject, html, text, replyTo } = renderEmail(
-          {
-            type: "community",
-            recipient,
-            relatedId: post.announcementId,
-            data: {
-              name: recipient.name ?? "",
-              title: post.title,
-              body: post.body,
-              // La baixa d'aquest correu, sense sessió (art. 21.2 LSSI).
-              unsubscribeUrl: (recipient.profileId && communityUnsubscribeUrl(recipient.profileId)) || "",
-            },
-          },
-          contact,
-        );
-        // I el botó «Donar-se de baixa» dels clients de correu (RFC 8058).
-        const oneClick = recipient.profileId ? communityUnsubscribeOneClickUrl(recipient.profileId) : null;
-        const headers: Record<string, string> = oneClick
-          ? { "List-Unsubscribe": `<${oneClick}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
-          : {};
-        return { to: recipient.email!, subject, html, text, replyTo, headers };
-      });
+      const emails = lot.map(({ recipient }) => buildCommunityEmail(post, recipient, contact));
       const key = `community-${post.announcementId}-${i / RESEND_BATCH_MAX}`;
       res = await send(emails, key);
       // Massa peticions per segon: s'espera i es torna a provar (fins a 3
@@ -304,4 +282,72 @@ async function optedInRecipients(): Promise<Rec[]> {
           ? toLocale(r.profile!.preferred_language)
           : null,
     }));
+}
+
+/**
+ * El correu d'un anunci per a UNA persona, tal com surt: el text, el peu amb
+ * l'enllaç per deixar de rebre'ls (art. 21.2 LSSI) i les capçaleres
+ * `List-Unsubscribe` d'un sol clic (RFC 8058).
+ *
+ * `unsubscribeFor`: de qui és la baixa que porta. Per defecte, de qui el rep;
+ * l'enviament de prova de l'admin hi posa el Client Demo.
+ */
+export function buildCommunityEmail(
+  post: CommunityPost,
+  recipient: NotificationRecipient,
+  contact: ReturnType<typeof publicContact> | null,
+  opts?: { unsubscribeFor?: string | null },
+): BatchEmail {
+  const unsubFor = opts?.unsubscribeFor ?? recipient.profileId;
+  const { subject, html, text, replyTo } = renderEmail(
+    {
+      type: "community",
+      recipient,
+      relatedId: post.announcementId,
+      data: {
+        name: recipient.name ?? "",
+        title: post.title,
+        body: post.body,
+        // La baixa d'aquest correu, sense sessió (art. 21.2 LSSI).
+        unsubscribeUrl: (unsubFor && communityUnsubscribeUrl(unsubFor)) || "",
+      },
+    },
+    contact,
+  );
+  // I el botó «Donar-se de baixa» dels clients de correu (RFC 8058).
+  const oneClick = unsubFor ? communityUnsubscribeOneClickUrl(unsubFor) : null;
+  const headers: Record<string, string> = oneClick
+    ? { "List-Unsubscribe": `<${oneClick}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+    : {};
+  return { to: recipient.email!, subject, html, text, replyTo, headers };
+}
+
+/**
+ * «Enviar-me una prova»: el correu d'un anunci que encara NO s'ha publicat,
+ * només a qui el demana (l'admin de la sessió). Exactament el que rebria un
+ * client, amb dues diferències: l'assumpte comença per «[Prova] », i l'enllaç
+ * de baixa i les capçaleres van signats per al Client Demo, de manera que
+ * provar-los no toca cap compte real. No escriu res a `notification_log` ni
+ * compta a «Correu: enviat a N de M».
+ *
+ * Si el Client Demo no és a `demo_profiles`, no s'envia: mai una baixa
+ * signada per a un compte real.
+ */
+export async function sendCommunityTest(
+  input: { title: string; body: string; toEmail: string; toName: string | null },
+  send: (emails: BatchEmail[], key?: string) => Promise<BatchResult> = sendEmailBatch,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { PRE_CLIENT_PROFILE_ID } = await import("@/lib/pre-accounts");
+  const { getDemoWorld } = await import("@/lib/data/demo-world");
+  if (!(await getDemoWorld()).profileIds.has(PRE_CLIENT_PROFILE_ID))
+    return { ok: false, error: "No es pot enviar la prova: el Client Demo no consta com a compte demo." };
+  const contact = publicContact(await getCenterContact().catch(() => EMPTY_CONTACT));
+  const email = buildCommunityEmail(
+    { announcementId: "prova", title: input.title, body: input.body },
+    { profileId: null, email: input.toEmail, phone: null, name: input.toName, locale: null },
+    contact,
+    { unsubscribeFor: PRE_CLIENT_PROFILE_ID },
+  );
+  const res = await send([{ ...email, subject: `[Prova] ${email.subject}` }]);
+  return res.ok ? { ok: true } : { ok: false, error: `No s'ha pogut enviar la prova: ${res.error}` };
 }
