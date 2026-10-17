@@ -53,7 +53,8 @@ export async function giftVoucherPdfResponse(_req: Request, id: string): Promise
     serviceType: voucher.serviceType,
     totalSessions: voucher.totalSessions,
     expiresAt: voucher.expiresAt,
-    buyerName: voucher.buyerName,
+    // Sense comprador (s'ha donat de baixa, 0123): el PDF no porta cap nom.
+    buyerName: buyerClientId ? voucher.buyerName : null,
     recipientName: voucher.recipientName,
     message: voucher.message,
   };

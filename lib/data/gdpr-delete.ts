@@ -9,8 +9,20 @@ import type { ServiceType } from "@/types/database";
 import { authErrorCa } from "@/lib/auth-errors";
 import { archiveClinicalHistory, type ArchiveOutcome } from "@/lib/data/clinical-archive";
 import { deleteAllAvatarsOf } from "@/lib/data/avatars";
+import {
+  giftVoucherBuyerLocale,
+  scrubBuyerFromVouchers,
+  vouchersBoughtBy,
+  type VoucherScrubOutcome,
+} from "@/lib/data/gift-vouchers";
 
-export type DeleteResult = { profileId: string; label: string; archive: ArchiveOutcome };
+export type DeleteResult = {
+  profileId: string;
+  label: string;
+  archive: ArchiveOutcome;
+  /** Els PDF dels vals que havia comprat, sense el seu nom (vegeu el punt 4). */
+  vouchers: VoucherScrubOutcome;
+};
 
 /**
  * Supressió d'un client (dret a l'oblit). Estratègia: hard delete de tot el
@@ -31,9 +43,13 @@ export type DeleteResult = { profileId: string; label: string; archive: ArchiveO
  *    abans es quedava orfe. Si falla, es registra i la baixa es dona per feta
  *    (el compte ja no hi és); el fitxer es pot treure després per la ruta.
  *
- * Els vals de regal (0123): un val que va comprar segueix viu i bescanviable
- * (el regal és de qui el rep), sense comprador, amb el seu PDF; un que va
- * bescanviar es queda «bescanviat», sense el seu nom.
+ * 4. Els vals de regal (0123): un val que va comprar segueix viu i bescanviable
+ *    (el regal és de qui el rep), sense comprador. El seu PDF portava el nom de
+ *    qui el va comprar: si el val és viu, es torna a fer sense el nom (a
+ *    `sense-comprador/`) i s'esborra l'antic; si ja no es pot fer servir, se
+ *    n'esborra el PDF. Si falla, es queda el PDF antic i s'anota: la baixa no
+ *    es desfà (`scrubBuyerFromVouchers`). Un val que va bescanviar es queda
+ *    «bescanviat», sense el seu nom.
  *
  * Els referits (0122): les recompenses de qui plega cauen amb ell; les d'un
  * altre en què surt de padrí o de referit es queden, sense el seu nom, i qui
@@ -47,6 +63,9 @@ export async function deleteClient(
   if (USE_MOCK) {
     const exists = getStore().clients.some((c) => c.id === clientId);
     if (!exists) return null;
+    // Els vals que va comprar, ABANS de res (després ja no se sabria quins eren).
+    const vouchers = await vouchersBoughtBy(clientId);
+    const voucherLocale = await giftVoucherBuyerLocale(clientId);
     // Primer de tot: si falla, llença i no s'ha tocat res.
     const archive = await archiveClinicalHistory(clientId, actorId);
     const before = getStore();
@@ -132,7 +151,8 @@ export async function deleteClient(
     store.clients = store.clients.filter((c) => c.id !== clientId);
     store.profiles = store.profiles.filter((p) => p.id !== profileId);
     saveStore(store);
-    return { profileId, label, archive };
+    const voucherPdfs = await scrubBuyerFromVouchers(vouchers, voucherLocale);
+    return { profileId, label, archive, vouchers: voucherPdfs };
   }
 
   const admin = createAdminClient();
@@ -151,6 +171,12 @@ export async function deleteClient(
     }
   ).profile;
   const label = `${p?.full_name ?? "—"} <${p?.email ?? ""}>`;
+
+  // Els vals que va comprar, abans de tocar res: després de la baixa
+  // `buyer_client_id` és NULL i ja no se sabria quins eren. Si no es poden
+  // llegir, llença i no s'ha esborrat res.
+  const vouchers = await vouchersBoughtBy(clientId);
+  const voucherLocale = await giftVoucherBuyerLocale(clientId);
 
   // Arxiu clínic, ABANS de qualsevol esborrat. Si falla, llença: no s'esborra res.
   const archive = await archiveClinicalHistory(clientId, actorId);
@@ -192,5 +218,8 @@ export async function deleteClient(
     console.error(`[gdpr-delete] no s'ha pogut esborrar la foto de profile-avatars/${profileId}/`, e),
   );
 
-  return { profileId, label, archive };
+  // 4. Els PDF dels vals que havia comprat, sense el seu nom. Mai llença.
+  const voucherPdfs = await scrubBuyerFromVouchers(vouchers, voucherLocale);
+
+  return { profileId, label, archive, vouchers: voucherPdfs };
 }

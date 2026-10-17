@@ -294,7 +294,12 @@ no fa res); `X-Frame-Options: DENY` continua protegint dels iframes.
   (`0123`): el que va comprar sobreviu (`buyer_client_id` a NULL), bescanviable i
   amb el seu PDF (si cal regenerar-lo, a `sense-comprador/`); el que va
   bescanviar es queda «bescanviat» sense ell (el check ja no exigeix
-  `redeemed_by_client_id`). L'admin descarrega els PDF per
+  `redeemed_by_client_id`). El PDF portava el nom del comprador: la baixa llegeix
+  els seus vals ABANS d'esborrar (`vouchersBoughtBy`) i, després,
+  `scrubBuyerFromVouchers` refà el PDF dels vius sense el nom a
+  `sense-comprador/` i esborra l'antic, i esborra el dels bescanviats, caducats
+  o anul·lats (`pdf_path` a NULL). Si falla, el val conserva el PDF antic i
+  s'anota; la baixa no es desfà. L'admin descarrega els PDF per
   `/admin/vals-regal/[id]/pdf` (`lib/gift-voucher-pdf-response.ts`). Proves:
   `supabase/tests/0122_referrals_on_client_delete.sql`,
   `supabase/tests/0123_gift_vouchers_buyer_delete.sql` i `npm run archive:check`.

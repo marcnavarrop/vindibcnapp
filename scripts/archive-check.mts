@@ -171,20 +171,24 @@ try {
     s.referral_rewards.push({ id: "rr-oriol", referrer_client_id: "c-ana", referee_client_id: "c-oriol", beneficiary_client_id: "c-oriol", discount_percent: 10, status: "pending", used_in_bono_id: null, created_at: new Date().toISOString() });
     saveStore(s);
   }
-  // I els vals de regal (0123): un que l'Ana va comprar (actiu) i un que va bescanviar.
+  // I els vals de regal (0123): tres que l'Ana va comprar (actiu, pendent de
+  // cobrar i ja bescanviat per l'Oriol) i un de l'Oriol que ella va bescanviar.
   {
     const s = getStore();
     const svc = s.services[0];
-    const base = { service_id: svc.id, recipient_email: null, message: null, price: 50, service_type: svc.service_type, total_sessions: 4, package_name: svc.name, purchased_at: new Date().toISOString(), expires_at: "2099-01-01", redeemed_bono_id: null, created_at: new Date().toISOString(), stripe_checkout_session_id: null };
+    const base = { service_id: svc.id, recipient_email: null, message: null, price: 50, service_type: svc.service_type, total_sessions: 4, package_name: svc.name, purchased_at: new Date().toISOString(), expires_at: "2099-01-01", redeemed_bono_id: null, created_at: new Date().toISOString(), stripe_checkout_session_id: null, redeemed_at: null, redeemed_by_client_id: null };
     s.gift_vouchers.push(
-      { ...base, id: "gv-ana-comprat", code: "VINDI-ARXA-COMP", buyer_client_id: "c-ana", recipient_name: "L'Oriol", status: "active", redeemed_at: null, redeemed_by_client_id: null, pdf_path: "c-ana/gv-ana-comprat.pdf" } as never,
-      { ...base, id: "gv-ana-bescanviat", code: "VINDI-ARXA-BESC", buyer_client_id: "c-oriol", recipient_name: "L'Ana", status: "redeemed", redeemed_at: new Date().toISOString(), redeemed_by_client_id: "c-ana", pdf_path: null } as never,
+      { ...base, id: "gv-ana-comprat", code: "VINDI-ARXA-COMP", buyer_client_id: "c-ana", recipient_name: "L'Oriol", status: "active", pdf_path: "c-ana/gv-ana-comprat.pdf" } as never,
+      { ...base, id: "gv-ana-pendent", code: "VINDI-ARXA-PEND", buyer_client_id: "c-ana", recipient_name: "La Laia", status: "pending_payment", pdf_path: "c-ana/gv-ana-pendent.pdf" } as never,
+      { ...base, id: "gv-ana-gastat", code: "VINDI-ARXA-GAST", buyer_client_id: "c-ana", recipient_name: "L'Oriol", status: "redeemed", redeemed_at: new Date().toISOString(), redeemed_by_client_id: "c-oriol", pdf_path: "c-ana/gv-ana-gastat.pdf" } as never,
+      { ...base, id: "gv-ana-bescanviat", code: "VINDI-ARXA-BESC", buyer_client_id: "c-oriol", recipient_name: "L'Ana", status: "redeemed", redeemed_at: new Date().toISOString(), redeemed_by_client_id: "c-ana", pdf_path: "c-oriol/gv-ana-bescanviat.pdf" } as never,
     );
     saveStore(s);
   }
   let padriError = "";
+  let padriResult: Awaited<ReturnType<typeof deleteClient>> = null;
   try {
-    await deleteClient("c-ana", "u-admin");
+    padriResult = await deleteClient("c-ana", "u-admin");
   } catch (e) {
     padriError = e instanceof Error ? e.message : String(e);
   }
@@ -193,12 +197,34 @@ try {
   check("l'Oriol continua, sense padrí", s6.clients.find((c) => c.id === "c-oriol")?.referred_by_client_id === null);
   check("la recompensa de l'Oriol es queda, sense padrí", s6.referral_rewards.find((r) => r.id === "rr-oriol")?.referrer_client_id === null);
   check("la de l'Ana (beneficiària) se'n va amb ella", !s6.referral_rewards.some((r) => r.id === "rr-ana-reward"));
-  const comprat = s6.gift_vouchers.find((v) => v.id === "gv-ana-comprat");
-  check("el val que va comprar segueix viu, actiu i sense comprador", comprat?.status === "active" && comprat.buyer_client_id === null && comprat.pdf_path === "c-ana/gv-ana-comprat.pdf");
-  const besc = s6.gift_vouchers.find((v) => v.id === "gv-ana-bescanviat");
-  check("el que va bescanviar segueix bescanviat, sense ella", besc?.status === "redeemed" && besc.redeemed_by_client_id === null);
+  const gv = (id: string) => getStore().gift_vouchers.find((v) => v.id === id);
+  check("val actiu: segueix actiu, sense comprador, PDF nou sense el nom", gv("gv-ana-comprat")?.status === "active" && gv("gv-ana-comprat")?.buyer_client_id === null && gv("gv-ana-comprat")?.pdf_path === "sense-comprador/gv-ana-comprat.pdf" && gv("gv-ana-comprat")?.code === "VINDI-ARXA-COMP", gv("gv-ana-comprat")?.pdf_path ?? "");
+  check("val pendent de cobrar: igual, PDF nou", gv("gv-ana-pendent")?.status === "pending_payment" && gv("gv-ana-pendent")?.pdf_path === "sense-comprador/gv-ana-pendent.pdf" && gv("gv-ana-pendent")?.recipient_name === "La Laia");
+  check("val ja bescanviat: fora el PDF (pdf_path a NULL)", gv("gv-ana-gastat")?.status === "redeemed" && gv("gv-ana-gastat")?.pdf_path === null);
+  check("el val d'un altre que ella va bescanviar: el PDF no es toca", gv("gv-ana-bescanviat")?.redeemed_by_client_id === null && gv("gv-ana-bescanviat")?.pdf_path === "c-oriol/gv-ana-bescanviat.pdf");
+  check("la baixa ho compta (2 refets, 1 esborrat, 0 fallits)", JSON.stringify(padriResult?.vouchers) === JSON.stringify({ regenerated: 2, cleared: 1, failed: 0 }), JSON.stringify(padriResult?.vouchers));
   const red = await redeemGiftVoucher({ code: "VINDI-ARXA-COMP", profileId: "u-client-oriol" });
-  check("l'Oriol bescanvia el val de l'Ana", red.ok === true && getStore().gift_vouchers.find((v) => v.id === "gv-ana-comprat")?.redeemed_by_client_id === "c-oriol", JSON.stringify(red));
+  check("l'Oriol bescanvia el val de l'Ana", red.ok === true && gv("gv-ana-comprat")?.redeemed_by_client_id === "c-oriol", JSON.stringify(red));
+
+  // Si el PDF nou no es pot generar, la baixa NO es desfà i el val conserva l'antic.
+  {
+    const s = getStore();
+    const v = s.gift_vouchers.find((x) => x.id === "gv-ana-pendent")!;
+    s.gift_vouchers.push({ ...v, id: "gv-oriol-viu", code: "VINDI-ARXO-VIU1", buyer_client_id: "c-oriol", pdf_path: "c-oriol/gv-oriol-viu.pdf", status: "active" } as never);
+    saveStore(s);
+  }
+  process.env.MOCK_FAIL = "voucher_pdf";
+  let oriolError = "";
+  let oriolResult: Awaited<ReturnType<typeof deleteClient>> = null;
+  try {
+    oriolResult = await deleteClient("c-oriol", "u-admin");
+  } catch (e) {
+    oriolError = e instanceof Error ? e.message : String(e);
+  }
+  delete process.env.MOCK_FAIL;
+  check("si el PDF nou falla, la baixa es fa igual", !oriolError && !getStore().clients.some((c) => c.id === "c-oriol"), oriolError);
+  check("…i el val conserva el PDF d'abans", gv("gv-oriol-viu")?.pdf_path === "c-oriol/gv-oriol-viu.pdf" && gv("gv-oriol-viu")?.status === "active");
+  check("…i la baixa ho compta com a fallit", oriolResult?.vouchers.failed === 1, JSON.stringify(oriolResult?.vouchers));
 
   console.log("\n7. La purga\n");
   {

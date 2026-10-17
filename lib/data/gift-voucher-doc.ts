@@ -9,6 +9,7 @@ import {
 } from "@/lib/invoices/gift-voucher-pdf";
 import { getCenterContact } from "@/lib/data/center-settings";
 import { publicContact } from "@/lib/center-contact";
+import { mockFails } from "@/lib/mock/faults";
 
 /**
  * El PDF del val al Storage. Mateix criteri que les factures de liquidació i
@@ -51,6 +52,8 @@ export async function uploadGiftVoucherPdf(opts: {
   content: GiftVoucherPdfInput;
 }): Promise<string> {
   const path = voucherStoragePath(opts.buyerClientId, opts.voucherId);
+  // Per provar què passa si no es pot generar: MOCK_FAIL=voucher_pdf.
+  if (mockFails("voucher_pdf")) throw new Error("No s'ha pogut desar el val (simulat).");
   const bytes = await renderGiftVoucherPdf(await withContact(opts.content));
 
   // En simulació no hi ha Storage: la ruta es desa igualment perquè la UI es
@@ -97,4 +100,14 @@ async function withContact(content: GiftVoucherPdfInput): Promise<GiftVoucherPdf
   if (content.contact !== undefined) return content;
   const contact = await getCenterContact().catch(() => null);
   return { ...content, contact: contact ? publicContact(contact) : null };
+}
+
+/** Esborra el PDF d'un val del bucket. Llença si no pot (qui crida decideix). */
+export async function removeGiftVoucherPdf(path: string): Promise<void> {
+  if (USE_MOCK) {
+    if (mockFails("voucher_pdf_remove")) throw new Error("No s'ha pogut esborrar el PDF (simulat).");
+    return;
+  }
+  const { error } = await createAdminClient().storage.from(BUCKET).remove([path]);
+  if (error) throw new Error(error.message);
 }

@@ -1872,7 +1872,7 @@ export function buildAdminManual(s: AdminManualSettings): Chapter[] {
         },
         {
           t: "warn",
-          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, tests d'avaluació, historial clínic, consentiments, documents i foto de perfil. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona. Si havia recomanat algú amb «Porta un amic», la persona que va venir es queda client i conserva el seu descompte; a Referits hi surt «—» on hi havia el seu nom. Els vals de regal que havia comprat NO es perden: segueixen bescanviables per a qui els té, amb el seu PDF, i a Vals de regal hi surten sense comprador.",
+          text: "És IRREVERSIBLE. S'esborren les dades personals i l'accés, i cauen amb elles els seus bons, reserves, mesures, exercicis assignats, tests d'avaluació, historial clínic, consentiments, documents i foto de perfil. Els pagaments es conserven de forma anonimitzada, per obligació fiscal: el registre comptable queda, desvinculat de la persona. Si havia recomanat algú amb «Porta un amic», la persona que va venir es queda client i conserva el seu descompte; a Referits hi surt «—» on hi havia el seu nom. Els vals de regal que havia comprat NO es perden: segueixen bescanviables per a qui els té i a Vals de regal hi surten sense comprador. El seu PDF portava el nom de qui el va comprar: es torna a fer sense el nom (el codi, la caducitat i el destinatari no canvien), i el dels vals ja bescanviats o caducats s'esborra.",
         },
         { t: "h", text: "L'historial clínic es conserva: l'arxiu clínic" },
         {

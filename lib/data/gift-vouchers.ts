@@ -642,7 +642,7 @@ function clean(value: string | null | undefined, max: number): string | null {
 }
 
 /** Desa la ruta del PDF un cop pujat. */
-export async function setGiftVoucherPdfPath(id: string, path: string): Promise<void> {
+export async function setGiftVoucherPdfPath(id: string, path: string | null): Promise<void> {
   if (USE_MOCK) {
     const store = getStore();
     const v = store.gift_vouchers.find((x) => x.id === id);
@@ -976,4 +976,125 @@ export async function giftVoucherBuyerContact(voucherId: string): Promise<{
     recipientName: row.recipient_name,
     packageName: row.package_name,
   };
+}
+
+// ─── Baixa RGPD del comprador ────────────────────────────────────────────────
+
+/** El que cal d'un val del comprador per treure-li el nom del PDF. */
+export type BuyerVoucherSnapshot = {
+  id: string;
+  code: string;
+  status: GiftVoucherStatus;
+  expiresAt: string;
+  pdfPath: string | null;
+  packageName: string;
+  serviceType: ServiceType;
+  totalSessions: number;
+  recipientName: string | null;
+  message: string | null;
+};
+
+/**
+ * Els vals que ha comprat un client, llegits ABANS d'esborrar-li el compte
+ * (després `buyer_client_id` ja és NULL i no se sabria quins eren). Clau de
+ * servei: és part de la baixa, que només fa l'admin.
+ */
+export async function vouchersBoughtBy(clientId: string): Promise<BuyerVoucherSnapshot[]> {
+  type Row = {
+    id: string; code: string; status: GiftVoucherStatus; expires_at: string; pdf_path: string | null;
+    package_name: string; service_type: ServiceType; total_sessions: number;
+    recipient_name: string | null; message: string | null;
+  };
+  let rows: Row[];
+  if (USE_MOCK) {
+    rows = getStore().gift_vouchers.filter((v) => v.buyer_client_id === clientId) as Row[];
+  } else {
+    const { data, error } = await createAdminClient()
+      .from("gift_vouchers")
+      .select("id, code, status, expires_at, pdf_path, package_name, service_type, total_sessions, recipient_name, message")
+      .eq("buyer_client_id", clientId)
+      .limit(1000);
+    if (error) throw new Error(`No s'han pogut llegir els vals de regal: ${error.message}`);
+    rows = (data ?? []) as Row[];
+  }
+  return rows.map((r) => ({
+    id: r.id,
+    code: r.code,
+    status: r.status,
+    expiresAt: r.expires_at,
+    pdfPath: r.pdf_path,
+    packageName: r.package_name,
+    serviceType: r.service_type,
+    totalSessions: r.total_sessions,
+    recipientName: r.recipient_name,
+    message: r.message,
+  }));
+}
+
+export type VoucherScrubOutcome = {
+  /** Vals vius amb el PDF tornat a fer sense el nom del comprador. */
+  regenerated: number;
+  /** Vals que ja no es poden fer servir: PDF esborrat i `pdf_path` a NULL. */
+  cleared: number;
+  /** Vals on no s'ha pogut: conserven el PDF d'abans (queda al log). */
+  failed: number;
+};
+
+/**
+ * DESPRÉS d'esborrar el compte: treu el nom del comprador dels PDF.
+ *
+ *   · Val viu (actiu o pendent de cobrar, i no caducat): PDF nou sense el nom a
+ *     `sense-comprador/`, `pdf_path` al nou, i fora l'antic. Codi, estat,
+ *     caducitat i destinatari no canvien. Si no es pot generar, el val es queda
+ *     amb el PDF antic (millor un nom de més que un val sense PDF) i s'anota.
+ *   · Val que ja no es pot fer servir (bescanviat, caducat o anul·lat): fora el
+ *     PDF i `pdf_path` a NULL. Si no es pot esborrar, es manté la ruta (així el
+ *     fitxer no queda perdut) i s'anota.
+ *
+ * Mai llença: el compte ja no hi és i la baixa no es desfà.
+ */
+export async function scrubBuyerFromVouchers(
+  vouchers: BuyerVoucherSnapshot[],
+  locale: Locale | null,
+): Promise<VoucherScrubOutcome> {
+  const { NO_BUYER_FOLDER, removeGiftVoucherPdf, uploadGiftVoucherPdf } = await import("@/lib/data/gift-voucher-doc");
+  const today = centerToday();
+  const out: VoucherScrubOutcome = { regenerated: 0, cleared: 0, failed: 0 };
+  for (const v of vouchers) {
+    const alive = (v.status === "active" || v.status === "pending_payment") && v.expiresAt >= today;
+    try {
+      if (alive) {
+        const path = await uploadGiftVoucherPdf({
+          buyerClientId: NO_BUYER_FOLDER,
+          voucherId: v.id,
+          content: {
+            locale,
+            code: v.code,
+            packageName: v.packageName,
+            serviceType: v.serviceType,
+            totalSessions: v.totalSessions,
+            expiresAt: v.expiresAt,
+            buyerName: null,
+            recipientName: v.recipientName,
+            message: v.message,
+          },
+        });
+        await setGiftVoucherPdfPath(v.id, path);
+        if (v.pdfPath && v.pdfPath !== path) {
+          await removeGiftVoucherPdf(v.pdfPath).catch((e) =>
+            console.error(`[gdpr-delete] val ${v.id}: PDF nou desat, però no s'ha pogut esborrar l'antic (${v.pdfPath})`, e),
+          );
+        }
+        out.regenerated++;
+      } else {
+        if (v.pdfPath) await removeGiftVoucherPdf(v.pdfPath);
+        await setGiftVoucherPdfPath(v.id, null);
+        out.cleared++;
+      }
+    } catch (e) {
+      out.failed++;
+      console.error(`[gdpr-delete] val ${v.id}: no s'ha pogut treure el nom del comprador del PDF; es queda el d'abans (${v.pdfPath ?? "sense PDF"})`, e);
+    }
+  }
+  return out;
 }

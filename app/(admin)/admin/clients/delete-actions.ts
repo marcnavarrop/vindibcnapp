@@ -102,6 +102,10 @@ export async function deleteClientAction(
         `Supressió des de la fitxa (client ${clientId}).` +
         (result.archive.archived
           ? ` Historial clínic arxivat fins al ${ddmmyyyy(result.archive.purgeAfter)} (arxiu ${result.archive.patientId}).`
+          : "") +
+        (result.vouchers.regenerated + result.vouchers.cleared + result.vouchers.failed > 0
+          ? ` Vals de regal: ${result.vouchers.regenerated} PDF refets sense el nom, ${result.vouchers.cleared} PDF esborrats` +
+            (result.vouchers.failed ? `, ${result.vouchers.failed} sense poder-ho fer (vegeu el log).` : ".")
           : ""),
     });
   } catch {
